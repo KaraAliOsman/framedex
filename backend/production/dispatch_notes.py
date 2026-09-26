@@ -178,11 +178,26 @@ def dispatch_note_access(*, org_id: UUID, order_id: UUID) -> dict:
                 404, "dispatch_note_not_found", "La guía de despacho no está disponible."
             )
         note = note[0]
-        signed_url = SupabaseDocumentStorage().signed_url(
+        storage = SupabaseDocumentStorage()
+        signed_url = storage.signed_url(
             str(note["storage_object_key"]), expires_in=SIGNED_URL_TTL_SECONDS
+        )
+        repr_row = rows(
+            "SELECT repr_storage_object_key FROM public.project_dtes "
+            "WHERE org_id=%s AND dispatch_note_id=%s",
+            [str(org_id), str(note["id"])],
+        )
+        tributario_signed_url = (
+            storage.signed_url(
+                str(repr_row[0].get("repr_storage_object_key")),
+                expires_in=SIGNED_URL_TTL_SECONDS,
+            )
+            if repr_row and repr_row[0].get("repr_storage_object_key")
+            else None
         )
     return {
         **_note_public(note),
         "signed_url": signed_url,
+        "tributario_signed_url": tributario_signed_url,
         "expires_in": SIGNED_URL_TTL_SECONDS,
     }

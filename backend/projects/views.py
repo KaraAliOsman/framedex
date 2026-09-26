@@ -678,6 +678,45 @@ class ProjectCreditNoteDteView(APIView):
             )
 
 
+class ProjectCreditNoteDteEnvioView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_credit_note_dte_envio_send",
+        request=SiiEnvioSendSerializer,
+        responses={201: SiiEnvioSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, credit_note_id):
+        data = validate(SiiEnvioSendSerializer, request.data)
+        with scope(request, ("OWNER", "WORKSHOP_MANAGER")) as (token, _, org):
+            return response(
+                sii_envio.send_credit_note_envio(
+                    org_id=org,
+                    project_id=project_id,
+                    credit_note_id=credit_note_id,
+                    actor_id=token.user_id,
+                    resubmit=bool(data.get("resubmit")),
+                ),
+                status=201,
+            )
+
+    @extend_schema(
+        operation_id="project_credit_note_dte_envio_access",
+        responses={200: SiiEnvioAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, credit_note_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                sii_envio.credit_note_envio_access(
+                    org_id=org,
+                    project_id=project_id,
+                    credit_note_id=credit_note_id,
+                )
+            )
+
+
 class SiiCafsView(APIView):
     parser_classes = [DecimalJSONParser]
 

@@ -14,6 +14,8 @@ import {
   productionOrderDispatchNote,
   productionOrderDispatchNoteDte,
   productionOrderDispatchNoteDteEmit,
+  productionOrderDispatchNoteDteEnvio,
+  productionOrderDispatchNoteDteEnvioSend,
   productionOrderDxfExport,
   productionOrderInstall,
   productionOrderLabels,
@@ -630,6 +632,42 @@ export function ProductionPage(): JSX.Element {
     }
   }
 
+  async function sendDispatchEnvio(orderId: string, resubmit = false): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await productionOrderDispatchNoteDteEnvioSend(orderId, {
+        resubmit,
+      });
+      if (response.status === 201) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.envioSendError"));
+      }
+    } catch {
+      setMessage(t("production.envioSendError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openDispatchEnvio(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.envioOpenError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDispatchNoteDteEnvio(orderId);
+      if (response.status !== 200) throw new Error("envio_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.envioOpenError"));
+    }
+  }
+
   async function openDispatchNote(orderId: string): Promise<void> {
     const tab = window.open("", "_blank");
     if (!tab) {
@@ -939,6 +977,47 @@ export function ProductionPage(): JSX.Element {
                     {t("production.dteEmit")}
                   </button>
                 ) : null}
+                {(() => {
+                  const envio = detail.dispatch_note_dte?.envio as
+                    | { status?: string; track_id?: string | null; attempted?: boolean }
+                    | null
+                    | undefined;
+                  if (!detail.dispatch_note_dte) return null;
+                  const resubmit = envio?.attempted === true && !envio?.track_id;
+                  return (
+                    <>
+                      {envio?.status ? (
+                        <button
+                          type="button"
+                          className="production-dispatch production-note-envio"
+                          title={`${t("production.envioStatus")} · ${envio.track_id ?? ""}`}
+                          onClick={() => void openDispatchEnvio(detail.id)}
+                        >
+                          {`${t("production.envioStatus")} · ${envio.status}`}
+                        </button>
+                      ) : canWrite ? (
+                        <button
+                          type="button"
+                          className="production-dispatch"
+                          disabled={busy}
+                          onClick={() => void sendDispatchEnvio(detail.id)}
+                        >
+                          {t("production.envioSend")}
+                        </button>
+                      ) : null}
+                      {canWrite && envio?.status === "PENDING" ? (
+                        <button
+                          type="button"
+                          className="production-dispatch"
+                          disabled={busy}
+                          onClick={() => void sendDispatchEnvio(detail.id, resubmit)}
+                        >
+                          {resubmit ? t("production.envioResend") : t("production.envioRefresh")}
+                        </button>
+                      ) : null}
+                    </>
+                  );
+                })()}
                 {canWrite && detail.status === "HOLD" ? (
                   <button
                     type="button"

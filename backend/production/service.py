@@ -35,6 +35,7 @@ from inventory import production_stock
 from production.confirmations import confirmation_summary
 from production.dxf import dxf_files
 from production.dispatch_notes import issue_dispatch_note
+from projects import sii_envio
 from projects.service import project_row
 
 
@@ -1004,15 +1005,18 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     )
     if dispatch_note:
         dte = rows(
-            "SELECT dte_type, folio, issued_at FROM public.project_dtes "
-            "WHERE org_id=%s AND dispatch_note_id=%s",
+            "SELECT d.id, d.dte_type, d.folio, d.issued_at "
+            "FROM public.project_dtes d "
+            "WHERE d.org_id=%s AND d.dispatch_note_id=%s",
             [str(org_id), str(dispatch_note[0]["id"])],
         )
+        envios = sii_envio.envios_by_dispatch_note(org_id=org_id)
         output["dispatch_note_dte"] = (
             {
                 "dte_type": int(dte[0]["dte_type"]),
                 "folio": int(dte[0]["folio"]),
                 "issued_at": dte[0]["issued_at"],
+                "envio": envios.get(str(dispatch_note[0]["id"])),
             }
             if dte
             else None

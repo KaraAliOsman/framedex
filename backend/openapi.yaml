@@ -7886,6 +7886,156 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/orders/{order_id}/dispatch-note-envio/:
+    get:
+      operationId: production_order_dispatch_note_dte_envio
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiiEnvioAccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: production_order_dispatch_note_dte_envio_send
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiiEnvioSendRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SiiEnvioSendRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SiiEnvioSendRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiiEnvio'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/orders/{order_id}/dxf-export/:
     post:
       operationId: production_order_dxf_export
@@ -9591,6 +9741,162 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectCreditNoteAccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/credit-notes/{credit_note_id}/dte-envio/:
+    get:
+      operationId: project_credit_note_dte_envio_access
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: credit_note_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiiEnvioAccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: project_credit_note_dte_envio_send
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: credit_note_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiiEnvioSendRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiiEnvio'
           description: ''
         '400':
           content:
@@ -15185,6 +15491,9 @@ components:
           format: date-time
         signed_url:
           type: string
+        tributario_signed_url:
+          type: string
+          nullable: true
         expires_in:
           type: integer
       required:
@@ -15193,6 +15502,7 @@ components:
       - id
       - note_code
       - signed_url
+      - tributario_signed_url
       - work_order_id
     DispatchNoteDte:
       type: object
@@ -15232,6 +15542,9 @@ components:
           type: string
         signed_url:
           type: string
+        tributario_signed_url:
+          type: string
+          nullable: true
         expires_in:
           type: integer
       required:
@@ -15242,6 +15555,7 @@ components:
       - id
       - issued_at
       - signed_url
+      - tributario_signed_url
     DispatchNoteDteEmitRequest:
       type: object
       properties:
@@ -19763,6 +20077,9 @@ components:
           type: string
         signed_url:
           type: string
+        tributario_signed_url:
+          type: string
+          nullable: true
         expires_in:
           type: integer
       required:
@@ -19774,6 +20091,7 @@ components:
       - invoice_id
       - project_id
       - signed_url
+      - tributario_signed_url
     ProjectCreditNoteEmitRequest:
       type: object
       properties:
@@ -19825,6 +20143,9 @@ components:
           nullable: true
         signed_url:
           type: string
+        tributario_signed_url:
+          type: string
+          nullable: true
         expires_in:
           type: integer
       required:
@@ -19835,6 +20156,7 @@ components:
       - invoice_id
       - issued_at
       - signed_url
+      - tributario_signed_url
     ProjectDteEnvio:
       type: object
       properties:
@@ -19910,6 +20232,9 @@ components:
           type: string
         signed_url:
           type: string
+        tributario_signed_url:
+          type: string
+          nullable: true
         expires_in:
           type: integer
       required:
@@ -19921,6 +20246,7 @@ components:
       - project_id
       - revision_code
       - signed_url
+      - tributario_signed_url
     ProjectListResponse:
       type: object
       properties:

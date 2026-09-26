@@ -8789,6 +8789,171 @@ export const productionOrderDispatchNoteDteEmit = async (
   );
 };
 
+export type productionOrderDispatchNoteDteEnvioResponse200 = {
+  data: SiiEnvioAccess;
+  status: 200;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponseSuccess =
+  productionOrderDispatchNoteDteEnvioResponse200 & {
+    headers: Headers;
+  };
+export type productionOrderDispatchNoteDteEnvioResponseError = (
+  | productionOrderDispatchNoteDteEnvioResponse400
+  | productionOrderDispatchNoteDteEnvioResponse401
+  | productionOrderDispatchNoteDteEnvioResponse403
+  | productionOrderDispatchNoteDteEnvioResponse404
+  | productionOrderDispatchNoteDteEnvioResponse409
+  | productionOrderDispatchNoteDteEnvioResponse422
+  | productionOrderDispatchNoteDteEnvioResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDispatchNoteDteEnvioResponse =
+  | productionOrderDispatchNoteDteEnvioResponseSuccess
+  | productionOrderDispatchNoteDteEnvioResponseError;
+
+export const getProductionOrderDispatchNoteDteEnvioUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dispatch-note-envio/`;
+};
+
+export const productionOrderDispatchNoteDteEnvio = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDispatchNoteDteEnvioResponse> => {
+  return apiMutator<productionOrderDispatchNoteDteEnvioResponse>(
+    getProductionOrderDispatchNoteDteEnvioUrl(orderId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse201 = {
+  data: SiiEnvio;
+  status: 201;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponseSuccess =
+  productionOrderDispatchNoteDteEnvioSendResponse201 & {
+    headers: Headers;
+  };
+export type productionOrderDispatchNoteDteEnvioSendResponseError = (
+  | productionOrderDispatchNoteDteEnvioSendResponse400
+  | productionOrderDispatchNoteDteEnvioSendResponse401
+  | productionOrderDispatchNoteDteEnvioSendResponse403
+  | productionOrderDispatchNoteDteEnvioSendResponse404
+  | productionOrderDispatchNoteDteEnvioSendResponse409
+  | productionOrderDispatchNoteDteEnvioSendResponse422
+  | productionOrderDispatchNoteDteEnvioSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDispatchNoteDteEnvioSendResponse =
+  | productionOrderDispatchNoteDteEnvioSendResponseSuccess
+  | productionOrderDispatchNoteDteEnvioSendResponseError;
+
+export const getProductionOrderDispatchNoteDteEnvioSendUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dispatch-note-envio/`;
+};
+
+export const productionOrderDispatchNoteDteEnvioSend = async (
+  orderId: string,
+  siiEnvioSendRequest?: SiiEnvioSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDispatchNoteDteEnvioSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderDispatchNoteDteEnvioSendResponse>(
+    getProductionOrderDispatchNoteDteEnvioSendUrl(orderId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(siiEnvioSendRequest),
+    },
+  );
+};
+
 export type productionOrderDxfExportResponse201 = {
   data: DxfExport;
   status: 201;
@@ -10617,6 +10782,171 @@ export const projectCreditNoteAccess = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+export type projectCreditNoteDteEnvioAccessResponse200 = {
+  data: SiiEnvioAccess;
+  status: 200;
+};
+
+export type projectCreditNoteDteEnvioAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCreditNoteDteEnvioAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCreditNoteDteEnvioAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCreditNoteDteEnvioAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCreditNoteDteEnvioAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCreditNoteDteEnvioAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCreditNoteDteEnvioAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCreditNoteDteEnvioAccessResponseSuccess =
+  projectCreditNoteDteEnvioAccessResponse200 & {
+    headers: Headers;
+  };
+export type projectCreditNoteDteEnvioAccessResponseError = (
+  | projectCreditNoteDteEnvioAccessResponse400
+  | projectCreditNoteDteEnvioAccessResponse401
+  | projectCreditNoteDteEnvioAccessResponse403
+  | projectCreditNoteDteEnvioAccessResponse404
+  | projectCreditNoteDteEnvioAccessResponse409
+  | projectCreditNoteDteEnvioAccessResponse422
+  | projectCreditNoteDteEnvioAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCreditNoteDteEnvioAccessResponse =
+  projectCreditNoteDteEnvioAccessResponseSuccess | projectCreditNoteDteEnvioAccessResponseError;
+
+export const getProjectCreditNoteDteEnvioAccessUrl = (projectId: string, creditNoteId: string) => {
+  return `/api/v1/projects/${projectId}/credit-notes/${creditNoteId}/dte-envio/`;
+};
+
+export const projectCreditNoteDteEnvioAccess = async (
+  projectId: string,
+  creditNoteId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCreditNoteDteEnvioAccessResponse> => {
+  return apiMutator<projectCreditNoteDteEnvioAccessResponse>(
+    getProjectCreditNoteDteEnvioAccessUrl(projectId, creditNoteId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type projectCreditNoteDteEnvioSendResponse201 = {
+  data: SiiEnvio;
+  status: 201;
+};
+
+export type projectCreditNoteDteEnvioSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCreditNoteDteEnvioSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCreditNoteDteEnvioSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCreditNoteDteEnvioSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCreditNoteDteEnvioSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCreditNoteDteEnvioSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCreditNoteDteEnvioSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCreditNoteDteEnvioSendResponseSuccess =
+  projectCreditNoteDteEnvioSendResponse201 & {
+    headers: Headers;
+  };
+export type projectCreditNoteDteEnvioSendResponseError = (
+  | projectCreditNoteDteEnvioSendResponse400
+  | projectCreditNoteDteEnvioSendResponse401
+  | projectCreditNoteDteEnvioSendResponse403
+  | projectCreditNoteDteEnvioSendResponse404
+  | projectCreditNoteDteEnvioSendResponse409
+  | projectCreditNoteDteEnvioSendResponse422
+  | projectCreditNoteDteEnvioSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCreditNoteDteEnvioSendResponse =
+  projectCreditNoteDteEnvioSendResponseSuccess | projectCreditNoteDteEnvioSendResponseError;
+
+export const getProjectCreditNoteDteEnvioSendUrl = (projectId: string, creditNoteId: string) => {
+  return `/api/v1/projects/${projectId}/credit-notes/${creditNoteId}/dte-envio/`;
+};
+
+export const projectCreditNoteDteEnvioSend = async (
+  projectId: string,
+  creditNoteId: string,
+  siiEnvioSendRequest?: SiiEnvioSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCreditNoteDteEnvioSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectCreditNoteDteEnvioSendResponse>(
+    getProjectCreditNoteDteEnvioSendUrl(projectId, creditNoteId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(siiEnvioSendRequest),
     },
   );
 };

@@ -26,7 +26,12 @@ from production import service
 from production.trace import trace_piece, trace_version, trace_work_order
 from production.confirmations import confirmation_access, confirm_delivery
 from production.dispatch_notes import dispatch_note_access
-from projects import sii
+from projects import sii, sii_envio
+from projects.serializers import (
+    SiiEnvioAccessSerializer,
+    SiiEnvioSendSerializer,
+    SiiEnvioSerializer,
+)
 from production.serializers import (
     ProductionPrepSerializer,
     DeliveryConfirmRequestSerializer,
@@ -519,6 +524,41 @@ class ProductionOrderDispatchNoteDteView(APIView):
         with public_production_errors():
             with documentary_scope(request, _READERS) as (_, _, org_id):
                 output = sii.dispatch_note_dte_access(
+                    org_id=org_id, order_id=order_id
+                )
+        return Response(output)
+
+
+class ProductionOrderDispatchNoteEnvioView(APIView):
+    @extend_schema(
+        operation_id="production_order_dispatch_note_dte_envio_send",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=SiiEnvioSendSerializer,
+        responses={201: SiiEnvioSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(SiiEnvioSendSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = sii_envio.send_dispatch_note_envio(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    resubmit=bool(data.get("resubmit")),
+                )
+        return Response(output, status=201)
+
+    @extend_schema(
+        operation_id="production_order_dispatch_note_dte_envio",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: SiiEnvioAccessSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = sii_envio.dispatch_note_envio_access(
                     org_id=org_id, order_id=order_id
                 )
         return Response(output)

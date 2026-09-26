@@ -5,6 +5,8 @@ import {
   projectCreditNoteAccess,
   projectCreditNoteDteAccess,
   projectCreditNoteDteEmit,
+  projectCreditNoteDteEnvioAccess,
+  projectCreditNoteDteEnvioSend,
   projectCreditNoteEmit,
   projectInvoiceAccess,
   projectInvoiceDteAccess,
@@ -356,6 +358,55 @@ export function ProjectPaymentsPanel({
     }
   }
 
+  async function sendCreditEnvio(note: ProjectCreditNote, resubmit = false): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteDteEnvioSend(
+        projectId,
+        note.id,
+        { resubmit },
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.envioSendError")));
+      }
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openCreditEnvio(note: ProjectCreditNote): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.envioOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteDteEnvioAccess(projectId, note.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.envioOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
   async function annulInvoice(invoice: ProjectInvoice): Promise<void> {
     if (!(await confirm({ title: t("projects.creditNoteAnnulConfirm"), danger: true }))) return;
     const reason = await prompt({ title: t("projects.creditNoteReason") });
@@ -690,6 +741,19 @@ export function ProjectPaymentsPanel({
                           {`${t("projects.envioStatus")} · ${invoice.dte.envio.status}`}
                         </button>
                       )}
+                      {invoice.credit_note?.dte?.envio && (
+                        <button
+                          type="button"
+                          className="production-chip"
+                          title={`${t("projects.envioStatus")} · ${invoice.credit_note.dte.envio.track_id ?? ""}`}
+                          onClick={() => {
+                            if (invoice.credit_note) void openCreditEnvio(invoice.credit_note);
+                          }}
+                          disabled={busy}
+                        >
+                          {`${t("projects.envioStatus")} · ${invoice.credit_note.dte.envio.status}`}
+                        </button>
+                      )}
                     </td>
                     <td>
                       <button
@@ -743,6 +807,39 @@ export function ProjectPaymentsPanel({
                           disabled={busy}
                         >
                           {invoice.dte.envio.attempted === true && !invoice.dte.envio.track_id
+                            ? t("projects.envioResend")
+                            : t("projects.envioRefresh")}
+                        </button>
+                      )}
+                      {canSendEnvio &&
+                        invoice.credit_note?.dte &&
+                        !invoice.credit_note.dte.envio && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (invoice.credit_note) void sendCreditEnvio(invoice.credit_note);
+                            }}
+                            disabled={busy}
+                          >
+                            {t("projects.envioSend")}
+                          </button>
+                        )}
+                      {canSendEnvio && invoice.credit_note?.dte?.envio?.status === "PENDING" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (invoice.credit_note) {
+                              void sendCreditEnvio(
+                                invoice.credit_note,
+                                invoice.credit_note.dte?.envio?.attempted === true &&
+                                  !invoice.credit_note.dte.envio.track_id,
+                              );
+                            }
+                          }}
+                          disabled={busy}
+                        >
+                          {invoice.credit_note.dte.envio.attempted === true &&
+                          !invoice.credit_note.dte.envio.track_id
                             ? t("projects.envioResend")
                             : t("projects.envioRefresh")}
                         </button>

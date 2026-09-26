@@ -1033,12 +1033,12 @@ def render_pdf_document(
 
 _PAYMENT_KIND_ES = {"ANTICIPO": "Anticipo", "PARCIAL": "Abono parcial", "SALDO": "Saldo"}
 _PAYMENT_METHOD_ES = {
-    "TRANSFERENCIA": "Transferencia",
-    "EFECTIVO": "Efectivo",
-    "TARJETA": "Tarjeta",
-    "CHEQUE": "Cheque",
+    "TRANSFER": "Transferencia",
+    "CASH": "Efectivo",
+    "CARD": "Tarjeta",
+    "CHECK": "Cheque",
     "FLOW": "Flow",
-    "OTRO": "Otro",
+    "OTHER": "Otro",
 }
 
 

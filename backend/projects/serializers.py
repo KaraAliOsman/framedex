@@ -225,6 +225,7 @@ class ProjectDteSerializer(serializers.Serializer):
 
 class ProjectDteAccessSerializer(ProjectDteSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
@@ -240,6 +241,7 @@ class ProjectCreditNoteSerializer(serializers.Serializer):
 
 class ProjectCreditNoteAccessSerializer(ProjectCreditNoteSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
@@ -259,6 +261,7 @@ class ProjectInvoiceSerializer(serializers.Serializer):
 
 class ProjectInvoiceAccessSerializer(ProjectInvoiceSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 

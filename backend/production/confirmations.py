@@ -45,6 +45,29 @@ def _sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
+def _pod_currency(org_id: UUID, project_id, deal: dict | None) -> str:
+    """Currency printed on the POD — the same sources the payment deal
+    resolves (sealed snapshot → org) so a replayed cobro still renders the
+    money in the project's own currency rather than a non-CLP dash."""
+    if deal is not None:
+        return deal["currency"]
+    versions = rows(
+        "SELECT snapshot_json::text AS snapshot_json "
+        "FROM public.project_versions "
+        "WHERE org_id=%s AND project_id=%s ORDER BY emitted_at DESC,id DESC LIMIT 1",
+        [str(org_id), str(project_id)],
+    )
+    if versions:
+        snapshot = versions[0]["snapshot_json"]
+        if isinstance(snapshot, str):
+            snapshot = json.loads(snapshot)
+        sealed = snapshot.get("project") if isinstance(snapshot, dict) else None
+        if (sealed or {}).get("currency"):
+            return sealed["currency"]
+    org = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [str(org_id)])
+    return org[0]["currency"] if org else "CLP"
+
+
 def _confirmation_public(row) -> dict:
     return {
         "id": str(row["id"]),
@@ -199,12 +222,13 @@ def confirm_delivery(
             project = project_row(org_id, order["project_id"], lock=True)
             payment_id = None
             payment_payload = None
+            deal = None
             if payment_kwargs is not None:
                 # The cobro goes through the cobranza ledger primitive so the
                 # same deal, currency, project and replay rules apply — the
                 # pod:<delivery> key dedupes a retried confirm like every
                 # other payment.
-                payment_row, _ = resolve_or_insert_payment(
+                payment_row, deal = resolve_or_insert_payment(
                     org_id=org_id,
                     project_id=order["project_id"],
                     project=project,
@@ -251,6 +275,7 @@ def confirm_delivery(
                 else json.loads(order["payload_json"] or "{}")
             )
             units = _manifest_units(order_payload)
+            currency = _pod_currency(org_id, order["project_id"], deal)
             signature_hash = _sha256(signature_png)
             payload = {
                 "confirmation_code": confirmation_code,
@@ -271,6 +296,7 @@ def confirm_delivery(
                     "name": project["name"],
                     "client_name": project["client_name"],
                     "client_rut": project["client_rut"],
+                    "currency": currency,
                 },
                 "delivery": {
                     "id": delivery_id_s,

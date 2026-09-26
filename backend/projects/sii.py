@@ -653,6 +653,47 @@ def _dte_xml_credit_note(
     )
 
 
+def _seal_repr(
+    *,
+    storage,
+    org_id_s: str,
+    project_id_s: str,
+    dte_row_id: str,
+    dte_xml: bytes,
+    parent_storage_key: str,
+) -> None:
+    """Seal the "PDF tributario": fiscal cover composed from the stamped XML
+    plus the untouched sealed body. An emit that fails here must abort the
+    whole transaction — a stamped folio without its printable identity is a
+    broken artifact, not a best-effort extra."""
+    from projects import sii_repr  # heavy deps (weasyprint) load lazily
+
+    parent_pdf = storage.download(parent_storage_key)
+    content = sii_repr.compose_tributario_pdf(
+        dte_xml=dte_xml, parent_pdf=parent_pdf
+    )
+    content_hash = _sha256(content)
+    object_key = (
+        f"org_{org_id_s}/projects/{project_id_s}/dtes/"
+        f"repr-{dte_row_id}_{content_hash[:16]}.pdf"
+    )
+    storage.upload_immutable(object_key, content, "application/pdf")
+    try:
+        one(
+            "UPDATE public.project_dtes SET "
+            "repr_storage_object_key=%s, repr_file_sha256=%s "
+            "WHERE id=%s RETURNING id",
+            [object_key, content_hash, dte_row_id],
+            "sii_dte_missing",
+        )
+    except Exception:
+        try:
+            storage.delete_object(object_key)
+        except Exception:  # noqa: BLE001 — cleanup must not mask the real failure
+            pass
+        raise
+
+
 def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -> dict:
     """Timbra a sealed factura: allocate the next folio from the org's CAF
     pool and store the signed DTE XML as immutable evidence. UNIQUE
@@ -778,6 +819,14 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
                         issued_at,
                     ],
                 )
+                _seal_repr(
+                    storage=storage,
+                    org_id_s=org_id_s,
+                    project_id_s=project_id_s,
+                    dte_row_id=str(row["id"]),
+                    dte_xml=content,
+                    parent_storage_key=str(invoice["storage_object_key"]),
+                )
             except Exception:
                 try:
                     storage.delete_object(object_key)
@@ -808,9 +857,18 @@ def dte_access(*, org_id: UUID, project_id: UUID, invoice_id: UUID) -> dict:
         signed_url = SupabaseDocumentStorage().signed_url(
             str(found["storage_object_key"]), expires_in=SIGNED_URL_TTL_SECONDS
         )
+        tributario_url = (
+            SupabaseDocumentStorage().signed_url(
+                str(found.get("repr_storage_object_key")),
+                expires_in=SIGNED_URL_TTL_SECONDS,
+            )
+            if found.get("repr_storage_object_key")
+            else None
+        )
     return {
         **_dte_public(found),
         "signed_url": signed_url,
+        "tributario_signed_url": tributario_url,
         "expires_in": SIGNED_URL_TTL_SECONDS,
     }
 
@@ -1028,6 +1086,14 @@ def emit_credit_note_dte(
                         issued_at,
                     ],
                 )
+                _seal_repr(
+                    storage=storage,
+                    org_id_s=org_id_s,
+                    project_id_s=project_id_s,
+                    dte_row_id=str(row["id"]),
+                    dte_xml=content,
+                    parent_storage_key=str(credit_note["storage_object_key"]),
+                )
             except Exception:
                 try:
                     storage.delete_object(object_key)
@@ -1064,9 +1130,18 @@ def credit_note_dte_access(*, org_id: UUID, project_id: UUID, invoice_id: UUID) 
         signed_url = SupabaseDocumentStorage().signed_url(
             str(found["storage_object_key"]), expires_in=SIGNED_URL_TTL_SECONDS
         )
+        tributario_url = (
+            SupabaseDocumentStorage().signed_url(
+                str(found.get("repr_storage_object_key")),
+                expires_in=SIGNED_URL_TTL_SECONDS,
+            )
+            if found.get("repr_storage_object_key")
+            else None
+        )
     return {
         **_dte_public(found),
         "signed_url": signed_url,
+        "tributario_signed_url": tributario_url,
         "expires_in": SIGNED_URL_TTL_SECONDS,
     }
 
@@ -1127,10 +1202,12 @@ def _receptor_guia_interno(project: dict, caf: dict) -> tuple[str, str, str]:
 
 
 def _dte_xml_dispatch_note(
-    *, folio: int, note: dict, caf: dict, issued_at, ind_traslado: int
+    *, folio: int, note: dict, caf: dict, issued_at, ind_traslado: int,
+    deal: dict | None = None,
 ) -> str:
-    """DTE-52: an amount-less traslado whose <Referencia> points back at
-    the work order it ships."""
+    """DTE-52: a traslado whose <Referencia> points back at the work order
+    it ships — amount-less only for traslado interno; a venta guía stamps
+    the sealed deal's totals."""
     payload = (
         note["payload_json"]
         if isinstance(note["payload_json"], dict)
@@ -1161,7 +1238,7 @@ def _dte_xml_dispatch_note(
         receptor=receptor,
         receptor_name=receptor_name,
         receptor_extra=receptor_extra,
-        deal=None,
+        deal=deal,
         item=item,
         caf=caf,
         issued_at=issued_at,
@@ -1236,6 +1313,27 @@ def emit_dispatch_note_dte(
                     "sii_caf_exhausted",
                     "No hay folios CAF tipo 52 disponibles — cargue un CAF en Configuración.",
                 )
+            deal = None
+            if ind_traslado != IND_TRASLADO_INTERNO:
+                # IndTraslado=1 declares a sale — stamp the sealed revision's
+                # totals, never a $0 guía the SII would see as a falsified
+                # venta. Traslado interno (5) legitimately carries no deal.
+                from projects import invoices  # lazy: invoices → sii_envio → sii
+
+                sealed = invoices._sealed_deal(org_id, order["project_id"])
+                if sealed is None:
+                    raise contract_error(
+                        422,
+                        "guia_venta_requires_sealed_deal",
+                        "La guía de venta requiere una revisión emitida con "
+                        "totales — use traslado interno o emita la revisión.",
+                    )
+                deal = {
+                    "total_net": sealed["net"],
+                    "total_tax": sealed["tax"],
+                    "total_gross": sealed["gross"],
+                    "currency": sealed["currency"],
+                }
             issued_at = timezone.now()
             content = _encode_dte(
                 _dte_xml_dispatch_note(
@@ -1244,6 +1342,7 @@ def emit_dispatch_note_dte(
                     caf=caf,
                     issued_at=issued_at,
                     ind_traslado=ind_traslado,
+                    deal=deal,
                 )
             )
             moved = rows(
@@ -1307,6 +1406,14 @@ def emit_dispatch_note_dte(
                         issued_at,
                     ],
                 )
+                _seal_repr(
+                    storage=storage,
+                    org_id_s=org_id_s,
+                    project_id_s=str(order["project_id"]),
+                    dte_row_id=str(row["id"]),
+                    dte_xml=content,
+                    parent_storage_key=str(note["storage_object_key"]),
+                )
             except Exception:
                 try:
                     storage.delete_object(object_key)
@@ -1339,8 +1446,17 @@ def dispatch_note_dte_access(*, org_id: UUID, order_id: UUID) -> dict:
         signed_url = SupabaseDocumentStorage().signed_url(
             str(found["storage_object_key"]), expires_in=SIGNED_URL_TTL_SECONDS
         )
+        tributario_url = (
+            SupabaseDocumentStorage().signed_url(
+                str(found.get("repr_storage_object_key")),
+                expires_in=SIGNED_URL_TTL_SECONDS,
+            )
+            if found.get("repr_storage_object_key")
+            else None
+        )
     return {
         **_dte_public(found),
         "signed_url": signed_url,
+        "tributario_signed_url": tributario_url,
         "expires_in": SIGNED_URL_TTL_SECONDS,
     }

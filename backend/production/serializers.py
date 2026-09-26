@@ -153,6 +153,7 @@ class DispatchNoteSerializer(serializers.Serializer):
 
 class DispatchNoteAccessSerializer(DispatchNoteSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
@@ -171,6 +172,7 @@ class DispatchNoteDteSerializer(serializers.Serializer):
 
 class DispatchNoteDteAccessSerializer(DispatchNoteDteSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
