@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { documentaryArtifactAccess } from "../../api/generated/dekopen";
+import { InventorySection } from "./InventorySection";
 import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { DeniedState } from "../../ui";
@@ -571,6 +572,15 @@ function PurchasingWorkspace({
           </table>
         </section>
       )}
+      <InventorySection
+        request={request}
+        canWrite={role === "WORKSHOP_MANAGER" || role === "OWNER"}
+        stockItems={stock.map((item) => ({
+          item_id: item.item_id,
+          sku: item.sku,
+          name: item.name,
+        }))}
+      />
       {state?.version && (
         <section className="purchasing-documents">
           <h2>{t("purchasing.documents")}</h2>
