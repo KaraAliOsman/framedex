@@ -885,8 +885,8 @@ def _doc03(snapshot: dict[str, object]) -> str:
                 ["Pieza", "Rol / slot", "SKU taller", "Corte mm", "Ángulos", "Flecha mm", "Referencia X/Y"],
                 [[
                     labels["member"].get(member.get("member_id"), member.get("member_id")),
-                    f"{_value(_object(member.get('identity'), 'invalid_member_identity').get('role'))} / "
-                    f"{_value(_object(member.get('identity'), 'invalid_member_identity').get('physical_member_slot'))}",
+                    f"{_ROLE_ES.get(_value(_object(member.get('identity'), 'invalid_member_identity').get('role')), _value(_object(member.get('identity'), 'invalid_member_identity').get('role')))} / "
+                    f"{_SLOT_ES.get(_value(_object(member.get('identity'), 'invalid_member_identity').get('physical_member_slot')), _value(_object(member.get('identity'), 'invalid_member_identity').get('physical_member_slot')))}",
                     member.get("workshop_sku"), member.get("cut_length_mm"),
                     f"{_value(member.get('angle_left'))}° / {_value(member.get('angle_right'))}°",
                     member.get("sagitta_mm") if member.get("sagitta_mm") is not None else "—",
@@ -929,7 +929,10 @@ def _doc03(snapshot: dict[str, object]) -> str:
                   f"{_value(_object(item.get('point'), 'invalid_handle_point').get('x_mm'))} / "
                   f"{_value(_object(item.get('point'), 'invalid_handle_point').get('y_mm'))}",
                   item.get("requested_height_mm"),
-                  item.get("vertical_reference")] for item in handles],
+                  _SLOT_ES.get(
+                      _value(item.get("vertical_reference")),
+                      item.get("vertical_reference"),
+                  )] for item in handles],
                 ["hash", "", "hash", "dimension", "dimension", ""]
             )
         if fact.get("position_index") not in annotated_positions:
@@ -1186,7 +1189,8 @@ def _doc04(snapshot: dict[str, object]) -> str:
         f"<strong>Proveedor:</strong> {escape(_value(order.get('supplier_name')))}</p>"
         + _table(
             ["Requisito", "Categoría", "SKU taller", "SKU compra", "Cantidad", "Unidad"],
-            [[line.get("requirement_key"), line.get("category"),
+            [[_short_id(line.get("requirement_key")),
+              _CATEGORY_ES.get(_value(line.get("category")), line.get("category")),
               ", ".join(_value(item) for item in _array(line.get("technical_skus"), "invalid_order_line")),
               line.get("purchasing_sku"), line.get("quantity"), line.get("unit")]
              for line in lines], ["hash", "", "", "", "dimension", ""],
@@ -1450,6 +1454,29 @@ _TYPOLOGY_ES = {
 _COLOR_ES = {
     "WHITE": "Blanco",
     "FOILED": "Foliado",
+}
+
+_CATEGORY_ES = {
+    "PROFILE": "Perfil", "REINFORCEMENT": "Refuerzo", "GLASS": "Vidrio",
+    "HARDWARE_KIT": "Kit herraje", "PANEL": "Panel",
+    "ACCESSORY": "Accesorio", "FITTING": "Fijación",
+}
+
+_ROLE_ES = {
+    "FRAME": "Marco", "SASH": "Hoja", "MULLION_V": "Montante",
+    "MULLION_H": "Travesaño", "INVERSOR": "Inversor",
+    "GLAZING_BEAD": "Juntaquillo", "COUPLER": "Cople",
+    "ADDITIONAL": "Adicional", "THRESHOLD": "Umbral", "CHANNEL": "Canal",
+}
+
+_SLOT_ES = {
+    "OUTER_TOP": "Lado superior marco",
+    "OUTER_BOTTOM": "Lado inferior marco",
+    "LEAF_TOP": "Lado superior hoja",
+    "LEAF_BOTTOM": "Lado inferior hoja",
+    "CENTER": "Centro",
+    "left": "Izquierda", "right": "Derecha",
+    "top": "Superior", "bottom": "Inferior",
 }
 
 
