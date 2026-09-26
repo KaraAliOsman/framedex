@@ -753,6 +753,10 @@ def parse_dxf(content: bytes) -> SectionImportResult:
 
     def flush() -> None:
         nonlocal vertices, closed, tag_index, open_count
+        if len(candidates) + open_count >= MAX_OUTLINES:
+            raise SectionImportError(
+                "section_too_complex", "The document exceeds the parsing budget."
+            )
         if entity in ("LWPOLYLINE", "POLYLINE") and len(vertices) > MAX_POINTS:
             raise SectionImportError(
                 "section_too_complex", "A polyline exceeds the point budget."
@@ -775,6 +779,7 @@ def parse_dxf(content: bytes) -> SectionImportResult:
         vertices = []
         closed = False
 
+    entity_count = 0
     for code, value in pairs:
         if code == "2" and value == "ENTITIES":
             in_entities = True
@@ -782,6 +787,12 @@ def parse_dxf(content: bytes) -> SectionImportResult:
         if not in_entities:
             continue
         if code == "0":
+            entity_count += 1
+            if entity_count > MAX_ELEMENTS:
+                raise SectionImportError(
+                    "section_too_complex",
+                    "The document exceeds the parsing budget.",
+                )
             if value == "VERTEX" and entity == "POLYLINE":
                 # VERTEX records feed the open POLYLINE — the parent flushes
                 # only at SEQEND or the next non-vertex entity.

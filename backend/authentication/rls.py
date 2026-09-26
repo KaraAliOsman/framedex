@@ -6,7 +6,34 @@ from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 import json
 
-from django.db import connection, transaction
+from django.db import DatabaseError, connection, transaction
+
+
+@contextmanager
+def catalog_backend() -> Iterator[None]:
+    """Catalog writes run under the dedicated backend role: member-facing
+    `authenticated` holds only column-wise grants over the writable fields, so
+    provenance, review stamps and section revisions are exclusively API-written
+    under this role. Org/user RLS policies and request.jwt.claims are
+    unchanged. No-op where roles do not exist (SQLite unit tests)."""
+    if connection.vendor != "postgresql":
+        yield
+        return
+    with connection.cursor() as cursor:
+        cursor.execute("SET LOCAL ROLE catalog_backend")
+    try:
+        yield
+    except DatabaseError:
+        raise
+    except BaseException:
+        if not connection.needs_rollback:
+            with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL ROLE authenticated")
+        raise
+    else:
+        if not connection.needs_rollback:
+            with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL ROLE authenticated")
 
 
 @contextmanager

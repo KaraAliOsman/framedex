@@ -514,14 +514,23 @@ export function catalogApi(orgId: string) {
       if (response.status !== 200) throw new Error("catalog_read_failed");
       return response.data.items;
     },
-    async review<R extends Resource>(resource: R, id: string): Promise<Row<R>> {
-      // Glazing rows have no provenance — never called for them by the UI.
+    async review<R extends Resource>(resource: R, row: Row<R>): Promise<Row<R>> {
+      // If-Match is required by the API: a review must approve the revision
+      // the reviewer actually read, not a later edit (409 on drift).
+      const headers = {
+        headers: {
+          ...options.headers,
+          "If-Match": `"${(row as { revision?: string }).revision ?? ""}"`,
+        },
+      };
       const response =
         resource === "systems"
-          ? await client.catalogSystemReview(id, options)
+          ? await client.catalogSystemReview(row.id, headers)
           : resource === "articles"
-            ? await client.catalogArticleReview(id, options)
-            : await client.catalogKitReview(id, options);
+            ? await client.catalogArticleReview(row.id, headers)
+            : resource === "glazing"
+              ? await client.catalogBeadReview(row.id, headers)
+              : await client.catalogKitReview(row.id, headers);
       if (response.status !== 200) throw new Error("catalog_review_failed");
       return response.data as Row<R>;
     },

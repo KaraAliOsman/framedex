@@ -3044,6 +3044,75 @@ export const catalogBeadDelete = async (
   });
 };
 
+export type catalogBeadReviewResponse200 = {
+  data: BeadResponse;
+  status: 200;
+};
+
+export type catalogBeadReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogBeadReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogBeadReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogBeadReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogBeadReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogBeadReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogBeadReviewResponseSuccess = catalogBeadReviewResponse200 & {
+  headers: Headers;
+};
+export type catalogBeadReviewResponseError = (
+  | catalogBeadReviewResponse400
+  | catalogBeadReviewResponse401
+  | catalogBeadReviewResponse403
+  | catalogBeadReviewResponse404
+  | catalogBeadReviewResponse409
+  | catalogBeadReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogBeadReviewResponse =
+  catalogBeadReviewResponseSuccess | catalogBeadReviewResponseError;
+
+export const getCatalogBeadReviewUrl = (rowId: string) => {
+  return `/api/v1/catalogs/glazing/${rowId}/review/`;
+};
+
+/**
+ * Mark the row technically reviewed; LEGACY_UNVERIFIED provenance becomes MANUAL.
+ */
+export const catalogBeadReview = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogBeadReviewResponse> => {
+  return apiMutator<catalogBeadReviewResponse>(getCatalogBeadReviewUrl(rowId), {
+    ...options,
+    method: "POST",
+  });
+};
+
 export type catalogKitListResponse200 = {
   data: KitList;
   status: 200;

@@ -215,6 +215,7 @@ class CatalogReviewView(APIView):
                     tenant.active_organization.organization_id,
                     row_id,
                     token.user_id,
+                    expected_revision=request.headers.get("If-Match"),
                 )
                 output = self.response_serializer(row).data
         except DatabaseError as error:
@@ -327,6 +328,7 @@ BeadCollectionView, BeadDetailView = _endpoint_classes(
     BeadResponseSerializer,
     BeadListSerializer,
 )
+BeadReviewView = _review_view("Bead", service.BEADS, BeadResponseSerializer)
 KitCollectionView, KitDetailView = _endpoint_classes(
     "Kit",
     service.KITS,

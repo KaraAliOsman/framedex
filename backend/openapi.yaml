@@ -2541,6 +2541,72 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/glazing/{row_id}/review/:
+    post:
+      operationId: catalog_bead_review
+      description: Mark the row technically reviewed; LEGACY_UNVERIFIED provenance
+        becomes MANUAL.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: row_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeadResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/hardware-kits/:
     get:
       operationId: catalog_kit_list
@@ -13254,7 +13320,28 @@ components:
       - items
     BeadResponse:
       type: object
+      description: |-
+        Read-only provenance/review state — written only by import jobs and
+        the technical-review endpoint, never by catalog CRUD.
       properties:
+        data_provenance:
+          allOf:
+          - $ref: '#/components/schemas/DataProvenanceEnum'
+          readOnly: true
+        technical_reviewed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        technical_reviewed_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        review_pending:
+          type: boolean
+          readOnly: true
+          default: false
         system_id:
           type: string
           format: uuid
@@ -13295,14 +13382,18 @@ components:
       - bead_article_id
       - bead_width_mm
       - cut_add_mm
+      - data_provenance
       - gasket_exterior_mm
       - gasket_interior_mm
       - glass_thickness_mm
       - id
       - is_active
       - read_only
+      - review_pending
       - revision
       - system_id
+      - technical_reviewed_at
+      - technical_reviewed_by
     BeadWriteRequest:
       type: object
       properties:

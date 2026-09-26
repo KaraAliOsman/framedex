@@ -36,6 +36,11 @@ CREATE POLICY ai_audit_logs_insert ON public.ai_audit_logs
 REVOKE INSERT ON public.ai_audit_logs FROM authenticated;
 GRANT INSERT, SELECT ON public.ai_audit_logs TO ai_backend;
 GRANT EXECUTE ON FUNCTION private.documentary_role(UUID, TEXT[]) TO ai_backend;
+-- The select policy is TO public, so every backend role that reads
+-- ai_audit_logs (billing settles wallet debits against it, pricing resolves
+-- operations) must be able to evaluate documentary_role inside it.
+GRANT EXECUTE ON FUNCTION private.documentary_role(UUID, TEXT[])
+    TO billing_backend, pricing_backend, portal_backend;
 
 -- ai_jobs: members keep reading their own job rows; only the backend role
 -- may write them (the API's own upserts run under SET LOCAL ROLE ai_backend).

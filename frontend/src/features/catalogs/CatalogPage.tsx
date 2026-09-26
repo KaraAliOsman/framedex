@@ -167,11 +167,11 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   }
 
   const [reviewing, setReviewing] = useState<string | null>(null);
-  async function reviewRow<R extends Resource>(kind: R, id: string) {
-    setReviewing(id);
+  async function reviewRow<R extends Resource>(kind: R, row: Row<R>) {
+    setReviewing(row.id);
     setNotice("");
     try {
-      accept(kind, await api.review(kind, id));
+      accept(kind, await api.review(kind, row));
       setNotice(ct("reviewed"));
     } catch (caught) {
       setNotice(failure(caught));
@@ -451,7 +451,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                                   type="button"
                                   aria-label={`${ct("markReviewed")} ${itemName(resource, row, data)}`}
                                   disabled={editor !== null || reviewing !== null}
-                                  onClick={() => void reviewRow(resource, row.id)}
+                                  onClick={() => void reviewRow(resource, row)}
                                 >
                                   {reviewing === row.id ? ct("reviewing") : ct("markReviewed")}
                                   <span className="catalog-sr-only">

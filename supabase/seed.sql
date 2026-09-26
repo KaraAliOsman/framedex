@@ -380,16 +380,19 @@ WHERE kit.system_id = system.id AND system.code = 'DEMO_60' AND system.is_global
 
 INSERT INTO public.profile_articles (
     id, system_id, org_id, sku, name, role, material,
-    face_width_mm, welding_loss_mm, reinforcement_gap_mm, reinforcement_sku
+    face_width_mm, commercial_length_mm, welding_loss_mm, reinforcement_gap_mm,
+    reinforcement_sku
 )
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/UMBRAL-ALU'),
     system.id, NULL, 'UMBRAL-ALU', 'Umbral Aluminio Demo 60', 'THRESHOLD', 'ALUMINIUM',
-    30.00, 0.00, 0.00, NULL
+    30.00, 6000.00, 0.00, 0.00, NULL
 FROM public.profile_systems AS system
 WHERE system.code = 'DEMO_60' AND system.is_global = TRUE
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name, role = EXCLUDED.role, material = EXCLUDED.material,
-    face_width_mm = EXCLUDED.face_width_mm, welding_loss_mm = EXCLUDED.welding_loss_mm,
+    face_width_mm = EXCLUDED.face_width_mm,
+    commercial_length_mm = EXCLUDED.commercial_length_mm,
+    welding_loss_mm = EXCLUDED.welding_loss_mm,
     reinforcement_gap_mm = EXCLUDED.reinforcement_gap_mm,
     reinforcement_sku = EXCLUDED.reinforcement_sku;
 

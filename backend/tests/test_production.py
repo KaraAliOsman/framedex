@@ -342,9 +342,14 @@ def test_release_rejects_not_allowed_version() -> None:
 
 
 def test_release_creates_work_order_with_steps() -> None:
-    # Legacy version (no frozen process_facts) → honest generic ladder.
     snapshot = {
-        "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
+        "positions": [
+            {
+                "id": _POSITION_ID,
+                "system_id": str(uuid4()),
+                "process_facts": _SNAPSHOT["positions"][0]["process_facts"],
+            }
+        ],
         "bom": _SNAPSHOT["bom"],
     }
     version = _version_row(snapshot)
@@ -388,7 +393,9 @@ def test_release_creates_work_order_with_steps() -> None:
         )
     assert output["released"] == 1 and output["created"] == 1
     step_inserts = [q for q in inserted_rows if "production_steps" in q]
-    assert len(step_inserts) == 5  # CUT ASSEMBLE GLAZE QC PACK
+    # The sealed PVC_WELDED profile routes: CUT WELD CLEAN SASH_ASSEMBLE
+    # HARDWARE GLAZE QC PACK (MACHINING has no work in this BOM).
+    assert len(step_inserts) == 8
     event_inserts = [q for q in inserted_rows if "production_step_events" in q]
     assert len(event_inserts) == 1
 
@@ -528,16 +535,16 @@ def test_release_freezes_process_authority_into_the_payload() -> None:
     assert authority["operation_station_map"]["END_MACHINING"] == "MACHINING"
 
 
-def test_release_without_frozen_facts_uses_legacy_fallback() -> None:
-    """Versions sealed before the authority model have no process_facts —
-    their facts are never reinterpreted through a later catalog revision."""
+def test_release_without_process_authority_is_refused() -> None:
+    """Versions sealed without a bound process profile carry
+    resolved_via='generic_fallback' — release must refuse rather than ship
+    an invented routing (review CAT-04). The remedy is re-sealing the
+    position under a catalog with real process authority."""
     snapshot = {
         "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
         "bom": [dict(_SNAPSHOT["bom"][0])],
     }
     version = _version_row(snapshot)
-    order_id = uuid4()
-    payloads: list[dict[str, object]] = []
 
     def fake_one(query, params=(), code=None):
         if "project_versions" in query:
@@ -545,52 +552,22 @@ def test_release_without_frozen_facts_uses_legacy_fallback() -> None:
         raise AssertionError(query)
 
     def fake_rows(query, params=()):
-        if "FROM public.manufacturing_process_profiles" in query:
-            return [
-                {
-                    "id": "22222222-2222-3333-4444-555555555555",
-                    "code": "GENERIC_LEGACY",
-                    "version": 1,
-                    "joining_method": "NONE",
-                    "stations": [
-                        {"code": "CUT", "when": "auto"},
-                        {"code": "ASSEMBLE", "when": "auto"},
-                        {"code": "GLAZE", "when": "auto"},
-                        {"code": "QC", "when": "required"},
-                        {"code": "PACK", "when": "required"},
-                    ],
-                    "operation_station_map": {"SAW_CUT": "CUT"},
-                }
-            ]
-        if "INSERT INTO public.orders" in query:
-            return [{"id": order_id}]
-        if "FROM public.orders" in query and "GROUP BY" in query:
-            return [{"id": order_id, "order_code": "OT", "order_type": "WORKSHOP_OT",
-                     "status": "RELEASED", "payload_json": {},
-                     "project_version_id": version["id"], "created_at": "x",
-                     "steps_total": 0, "steps_done": 0}]
+        if "revision_code" in query:
+            return [{"code": version["revision_code"]}]
         return []
-
-    original = service._work_order_payload
-
-    def capture(*args, **kwargs):
-        payload = original(*args, **kwargs)
-        payloads.append(payload)
-        return payload
 
     with patch("production.service.one", side_effect=fake_one), patch(
         "production.service.rows", side_effect=fake_rows
-    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
-        "production.service.documentary_backend", side_effect=_atomic
     ), patch(
-        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
-    ), patch("production.service._work_order_payload", side_effect=capture):
-        service.release_production(
-            org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
-        )
-    authority = payloads[0]["process_authority"]
-    assert authority["code"] == "GENERIC_LEGACY"
-    assert authority["resolved_via"] == "generic_fallback"
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.release_production(
+                org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
+            )
+    assert error.value.code == "production_process_unresolved"
 
 
 def test_release_replay_returns_existing() -> None:
@@ -1269,6 +1246,7 @@ def test_release_seals_glass_polishing_from_snapshot_positions() -> None:
                 "id": _POSITION_ID,
                 "system_id": str(uuid4()),
                 "glass_polishing": polishing,
+                "process_facts": _SNAPSHOT["positions"][0]["process_facts"],
             }
         ],
         "bom": _SNAPSHOT["bom"],

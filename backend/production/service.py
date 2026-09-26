@@ -619,6 +619,19 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             for pos in snapshot.get("positions") or []
             if pos.get("id")
         }
+        # Declared process authority is a release gate, not advisory: a
+        # position resolved to GENERIC_LEGACY means no bound/material process
+        # profile exists — the routing would be invented. Re-seal on a
+        # catalog with real process authority instead of shipping it.
+        unresolved = sorted(
+            str(pos.get("code") or pos.get("position_index") or pid)
+            for pos in (snapshot.get("positions") or [])
+            for pid in (str(pos.get("id")),)
+            if not isinstance(pos.get("process_facts"), dict)
+            or pos["process_facts"].get("resolved_via") == "generic_fallback"
+        )
+        if unresolved:
+            raise DocumentaryError("production_process_unresolved")
         generic_profile, _ = _load_profile_for(org_id, code="GENERIC_LEGACY")
         polishing_by_position = {
             str(pos.get("id")): pos.get("glass_polishing") or []

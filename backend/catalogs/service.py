@@ -9,6 +9,7 @@ from hashlib import sha256
 from django.db import connection
 
 from authentication.errors import contract_error
+from authentication.rls import catalog_backend
 from documents.repository import DocumentaryError
 from catalogs.serializers import (
     ArticleWriteSerializer,
@@ -58,7 +59,7 @@ ARTICLES = Resource(
         "section_revised_by",
     ),
 )
-BEADS = Resource("glazing_bead_matrix", BeadWriteSerializer)
+BEADS = Resource("glazing_bead_matrix", BeadWriteSerializer, _PROVENANCE_COLUMNS)
 KITS = Resource("hardware_kits", KitWriteSerializer, _PROVENANCE_COLUMNS)
 
 
@@ -263,9 +264,14 @@ _JSONB_FIELDS = {"contents", "section"}
 
 def _json_value(value):
     """Serialize with Decimals as numeric literals so the stored JSONB keeps
-    exact numbers for the repository's parse_float=Decimal decode."""
+    exact numbers for the repository's parse_float=Decimal decode. Dict keys
+    are sorted so a stored jsonb row (key order by length,bytewise) compares
+    equal to a freshly validated payload (serializer field order)."""
     if isinstance(value, dict):
-        items = (json.dumps(str(key)) + ":" + _json_value(item) for key, item in value.items())
+        items = (
+            json.dumps(str(key)) + ":" + _json_value(value[key])
+            for key in sorted(value, key=str)
+        )
         return "{" + ",".join(items) + "}"
     if isinstance(value, (list, tuple)):
         return "[" + ",".join(_json_value(item) for item in value) + "]"
@@ -287,6 +293,21 @@ def _parameters(values):
         else value
         for name, value in values.items()
     ]
+
+
+def _check_drawing_ref(org_id, section):
+    """DXF_REFERENCE provenance must name a stored section import owned by
+    this org — the org-scoped storage prefix is what a member can claim; an
+    arbitrary string or another tenant's path is not evidence."""
+    if not isinstance(section, dict) or section.get("source") != "DXF_REFERENCE":
+        return
+    ref = (section.get("drawing_ref") or "").strip()
+    if not ref.startswith(f"section-imports/{org_id}/"):
+        raise contract_error(
+            400,
+            "catalog_section_ref_invalid",
+            "catalogs.errors.section_ref_invalid",
+        )
 
 
 def _stamp_section(values, current, actor_id):
@@ -339,6 +360,7 @@ def create(resource, org_id, values, actor_id=None):
     if resource is SYSTEMS:
         _check_process_profile(org_id, values)
     if resource is ARTICLES and "section" in values:
+        _check_drawing_ref(org_id, values["section"])
         _stamp_section(values, None, actor_id)
     if resource is ARTICLES and values.get("role") in SINGLETON_ROLES:
         _lock_singleton_role(values["system_id"])
@@ -356,7 +378,7 @@ def create(resource, org_id, values, actor_id=None):
                 )
     columns = tuple(values)
     placeholders = ["%s::jsonb" if name in _JSONB_FIELDS else "%s" for name in columns]
-    with connection.cursor() as cursor:
+    with connection.cursor() as cursor, catalog_backend():
         cursor.execute(
             f"INSERT INTO public.{resource.table} "
             f"(org_id, {', '.join(columns)}) "
@@ -382,6 +404,7 @@ def update(resource, org_id, row_id, values, expected_revision=None, actor_id=No
         )
     values = validator.validated_data
     if resource is ARTICLES and "section" in values:
+        _check_drawing_ref(org_id, values["section"])
         _stamp_section(values, current, actor_id)
     if "system_id" in values and values["system_id"] != current["system_id"]:
         raise contract_error(
@@ -422,7 +445,7 @@ def update(resource, org_id, row_id, values, expected_revision=None, actor_id=No
                 "technical_reviewed_by = NULL",
                 "review_pending = review_pending OR technical_reviewed_at IS NOT NULL",
             ]
-        with connection.cursor() as cursor:
+        with connection.cursor() as cursor, catalog_backend():
             cursor.execute(
                 f"UPDATE public.{resource.table} SET {', '.join(assignments)} "
                 "WHERE id = %s AND org_id = %s",
@@ -435,14 +458,15 @@ def update(resource, org_id, row_id, values, expected_revision=None, actor_id=No
     return retrieve(resource, org_id, row_id)
 
 
-def review(resource, org_id, row_id, user_id):
+def review(resource, org_id, row_id, user_id, expected_revision=None):
     """Mark a catalog row technically reviewed. A LEGACY_UNVERIFIED row a
-    human has vouched for becomes MANUAL; other provenance stays truthful."""
-    if resource is BEADS:
-        raise _not_found()
+    human has vouched for becomes MANUAL; other provenance stays truthful.
+    If-Match is required: approving a revision that was edited under you is
+    not a review of what you read."""
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
-    with connection.cursor() as cursor:
+    require_revision(current, expected_revision)
+    with connection.cursor() as cursor, catalog_backend():
         cursor.execute(
             f"UPDATE public.{resource.table} SET "
             "technical_reviewed_at = now(), technical_reviewed_by = %s, "

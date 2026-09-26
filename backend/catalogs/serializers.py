@@ -8,7 +8,11 @@ from rest_framework import serializers
 from pricing.serializers import StrictSerializer
 from dekopen_engine.geometry import SUPPORTED_OPENING_TYPES
 from dekopen_engine.hardware import normalize_opening_type
-from dekopen_engine.models import BayOpeningType, HARDWARE_COMPONENT_CATEGORIES
+from dekopen_engine.models import (
+    BayOpeningType,
+    HARDWARE_COMPONENT_CATEGORIES,
+    polygon_self_intersects,
+)
 
 KIT_OPENING_TYPES = sorted(
     {
@@ -188,6 +192,10 @@ class ProfileSectionSerializer(StrictSerializer):
             area += x1 * y2 - x2 * y1
         if area == 0:
             raise serializers.ValidationError("A section polygon must enclose area.")
+        if polygon_self_intersects(points):
+            raise serializers.ValidationError(
+                "A section polygon cannot self-intersect."
+            )
         return value
 
     def validate(self, attrs):
@@ -360,7 +368,7 @@ class ArticleResponseSerializer(ProvenanceFieldsMixin, ArticleWriteSerializer):
     section_revised_by = serializers.UUIDField(read_only=True, allow_null=True)
 
 
-class BeadResponseSerializer(BeadWriteSerializer):
+class BeadResponseSerializer(ProvenanceFieldsMixin, BeadWriteSerializer):
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
     id = serializers.UUIDField()

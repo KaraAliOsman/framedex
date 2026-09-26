@@ -46,6 +46,11 @@ urlpatterns = [
         views.BeadDetailView.as_view(),
         name="catalog-bead-detail",
     ),
+    path(
+        "glazing/<uuid:row_id>/review/",
+        views.BeadReviewView.as_view(),
+        name="catalog-bead-review",
+    ),
     path("hardware-kits/", views.KitCollectionView.as_view(), name="catalog-kit-list"),
     path(
         "hardware-kits/<uuid:row_id>/",
