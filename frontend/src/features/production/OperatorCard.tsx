@@ -9,6 +9,7 @@ import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { opKindLabel, stockKindLabel } from "./labels";
 import type { ProductionOrderTrace, ProductionStep } from "../../api/generated/models";
+import { formatDate } from "../money";
 
 type Reservation = {
   kind?: string;
@@ -231,11 +232,7 @@ export function OperatorStepCard({
                             "0"
                           )}
                         </td>
-                        <td>
-                          {row.consumed_at
-                            ? new Date(row.consumed_at).toLocaleDateString("es-CL")
-                            : "—"}
-                        </td>
+                        <td>{row.consumed_at ? formatDate(row.consumed_at) : "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -350,7 +347,7 @@ export function OperatorStepCard({
                         <td>{piece.role ?? "—"}</td>
                         <td>
                           {piece.length_mm ?? "—"}
-                          {piece.sagitta_mm ? ` ↷${fmtMm(piece.sagitta_mm)}` : ""}
+                          {piece.sagitta_mm ? ` · f ${fmtMm(piece.sagitta_mm)}` : ""}
                         </td>
                         <td>
                           {piece.angle_left ?? "—"}° / {piece.angle_right ?? "—"}°

@@ -25,6 +25,7 @@ import type {
   SiiCertificate,
 } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
+import { formatDate } from "../features/money";
 import { t, type TranslationKey } from "../i18n/es-CL";
 import { MOD_K_HINT, MOD_KEY_HINT } from "../platform";
 import { useTheme } from "../theme/ThemeProvider";
@@ -393,7 +394,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
           </div>
           <div className="settings-row">
             <dt>{t("settings.siiCertValidUntil")}</dt>
-            <dd>{certificate.valid_to.slice(0, 10)}</dd>
+            <dd>{formatDate(certificate.valid_to)}</dd>
           </div>
           <div className="settings-row">
             <dt>{t("settings.siiCertResolution")}</dt>

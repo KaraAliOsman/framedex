@@ -17,6 +17,7 @@ import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import { DeniedState, useConfirm } from "../../ui";
 import "./projects.css";
+import { formatDate } from "../money";
 
 const clientFields = [
   ["name", "clients.name", "text", 255],
@@ -377,7 +378,7 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                         ).replace("{count}", String(clientProjects.length))}
                         {" · "}
                         <time dateTime={lastActivity(item, clientProjects)}>
-                          {new Date(lastActivity(item, clientProjects)).toLocaleDateString("es-CL")}
+                          {formatDate(lastActivity(item, clientProjects))}
                         </time>
                       </span>
                       {!item.is_active && (
@@ -479,7 +480,7 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                               {t(projectStatusKey[project.status] ?? "projects.draft")}
                             </span>
                             <time dateTime={project.updated_at}>
-                              {new Date(project.updated_at).toLocaleDateString("es-CL")}
+                              {formatDate(project.updated_at)}
                             </time>
                           </Link>
                         </li>

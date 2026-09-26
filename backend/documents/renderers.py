@@ -686,6 +686,15 @@ def _revision_header(
     sealed_at = _value(snapshot.get("sealed_at"))
     revision = _value(snapshot.get("revision"))
     project_code = _value(project.get("code"))
+    # The BOM hash is the machine identity — only workshop documents carry it;
+    # customer-facing documents keep it in metadata/QR instead of printing a
+    # meaningless hex chunk.
+    fingerprint = (
+        '<div class="tb-cell tb-wide"><span class="tb-label">Huella BOM</span>'
+        f'<span class="tb-value">{escape(bom_hash)}</span></div>'
+        if workshop
+        else ""
+    )
     titleblock = (
         '<div class="titleblock">'
         f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
@@ -696,11 +705,7 @@ def _revision_header(
         f'<span class="tb-value">{escape(revision)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
         f'<span class="tb-value">{escape(_cldate(sealed_at))}</span></div>'
-        f'<div class="tb-cell tb-wide"><span class="tb-label">'
-        f'{"Huella BOM" if workshop else "Huella"}</span>'
-        f'<span class="tb-value">'
-        f'{escape(bom_hash if workshop else (bom_hash[:16] if bom_hash != "—" else "—"))}'
-        "</span></div>"
+        f"{fingerprint}"
         '<div class="tb-cell"><span class="tb-label">Página</span>'
         '<span class="tb-value"><span class="pg"></span></span></div>'
         "</div>"

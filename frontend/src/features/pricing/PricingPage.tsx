@@ -887,7 +887,7 @@ function OperationDecision({
         {operation.requested_by
           ? operation.requested_by === currentUserId
             ? t("pricing.auditYou")
-            : operation.requested_by.slice(0, 8)
+            : t("pricing.auditOtherUser")
           : "—"}
         {operation.approved_at &&
           ` · ${t("pricing.auditDecided")} ${formatDateTime(operation.approved_at)}`}

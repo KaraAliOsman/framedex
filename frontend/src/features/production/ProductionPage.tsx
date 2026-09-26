@@ -48,6 +48,7 @@ import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { formatDateTime } from "../../format";
 import { DeniedState } from "../../ui";
 import { fmtMm } from "../../format";
+import { formatDate } from "../money";
 import { t } from "../../i18n/es-CL";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { cutRoleLabel } from "./labels";
@@ -919,7 +920,8 @@ export function ProductionPage(): JSX.Element {
                 </span>
                 {detail.quantity ? (
                   <span className="production-order-progress">
-                    {detail.quantity} {t("production.units")}
+                    {detail.quantity}{" "}
+                    {t(detail.quantity === 1 ? "production.unitsOne" : "production.units")}
                   </span>
                 ) : null}
                 {detail.shortage > 0 ? (
@@ -1366,9 +1368,7 @@ export function ProductionPage(): JSX.Element {
                                           )}
                                         </td>
                                         <td>
-                                          {row.consumed_at
-                                            ? new Date(row.consumed_at).toLocaleDateString("es-CL")
-                                            : "—"}
+                                          {row.consumed_at ? formatDate(row.consumed_at) : "—"}
                                         </td>
                                       </tr>
                                     ))}

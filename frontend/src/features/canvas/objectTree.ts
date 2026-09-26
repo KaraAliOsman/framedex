@@ -204,7 +204,9 @@ export function buildObjectTree(
   return {
     id: "root",
     label: t("tree.product"),
-    detail: `${totalW} × ${height} mm · ${modules.length} ${t("tree.units")}`,
+    detail:
+      `${totalW} × ${height} mm · ${modules.length} ` +
+      t(modules.length === 1 ? "tree.unitsOne" : "tree.units"),
     kind: "root",
     severity: null,
     selectId: null,

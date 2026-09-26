@@ -10,6 +10,7 @@ import { t, TranslationKey } from "../../i18n/es-CL";
 import { formatRevision } from "../../format";
 import { PositionThumb } from "../projects/PositionThumb";
 import "./portal.css";
+import { formatDate } from "../money";
 
 function money(raw: string, currency: string): string {
   const value = Number(raw);
@@ -49,7 +50,7 @@ const typologyKeys: Record<string, TranslationKey> = {
 
 function typologyLabel(raw: string | null | undefined): string {
   const key = raw ? typologyKeys[raw] : undefined;
-  return key ? t(key) : raw ?? "";
+  return key ? t(key) : (raw ?? "");
 }
 
 /** Identical openings collapse into one proposal card — a 15-unit block of
@@ -272,9 +273,7 @@ export function PortalQuotePage(): JSX.Element {
             <p className="portal-proposal__ref">
               {quote.project_name ? `${quote.project_name} · ` : ""}
               {quote.project_code} · {formatRevision(quote.revision_code)} ·{" "}
-              <time dateTime={quote.emitted_at}>
-                {new Date(quote.emitted_at).toLocaleDateString("es-CL")}
-              </time>
+              <time dateTime={quote.emitted_at}>{formatDate(quote.emitted_at)}</time>
             </p>
           </div>
         </header>
@@ -289,9 +288,7 @@ export function PortalQuotePage(): JSX.Element {
               <dt>{t("portal.validUntil")}</dt>
               <dd>
                 <time dateTime={quote.valid_until ?? ""}>
-                  {quote.valid_until
-                    ? new Date(quote.valid_until).toLocaleDateString("es-CL")
-                    : "—"}
+                  {quote.valid_until ? formatDate(quote.valid_until) : "—"}
                 </time>
               </dd>
             </div>
