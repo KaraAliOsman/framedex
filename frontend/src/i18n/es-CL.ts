@@ -2403,6 +2403,8 @@ export const messages = {
   "benchmark.view2d": "Alzado",
   "benchmark.commercial": "Comercial",
   "benchmark.view3d": "3D interactivo",
+  "benchmark.orbit": "Orbitar",
+  "benchmark.freeze": "Congelar vista",
   "benchmark.fixture.fixed": "Fijo",
   "benchmark.fixture.tiltTurn": "Oscilobatiente",
   "benchmark.fixture.twoSash": "Dos hojas",

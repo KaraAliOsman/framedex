@@ -206,8 +206,10 @@ function SolidMesh({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [material, theme],
   );
+  // Selection glows in the accent hue — warning amber washed side faces
+  // brown and read as a material tint (visual QA pass on /benchmark).
   const emissive = useMemo(
-    () => (selected ? tokenColor("--theme-warning", "rgb(180,83,9)") : "rgb(0,0,0)"),
+    () => (selected ? tokenColor("--theme-accent", "rgb(15,129,122)") : "rgb(0,0,0)"),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selected, theme],
   );
@@ -246,7 +248,7 @@ function SolidMesh({
         roughness={material.roughness}
         metalness={material.metalness}
         emissive={emissive}
-        emissiveIntensity={selected ? 0.55 : 0}
+        emissiveIntensity={selected ? 0.38 : 0}
         // An empty array — never undefined: r3f applies this prop onto
         // material.clippingPlanes and three's WebGLClipping crashes on a
         // missing .length, leaving the whole canvas blank once Corte was

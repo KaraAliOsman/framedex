@@ -88,3 +88,11 @@ description: Local dev-stack recipe for DEKOPEN E2E testing — Supabase CLI sta
 - `queries` chips include the caller's own surface (prepended) — "Consultó panel" appears even with zero model queries.
 - Pricing a NEW demo project needs `DEMO-BAR-COPLE-*` rows in `cost_list_items` (27 SKUs) or preview 422s.
 - `parametric_tree` comes back as undecoded text from raw cursors — if a projection shows modules/couplings null, suspect the decode, not the data.
+
+## §05 renderer review
+
+- Verify declared-profile extrusion via the **Corte clip cut-face** — the stepped Z-profile cross-section is the cleanest discriminator vs a flat box; surface orbits don't distinguish it.
+- Starter cards are `button.starter-card` containing `.starter-card-title`.
+- Coupling angle/coupler commits on a dirty product raise the unsaved-changes navigation guard — commit via blur only and expect every navigation to prompt until Guardar.
+- `/benchmark` 3D captures are click-to-activate (studio still → "Orbitar"); they no longer keep ~10 live contexts, so prior `Context Lost` warnings are gone — a still means "not activated", not a failed render.
+- Selected members glow accent-teal in 3D (not amber) — a warm tint on unlit side faces while a module/bay is selected is the old highlight hue, not a material bug; verify selection state in the tree before reporting tint.

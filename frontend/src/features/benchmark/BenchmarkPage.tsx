@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { STARTER_DEFINITIONS, starterNominalSize, type StarterKey } from "../canvas/designLibrary";
@@ -13,45 +13,56 @@ import "./benchmark.css";
  * ProductModel through every render surface (technical elevation, studio
  * commercial render, interactive 3D) per finish family. A QA surface for
  * inspecting whether output looks like physically convincing fenestration,
- * not a user-facing page; material chips keep ~10 WebGL contexts alive. */
+ * not a user-facing page; the interactive 3D mounts on demand per card. */
 
 const NOOP = (): void => undefined;
 
-/** A fixture wall of ten canvases would hold ~10 WebGL contexts at once —
- * near the browser ceiling. The 3D capture mounts only while its card is
- * inside (or near) the viewport, so at most a few contexts stay alive. */
+/** A fixture wall of ten interactive canvases would hold ~10 WebGL
+ * contexts at once — near the browser ceiling, and mount/unmount churn
+ * was visibly hitting context-loss warnings. The 3D capture therefore
+ * rests as the shared-context studio still and only upgrades to the live
+ * orbit view when a reviewer actually clicks to orbit it. */
 function LazyThree({
   product,
   members,
+  label,
 }: {
   product: ProductJson;
   members: MemberGeometry;
+  label: string;
 }): JSX.Element {
-  const body = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const node = body.current;
-    if (node === null) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) setVisible(entry.isIntersecting);
-      },
-      { rootMargin: "120px" },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+  const [active, setActive] = useState(false);
   return (
-    <div ref={body} className="benchmark-capture__body benchmark-capture__body--three">
-      {visible && (
-        <Model3DView
-          product={product}
-          members={members}
-          selection={null}
-          onSelectModule={NOOP}
-          onSelectBay={NOOP}
-          onSelectCoupling={NOOP}
-        />
+    <div className="benchmark-capture__body benchmark-capture__body--three">
+      {active ? (
+        <>
+          <Model3DView
+            product={product}
+            members={members}
+            selection={null}
+            onSelectModule={NOOP}
+            onSelectBay={NOOP}
+            onSelectCoupling={NOOP}
+          />
+          <button type="button" className="benchmark-three-freeze" onClick={() => setActive(false)}>
+            {t("benchmark.freeze")}
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="benchmark-three-activate"
+          onClick={() => setActive(true)}
+          aria-label={`${t("benchmark.orbit")} — ${label}`}
+        >
+          <StudioImage
+            product={product}
+            members={members}
+            options={{ width: 380, height: 260 }}
+            alt={label}
+          />
+          <span className="benchmark-three-cta">{t("benchmark.orbit")} ▸</span>
+        </button>
       )}
     </div>
   );
@@ -245,7 +256,11 @@ export function BenchmarkPage(): JSX.Element {
               </figure>
               <figure className="benchmark-capture benchmark-capture--three">
                 <figcaption>{t("benchmark.view3d")}</figcaption>
-                <LazyThree product={fixture.product} members={members} />
+                <LazyThree
+                  product={fixture.product}
+                  members={members}
+                  label={t(fixture.labelKey)}
+                />
               </figure>
             </div>
           </article>

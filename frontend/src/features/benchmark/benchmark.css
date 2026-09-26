@@ -118,11 +118,69 @@
   display: flex;
   flex-direction: column;
   padding: 0;
+  position: relative;
 }
 
 .benchmark-capture__body--three .model3d-view {
   min-height: 0;
   width: 100%;
+}
+
+.benchmark-three-activate {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  width: 100%;
+}
+
+.benchmark-three-activate img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.benchmark-three-cta {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 999px;
+  bottom: 0.6rem;
+  color: var(--theme-text-secondary);
+  font-size: 0.75rem;
+  left: 50%;
+  padding: 0.2rem 0.65rem;
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.benchmark-three-activate:hover .benchmark-three-cta,
+.benchmark-three-activate:focus-visible .benchmark-three-cta {
+  border-color: var(--theme-accent, #0f817a);
+  color: var(--theme-accent-ink);
+}
+
+.benchmark-three-freeze {
+  align-self: flex-end;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.25rem;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  z-index: 2;
+}
+
+.benchmark-three-freeze:hover {
+  border-color: var(--theme-accent, #0f817a);
 }
 
 @media (max-width: 1100px) {
