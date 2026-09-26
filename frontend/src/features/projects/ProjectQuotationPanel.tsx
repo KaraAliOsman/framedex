@@ -989,9 +989,7 @@ export function ProjectQuotationPanel({
     (project.versions?.length ?? 0) > 0;
 
   async function shareQuote(): Promise<void> {
-    const pendingLink = (approvals.data ?? []).find(
-      (link) => link.status === "PENDING",
-    );
+    const pendingLink = (approvals.data ?? []).find((link) => link.status === "PENDING");
     if (pendingLink) {
       const ok = await confirm({
         title: t("quotation.shareReplacesLink"),
@@ -1035,11 +1033,7 @@ export function ProjectQuotationPanel({
     setBusy(true);
     setMessage("");
     try {
-      const response = await projectQuoteApproveInternal(
-        project.id,
-        {},
-        requestOptions,
-      );
+      const response = await projectQuoteApproveInternal(project.id, {}, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       void queryClient.invalidateQueries({
@@ -1076,6 +1070,77 @@ export function ProjectQuotationPanel({
       if (generation.current === current) setMessage(t("quotation.error"));
     } finally {
       if (generation.current === current) setBusy(false);
+    }
+  }
+
+  // Consolidated "what's missing" for emission — the same conditions the
+  // submit gate enforces, shown live instead of one native validation bubble
+  // at a time. Each item focuses its field.
+  const emitMissing: { key: string; label: string; targetId?: string }[] = [];
+  if (preparation) {
+    if (!project.current_pricing_operation_id) {
+      emitMissing.push({ key: "pricing", label: t("quotation.missingPricing") });
+    }
+    if (!preparation.payment_terms.trim()) {
+      emitMissing.push({
+        key: "terms",
+        label: t("quotation.paymentTerms"),
+        targetId: "quotation-payment-terms",
+      });
+    }
+    if (!preparation.quotation_valid_until) {
+      emitMissing.push({
+        key: "valid",
+        label: t("quotation.validUntil"),
+        targetId: "quotation-valid-until",
+      });
+    }
+    preparation.positions.forEach((position, index) => {
+      const tag = `${t("quotation.position")} ${index + 1}`;
+      if (!position.location_tag.trim()) {
+        emitMissing.push({
+          key: `loc-${position.position_id}`,
+          label: `${tag} — ${t("projects.location")}`,
+          targetId: `position-location-${position.position_id}`,
+        });
+      }
+      if (!position.manufacturing_placement_policy_id) {
+        emitMissing.push({
+          key: `pl-${position.position_id}`,
+          label: `${tag} — ${t("quotation.placementPolicy")}`,
+          targetId: `placement-policy-${position.position_id}`,
+        });
+      }
+      if (!position.handle_requirement_policy_id) {
+        emitMissing.push({
+          key: `hp-${position.position_id}`,
+          label: `${tag} — ${t("quotation.handlePolicy")}`,
+          targetId: `handle-policy-${position.position_id}`,
+        });
+      }
+      if (!position.reinforcement_cut_policy_id) {
+        emitMissing.push({
+          key: `rf-${position.position_id}`,
+          label: `${tag} — ${t("quotation.reinforcementPolicy")}`,
+          targetId: `reinforcement-policy-${position.position_id}`,
+        });
+      }
+      const pendingSeeds = seededIntentKeys.current.get(String(position.position_id));
+      if (pendingSeeds && pendingSeeds.size > 0) {
+        const domKey = [...pendingSeeds][0]!.split("|").slice(0, 3).join("|");
+        emitMissing.push({
+          key: `seed-${position.position_id}`,
+          label: `${tag} — ${t("quotation.missingSeedConfirm")}`,
+          targetId: `handle-height-${position.position_id}-${domKey}`,
+        });
+      }
+    });
+    if (!confirmed) {
+      emitMissing.push({
+        key: "confirm",
+        label: t("quotation.confirm"),
+        targetId: "quotation-confirm",
+      });
     }
   }
 
@@ -1706,8 +1771,31 @@ export function ProjectQuotationPanel({
               )}
             </fieldset>
           ))}
+          {emitMissing.length > 0 && (
+            <div className="emit-checklist" aria-live="polite">
+              <strong>{t("quotation.missingTitle")}</strong>
+              <ul>
+                {emitMissing.map((item) => (
+                  <li key={item.key}>
+                    {item.targetId ? (
+                      <button
+                        type="button"
+                        className="link-button"
+                        onClick={() => document.getElementById(item.targetId!)?.focus()}
+                      >
+                        {item.label}
+                      </button>
+                    ) : (
+                      item.label
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <label className="quotation-confirm">
             <input
+              id="quotation-confirm"
               required
               type="checkbox"
               checked={confirmed}

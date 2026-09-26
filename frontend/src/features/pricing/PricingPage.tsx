@@ -200,15 +200,15 @@ const fields: Record<string, Field[]> = {
 // Audit rows carry raw storage names (entity = table, field = SQL verb);
 // people read domain nouns and past-tense actions.
 const auditEntityLabels: Record<string, Parameters<typeof t>[0]> = {
-  price_audit_logs: "pricing.auditEntity.priceAuditLogs",
-  price_lists: "pricing.auditEntity.priceLists",
-  price_list_items: "pricing.auditEntity.priceListItems",
+  cost_lists: "pricing.auditEntity.costLists",
+  cost_list_items: "pricing.auditEntity.costListItems",
   pricing_configurations: "pricing.auditEntity.pricingConfigurations",
   pricing_matrix_cells: "pricing.auditEntity.pricingMatrixCells",
   pricing_operations: "pricing.auditEntity.pricingOperations",
   pricing_rules: "pricing.auditEntity.pricingRules",
   project_positions: "pricing.auditEntity.projectPositions",
-  fx_snapshots: "pricing.auditEntity.fxSnapshots",
+  projects: "pricing.auditEntity.projects",
+  pricing_fx_snapshots: "pricing.auditEntity.fxSnapshots",
 };
 const auditActionLabels: Record<string, Parameters<typeof t>[0]> = {
   INSERT: "pricing.auditAction.insert",
@@ -223,6 +223,7 @@ const auditActorLabels: Record<string, Parameters<typeof t>[0]> = {
 const sections = [
   "cost-lists",
   "cost-items",
+  "coverage",
   "rules",
   "configurations",
   "matrix-cells",
@@ -232,6 +233,7 @@ const sections = [
 const sectionLabels = [
   "pricing.lists",
   "pricing.items",
+  "pricing.coverage",
   "pricing.rules",
   "pricing.configurations",
   "pricing.matrix",
@@ -326,6 +328,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
   const [items, setItems] = useState<Row[]>([]);
   const [costLists, setCostLists] = useState<Row[]>([]);
   const [configurations, setConfigurations] = useState<Row[]>([]);
+  const [catalogSkus, setCatalogSkus] = useState<Row[]>([]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -385,6 +388,13 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
         })
         .catch(() => {
           if (current) setMessage(t("pricing.loadError"));
+        });
+      void request<{ items: Row[] }>("admin/coverage/")
+        .then((response) => {
+          if (current) setCatalogSkus(response.items);
+        })
+        .catch(() => {
+          if (current) setCatalogSkus([]);
         });
     }
     return () => {
@@ -466,39 +476,45 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
             {t("pricing.reload")}
           </button>
           {!busy && items.length === 0 && <p>{t("pricing.empty")}</p>}
-          {items.map((item) => (
-            <article key={String(item.id)}>
-              <strong>
-                {String(
-                  item.supplier_name ??
-                    item.sku ??
-                    (item.context_code !== undefined && item.context_code !== null
-                      ? contextLabel(item.context_code)
-                      : (item.source ?? item.entity ?? t("pricing.rules"))),
+          {resource === "audits" ? (
+            items.map((item) => <AuditCard key={String(item.id)} item={item} />)
+          ) : resource === "coverage" ? (
+            <CoverageList items={items} />
+          ) : (
+            items.map((item) => (
+              <article key={String(item.id)}>
+                <strong>
+                  {String(
+                    item.supplier_name ??
+                      item.sku ??
+                      (item.context_code !== undefined && item.context_code !== null
+                        ? contextLabel(item.context_code)
+                        : (item.source ?? item.entity ?? t("pricing.rules"))),
+                  )}
+                </strong>
+                <dl>
+                  {(
+                    fields[resource] ?? [
+                      { name: "reason", label: "pricing.reason" as const },
+                      { name: "created_at", label: "pricing.created" as const },
+                    ]
+                  ).map((field) => (
+                    <div key={field.name}>
+                      <dt>{t(field.label)}</dt>
+                      <dd>
+                        {renderFieldValue(field, item[field.name], { costLists, configurations })}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                {resource !== "audits" && resource !== "fx" && (
+                  <button type="button" disabled={busy} onClick={() => setEditing(item)}>
+                    {t("pricing.edit")}
+                  </button>
                 )}
-              </strong>
-              <dl>
-                {(
-                  fields[resource] ?? [
-                    { name: "reason", label: "pricing.reason" as const },
-                    { name: "created_at", label: "pricing.created" as const },
-                  ]
-                ).map((field) => (
-                  <div key={field.name}>
-                    <dt>{t(field.label)}</dt>
-                    <dd>
-                      {renderFieldValue(field, item[field.name], { costLists, configurations })}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              {resource !== "audits" && resource !== "fx" && (
-                <button type="button" disabled={busy} onClick={() => setEditing(item)}>
-                  {t("pricing.edit")}
-                </button>
-              )}
-            </article>
-          ))}
+              </article>
+            ))
+          )}
         </div>
         {fields[resource] && resource !== "audits" && (
           <form
@@ -547,6 +563,11 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                     step={field.type === "percent" ? "0.1" : undefined}
                     min={field.type === "percent" ? "0" : undefined}
                     max={field.type === "percent" ? "100" : undefined}
+                    list={
+                      resource === "cost-items" && field.name === "sku"
+                        ? "pricing-catalog-skus"
+                        : undefined
+                    }
                     required={!field.optional}
                     defaultValue={
                       field.type === "percent"
@@ -562,6 +583,16 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                 )}
               </label>
             ))}
+            {resource === "cost-items" && (
+              <datalist id="pricing-catalog-skus">
+                {catalogSkus.map((row) => (
+                  <option key={String(row.sku)} value={String(row.sku)}>
+                    {String(row.name)} ·{" "}
+                    {t(coverageKindLabels[String(row.kind)] ?? "pricing.coverageKind.other")}
+                  </option>
+                ))}
+              </datalist>
+            )}
             {(resource === "cost-lists" || resource === "configurations") && (
               <label>
                 <input
@@ -588,13 +619,163 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
           </form>
         )}
       </div>
-      <ImportCosts
-        request={request}
-        costLists={costLists}
-        onSaved={() => setRevision((value) => value + 1)}
-      />
-      <CommercialOperations request={request} owner />
+      {(resource === "cost-lists" || resource === "cost-items") && (
+        <ImportCosts
+          request={request}
+          costLists={costLists}
+          onSaved={() => setRevision((value) => value + 1)}
+        />
+      )}
     </section>
+  );
+}
+
+const coverageKindLabels: Record<string, Parameters<typeof t>[0]> = {
+  PROFILE: "pricing.coverageKind.profile",
+  GLASS: "pricing.coverageKind.glass",
+  HARDWARE: "pricing.coverageKind.hardware",
+  REINFORCEMENT: "pricing.coverageKind.reinforcement",
+};
+
+function CoverageList({ items }: { items: Row[] }): JSX.Element {
+  const [onlyMissing, setOnlyMissing] = useState(false);
+  const missing = items.filter((item) => Number(item.active_cost_items ?? 0) === 0);
+  const shown = onlyMissing ? missing : items;
+  return (
+    <>
+      <p className="coverage-summary">
+        <strong>{missing.length}</strong> / {items.length} {t("pricing.coverageNoPrice")}{" "}
+        {missing.length > 0 && (
+          <button
+            type="button"
+            className="link-button"
+            aria-pressed={onlyMissing}
+            onClick={() => setOnlyMissing((value) => !value)}
+          >
+            {t(onlyMissing ? "pricing.coverageShowAll" : "pricing.coverageOnlyMissing")}
+          </button>
+        )}
+      </p>
+      {shown.map((item) => {
+        const uncovered = Number(item.active_cost_items ?? 0) === 0;
+        return (
+          <article
+            key={`${String(item.kind)}-${String(item.sku)}`}
+            className={uncovered ? "coverage-card coverage-card--missing" : "coverage-card"}
+          >
+            <strong>{String(item.sku)}</strong>
+            <span>{String(item.name)}</span>
+            <span className="coverage-card__meta">
+              {t(coverageKindLabels[String(item.kind)] ?? "pricing.coverageKind.other")} ·{" "}
+              {String(item.required_unit)}
+            </span>
+            <span className="status-chip" data-status={uncovered ? "declined" : "approved"}>
+              {uncovered
+                ? t("pricing.coverageMissing")
+                : `${Number(item.active_cost_items ?? 0)} ${t("pricing.coverageLists")}`}
+            </span>
+          </article>
+        );
+      })}
+    </>
+  );
+}
+
+const auditInternalKeys = new Set(["id", "org_id", "updated_at", "created_at"]);
+
+function auditRecordLabel(entity: string, record: Record<string, unknown> | null): string {
+  if (!record) return "";
+  for (const key of [
+    "sku",
+    "commercial_sku",
+    "supplier_name",
+    "code",
+    "name",
+    "context_code",
+    "pricing_mode",
+    "source",
+    "revision_code",
+  ]) {
+    const value = record[key];
+    if (typeof value === "string" && value !== "") return value;
+  }
+  const id = record["entity_id"] ?? record["id"];
+  return typeof id === "string" ? `${entity} ${id.slice(0, 8)}` : entity;
+}
+
+function auditValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "object") return JSON.stringify(value);
+  const text = String(value);
+  return text.length > 80 ? `${text.slice(0, 80)}…` : text;
+}
+
+function auditDiffs(
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null,
+): [string, string, string][] {
+  if (!after) return [];
+  const diffs: [string, string, string][] = [];
+  for (const [key, value] of Object.entries(after)) {
+    if (auditInternalKeys.has(key)) continue;
+    const prior = before?.[key];
+    if (before === null || JSON.stringify(prior) !== JSON.stringify(value)) {
+      diffs.push([key, auditValue(prior), auditValue(value)]);
+    }
+  }
+  return diffs;
+}
+
+function AuditCard({ item }: { item: Row }): JSX.Element {
+  const entity = String(item.entity ?? "");
+  const verb = String(item.field ?? "");
+  const after = (item.new_record ?? null) as Record<string, unknown> | null;
+  const before = (item.old_record ?? null) as Record<string, unknown> | null;
+  const diffs = auditDiffs(before, after);
+  const label = auditRecordLabel(entity, after ?? before);
+  const project = item.project_code
+    ? `${String(item.project_code)}${item.project_name ? ` — ${String(item.project_name)}` : ""}`
+    : "";
+  return (
+    <article className="audit-card">
+      <header className="audit-card__header">
+        <strong>{t(auditEntityLabels[entity] ?? "pricing.auditEntity.other")}</strong>
+        <span
+          className="status-chip"
+          data-status={verb === "INSERT" ? "completed" : verb === "DELETE" ? "revoked" : "pending"}
+        >
+          {t(auditActionLabels[verb] ?? "pricing.auditAction.other")}
+        </span>
+        {project !== "" && <span className="audit-card__project">{project}</span>}
+      </header>
+      {label !== "" && <p className="audit-card__title">{label}</p>}
+      {diffs.length > 0 ? (
+        <ul className="audit-card__diffs">
+          {diffs.slice(0, 8).map(([key, oldValue, newValue]) => (
+            <li key={key}>
+              <code>{key}</code>: <span>{oldValue}</span> → <strong>{newValue}</strong>
+            </li>
+          ))}
+          {diffs.length > 8 && (
+            <li>
+              +{diffs.length - 8} {t("pricing.auditMore")}
+            </li>
+          )}
+        </ul>
+      ) : (
+        ((item.old_value !== undefined && item.old_value !== null) ||
+          (item.new_value !== undefined && item.new_value !== null)) && (
+          <p className="audit-card__diffs">
+            {auditValue(item.old_value)} → <strong>{auditValue(item.new_value)}</strong>
+          </p>
+        )
+      )}
+      <footer className="audit-card__footer">
+        <span>{t(auditActorLabels[String(item.actor_type)] ?? "pricing.auditActor.other")}</span>
+        {item.reason ? <span>{String(item.reason)}</span> : null}
+        <time dateTime={String(item.created_at)}>{formatDateTime(String(item.created_at))}</time>
+      </footer>
+    </article>
   );
 }
 

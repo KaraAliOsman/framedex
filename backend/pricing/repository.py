@@ -139,7 +139,30 @@ ADMIN_TABLES = {
 
 def admin_list(resource, org_id):
     if resource == 'audits':
-        return rows('SELECT * FROM public.price_audit_logs WHERE org_id=%s ORDER BY created_at DESC,id LIMIT 200', [org_id])
+        return rows('SELECT l.*, p.code AS project_code, p.name AS project_name '
+                    'FROM public.price_audit_logs l '
+                    'LEFT JOIN public.projects p ON p.id=l.project_id AND p.org_id=l.org_id '
+                    'WHERE l.org_id=%s ORDER BY l.created_at DESC,l.id LIMIT 200', [org_id])
+    if resource == 'coverage':
+        return rows("""WITH catalog AS (
+            SELECT sku::text AS sku, name::text AS name, 'PROFILE'::text AS kind, 'M'::text AS required_unit
+              FROM public.profile_articles WHERE org_id=%s OR org_id IS NULL
+            UNION ALL
+            SELECT sku, name, 'GLASS', 'M2' FROM public.infill_articles WHERE org_id=%s OR org_id IS NULL
+            UNION ALL
+            SELECT sku, name, 'HARDWARE', 'KIT' FROM public.hardware_kits WHERE org_id=%s OR org_id IS NULL
+            UNION ALL
+            SELECT sku, name, 'REINFORCEMENT', 'M' FROM public.reinforcement_articles WHERE org_id=%s OR org_id IS NULL
+        )
+        SELECT c.sku, c.name, c.kind, c.required_unit, COUNT(i.id) AS active_cost_items
+        FROM catalog c
+        LEFT JOIN public.cost_list_items i
+          ON i.org_id=%s AND i.sku=c.sku
+         AND EXISTS (SELECT 1 FROM public.cost_lists l
+                     WHERE l.id=i.cost_list_id AND l.org_id=%s AND l.is_active
+                       AND (l.valid_to IS NULL OR l.valid_to>=current_date))
+        GROUP BY c.sku, c.name, c.kind, c.required_unit
+        ORDER BY COUNT(i.id), c.kind, c.sku""", [org_id]*6)
     if resource not in ADMIN_TABLES:
         raise PricingError('unknown_pricing_resource')
     table, _ = ADMIN_TABLES[resource]

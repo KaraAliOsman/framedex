@@ -61,8 +61,8 @@ it("keeps the current request alive after StrictMode cleanup and aborts on tenan
       <PricingPage />
     </StrictMode>,
   );
-  await waitFor(() => expect(apiMutator).toHaveBeenCalledTimes(3));
-  const previous = vi.mocked(apiMutator).mock.calls[2]?.[1].signal;
+  await waitFor(() => expect(apiMutator).toHaveBeenCalledTimes(2));
+  const previous = vi.mocked(apiMutator).mock.calls.at(-1)?.[1].signal;
   expect(previous?.aborted).toBe(false);
   identity.id = "tenant-b";
   view.rerender(

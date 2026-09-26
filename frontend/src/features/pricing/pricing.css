@@ -340,3 +340,89 @@
   font-size: 0.72rem;
   margin: 0.15rem 0 0;
 }
+
+.coverage-summary {
+  color: var(--theme-text-secondary);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--theme-accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.coverage-card {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+}
+
+.coverage-card--missing {
+  border-color: var(--theme-danger);
+}
+
+.coverage-card__meta,
+.coverage-card > span {
+  color: var(--theme-text-secondary);
+  font-size: 0.75rem;
+}
+
+.coverage-card .status-chip {
+  justify-self: start;
+}
+
+.audit-card {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.75rem 1rem;
+}
+
+.audit-card__header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.audit-card__project {
+  color: var(--theme-text-secondary);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.audit-card__title {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.audit-card__diffs {
+  font-size: 0.75rem;
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.audit-card__diffs code {
+  color: var(--theme-text-secondary);
+}
+
+.audit-card__diffs span {
+  color: var(--theme-text-secondary);
+}
+
+.audit-card__footer {
+  color: var(--theme-text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  gap: 0.75rem;
+}
