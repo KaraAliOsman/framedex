@@ -962,7 +962,7 @@ function ModuleTree({
 const TOP_GUTTER = 150;
 const SIDE_GUTTER = 130;
 const BOTTOM_GUTTER = 120;
-const LEFT_GUTTER = 170;
+const LEFT_GUTTER = 195;
 
 /** Architectural dimension run: extension lines from the measured edge out
  * to the dim line (overshooting it slightly), diagonal ticks at each mark,
@@ -1628,10 +1628,10 @@ export function ProductFrontContent({
       {/* the drawing band lifts for arc overshoot: sill stays shared. */}
       <g transform={`translate(0 ${lift})`}>
         {/* height chain */}
-        <DimRun marks={[0, height]} edge={0} at={-110} vertical={true} />
-        <g transform={`rotate(-90 ${-110} ${midY})`}>
+        <DimRun marks={[0, height]} edge={0} at={-160} vertical={true} />
+        <g transform={`rotate(-90 ${-160} ${midY})`}>
           <SvgDim
-            x={-110}
+            x={-160}
             y={midY}
             value={height.toFixed(2)}
             label={t("assembly.height")}

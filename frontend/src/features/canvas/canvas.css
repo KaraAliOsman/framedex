@@ -426,7 +426,7 @@
 .assembly-editor {
   display: grid;
   gap: 0.6rem;
-  grid-template-columns: 3rem 12.5rem minmax(0, 1fr) minmax(240px, 280px);
+  grid-template-columns: 3rem 14rem minmax(0, 1fr) minmax(240px, 280px);
   grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
     "tools tree canvas side"
