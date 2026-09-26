@@ -28,3 +28,34 @@ def _stub_branding(monkeypatch):
             "brand_logo_sha256": None,
         },
     )
+
+
+@pytest.fixture(autouse=True)
+def _stub_ai_job_backend(monkeypatch):
+    """AI job writes run under the ai_backend role inside real transactions;
+    unit tests stub rows/one but the django connection would still open a
+    cursor. The sqlite-vendor stub makes _ai_backend and the cancel paths
+    no-op so tests stay hermetic."""
+    from types import SimpleNamespace
+
+    from ai_gateway import jobs
+
+    monkeypatch.setattr(
+        jobs,
+        "connection",
+        SimpleNamespace(vendor="sqlite", needs_rollback=False),
+    )
+
+    class _Atomic:
+        def __call__(self, *args, **kwargs):
+            return self
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        jobs, "transaction", SimpleNamespace(atomic=_Atomic())
+    )

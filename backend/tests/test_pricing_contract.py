@@ -153,7 +153,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
     monkeypatch.setattr(
         service, "engine_result_from_api", lambda **kwargs: result
     )
-    total, _area, _result = service.position_cost(
+    total, _area, _result, _formation = service.position_cost(
         Repo(), position,
         {"waste_factor_pct": Decimal("0"),
          "labor_rate_per_m2": Decimal("0"),
@@ -223,7 +223,7 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch):
     monkeypatch.setattr(
         service, "engine_result_from_api", lambda **kwargs: result
     )
-    total, _area, _result = service.position_cost(
+    total, _area, _result, _formation = service.position_cost(
         Repo(), position,
         {"waste_factor_pct": Decimal("0"),
          "labor_rate_per_m2": Decimal("0"),
@@ -369,3 +369,43 @@ def test_design_batch_preview_refuses_sealed_revision(monkeypatch):
         raise AssertionError('expected PricingError')
     except PricingError as error:
         assert error.code == 'commercial_revision_required'
+
+
+def test_withdraw_retracts_only_own_pending(monkeypatch):
+    """A pending approval is only retractable by its requester (or an OWNER
+    clearing the queue); decided operations stay immutable."""
+    from uuid import uuid4
+
+    import pricing.service as service
+
+    org_id, operation_id, requester = uuid4(), uuid4(), uuid4()
+    operation = {
+        'id': operation_id, 'org_id': org_id, 'state': 'PENDING',
+        'requested_by': requester, 'requested_by_email': 'e@x.cl',
+        'project_id': uuid4(), 'revision_code': 'REV-A', 'reason': 'Cotización',
+        'input_snapshot': '{}', 'request': '{}', 'result': '{}',
+        'approved_by': None, 'approved_at': None,
+        'created_at': '2026-09-25T00:00:00Z',
+    }
+    queries = []
+    monkeypatch.setattr(service, 'one',
+                        lambda query, params=(), code='missing': (queries.append(query), operation)[1])
+    monkeypatch.setattr(service, 'audit_reason', lambda reason: None)
+    monkeypatch.setattr(service, 'operation_public', lambda row: row)
+
+    output = service.withdraw_operation(org_id, requester, 'ESTIMATOR', operation_id, 'mistake')
+    assert output is operation
+    assert any(query.startswith('UPDATE public.pricing_operations') for query in queries)
+
+    # A different estimator cannot retract someone else's request.
+    queries.clear()
+    with pytest.raises(PricingError):
+        service.withdraw_operation(org_id, uuid4(), 'ESTIMATOR', operation_id, 'mistake')
+
+    # An owner can clear the pending queue for review hygiene.
+    service.withdraw_operation(org_id, uuid4(), 'OWNER', operation_id, 'cleanup')
+
+    # A decided operation is immutable — history keeps its verdict.
+    operation['state'] = 'APPLIED'
+    with pytest.raises(PricingError):
+        service.withdraw_operation(org_id, requester, 'ESTIMATOR', operation_id, 'mistake')

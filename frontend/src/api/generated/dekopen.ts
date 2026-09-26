@@ -203,6 +203,7 @@ import type {
   SystemWorkspace,
   SystemWriteRequest,
   Wallet,
+  WithdrawRequest,
   WorkCenter,
   WorkCenterList,
   WorkCenterRequestRequest,
@@ -7991,6 +7992,88 @@ export const pricingApply = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(applyRequest),
+  });
+};
+
+export type pricingWithdrawResponse200 = {
+  data: PriceResponse;
+  status: 200;
+};
+
+export type pricingWithdrawResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingWithdrawResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingWithdrawResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingWithdrawResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingWithdrawResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingWithdrawResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingWithdrawResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingWithdrawResponseSuccess = pricingWithdrawResponse200 & {
+  headers: Headers;
+};
+export type pricingWithdrawResponseError = (
+  | pricingWithdrawResponse400
+  | pricingWithdrawResponse401
+  | pricingWithdrawResponse403
+  | pricingWithdrawResponse404
+  | pricingWithdrawResponse409
+  | pricingWithdrawResponse422
+  | pricingWithdrawResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingWithdrawResponse = pricingWithdrawResponseSuccess | pricingWithdrawResponseError;
+
+export const getPricingWithdrawUrl = (operationId: string) => {
+  return `/api/v1/pricing/operations/${operationId}/withdraw/`;
+};
+
+export const pricingWithdraw = async (
+  operationId: string,
+  withdrawRequest: WithdrawRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingWithdrawResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingWithdrawResponse>(getPricingWithdrawUrl(operationId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(withdrawRequest),
   });
 };
 

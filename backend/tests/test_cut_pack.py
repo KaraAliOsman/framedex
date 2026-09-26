@@ -23,7 +23,16 @@ def _version():
         "snapshot_json": json.dumps({
             "manufacturing": [
                 {
-                    "members": [{"member_id": "mem-1", "bay_id": "bay-1"}],
+                    "members": [
+                        {
+                            "member_id": "mem-1",
+                            "bay_id": "bay-1",
+                            "identity": {
+                                "position_id": "pos-1",
+                                "role": "FRAME",
+                            },
+                        }
+                    ],
                     "reinforcements": [],
                     "infills": [{"infill_id": "inf-1", "bay_id": "bay-1"}],
                     "handles": [],

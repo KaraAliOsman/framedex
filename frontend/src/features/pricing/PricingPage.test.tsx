@@ -289,8 +289,12 @@ it.each(["apply", "reject"] as const)(
     submitPreview();
     await settle(mutation, persisted);
     expect(previewButton()).toBeDisabled();
-    expect(screen.queryByText("Proyecto: P-A · Cliente A · Casa A")).not.toBeInTheDocument();
+    // The shown operation stays visible after the inputs moved — flagged
+    // stale and non-applicable until the newer preview lands and replaces it.
+    expect(screen.getByText("Proyecto: P-A · Cliente A · Casa A")).toBeInTheDocument();
+    expect(screen.getByText(t("pricing.staleHint"))).toBeInTheDocument();
     await settle(next, result("B"));
+    expect(screen.queryByText("Proyecto: P-A · Cliente A · Casa A")).not.toBeInTheDocument();
     expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: t("pricing.reload") }));
     await screen.findByRole("button", { name: t("pricing.review") });

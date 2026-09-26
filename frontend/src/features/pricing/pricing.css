@@ -251,3 +251,92 @@
   background: var(--theme-danger-soft);
   color: var(--theme-danger);
 }
+
+.status-chip[data-status="withdrawn"] {
+  background: var(--theme-surface-alt, rgba(100, 116, 139, 0.12));
+  color: var(--theme-text-secondary);
+}
+
+.operation-decision__stale {
+  color: var(--theme-warning);
+  font-size: 0.75rem;
+  margin: 0.25rem 0 0;
+}
+
+.operation-warning {
+  color: var(--theme-warning);
+  font-size: 0.7rem;
+  margin-left: 0.5rem;
+}
+
+.operation-lines__list {
+  color: var(--theme-text-secondary);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.operation-lines__detail > td {
+  border-top: none;
+  padding: 0 0.5rem 0.5rem;
+}
+
+.operation-lines__detail details summary {
+  color: var(--theme-accent);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.cost-composition {
+  margin-top: 0.5rem;
+}
+
+.cost-composition__table {
+  font-size: 0.75rem;
+}
+
+.cost-composition__table td {
+  padding: 0.15rem 0.75rem 0.15rem 0;
+}
+
+.cost-composition__table td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cost-composition__math {
+  color: var(--theme-text-secondary);
+  font-size: 0.72rem;
+  margin: 0.25rem 0 0;
+}
+
+.operation-authorities {
+  font-size: 0.72rem;
+  color: var(--theme-text-secondary);
+  margin-top: 0.25rem;
+}
+
+.operation-authorities summary {
+  cursor: pointer;
+}
+
+.operation-authorities ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.operation-history__filters {
+  align-items: flex-end;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.operation-history__filters select {
+  margin-left: 0.5rem;
+}
+
+.field-hint {
+  color: var(--theme-text-secondary);
+  font-size: 0.72rem;
+  margin: 0.15rem 0 0;
+}

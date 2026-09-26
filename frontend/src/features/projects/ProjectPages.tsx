@@ -1551,6 +1551,11 @@ function ProjectWorkspace({
                       {fmtMm(position.design.nominal_width_mm)} ×{" "}
                       {fmtMm(position.design.nominal_height_mm)}
                     </span>
+                    {Number(position.price_net) > 0 && (
+                      <span className="position-row__net">
+                        {formatMoney(position.price_net ?? "0", project.currency)}
+                      </span>
+                    )}
                     <span className="position-row__qty">
                       {editable ? (
                         <PositionQtyInput
@@ -1605,6 +1610,16 @@ function ProjectWorkspace({
                       <dt>{t("pricing.quantity")}</dt>
                       <dd>{selected.quantity}</dd>
                     </div>
+                    {Number(selected.price_net) > 0 && (
+                      <div>
+                        <dt>{t("pricing.net")}</dt>
+                        <dd>
+                          {formatMoney(selected.price_net ?? "0", project.currency)}
+                          {Number(selected.discount_pct) > 0 &&
+                            ` · ${t("portal.discount")} ${(Number(selected.discount_pct) * 100).toFixed(2).replace(/\.?0+$/, "")}%`}
+                        </dd>
+                      </div>
+                    )}
                     <div>
                       <dt>{t("projects.typology")}</dt>
                       <dd>

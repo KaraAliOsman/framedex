@@ -1262,3 +1262,10 @@
   display: flex;
   gap: 1rem;
 }
+
+.position-row__net {
+  color: var(--theme-text-secondary);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

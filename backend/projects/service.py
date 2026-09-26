@@ -66,6 +66,9 @@ POSITION_COLUMNS = (
     "color_exterior",
     "parametric_tree",
     "bom_snapshot",
+    "cost_net",
+    "price_net",
+    "discount_pct",
     "updated_at",
 )
 
@@ -167,6 +170,11 @@ def position_public(row):
                 "updated_at",
             )
         },
+        # The pricing authority writes these on apply — the workspace shows
+        # each vano's live net alongside its total, no re-derivation.
+        "cost_net": str(row["cost_net"]),
+        "price_net": str(row["price_net"]),
+        "discount_pct": str(row["discount_pct"]),
         "design": design,
         "bom": {**safe, "calculation_hash": expected},
     }

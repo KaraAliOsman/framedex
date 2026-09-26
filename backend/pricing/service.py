@@ -104,12 +104,21 @@ def position_cost(repo, position, rules):
     tree = decoded(position['parametric_tree'])
     color = 'WHITE' if position['color_interior']=='WHITE' and position['color_exterior']=='WHITE' else 'FOILED'
     materials = []
+    composition = []
     for cut in result.profile_cuts:
         stock = profile_stocks[cut.sku]
-        materials.append(linear_cost(repo,stock.commercial_sku,cut.length_mm*cut.qty,stock.stock_length_mm))
+        cost = linear_cost(repo,stock.commercial_sku,cut.length_mm*cut.qty,stock.stock_length_mm)
+        materials.append(cost)
+        composition.append({'kind':'PROFILE','sku':stock.commercial_sku,
+                            'quantity':str((cut.length_mm*cut.qty/D('1000')).quantize(D('0.001'))),
+                            'unit':'M','cost':str(cost.quantize(D('0.0001')))})
     for steel in result.reinforcements:
         stock = steel_stocks[(steel.parent_profile_sku,steel.reinforcement_sku)]
-        materials.append(linear_cost(repo,stock.commercial_sku,steel.length_mm*steel.qty,stock.stock_length_mm))
+        cost = linear_cost(repo,stock.commercial_sku,steel.length_mm*steel.qty,stock.stock_length_mm)
+        materials.append(cost)
+        composition.append({'kind':'REINFORCEMENT','sku':stock.commercial_sku,
+                            'quantity':str((steel.length_mm*steel.qty/D('1000')).quantize(D('0.001'))),
+                            'unit':'M','cost':str(cost.quantize(D('0.0001')))})
     for glass in result.glasses:
         # The selected commercial glass SKU is explicit in the persisted tree.
         sku = design_glass_sku(tree,glass.bay_id)
@@ -120,18 +129,42 @@ def position_cost(repo, position, rules):
             if getattr(glass, "shape", None)
             else exact_glass_area_m2(glass.width_mm, glass.height_mm)
         )
-        materials.append(repo.cost(sku,'M2') * glass_area)
+        cost = repo.cost(sku,'M2') * glass_area
+        materials.append(cost)
+        composition.append({'kind':'GLASS','sku':sku,
+                            'quantity':str(glass_area.quantize(D('0.0001'))),
+                            'unit':'M2','cost':str(cost.quantize(D('0.0001')))})
     for panel in result.panels:
-        materials.append(repo.cost(panel.sku,'M2') * exact_glass_area_m2(panel.width_mm,panel.height_mm))
+        panel_area = exact_glass_area_m2(panel.width_mm,panel.height_mm)
+        cost = repo.cost(panel.sku,'M2') * panel_area
+        materials.append(cost)
+        composition.append({'kind':'PANEL','sku':panel.sku,
+                            'quantity':str(panel_area.quantize(D('0.0001'))),
+                            'unit':'M2','cost':str(cost.quantize(D('0.0001')))})
     for kit in result.hardware_items:
-        materials.append(repo.cost(kit.kit_sku,'KIT') * kit.qty)
+        cost = repo.cost(kit.kit_sku,'KIT') * kit.qty
+        materials.append(cost)
+        composition.append({'kind':'HARDWARE','sku':kit.kit_sku,
+                            'quantity':str(kit.qty),'unit':'KIT',
+                            'cost':str(cost.quantize(D('0.0001')))})
     # Frameless supports/fittings are counted pieces: a declared SKU must
     # resolve a unit price or the quote fails — never silently priced at zero.
     for fitting in result.fittings:
-        materials.append(repo.cost(fitting.sku,'EA') * fitting.qty)
+        cost = repo.cost(fitting.sku,'EA') * fitting.qty
+        materials.append(cost)
+        composition.append({'kind':'FITTING','sku':fitting.sku,
+                            'quantity':str(fitting.qty),'unit':'EA',
+                            'cost':str(cost.quantize(D('0.0001')))})
     area = exact_glass_area_m2(position['width_mm'],position['height_mm'])
-    return (direct_cost(materials,area,rules['waste_factor_pct'],rules['labor_rate_per_m2'],
-                        rules['installation_rate_per_m2']), area, result)
+    total = direct_cost(materials,area,rules['waste_factor_pct'],rules['labor_rate_per_m2'],
+                        rules['installation_rate_per_m2'])
+    formation = {'composition':composition,
+                 'materials_cost':str(sum(materials,D('0')).quantize(D('0.0001'))),
+                 'waste_pct':str(rules['waste_factor_pct']),
+                 'labor_rate_per_m2':str(rules['labor_rate_per_m2']),
+                 'installation_rate_per_m2':str(rules['installation_rate_per_m2']),
+                 'area_m2':str(area.quantize(D('0.0001')))}
+    return total, area, result, formation
 
 
 def preview(org_id, actor, request):
@@ -164,19 +197,23 @@ def preview(org_id, actor, request):
         'installation_rate_per_m2':repo.convert(rules['installation_rate_per_m2'],organization['currency'])}
     discount = request['discount_pct']
     state = discount_state(actor.active_organization.role,discount,request['confirmed'])
-    if mode == PricingMode.COMMERCIAL_LIST_WITH_DISCOUNTS:
-        validate_segment(request['segment'],discount,sum(p['quantity'] for p in positions))
+    # Segment bands are a commercial guardrail, not a list-mode feature: a
+    # 5% RETAIL discount must not validate just because the pricing mode
+    # never reads the field.
+    validate_segment(request['segment'],discount,sum(p['quantity'] for p in positions))
     if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT and discount:
         raise PricingError('target_margin_already_defines_final_price')
     cost_lines, priced_lines, technical = [], [], []
     with localcontext() as context:
         context.prec = 80
         for position in positions:
-            cost, area, result = position_cost(repo,position,calculation_rules)
+            cost, area, result, formation = position_cost(repo,position,calculation_rules)
             index = position['position_index']
             cost_lines.append((index,cost*position['quantity']))
-            technical.append({'position_id':position['id'],'unit_cost':cost,
-                              'bom':result.model_dump(mode='json')})
+            technical.append({'position_id':position['id'],
+                              'position_index':index,
+                              'unit_cost':str(cost.quantize(D('0.0001'))),
+                              'bom':result.model_dump(mode='json'),**formation})
             if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
                 continue
             extra = {}
@@ -205,22 +242,45 @@ def preview(org_id, actor, request):
                   else finish_lines(priced_lines,request['currency'],rules['tax_rate_pct']))
     audit_reason(request['reason'])
     record = one(
-        'INSERT INTO public.pricing_operations(org_id,project_id,requested_by,request,input_snapshot,'
-        'result,source_revision,revision_code,state,reason) '
-        'VALUES(%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id,created_at',
-        [org_id,project['id'],request['_actor_id'],
+        'INSERT INTO public.pricing_operations(org_id,project_id,requested_by,requested_by_email,'
+        'request,input_snapshot,result,source_revision,revision_code,state,reason) '
+        'VALUES(%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id,created_at',
+        [org_id,project['id'],request['_actor_id'],request.get('_actor_email'),
          json_text({key:value for key,value in request.items() if not key.startswith('_')}),
          json_text({'rules':rules,'authorities':repo.authorities,'positions':technical,'cost_lines':cost_lines}),
          json_text(asdict(output)),source_revision(project,positions),project['current_revision'],
          'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
     costs = [(index, D(str(cost))) for index, cost in cost_lines]
+    breakdown = [{
+        'position_id':str(p['position_id']),
+        'position_index':p.get('position_index'),
+        'unit_cost':str(p.get('unit_cost') or ''),
+        'area_m2':str(p.get('area_m2') or ''),
+        'materials_cost':str(p.get('materials_cost') or ''),
+        'waste_pct':str(p.get('waste_pct') or ''),
+        'labor_rate_per_m2':str(p.get('labor_rate_per_m2') or ''),
+        'installation_rate_per_m2':str(p.get('installation_rate_per_m2') or ''),
+        'composition':p.get('composition') or [],
+    } for p in technical]
     return {'id':str(record['id']),'state':'PENDING' if state=='PENDING' else 'PREVIEW',
-            'project_id':str(project['id']),'revision_code':project['current_revision'],
+            'project_id':str(project['id']),
+            'project_code':project.get('code') or '',
+            'project_name':project.get('name') or '',
+            'client_name':project.get('client_name') or '',
+            'revision_code':project['current_revision'],
             'discount_pct':str(discount),
+            'pricing_mode':request.get('pricing_mode') or '',
+            'segment':request.get('segment') or '',
             'currency':request['currency'],**asdict(output),
             'cost_lines':[{'position_index':index,'line_cost':str(cost)} for index,cost in costs],
             'total_cost':str(sum((cost for _, cost in costs), D('0'))),
+            'positions_breakdown':breakdown,
+            'authorities':repo.authorities,
+            'rules':{key:str(rules[key]) for key in
+                     ('default_margin_pct','tax_rate_pct','waste_factor_pct','labor_rate_per_m2',
+                      'installation_rate_per_m2') if key in rules},
             'reason':request['reason'],'requested_by':str(request['_actor_id']),
+            'requested_by_email':request.get('_actor_email'),
             'approved_by':None,'approved_at':None,
             'created_at':record['created_at'].isoformat()}
 
@@ -279,7 +339,7 @@ def design_batch_preview(org_id, _actor, request):
                 finally:
                     with connection.cursor() as cursor:
                         cursor.execute('SET LOCAL ROLE pricing_backend')
-                before, _, _ = position_cost(repo,position,calculation_rules)
+                before, *_ = position_cost(repo,position,calculation_rules)
                 pseudo = {
                     'system_id':design['system_id'],
                     'parametric_tree':design['parametric_tree'],
@@ -288,7 +348,7 @@ def design_batch_preview(org_id, _actor, request):
                     'color_interior':design['color'],
                     'color_exterior':design['color'],
                 }
-                after, _, _ = position_cost(repo,pseudo,calculation_rules)
+                after, *_ = position_cost(repo,pseudo,calculation_rules)
             except ContractAPIException as error:
                 items.append({'position_id':position_id,'ok':False,
                               'error_code':error.contract_code,'error':error.public_detail})
@@ -317,15 +377,38 @@ def operation_public(operation):
     # is the margin the approver audited.
     snapshot = decoded(operation['input_snapshot'])
     costs = snapshot.get('cost_lines') or []
+    snapshot_rules = snapshot.get('rules') or {}
+    breakdown = [{
+        'position_id':str(p['position_id']),
+        'position_index':p.get('position_index'),
+        'unit_cost':str(p.get('unit_cost') or ''),
+        'area_m2':str(p.get('area_m2') or ''),
+        'materials_cost':str(p.get('materials_cost') or ''),
+        'waste_pct':str(p.get('waste_pct') or ''),
+        'labor_rate_per_m2':str(p.get('labor_rate_per_m2') or ''),
+        'installation_rate_per_m2':str(p.get('installation_rate_per_m2') or ''),
+        'composition':p.get('composition') or [],
+    } for p in snapshot.get('positions') or []]
     return {'id':str(operation['id']),'state':operation['state'],
             'project_id':str(operation['project_id']),
+            'project_code':operation.get('project_code') or '',
+            'project_name':operation.get('project_name') or '',
+            'client_name':operation.get('client_name') or '',
             'revision_code':operation.get('revision_code') or 'REV-A',
             'discount_pct':str(decoded(operation['request'])['discount_pct']),
+            'pricing_mode':decoded(operation['request']).get('pricing_mode') or '',
+            'segment':decoded(operation['request']).get('segment') or '',
             'currency':decoded(operation['request'])['currency'],**decoded(operation['result']),
             'cost_lines':[{'position_index':index,'line_cost':str(cost)} for index,cost in costs],
             'total_cost':str(sum((D(str(cost)) for _, cost in costs), D('0'))),
+            'positions_breakdown':breakdown,
+            'authorities':snapshot.get('authorities') or [],
+            'rules':{key:str(snapshot_rules[key]) for key in
+                     ('default_margin_pct','tax_rate_pct','waste_factor_pct','labor_rate_per_m2',
+                      'installation_rate_per_m2') if key in snapshot_rules},
             'reason':str(operation['reason']),
             'requested_by':str(operation['requested_by']),
+            'requested_by_email':operation.get('requested_by_email'),
             'approved_by':str(operation['approved_by']) if operation['approved_by'] else None,
             'approved_at':operation['approved_at'].isoformat() if operation['approved_at'] else None,
             'created_at':operation['created_at'].isoformat()}
@@ -374,5 +457,22 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
                         output['project_gross'],project['id'],org_id])
         cursor.execute("UPDATE public.pricing_operations SET state='APPLIED',approved_by=%s,approved_at=clock_timestamp(),reason=%s "
                        'WHERE id=%s AND org_id=%s',[actor_id,reason,operation_id,org_id])
+    return operation_public(one('SELECT * FROM public.pricing_operations WHERE id=%s AND org_id=%s',
+                                [operation_id,org_id]))
+
+
+def withdraw_operation(org_id, actor_id, role, operation_id, reason):
+    """A PENDING request the requester no longer wants reviewed — or the owner
+    clearing the queue — must not stay actionable forever."""
+    operation = one('SELECT * FROM public.pricing_operations WHERE id=%s AND org_id=%s FOR UPDATE',
+                    [operation_id,org_id],'pricing_operation_not_found')
+    if role not in ('OWNER','ESTIMATOR') or (role != 'OWNER' and operation['requested_by'] != actor_id):
+        raise PricingError('pricing_permission_denied')
+    if operation['state'] != 'PENDING':
+        raise PricingError('operation_not_withdrawable')
+    audit_reason(reason)
+    one("UPDATE public.pricing_operations SET state='WITHDRAWN',approved_by=%s,approved_at=clock_timestamp(),"
+        'reason=%s WHERE id=%s AND org_id=%s RETURNING id',
+        [actor_id,reason,operation_id,org_id])
     return operation_public(one('SELECT * FROM public.pricing_operations WHERE id=%s AND org_id=%s',
                                 [operation_id,org_id]))

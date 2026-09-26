@@ -78,6 +78,9 @@ function makePosition(): PositionResponse {
     position_index: 1,
     location_tag: "Dormitorio principal",
     quantity: 2,
+    cost_net: "0",
+    price_net: "0",
+    discount_pct: "0",
     typology: "FIXED",
     updated_at: "2026-09-18T12:01:02.123456Z",
     design: {

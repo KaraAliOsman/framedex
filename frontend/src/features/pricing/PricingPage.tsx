@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { projectsList, projectsRetrieve } from "../../api/generated/dekopen";
@@ -37,6 +37,7 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
   M2: "pricing.squareMetre",
   KIT: "pricing.kit",
   UNIT: "pricing.each",
+  EA: "pricing.eachUnit",
   FIXED: "pricing.fixed",
   TURN: "pricing.turn",
   TILT_TURN: "pricing.tiltTurn",
@@ -51,6 +52,33 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
 function optionLabel(value: string): string {
   const key = optionLabels[value];
   return key ? t(key) : value;
+}
+
+/** Backend contract codes the estimator can actually act on — the generic
+ * "revisa los campos" fallback taught users nothing about what failed. */
+const ERROR_KEYS: Record<string, Parameters<typeof t>[0]> = {
+  missing_cost: "pricing.errMissingCost",
+  ambiguous_cost_list: "pricing.errAmbiguousList",
+  stale_pricing_operation: "pricing.errStale",
+  mfa_required: "pricing.errMfa",
+  invalid_segment_discount: "pricing.errSegment",
+  missing_glass_authority: "pricing.errGlass",
+  commercial_revision_required: "pricing.errRevision",
+  pricing_configuration_not_found: "pricing.errConfig",
+  owner_approval_required: "pricing.errOwner",
+  operation_not_withdrawable: "pricing.errWithdraw",
+  pricing_permission_denied: "pricing.errDenied",
+  negative_margin: "pricing.errNegative",
+  target_margin_already_defines_final_price: "pricing.errTarget",
+};
+
+function pricingError(error: unknown, fallback: Parameters<typeof t>[0]): string {
+  if (error instanceof ApiError) {
+    const payload = error.payload as { error?: { code?: unknown; detail?: unknown } } | null;
+    const code = payload?.error?.code;
+    if (typeof code === "string" && ERROR_KEYS[code]) return t(ERROR_KEYS[code]);
+  }
+  return actionErrorDetail(error, t(fallback));
 }
 /** The seeded DEFAULT context is a real value, not a display string — render
  * the operator-facing label everywhere it surfaces (review m2). */
@@ -91,6 +119,8 @@ function renderFieldValue(
     if (match) return `${match[3]}-${match[2]}-${match[1]}`;
   }
   if (field.type === "percent") return `${pctDisplay(text)} %`;
+  if (field.name === "unit_cost" || field.name === "catalog_price" || field.name === "price")
+    return formatMoney(text, "CLP");
   if (field.name === "created_at") return formatDateTime(text);
   if (field.name === "entity") return t(auditEntityLabels[text] ?? "pricing.auditEntity.other");
   if (field.name === "field") return t(auditActionLabels[text] ?? "pricing.auditAction.other");
@@ -121,7 +151,7 @@ const fields: Record<string, Field[]> = {
       label: "pricing.itemType",
       options: ["PROFILE", "GLASS", "HARDWARE", "PANEL", "ACCESSORY"],
     },
-    { name: "unit", label: "pricing.unit", options: ["BAR", "M", "M2", "KIT", "UNIT"] },
+    { name: "unit", label: "pricing.unit", options: ["BAR", "M", "M2", "KIT", "UNIT", "EA"] },
     { name: "unit_cost", label: "pricing.cost" },
   ],
   rules: [
@@ -744,7 +774,7 @@ function ImportCosts({
               <tr key={String(row.sku)}>
                 <td>{String(row.sku)}</td>
                 <td>{String(row.unit)}</td>
-                <td>{String(row.unit_cost)}</td>
+                <td>{formatMoney(String(row.unit_cost), "CLP")}</td>
               </tr>
             ))}
           </tbody>
@@ -760,6 +790,52 @@ function ImportCosts({
 }
 
 type Operation = PriceResponse;
+
+/** One position's technical price formation: what the engine attributed to
+ * materials, the waste/labour rates the authority supplied, and how the line
+ * net falls out of unit cost × quantity × discount. */
+function CostComposition({
+  entry,
+  currency,
+  discount,
+  lineNet,
+}: {
+  entry: NonNullable<PriceResponse["positions_breakdown"]>[number];
+  currency: string;
+  discount: number;
+  lineNet: string;
+}): JSX.Element {
+  const area = Number(entry.area_m2);
+  const rates = Number(entry.labor_rate_per_m2) + Number(entry.installation_rate_per_m2);
+  const labour = Number.isFinite(area) && Number.isFinite(rates) ? area * rates : null;
+  return (
+    <div className="cost-composition">
+      <table className="cost-composition__table">
+        <tbody>
+          {(entry.composition ?? []).map((component, index) => (
+            <tr key={index}>
+              <td>{optionLabel(component.kind ?? "")}</td>
+              <td>{component.sku}</td>
+              <td>
+                {component.quantity} {optionLabel(component.unit ?? "")}
+              </td>
+              <td>{formatMoney(component.cost ?? "0", currency)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="cost-composition__math">
+        {t("pricing.materials")} {formatMoney(entry.materials_cost ?? "0", currency)} +{" "}
+        {t("pricing.wasteShort")} {pctDisplay(entry.waste_pct)}%
+        {labour !== null &&
+          ` + ${t("pricing.laborShort")} ${formatMoney(String(labour), currency)}`}{" "}
+        → {t("pricing.unitCost")} {formatMoney(entry.unit_cost ?? "0", currency)}
+        {discount > 0 &&
+          ` · ${t("pricing.discount")} ${pctDisplay(discount)}% → ${formatMoney(lineNet, currency)}`}
+      </p>
+    </div>
+  );
+}
 
 /** Whole-percent-free margin: (net − cost) / net, both Decimal strings —
  * computed in cents so the display never carries a float artifact. */
@@ -795,7 +871,9 @@ function OperationDecision({
   projectLabel,
   currentUserId,
   onApply,
+  stale,
   onReject,
+  onWithdraw,
 }: {
   operation: Operation;
   owner: boolean;
@@ -804,11 +882,19 @@ function OperationDecision({
   boundProject?: ProjectResponse;
   projectLabel?: string;
   currentUserId?: string;
+  stale?: boolean;
   onApply: () => void;
   onReject: () => void;
+  onWithdraw?: () => void;
 }): JSX.Element {
   const costs = new Map(
     (operation.cost_lines ?? []).map((line) => [line.position_index, line.line_cost]),
+  );
+  // The preview's technical snapshot prices each position line-by-line:
+  // kind/SKU/quantity/cost plus the waste and labour rates the authority
+  // supplied. Estimators fold it open under each net line.
+  const breakdowns = new Map(
+    (operation.positions_breakdown ?? []).map((entry) => [entry.position_index, entry]),
   );
   // Position metadata joins only when the operation targets the live
   // revision of the project it actually belongs to — a stale operation's
@@ -831,6 +917,20 @@ function OperationDecision({
     boundProject.currency === operation.currency
       ? Number(operation.project_gross) - Number(boundProject.total_price_gross)
       : null;
+  const discount = Number(operation.discount_pct ?? 0);
+  // finish_lines applies the discount per line, so net/(1−d) reproduces the
+  // pre-discount list price exactly — no second authority needed.
+  const listNet =
+    discount > 0 && discount < 1 ? Number(operation.project_net) / (1 - discount) : null;
+  const netCents = moneyCents(operation.project_net);
+  const costCents = moneyCents(operation.total_cost);
+  const realizedPct =
+    netCents !== null && costCents !== null && netCents > 0n
+      ? Number(((netCents - costCents) * 10000n) / netCents) / 100
+      : null;
+  const objective = Number(operation.rules?.default_margin_pct ?? NaN);
+  const marginBelow =
+    realizedPct !== null && Number.isFinite(objective) && realizedPct < objective * 100;
   return (
     <article className="operation-decision">
       <header className="operation-decision__head">
@@ -842,7 +942,9 @@ function OperationDecision({
                 ? "pricing.applied"
                 : operation.state === "REJECTED"
                   ? "pricing.rejected"
-                  : "pricing.notApplied",
+                  : operation.state === "WITHDRAWN"
+                    ? "pricing.withdrawn"
+                    : "pricing.notApplied",
           )}
         </span>
         {projectLabel && (
@@ -851,9 +953,10 @@ function OperationDecision({
           </span>
         )}
         <span className="operation-decision__meta">
-          {operation.revision_code} · {t("pricing.discount")} {pctDisplay(operation.discount_pct)} %
+          {operation.revision_code} · {t("pricing.discount")} {pctDisplay(operation.discount_pct)}%
           · <time dateTime={operation.created_at}>{formatDateTime(operation.created_at)}</time>
         </span>
+        {stale && <p className="operation-decision__stale">{t("pricing.staleHint")}</p>}
       </header>
 
       <div className="operation-totals">
@@ -862,9 +965,20 @@ function OperationDecision({
           <dd>{formatMoney(operation.total_cost, operation.currency)}</dd>
         </div>
         <div className="operation-total">
-          <dt>{t("pricing.marginRealized")}</dt>
-          <dd>{marginText(operation.project_net, operation.total_cost, operation.currency)}</dd>
+          <dt>{t("pricing.marginNet")}</dt>
+          <dd>
+            {marginText(operation.project_net, operation.total_cost, operation.currency)}
+            {marginBelow && (
+              <span className="operation-warning">{t("pricing.marginBelowObjective")}</span>
+            )}
+          </dd>
         </div>
+        {listNet !== null && (
+          <div className="operation-total">
+            <dt>{t("pricing.listPrice")}</dt>
+            <dd>{formatMoney(String(listNet), operation.currency)}</dd>
+          </div>
+        )}
         <div className="operation-total">
           <dt>{t("pricing.net")}</dt>
           <dd>{formatMoney(operation.project_net, operation.currency)}</dd>
@@ -895,29 +1009,64 @@ function OperationDecision({
             <th scope="col">#</th>
             <th scope="col">{t("projects.location")}</th>
             <th scope="col">{t("pricing.quantity")}</th>
-            <th scope="col">{t("pricing.cost")}</th>
+            <th scope="col">{t("pricing.lineCost")}</th>
             <th scope="col">{t("pricing.net")}</th>
-            <th scope="col">{t("pricing.marginRealized")}</th>
+            <th scope="col">{t("pricing.marginNet")}</th>
           </tr>
         </thead>
         <tbody>
           {(operation.lines ?? []).map((line) => {
             const position = positions.get(line.position_index);
+            const breakdown = breakdowns.get(line.position_index);
             return (
-              <tr key={line.position_index}>
-                <td>{line.position_index}</td>
-                <td>{position?.location_tag || "—"}</td>
-                <td>{position?.quantity ?? "—"}</td>
-                <td>{formatMoney(costs.get(line.position_index) ?? "0", operation.currency)}</td>
-                <td>{formatMoney(line.line_net, operation.currency)}</td>
-                <td>
-                  {marginText(
-                    line.line_net,
-                    costs.get(line.position_index) ?? "0",
-                    operation.currency,
-                  )}
-                </td>
-              </tr>
+              <Fragment key={line.position_index}>
+                <tr>
+                  <td>{line.position_index}</td>
+                  <td>{position?.location_tag || "—"}</td>
+                  <td>{position?.quantity ?? "—"}</td>
+                  <td>{formatMoney(costs.get(line.position_index) ?? "0", operation.currency)}</td>
+                  <td>
+                    {discount > 0 && position?.quantity ? (
+                      <>
+                        {formatMoney(line.line_net, operation.currency)}
+                        <span className="operation-lines__list">
+                          {" "}
+                          (
+                          {formatMoney(
+                            String(Number(line.line_net) / (1 - discount)),
+                            operation.currency,
+                          )}{" "}
+                          −{pctDisplay(discount)}%)
+                        </span>
+                      </>
+                    ) : (
+                      formatMoney(line.line_net, operation.currency)
+                    )}
+                  </td>
+                  <td>
+                    {marginText(
+                      line.line_net,
+                      costs.get(line.position_index) ?? "0",
+                      operation.currency,
+                    )}
+                  </td>
+                </tr>
+                {breakdown && (
+                  <tr className="operation-lines__detail">
+                    <td colSpan={6}>
+                      <details>
+                        <summary>{t("pricing.costComposition")}</summary>
+                        <CostComposition
+                          currency={operation.currency}
+                          discount={discount}
+                          entry={breakdown}
+                          lineNet={line.line_net}
+                        />
+                      </details>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             );
           })}
         </tbody>
@@ -928,22 +1077,44 @@ function OperationDecision({
         {operation.requested_by
           ? operation.requested_by === currentUserId
             ? t("pricing.auditYou")
-            : t("pricing.auditOtherUser")
+            : (operation.requested_by_email ?? t("pricing.auditOtherUser"))
           : "—"}
         {operation.approved_at &&
           ` · ${t("pricing.auditDecided")} ${formatDateTime(operation.approved_at)}`}
       </p>
+
+      {(operation.authorities ?? []).length > 0 && (
+        <details className="operation-authorities">
+          <summary>{t("pricing.authorities")}</summary>
+          <ul>
+            {(operation.authorities ?? []).map((authority, index) => (
+              <li key={index}>
+                {Object.entries(authority as Record<string, unknown>)
+                  .map(([key, value]) => `${key}: ${String(value)}`)
+                  .join(" · ")}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       <div className="operation-decision__actions">
         {["PREVIEW", "PENDING"].includes(operation.state) &&
           (owner || operation.state !== "PENDING") && (
             <button
               className="ui-button"
-              disabled={busy || !reasonReady}
+              disabled={busy || !reasonReady || stale}
               onClick={onApply}
               type="button"
             >
               {t("pricing.apply")}
+            </button>
+          )}
+        {operation.state === "PENDING" &&
+          onWithdraw &&
+          (owner || operation.requested_by === currentUserId) && (
+            <button className="btn" disabled={busy || stale} onClick={onWithdraw} type="button">
+              {t("pricing.withdraw")}
             </button>
           )}
         {owner && operation.state === "PENDING" && (
@@ -982,6 +1153,10 @@ function CommercialOperations({
   // the vsCurrent comparison must rebind rather than diff against the
   // pre-apply snapshot.
   const [boundReload, setBoundReload] = useState(0);
+  // Set when the form moves after a preview — the shown operation no longer
+  // matches the inputs, so it stays visible but stops being applicable.
+  const [stale, setStale] = useState(false);
+  const [stateFilter, setStateFilter] = useState("");
   const generation = useRef(0);
 
   const me = useAuthSession().me;
@@ -1055,29 +1230,17 @@ function CommercialOperations({
   }, [projectId, history.length]);
 
   // The applied operation is the page's primary state — load history on
-  // mount instead of waiting for a manual Recargar click. StrictMode's
-  // simulated remount must not issue a second read: the ref survives the
-  // double-invoked effects while the generation guard owns staleness. The
-  // remount branch releases `busy`: the cleanup bumped the generation, so
-  // the orphaned mount-load's `finally` can never reset it — and no
-  // user-triggered run can exist yet on a remount.
-  const historyMounted = useRef(false);
+  // mount and whenever the active organization changes. The ref survives
+  // StrictMode's simulated remount, so the dedupe is per organization, not
+  // per effect run; the mount load's publish is guarded by the generation
+  // counter like every other request, never by mount bookkeeping.
+  const historyOrg = useRef<string | undefined>();
   useEffect(() => {
-    if (historyMounted.current) {
-      setBusy(false);
-      return;
-    }
-    historyMounted.current = true;
+    if (historyOrg.current === orgId) return;
+    historyOrg.current = orgId;
     if (orgId) void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId]);
-
-  useEffect(
-    () => () => {
-      generation.current += 1;
-    },
-    [],
-  );
   function invalidate(): void {
     generation.current += 1;
     setBusy(false);
@@ -1096,7 +1259,7 @@ function CommercialOperations({
       const value = await action();
       if (generation.current === current) publish(value);
     } catch (error) {
-      if (generation.current === current) setError(actionErrorDetail(error, t(errorKey)));
+      if (generation.current === current) setError(pricingError(error, errorKey));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -1115,6 +1278,7 @@ function CommercialOperations({
   }
   function publishOperation(value: Operation): void {
     if (!isOperation(value)) throw new Error("pricing.malformedOperation");
+    setStale(false);
     setOperation(value);
   }
   function apply(reject = false): Promise<void> {
@@ -1130,6 +1294,20 @@ function CommercialOperations({
         publishOperation(value);
         setHistory((rows) => rows.map((row) => (row.id === value.id ? value : row)));
         setBoundReload((count) => count + 1);
+      },
+      "pricing.applyError",
+    );
+  }
+  function withdraw(): Promise<void> {
+    if (!operation) return Promise.resolve();
+    return runCurrent(
+      () =>
+        request<Operation>(`operations/${operation.id}/withdraw/`, "POST", {
+          reason: reason || t("pricing.withdrawReason"),
+        }),
+      (value) => {
+        publishOperation(value);
+        setHistory((rows) => rows.map((row) => (row.id === value.id ? value : row)));
       },
       "pricing.applyError",
     );
@@ -1164,7 +1342,7 @@ function CommercialOperations({
           const target = event.target as HTMLInputElement;
           if (target.name === "reason" || target.name === "confirmed") return;
           invalidate();
-          setOperation(null);
+          setStale(true);
         }}
         onSubmit={(event) => {
           event.preventDefault();
@@ -1221,8 +1399,16 @@ function CommercialOperations({
         </label>
         <label>
           {t("pricing.context")}
-          <input name="context_code" defaultValue="DEFAULT" required />
+          <input
+            name="context_code"
+            defaultValue="DEFAULT"
+            disabled={selectedMode === "COST_PLUS_MARGIN"}
+            required={selectedMode !== "COST_PLUS_MARGIN"}
+          />
         </label>
+        {selectedMode === "COST_PLUS_MARGIN" && (
+          <p className="field-hint">{t("pricing.contextUnusedHint")}</p>
+        )}
         <label>
           {t("pricing.currency")}
           <select name="currency">
@@ -1243,6 +1429,7 @@ function CommercialOperations({
           {t("pricing.fxId")}
           <input name="fx_snapshot_id" />
         </label>
+        <p className="field-hint">{t("pricing.fxHint")}</p>
         <label>
           {t("pricing.discount")}
           <input
@@ -1279,6 +1466,7 @@ function CommercialOperations({
             ))}
           </select>
         </label>
+        <p className="field-hint">{t("pricing.segmentHint")}</p>
         <label>
           {t("pricing.reason")}
           <input
@@ -1317,16 +1505,32 @@ function CommercialOperations({
                 ? projectLabel(projectOptions.find((p) => p.id === operation.project_id)!)
                 : t("projects.loadError")
           }
+          onWithdraw={() => void withdraw()}
           reasonReady={reason.trim().length > 0}
+          stale={stale}
         />
       )}
       <h2>{t("pricing.history")}</h2>
-      <button type="button" disabled={busy} onClick={() => void reload()}>
-        {t("pricing.reload")}
-      </button>
+      <div className="operation-history__filters">
+        <label>
+          {t("pricing.filterState")}
+          <select value={stateFilter} onChange={(event) => setStateFilter(event.target.value)}>
+            <option value="">{t("pricing.filterAll")}</option>
+            {["PENDING", "APPLIED", "REJECTED", "WITHDRAWN", "PREVIEW"].map((state) => (
+              <option key={state} value={state}>
+                {state.toLowerCase()}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" disabled={busy} onClick={() => void reload()}>
+          {t("pricing.reload")}
+        </button>
+      </div>
       {Array.isArray(history) &&
         history
           .filter((item) => !boundProjectId || item.project_id === boundProjectId)
+          .filter((item) => !stateFilter || item.state === stateFilter)
           .map((item) => (
             <article className="operation-history__item" key={item.id}>
               <p>
@@ -1339,18 +1543,30 @@ function CommercialOperations({
                         ? "pricing.applied"
                         : item.state === "REJECTED"
                           ? "pricing.rejected"
-                          : "pricing.notApplied",
+                          : item.state === "WITHDRAWN"
+                            ? "pricing.withdrawn"
+                            : "pricing.notApplied",
                   )}
                 </span>
               </p>
               <p className="operation-history__meta">
-                {item.revision_code} · {item.reason} · {formatDateTime(item.created_at)}
+                {[
+                  item.project_code,
+                  item.client_name,
+                  item.revision_code,
+                  item.requested_by_email,
+                  item.reason,
+                  formatDateTime(item.created_at),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => {
                   invalidate();
+                  setStale(false);
                   setOperation(item);
                   setReason(item.reason);
                   setConfirmed(false);
@@ -1362,6 +1578,42 @@ function CommercialOperations({
           ))}
     </section>
   );
+}
+
+/** Client-side port of backend/projects/typology.py's derive_typology —
+ * walks the same parametric tree so a drafted position doesn't claim every
+ * product is FIXED. The backend re-derives authoritatively on save. */
+function deriveDraftTypology(tree: unknown): string {
+  const OPENING: Record<string, string> = {
+    FIXED: "FIXED",
+    TURN_LEFT: "TURN",
+    TURN_RIGHT: "TURN",
+    TILT_TURN_LEFT: "TILT_TURN",
+    TILT_TURN_RIGHT: "TILT_TURN",
+    SLIDING_2L: "SLIDING_2L",
+    SLIDING_3L: "SLIDING_3L",
+    SLIDING_4L: "SLIDING_4L",
+    SLIDING: "SLIDING",
+    AWNING: "AWNING",
+    DOOR_ENTRY: "DOOR_ENTRY",
+  };
+  const node = tree as Record<string, unknown> | undefined;
+  if (!node) return "FIXED";
+  if (node.version === "product-v2") {
+    const modules = (node.assembly as { modules?: unknown[] } | undefined)?.modules;
+    if (Array.isArray(modules) && modules.length === 1)
+      return deriveDraftTypology((modules[0] as { tree?: unknown }).tree);
+    return "COMPOSITE";
+  }
+  let current: Record<string, unknown> = node;
+  if (current.type === "ROOT") {
+    const children = current.children;
+    if (!Array.isArray(children) || children.length !== 1) return "FIXED";
+    current = children[0] as Record<string, unknown>;
+  }
+  const children = current.children;
+  if (Array.isArray(children) && children.length) return "COMPOSITE";
+  return OPENING[String(current.opening_type)] ?? "FIXED";
 }
 
 function CommercialDraft({
@@ -1406,7 +1658,7 @@ function CommercialDraft({
                 parametric_tree: { ...inputs.parametricTree, glass_article_sku: data.glass_sku },
                 position_index: 1,
                 quantity: Number(data.quantity),
-                typology: "FIXED",
+                typology: deriveDraftTypology(inputs.parametricTree),
               },
             ],
           })

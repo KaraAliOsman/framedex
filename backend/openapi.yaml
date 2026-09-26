@@ -7107,6 +7107,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/pricing/operations/{operation_id}/withdraw/:
+    post:
+      operationId: pricing_withdraw
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: operation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/pricing/preview/:
     post:
       operationId: pricing_preview
@@ -15154,6 +15230,25 @@ components:
       - reconciliation_required
       - registration_state
       - scheduled_changes
+    CompositionLine:
+      type: object
+      properties:
+        kind:
+          type: string
+        sku:
+          type: string
+        quantity:
+          type: string
+        unit:
+          type: string
+        cost:
+          type: string
+      required:
+      - cost
+      - kind
+      - quantity
+      - sku
+      - unit
     ConfirmBatchRequestRequest:
       type: object
       properties:
@@ -19650,6 +19745,40 @@ components:
       - total_price_tax
       - valid_until
       - validity_expired
+    PositionBreakdown:
+      type: object
+      properties:
+        position_id:
+          type: string
+        position_index:
+          type: integer
+          nullable: true
+        unit_cost:
+          type: string
+        area_m2:
+          type: string
+        materials_cost:
+          type: string
+        waste_pct:
+          type: string
+        labor_rate_per_m2:
+          type: string
+        installation_rate_per_m2:
+          type: string
+        composition:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompositionLine'
+      required:
+      - area_m2
+      - composition
+      - installation_rate_per_m2
+      - labor_rate_per_m2
+      - materials_cost
+      - position_id
+      - position_index
+      - unit_cost
+      - waste_pct
     PositionDesign:
       type: object
       properties:
@@ -19772,6 +19901,12 @@ components:
           type: integer
         typology:
           type: string
+        cost_net:
+          type: string
+        price_net:
+          type: string
+        discount_pct:
+          type: string
         design:
           $ref: '#/components/schemas/PositionDesign'
         bom:
@@ -19781,10 +19916,13 @@ components:
           format: date-time
       required:
       - bom
+      - cost_net
       - design
+      - discount_pct
       - id
       - location_tag
       - position_index
+      - price_net
       - project_id
       - quantity
       - typology
@@ -19883,10 +20021,20 @@ components:
         project_id:
           type: string
           format: uuid
+        project_code:
+          type: string
+        project_name:
+          type: string
+        client_name:
+          type: string
         revision_code:
           type: string
           pattern: ^REV-[A-Z]+$
         discount_pct:
+          type: string
+        pricing_mode:
+          type: string
+        segment:
           type: string
         state:
           $ref: '#/components/schemas/PriceResponseStateEnum'
@@ -19900,6 +20048,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CostLineResponse'
+        positions_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/PositionBreakdown'
+        authorities:
+          type: array
+          items: {}
+        rules:
+          type: object
+          additionalProperties: {}
         total_cost:
           type: string
         project_net:
@@ -19912,6 +20070,9 @@ components:
           type: string
         requested_by:
           type: string
+        requested_by_email:
+          type: string
+          nullable: true
         approved_by:
           type: string
           nullable: true
@@ -19923,19 +20084,28 @@ components:
       required:
       - approved_at
       - approved_by
+      - authorities
+      - client_name
       - cost_lines
       - created_at
       - currency
       - discount_pct
       - id
       - lines
+      - positions_breakdown
+      - pricing_mode
+      - project_code
       - project_gross
       - project_id
+      - project_name
       - project_net
       - project_tax
       - reason
       - requested_by
+      - requested_by_email
       - revision_code
+      - rules
+      - segment
       - state
       - total_cost
     PriceResponseStateEnum:
@@ -19944,12 +20114,14 @@ components:
       - PENDING
       - APPLIED
       - REJECTED
+      - WITHDRAWN
       type: string
       description: |-
         * `PREVIEW` - PREVIEW
         * `PENDING` - PENDING
         * `APPLIED` - APPLIED
         * `REJECTED` - REJECTED
+        * `WITHDRAWN` - WITHDRAWN
     PricingModeEnum:
       enum:
       - COST_PLUS_MARGIN
@@ -22838,6 +23010,15 @@ components:
       - WHITE
       type: string
       description: '* `WHITE` - WHITE'
+    WithdrawRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - reason
     WorkCenter:
       type: object
       properties:

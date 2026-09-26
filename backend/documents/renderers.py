@@ -1806,7 +1806,11 @@ def _invoice_body(payload: dict[str, object]) -> str:
                             else ""
                         ),
                         position.get("quantity"),
-                        _money(position.get("price_net"), currency),
+                        (
+                            _money(position.get("price_net"), currency)
+                            if position.get("price_net") not in (None, "")
+                            else "—"
+                        ),
                     ]
                     for position in positions
                 ],
@@ -1927,7 +1931,11 @@ def _credit_note_body(payload: dict[str, object]) -> str:
                             else ""
                         ),
                         position.get("quantity"),
-                        _money(position.get("price_net"), currency),
+                        (
+                            _money(position.get("price_net"), currency)
+                            if position.get("price_net") not in (None, "")
+                            else "—"
+                        ),
                     ]
                     for position in positions
                 ],

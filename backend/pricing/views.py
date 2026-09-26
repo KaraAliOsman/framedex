@@ -27,10 +27,10 @@ from pricing.serializers import (
     AdminResponseSerializer, AdminWriteSerializer, ApplySerializer, DraftProjectSerializer,
     DraftResponseSerializer, PriceRequestSerializer, PriceResponseSerializer, RESOURCE_SERIALIZERS,
     ImportRequestSerializer, DesignBatchPreviewRequestSerializer,
-    DesignBatchPreviewResponseSerializer,
+    DesignBatchPreviewResponseSerializer, WithdrawSerializer,
 )
 from pricing.service import (apply_operation, design_batch_preview, operation_public,
-                             preview)
+                             preview, withdraw_operation)
 from pricing.xlsx_import import import_rows, parse_xlsx
 from projects.typology import derive_typology
 
@@ -114,7 +114,7 @@ def _preview_attempt(token, claims, organization_header, data, service=preview):
         enforce_owner_mfa(tenant,token.aal)
         if tenant.active_organization.role not in ('OWNER','ESTIMATOR'):
             raise PricingError('pricing_permission_denied')
-        attempt_data = {**data,'_actor_id':token.user_id}
+        attempt_data = {**data,'_actor_id':token.user_id,'_actor_email':token.email}
         with commercial_backend():
             output = service(tenant.active_organization.organization_id,tenant,attempt_data)
     return output
@@ -208,16 +208,35 @@ class ApplyView(APIView):
         return Response(price_response(output))
 
 
+class WithdrawView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(operation_id='pricing_withdraw',parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   request=WithdrawSerializer,responses={200:PriceResponseSerializer,**ERRORS},tags=['pricing'])
+    def post(self,request,operation_id):
+        data = validate(WithdrawSerializer,request.data)
+        with scope(request,('OWNER','ESTIMATOR')) as (token,tenant,org):
+            with commercial_backend():
+                output = withdraw_operation(org,token.user_id,tenant.active_organization.role,
+                                            operation_id,**data)
+        return Response(price_response(output))
+
+
 class OperationsView(APIView):
     @extend_schema(operation_id='pricing_operations',parameters=[ACTIVE_ORGANIZATION_HEADER],
                    responses={200:PriceResponseSerializer(many=True),**ERRORS},tags=['pricing'])
     def get(self,request):
         with scope(request,('OWNER','ESTIMATOR')) as (token,tenant,org):
             with commercial_backend():
-                condition = '' if tenant.active_organization.role=='OWNER' else ' AND requested_by=%s'
+                condition = '' if tenant.active_organization.role=='OWNER' else ' AND operation.requested_by=%s'
                 parameters = [org] if not condition else [org,token.user_id]
-                result = rows('SELECT * FROM public.pricing_operations WHERE org_id=%s'+condition+
-                              ' ORDER BY created_at DESC,id LIMIT 100',parameters)
+                result = rows('SELECT operation.*,project.code AS project_code,project.name AS project_name,'
+                              'project.client_name AS client_name '
+                              'FROM public.pricing_operations operation '
+                              'JOIN public.projects project ON project.id=operation.project_id '
+                              'AND project.org_id=operation.org_id '
+                              'WHERE operation.org_id=%s'+condition+
+                              ' ORDER BY operation.created_at DESC,operation.id LIMIT 100',parameters)
                 output = [price_response(operation_public(item)) for item in result]
         return Response(output)
 
