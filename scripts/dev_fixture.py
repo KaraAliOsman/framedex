@@ -683,40 +683,79 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
         )
         positions = []
         for p in prepared["positions"]:
-            handle_intents = [
-                {
-                    "schema_version": 1,
-                    "bay_id": req["bay_id"],
-                    "leaf_id": req.get("leaf_id"),
-                    "handle_domain_slot": req["handle_domain_slot"],
-                    "requested_height_mm": "1050",
-                    "vertical_reference": "OUTER_BOTTOM",
-                }
-                for policy in p.get("handle_requirements", [])
-                for req in policy.get("requirements", [])
-            ]
+            def pick(options, current):
+                if current:
+                    return current
+                if not options:
+                    raise RuntimeError("no policy options for position")
+                return options[0]["id"]
+
+            placement_id = pick(
+                p.get("placement_options") or [],
+                p.get("manufacturing_placement_policy_id"),
+            )
+            handle_id = pick(
+                p.get("handle_options") or [],
+                p.get("handle_requirement_policy_id"),
+            )
+            reinforcement_id = pick(
+                p.get("reinforcement_options") or [],
+                p.get("reinforcement_cut_policy_id"),
+            )
+
+            # Preserve prepared evidence verbatim, merging duplicate targets.
+            # The fixture must not invent or recalculate manufacturing values.
+            merged: dict[tuple, dict] = {}
+            for ann in p.get("workshop_suggestions") or []:
+                key = (ann.get("bay_id"), ann.get("leaf_id"))
+                row = merged.setdefault(key, dict(ann))
+                for k, v in ann.items():
+                    if v not in (None, [], {}, "") and not row.get(k):
+                        row[k] = v
+            annotations = list(merged.values())
+
+            handle_intents = []
+            for policy in p.get("handle_requirements") or []:
+                if str(policy.get("policy_id")) != str(handle_id):
+                    continue
+                for req in policy.get("requirements") or []:
+                    # Explicit DEMO design intent (not computed authority):
+                    # 400 mm down from the leaf top fits the short demo leaves.
+                    refs = req.get("permitted_vertical_references") or []
+                    if "LEAF_TOP" not in refs:
+                        raise RuntimeError("DEMO handle intent needs LEAF_TOP authority")
+                    requested = "400"
+                    handle_intents.append(
+                        {
+                            "schema_version": 1,
+                            "bay_id": req["bay_id"],
+                            "leaf_id": req.get("leaf_id"),
+                            "handle_domain_slot": req["handle_domain_slot"],
+                            "requested_height_mm": requested,
+                            "vertical_reference": "LEAF_TOP",
+                        }
+                    )
+
             positions.append(
                 {
                     "position_id": p["position_id"],
                     "calculation_hash": p["calculation_hash"],
                     "location_tag": p["location_tag"] or "POS",
-                    "manufacturing_placement_policy_id": p[
-                        "manufacturing_placement_policy_id"
-                    ],
-                    "handle_requirement_policy_id": p[
-                        "handle_requirement_policy_id"
-                    ],
-                    "reinforcement_cut_policy_id": p["reinforcement_cut_policy_id"],
-                    "workshop_annotations": p.get("workshop_suggestions", []),
+                    "manufacturing_placement_policy_id": placement_id,
+                    "handle_requirement_policy_id": handle_id,
+                    "reinforcement_cut_policy_id": reinforcement_id,
+                    "workshop_annotations": annotations,
                     "structural_inputs": p.get("structural_inputs", []),
-                    "glass_polishing": p.get("polishing_suggestions", []),
+                    "glass_polishing": p.get("polishing_suggestions")
+                    or p.get("glass_polishing")
+                    or [],
                     "handle_intents": handle_intents,
                     "accessory_schedule": {
                         "schema_version": 1,
                         "coverage": "NONE_REQUIRED",
                         "items": [],
                     },
-                    "legacy_handle_migration_confirmed": False,
+                    "legacy_handle_migration_confirmed": True,
                 }
             )
         api(
@@ -736,6 +775,7 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
             "current_pricing_operation_id"
         ):
             return {"id": detail["current_pricing_operation_id"]}
+        # Refresh only editable inputs; emitted inputs are immutable.
         save_inputs(project_id)
         operation = api(
             estimator,
