@@ -7,7 +7,7 @@ import json
 import pytest
 
 from ai_gateway.evals.outcomes import classify, evaluate, summarize
-from ai_gateway.evals.run import Recorder, load_cases
+from ai_gateway.evals.run import Recorder, fixture_project, load_cases
 from ai_gateway.evals.facts import frame_bar_count, priced_winner
 from ai_gateway.evals.redaction import redact_report
 
@@ -34,6 +34,15 @@ def test_owner_suite_is_complete_and_keeps_typo_and_orientation():
                                        [f"F{i:02}" for i in range(1, 4)] + ["G01", "G02"])
     assert cases[10]["request"] == "aser la bentana 20 cm mas ancha"
     assert cases[1]["expected"] == "fixed_tilt_left"
+
+
+def test_fixture_is_discovered_after_a_clean_stack_recreates_project_ids():
+    identity = "ffffffff-eeee-dddd-cccc-bbbbbbbbbbbb"
+    assert str(fixture_project([{"id": identity, "name": "Vivienda demo [CASA_LOMAS]"}])) == identity
+    with pytest.raises(ValueError):
+        fixture_project([])
+    with pytest.raises(ValueError):
+        fixture_project([{"id": identity, "name": "Otra vivienda [CASA_LOMAS]"}] * 2)
 
 
 def test_saying_dimensions_cannot_replace_the_edit():

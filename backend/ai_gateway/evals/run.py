@@ -36,7 +36,6 @@ from ai_gateway.evals.redaction import redact_report
 ROOT = Path(__file__).resolve().parents[3]
 NAMESPACE = uuid5(NAMESPACE_URL, "https://dekopen.local/dev-fixture")
 ORG_ID = uuid5(NAMESPACE, "org")
-PROJECT_ID = UUID("98de7f4e-331e-47b1-bf55-34def4556ffc")
 AI_TABLES = frozenset({
     "ai_jobs", "ai_job_cancel_signals", "ai_audit_logs", "job_runs", "job_events",
     "credit_ledger", "credit_lots", "credit_lot_movements", "credit_grants",
@@ -48,6 +47,13 @@ def load_cases() -> list[dict]:
     if len(cases) != 26 or len({c["id"] for c in cases}) != 26:
         raise ValueError("The owner suite must contain exactly 26 unique cases")
     return cases
+
+
+def fixture_project(items: list[dict]) -> UUID:
+    matches = [p for p in items if p.get("name", "").endswith("[CASA_LOMAS]")]
+    if len(matches) != 1:
+        raise ValueError("Prepare exactly one CASA_LOMAS demo fixture in the active organization")
+    return UUID(matches[0]["id"])
 
 
 def apply_copy(product: dict, ops: list[dict]) -> tuple[dict, dict]:
@@ -217,6 +223,8 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
     from engine_api.repository import SystemParamsRepository
     from django.db import connection
 
+    project_id = project["id"]
+
     with authenticated_rls_context(claims):
         catalog = _catalog(UUID(position["design"]["system_id"]), ORG_ID)
         params = SystemParamsRepository().load_visible(UUID(position["design"]["system_id"]), ORG_ID)
@@ -226,7 +234,7 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
         "second_floor_ids": [p["id"] for p in project["positions"] if
                              any(t in p["location_tag"].lower() for t in ("segundo piso", "2º piso", "piso 2"))],
         "position_three": next((p for p in project["positions"] if p["position_index"] == 3), None),
-        "quote_path": f"/projects/{PROJECT_ID}/pricing",
+        "quote_path": f"/projects/{project_id}/pricing",
         "most_expensive": None,
         "frame_bars": None,
         "revision_differences": None,
@@ -236,7 +244,7 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
     }
     with connection.cursor() as cursor:
         cursor.execute("SELECT revision_code FROM public.project_versions WHERE org_id=%s AND project_id=%s",
-                       [ORG_ID, PROJECT_ID])
+                       [ORG_ID, project_id])
         truth["revisions"] = [r[0] for r in cursor.fetchall()]
         cursor.execute("SELECT id, order_code, payload_json FROM public.orders "
                        "WHERE org_id=%s AND order_type='WORKSHOP_OT' ORDER BY order_code", [ORG_ID])
@@ -252,7 +260,7 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
         truth["most_expensive"] = priced_winner(project, operations)
     if {"REV-A", "REV-B"} <= set(truth["revisions"]):
         status, comparison = _request(client, "get",
-            f"documents/projects/{PROJECT_ID}/versions/compare/?base=REV-A&head=REV-B")
+            f"documents/projects/{project_id}/versions/compare/?base=REV-A&head=REV-B")
         if status == 200:
             truth["revision_differences"] = comparison.get("positions")
     if case["expected"] == "kitchen_position":
@@ -270,9 +278,9 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
     purchase = _claims_context(claims, "purchase_plan", {})
     truth["purchase_context"] = purchase
     truth["purchase_shortages"] = purchase.get("uncovered_lines") if purchase.get("coverage_verified") else None
-    quotation = _claims_context(claims, "quotation", {"project_id": str(PROJECT_ID)})
+    quotation = _claims_context(claims, "quotation", {"project_id": str(project_id)})
     truth["quotation_context"] = quotation
-    status, preparation = _request(client, "get", f"documents/projects/{PROJECT_ID}/inputs/")
+    status, preparation = _request(client, "get", f"documents/projects/{project_id}/inputs/")
     truth["documentary_preparation"] = preparation if status == 200 else {"http_status": status}
     truth["documentary_missing"] = preparation.get("missing") if status == 200 else None
     if case["view"] == "editor":
@@ -292,7 +300,7 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
     return truth
 
 
-def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str) -> dict:
+def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str, project_id: UUID) -> dict:
     from django.db import connection, transaction
     from ai_gateway import agent
     from ai_gateway.handlers import ai_agent_run
@@ -312,7 +320,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
             with connection.cursor() as cursor:
                 cursor.execute("UPDATE public.ai_routes SET provider=%s, provider_model=%s "
                                "WHERE capability='agent'", [provider, model])
-            status, project = _request(client, "get", f"projects/{PROJECT_ID}/")
+            status, project = _request(client, "get", f"projects/{project_id}/")
             if status != 200 or len(project.get("positions") or []) != 12:
                 raise RuntimeError("local_fixture_requires_twelve_positions")
             position = project["positions"][0]
@@ -338,7 +346,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
             surface = {"editor": "position", "project": "project", "factory": "production",
                        "general": "dashboard"}[case["view"]]
             refs = ({"position_id": position["id"]} if surface == "position" else
-                    {"project_id": str(PROJECT_ID)} if surface == "project" else {})
+                    {"project_id": str(project_id)} if surface == "project" else {})
             baseline = _snapshot()
             payload = {"surface": surface, "refs": refs, "goal": request,
                        "operation_key": f"eval:{case['id']}:{uuid4().hex}"}
@@ -476,6 +484,13 @@ def main() -> int:
     verified = get_token_verifier().verify(access_token)
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}", HTTP_X_ORGANIZATION_ID=str(ORG_ID))
+    status, listing = _request(client, "get", "projects/")
+    if status != 200:
+        parser.error("The estimator fixture cannot read its projects")
+    try:
+        project_id = fixture_project(listing.get("items") or [])
+    except ValueError as error:
+        parser.error(str(error))
     cases = load_cases()
     if args.case:
         cases = [c for c in cases if c["id"] == args.case]
@@ -484,7 +499,8 @@ def main() -> int:
     snapshot = _snapshot(include_ai=True)
     results = []
     for case in cases:
-        result = run_case(case, client=client, claims=verified.claims, provider=provider, model=model)
+        result = run_case(case, client=client, claims=verified.claims, provider=provider, model=model,
+                          project_id=project_id)
         results.append(result)
         print(f"{case['id']}: {'PASA' if result['passed'] else result['failure']} "
               f"({result['round_count']} rounds, {result['latency_ms']} ms)", flush=True)
@@ -493,7 +509,7 @@ def main() -> int:
         "schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(),
         "verified_ref": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "provider": provider, "provider_model": model,
-        "fixture": {"org_id": str(ORG_ID), "project_id": str(PROJECT_ID), "synthetic": True,
+        "fixture": {"org_id": str(ORG_ID), "project_id": str(project_id), "synthetic": True,
                     "manufacturing_authority": False},
         "transport": {"submit": "POST /api/v1/ai/agent/", "read": "GET /api/v1/ai/jobs/{id}/",
                       "worker": "ai_gateway.handlers.ai_agent_run", "transaction": "always rolled back"},
