@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -1225,7 +1226,7 @@ export function ProductionPage(): JSX.Element {
           {/* Piece in hand → find its order without opening one first
               (PM-M6). Top of the sidebar: scanning a stick is the most
               frequent floor gesture, above filters and boards. */}
-          <form
+          <ValidatedForm
             className="production-trace-lookup"
             onSubmit={(event) => {
               event.preventDefault();
@@ -1245,7 +1246,7 @@ export function ProductionPage(): JSX.Element {
             <button type="submit" disabled={pieceBusy || !pieceQuery.trim()}>
               {t("production.tracePieceLookup")}
             </button>
-          </form>
+          </ValidatedForm>
           {pieceReport ? (
             <TracePieceMatches
               report={pieceReport}
@@ -2842,7 +2843,7 @@ export function ProductionPage(): JSX.Element {
                       </fieldset>
                     ) : null}
                     {confirmOpen && canField && delivery ? (
-                      <form
+                      <ValidatedForm
                         className="production-delivery-form production-confirm-form"
                         onSubmit={(event) => {
                           event.preventDefault();
@@ -2980,13 +2981,13 @@ export function ProductionPage(): JSX.Element {
                             {t("production.deliveryCancel")}
                           </button>
                         </div>
-                      </form>
+                      </ValidatedForm>
                     ) : null}
                     {!delivery && deliveryForm === null ? (
                       <p className="production-optimize-empty">{t("production.deliveryEmpty")}</p>
                     ) : null}
                     {deliveryForm !== null && canWrite ? (
-                      <form
+                      <ValidatedForm
                         className="production-delivery-form"
                         onSubmit={(event) => {
                           event.preventDefault();
@@ -3137,7 +3138,7 @@ export function ProductionPage(): JSX.Element {
                             {t("production.deliveryCancel")}
                           </button>
                         </div>
-                      </form>
+                      </ValidatedForm>
                     ) : null}
                   </section>
                 );

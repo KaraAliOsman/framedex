@@ -1,0 +1,6962 @@
+{
+  "baseRef": "7e98f71d02f31949def1383766eb2b6ee53e156c",
+  "capturesPerSide": 352,
+  "method": "Occurrence counts per detector, route, role, theme and viewport. Overflow must not newly appear. Retained findings are not accepted as constitution compliance.",
+  "before": {
+    "radius-over-4": 11860,
+    "shadow-outside-scale": 200,
+    "multiple-primary": 8,
+    "contrast-under-aa": 812,
+    "raw-enum": 192,
+    "font-under-11": 2820,
+    "gradient": 16,
+    "interactive-without-effect": 40,
+    "touch-target-under-44": 480
+  },
+  "after": {
+    "radius-over-4": 3656,
+    "shadow-outside-scale": 112,
+    "multiple-primary": 8,
+    "contrast-under-aa": 338,
+    "raw-enum": 192,
+    "font-under-11": 1728,
+    "interactive-without-effect": 40,
+    "touch-target-under-44": 476
+  },
+  "newRegressions": [],
+  "routeComparisons": [
+    {
+      "route": [
+        "inicio",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 10,
+        "shadow-outside-scale": 6,
+        "multiple-primary": 1
+      },
+      "after": {
+        "radius-over-4": 6,
+        "shadow-outside-scale": 6,
+        "multiple-primary": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "inicio",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 10,
+        "shadow-outside-scale": 6,
+        "multiple-primary": 1
+      },
+      "after": {
+        "radius-over-4": 6,
+        "shadow-outside-scale": 6,
+        "multiple-primary": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "inicio",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 10,
+        "shadow-outside-scale": 6,
+        "multiple-primary": 1
+      },
+      "after": {
+        "radius-over-4": 6,
+        "shadow-outside-scale": 6,
+        "multiple-primary": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "inicio",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 10,
+        "shadow-outside-scale": 6,
+        "multiple-primary": 1
+      },
+      "after": {
+        "radius-over-4": 6,
+        "shadow-outside-scale": 6,
+        "multiple-primary": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "inicio",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 10,
+        "shadow-outside-scale": 6,
+        "contrast-under-aa": 1,
+        "multiple-primary": 1
+      },
+      "after": {
+        "radius-over-4": 6,
+        "shadow-outside-scale": 6,
+        "contrast-under-aa": 1,
+        "multiple-primary": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "inicio",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 10,
+        "shadow-outside-scale": 6,
+        "contrast-under-aa": 1,
+        "multiple-primary": 1
+      },
+      "after": {
+        "radius-over-4": 6,
+        "shadow-outside-scale": 6,
+        "contrast-under-aa": 1,
+        "multiple-primary": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "inicio",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 10,
+        "shadow-outside-scale": 6,
+        "contrast-under-aa": 1,
+        "multiple-primary": 1
+      },
+      "after": {
+        "radius-over-4": 6,
+        "shadow-outside-scale": 6,
+        "contrast-under-aa": 1,
+        "multiple-primary": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "inicio",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 10,
+        "shadow-outside-scale": 6,
+        "contrast-under-aa": 1,
+        "multiple-primary": 1
+      },
+      "after": {
+        "radius-over-4": 6,
+        "shadow-outside-scale": 6,
+        "contrast-under-aa": 1,
+        "multiple-primary": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "login",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 3
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "login",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 3
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "login",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 3
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "login",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 3
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "login",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 3
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "login",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 3
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "login",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 3
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "login",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 3
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 43,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 31,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 31,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 43,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 43,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 31,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 31,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 43,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 40,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 31,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 40,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 31,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 40,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 40,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 31,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 31,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 41,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 30,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 41,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "WORKSHOP_MANAGER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 30,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 41,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 30,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 41,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "panel",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 30,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 39,
+        "contrast-under-aa": 9,
+        "font-under-11": 4
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 39,
+        "contrast-under-aa": 9,
+        "font-under-11": 4
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 27,
+        "contrast-under-aa": 9,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 27,
+        "contrast-under-aa": 9,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 39,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 39,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 27,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 27,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 36,
+        "contrast-under-aa": 10,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 36,
+        "contrast-under-aa": 10,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 27,
+        "contrast-under-aa": 9,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 27,
+        "contrast-under-aa": 9,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 36,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 36,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 27,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 27,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 37,
+        "contrast-under-aa": 10,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 2,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 37,
+        "contrast-under-aa": 10,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 2,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "WORKSHOP_MANAGER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 26,
+        "contrast-under-aa": 9,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 2,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 26,
+        "contrast-under-aa": 9,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 2,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 37,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 2,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 26,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 2,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 37,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 2,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyectos",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 26,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 2,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 3,
+        "font-under-11": 5,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 52,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 52,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 3,
+        "font-under-11": 5,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 52,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 52,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 2,
+        "font-under-11": 5,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 2,
+        "font-under-11": 5,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 4,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 2,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 4,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 2,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 52,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 52,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 52,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 52,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 47,
+        "contrast-under-aa": 4,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 2,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 43,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "WORKSHOP_MANAGER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 43,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 47,
+        "contrast-under-aa": 4,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 2,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 43,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 47,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 43,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "proyecto-detalle",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 47,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "shadow-outside-scale": 2
+      },
+      "after": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-nueva",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 86,
+        "contrast-under-aa": 2,
+        "font-under-11": 12,
+        "shadow-outside-scale": 3,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 63,
+        "contrast-under-aa": 1,
+        "font-under-11": 1
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "posicion-nueva",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 94,
+        "contrast-under-aa": 2,
+        "font-under-11": 13,
+        "shadow-outside-scale": 2,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 63,
+        "contrast-under-aa": 1,
+        "font-under-11": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-nueva",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 86,
+        "contrast-under-aa": 2,
+        "font-under-11": 12,
+        "shadow-outside-scale": 3,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 63,
+        "contrast-under-aa": 1,
+        "font-under-11": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-nueva",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 94,
+        "contrast-under-aa": 2,
+        "font-under-11": 13,
+        "shadow-outside-scale": 2,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 63,
+        "contrast-under-aa": 1,
+        "font-under-11": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-nueva",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 86,
+        "contrast-under-aa": 2,
+        "font-under-11": 12,
+        "shadow-outside-scale": 3,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 63,
+        "contrast-under-aa": 1,
+        "font-under-11": 1
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "posicion-nueva",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 86,
+        "contrast-under-aa": 2,
+        "font-under-11": 12,
+        "shadow-outside-scale": 3,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 63,
+        "contrast-under-aa": 1,
+        "font-under-11": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-nueva",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 94,
+        "contrast-under-aa": 2,
+        "font-under-11": 13,
+        "shadow-outside-scale": 2,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 63,
+        "contrast-under-aa": 1,
+        "font-under-11": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-nueva",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 94,
+        "contrast-under-aa": 2,
+        "font-under-11": 13,
+        "shadow-outside-scale": 2,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 63,
+        "contrast-under-aa": 1,
+        "font-under-11": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-edicion",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 110,
+        "contrast-under-aa": 4,
+        "font-under-11": 17,
+        "shadow-outside-scale": 2,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 67,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-edicion",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 102,
+        "contrast-under-aa": 4,
+        "font-under-11": 16,
+        "shadow-outside-scale": 3,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 67,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "posicion-edicion",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 110,
+        "contrast-under-aa": 4,
+        "font-under-11": 17,
+        "shadow-outside-scale": 2,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 67,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-edicion",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 102,
+        "contrast-under-aa": 4,
+        "font-under-11": 16,
+        "shadow-outside-scale": 3,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 67,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-edicion",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 102,
+        "contrast-under-aa": 2,
+        "font-under-11": 16,
+        "shadow-outside-scale": 3,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 67,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "posicion-edicion",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 102,
+        "contrast-under-aa": 2,
+        "font-under-11": 16,
+        "shadow-outside-scale": 3,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 67,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-edicion",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 110,
+        "contrast-under-aa": 2,
+        "font-under-11": 17,
+        "shadow-outside-scale": 2,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 67,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "posicion-edicion",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 110,
+        "contrast-under-aa": 2,
+        "font-under-11": 17,
+        "shadow-outside-scale": 2,
+        "gradient": 1
+      },
+      "after": {
+        "radius-over-4": 67,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 5,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 5,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 15,
+        "contrast-under-aa": 1,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 15,
+        "contrast-under-aa": 1,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 15,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 5,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 5,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 15,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 15,
+        "contrast-under-aa": 1,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 15,
+        "contrast-under-aa": 1,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 15,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": true,
+      "overflowAfter": true
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 15,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-proyecto",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 12,
+        "contrast-under-aa": 1,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 24,
+        "contrast-under-aa": 1,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 24,
+        "contrast-under-aa": 1,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 12,
+        "contrast-under-aa": 1,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 24,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 12,
+        "contrast-under-aa": 3,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 24,
+        "contrast-under-aa": 3,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 12,
+        "contrast-under-aa": 3,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 12,
+        "contrast-under-aa": 1,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 12,
+        "contrast-under-aa": 1,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 21,
+        "contrast-under-aa": 4,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 12,
+        "contrast-under-aa": 3,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 21,
+        "contrast-under-aa": 4,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "precios-comercial",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 2,
+        "radius-over-4": 12,
+        "contrast-under-aa": 3,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "raw-enum": 2,
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "costos",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "costos",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 34,
+        "contrast-under-aa": 1,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "costos",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "costos",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 34,
+        "contrast-under-aa": 1,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "costos",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 34,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "costos",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 34,
+        "contrast-under-aa": 2,
+        "font-under-11": 4,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "costos",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 2,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "costos",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 2,
+        "font-under-11": 3,
+        "interactive-without-effect": 1
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "interactive-without-effect": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 33,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 33,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 33,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 33,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 30,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 30,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 30,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 30,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "clientes",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 33,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 33,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 33,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 33,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 30,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 30,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 30,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 30,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "cliente-detalle",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 93,
+        "contrast-under-aa": 4,
+        "font-under-11": 93,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 81,
+        "contrast-under-aa": 4,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 81,
+        "contrast-under-aa": 4,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 93,
+        "contrast-under-aa": 4,
+        "font-under-11": 93,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 93,
+        "contrast-under-aa": 19,
+        "font-under-11": 93,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 81,
+        "contrast-under-aa": 19,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 81,
+        "contrast-under-aa": 19,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 93,
+        "contrast-under-aa": 19,
+        "font-under-11": 93,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "WORKSHOP_MANAGER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 81,
+        "contrast-under-aa": 4,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 92,
+        "contrast-under-aa": 5,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 2,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 92,
+        "contrast-under-aa": 5,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 2,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 81,
+        "contrast-under-aa": 4,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 92,
+        "contrast-under-aa": 20,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 81,
+        "contrast-under-aa": 19,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 81,
+        "contrast-under-aa": 19,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "catalogo",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "raw-enum": 4,
+        "radius-over-4": 92,
+        "contrast-under-aa": 20,
+        "font-under-11": 92,
+        "shadow-outside-scale": 1
+      },
+      "after": {
+        "raw-enum": 4,
+        "radius-over-4": 75,
+        "contrast-under-aa": 1,
+        "shadow-outside-scale": 1,
+        "font-under-11": 89
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 23,
+        "contrast-under-aa": 1,
+        "font-under-11": 15
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 23,
+        "contrast-under-aa": 1,
+        "font-under-11": 15
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 23,
+        "contrast-under-aa": 2,
+        "font-under-11": 15
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 23,
+        "contrast-under-aa": 2,
+        "font-under-11": 15
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 20,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 2,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 20,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 2,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 20,
+        "contrast-under-aa": 3,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 20,
+        "contrast-under-aa": 3,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 2,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 2,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "WORKSHOP_MANAGER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 1,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 3,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 3,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "asistente",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 11,
+        "contrast-under-aa": 2,
+        "font-under-11": 14
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "font-under-11": 11
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 20,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 20,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 20,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 20,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 17,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 19,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "WORKSHOP_MANAGER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 19,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 19,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 19,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "trabajos",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 8,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "ajustes",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "ajustes",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "ajustes",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 46,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "ajustes",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 46,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "ajustes",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 46,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "ajustes",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 46,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "ajustes",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "ajustes",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 58,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "billetera",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "billetera",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "billetera",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 9,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "billetera",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 9,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "billetera",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "billetera",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "billetera",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 9,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "billetera",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 9,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "facturacion",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "facturacion",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 9,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "facturacion",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "facturacion",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 9,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "facturacion",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "facturacion",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "facturacion",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 9,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "facturacion",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 9,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 1,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "OWNER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 140,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "OWNER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 152,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "OWNER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 152,
+        "contrast-under-aa": 1,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "OWNER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 140,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "OWNER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 140,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "OWNER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 140,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "OWNER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 152,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "OWNER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 152,
+        "contrast-under-aa": 2,
+        "font-under-11": 4
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "WORKSHOP_MANAGER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 140,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 151,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 151,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 2
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 140,
+        "contrast-under-aa": 1,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 140,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 151,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 140,
+        "contrast-under-aa": 2,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "compras",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 151,
+        "contrast-under-aa": 3,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 5,
+        "contrast-under-aa": 1
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 28,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 24,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 23
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "WORKSHOP_MANAGER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 28,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 24,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 23
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "WORKSHOP_MANAGER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 28,
+        "contrast-under-aa": 3,
+        "touch-target-under-44": 24,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 23
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 28,
+        "contrast-under-aa": 3,
+        "touch-target-under-44": 24,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 23
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 18,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "WORKSHOP_MANAGER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 22,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 18,
+        "font-under-11": 3
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "OPERATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 26,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 23,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 23
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "OPERATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 26,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 23,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 23
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "OPERATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "OPERATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "OPERATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 26,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 23,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 23
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "OPERATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 26,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 23,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 23
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "OPERATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "OPERATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 21,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 4,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 18
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "INSTALLER",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 23,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 21,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 21
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "INSTALLER",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 23,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 21,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 21
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "INSTALLER",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 18,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 16,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 16
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "INSTALLER",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 18,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 16,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 16
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "INSTALLER",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 23,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 21,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 21
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "INSTALLER",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 18,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 16,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 16
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "INSTALLER",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 18,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 16,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 16
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "produccion",
+        "INSTALLER",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 23,
+        "contrast-under-aa": 2,
+        "touch-target-under-44": 21,
+        "font-under-11": 2
+      },
+      "after": {
+        "radius-over-4": 3,
+        "contrast-under-aa": 1,
+        "touch-target-under-44": 21
+      },
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-vigente",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-vigente",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-vigente",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-vigente",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-vigente",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-vigente",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-vigente",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-vigente",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-aprobada",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-aprobada",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-aprobada",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-aprobada",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-aprobada",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-aprobada",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-aprobada",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-aprobada",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-revocada",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-revocada",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-revocada",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-revocada",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-revocada",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-revocada",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-revocada",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-revocada",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-expirada",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-expirada",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-expirada",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-expirada",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-expirada",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-expirada",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-expirada",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-expirada",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-reemplazada",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-reemplazada",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-reemplazada",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-reemplazada",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-reemplazada",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-reemplazada",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-reemplazada",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "portal-reemplazada",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "pago-retorno",
+        "ESTIMATOR",
+        "light",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "pago-retorno",
+        "ESTIMATOR",
+        "light",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "pago-retorno",
+        "ESTIMATOR",
+        "light",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "pago-retorno",
+        "ESTIMATOR",
+        "light",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "pago-retorno",
+        "ESTIMATOR",
+        "dark",
+        "1440x900"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "pago-retorno",
+        "ESTIMATOR",
+        "dark",
+        "1024x768"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "pago-retorno",
+        "ESTIMATOR",
+        "dark",
+        "1280x800"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    },
+    {
+      "route": [
+        "pago-retorno",
+        "ESTIMATOR",
+        "dark",
+        "390x844"
+      ],
+      "before": {
+        "radius-over-4": 1,
+        "shadow-outside-scale": 1
+      },
+      "after": {},
+      "overflowBefore": false,
+      "overflowAfter": false
+    }
+  ],
+  "limits": [
+    "Portal refs are provisional fixture refs and exercise failure states, not five issued quotations.",
+    "HTTP and console errors inherited from current product/fixture are retained in raw reports.",
+    "No manufacturing authority or numerical result was invented for evidence."
+  ]
+}

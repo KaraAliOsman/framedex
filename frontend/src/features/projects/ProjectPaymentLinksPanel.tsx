@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
@@ -14,6 +15,7 @@ import type {
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { formatMoney } from "../money";
+import { compareDecimal, parseDecimalInput } from "../../decimal";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
   ANTICIPO: "projects.paymentKindAnticipo",
@@ -121,6 +123,11 @@ export function ProjectPaymentLinksPanel({
 
   async function create(event: FormEvent): Promise<void> {
     event.preventDefault();
+    const parsedAmount = parseDecimalInput(amount, 0);
+    if (parsedAmount === null || compareDecimal(parsedAmount, "0") <= 0) {
+      setMessage("Escribe un monto en pesos mayor que cero, sin decimales.");
+      return;
+    }
     setBusy(true);
     setMessage("");
     try {
@@ -129,7 +136,7 @@ export function ProjectPaymentLinksPanel({
         {
           operation_key: crypto.randomUUID(),
           kind,
-          amount: amount.replace(",", "."),
+          amount: parsedAmount,
           payer_email: payerEmail.trim(),
           ...(subject.trim() ? { subject: subject.trim() } : {}),
         },
@@ -207,7 +214,7 @@ export function ProjectPaymentLinksPanel({
         </p>
       )}
       {showForm && (
-        <form className="payments-form" onSubmit={create}>
+        <ValidatedForm className="payments-form" onSubmit={create}>
           <label>
             {t("projects.paymentKind")}
             <select
@@ -224,7 +231,8 @@ export function ProjectPaymentLinksPanel({
             <input
               required
               inputMode="numeric"
-              pattern="[0-9]+"
+              data-precision="0"
+              min="1"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
               placeholder="250000"
@@ -252,7 +260,7 @@ export function ProjectPaymentLinksPanel({
               {t("projects.paymentCancel")}
             </button>
           </div>
-        </form>
+        </ValidatedForm>
       )}
       {links.length > 0 && (
         <table className="payments-table">

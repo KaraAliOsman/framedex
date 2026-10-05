@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -951,7 +952,7 @@ function RequirementSection({
             suppliersFailed={suppliersFailed}
           />
           {pending.length > 0 && (
-            <form
+            <ValidatedForm
               className="purchasing-confirm"
               onSubmit={(event) => {
                 event.preventDefault();
@@ -977,7 +978,7 @@ function RequirementSection({
               <button type="submit" disabled={busy || !attested || !allAllocated}>
                 {t("purchasing.confirm")}
               </button>
-            </form>
+            </ValidatedForm>
           )}
         </>
       )}
@@ -1143,7 +1144,7 @@ function EligibilityForm({
         </p>
       ))}
       {requirements.length > 0 && (
-        <form
+        <ValidatedForm
           onSubmit={(event: FormEvent<HTMLFormElement>) => {
             event.preventDefault();
             const data = new FormData(event.currentTarget);
@@ -1253,7 +1254,7 @@ function EligibilityForm({
           <button type="submit" disabled={busy}>
             {t("purchasing.createEligibility")}
           </button>
-        </form>
+        </ValidatedForm>
       )}
     </details>
   );
@@ -1339,7 +1340,7 @@ function OrderCard({
         </p>
       )}
       {order.status === "DRAFT" && canWrite && (
-        <form
+        <ValidatedForm
           onSubmit={(event) => {
             event.preventDefault();
             void action(
@@ -1382,7 +1383,7 @@ function OrderCard({
           <button type="submit" disabled={busy || !attested}>
             {t("purchasing.send")}
           </button>
-        </form>
+        </ValidatedForm>
       )}
       <ul>
         {orderDocuments(order, role).map((doc) => (
@@ -1740,7 +1741,7 @@ function ReceivingPanel({
       {open && !state && <p>{t("purchasing.receivingLoading")}</p>}
       {formError ? <p role="alert">{formError}</p> : null}
       {open && state && (
-        <form onSubmit={submit}>
+        <ValidatedForm onSubmit={submit}>
           <div className="purchasing-receiving-scroll">
             <table>
               <thead>
@@ -1924,7 +1925,7 @@ function ReceivingPanel({
               </tbody>
             </table>
           )}
-        </form>
+        </ValidatedForm>
       )}
     </details>
   );

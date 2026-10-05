@@ -1,0 +1,244 @@
+.assembly-field {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+}
+.assembly-field > span {
+  color: var(--theme-text-secondary);
+  font-size: var(--type-title-m);
+}
+.assembly-field input {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-variant-numeric: tabular-nums;
+  padding: 0.25rem 0.4rem;
+  text-align: right;
+  width: 5.5rem;
+}
+.assembly-input-wrap {
+  align-items: center;
+  display: inline-flex;
+  position: relative;
+}
+.assembly-input-wrap input {
+  padding-right: 1.5rem;
+}
+.assembly-unit {
+  color: var(--theme-text-muted);
+  font-size: var(--type-body);
+  pointer-events: none;
+  position: absolute;
+  right: 0.45rem;
+}
+.assembly-field--inline {
+  gap: 0.5rem;
+}
+.assembly-field--inline input[type="checkbox"] {
+  width: auto;
+}
+.inspector-note {
+  color: var(--theme-text-muted);
+  font-size: var(--type-body);
+  margin: 0 0 0.4rem;
+}
+.inspector-subhead {
+  color: var(--theme-text-secondary);
+  font-size: var(--type-dense);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0.6rem 0 0.3rem;
+  text-transform: uppercase;
+}
+.frameless-rows {
+  display: grid;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.frameless-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.frameless-row select {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-size: var(--type-body);
+  padding: 0.2rem 0.3rem;
+}
+.frameless-row input[type="text"] {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-size: var(--type-body);
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  width: 7rem;
+}
+.frameless-row input[type="number"] {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-variant-numeric: tabular-nums;
+  padding: 0.25rem 0.4rem;
+  text-align: right;
+  width: 3.5rem;
+}
+.frameless-edges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+}
+.assembly-canvas {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  padding: 0.5rem 0.75rem;
+}
+.bow-plan-svg {
+  background: var(--theme-bg-canvas);
+  display: block;
+  min-height: 16rem;
+  width: 100%;
+}
+.plan-module {
+  cursor: pointer;
+  fill: var(--theme-glass-tint);
+  stroke: var(--theme-text-primary);
+  stroke-width: 6;
+  vector-effect: non-scaling-stroke;
+}
+.plan-module.is-selected {
+  fill: var(--theme-surface-card);
+  stroke: var(--theme-accent);
+}
+.plan-coupling {
+  fill: var(--theme-surface-card);
+  stroke: var(--theme-text-secondary);
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+.plan-front-chain {
+  stroke: var(--theme-accent);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
+}
+.plan-dimension {
+  fill: var(--theme-text-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.plan-dimension--total {
+  fill: var(--theme-text-primary);
+}
+.assembly-status {
+  border: 1px solid var(--theme-border-subtle);
+  font-size: var(--type-title-m);
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.6rem;
+}
+.assembly-status--valid {
+  border-color: var(--theme-success);
+  color: var(--theme-success);
+}
+.assembly-status--manufacturing_incomplete {
+  border-color: var(--theme-warning);
+  color: var(--theme-warning);
+}
+.assembly-status--invalid {
+  border-color: var(--theme-danger);
+  color: var(--theme-danger);
+}
+.assembly-status--idle {
+  color: var(--theme-text-secondary);
+}
+.assembly-issues {
+  color: var(--theme-text-secondary);
+  font-size: var(--type-body);
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+}
+.assembly-editor {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: 3rem 14rem minmax(0, 1fr) minmax(240px, 280px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "tools tree canvas side"
+    "status status status side";
+  height: calc(100dvh - 12rem);
+  min-height: 28rem;
+  position: relative;
+}
+@media (max-height: 52.5rem) {
+  .assembly-editor {
+    height: calc(100dvh - 9.5rem);
+    min-height: 20rem;
+  }
+  .canvas-viewport {
+    min-height: 18rem;
+  }
+  .plan-inset {
+    height: 7.5rem;
+    width: 10.5rem;
+  }
+}
+.assembly-editor--tree-closed {
+  grid-template-columns: 3rem minmax(0, 1fr) minmax(250px, 300px);
+  grid-template-areas:
+    "tools canvas side"
+    "status status side";
+}
+@media (max-width: 1100px) {
+  .assembly-editor,
+  .assembly-editor--tree-closed {
+    grid-template-columns: 3rem minmax(0, 1fr) minmax(240px, 300px);
+    grid-template-areas:
+      "tools canvas side"
+      "status status side";
+  }
+  .assembly-tree {
+    background: var(--theme-surface-panel);
+    border: 1px solid var(--theme-border-subtle);
+    border-radius: var(--radius-md);
+    bottom: 3.2rem;
+    box-shadow: var(--shadow-pop);
+    display: block;
+    left: 3.8rem;
+    max-width: min(18rem, 72vw);
+    overflow: hidden;
+    position: absolute;
+    top: 0.4rem;
+    width: 18rem;
+    z-index: var(--z-sticky);
+  }
+  .assembly-tree .object-tree {
+    border: none;
+    border-radius: var(--r-0);
+  }
+}
+@media (max-width: 820px) {
+  .assembly-editor,
+  .assembly-editor--tree-closed {
+    grid-template-columns: 3rem minmax(0, 1fr);
+    grid-template-rows: minmax(20rem, 55dvh) auto auto;
+    grid-template-areas:
+      "tools canvas"
+      "tools side"
+      "status status";
+    height: auto;
+    min-height: 0;
+  }
+  .canvas-viewport {
+    height: 100%;
+    min-height: 20rem;
+  }
+  .assembly-side {
+    overflow-y: visible;
+  }
+}

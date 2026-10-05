@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 // Progressive first-run flow: org identity → system context → demo-vs-real
 // data choice → first client → first project → first position → first quote.
 // Steps that produce records create them inline (client, project); steps that
@@ -471,7 +472,7 @@ export function OnboardingPage(): JSX.Element {
                 <StatusBadge tone="success" label={t("onboarding.clientSaved")} /> {clientName}
               </p>
             ) : canWrite ? (
-              <form className="auth-form" onSubmit={(event) => void createClient(event)}>
+              <ValidatedForm className="auth-form" onSubmit={(event) => void createClient(event)}>
                 <label htmlFor="onb-client-name">{t("clients.name")}</label>
                 <input
                   id="onb-client-name"
@@ -524,7 +525,7 @@ export function OnboardingPage(): JSX.Element {
                 >
                   {busy ? t("onboarding.saving") : t("onboarding.clientCreate")}
                 </button>
-              </form>
+              </ValidatedForm>
             ) : (
               <EmptyState
                 title={t("onboarding.clientReadonly")}
@@ -543,7 +544,7 @@ export function OnboardingPage(): JSX.Element {
                 <StatusBadge tone="success" label={t("onboarding.projectSaved")} /> {projectName}
               </p>
             ) : canWrite ? (
-              <form className="auth-form" onSubmit={(event) => void createProject(event)}>
+              <ValidatedForm className="auth-form" onSubmit={(event) => void createProject(event)}>
                 <label htmlFor="onb-project-name">{t("projects.name")}</label>
                 <input
                   id="onb-project-name"
@@ -574,7 +575,7 @@ export function OnboardingPage(): JSX.Element {
                 >
                   {busy ? t("onboarding.saving") : t("onboarding.projectCreate")}
                 </button>
-              </form>
+              </ValidatedForm>
             ) : (
               <EmptyState
                 title={t("onboarding.projectReadonly")}

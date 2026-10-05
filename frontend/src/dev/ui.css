@@ -1,0 +1,103 @@
+.ui-manual {
+  max-width: 90rem;
+  margin: auto;
+  padding: var(--space-24px);
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font: var(--type-body)/var(--line-body) var(--font-sans);
+}
+.ui-manual__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-24px);
+  align-items: start;
+  margin-bottom: var(--space-24px);
+}
+.ui-manual h1 {
+  font: 600 var(--type-display)/var(--line-display) var(--font-sans);
+  margin: var(--space-8px) 0;
+}
+.ui-manual h2 {
+  font: 600 var(--type-title-l)/var(--line-title-l) var(--font-sans);
+}
+.ui-manual__settings {
+  display: grid;
+  gap: var(--space-8px);
+}
+.ui-manual__sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--inspector-width);
+  gap: var(--space-24px);
+  margin: var(--space-16px) 0;
+}
+.ui-manual__sheet > div {
+  min-width: 0;
+}
+.ui-manual__values {
+  max-width: 44rem;
+}
+.ui-manual__fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-16px);
+}
+.ui-manual__fields .ui-field {
+  min-width: 0;
+}
+.ui-manual__glyphs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-24px);
+  margin: var(--space-16px) 0;
+}
+.ui-manual__glyphs figure {
+  margin: 0;
+  display: grid;
+  gap: var(--space-8px);
+  justify-items: center;
+}
+.ui-manual__glyphs .ui-opening-glyph {
+  width: var(--space-48px);
+  height: var(--space-48px);
+}
+.ui-manual__comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24px);
+  padding-block: var(--space-24px);
+}
+/* Isolated historical counterexample from board-06, never imported by production. */
+.ui-manual__bad {
+  padding: 32px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #6c4cc4, #304be7);
+  color: white;
+}
+.ui-manual__bad-card {
+  padding: 24px;
+  margin-block: 24px;
+  border-radius: 16px;
+  background: #fff;
+  color: #465158;
+  box-shadow: 0 12px 32px #32225e66;
+}
+@media (max-width: 720px) {
+  .ui-manual {
+    padding: var(--space-12px);
+  }
+  .ui-manual__header,
+  .ui-manual__sheet,
+  .ui-manual__comparison {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .ui-manual__fields {
+    grid-template-columns: 1fr;
+  }
+  .ui-manual__settings {
+    min-width: 0;
+  }
+  .ui-manual__settings .ui-segmented {
+    flex-wrap: wrap;
+  }
+}

@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useState } from "react";
 import { WorkCenterRequestKindEnum } from "../../api/generated/models";
 import type {
@@ -987,7 +988,7 @@ export function SystemWorkspaceView({
             </ul>
             {canEdit &&
               (centerForm ? (
-                <form
+                <ValidatedForm
                   className="ws-center-form"
                   onSubmit={(event) => {
                     event.preventDefault();
@@ -1042,7 +1043,7 @@ export function SystemWorkspaceView({
                     {t("projects.cancel")}
                   </button>
                   {centerError ? <span role="alert">{centerError}</span> : null}
-                </form>
+                </ValidatedForm>
               ) : (
                 <button
                   type="button"

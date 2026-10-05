@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -540,7 +541,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
           )}
         </div>
         {fields[resource] && resource !== "audits" && (
-          <form
+          <ValidatedForm
             key={`${resource}-${editing?.id ?? "new"}-${revision}`}
             onSubmit={(event) => void save(event)}
             className="pricing-form"
@@ -639,7 +640,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                 {t("pricing.cancel")}
               </button>
             )}
-          </form>
+          </ValidatedForm>
         )}
       </div>
       {(resource === "cost-lists" || resource === "cost-items") && (
@@ -881,7 +882,7 @@ function ImportCosts({
   return (
     <section className="pricing-import">
       <h2>{t("pricing.import")}</h2>
-      <form
+      <ValidatedForm
         onChange={() => {
           inputRevision.current += 1;
           pendingAuthority.current = null;
@@ -962,7 +963,7 @@ function ImportCosts({
           </label>
         </div>
         <button disabled={busy}>{t("pricing.previewImport")}</button>
-      </form>
+      </ValidatedForm>
       {error && <p role="alert">{error}</p>}
       {preview.length > 0 && (
         <table>
@@ -1785,7 +1786,7 @@ function CommercialOperations({
           }}
         />
       )}
-      <form
+      <ValidatedForm
         className="commercial-form"
         onChange={(event) => {
           const target = event.target as HTMLInputElement;
@@ -2030,7 +2031,7 @@ function CommercialOperations({
           {t("pricing.confirmDiscount")}
         </label>
         <button disabled={busy}>{t("pricing.preview")}</button>
-      </form>
+      </ValidatedForm>
       {error && (
         <p role="alert">
           {error}
@@ -2196,7 +2197,7 @@ function CommercialDraft({
       <p>
         {inputs.nominalWidthMm} × {inputs.nominalHeightMm} mm
       </p>
-      <form
+      <ValidatedForm
         onSubmit={(event) => {
           event.preventDefault();
           const data = Object.fromEntries(new FormData(event.currentTarget));
@@ -2258,7 +2259,7 @@ function CommercialDraft({
           <input name="reason" required disabled={busy} />
         </label>
         <button disabled={busy}>{t("pricing.createDraft")}</button>
-      </form>
+      </ValidatedForm>
       {error && <p role="alert">{error}</p>}
     </details>
   );

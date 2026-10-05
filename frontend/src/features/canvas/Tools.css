@@ -1,0 +1,259 @@
+.assembly-tools,
+.plan-inset,
+.model3d-inset {
+  background: var(--theme-surface-panel);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+}
+.assembly-tools {
+  align-content: start;
+  align-items: center;
+  border: 1px solid var(--theme-border-subtle);
+  gap: 2px;
+  grid-area: tools;
+  padding: 0.3rem 0;
+}
+.tool-button {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--theme-text-secondary);
+  display: flex;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  width: 2rem;
+}
+.tool-button:hover:not(:disabled) {
+  background: var(--theme-surface-hover);
+  color: var(--theme-text-primary);
+}
+.tool-button.is-active {
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent-ink);
+}
+.tool-button:disabled {
+  color: var(--theme-text-muted);
+  cursor: default;
+  opacity: 0.45;
+}
+.tool-icon {
+  fill: none;
+  height: 1rem;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  width: 1rem;
+}
+.assembly-tools__divider {
+  background: var(--theme-border-subtle);
+  height: 1px;
+  margin: 0.25rem 0;
+  width: 1.4rem;
+}
+.assembly-tools__spacer {
+  flex: 1;
+}
+.assembly-canvas {
+  position: relative;
+}
+.plan-inset {
+  border: 1px solid var(--theme-border-subtle);
+  bottom: 0.75rem;
+  box-shadow: var(--shadow-raise);
+  height: 9rem;
+  position: absolute;
+  right: 0.75rem;
+  width: 13rem;
+  z-index: var(--z-base);
+  pointer-events: none;
+}
+.plan-inset__header,
+.plan-inset .plan-module,
+.plan-inset .plan-coupling,
+.plan-inset .plan-angle,
+.plan-inset .plan-issue-flag {
+  pointer-events: auto;
+}
+.plan-inset__header {
+  align-items: center;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-muted);
+  display: flex;
+  font-size: var(--type-dense);
+  font-weight: 600;
+  justify-content: space-between;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.5rem;
+  text-transform: uppercase;
+}
+.plan-inset__header button {
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted);
+  font-size: var(--type-title-m);
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+.plan-inset__svg {
+  flex: 1;
+  min-height: 0;
+}
+.plan-toggle {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-sm);
+  bottom: 0.75rem;
+  color: var(--theme-text-secondary);
+  font-size: var(--type-dense);
+  padding: 0.3rem 0.6rem;
+  position: absolute;
+  right: 0.75rem;
+  z-index: var(--z-base);
+}
+.model3d-inset {
+  border: 1px solid var(--theme-border-subtle);
+  bottom: 0.75rem;
+  box-shadow: var(--shadow-raise);
+  height: 22rem;
+  left: 0.75rem;
+  position: absolute;
+  width: 30rem;
+  z-index: var(--z-base);
+}
+.model3d-inset .model3d-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.model3d-toolbar {
+  align-items: center;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.3rem 0.5rem;
+}
+.model3d-toolbar button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--theme-text-secondary);
+  font-size: var(--type-dense);
+  padding: 0.18rem 0.5rem;
+}
+.model3d-toolbar button:hover {
+  background: var(--theme-surface-hover);
+}
+.model3d-toolbar button.is-active {
+  background: var(--theme-accent-soft);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent-ink);
+}
+.model3d-face {
+  color: var(--theme-text-muted);
+  font-size: var(--type-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-left: auto;
+  text-transform: uppercase;
+}
+.model3d-inset .model3d-view .model3d-canvas {
+  flex: 1;
+  min-height: 0;
+}
+.model3d-diagnostics {
+  border-bottom: 1px solid var(--theme-border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.3rem 0.5rem;
+}
+.model3d-diag {
+  background: var(--theme-warning-soft, var(--theme-surface-card));
+  border: 1px solid var(--theme-warning, var(--theme-border-strong));
+  border-radius: var(--radius-sm);
+  color: var(--theme-text-secondary);
+  cursor: help;
+  font-size: var(--type-micro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.08rem 0.4rem;
+}
+.model3d-diag--handle_out_of_range,
+.model3d-diag--handle_datum_unsupported,
+.model3d-diag--kit_unknown {
+  border-color: var(--theme-danger, var(--theme-border-strong));
+}
+.model3d-illustrative {
+  border-bottom: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-muted);
+  font-size: var(--type-micro);
+  margin: 0;
+  padding: 0.22rem 0.5rem;
+}
+.model3d-fallback {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 12rem;
+}
+.model3d-fallback__text {
+  color: var(--theme-text-secondary);
+  font-size: var(--type-title-m);
+  margin: 0;
+  max-width: 22rem;
+  text-align: center;
+}
+.model3d-loading {
+  align-items: center;
+  color: var(--theme-text-muted);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  font-size: var(--type-dense);
+  gap: 10px;
+  justify-content: center;
+}
+.model3d-loading__bar {
+  width: 148px;
+  height: 3px;
+  border-radius: var(--r-2);
+  overflow: hidden;
+  position: relative;
+  background: var(--theme-skeleton);
+}
+.model3d-loading__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: var(--r-2);
+  background: var(--theme-accent);
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .model3d-loading__bar::after {
+    animation: none;
+    width: 100%;
+  }
+}
+.model3d-toggle {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-sm);
+  bottom: 3rem;
+  color: var(--theme-text-secondary);
+  font-size: var(--type-dense);
+  padding: 0.3rem 0.6rem;
+  position: absolute;
+  left: 0.75rem;
+  z-index: var(--z-base);
+}
+.assembly-field-error {
+  color: var(--theme-danger);
+  display: block;
+  font-size: var(--type-dense);
+  margin-top: 0.2rem;
+}

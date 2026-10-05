@@ -684,7 +684,7 @@ describe("CatalogPage article section editor", () => {
 
     fireEvent.submit(editorForm());
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("catalog.errorValidation"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Revisa los campos indicados");
     expectNoWrites();
   });
 

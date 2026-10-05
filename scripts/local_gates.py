@@ -166,7 +166,8 @@ def run_auth_e2e(env: Mapping[str, str], *test_args: str) -> None:
     backend_env = dict(env)
     frontend_env = {
         key: value for key, value in env.items()
-        if key not in {"DATABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SECRET_KEY", "JWT_SECRET"}
+        if not key.startswith("AI_GATEWAY_")
+        and key not in {"DATABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SECRET_KEY", "JWT_SECRET"}
     }
     commands = [
         ([sys.executable, "backend/manage.py", "runserver", "127.0.0.1:8000", "--noreload"], ROOT, backend_env),

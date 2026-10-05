@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
@@ -31,6 +32,7 @@ import { t, type TranslationKey } from "../../i18n/es-CL";
 import { actionErrorDetail } from "../errors";
 import { formatDate, formatMoney, parseMoneyInput } from "../money";
 import { formatRevision } from "../../format";
+import { compareDecimal, decimalInputValue } from "../../decimal";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
 import { useConfirm, usePrompt } from "../../ui";
 
@@ -133,19 +135,21 @@ export function ProjectPaymentsPanel({
     // Follow the deal's position — registering against an outstanding
     // balance should open as SALDO prefilled with what is owed, not the
     // anticipo the first payment was (review WM7).
-    const collected = summary ? Number(summary.collected) : 0;
-    const balance = summary ? Number(summary.balance) : 0;
-    const nextKind: PaymentKindEnum = collected > 0 && balance > 0 ? "SALDO" : "ANTICIPO";
+    const collected = summary?.collected ?? "0";
+    const balance = summary?.balance ?? "0";
+    const nextKind: PaymentKindEnum =
+      compareDecimal(collected, "0") > 0 && compareDecimal(balance, "0") > 0 ? "SALDO" : "ANTICIPO";
     setKind(nextKind);
-    if (nextKind === "SALDO") setAmount(String(balance));
+    if (nextKind === "SALDO") setAmount(decimalInputValue(balance).replace(".", ","));
     setBaseline({ kind: nextKind, method });
     setShowForm(true);
   }
 
   async function record(event: FormEvent): Promise<void> {
     event.preventDefault();
-    const amountParsed = parseMoneyInput(amount);
-    if (amountParsed === null) {
+    const precision = summary?.currency === "USD" ? 2 : 0;
+    const amountParsed = parseMoneyInput(amount, precision);
+    if (amountParsed === null || compareDecimal(amountParsed, "0") <= 0) {
       setMessage(t("projects.paymentAmountInvalid"));
       return;
     }
@@ -590,7 +594,7 @@ export function ProjectPaymentsPanel({
         </div>
       )}
       {showForm && (
-        <form className="payments-form" onSubmit={record}>
+        <ValidatedForm className="payments-form" onSubmit={record}>
           <label>
             {t("projects.paymentKind")}
             <select
@@ -607,7 +611,9 @@ export function ProjectPaymentsPanel({
             <input
               required
               inputMode="decimal"
-              pattern="[0-9]{1,3}(\.[0-9]{3})+|[0-9]+"
+              name="amount"
+              data-precision={summary?.currency === "USD" ? 2 : 0}
+              min={summary?.currency === "USD" ? "0.01" : "1"}
               title={t("projects.paymentAmountHint")}
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
@@ -643,7 +649,7 @@ export function ProjectPaymentsPanel({
               {t("projects.paymentCancel")}
             </button>
           </div>
-        </form>
+        </ValidatedForm>
       )}
       {payments.length > 0 && (
         <table className="payments-table">

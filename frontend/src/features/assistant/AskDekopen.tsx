@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -329,7 +330,7 @@ export function AskDekopen({
                 ) : null}
               </div>
               {message ? <p className="ask-dock__error">{message}</p> : null}
-              <form
+              <ValidatedForm
                 className="ask-dock__form"
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -349,7 +350,7 @@ export function AskDekopen({
                 <button type="submit" disabled={busy || !question.trim()}>
                   {t("ask.send")}
                 </button>
-              </form>
+              </ValidatedForm>
             </>
           )}
         </section>

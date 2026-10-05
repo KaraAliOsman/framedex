@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -913,7 +914,7 @@ export function AgentBody({
         </ul>
       ) : null}
       {!terminal ? (
-        <form
+        <ValidatedForm
           className="ask-dock__form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -939,7 +940,7 @@ export function AgentBody({
           <button type="submit" disabled={(busy && !live) || !goal.trim()}>
             {t("agent.send")}
           </button>
-        </form>
+        </ValidatedForm>
       ) : null}
     </>
   );

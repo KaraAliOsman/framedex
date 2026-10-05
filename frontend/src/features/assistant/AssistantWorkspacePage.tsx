@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -982,7 +983,7 @@ export function AssistantWorkspacePage(): JSX.Element {
             {error}
           </p>
         ) : null}
-        <form
+        <ValidatedForm
           className="aiws-composer"
           onSubmit={(event) => {
             event.preventDefault();
@@ -1053,7 +1054,7 @@ export function AssistantWorkspacePage(): JSX.Element {
           >
             {t("agent.send")}
           </button>
-        </form>
+        </ValidatedForm>
       </div>
       <aside className="aiws-inspector" aria-label={t("aiws.inspector")}>
         {artifact ? (

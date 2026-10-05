@@ -1,0 +1,91 @@
+.ui-panel {
+  padding: var(--space-12px);
+  border-block-start: 1px solid var(--border-default);
+}
+.ui-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8px);
+  margin-block-end: var(--space-12px);
+}
+.ui-panel__header h2,
+.ui-inspector :is(h2, h3) {
+  margin: 0;
+  font-size: var(--type-title-m);
+  line-height: var(--line-title-m);
+  font-weight: 600;
+}
+.ui-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8px);
+}
+.ui-inspector {
+  width: min(100%, var(--inspector-width));
+  padding: var(--space-12px);
+  border-inline-start: 1px solid var(--border-default);
+  background: var(--surface-panel);
+}
+.ui-inspector details {
+  padding-block: var(--space-8px);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.ui-inspector summary {
+  cursor: pointer;
+  font-weight: 500;
+  margin-block-end: var(--space-8px);
+}
+.ui-key-value {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--space-8px);
+  min-height: var(--density-compact);
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ui-key-value dt {
+  color: var(--text-secondary);
+  font-size: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ui-key-value dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.ui-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  gap: var(--space-8px);
+  padding: 0;
+}
+.ui-stepper li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8px);
+  color: var(--text-secondary);
+}
+.ui-stepper li + li::before {
+  content: "›";
+}
+.ui-stepper [aria-current="step"] {
+  color: var(--text-primary);
+  font-weight: 600;
+  border-block-end: 2px solid var(--interactive);
+}
+.ui-stepper [data-complete]::after {
+  content: "✓";
+}
+.ui-stat {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4px);
+}
+.ui-stat strong {
+  font-weight: 500;
+}

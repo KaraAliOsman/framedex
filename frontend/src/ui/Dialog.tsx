@@ -2,6 +2,8 @@ import { type PropsWithChildren, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { t } from "../i18n/es-CL";
+import { useFloatingLayer } from "./floatingLayer";
+import { Icon } from "./Glyphs";
 
 export type DialogProps = PropsWithChildren<{
   title: string;
@@ -9,6 +11,7 @@ export type DialogProps = PropsWithChildren<{
   /** Optional footer actions (buttons). Enter triggers the first primary action. */
   footer?: React.ReactNode;
   width?: "s" | "m" | "l";
+  surface?: "dialog" | "drawer" | "palette";
 }>;
 
 /**
@@ -22,10 +25,12 @@ export function Dialog({
   onClose,
   footer,
   width = "m",
+  surface = "dialog",
   children,
 }: DialogProps): JSX.Element {
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<Element | null>(null);
+  useFloatingLayer(true, onClose);
 
   useEffect(() => {
     previousFocus.current = document.activeElement;
@@ -86,11 +91,11 @@ export function Dialog({
   }, [onClose]);
 
   return createPortal(
-    <div className="ui-overlay" onClick={onClose} role="presentation">
+    <div className={`ui-overlay ui-overlay--${surface}`} onClick={onClose} role="presentation">
       <div
         aria-label={title}
         aria-modal="true"
-        className={`ui-dialog ui-dialog--${width}`}
+        className={`ui-dialog ui-dialog--${width} ui-dialog--${surface}`}
         onClick={(event) => event.stopPropagation()}
         ref={panelRef}
         role="dialog"
@@ -101,10 +106,11 @@ export function Dialog({
           <button
             aria-label={t("ui.close")}
             className="ui-icon-button"
+            title={`${t("ui.close")} — Esc`}
             onClick={onClose}
             type="button"
           >
-            ×
+            <Icon kind="close" />
           </button>
         </header>
         <div className="ui-dialog__body">{children}</div>
