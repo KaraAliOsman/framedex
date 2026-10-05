@@ -244,6 +244,29 @@ def test_installation_height_needs_typed_question_not_guessed_handle():
     assert not verdict("E08", before, after, result=result)["passed"]
 
 
+@pytest.mark.parametrize("question", [
+    "¿Registrar la altura de manilla 1050 mm desde el piso como nota para fabricación/instalación?",
+    "¿Quieres que la ventana tenga manilla a 1050 del piso?",
+    "¿Quieres que instalemos una manilla?",
+])
+def test_handle_note_is_not_a_question_about_the_missing_installation_datum(question):
+    before = product()
+    result = {"questions": [question]}
+    scored = verdict("E08", before, before, result=result)
+    assert not scored["passed"]
+    assert scored["failure"] == "no_pidio_aclaracion"
+
+
+@pytest.mark.parametrize("question", [
+    "¿Cuál es la altura del antepecho?",
+    "¿A qué distancia del piso queda la parte inferior del marco?",
+    "Indica a qué altura del suelo está la ventana.",
+])
+def test_installation_datum_questions_accept_workshop_wording(question):
+    before = product()
+    assert verdict("E08", before, before, result={"questions": [question]})["passed"]
+
+
 def test_glass_must_resolve_to_real_recipe_or_real_alternatives():
     before = product()
     after = deepcopy(before)
@@ -257,6 +280,27 @@ def test_glass_must_resolve_to_real_recipe_or_real_alternatives():
     assert verdict("E06", before, before, result=result, truth=truth)["passed"]
     result["reply"] = "No está disponible. Alternativa: INVENTADO."
     assert not verdict("E06", before, before, result=result, truth=truth)["passed"]
+
+
+@pytest.mark.parametrize("case", ["E05", "E06"])
+def test_current_glass_mention_does_not_offer_an_available_alternative(case):
+    before = product()
+    truth = {"glass_recipes": {"VIDRIO-BASE": "4 Float"}}
+    response = {"reply": "El vidrio actual es VIDRIO-BASE. No hay artículos de vidrio en el catálogo. "
+                "Voy a revisar las opciones disponibles antes de tocar nada."}
+    assert not verdict(case, before, before, result=response, truth=truth)["passed"]
+    response["artifacts"] = [{"kind": "catalog_candidates", "payload": {"skus": ["VIDRIO-BASE"]}}]
+    assert verdict(case, before, before, result=response, truth=truth)["passed"]
+    response["artifacts"][0]["payload"]["skus"].append("INVENTADO")
+    assert not verdict(case, before, before, result=response, truth=truth)["passed"]
+
+
+def test_general_opening_explanation_cannot_contradict_hinge_handedness():
+    before = product()
+    reply = "Abatible: gira sobre un eje vertical. Oscilobatiente: giro y basculación superior."
+    assert verdict("G02", before, before, result={"reply": reply})["passed"]
+    reply += " El lado indica hacia dónde gira la hoja vista desde el interior."
+    assert not verdict("G02", before, before, result={"reply": reply})["passed"]
 
 
 def test_technical_weight_is_exact_and_unknown_requires_cause():

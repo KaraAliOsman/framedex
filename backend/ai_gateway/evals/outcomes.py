@@ -57,6 +57,24 @@ def _narrative(result: dict) -> str:
     ]).lower()
 
 
+def _installation_question(question: str) -> bool:
+    """Ask for the missing window datum, not the requested handle height."""
+    text = question.lower()
+    return bool(re.search(r"altura|distancia|cu[aá]nto", text)
+                and re.search(r"piso|suelo|antepecho", text)
+                and re.search(r"ventana|vano|marco|antepecho", text)
+                and re.search(r"a qu[eé]|cu[aá]l|cu[aá]nto|dime|indica|confirma", text))
+
+
+def _offered_glass(text: str, catalog: dict) -> list[str]:
+    """An installed SKU is not an offered substitute; require an offer clause."""
+    clauses = re.split(r"[.!?;\n]", text)
+    return [sku for sku in catalog if any(
+        sku.lower() in clause and re.search(
+            r"alternativa|opci[oó]n|opciones|disponibles?\s*[:=]|puedes (?:usar|elegir)|ofrezco", clause)
+        for clause in clauses)]
+
+
 def classify(error: str, rejected: list[dict], *, grounding: bool = False) -> str:
     if error in {"ai_provider_not_configured", "ai_provider_mock_disabled",
                  "ai_capability_unknown", "ai_entitlement_required", "insufficient_credits"}:
@@ -107,7 +125,7 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
     splits_h = [n for n in all_nodes if n.get("type") == "SPLIT_H"]
     questions = result.get("questions") or []
     catalog = truth.get("glass_recipes") or {}
-    available_mentions = [sku for sku in catalog if sku.lower() in text]
+    available_mentions = _offered_glass(text, catalog)
     kinds = {a.get("kind") for a in artifacts}
 
     if expectation in {"two_fixed_bays", "fixed_tilt_left", "three_bays"}:
@@ -176,9 +194,8 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
     elif expectation in {"incompatible_sliding", "installation_question"}:
         check("no_mutation", after == before and not ops)
         if expectation == "installation_question":
-            check("installation_height_question", any(
-                re.search(r"(?:instal|antepecho|ventana.*piso|piso.*ventana)", q.lower())
-                for q in questions), "typed question about window installation height", questions)
+            check("installation_height_question", any(_installation_question(q) for q in questions),
+                  "typed question about window installation height", questions)
         else:
             check("selected_system_rejects_sliding", truth.get("sliding_supported") is False,
                   "negative engine/catalog compatibility", truth.get("sliding_supported"))
@@ -291,6 +308,12 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
         check("dual_tilt_and_turn", bool(re.search(r"(?:inclina|bascul|abatimiento|superior)", text)) and
               bool(re.search(r"lateral|gira|giro|bisagra", text)))
         check("no_technical_numbers", not re.search(r"\d+(?:[.,]\d+)?\s*(?:mm|kg|grados|°|\$)", text))
+        # LEFT/RIGHT declare the hinge side in the owner's convention. The
+        # general explanation must not add a contradictory handedness rule.
+        check("consistent_handedness", not re.search(
+            r"(?:el )?lado indica (?:hacia )?(?:d[oó]nde|qu[eé] lado).*gira|"
+            r"turn_left.{0,80}manilla (?:a la |en la )?izquierda|"
+            r"turn_right.{0,80}manilla (?:a la |en la )?derecha", text))
         check("no_mutation", not ops and after == before)
     else:
         raise ValueError(f"unknown oracle: {expectation}")
@@ -302,7 +325,7 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
             category = "accion_consecuente_ejecutada"
         elif any(c["check"] == "context_available" and not c["passed"] for c in checks):
             category = "contexto_insuficiente"
-        elif expectation == "installation_question" and not questions:
+        elif expectation == "installation_question" and not any(_installation_question(q) for q in questions):
             category = "no_pidio_aclaracion"
         else:
             category = classify("", result.get("rejected") or [])
