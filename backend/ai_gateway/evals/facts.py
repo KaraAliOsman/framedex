@@ -15,14 +15,21 @@ def priced_winner(project: dict, operations: list[dict]) -> str | None:
     authority = project.get("current_pricing_operation_id")
     if not project.get("pricing_current") or not authority:
         return None
-    operation = next((o for o in operations if o.get("id") == authority
-                      and o.get("state") == "APPLIED" and o.get("project_id") == project.get("id")
-                      and o.get("revision_code") == project.get("current_revision")), None)
-    if operation is None:
-        return None
     positions = {p["position_index"]: p for p in project.get("positions") or []}
-    lines = operation.get("lines") or []
-    if not lines or {line["position_index"] for line in lines} != set(positions):
+    operation = next((o for o in operations if o.get("id") == authority), None)
+    if operation is not None:
+        if (operation.get("state") != "APPLIED" or operation.get("project_id") != project.get("id")
+                or operation.get("revision_code") != project.get("current_revision")):
+            return None
+        lines = operation.get("lines") or []
+    else:
+        # The estimator's operation list only exposes their own previews.
+        # Project GET still exposes applied position prices, gated by its
+        # current APPLIED authority (including the reset/revision check).
+        if any(p.get("price_net") is None for p in positions.values()):
+            return None
+        lines = [{"position_index": index, "line_net": p["price_net"]} for index, p in positions.items()]
+    if not lines or len(lines) != len(positions) or {line["position_index"] for line in lines} != set(positions):
         return None
     winner = max(lines, key=lambda line: (Decimal(str(line["line_net"])), -line["position_index"]))
     return positions[winner["position_index"]]["id"]

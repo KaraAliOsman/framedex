@@ -119,6 +119,9 @@ def test_price_ranking_uses_the_current_applied_operation_and_exact_engine_lines
     assert priced_winner({**project, "pricing_current": False}, [operation]) is None
     assert priced_winner(project, [{**operation, "state": "PREVIEW"}]) is None
     assert priced_winner(project, [{**operation, "revision_code": "REV-A"}]) is None
+    assert priced_winner({**project, "positions": [
+        {"position_index": 1, "id": "one", "price_net": "10.01"},
+        {"position_index": 2, "id": "two", "price_net": "10.02"}]}, []) == "two"
 
 
 def test_cut_plan_counts_frame_profile_bars_and_preserves_absent_authority():

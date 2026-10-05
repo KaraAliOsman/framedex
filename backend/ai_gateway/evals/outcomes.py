@@ -218,11 +218,13 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
                   {"project_draft", "product_draft"}]
         proposed = [p for draft in drafts for p in draft.get("positions", [])]
         if expectation == "kitchen_position":
+            check("context_available", truth.get("sliding_supported") is not None,
+                  "sliding compatibility evaluated by the selected catalog/engine", truth.get("sliding_supported"))
             valid = [p for p in proposed if p.get("opening_type") == "SLIDING_2L"
                      and _exact_decimal(p.get("width_mm"), "1600")
                      and _exact_decimal(p.get("height_mm"), "1100")
                      and "cocina" in str(p.get("location_tag") or p.get("location") or "").lower()]
-            check("new_position_or_incompatibility", bool(valid) or (
+            check("new_position_or_incompatibility", (bool(valid) and truth.get("sliding_supported") is True) or (
                 truth.get("sliding_supported") is False and not proposed and not ops
                 and bool(re.search(r"incompat|no admite", text))))
         else:
