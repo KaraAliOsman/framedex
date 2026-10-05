@@ -1,7 +1,7 @@
 | ID | Ola | Estado | PR | SHA | Notas |
 |---|---|---|---|---|---|
 | P00 | 0 | mergeado | https://github.com/KaraAliOsman/framedex/pull/114 | a096f85b2e56e21eda024c1ec92a456ed9d30b03 | CI 4/4 verde; PR mergeado en integracion/v1. |
-| P01 | 0b | pendiente |  |  |  |
+| P01 | 0b | en curso |  |  | Tokens, primitivas y guardas de la constitución. |
 | IA1 | 0b | pendiente |  |  |  |
 | D01 | 0b | pendiente |  |  |  |
 | D02 | D1 | pendiente |  |  |  |
@@ -39,3 +39,5 @@
 | P18 | 3 | pendiente |  |  |  |
 | P24 | 4 | pendiente |  |  |  |
 | P20 | 5 | pendiente |  |  |  |
+
+Arranque completado: PR [#116](https://github.com/KaraAliOsman/framedex/pull/116), squash `739704ab8f81ded8f860d44d44adba0c33f96db4` en `integracion/v1`; cuatro checks de CI PASA. Los cuatro commits locales se trasladaron conservando el arreglo de P00 y la evidencia preparada del fixture. `main` local no se modificó.

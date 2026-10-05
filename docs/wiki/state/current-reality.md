@@ -3,10 +3,11 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: a096f85b2e56e21eda024c1ec92a456ed9d30b03
+verified_ref: 739704ab8f81ded8f860d44d44adba0c33f96db4
 sources:
   - repository main
   - P00 foundation PR #114
+  - local stack fixes PR #116
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -20,7 +21,7 @@ sources:
 
 ## Verified repository baseline
 
-At the verification ref (`a096f85b2e56e21eda024c1ec92a456ed9d30b03` on `integracion/v1`), the repository identifies DEKOPEN as:
+At the verification ref (`739704ab8f81ded8f860d44d44adba0c33f96db4` on `integracion/v1`), the repository identifies DEKOPEN as:
 
 - a pure deterministic engine under `engine/`;
 - Django modular monolith under `backend/`;
@@ -62,6 +63,12 @@ P00 is merged in PR #114 and adds the v1 integration foundation:
 - `scripts/dev_fixture.py` now seeds more realistic DEMO fixture identity, clients and project volume while preserving `DEMO_60` as synthetic reference data.
 
 Verification caveat: PR #114 passed the required GitHub checks (Lint & Typecheck, Test Suite, Frontend Build, Database Gate). Its local notes still state that Windows policy blocked `rpds` during generated-API drift checking, and the committed baseline capture is a smoke baseline for `/login`; later queue items must run the full route matrix once portal tokens and all fixture states are available.
+
+## Local stack fixes verified 2026-10-05
+
+PR #116 is merged at the verification ref and carries the four former local-only commits. The fixture preserves prepared workshop evidence, declares its synthetic handle intent against the leaf datum, and respects sealed inputs on repeats. The PowerShell launcher withholds environment values and cleans up only its own processes on failure.
+
+All four local make gates passed, including OpenAPI/orval reproducibility; the earlier `rpds` limitation did not recur. Required GitHub checks passed on PR #116. Docker Desktop currently fails to initialize its ingest socket before starting an engine; an isolated local WSL test daemon is being prepared. This environment issue does not establish any product capability as accepted. P01 remains in progress.
 
 ## Recent branch/PR caution
 

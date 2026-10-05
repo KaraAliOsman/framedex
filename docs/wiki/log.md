@@ -22,3 +22,11 @@ Append-only chronology. Keep newest entries at the bottom.
 - Confirmed PR #114 is merged into `integracion/v1` at `a096f85b2e56e21eda024c1ec92a456ed9d30b03`.
 - Confirmed the four required GitHub checks passed: Lint & Typecheck, Test Suite, Frontend Build and Database Gate.
 - Updated the queue state and current-reality verification ref so the next session can advance from P00.
+
+## [2026-10-05] startup | local-only fixes integrated before P01
+
+- Merged PR #116 into `integracion/v1` at `739704ab8f81ded8f860d44d44adba0c33f96db4`, with the four required GitHub checks passing; `main` was not changed.
+- Preserved P00's cost-list conflict key. Removed float-based and invented manufacturing results from the incoming fixture patch, while retaining prepared evidence and explicit DEMO handle intent.
+- The Windows launcher withholds environment values, records owned process IDs, and tears down partial starts.
+- Local lint, typecheck, tests and build passed; OpenAPI/orval regeneration was reproducible. Docker Desktop's ingest-socket startup failure is being handled with an isolated WSL test daemon, without resetting Desktop data.
+- Advanced the queue to P01; no later task is represented as implemented or accepted.
