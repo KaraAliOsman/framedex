@@ -8,9 +8,11 @@ on:
   pull_request:
 
 jobs:
+  # Repository admins can select an isolated temporary Ubuntu runner during
+  # hosted-runner incidents. The default platform and every gate stay intact.
   lint-and-typecheck:
     name: Lint & Typecheck
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.DEKOPEN_CI_RUNNER || 'ubuntu-24.04' }}
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -44,7 +46,7 @@ jobs:
 
   test-suite:
     name: Test Suite
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.DEKOPEN_CI_RUNNER || 'ubuntu-24.04' }}
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -82,7 +84,7 @@ jobs:
 
   frontend-build:
     name: Frontend Build
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.DEKOPEN_CI_RUNNER || 'ubuntu-24.04' }}
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -101,7 +103,7 @@ jobs:
 
   database-gate:
     name: Database Gate
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.DEKOPEN_CI_RUNNER || 'ubuntu-24.04' }}
     steps:
       - uses: actions/checkout@v7.0.1
 
