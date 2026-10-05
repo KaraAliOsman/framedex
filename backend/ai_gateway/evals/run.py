@@ -448,6 +448,11 @@ def main() -> int:
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--case", help="One case for diagnosing the harness; omit for the acceptance suite")
     args = parser.parse_args()
+    verified_ref = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    source_paths = ["backend", "engine", "frontend/src", "scripts/ai_evals.py"]
+    if subprocess.run(["git", "diff", "--quiet", verified_ref, "--", *source_paths],
+                      cwd=ROOT, capture_output=True, check=False).returncode:
+        parser.error("Commit product/harness sources before recording an evaluation reference")
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     import django
     django.setup()
@@ -506,9 +511,13 @@ def main() -> int:
         print(f"{case['id']}: {'PASA' if result['passed'] else result['failure']} "
               f"({result['round_count']} rounds, {result['latency_ms']} ms)", flush=True)
     unchanged = snapshot == _snapshot(include_ai=True)
+    source_unchanged = subprocess.run(
+        ["git", "diff", "--quiet", verified_ref, "--", *source_paths],
+        cwd=ROOT, capture_output=True, check=False,
+    ).returncode == 0
     report = {
-        "schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(),
-        "verified_ref": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+        "schema_version": 2, "generated_at": datetime.now(timezone.utc).isoformat(),
+        "verified_ref": verified_ref, "execution_source_unchanged": source_unchanged,
         "provider": provider, "provider_model": model,
         "fixture": {"org_id": str(ORG_ID), "project_id": str(project_id), "synthetic": True,
                     "manufacturing_authority": False},
@@ -520,7 +529,7 @@ def main() -> int:
     args.out.write_text(json.dumps(redact_report(report), ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
     print(f"{len(results)} cases recorded; persistent state {'unchanged' if unchanged else 'CHANGED'}.")
     # Product failures are baseline data; a broken harness/isolation is an error.
-    return 0 if unchanged and not any(c.get("harness_error") for c in results) else 1
+    return 0 if unchanged and source_unchanged and not any(c.get("harness_error") for c in results) else 1
 
 
 if __name__ == "__main__":
