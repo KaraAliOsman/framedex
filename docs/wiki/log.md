@@ -22,3 +22,12 @@ Append-only chronology. Keep newest entries at the bottom.
 - Confirmed PR #114 is merged into `integracion/v1` at `a096f85b2e56e21eda024c1ec92a456ed9d30b03`.
 - Confirmed the four required GitHub checks passed: Lint & Typecheck, Test Suite, Frontend Build and Database Gate.
 - Updated the queue state and current-reality verification ref so the next session can advance from P00.
+
+## [2026-10-05] IA1 | AI evaluation harness + baseline diagnosis
+
+- Built `backend/ai_gateway/evals/`: 26 result-based cases (E01-E13 editor, J01-J08 project, F01-F03 production/purchasing, G01-G02 general) run through the real UI routes in-process (`design_assist.assist`, `agent._act`, `assist.ask`) with only I/O edges patched; proposed ops are applied via the real frontend `applyDesignOps` bundled with esbuild into a Node sandbox; scoring compares the resulting product structure (mm, openings, glass SKUs) — not text.
+- Deterministic 10-category failure taxonomy per the encargo; prompt-echo is stripped from the text corpus so a quoted question is not a clarification.
+- Committed baselines `docs/ai/evals/2026-10-05-mock.json` (0/26 — MOCK is the echo floor) and `2026-10-05-mimo.json` (0/26 — configured provider answers HTTP 429 `ai_provider_quota` on every call; diagnosed quota exhaustion, not transient rate-limit).
+- Five root causes ordered by impact in `docs/ai/evals/README.md`: provider quota down; `_summary` flat-modules gate rejects every persisted `parametric_tree` (`unsupported_product` — batch ops structurally dead); ops vocabulary lacks bay-split/create-duplicate/hardware ops while `SLIDING_2L` validates on incompatible systems; context projections lack weight/validation/price/diff/bars data; `_declared_values` forbids arithmetic so relative-measure instructions are impossible.
+- Non-blocking hook: `make test-ai-evals` + CI job `AI Evals (MOCK, non-blocking)` uploading `ci-mock.json` (gitignored).
+- Harness does not fix the IA — IA2/IA3 correct against this same vara.

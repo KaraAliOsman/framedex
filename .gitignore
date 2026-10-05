@@ -86,3 +86,6 @@ scratch/
 tmp/
 *.tmp
 frontend/tsconfig.tsbuildinfo
+
+# CI eval artifact (regenerado en cada corrida, nunca se commitea)
+docs/ai/evals/ci-mock.json
