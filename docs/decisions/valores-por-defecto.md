@@ -27,3 +27,23 @@ Estos contratos técnicos aplican la constitución; no son preferencias comercia
 - Densidad: controles de 32 px en oficina, 44 px en taller, 40 px en documento y 44 px en documento móvil. El muestrario permite revisar las tres; los encargos de superficie conectarán la densidad y su tema al contexto de uso.
 
 Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2.md).
+
+## D01 · autoridad e ingesta (2026-10-05)
+
+- Catálogo de arranque: cinco series sintéticas y precios con semilla `20261005`.
+  La semilla es una propiedad reproducible del fixture; el dueño carga y revisa sus
+  fuentes en Catálogo › Importar. La selección de sistema y acabado es configurable
+  por producto. Una importación no certifica automáticamente el catálogo.
+- Sin autoridad de corte o límites, el producto nuevo se bloquea con causa y fuente
+  faltante. No se adoptan descuentos ni capacidades silenciosos. El dueño los
+  declara en Catálogo › Sistema › Parámetros o mediante la plantilla.
+- Revisión: dueño o encargado de taller, con diff, confirmación explícita y
+  procedencia. El estimador consulta. Los costos conservan el permiso de precios
+  del dueño. Deshacer es atómico y se bloquea al usarse una autoridad.
+- Productos guardados: preservar las fórmulas anteriores mediante autoridad
+  histórica. No recalcular documentos emitidos; no mover catálogos comerciales ni
+  composiciones mixtas. Las series históricas no se ofrecen a productos nuevos.
+- MiMo de texto: admitir PDF con texto, planilla, correo y texto pegado. Una foto o
+  escaneo sin texto muestra la limitación; no se simula OCR. IA3 verificará la ruta
+  multimodal antes de habilitarla. El proveedor se configura en el backend y su
+  credencial permanece exclusivamente en el entorno.

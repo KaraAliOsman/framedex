@@ -8,6 +8,8 @@
 import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { MaterialEnum } from "./materialEnum";
+import type { ProfileCutRule } from "./profileCutRule";
+import type { ProfileReinforcementRule } from "./profileReinforcementRule";
 import type { ProfileSection } from "./profileSection";
 
 /**
@@ -21,6 +23,8 @@ export interface ArticleResponse {
   /** @nullable */
   readonly technical_reviewed_by: string | null;
   readonly review_pending: boolean;
+  cut_rule?: ProfileCutRule | null;
+  reinforcement_rule?: ProfileReinforcementRule | null;
   system_id: string;
   /** @maxLength 100 */
   sku: string;

@@ -6,6 +6,7 @@ import { STARTER_DEFINITIONS, starterNominalSize, type StarterDefinition } from 
 import type { MemberGeometry } from "./members";
 import { ProductFrontSvg } from "./ProductFrontSvg";
 import type { ProductJson } from "./productEditing";
+import { intentBays } from "./intentEditing";
 
 const NO_ISSUES: ProductIssue[] = [];
 const NOOP = () => {};
@@ -42,9 +43,11 @@ export function StarterGallery({
   members,
   disabled,
   onPick,
+  allowedOpenings,
 }: {
   members: MemberGeometry;
   disabled: boolean;
+  allowedOpenings?: string[];
   onPick(definition: StarterDefinition): void;
 }): JSX.Element {
   const previews = useMemo(
@@ -58,11 +61,20 @@ export function StarterGallery({
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return previews;
-    return previews.filter(({ definition }) =>
+    const compatible = previews.filter(
+      ({ product }) =>
+        !allowedOpenings ||
+        product.assembly.modules.every((module) =>
+          intentBays(module.tree).every((bay) =>
+            allowedOpenings.includes(bay.opening_type ?? "FIXED"),
+          ),
+        ),
+    );
+    if (!needle) return compatible;
+    return compatible.filter(({ definition }) =>
       `${t(definition.titleKey)} ${t(definition.hintKey)}`.toLowerCase().includes(needle),
     );
-  }, [previews, query]);
+  }, [previews, query, allowedOpenings]);
   return (
     <div className="starter-gallery-wrap">
       <label className="starter-search">

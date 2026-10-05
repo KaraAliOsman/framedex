@@ -47,9 +47,16 @@ import type {
   CatalogImportConfirmResponse,
   CatalogImportCreateResponse,
   CatalogImportDetailResponse,
+  CatalogImportExportParams,
   CatalogImportListResponse,
   CatalogKitListParams,
+  CatalogPublishRequestRequest,
+  CatalogReviewRequestRequest,
+  CatalogReviewResponse,
   CatalogSectionImportCreateBody,
+  CatalogTemplateDownloadParams,
+  CatalogTemplateSchema,
+  CatalogUndoRequestRequest,
   ChangeInputRequest,
   ChangeResult,
   CheckoutInputRequest,
@@ -2630,6 +2637,495 @@ export const catalogImportConfirm = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(catalogImportConfirmRequest),
+  });
+};
+
+export type catalogImportExportResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type catalogImportExportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportExportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportExportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportExportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportExportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportExportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportExportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportExportResponseSuccess = catalogImportExportResponse200 & {
+  headers: Headers;
+};
+export type catalogImportExportResponseError = (
+  | catalogImportExportResponse400
+  | catalogImportExportResponse401
+  | catalogImportExportResponse403
+  | catalogImportExportResponse404
+  | catalogImportExportResponse409
+  | catalogImportExportResponse422
+  | catalogImportExportResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportExportResponse =
+  catalogImportExportResponseSuccess | catalogImportExportResponseError;
+
+export const getCatalogImportExportUrl = (importId: string, params?: CatalogImportExportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalog-imports/${importId}/export/?${stringifiedParams}`
+    : `/api/v1/catalog-imports/${importId}/export/`;
+};
+
+export const catalogImportExport = async (
+  importId: string,
+  params?: CatalogImportExportParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportExportResponse> => {
+  return apiMutator<catalogImportExportResponse>(getCatalogImportExportUrl(importId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogImportPublishResponse200 = {
+  data: CatalogImportConfirmResponse;
+  status: 200;
+};
+
+export type catalogImportPublishResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportPublishResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportPublishResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportPublishResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportPublishResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportPublishResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportPublishResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportPublishResponseSuccess = catalogImportPublishResponse200 & {
+  headers: Headers;
+};
+export type catalogImportPublishResponseError = (
+  | catalogImportPublishResponse400
+  | catalogImportPublishResponse401
+  | catalogImportPublishResponse403
+  | catalogImportPublishResponse404
+  | catalogImportPublishResponse409
+  | catalogImportPublishResponse422
+  | catalogImportPublishResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportPublishResponse =
+  catalogImportPublishResponseSuccess | catalogImportPublishResponseError;
+
+export const getCatalogImportPublishUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/publish/`;
+};
+
+export const catalogImportPublish = async (
+  importId: string,
+  catalogPublishRequestRequest: CatalogPublishRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportPublishResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogImportPublishResponse>(getCatalogImportPublishUrl(importId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(catalogPublishRequestRequest),
+  });
+};
+
+export type catalogImportReviewResponse200 = {
+  data: CatalogReviewResponse;
+  status: 200;
+};
+
+export type catalogImportReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportReviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportReviewResponseSuccess = catalogImportReviewResponse200 & {
+  headers: Headers;
+};
+export type catalogImportReviewResponseError = (
+  | catalogImportReviewResponse400
+  | catalogImportReviewResponse401
+  | catalogImportReviewResponse403
+  | catalogImportReviewResponse404
+  | catalogImportReviewResponse409
+  | catalogImportReviewResponse422
+  | catalogImportReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportReviewResponse =
+  catalogImportReviewResponseSuccess | catalogImportReviewResponseError;
+
+export const getCatalogImportReviewUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/review/`;
+};
+
+export const catalogImportReview = async (
+  importId: string,
+  catalogReviewRequestRequest: CatalogReviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportReviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogImportReviewResponse>(getCatalogImportReviewUrl(importId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(catalogReviewRequestRequest),
+  });
+};
+
+export type catalogImportUndoResponse200 = {
+  data: CatalogImportDetailResponse;
+  status: 200;
+};
+
+export type catalogImportUndoResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportUndoResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportUndoResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportUndoResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportUndoResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportUndoResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportUndoResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportUndoResponseSuccess = catalogImportUndoResponse200 & {
+  headers: Headers;
+};
+export type catalogImportUndoResponseError = (
+  | catalogImportUndoResponse400
+  | catalogImportUndoResponse401
+  | catalogImportUndoResponse403
+  | catalogImportUndoResponse404
+  | catalogImportUndoResponse409
+  | catalogImportUndoResponse422
+  | catalogImportUndoResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportUndoResponse =
+  catalogImportUndoResponseSuccess | catalogImportUndoResponseError;
+
+export const getCatalogImportUndoUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/undo/`;
+};
+
+export const catalogImportUndo = async (
+  importId: string,
+  catalogUndoRequestRequest: CatalogUndoRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportUndoResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogImportUndoResponse>(getCatalogImportUndoUrl(importId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(catalogUndoRequestRequest),
+  });
+};
+
+export type catalogTemplateSchemaResponse200 = {
+  data: CatalogTemplateSchema;
+  status: 200;
+};
+
+export type catalogTemplateSchemaResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogTemplateSchemaResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogTemplateSchemaResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogTemplateSchemaResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogTemplateSchemaResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogTemplateSchemaResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogTemplateSchemaResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogTemplateSchemaResponseSuccess = catalogTemplateSchemaResponse200 & {
+  headers: Headers;
+};
+export type catalogTemplateSchemaResponseError = (
+  | catalogTemplateSchemaResponse400
+  | catalogTemplateSchemaResponse401
+  | catalogTemplateSchemaResponse403
+  | catalogTemplateSchemaResponse404
+  | catalogTemplateSchemaResponse409
+  | catalogTemplateSchemaResponse422
+  | catalogTemplateSchemaResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogTemplateSchemaResponse =
+  catalogTemplateSchemaResponseSuccess | catalogTemplateSchemaResponseError;
+
+export const getCatalogTemplateSchemaUrl = () => {
+  return `/api/v1/catalog-imports/schema/`;
+};
+
+export const catalogTemplateSchema = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogTemplateSchemaResponse> => {
+  return apiMutator<catalogTemplateSchemaResponse>(getCatalogTemplateSchemaUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogTemplateDownloadResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type catalogTemplateDownloadResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogTemplateDownloadResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogTemplateDownloadResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogTemplateDownloadResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogTemplateDownloadResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogTemplateDownloadResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogTemplateDownloadResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogTemplateDownloadResponseSuccess = catalogTemplateDownloadResponse200 & {
+  headers: Headers;
+};
+export type catalogTemplateDownloadResponseError = (
+  | catalogTemplateDownloadResponse400
+  | catalogTemplateDownloadResponse401
+  | catalogTemplateDownloadResponse403
+  | catalogTemplateDownloadResponse404
+  | catalogTemplateDownloadResponse409
+  | catalogTemplateDownloadResponse422
+  | catalogTemplateDownloadResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogTemplateDownloadResponse =
+  catalogTemplateDownloadResponseSuccess | catalogTemplateDownloadResponseError;
+
+export const getCatalogTemplateDownloadUrl = (params?: CatalogTemplateDownloadParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalog-imports/template/?${stringifiedParams}`
+    : `/api/v1/catalog-imports/template/`;
+};
+
+export const catalogTemplateDownload = async (
+  params?: CatalogTemplateDownloadParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogTemplateDownloadResponse> => {
+  return apiMutator<catalogTemplateDownloadResponse>(getCatalogTemplateDownloadUrl(params), {
+    ...options,
+    method: "GET",
   });
 };
 

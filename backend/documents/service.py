@@ -1095,7 +1095,7 @@ def freeze_revision_a(
             for row in rows(
                 """
                 SELECT id::text, material::text, end_milling_overlap_mm,
-                       process_profile_id::text
+                       process_profile_id::text, is_demo
                 FROM public.profile_systems
                 WHERE id = ANY(%s::uuid[])
                 """,
@@ -1418,6 +1418,7 @@ def freeze_revision_a(
                 "color_exterior": str(position["color_exterior"]),
                 "location_tag": location_tag,
                 "system_name": str(position["system_name"]),
+                "is_demo": bool(system_facts_by_id.get(str(system_id), {}).get("is_demo", False)),
                 "price_net": D(str(position["price_net"])),
                 "discount_pct": str(position["discount_pct"]),
                 "parametric_tree": tree,
@@ -1484,6 +1485,7 @@ def freeze_revision_a(
         )
         sealed_at = datetime.now(timezone.utc)
         snapshot = {
+            "is_demo": any(item.get("is_demo") for item in position_inputs),
             "schema_version": 1,
             "canonical_version": DOCUMENTARY_CANONICAL_VERSION,
             "project_id": project_id,

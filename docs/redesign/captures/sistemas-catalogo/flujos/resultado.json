@@ -1,0 +1,13 @@
+{
+  "realAIReview": true,
+  "emptyAndLoadingStates": true,
+  "simulatedReadFailure": true,
+  "readOnlyRoleCannotUploadOrPublish": true,
+  "publicationBlockedByErrors": true,
+  "manualNineSheets": true,
+  "publicationRequiresReview": true,
+  "exportCSV": true,
+  "undo": true,
+  "viewports": 6,
+  "consoleErrors": []
+}

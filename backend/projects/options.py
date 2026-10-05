@@ -4,7 +4,8 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.views import APIView
 
-from catalogs.serializers import ProfileSectionSerializer
+from catalogs.serializers import ProfileSectionSerializer, SystemDimensionalLimitSerializer
+from dekopen_engine.catalog_rules import FAMILY_OPENINGS
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import rows
 from pricing.views import ERRORS, scope
@@ -97,6 +98,10 @@ class PanelChoiceSerializer(serializers.Serializer):
 
 
 class DesignOptionsSerializer(serializers.Serializer):
+    system_family = serializers.CharField(allow_null=True)
+    is_demo = serializers.BooleanField()
+    compatible_openings = serializers.ListField(child=serializers.CharField())
+    dimensional_limits = SystemDimensionalLimitSerializer(many=True)
     profiles = ProfileChoiceSerializer(many=True)
     glazing_thicknesses = serializers.ListField(child=serializers.CharField())
     hardware_kits = KitChoiceSerializer(many=True)
@@ -141,6 +146,11 @@ class DesignOptionsView(APIView):
             )
             return response(
                 {
+                    "system_family": params.system_family.value if params.system_family else None,
+                    "is_demo": bool(rows("SELECT is_demo FROM public.profile_systems WHERE id=%s", [system_id])[0]["is_demo"]),
+                    "compatible_openings": sorted(opening.value for opening in FAMILY_OPENINGS[params.system_family])
+                        if params.system_family else [],
+                    "dimensional_limits": [rule.model_dump() for rule in params.dimensional_limits],
                     "profiles": [
                         {
                             "sku": item.sku,

@@ -6,9 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { MaterialEnum } from "./materialEnum";
-import type { RailTypeEnum } from "./railTypeEnum";
+import type { SlidingSystemParametersRequest } from "./slidingSystemParametersRequest";
+import type { SystemDimensionalLimitRequest } from "./systemDimensionalLimitRequest";
+import type { SystemFamilyEnum } from "./systemFamilyEnum";
+import type { SystemWriteRequestRailType } from "./systemWriteRequestRailType";
 
 export interface SystemWriteRequest {
+  system_family: SystemFamilyEnum;
+  sliding_parameters?: SlidingSystemParametersRequest | null;
+  dimensional_limits?: SystemDimensionalLimitRequest[];
   /**
    * @minLength 1
    * @maxLength 150
@@ -33,14 +39,26 @@ export interface SystemWriteRequest {
   glass_clearance_white_mm: string;
   /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
   glass_clearance_foil_mm: string;
-  /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
-  pulley_height_mm: string;
-  /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
-  central_overlap_mm: string;
-  /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
-  sliding_lateral_clearance_mm: string;
-  /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
-  sliding_end_add_mm: string;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,2}(?:\.\d{0,2})?$
+   */
+  pulley_height_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,2}(?:\.\d{0,2})?$
+   */
+  central_overlap_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,2}(?:\.\d{0,2})?$
+   */
+  sliding_lateral_clearance_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,2}(?:\.\d{0,2})?$
+   */
+  sliding_end_add_mm?: string | null;
   /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
   corner_bracket_loss_mm: string;
   /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
@@ -49,11 +67,17 @@ export interface SystemWriteRequest {
   door_threshold_mm: string;
   /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
   door_bottom_clearance_mm: string;
-  rail_type: RailTypeEnum;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  sliding_glazing_deduction_width_mm: string;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  sliding_glazing_deduction_height_mm: string;
+  rail_type?: (typeof SystemWriteRequestRailType)[keyof typeof SystemWriteRequestRailType] | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  sliding_glazing_deduction_width_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  sliding_glazing_deduction_height_mm?: string | null;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   door_leaf_side_clearance_mm: string;
   /**

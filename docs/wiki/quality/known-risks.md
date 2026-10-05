@@ -47,6 +47,12 @@ This page records recurring failure modes. It does **not** assert that every ite
 - technical UNKNOWN silently converted into default values;
 - imported profile sections with unverified scale/origin/orientation.
 
+D01 adds family guards, exact cut/refinement rules, reviewed import tokens and
+append-only publication/retraction history. Its upgrade gate checks old DEMO
+products without changing issued authority. Remaining boundaries: scanned images
+need a verified multimodal route; catalog data stays synthetic until a supplier
+source is reviewed. See [the authority page](../product/catalog-authority.md).
+
 ## Pricing/quotation
 
 - preview mutating persisted state;

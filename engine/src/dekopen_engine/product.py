@@ -53,6 +53,10 @@ from dekopen_engine.manufacturing_trace import (
     TraceRectV1,
     TraceSegmentV1,
 )
+from dekopen_engine.catalog_rules import (
+    CatalogRuleError, reinforcement_required, reinforcement_screws, reinforcement_sku,
+    rounded_profile_cut, validate_family, validate_leaf_limits, validate_profile_authority,
+)
 from dekopen_engine.models import (
     BayOpeningType,
     EffectiveProfileArticle,
@@ -93,6 +97,8 @@ class Severity(str, Enum):
 
 
 class IssueCode(str, Enum):
+    SYSTEM_FAMILY_INCOMPATIBLE = "system_family_incompatible"
+    SYSTEM_DIMENSIONAL_LIMIT = "system_dimensional_limit"
     COUPLINGS_COUNT_MISMATCH = "couplings_count_mismatch"
     ASSEMBLY_FOLDS_BACK = "assembly_folds_back"
     PLAN_SELF_INTERSECTION = "plan_self_intersection"
@@ -1065,6 +1071,7 @@ def _evaluate_contour_module(
     params: SystemParams,
     *,
     is_foiled: bool,
+    finish: str | None = None,
 ) -> tuple[EngineResult | None, list[ProductIssue], GeometryComputation | None]:
     """Evaluate a non-rectangular module: frame follows the contour, one
     inward-offset fill region per module.
@@ -1127,6 +1134,7 @@ def _evaluate_contour_module(
         )
 
     frame = params.effective_profile_articles[ProfileRole.FRAME]
+    validate_profile_authority(frame, legacy=params.uses_legacy_rules, reinforced_member=True)
     per_end = joint_adjustment_per_end(params, frame)
     n = len(contour.vertices)
     topology_path = f"BAY:{leaf.id}"
@@ -1134,6 +1142,7 @@ def _evaluate_contour_module(
 
     profile_cuts: list[ProfileCut] = []
     reinforcements: list[ReinforcementPiece] = []
+    fittings: list[FittingPiece] = []
     glasses: list[GlassPiece] = []
     trace_members: list[SemanticMemberTraceV1] = []
     trace_infills: list[SemanticInfillTraceV1] = []
@@ -1141,7 +1150,7 @@ def _evaluate_contour_module(
 
     for i in range(n):
         bulge = contour.bulges[i]
-        length = contour_edge_length(contour, i) + 2 * per_end
+        length = rounded_profile_cut(contour_edge_length(contour, i) + 2 * per_end, frame)
         sagitta = bulge if bulge else None
         cut_length = _q(length)
         angle_left = _qa(interior_angle(contour, i) / 2)
@@ -1168,7 +1177,10 @@ def _evaluate_contour_module(
                     params={"edge": str(i), "sagitta_mm": str(_q(sagitta))},
                 )
             )
-        if frame.material is MaterialType.PVC:
+        steel_length = None
+        if ((frame.reinforcement_rule is not None or frame.material is MaterialType.PVC)
+                and reinforcement_required(frame, length,
+                    finish=finish or ("FOILED" if is_foiled else "WHITE"), is_foiled=is_foiled)):
             # Same rule as _append_profile: a welded PVC member is reinforced
             # whether or not the catalog resolved the steel article yet — the
             # cutting authority resolves the SKU downstream. A missing
@@ -1179,7 +1191,7 @@ def _evaluate_contour_module(
             reinforcements.append(
                 ReinforcementPiece(
                     parent_profile_sku=frame.sku,
-                    reinforcement_sku=frame.reinforcement_sku,
+                    reinforcement_sku=reinforcement_sku(frame),
                     role=ProfileRole.FRAME,
                     length_mm=_q(steel_length),
                     qty=1,
@@ -1187,10 +1199,13 @@ def _evaluate_contour_module(
                     sagitta_mm=_q(sagitta) if sagitta is not None else None,
                 )
             )
+            screws = reinforcement_screws(frame, steel_length, qty=1, bay_id=leaf.id, leaf_id=None)
+            if screws is not None:
+                fittings.append(screws)
 
         start = contour.vertices[i]
         end = contour.vertices[(i + 1) % n]
-        steel = _q(steel_length) if frame.material is MaterialType.PVC else None
+        steel = _q(steel_length) if steel_length is not None else None
         trace_members.append(
             SemanticMemberTraceV1(
                 semantic_member_id=f"{topology_path}/member/E{i}",
@@ -1217,12 +1232,8 @@ def _evaluate_contour_module(
                     start=TracePointV1(x_mm=start.x_mm, y_mm=start.y_mm),
                     end=TracePointV1(x_mm=end.x_mm, y_mm=end.y_mm),
                 ),
-                reinforcement_required=frame.material is MaterialType.PVC,
-                reinforcement_sku=(
-                    frame.reinforcement_sku
-                    if frame.material is MaterialType.PVC
-                    else None
-                ),
+                reinforcement_required=steel is not None,
+                reinforcement_sku=reinforcement_sku(frame) if steel is not None else None,
                 reinforcement_length_mm=steel,
             )
         )
@@ -1262,6 +1273,10 @@ def _evaluate_contour_module(
         raise ValueError(f"contour region {leaf.id} requires glass_thickness_mm and glass_spec")
 
     thickness_net = derive_net_glass_thickness(leaf.glass_spec)
+    validate_leaf_limits(params, BayOpeningType.FIXED, bay_id=leaf.id,
+        width_mm=module.width_mm, height_mm=module.height_mm, check_weight=True,
+        weight_kg=None if thickness_net is None else
+            fill_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50"))
     area_m2 = (fill_area_mm2 / Decimal("1000000")).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
@@ -1340,10 +1355,13 @@ def _evaluate_contour_module(
 
     # Glazing beads run the fill boundary, one cut per edge.
     rule = resolve_bead_rule(leaf.glass_thickness_mm, params)
+    validate_profile_authority(rule.bead_article, legacy=params.uses_legacy_rules,
+                               reinforced_member=False)
     fill_n = len(fill.vertices)
     for i in range(fill_n):
         bulge = fill.bulges[i]
-        bead_length = _q(contour_edge_length(fill, i) + rule.cut_add_mm)
+        bead_length = _q(rounded_profile_cut(contour_edge_length(fill, i) + rule.cut_add_mm,
+                                            rule.bead_article))
         bead_left = _qa(interior_angle(fill, i) / 2)
         bead_right = _qa(interior_angle(fill, (i + 1) % fill_n) / 2)
         profile_cuts.append(
@@ -1407,6 +1425,7 @@ def _evaluate_contour_module(
         profile_cuts=profile_cuts,
         reinforcements=reinforcements,
         glasses=glasses,
+        fittings=fittings,
     )
     computation = GeometryComputation(
         result=result,
@@ -1591,13 +1610,14 @@ def contour_module_computation(
     params: SystemParams,
     *,
     is_foiled: bool = False,
+    finish: str | None = None,
 ) -> tuple[GeometryComputation | None, list[ProductIssue]]:
     """Documentary-sealing entry for a contour module: the same evaluation
     the BOM path runs, returned as a GeometryComputation whose manufacturing
     trace carries the real contour members, glass polygon and bead sets
     instead of a rectangular approximation."""
     _result, issues, computation = _evaluate_contour_module(
-        module, params, is_foiled=is_foiled
+        module, params, is_foiled=is_foiled, finish=finish
     )
     return computation, issues
 
@@ -1766,6 +1786,7 @@ def evaluate_product(
     *,
     coupler_articles: dict[str, EffectiveProfileArticle] | None = None,
     is_foiled: bool = False,
+    finish: str | None = None,
 ) -> ProductEvaluation:
     """Evaluate an assembly: plan geometry, per-module geometry, couplers, BOM."""
     assembly = product.assembly
@@ -1805,19 +1826,22 @@ def evaluate_product(
         module_issues: list[ProductIssue] = []
         result: EngineResult | None = None
         try:
+            validate_family(_top_with_module_dims(module), params)
             if module.frameless is not None:
                 result, frameless_issues = _evaluate_frameless_module(
                     module, coupler_articles=coupler_articles
                 )
                 module_issues.extend(frameless_issues)
             elif module.contour is not None:
+                validate_leaf_limits(params, module.tree.opening_type or BayOpeningType.FIXED,
+                    bay_id=module.tree.id, width_mm=module.width_mm, height_mm=module.height_mm)
                 result, contour_issues, _computation = _evaluate_contour_module(
-                    module, params, is_foiled=is_foiled
+                    module, params, is_foiled=is_foiled, finish=finish
                 )
                 module_issues.extend(contour_issues)
             else:
                 result = calculate_geometry(
-                    _top_with_module_dims(module), params, is_foiled=is_foiled
+                    _top_with_module_dims(module), params, is_foiled=is_foiled, finish=finish
                 )
             if result is not None:
                 aggregated.append(_prefix_result(module.id, result))
@@ -1848,7 +1872,7 @@ def evaluate_product(
                     params=issue_params,
                 )
             )
-        except SlidingLayoutError as error:
+        except (SlidingLayoutError, CatalogRuleError) as error:
             module_issues.append(
                 ProductIssue(
                     code=error.code,
@@ -1878,6 +1902,7 @@ def evaluate_product(
 
     coupler_cuts: list[ProfileCut] = []
     coupler_reinforcements: list[ReinforcementPiece] = []
+    coupler_fittings: list[FittingPiece] = []
     module_by_id = {module.id: module for module in modules}
     claimed_edges: set[tuple[str, EdgeSide]] = set()
     resolved_pairs = _resolved_pairs(modules, couplings)
@@ -2049,19 +2074,29 @@ def evaluate_product(
                 )
                 continue
             span = first.width_mm
+        try:
+            validate_profile_authority(article, legacy=params.uses_legacy_rules,
+                                       reinforced_member=True)
+        except ValueError as error:
+            issues.append(ProductIssue(code=IssueCode.MODULE_GEOMETRY_FAILED.value,
+                severity=Severity.ERROR, target=target, params={"reason": str(error)}))
+            continue
+        span = rounded_profile_cut(span + (2 * joint_adjustment_per_end(params, article)
+                                          if not params.uses_legacy_rules else Decimal("0")), article)
         coupler_cuts.append(
             ProfileCut(
                 sku=article.sku,
                 role=ProfileRole.COUPLER,
                 material=article.material,
                 length_mm=span,
-                angle_left=Decimal("90.0"),
-                angle_right=Decimal("90.0"),
+                angle_left=Decimal(article.cut_rule.angle_degrees) if article.cut_rule else Decimal("90.0"),
+                angle_right=Decimal(article.cut_rule.angle_degrees) if article.cut_rule else Decimal("90.0"),
                 qty=1,
                 bay_id=coupling.id,
             )
         )
-        if article.reinforcement_sku:
+        if reinforcement_sku(article) and reinforcement_required(
+                article, span, finish=finish or ("FOILED" if is_foiled else "WHITE"), is_foiled=is_foiled):
             steel_length = reinforcement_cut_length(span, article, 0)
             if steel_length <= Decimal("0"):
                 issues.append(
@@ -2076,13 +2111,17 @@ def evaluate_product(
                 coupler_reinforcements.append(
                     ReinforcementPiece(
                         parent_profile_sku=article.sku,
-                        reinforcement_sku=article.reinforcement_sku,
+                        reinforcement_sku=reinforcement_sku(article),
                         role=ProfileRole.COUPLER,
                         length_mm=steel_length,
                         qty=1,
                         bay_id=coupling.id,
                     )
                 )
+                screws = reinforcement_screws(article, steel_length, qty=1,
+                                              bay_id=coupling.id, leaf_id=None)
+                if screws is not None:
+                    coupler_fittings.append(screws)
 
     bom: EngineResult | None = None
     if aggregated or coupler_cuts:
@@ -2135,7 +2174,7 @@ def evaluate_product(
             + coupler_reinforcements,
             glasses=[piece for r in aggregated for piece in r.glasses],
             panels=[piece for r in aggregated for piece in r.panels],
-            fittings=[piece for r in aggregated for piece in r.fittings],
+            fittings=[piece for r in aggregated for piece in r.fittings] + coupler_fittings,
             hardware_items=[
                 item for r in aggregated for item in r.hardware_items
             ],

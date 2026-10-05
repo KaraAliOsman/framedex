@@ -75,6 +75,7 @@ export type Field = {
   places?: number;
   maxLength?: number;
   options?: readonly string[];
+  label?: string;
 };
 
 type Group = { title: string; fields: Field[] };
@@ -115,6 +116,12 @@ export const schemas: Record<Resource, Group[]> = {
       fields: [
         text("name", 150),
         text("code", 50),
+        {
+          name: "system_family",
+          label: "Familia del sistema",
+          kind: "select",
+          options: ["CASEMENT", "SLIDING", "LIFT_SLIDE", "DOOR", "FACADE_FIXED"],
+        },
         material,
         // §06 system identity — who makes it, which family, what it covers.
         text("manufacturer", 255, true),
@@ -143,22 +150,33 @@ export const schemas: Record<Resource, Group[]> = {
         // engine refuses rather than compute on an invented constant.
         decimal("rebate_depth_mm", 2, true),
         decimal("end_milling_overlap_mm", 2, true),
+        decimal("corner_bracket_loss_mm"),
+        decimal("hook_depth_mm"),
       ],
     },
     {
       title: "slidingGeometry",
       fields: [
-        rail,
-        ...measures(
-          "pulley_height_mm",
-          "central_overlap_mm",
-          "sliding_lateral_clearance_mm",
-          "sliding_end_add_mm",
-          "corner_bracket_loss_mm",
-          "hook_depth_mm",
-          "sliding_glazing_deduction_width_mm",
-          "sliding_glazing_deduction_height_mm",
-        ),
+        ...[
+          ["pulley_height_mm", "Altura del rodamiento (mm)"],
+          ["central_overlap_mm", "Traslape central (mm)"],
+          ["lateral_clearance_mm", "Holgura lateral de corredera (mm)"],
+          ["end_add_mm", "Adición por extremo (mm)"],
+          ["glazing_deduction_width_mm", "Descuento de vidrio en ancho (mm)"],
+          ["glazing_deduction_height_mm", "Descuento de vidrio en alto (mm)"],
+        ].map(([name, label]) => ({ ...decimal(`sliding_parameters.${name}`), label })),
+        { ...rail, name: "sliding_parameters.rail_type", label: "Tipo de riel" },
+        { ...integer("sliding_parameters.rail_count"), label: "Cantidad de carriles" },
+        {
+          name: "sliding_parameters.separate_rail",
+          label: "Riel separado del marco",
+          kind: "boolean",
+        },
+        {
+          name: "sliding_parameters.interlock_required",
+          label: "Encuentro requerido",
+          kind: "boolean",
+        },
       ],
     },
     {
@@ -191,8 +209,76 @@ export const schemas: Record<Resource, Group[]> = {
             "COUPLER",
             "ADDITIONAL",
             "THRESHOLD",
+            "CHANNEL",
+            "SLIDING_SASH",
+            "INTERLOCK",
+            "RAIL",
+            "DOOR_SASH",
+            "FRAME_EXTENSION",
+            "SILL",
+            "COVER_TRIM",
+            "PLINTH",
           ],
         },
+      ],
+    },
+    {
+      title: "cutRule",
+      fields: [
+        {
+          name: "cut_rule.angle_degrees",
+          label: "Ángulo de corte",
+          kind: "select",
+          options: ["45", "90"],
+        },
+        ...[
+          ["welding_loss_per_end_mm", "Pérdida de soldadura por extremo (mm)"],
+          ["joint_deduction_per_end_mm", "Descuento por unión (mm)"],
+          ["meeting_deduction_mm", "Descuento de encuentro (mm)"],
+          ["cut_step_mm", "Paso de redondeo (mm)"],
+        ].map(([name, label]) => ({ ...decimal(`cut_rule.${name}`), label })),
+        {
+          name: "cut_rule.rounding",
+          label: "Redondeo de corte",
+          kind: "select",
+          options: ["UP", "DOWN", "NEAREST"],
+        },
+        { ...text("cut_rule.source", 1000), label: "Fuente de la regla de corte" },
+      ],
+    },
+    {
+      title: "reinforcementRule",
+      fields: [
+        {
+          ...text("reinforcement_rule.reinforcement_sku", 100),
+          label: "SKU del refuerzo compatible",
+        },
+        { ...text("reinforcement_rule.reinforcement_type", 100), label: "Tipo de refuerzo" },
+        {
+          ...decimal("reinforcement_rule.minimum_length_mm"),
+          label: "Largo mínimo que exige refuerzo (mm)",
+        },
+        {
+          name: "reinforcement_rule.required_finishes",
+          label: "Colores que exigen refuerzo (separados por coma)",
+          kind: "csv",
+        },
+        {
+          name: "reinforcement_rule.required_non_white",
+          label: "Obligatorio en foliados y colores oscuros",
+          kind: "boolean",
+        },
+        {
+          ...decimal("reinforcement_rule.cut_deduction_mm"),
+          label: "Descuento de corte de refuerzo (mm)",
+        },
+        { ...decimal("reinforcement_rule.screws_per_m", 4), label: "Tornillos por metro" },
+        { ...text("reinforcement_rule.screw_sku", 100), label: "SKU del tornillo" },
+        {
+          ...decimal("reinforcement_rule.screw_weight_kg", 6, true),
+          label: "Masa del tornillo (kg)",
+        },
+        { ...text("reinforcement_rule.source", 1000), label: "Fuente de la regla de refuerzo" },
       ],
     },
     {
@@ -387,30 +473,82 @@ export function fieldsFor(resource: Resource): Field[] {
   return schemas[resource].flatMap((group) => group.fields);
 }
 
+export function groupsFor(resource: Resource, draft: Record<string, string>): Group[] {
+  return schemas[resource]
+    .filter(
+      (group) =>
+        group.title !== "slidingGeometry" ||
+        ["SLIDING", "LIFT_SLIDE"].includes(draft.system_family ?? ""),
+    )
+    .filter(
+      (group) =>
+        !["cutRule", "reinforcementRule"].includes(group.title) ||
+        draft[`${group.title}.enabled`] === "true",
+    );
+}
+
+export const catalogVocabulary: Record<string, string> = {
+  "group.cutRule": "Regla de corte",
+  "group.reinforcementRule": "Regla de refuerzo",
+  "option.CASEMENT": "Practicable y oscilobatiente",
+  "option.SLIDING": "Corredera",
+  "option.LIFT_SLIDE": "Elevable",
+  "option.DOOR": "Puerta",
+  "option.FACADE_FIXED": "Fijo de gran formato",
+  "option.45": "45°",
+  "option.90": "90°",
+  "option.UP": "Hacia arriba",
+  "option.DOWN": "Hacia abajo",
+  "option.NEAREST": "Más cercano",
+  "option.SLIDING_SASH": "Hoja corredera",
+  "option.INTERLOCK": "Encuentro",
+  "option.RAIL": "Riel",
+  "option.DOOR_SASH": "Hoja de puerta",
+  "option.FRAME_EXTENSION": "Ensanche",
+  "option.SILL": "Vierteaguas",
+  "option.COVER_TRIM": "Tapajuntas",
+  "option.PLINTH": "Zócalo",
+  "option.CHANNEL": "Canal",
+};
+
 export function initialDraft(
   resource: Resource,
   row: object | undefined,
   systemId: string | null,
 ): Record<string, string> {
   const source = (row ?? {}) as Record<string, unknown>;
-  return Object.fromEntries(
-    fieldsFor(resource).map((field) => [
-      field.name,
-      source[field.name] == null
-        ? field.name === "system_id"
-          ? (systemId ?? "")
-          : // A required select renders its first option visually; the draft
-            // must start there too or it would silently submit "".
-            row === undefined && field.kind === "select" && !field.optional
-            ? (field.options?.[0] ?? "")
-            : row === undefined && field.kind === "boolean"
-              ? "true"
-              : ""
-        : Array.isArray(source[field.name])
-          ? (source[field.name] as string[]).join(", ")
-          : String(source[field.name]),
-    ]),
-  );
+  const valueFor = (name: string) =>
+    name
+      .split(".")
+      .reduce<unknown>(
+        (current, key) =>
+          current && typeof current === "object"
+            ? (current as Record<string, unknown>)[key]
+            : undefined,
+        source,
+      );
+  return {
+    ...Object.fromEntries(
+      fieldsFor(resource).map((field) => [
+        field.name,
+        valueFor(field.name) == null
+          ? field.name === "system_id"
+            ? (systemId ?? "")
+            : // A required select renders its first option visually; the draft
+              // must start there too or it would silently submit "".
+              row === undefined && field.kind === "select" && !field.optional
+              ? (field.options?.[0] ?? "")
+              : row === undefined && field.kind === "boolean"
+                ? "true"
+                : ""
+          : Array.isArray(valueFor(field.name))
+            ? (valueFor(field.name) as string[]).join(", ")
+            : String(valueFor(field.name)),
+      ]),
+    ),
+    "cutRule.enabled": source.cut_rule ? "true" : "false",
+    "reinforcementRule.enabled": source.reinforcement_rule ? "true" : "false",
+  };
 }
 
 export function writeFromDraft<R extends Resource>(
@@ -418,20 +556,18 @@ export function writeFromDraft<R extends Resource>(
   draft: Record<string, string>,
   contents: HardwareComponent[],
   section?: SectionDraft,
+  limits?: SystemWriteRequest["dimensional_limits"],
 ): Writes[R] {
-  const values: Record<
-    string,
-    string | number | boolean | null | string[] | HardwareComponent[] | ProfileSectionRequest
-  > = {};
-  for (const field of fieldsFor(resource)) {
+  const flat: Record<string, unknown> = {};
+  for (const field of groupsFor(resource, draft).flatMap((group) => group.fields)) {
     const value = draft[field.name]?.trim() ?? "";
     if (field.kind === "csv") {
-      values[field.name] = value
+      flat[field.name] = value
         .split(",")
         .map((item) => item.trim())
         .filter((item) => item !== "");
     } else if (value === "" && field.optional) {
-      values[field.name] = null;
+      flat[field.name] = null;
     } else if (field.kind === "integer") {
       // Integer counters only; never dimensions, weights, quantities or money.
       const count = Number(value);
@@ -442,15 +578,28 @@ export function writeFromDraft<R extends Resource>(
         count > 2147483647
       )
         throw new Error(`Invalid integer: ${field.name}`);
-      values[field.name] = count;
+      flat[field.name] = count;
     } else if (field.kind === "boolean") {
       if (value !== "true" && value !== "false") throw new Error(`Missing boolean: ${field.name}`);
-      values[field.name] = value === "true";
+      flat[field.name] = value === "true";
     } else if (field.kind === "processProfile") {
-      values[field.name] = value === "" ? null : value;
+      flat[field.name] = value === "" ? null : value;
     } else {
-      values[field.name] = field.kind === "decimal" ? exact(value) : value;
+      flat[field.name] = field.kind === "decimal" ? exact(value) : value;
     }
+  }
+  const values: Record<string, unknown> = {};
+  for (const [name, value] of Object.entries(flat)) {
+    const [parent, child] = name.split(".");
+    if (child && parent) {
+      const nested = (values[parent] ?? {}) as Record<string, unknown>;
+      nested[child] = value;
+      values[parent] = nested;
+    } else if (parent) values[parent] = value;
+  }
+  if (resource === "systems") {
+    values.sliding_parameters ??= null;
+    if (limits !== undefined) values.dimensional_limits = limits;
   }
   if (resource === "hardware-kits") {
     values.contents = contents.map((item) => ({
@@ -463,6 +612,8 @@ export function writeFromDraft<R extends Resource>(
   }
   if (resource === "articles") {
     values.section = sectionFromDraft(section);
+    values.cut_rule ??= null;
+    values.reinforcement_rule ??= null;
   }
   // Only schema-declared writable fields enter the request.
   return values as unknown as Writes[R];

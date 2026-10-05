@@ -145,6 +145,7 @@ def generate_artifact(
             frozen: dict[str, object] = frozen_revision
             if order_id is not None:
                 order, frozen = _order_snapshot(order_id, project_version_id, org_id)
+                frozen["is_demo"] = frozen_revision.get("is_demo", False)
             existing = rows(
                 "SELECT * FROM public.document_artifacts "
                 "WHERE org_id=%s AND project_version_id=%s AND artifact_scope=%s "

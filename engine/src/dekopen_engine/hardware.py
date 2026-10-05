@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from dekopen_engine.models import BayOpeningType, HardwareKitRule, SystemParams
 from dekopen_engine.weight import ExactLeafWeight, with_hardware_weight
+from dekopen_engine.catalog_rules import SLIDING_OPENINGS, sliding_parameters
 
 
 class NoCompatibleHardwareKit(ValueError):
@@ -65,7 +66,9 @@ def evaluate_hardware_candidates(
         total = exact.total_weight_kg
         candidates.append(HardwareCandidateEvaluation(
             kit=kit, opening_match=kit.opening_type == normalize_opening_type(opening),
-            rail_match=kit.rail_type is params.rail_type,
+            rail_match=(kit.rail_type is params.rail_type if params.uses_legacy_rules
+                        else kit.rail_type is sliding_parameters(params).rail_type
+                        if opening in SLIDING_OPENINGS else True),
             width_match=kit.min_leaf_width_mm <= width_mm <= kit.max_leaf_width_mm,
             height_match=kit.min_leaf_height_mm <= height_mm <= kit.max_leaf_height_mm,
             exact_total_weight=exact,

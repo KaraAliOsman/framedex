@@ -68,13 +68,15 @@ def extract_tagged(kind: str, content: bytes) -> list[tuple[str, str]] | None:
             )
         return pairs
     if kind == "XLSX":
+        from ingest.catalog_template import _xlsx_tables
         pairs = []
-        for index, row in enumerate(xlsx_rows(content), start=1):
-            joined = " ".join(
-                str(cell) for cell in row if cell is not None and str(cell).strip()
-            )
-            if joined:
-                pairs.append((joined, f"fila {index}"))
+        for sheet, table in _xlsx_tables(content):
+            for row in table:
+                number = row["_row"]
+                cells = [(letter, value) for letter, value in row.items() if letter != "_row" and value]
+                if cells:
+                    pairs.append((" | ".join(value for _, value in cells),
+                                  f"{sheet}!{cells[0][0]}{number}:{cells[-1][0]}{number}"))
         return pairs
     if kind == "CSV":
         return [
@@ -82,6 +84,8 @@ def extract_tagged(kind: str, content: bytes) -> list[tuple[str, str]] | None:
             for index, line in enumerate(_csv_lines(content), start=1)
             if line
         ]
+    if kind == "TEXT":
+        return [(line, f"línea {index}") for index, line in enumerate(content.decode("utf-8-sig").splitlines(), 1) if line.strip()]
     return None
 
 
@@ -106,7 +110,7 @@ def safe_file_name(file_name: str) -> bool:
     return not any(ord(character) < 32 for character in file_name)
 
 
-def kind_for(file_name: str) -> str | None:
+def kind_for(file_name: str, *, allow_text: bool = False) -> str | None:
     lowered = file_name.lower()
     if lowered.endswith(".pdf"):
         return "PDF"
@@ -116,6 +120,8 @@ def kind_for(file_name: str) -> str | None:
         return "IMAGE"
     if lowered.endswith(".csv"):
         return "CSV"
+    if allow_text and lowered.endswith((".txt", ".eml")):
+        return "TEXT"
     return None
 
 
@@ -130,8 +136,12 @@ def sniffed_kind(kind: str, content: bytes) -> bool:
     """Content must match its declared kind — the file goes to a provider or
     a parser, so extension alone can't be the authority. CSV carries no
     signature; the schedule parser's own structure check is the gate."""
-    if kind == "CSV":
-        return True
+    if kind in ("CSV", "TEXT"):
+        try:
+            content.decode("utf-8-sig")
+            return b"\x00" not in content
+        except UnicodeDecodeError:
+            return False
     if kind == "IMAGE":
         if content.startswith(b"RIFF"):
             return len(content) >= 12 and content[8:12] == b"WEBP"

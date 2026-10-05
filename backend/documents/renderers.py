@@ -2564,6 +2564,9 @@ def render_pdf_document(
         body = _doc08(snapshot)
     else:
         raise DocumentaryError("pdf_document_type_invalid")
+    if snapshot.get("is_demo") or any(isinstance(position, dict) and position.get("is_demo")
+                                     for position in snapshot.get("positions", [])):
+        body = '<p class="demo-notice"><strong>DEMO</strong> · Catálogo sintético, sin certificación. Medidas y precios de prueba.</p>' + body
     # Order-scoped payloads (DOC-02/DOC-04/DOC-07) carry `order`, not
     # `project` — resolve the code from whichever envelope the snapshot is.
     project_obj = snapshot.get("project")
@@ -2576,7 +2579,7 @@ def render_pdf_document(
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
         f"<title>{title}</title>"
-        f"<style>{_CSS}</style></head><body>{body}</body></html>"
+        f"<style>{_CSS}.demo-notice {{ border: 1pt solid #465158; padding: 2mm; font-size: 8pt; }}</style></head><body>{body}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
         pdf_identifier=pdf_identifier,

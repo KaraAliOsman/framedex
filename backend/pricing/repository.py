@@ -107,7 +107,20 @@ class PricingRepository:
             'AND (l.valid_to IS NULL OR l.valid_to>=%s) ORDER BY l.valid_from DESC',
             [self.org_id,sku,self.effective_date,self.effective_date])
         if not candidates:
-            raise PricingError('cost_list_not_found')
+            demo = rows(
+                'SELECT p.id,p.sku,p.unit,p.unit_cost,p.currency,p.system_id,p.is_demo,p.seed,p.source '
+                'FROM public.catalog_demo_prices p JOIN public.profile_systems s ON s.id=p.system_id '
+                'WHERE p.sku=%s AND p.org_id IS NULL AND p.is_demo AND s.is_demo AND s.is_global '
+                'AND s.is_active', [sku])
+            if not demo:
+                raise PricingError('cost_list_not_found')
+            if len(demo) != 1:
+                raise PricingError('ambiguous_cost_list')
+            value = demo[0]
+            if value['unit'].upper() != required_unit.upper():
+                raise PricingError('incompatible_cost_unit')
+            self.authorities.append({'cost': value})
+            return self.convert(value['unit_cost'],value['currency'])
         latest = [item for item in candidates if item['valid_from'] == candidates[0]['valid_from']]
         if len(latest) != 1:
             raise PricingError('ambiguous_cost_list')
@@ -148,6 +161,10 @@ ADMIN_TABLES = {
 
 
 def admin_list(resource, org_id):
+    if resource == 'demo-costs':
+        return rows('SELECT p.*,s.name AS system_name,s.code AS system_code '
+                    'FROM public.catalog_demo_prices p JOIN public.profile_systems s ON s.id=p.system_id '
+                    'WHERE p.is_demo AND s.is_demo AND s.is_global AND s.is_active ORDER BY s.code,p.sku')
     if resource == 'audits':
         return rows('SELECT l.*, p.code AS project_code, p.name AS project_name '
                     'FROM public.price_audit_logs l '

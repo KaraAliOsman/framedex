@@ -24,6 +24,7 @@ const systemFields = [
   "name",
   "code",
   "material",
+  "system_family",
   "depth_mm",
   "chamber_count",
   "version",
@@ -32,15 +33,10 @@ const systemFields = [
   "glass_clearance_white_mm",
   "glass_clearance_foil_mm",
   "chamber_clearance_mm",
-  "rail_type",
-  "pulley_height_mm",
-  "central_overlap_mm",
-  "sliding_lateral_clearance_mm",
-  "sliding_end_add_mm",
+  "rebate_depth_mm",
+  "end_milling_overlap_mm",
   "corner_bracket_loss_mm",
   "hook_depth_mm",
-  "sliding_glazing_deduction_width_mm",
-  "sliding_glazing_deduction_height_mm",
   "door_threshold_mm",
   "door_bottom_clearance_mm",
   "door_leaf_side_clearance_mm",
@@ -233,14 +229,20 @@ test("manager creates, updates and reopens a synthetic series and bead compatibi
 
   const baseline = await loadCatalog(page);
   const templates = baseline.systems.filter(
-    (row) => row.code === "DEMO_60" && row.is_global && row.is_demo && row.is_active,
+    (row) =>
+      row.code === "DEMO_60" &&
+      row.version === 2 &&
+      row.system_family === "CASEMENT" &&
+      row.is_global &&
+      row.is_demo &&
+      row.is_active,
   );
   expect(templates).toHaveLength(1);
   const templateSystem = templates[0]!;
 
   const beadTemplates = baseline.glazing.filter(
     (row) =>
-      row.system_id === templateSystem.id && row.glass_thickness_mm === "20.00" && row.is_active,
+      row.system_id === templateSystem.id && row.glass_thickness_mm === "4.00" && row.is_active,
   );
   expect(beadTemplates).toHaveLength(1);
   const templateBead = beadTemplates[0]!;

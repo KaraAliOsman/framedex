@@ -2115,6 +2115,475 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalog-imports/{import_id}/export/:
+    get:
+      operationId: catalog_import_export
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: sheet
+        schema:
+          type: string
+          enum:
+          - Colores y SKU por color
+          - Herrajes
+          - Límites
+          - Perfiles
+          - Precios de costo
+          - Refuerzos
+          - Roles y reglas de corte
+          - Sistemas
+          - Vidrios
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalog-imports/{import_id}/publish/:
+    post:
+      operationId: catalog_import_publish
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogPublishRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogImportConfirmResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalog-imports/{import_id}/review/:
+    post:
+      operationId: catalog_import_review
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogReviewRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogReviewResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalog-imports/{import_id}/undo/:
+    post:
+      operationId: catalog_import_undo
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogUndoRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CatalogUndoRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CatalogUndoRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogImportDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalog-imports/schema/:
+    get:
+      operationId: catalog_template_schema
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogTemplateSchema'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalog-imports/template/:
+    get:
+      operationId: catalog_template_download
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - csv
+          - xlsx
+      - in: query
+        name: sheet
+        schema:
+          type: string
+          enum:
+          - Colores y SKU por color
+          - Herrajes
+          - Límites
+          - Perfiles
+          - Precios de costo
+          - Refuerzos
+          - Roles y reglas de corte
+          - Sistemas
+          - Vidrios
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/articles/:
     get:
       operationId: catalog_article_list
@@ -16307,6 +16776,14 @@ components:
       - id
       - requirement_line_id
       - supplier_eligibility_id
+    AngleDegreesEnum:
+      enum:
+      - 45
+      - 90
+      type: integer
+      description: |-
+        * `45` - 45
+        * `90` - 90
     AnnotationRequest:
       type: object
       properties:
@@ -16459,6 +16936,14 @@ components:
           type: boolean
           readOnly: true
           default: false
+        cut_rule:
+          allOf:
+          - $ref: '#/components/schemas/ProfileCutRule'
+          nullable: true
+        reinforcement_rule:
+          allOf:
+          - $ref: '#/components/schemas/ProfileReinforcementRule'
+          nullable: true
         system_id:
           type: string
           format: uuid
@@ -16550,6 +17035,14 @@ components:
     ArticleWriteRequest:
       type: object
       properties:
+        cut_rule:
+          allOf:
+          - $ref: '#/components/schemas/ProfileCutRuleRequest'
+          nullable: true
+        reinforcement_rule:
+          allOf:
+          - $ref: '#/components/schemas/ProfileReinforcementRuleRequest'
+          nullable: true
         system_id:
           type: string
           format: uuid
@@ -16742,6 +17235,7 @@ components:
       - user
     AuthorityTableEnum:
       enum:
+      - catalog_color_skus
       - catalog_imports
       - fitting_purchase_mappings
       - glass_purchase_mappings
@@ -16755,6 +17249,7 @@ components:
       - reinforcement_cut_policies
       type: string
       description: |-
+        * `catalog_color_skus` - catalog_color_skus
         * `catalog_imports` - catalog_imports
         * `fitting_purchase_mappings` - fitting_purchase_mappings
         * `glass_purchase_mappings` - glass_purchase_mappings
@@ -16966,6 +17461,38 @@ components:
       - plan
       - subscription
       - trial_ends_at
+    CatalogChange:
+      type: object
+      properties:
+        key:
+          type: string
+        sheet:
+          type: string
+        action:
+          $ref: '#/components/schemas/CatalogChangeActionEnum'
+        before:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        after:
+          type: object
+          additionalProperties: {}
+      required:
+      - action
+      - after
+      - before
+      - key
+      - sheet
+    CatalogChangeActionEnum:
+      enum:
+      - create
+      - update
+      - none
+      type: string
+      description: |-
+        * `create` - create
+        * `update` - update
+        * `none` - none
     CatalogHardwareComponent:
       type: object
       properties:
@@ -17182,6 +17709,15 @@ components:
       - COUPLER
       - ADDITIONAL
       - THRESHOLD
+      - CHANNEL
+      - SLIDING_SASH
+      - INTERLOCK
+      - RAIL
+      - DOOR_SASH
+      - FRAME_EXTENSION
+      - SILL
+      - COVER_TRIM
+      - PLINTH
       type: string
       description: |-
         * `FRAME` - FRAME
@@ -17193,6 +17729,32 @@ components:
         * `COUPLER` - COUPLER
         * `ADDITIONAL` - ADDITIONAL
         * `THRESHOLD` - THRESHOLD
+        * `CHANNEL` - CHANNEL
+        * `SLIDING_SASH` - SLIDING_SASH
+        * `INTERLOCK` - INTERLOCK
+        * `RAIL` - RAIL
+        * `DOOR_SASH` - DOOR_SASH
+        * `FRAME_EXTENSION` - FRAME_EXTENSION
+        * `SILL` - SILL
+        * `COVER_TRIM` - COVER_TRIM
+        * `PLINTH` - PLINTH
+    CatalogPublishRequestRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogReviewItemRequest'
+        review_token:
+          type: string
+          minLength: 1
+          pattern: ^sha256:[0-9a-f]{64}$
+        reviewed:
+          type: boolean
+      required:
+      - items
+      - review_token
+      - reviewed
     CatalogReadiness:
       type: object
       properties:
@@ -17215,6 +17777,110 @@ components:
       - quote_ready
       - reasons
       - scope
+    CatalogReviewError:
+      type: object
+      properties:
+        key:
+          type: string
+        field:
+          type: string
+        message:
+          type: string
+      required:
+      - field
+      - key
+      - message
+    CatalogReviewItemRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 40
+        values:
+          type: object
+          additionalProperties: {}
+      required:
+      - key
+      - values
+    CatalogReviewRequestRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogReviewItemRequest'
+      required:
+      - items
+    CatalogReviewResponse:
+      type: object
+      properties:
+        review_token:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogReviewError'
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogChange'
+      required:
+      - changes
+      - errors
+      - review_token
+    CatalogTemplateColumn:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        kind:
+          type: string
+        required:
+          type: boolean
+        choices:
+          type: object
+          additionalProperties: {}
+          nullable: true
+      required:
+      - choices
+      - key
+      - kind
+      - label
+      - required
+    CatalogTemplateSchema:
+      type: object
+      properties:
+        version:
+          type: string
+        sheets:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogTemplateSheet'
+      required:
+      - sheets
+      - version
+    CatalogTemplateSheet:
+      type: object
+      properties:
+        name:
+          type: string
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogTemplateColumn'
+      required:
+      - columns
+      - name
+    CatalogUndoRequestRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
     CategoryEnum:
       enum:
       - HANDLE
@@ -18625,6 +19291,19 @@ components:
     DesignOptions:
       type: object
       properties:
+        system_family:
+          type: string
+          nullable: true
+        is_demo:
+          type: boolean
+        compatible_openings:
+          type: array
+          items:
+            type: string
+        dimensional_limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemDimensionalLimit'
         profiles:
           type: array
           items:
@@ -18681,20 +19360,24 @@ components:
           type: string
       required:
       - colors
+      - compatible_openings
       - coupler_profiles
       - coupler_skus
       - depth_mm
+      - dimensional_limits
       - glass_skus
       - glass_specs
       - glazing_beads
       - glazing_thicknesses
       - handle_policy
       - hardware_kits
+      - is_demo
       - panel_choices
       - panel_skus
       - profiles
       - rebate_depth_mm
       - sash_overlap_mm
+      - system_family
     DiffPreconditions:
       type: object
       properties:
@@ -22020,6 +22703,14 @@ components:
     PatchedArticleWriteRequest:
       type: object
       properties:
+        cut_rule:
+          allOf:
+          - $ref: '#/components/schemas/ProfileCutRuleRequest'
+          nullable: true
+        reinforcement_rule:
+          allOf:
+          - $ref: '#/components/schemas/ProfileReinforcementRuleRequest'
+          nullable: true
         system_id:
           type: string
           format: uuid
@@ -22350,6 +23041,16 @@ components:
     PatchedSystemWriteRequest:
       type: object
       properties:
+        system_family:
+          $ref: '#/components/schemas/SystemFamilyEnum'
+        sliding_parameters:
+          allOf:
+          - $ref: '#/components/schemas/SlidingSystemParametersRequest'
+          nullable: true
+        dimensional_limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemDimensionalLimitRequest'
         name:
           type: string
           minLength: 1
@@ -22384,18 +23085,22 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         central_overlap_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         sliding_lateral_clearance_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         sliding_end_add_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         corner_bracket_loss_mm:
           type: string
           format: decimal
@@ -22413,15 +23118,20 @@ components:
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
         rail_type:
-          $ref: '#/components/schemas/RailTypeEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RailTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
         sliding_glazing_deduction_width_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         sliding_glazing_deduction_height_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         door_leaf_side_clearance_mm:
           type: string
           format: decimal
@@ -24175,6 +24885,178 @@ components:
       - role
       - sagitta_mm
       - sku
+    ProfileCutRule:
+      type: object
+      properties:
+        angle_degrees:
+          $ref: '#/components/schemas/AngleDegreesEnum'
+        welding_loss_per_end_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        joint_deduction_per_end_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        meeting_deduction_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        cut_step_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        rounding:
+          $ref: '#/components/schemas/RoundingEnum'
+        source:
+          type: string
+          maxLength: 1000
+      required:
+      - angle_degrees
+      - cut_step_mm
+      - joint_deduction_per_end_mm
+      - meeting_deduction_mm
+      - rounding
+      - source
+      - welding_loss_per_end_mm
+    ProfileCutRuleRequest:
+      type: object
+      properties:
+        angle_degrees:
+          $ref: '#/components/schemas/AngleDegreesEnum'
+        welding_loss_per_end_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        joint_deduction_per_end_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        meeting_deduction_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        cut_step_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        rounding:
+          $ref: '#/components/schemas/RoundingEnum'
+        source:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - angle_degrees
+      - cut_step_mm
+      - joint_deduction_per_end_mm
+      - meeting_deduction_mm
+      - rounding
+      - source
+      - welding_loss_per_end_mm
+    ProfileReinforcementRule:
+      type: object
+      properties:
+        reinforcement_sku:
+          type: string
+          maxLength: 100
+        reinforcement_type:
+          type: string
+          maxLength: 100
+        minimum_length_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        required_finishes:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        required_non_white:
+          type: boolean
+        cut_deduction_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        screws_per_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+        screw_sku:
+          type: string
+          maxLength: 100
+        screw_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,6})?$
+          nullable: true
+        source:
+          type: string
+          maxLength: 1000
+      required:
+      - cut_deduction_mm
+      - minimum_length_mm
+      - reinforcement_sku
+      - reinforcement_type
+      - required_finishes
+      - required_non_white
+      - screw_sku
+      - screws_per_m
+      - source
+    ProfileReinforcementRuleRequest:
+      type: object
+      properties:
+        reinforcement_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        reinforcement_type:
+          type: string
+          minLength: 1
+          maxLength: 100
+        minimum_length_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        required_finishes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+        required_non_white:
+          type: boolean
+        cut_deduction_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        screws_per_m:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+        screw_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        screw_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,6})?$
+          nullable: true
+        source:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - cut_deduction_mm
+      - minimum_length_mm
+      - reinforcement_sku
+      - reinforcement_type
+      - required_finishes
+      - required_non_white
+      - screw_sku
+      - screws_per_m
+      - source
     ProfileSection:
       type: object
       description: |-
@@ -24250,6 +25132,9 @@ components:
     ProfileSystemSummary:
       type: object
       properties:
+        system_family:
+          type: string
+          nullable: true
         id:
           type: string
           format: uuid
@@ -24272,6 +25157,7 @@ components:
       - name
       - quote_ready
       - readiness_reasons
+      - system_family
     ProjectCreditNote:
       type: object
       properties:
@@ -25482,6 +26368,16 @@ components:
       - price_gross_delta
       - removed
       - unchanged
+    RoundingEnum:
+      enum:
+      - UP
+      - NEAREST
+      - DOWN
+      type: string
+      description: |-
+        * `UP` - UP
+        * `NEAREST` - NEAREST
+        * `DOWN` - DOWN
     RuleEvaluation:
       type: object
       properties:
@@ -25970,6 +26866,102 @@ components:
       description: |-
         * `MOVING` - MOVING
         * `FIXED` - FIXED
+    SlidingSystemParameters:
+      type: object
+      properties:
+        pulley_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        central_overlap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        lateral_clearance_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        end_add_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        glazing_deduction_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        glazing_deduction_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        rail_type:
+          $ref: '#/components/schemas/RailTypeEnum'
+        rail_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        separate_rail:
+          type: boolean
+        interlock_required:
+          type: boolean
+      required:
+      - central_overlap_mm
+      - end_add_mm
+      - glazing_deduction_height_mm
+      - glazing_deduction_width_mm
+      - interlock_required
+      - lateral_clearance_mm
+      - pulley_height_mm
+      - rail_count
+      - rail_type
+      - separate_rail
+    SlidingSystemParametersRequest:
+      type: object
+      properties:
+        pulley_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        central_overlap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        lateral_clearance_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        end_add_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        glazing_deduction_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        glazing_deduction_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        rail_type:
+          $ref: '#/components/schemas/RailTypeEnum'
+        rail_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        separate_rail:
+          type: boolean
+        interlock_required:
+          type: boolean
+      required:
+      - central_overlap_mm
+      - end_add_mm
+      - glazing_deduction_height_mm
+      - glazing_deduction_width_mm
+      - interlock_required
+      - lateral_clearance_mm
+      - pulley_height_mm
+      - rail_count
+      - rail_type
+      - separate_rail
     StepTransition:
       type: object
       properties:
@@ -26171,6 +27163,141 @@ components:
             $ref: '#/components/schemas/Supplier'
       required:
       - suppliers
+    SystemDimensionalLimit:
+      type: object
+      properties:
+        opening_type:
+          $ref: '#/components/schemas/SystemDimensionalLimitOpeningTypeEnum'
+        min_leaf_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        min_leaf_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          nullable: true
+        min_aspect_ratio:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+        max_aspect_ratio:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+        source:
+          type: string
+          maxLength: 1000
+      required:
+      - max_aspect_ratio
+      - max_leaf_height_mm
+      - max_leaf_width_mm
+      - min_aspect_ratio
+      - min_leaf_height_mm
+      - min_leaf_width_mm
+      - opening_type
+      - source
+    SystemDimensionalLimitOpeningTypeEnum:
+      enum:
+      - FIXED
+      - TURN_LEFT
+      - TURN_RIGHT
+      - TILT_TURN_LEFT
+      - TILT_TURN_RIGHT
+      - SLIDING_2L
+      - SLIDING_3L
+      - SLIDING_4L
+      - SLIDING
+      - AWNING
+      - DOOR_ENTRY
+      - DOOR_DOUBLE
+      type: string
+      description: |-
+        * `FIXED` - FIXED
+        * `TURN_LEFT` - TURN_LEFT
+        * `TURN_RIGHT` - TURN_RIGHT
+        * `TILT_TURN_LEFT` - TILT_TURN_LEFT
+        * `TILT_TURN_RIGHT` - TILT_TURN_RIGHT
+        * `SLIDING_2L` - SLIDING_2L
+        * `SLIDING_3L` - SLIDING_3L
+        * `SLIDING_4L` - SLIDING_4L
+        * `SLIDING` - SLIDING
+        * `AWNING` - AWNING
+        * `DOOR_ENTRY` - DOOR_ENTRY
+        * `DOOR_DOUBLE` - DOOR_DOUBLE
+    SystemDimensionalLimitRequest:
+      type: object
+      properties:
+        opening_type:
+          $ref: '#/components/schemas/SystemDimensionalLimitOpeningTypeEnum'
+        min_leaf_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        min_leaf_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        max_leaf_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          nullable: true
+        min_aspect_ratio:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+        max_aspect_ratio:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+        source:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - max_aspect_ratio
+      - max_leaf_height_mm
+      - max_leaf_width_mm
+      - min_aspect_ratio
+      - min_leaf_height_mm
+      - min_leaf_width_mm
+      - opening_type
+      - source
+    SystemFamilyEnum:
+      enum:
+      - CASEMENT
+      - SLIDING
+      - LIFT_SLIDE
+      - DOOR
+      - FACADE_FIXED
+      type: string
+      description: |-
+        * `CASEMENT` - CASEMENT
+        * `SLIDING` - SLIDING
+        * `LIFT_SLIDE` - LIFT_SLIDE
+        * `DOOR` - DOOR
+        * `FACADE_FIXED` - FACADE_FIXED
     SystemList:
       type: object
       properties:
@@ -26204,6 +27331,19 @@ components:
           type: boolean
           readOnly: true
           default: false
+        system_family:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SystemFamilyEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        sliding_parameters:
+          allOf:
+          - $ref: '#/components/schemas/SlidingSystemParameters'
+          nullable: true
+        dimensional_limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemDimensionalLimit'
         name:
           type: string
           maxLength: 150
@@ -26236,18 +27376,22 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         central_overlap_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         sliding_lateral_clearance_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         sliding_end_add_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         corner_bracket_loss_mm:
           type: string
           format: decimal
@@ -26265,15 +27409,20 @@ components:
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
         rail_type:
-          $ref: '#/components/schemas/RailTypeEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RailTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
         sliding_glazing_deduction_width_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         sliding_glazing_deduction_height_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         door_leaf_side_clearance_mm:
           type: string
           format: decimal
@@ -26338,7 +27487,6 @@ components:
         is_demo:
           type: boolean
       required:
-      - central_overlap_mm
       - chamber_count
       - code
       - corner_bracket_loss_mm
@@ -26356,17 +27504,12 @@ components:
       - is_global
       - material
       - name
-      - pulley_height_mm
-      - rail_type
       - read_only
       - readiness
       - review_pending
       - revision
       - sash_overlap_mm
-      - sliding_end_add_mm
-      - sliding_glazing_deduction_height_mm
-      - sliding_glazing_deduction_width_mm
-      - sliding_lateral_clearance_mm
+      - system_family
       - technical_reviewed_at
       - technical_reviewed_by
       - version
@@ -26413,6 +27556,16 @@ components:
     SystemWriteRequest:
       type: object
       properties:
+        system_family:
+          $ref: '#/components/schemas/SystemFamilyEnum'
+        sliding_parameters:
+          allOf:
+          - $ref: '#/components/schemas/SlidingSystemParametersRequest'
+          nullable: true
+        dimensional_limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemDimensionalLimitRequest'
         name:
           type: string
           minLength: 1
@@ -26447,18 +27600,22 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         central_overlap_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         sliding_lateral_clearance_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         sliding_end_add_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          nullable: true
         corner_bracket_loss_mm:
           type: string
           format: decimal
@@ -26476,15 +27633,20 @@ components:
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
         rail_type:
-          $ref: '#/components/schemas/RailTypeEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RailTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
         sliding_glazing_deduction_width_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         sliding_glazing_deduction_height_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         door_leaf_side_clearance_mm:
           type: string
           format: decimal
@@ -26535,7 +27697,6 @@ components:
           format: uuid
           nullable: true
       required:
-      - central_overlap_mm
       - chamber_count
       - code
       - corner_bracket_loss_mm
@@ -26549,13 +27710,8 @@ components:
       - is_active
       - material
       - name
-      - pulley_height_mm
-      - rail_type
       - sash_overlap_mm
-      - sliding_end_add_mm
-      - sliding_glazing_deduction_height_mm
-      - sliding_glazing_deduction_width_mm
-      - sliding_lateral_clearance_mm
+      - system_family
       - version
     TimeWindowEnum:
       enum:

@@ -19,6 +19,24 @@ sources:
 
 # Current reality
 
+## D01 catalog authority verified 2026-10-05
+
+The D01 branch separates five system families, adds exact per-profile cut and
+reinforcement rules and sourced dimensional limits, and supplies five explicitly
+synthetic DEMO series with reproducible costs. New products use family compatibility;
+the upgrade preserves historical saved calculations and issued documentary authority.
+
+Manual nine-sheet import and real MiMo text extraction converge in source-backed
+review, a transactional diff, explicit publication and guarded undo. Original
+evidence survives reviewer corrections. No PDF candidate was published during the
+real-provider verification. The measured source produced 31 candidates, 324 supported
+HIGH fields and 27 UNKNOWN fields. Scans without text remain an explicit limitation.
+
+Verification details and the acceptance scope are in
+[the D01 report](../../redesign/captures/sistemas-catalogo/aceptacion.md) and
+[the durable catalog page](../product/catalog-authority.md). D02–D07 and P16 still
+need their own acceptance; this does not accredit unfinished queue surfaces.
+
 **Warning:** this is a volatile navigation page. Re-check the repository before relying on it for implementation decisions.
 
 ## IA1 outcome measurement verified 2026-10-05

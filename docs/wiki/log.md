@@ -76,3 +76,16 @@ Append-only chronology. Keep newest entries at the bottom.
 ## 2026-10-05 — IA1 integrado con línea base y CI verificadas
 
 PR #118 mergeado en `integracion/v1` con squash `2c9bbebc1cca6df125a4e0eeae14b22b71478b9e`. La corrida medida conserva su referencia `dd4ce1cc`: MiMo 3/26, MOCK 0/26 y 48 regresiones de oráculos, sin escrituras persistentes ni cambios de fuente. Los cuatro checks de GitHub pasaron sobre `2a41f7421cf6b767e80ec6f4dc7250cada67dbd8` (run 37370890838); el incidente alojado se recuperó con runners temporales de un solo job en Ubuntu 24.04, conservando cada gate. Se completaron SQLite y tzdata ausentes en la imagen mínima antes de los reintentos. La variable y los runners se retiraron al cerrar; `main` y el catálogo de producción no se modificaron. Evidencia: `docs/ai/evals/README.md` y `docs/redesign/captures/diagnostico-evals/aceptacion.md`.
+
+## 2026-10-05 — D01 · autoridad de catálogo y revisión
+
+La rama D01 introduce familias separadas, reglas exactas de corte/refuerzo, límites
+con fuente y cinco series DEMO reproducibles. La migración preserva cortes y hashes
+históricos; el registro append-only conserva el BOM anterior. La plantilla de
+nueve hojas y MiMo real convergen en candidatos, diff revisado y publicación con
+procedencia, seguida de exportación o deshacer atómico si no se usó la autoridad.
+El PDF sintético produjo 31 candidatos, 324 HIGH respaldados y 27 UNKNOWN, sin
+publicación. La UI declara la limitación de escaneos sin texto. Los límites de
+alcance y la rúbrica están en `docs/redesign/captures/sistemas-catalogo/aceptacion.md`;
+la síntesis está en `product/catalog-authority.md`. Integración y SHA se registran
+cuando pase el Database Gate completo y los cuatro checks del PR.

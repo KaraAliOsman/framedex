@@ -137,8 +137,7 @@ def test_new_system_requires_explicit_added_geometry():
     serializer = SystemWriteSerializer(data={})
     assert not serializer.is_valid()
     assert {
-        "sliding_glazing_deduction_width_mm",
-        "sliding_glazing_deduction_height_mm",
+        "system_family",
         "door_leaf_side_clearance_mm",
     } <= set(serializer.errors)
 

@@ -290,21 +290,15 @@ def test_catalog_singleton_role_uniqueness(documentary_tenant, role):
                 "code": f"SYS-{uuid4().hex[:6].upper()}",
                 "depth_mm": D("60.00"),
                 "material": "PVC",
+                "system_family": "CASEMENT",
                 "chamber_count": 3,
                 "sash_overlap_mm": D("8.00"),
                 "glass_clearance_white_mm": D("4.00"),
                 "glass_clearance_foil_mm": D("4.00"),
-                "pulley_height_mm": D("0.00"),
-                "central_overlap_mm": D("0.00"),
-                "sliding_lateral_clearance_mm": D("0.00"),
-                "sliding_end_add_mm": D("0.00"),
                 "corner_bracket_loss_mm": D("0.00"),
                 "hook_depth_mm": D("0.00"),
                 "door_threshold_mm": D("0.00"),
                 "door_bottom_clearance_mm": D("0.00"),
-                "rail_type": "dual",
-                "sliding_glazing_deduction_width_mm": D("0.00"),
-                "sliding_glazing_deduction_height_mm": D("0.00"),
                 "door_leaf_side_clearance_mm": D("0.00"),
                 "chamber_clearance_mm": None,
                 "version": 1,
@@ -505,7 +499,7 @@ def test_backend_readiness_excludes_incomplete_system(documentary_tenant):
         # authorities and manufacturing policies stay incomplete.
         assert readiness["reasons"] == ["manufacturing"]
         assert not catalog_readiness(system, other)["quote_ready"]
-        demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
+        demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")["id"]
         assert catalog_readiness(demo, org)["quote_ready"]
 
 
@@ -543,7 +537,7 @@ def test_pricing_reset_marker_cannot_be_written_directly(documentary_tenant):
 def test_catalog_reservation_requires_editing_membership(documentary_tenant, case):
     from django.db import DatabaseError, transaction
     org, other, users, _ = documentary_tenant
-    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
+    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")["id"]
     actor = users["INSTALLER"] if case == "installer" else users["OWNER"]
     tenant = None if case == "null_tenant" else other if case == "other_tenant" else org
     with as_user(actor), pytest.raises(DatabaseError), transaction.atomic():
@@ -718,7 +712,7 @@ def test_readiness_levels_report_exact_blockers(documentary_tenant):
     the action that resolves it — quote_ready keeps its legacy contract."""
     from catalogs.readiness import catalog_readiness
     org, _, users, _ = documentary_tenant
-    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
+    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")["id"]
 
     with as_user(users["OWNER"]):
         readiness = catalog_readiness(demo, org)
@@ -776,7 +770,7 @@ def test_readiness_levels_flag_unmapped_machine_ops(documentary_tenant):
     # the global manufacturing policies copied for it (postgres-level fixture
     # writes — they run before any member context locks the role).
     from pricing.repository import json_text, rows as pg_rows
-    global_demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND is_global")["id"]
+    global_demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1 AND is_global")["id"]
     for table in ("manufacturing_placement_policies", "handle_requirement_policies",
                   "reinforcement_cut_policies"):
         jsonb_cols = {
@@ -861,4 +855,4 @@ def test_global_search_uses_canonical_catalog_visibility(documentary_tenant):
         systems = search(org, "demo_60")["results"]
         articles = search(org, "marco")["results"]
     assert any(r["group"] == "systems" and "DEMO_60" in r["title"] for r in systems)
-    assert any(r["group"] == "articles" and r["title"] == "MARCO" for r in articles)
+    assert any(r["group"] == "articles" and "marco" in (r["subtitle"] or "").lower() for r in articles)

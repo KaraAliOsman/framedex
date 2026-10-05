@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from dekopen_engine.snapshot import calculation_response, evaluation_response
 from dekopen_engine.weight import MissingFabricationAuthority
+from dekopen_engine.catalog_rules import CatalogRuleError
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -141,6 +142,9 @@ class EngineCalculateView(APIView):
                 "system_not_found",
                 "Profile system does not exist or is not visible",
             ) from error
+        except CatalogRuleError as error:
+            raise contract_error(422, error.code, str(error),
+                                 error_extra={"limits": error.params}) from error
         except (UnsupportedEngineContract, UnsupportedCatalogContract) as error:
             raise contract_error(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,

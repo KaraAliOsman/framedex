@@ -99,7 +99,7 @@ def _seed_bow_project(
     operable: bool = False,
 ) -> tuple[UUID, UUID, UUID, dict[str, object]]:
     system_id = UUID(str(one(
-        "SELECT id FROM public.profile_systems WHERE code='DEMO_60'"
+        "SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1"
     )["id"]))
     project_id = UUID(str(one(
         "INSERT INTO public.projects(org_id,code,name,client_name,client_rut,client_email,"
@@ -234,7 +234,7 @@ def _freeze(org: UUID, owner: UUID, project_id: UUID, operation_id: UUID, *, inc
 
 def _policies(org: UUID) -> dict[str, object]:
     system_id = UUID(str(one(
-        "SELECT id FROM public.profile_systems WHERE code='DEMO_60'"
+        "SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1"
     )["id"]))
     return one(
         "SELECT placement.id AS placement_id,handles.id AS handle_id,steel.id AS steel_id "
@@ -331,7 +331,7 @@ def test_save_documentary_inputs_validates_namespaced_targets(documentary_tenant
     org, _, users, _ = documentary_tenant
     owner = users["OWNER"]
     system_id = UUID(str(one(
-        "SELECT id FROM public.profile_systems WHERE code='DEMO_60'"
+        "SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1"
     )["id"]))
     tree = _bow_tree()
     project_id = UUID(str(one(

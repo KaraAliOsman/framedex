@@ -222,6 +222,7 @@ class EngineAssemblyCalculateResponseSerializer(serializers.Serializer):
 
 
 class ProfileSystemSummarySerializer(serializers.Serializer):
+    system_family = serializers.CharField(allow_null=True)
     id = serializers.UUIDField()
     code = serializers.CharField()
     name = serializers.CharField()

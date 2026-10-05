@@ -68,8 +68,8 @@ def test_manager_crud_and_exact_contents(real_rows):
         "code": "MANUAL-TEST",
         "depth_mm": "60.00",
         "material": "PVC",
+        "system_family": "CASEMENT",
         "chamber_count": 3,
-        "rail_type": "dual",
         "version": 1,
         "is_active": False,
     }
@@ -77,16 +77,10 @@ def test_manager_crud_and_exact_contents(real_rows):
         "sash_overlap_mm",
         "glass_clearance_white_mm",
         "glass_clearance_foil_mm",
-        "pulley_height_mm",
-        "central_overlap_mm",
-        "sliding_lateral_clearance_mm",
-        "sliding_end_add_mm",
         "corner_bracket_loss_mm",
         "hook_depth_mm",
         "door_threshold_mm",
         "door_bottom_clearance_mm",
-        "sliding_glazing_deduction_width_mm",
-        "sliding_glazing_deduction_height_mm",
         "door_leaf_side_clearance_mm",
     ):
         system_payload[name] = "1.00"

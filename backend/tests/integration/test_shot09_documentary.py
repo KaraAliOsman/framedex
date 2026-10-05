@@ -101,7 +101,7 @@ def _tenant(org: UUID, role: str) -> TenantContext:
 def _seed_project(
     org: UUID, owner: UUID, *, valid_annotations: bool = True, apply_pricing: bool = True
 ) -> tuple[UUID, UUID, UUID]:
-    system_id = UUID(str(one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]))
+    system_id = UUID(str(one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")["id"]))
     project_id = UUID(str(one(
         "INSERT INTO public.projects(org_id,code,name,client_name,client_rut,client_email,"
         "client_phone,delivery_address,created_by) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",

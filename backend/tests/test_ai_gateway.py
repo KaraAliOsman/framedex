@@ -44,6 +44,7 @@ def _org(**over):
 
 
 def _patch_env(monkeypatch, *, org=None, route=None, rows_impl=None, provider=None):
+    monkeypatch.setattr(service, "documentary_backend", _atomic)
     monkeypatch.setattr(service.wallet, "financial_transaction", lambda org_id: _atomic())
     monkeypatch.setattr(
         service.wallet,

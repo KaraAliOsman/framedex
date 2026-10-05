@@ -24,6 +24,8 @@ from dekopen_engine import (
     evaluate_product,
 )
 from dekopen_engine.contour import Contour
+from dekopen_engine.catalog_rules import CatalogRuleError
+from dekopen_engine.weight import MissingFabricationAuthority
 from dekopen_engine.models import PlanPoint
 from dekopen_engine.product import (
     ConnectionKind,
@@ -350,9 +352,11 @@ def calculate_from_api(
         nominal_height_mm=nominal_height_mm, color=color, params=params,
     )
     try:
-        return calculate_geometry(root, params, is_foiled=color != "WHITE")
+        return calculate_geometry(root, params, is_foiled=color != "WHITE", finish=color)
     except NotImplementedError as error:
         raise UnsupportedEngineContract(str(error)) from error
+    except (CatalogRuleError, MissingFabricationAuthority):
+        raise
     except ValueError as error:
         raise InvalidEngineRequest(str(error)) from error
 
@@ -554,7 +558,7 @@ def evaluate_assembly_from_api(
         else parse_product_model(product)
     )
     return evaluate_product(
-        model, params, coupler_articles=coupler_articles, is_foiled=color != "WHITE"
+        model, params, coupler_articles=coupler_articles, is_foiled=color != "WHITE", finish=color
     )
 
 

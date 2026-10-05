@@ -11,13 +11,14 @@ import { SystemWorkspaceView } from "./SystemWorkspace";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import { SectionImportPanel } from "./SectionImportPanel";
 import { Button, DeniedState, PageHeader, Tabs, useConfirm } from "../../ui";
-import type { ProcessProfileOption } from "../../api/generated/models";
+import type { ProcessProfileOption, SystemResponse } from "../../api/generated/models";
 import {
   HARDWARE_COMPONENT_CATEGORIES,
   catalogApi,
   initialDraft,
   initialSectionDraft,
-  schemas,
+  groupsFor,
+  catalogVocabulary,
   sectionPreviewFromDraft,
   writeFromDraft,
   type CatalogData,
@@ -28,10 +29,11 @@ import {
   type SectionDraft,
 } from "./catalogModel";
 import "./catalogs.css";
+import { CatalogLimitsEditor } from "./CatalogLimitsEditor";
 
 type Label = Parameters<typeof t>[0];
 // All suffixes below are supplied in the translation block.
-const ct = (key: string) => t(`catalog.${key}` as Label);
+const ct = (key: string) => catalogVocabulary[key] ?? t(`catalog.${key}` as Label);
 const resources: Resource[] = ["systems", "articles", "glazing", "hardware-kits"];
 
 const DETAIL_KEYS: Record<string, Label> = {
@@ -66,12 +68,6 @@ function itemName(resource: Resource, row: Row<Resource>, data: CatalogData): st
 
 function itemCode(row: Row<Resource>): string {
   return "sku" in row ? row.sku : "code" in row ? row.code : "";
-}
-
-/** Import-generated codes embed a UUID (TEST-0f41dce9…) — render the short
- * form in lists; the full code stays in the tooltip. */
-function shortCode(code: string): string {
-  return code.length > 16 ? `${code.slice(0, 16)}…` : code;
 }
 
 function systemReadinessLabel(system: Row<"systems">): string {
@@ -219,8 +215,8 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
     setWorkspaceKey((value) => value + 1);
   }
 
-  if (loading) return <p role="status">{ct("loading")}</p>;
-  if (error || !data) {
+  if (loading && data === null) return <p role="status">{ct("loading")}</p>;
+  if (!data) {
     return (
       <section className="catalog">
         <p role="alert">{error || ct("errorNetwork")}</p>
@@ -247,7 +243,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
     : undefined;
 
   return (
-    <section className="catalog">
+    <section className="catalog" aria-busy={loading}>
       <PageHeader
         actions={
           canEdit ? (
@@ -268,8 +264,16 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       />
 
       <p className="catalog-status" role="status" aria-live="polite">
-        {notice}
+        {loading ? ct("loading") : notice}
       </p>
+      {error && (
+        <div>
+          <p role="alert">{error}</p>
+          <button type="button" onClick={() => setReload((value) => value + 1)}>
+            {ct("retry")}
+          </button>
+        </div>
+      )}
 
       <CatalogImportsPanel
         orgId={orgId}
@@ -313,7 +317,10 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                   </strong>
                   <span title={system.code}>
                     {system.family ? `${system.family} · ` : ""}
-                    {shortCode(system.code)} · {ct(`option.${system.material}`)} · v{system.version}
+                    {system.system_family
+                      ? `${ct(`option.${system.system_family}`)} · `
+                      : "Catálogo histórico · "}
+                    {ct(`option.${system.material}`)} · v{system.version}
                   </span>
                   <small>
                     {system.is_global ? ct("global") : ct("own")}
@@ -559,6 +566,9 @@ function CatalogEditor({
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uncertainCreate, setUncertainCreate] = useState(false);
+  const [limits, setLimits] = useState<SystemResponse["dimensional_limits"]>(
+    (resource === "systems" ? (row as SystemResponse | undefined)?.dimensional_limits : []) ?? [],
+  );
   const [error, setError] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
   const firstControl = useRef<HTMLHeadingElement>(null);
@@ -635,7 +645,7 @@ function CatalogEditor({
     if (readOnly || inFlight.current || noBeads || uncertainCreate) return;
     // noValidate suppresses the browser's English bubbles; name the first
     // empty/malformed required field in es-CL and land focus on its control.
-    const fields = schemas[resource].flatMap((group) => group.fields);
+    const fields = groupsFor(resource, draft).flatMap((group) => group.fields);
     const missing = fields.find(
       (field) => !field.optional && (draft[field.name] ?? "").trim() === "",
     );
@@ -651,15 +661,15 @@ function CatalogEditor({
     if (failed) {
       setError(
         missing
-          ? `${ct("fieldRequired")} — ${ct(`field.${failed.name}`)}`
-          : `${ct("errorValidation")} — ${ct(`field.${failed.name}`)}`,
+          ? `${ct("fieldRequired")} — ${failed.label ?? ct(`field.${failed.name}`)}`
+          : `${ct("errorValidation")} — ${failed.label ?? ct(`field.${failed.name}`)}`,
       );
       document.getElementById(`catalog-${resource}-${failed.name}`)?.focus();
       return;
     }
     let body;
     try {
-      body = writeFromDraft(resource, draft, contents, sectionDraft);
+      body = writeFromDraft(resource, draft, contents, sectionDraft, limits);
     } catch (caught) {
       // writeFromDraft tags the failing field ("Invalid integer: sku") — name
       // it so the reviewer doesn't hunt the whole form.
@@ -718,7 +728,7 @@ function CatalogEditor({
       field.kind === "system"
         ? data.systems.map((system) => ({
             value: system.id,
-            label: `${system.name} · ${system.code}${system.is_global ? ` · ${ct("global")}` : ""}`,
+            label: `${system.name}${system.is_global ? ` · ${ct("global")}` : ""}`,
           }))
         : field.kind === "bead"
           ? beadOptions.map((article) => ({
@@ -732,8 +742,8 @@ function CatalogEditor({
               }))
             : field.kind === "boolean"
               ? [
-                  { value: "true", label: ct("active") },
-                  { value: "false", label: ct("inactive") },
+                  { value: "true", label: field.name === "is_active" ? ct("active") : "Sí" },
+                  { value: "false", label: field.name === "is_active" ? ct("inactive") : "No" },
                 ]
               : (field.options ?? []).map((option) => ({
                   value: option,
@@ -745,7 +755,7 @@ function CatalogEditor({
     return (
       <label key={field.name} htmlFor={id}>
         <span>
-          {ct(`field.${field.name}`)}
+          {field.label ?? ct(`field.${field.name}`)}
           {field.optional && <small> · {ct("optional")}</small>}
         </span>
         {select ? (
@@ -831,12 +841,40 @@ function CatalogEditor({
 
       <fieldset className="catalog-controls" disabled={busy || readOnly}>
         <legend className="catalog-sr-only">{ct("fields")}</legend>
-        {schemas[resource].map((group) => (
+        {resource === "articles" && (
+          <div className="catalog-rule-toggles">
+            {["cutRule", "reinforcementRule"].map((kind) => (
+              <label key={kind}>
+                <input
+                  type="checkbox"
+                  checked={draft[`${kind}.enabled`] === "true"}
+                  onChange={(event) => change(`${kind}.enabled`, String(event.target.checked))}
+                />
+                Declarar {ct(`group.${kind}`).toLowerCase()}
+              </label>
+            ))}
+            <p>
+              Una regla sin declarar queda Sin dato; el motor no autoriza fabricar con una
+              suposición.
+            </p>
+          </div>
+        )}
+        {groupsFor(resource, draft).map((group) => (
           <fieldset className="catalog-group" key={group.title}>
             <legend>{ct(`group.${group.title}`)}</legend>
             <div className="catalog-fields">{group.fields.map(control)}</div>
           </fieldset>
         ))}
+        {resource === "systems" && (
+          <CatalogLimitsEditor
+            family={draft.system_family ?? ""}
+            limits={limits ?? []}
+            onChange={(value) => {
+              setLimits(value);
+              setDirty(true);
+            }}
+          />
+        )}
 
         {resource === "articles" && (
           <fieldset className="catalog-group">

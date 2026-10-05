@@ -10,6 +10,8 @@ from dekopen_engine.geometry import SUPPORTED_OPENING_TYPES
 from dekopen_engine.hardware import normalize_opening_type
 from dekopen_engine.models import (
     BayOpeningType,
+    ProfileRole,
+    SystemFamily,
     HARDWARE_COMPONENT_CATEGORIES,
     polygon_self_intersects,
 )
@@ -66,7 +68,99 @@ class QuantityField(serializers.Field):
         return str(value)
 
 
+class CompleteAuthoritySerializer(StrictSerializer):
+    def validate(self, attrs):
+        missing = {key for key, field in self.fields.items() if field.required} - attrs.keys()
+        if missing:
+            raise serializers.ValidationError({key: "Falta este dato de la fuente." for key in sorted(missing)})
+        return attrs
+
+
+class ProfileCutRuleSerializer(CompleteAuthoritySerializer):
+    angle_degrees = serializers.ChoiceField(choices=[45, 90])
+    welding_loss_per_end_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    joint_deduction_per_end_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    meeting_deduction_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    cut_step_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    rounding = serializers.ChoiceField(choices=["UP", "NEAREST", "DOWN"])
+    source = serializers.CharField(max_length=1000)
+
+
+class ProfileReinforcementRuleSerializer(CompleteAuthoritySerializer):
+    reinforcement_sku = serializers.CharField(max_length=100)
+    reinforcement_type = serializers.CharField(max_length=100)
+    minimum_length_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    required_finishes = serializers.ListField(child=serializers.CharField(max_length=50))
+    required_non_white = serializers.BooleanField()
+    cut_deduction_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    screws_per_m = decimal_field(10, 4, min_value=Decimal("0.0001"))
+    screw_sku = serializers.CharField(max_length=100)
+    screw_weight_kg = decimal_field(10, 6, min_value=Decimal("0"), required=False, allow_null=True)
+    source = serializers.CharField(max_length=1000)
+
+
+class SlidingSystemParametersSerializer(CompleteAuthoritySerializer):
+    pulley_height_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    central_overlap_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    lateral_clearance_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    end_add_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    glazing_deduction_width_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    glazing_deduction_height_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    rail_type = serializers.ChoiceField(choices=["dual", "mono"])
+    rail_count = serializers.IntegerField(min_value=1, max_value=2147483647)
+    separate_rail = serializers.BooleanField()
+    interlock_required = serializers.BooleanField()
+
+
+class SystemDimensionalLimitSerializer(CompleteAuthoritySerializer):
+    opening_type = serializers.ChoiceField(choices=[item.value for item in BayOpeningType])
+    min_leaf_width_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    max_leaf_width_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    min_leaf_height_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    max_leaf_height_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    max_leaf_weight_kg = decimal_field(10, 4, min_value=Decimal("0.0001"), required=False, allow_null=True)
+    min_aspect_ratio = decimal_field(10, 4, min_value=Decimal("0.0001"))
+    max_aspect_ratio = decimal_field(10, 4, min_value=Decimal("0.0001"))
+    source = serializers.CharField(max_length=1000)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        for lower, upper in (("min_leaf_width_mm", "max_leaf_width_mm"),
+                             ("min_leaf_height_mm", "max_leaf_height_mm"),
+                             ("min_aspect_ratio", "max_aspect_ratio")):
+            if attrs[lower] > attrs[upper]:
+                raise serializers.ValidationError({upper: "El máximo debe ser mayor o igual al mínimo."})
+        return attrs
+
+
 class SystemWriteSerializer(StrictSerializer):
+    system_family = serializers.ChoiceField(choices=[item.value for item in SystemFamily])
+    sliding_parameters = SlidingSystemParametersSerializer(required=False, allow_null=True)
+    dimensional_limits = SystemDimensionalLimitSerializer(many=True, required=False)
+
+    def validate(self, attrs):
+        effective = {**(self.instance or {}), **attrs}
+        family = effective.get("system_family")
+        legacy = ("pulley_height_mm", "central_overlap_mm", "sliding_lateral_clearance_mm",
+                  "sliding_end_add_mm", "sliding_glazing_deduction_width_mm",
+                  "sliding_glazing_deduction_height_mm", "rail_type")
+        if family is not None:
+            if any(effective.get(key) is not None for key in legacy):
+                raise serializers.ValidationError({key: "Este parámetro vive en la ficha de corredera."
+                    for key in legacy if effective.get(key) is not None})
+            sliding = effective.get("sliding_parameters")
+            if family in ("SLIDING", "LIFT_SLIDE") and sliding is None:
+                raise serializers.ValidationError({"sliding_parameters": "Faltan los parámetros de corredera de la fuente."})
+            if family not in ("SLIDING", "LIFT_SLIDE") and sliding is not None:
+                raise serializers.ValidationError({"sliding_parameters": "Esta familia no admite parámetros de corredera."})
+            from dekopen_engine.catalog_rules import FAMILY_OPENINGS
+            limits = effective.get("dimensional_limits", [])
+            openings = [rule["opening_type"] for rule in limits]
+            if len(openings) != len(set(openings)):
+                raise serializers.ValidationError({"dimensional_limits": "Hay aperturas duplicadas."})
+            if any(BayOpeningType(opening) not in FAMILY_OPENINGS[SystemFamily(family)] for opening in openings):
+                raise serializers.ValidationError({"dimensional_limits": "La apertura del límite no corresponde a esta familia."})
+        return attrs
     name = serializers.CharField(max_length=150)
     code = serializers.CharField(max_length=50)
     depth_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
@@ -75,17 +169,17 @@ class SystemWriteSerializer(StrictSerializer):
     sash_overlap_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
     glass_clearance_white_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
     glass_clearance_foil_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
-    pulley_height_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
-    central_overlap_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
-    sliding_lateral_clearance_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
-    sliding_end_add_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    pulley_height_mm = decimal_field(4, 2, min_value=Decimal("0.00"), required=False, allow_null=True)
+    central_overlap_mm = decimal_field(4, 2, min_value=Decimal("0.00"), required=False, allow_null=True)
+    sliding_lateral_clearance_mm = decimal_field(4, 2, min_value=Decimal("0.00"), required=False, allow_null=True)
+    sliding_end_add_mm = decimal_field(4, 2, min_value=Decimal("0.00"), required=False, allow_null=True)
     corner_bracket_loss_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
     hook_depth_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
     door_threshold_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
     door_bottom_clearance_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
-    rail_type = serializers.ChoiceField(choices=["dual", "mono"])
-    sliding_glazing_deduction_width_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
-    sliding_glazing_deduction_height_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
+    rail_type = serializers.ChoiceField(choices=["dual", "mono"], required=False, allow_null=True)
+    sliding_glazing_deduction_width_mm = decimal_field(10, 2, min_value=Decimal("0.00"), required=False, allow_null=True)
+    sliding_glazing_deduction_height_mm = decimal_field(10, 2, min_value=Decimal("0.00"), required=False, allow_null=True)
     door_leaf_side_clearance_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
     rebate_depth_mm = decimal_field(
         10, 2, min_value=Decimal("0.00"), required=False, allow_null=True
@@ -234,22 +328,14 @@ class ProfileSectionSerializer(StrictSerializer):
 
 
 class ArticleWriteSerializer(StrictSerializer):
+    cut_rule = ProfileCutRuleSerializer(required=False, allow_null=True)
+    reinforcement_rule = ProfileReinforcementRuleSerializer(required=False, allow_null=True)
     system_id = serializers.UUIDField()
     sku = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=255)
     section = ProfileSectionSerializer(required=False, allow_null=True)
     role = serializers.ChoiceField(
-        choices=[
-            "FRAME",
-            "SASH",
-            "MULLION_V",
-            "MULLION_H",
-            "INVERSOR",
-            "GLAZING_BEAD",
-            "COUPLER",
-            "ADDITIONAL",
-            "THRESHOLD",
-        ]
+        choices=[role.value for role in ProfileRole]
     )
     material = serializers.ChoiceField(choices=["PVC", "ALUMINIUM"])
     face_width_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
@@ -368,6 +454,7 @@ class ProvenanceFieldsMixin(serializers.Serializer):
 
 
 class SystemResponseSerializer(ProvenanceFieldsMixin, SystemWriteSerializer):
+    system_family = serializers.ChoiceField(choices=[item.value for item in SystemFamily], allow_null=True)
     readiness = CatalogReadinessSerializer(read_only=True)
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()

@@ -19,7 +19,7 @@ INSERT INTO tenancy_memberships(org_id,user_id,role) VALUES
 INSERT INTO projects(id,org_id,code,name,client_name,created_by) VALUES
  ('88aa2000-0000-4000-8000-000000000001','88aa0000-0000-4000-8000-000000000001','P-R170','Casa','Fixture','88aa1000-0000-4000-8000-000000000001');
 INSERT INTO project_positions(id,org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot)
- SELECT '88aa3000-0000-4000-8000-000000000001','88aa0000-0000-4000-8000-000000000001','88aa2000-0000-4000-8000-000000000001',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60';
+ SELECT '88aa3000-0000-4000-8000-000000000001','88aa0000-0000-4000-8000-000000000001','88aa2000-0000-4000-8000-000000000001',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60' AND version=1;
 INSERT INTO pricing_operations(id,org_id,project_id,requested_by,request,input_snapshot,result,source_revision,state,reason) VALUES
  ('88aa4000-0000-4000-8000-000000000001','88aa0000-0000-4000-8000-000000000001','88aa2000-0000-4000-8000-000000000001','88aa1000-0000-4000-8000-000000000001','{}','{}','{}','REV-A','APPLIED','170 fixture');
 INSERT INTO project_versions(id,project_id,org_id,revision_code,snapshot_json,emitted_by,pricing_operation_id,canonical_version,bom_hash,snapshot_sha256,production_allowed,documentary_complete) VALUES

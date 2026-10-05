@@ -281,6 +281,7 @@ beforeEach(() => {
           id: "system-a",
           code: "A",
           name: "Sistema A",
+          system_family: null,
           is_demo: false,
           quote_ready: true,
           readiness_reasons: [],
@@ -289,6 +290,7 @@ beforeEach(() => {
           id: "system-b",
           code: "B",
           name: "Sistema B",
+          system_family: null,
           is_demo: false,
           quote_ready: true,
           readiness_reasons: [],
@@ -298,6 +300,10 @@ beforeEach(() => {
   );
   vi.mocked(projectDesignOptions).mockResolvedValue(
     ok({
+      system_family: null,
+      is_demo: false,
+      compatible_openings: [],
+      dimensional_limits: [],
       profiles: [
         {
           sku: "MULL-60",
@@ -481,6 +487,10 @@ it("auto-resolves the catalog coupler when only one exists", async () => {
 it("fills glass defaults when the catalog has a single glazing thickness", async () => {
   vi.mocked(projectDesignOptions).mockResolvedValue(
     ok({
+      system_family: null,
+      is_demo: false,
+      compatible_openings: [],
+      dimensional_limits: [],
       profiles: [],
       glazing_thicknesses: ["4.00"],
       handle_policy: null,
@@ -817,6 +827,7 @@ it("does not offer FOILED or a catalog the backend marks incomplete", async () =
           id: "system-a",
           code: "A",
           name: "Sistema A",
+          system_family: null,
           is_demo: false,
           quote_ready: true,
           readiness_reasons: [],
@@ -825,6 +836,7 @@ it("does not offer FOILED or a catalog the backend marks incomplete", async () =
           id: "system-b",
           code: "B",
           name: "Incomplete system",
+          system_family: null,
           is_demo: false,
           quote_ready: false,
           readiness_reasons: ["manufacturing"],

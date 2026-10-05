@@ -11,6 +11,8 @@ from psycopg import sql
 from authentication.errors import contract_error
 from dekopen_engine.documentary_canonical import documentary_canonical_json_v1
 from dekopen_engine.models import EngineResult
+from dekopen_engine.catalog_rules import CatalogRuleError
+from dekopen_engine.weight import MissingFabricationAuthority
 from dekopen_engine.snapshot import calculation_response, calculation_hash, result_payload
 from documents.repository import documentary_backend
 from engine_api.adapter import (
@@ -394,7 +396,8 @@ def calculate_design(org_id, design):
                 raise contract_error(
                     400,
                     "manufacturing_incomplete",
-                    "El conjunto tiene errores que impiden guardarlo: asigna acopladores y revisa cada módulo.",
+                    next((issue.params["reason"] for issue in evaluation.issues if issue.params.get("reason")),
+                         "El conjunto tiene errores que impiden guardarlo: asigna acopladores y revisa cada módulo."),
                 )
             intent_unsupported = {
                 "contour_opening_unsupported",
@@ -446,6 +449,14 @@ def calculate_design(org_id, design):
         raise contract_error(
             404, "system_not_found", "La serie no está disponible para este taller."
         ) from error
+    except CatalogRuleError as error:
+        families = error.params.get("compatible_families", "").split(",")
+        compatible = [system.public_dict() for system in SystemParamsRepository().list_visible(org_id)
+                      if system.system_family in families]
+        raise contract_error(422, error.code, str(error),
+            error_extra={"limits": error.params, "compatible_systems": compatible}) from error
+    except MissingFabricationAuthority as error:
+        raise contract_error(409, "catalog_authority_missing", str(error)) from error
     except (UnsupportedEngineContract, UnsupportedCatalogContract) as error:
         raise contract_error(
             422,

@@ -80,6 +80,7 @@ function system(): SystemResponse {
     version: 1,
     is_active: true,
     is_global: true,
+    system_family: null,
     is_demo: true,
     readiness: { quote_ready: true, scope: "WHITE_FIXED_CATALOG", reasons: [] },
     revision: REVISION,

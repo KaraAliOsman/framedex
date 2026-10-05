@@ -43,11 +43,10 @@ SELECT set_config('request.jwt.claim.sub',
     'dddddddd-0000-4000-8000-000000000001', TRUE);
 
 INSERT INTO public.profile_systems (id, org_id, name, code, depth_mm,
-    sliding_glazing_deduction_width_mm, sliding_glazing_deduction_height_mm,
-    door_leaf_side_clearance_mm)
+    system_family, door_leaf_side_clearance_mm)
 VALUES ('55555555-aaaa-4555-8555-555555555555',
         '55555555-5555-4555-8555-555555555555', 'T60', 'T60', 60.00,
-        0.00, 0.00, 0.00);
+        'CASEMENT', 0.00);
 
 INSERT INTO public.profile_articles (
     id, org_id, system_id, sku, name, role, face_width_mm,

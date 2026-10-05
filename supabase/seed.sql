@@ -1,5 +1,28 @@
 -- Deterministic global catalog required by the SHOT-02 gate.
 
+-- Historical fixtures are also used by populated-upgrade gates before D01.
+-- After D01, reserve their exact identities as platform-owned legacy rows
+-- before the original upserts run. New catalogs keep legacy_authority=false.
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='profile_systems'
+          AND column_name='legacy_authority') THEN
+        INSERT INTO public.profile_systems
+            (id,org_id,code,name,depth_mm,material,chamber_count,is_global,is_demo,
+             legacy_authority,rail_count,door_leaf_side_clearance_mm,pulley_height_mm,
+             sliding_lateral_clearance_mm,rail_type)
+        SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/catalog/'||v.code),
+            NULL,v.code,v.name,v.depth_mm,v.material::public.material_type,v.chambers,
+            TRUE,TRUE,TRUE,2,v.door_clearance_mm,v.pulley_mm,v.lateral_mm,'dual'
+        FROM (VALUES
+            ('DEMO_60','Sistema Demo 60mm PVC — referencia sintética',60.00,'PVC',3,7.00,12.00,0.00),
+            ('ALU_65','Línea Aluminio 65 — referencia sintética',65.00,'ALUMINIUM',1,5.00,10.00,3.00),
+            ('GLASS_45','Vidrio-dominante 45 (aluminio) — referencia sintética',45.00,'ALUMINIUM',1,3.00,8.00,2.00)
+        ) AS v(code,name,depth_mm,material,chambers,door_clearance_mm,pulley_mm,lateral_mm)
+        ON CONFLICT (id) DO NOTHING;
+    END IF;
+END $$;
+
 INSERT INTO public.profile_systems (
     id,
     org_id,
@@ -378,7 +401,7 @@ UPDATE public.hardware_kits AS kit
 SET weight_kg = 2.50,
     name = CASE WHEN kit.sku = 'KIT-TILT-TURN' THEN 'Kit Vorne OB 100kg' ELSE kit.name END
 FROM public.profile_systems AS system
-WHERE kit.system_id = system.id AND system.code = 'DEMO_60' AND system.is_global = TRUE
+WHERE kit.system_id = system.id AND system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global = TRUE
   AND kit.sku IN ('KIT-TURN', 'KIT-TILT-TURN', 'KIT-SLIDING');
 
 -- Categorized kit contents: the visual renderer and readiness reads bind
@@ -404,7 +427,7 @@ SET contents = CASE kit.sku
     ELSE kit.contents
   END
 FROM public.profile_systems AS system
-WHERE kit.system_id = system.id AND system.code = 'DEMO_60' AND system.is_global = TRUE
+WHERE kit.system_id = system.id AND system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global = TRUE
   AND kit.sku IN ('KIT-TURN', 'KIT-TILT-TURN', 'KIT-SLIDING');
 
 INSERT INTO public.profile_articles (
@@ -416,7 +439,7 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/UM
     system.id, NULL, 'UMBRAL-ALU', 'Umbral Aluminio Demo 60', 'THRESHOLD', 'ALUMINIUM',
     30.00, 6000.00, 0.00, 0.00, NULL
 FROM public.profile_systems AS system
-WHERE system.code = 'DEMO_60' AND system.is_global = TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global = TRUE
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name, role = EXCLUDED.role, material = EXCLUDED.material,
     face_width_mm = EXCLUDED.face_width_mm,
@@ -439,7 +462,7 @@ CROSS JOIN (VALUES
     ('COPLE-90', 'Acoplador Angular Demo 60/34', 34.00::numeric, 1.1000::numeric),
     ('CANAL-U', 'Canal U vidrio sin marco 60/24', 24.00::numeric, 0.7000::numeric)
 ) AS coupler(sku, name, face_mm, weight)
-WHERE system.code = 'DEMO_60' AND system.is_global = TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global = TRUE
 ON CONFLICT (system_id, sku) DO UPDATE SET
     name = EXCLUDED.name, role = EXCLUDED.role, material = EXCLUDED.material,
     face_width_mm = EXCLUDED.face_width_mm,
@@ -456,7 +479,7 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/PA
     system.id, NULL, 'PANEL-SANDWICH-DEMO-24', 'Panel Sándwich Demo 24mm',
     'SANDWICH_PANEL', 24.00, 10.0000
 FROM public.profile_systems AS system
-WHERE system.code = 'DEMO_60' AND system.is_global = TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global = TRUE
 ON CONFLICT (system_id, sku) DO UPDATE SET
     name = EXCLUDED.name, kind = EXCLUDED.kind,
     thickness_mm = EXCLUDED.thickness_mm, weight_kg_m2 = EXCLUDED.weight_kg_m2;
@@ -482,7 +505,7 @@ CROSS JOIN (VALUES
        {"sku":"DEMO-BIS-PUERTA","name":"Bisagra puerta reforzada Demo","qty":3,"unit":"unit","category":"HINGE"},
        {"sku":"DEMO-MAN-PUERTA","name":"Par manilla puerta + cilindro Demo","qty":1,"unit":"set","category":"HANDLE"}]'::JSONB)
 ) AS fixture(sku, name, opening_type, min_w, max_w, min_h, max_h, max_weight, stays, contents)
-WHERE system.code = 'DEMO_60' AND system.is_global = TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global = TRUE
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name, opening_type = EXCLUDED.opening_type,
     min_leaf_width_mm = EXCLUDED.min_leaf_width_mm,
@@ -496,7 +519,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- DEMO_60 SYNTHETIC FIXTURE. No manufacturer certification or new mass authority.
 UPDATE public.profile_systems SET chamber_clearance_mm=12.00
- WHERE code='DEMO_60' AND is_global=TRUE;
+ WHERE id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND is_global=TRUE;
 INSERT INTO public.cutting_profiles
  (id, org_id, code, name, kerf_mm, head_trim_mm, tail_trim_mm, is_default, is_active)
 VALUES (uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot07/cutting/DEMO'),
@@ -507,7 +530,7 @@ INSERT INTO public.profile_purchase_mappings
 SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot07/purchase/'||article.id),
  article.id,NULL,'COMPRA-'||article.sku,'Catálogo de demostración','Proveedor de referencia','BAR'
 FROM public.profile_articles article JOIN public.profile_systems system ON system.id=article.system_id
-WHERE system.code='DEMO_60' AND system.is_global=TRUE AND article.org_id IS NULL
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE AND article.org_id IS NULL
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.reinforcement_articles
  (id,system_id,org_id,parent_profile_article_id,sku,commercial_sku,name,
@@ -516,7 +539,7 @@ SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot07/steel/'||art
  system.id,NULL,article.id,'ACERO-'||article.sku,'COMPRA-ACERO-'||article.sku,
  'Catálogo de demostración','Catálogo de demostración','Proveedor de referencia',6000.00,'BAR',TRUE
 FROM public.profile_articles article JOIN public.profile_systems system ON system.id=article.system_id
-WHERE system.code='DEMO_60' AND system.is_global=TRUE AND article.org_id IS NULL
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE AND article.org_id IS NULL
  AND article.role NOT IN ('GLAZING_BEAD','THRESHOLD')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.inspector_rule_configs (id,system_id,org_id,rule_id,params)
@@ -538,7 +561,7 @@ FROM public.profile_systems system CROSS JOIN (VALUES
  ('R13', '{"height_trigger_mm":"1200.00","required_stay_arms":2}'::JSONB),
  ('R14', '{"weight_trigger_kg":"150.00","required_carriages":4,"minimum_capacity_kg":"80.00"}'::JSONB)
 ) cfg(rule_id,params)
-WHERE system.code='DEMO_60' AND system.is_global=TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE
 ON CONFLICT (system_id,org_id,rule_id) DO NOTHING;
 
 DO $shot09$
@@ -551,7 +574,7 @@ SET physical_stock_identity=uuid_generate_v5(
     cutting_profile_id=uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot07/cutting/DEMO'),
     binding_version=1
 FROM public.profile_articles article JOIN public.profile_systems system ON system.id=article.system_id
-WHERE mapping.profile_article_id=article.id AND system.code='DEMO_60' AND system.is_global=TRUE
+WHERE mapping.profile_article_id=article.id AND system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE
  AND mapping.org_id IS NULL;
 UPDATE public.reinforcement_articles AS reinforcement
 SET physical_stock_identity=uuid_generate_v5(
@@ -560,28 +583,28 @@ SET physical_stock_identity=uuid_generate_v5(
     cutting_profile_id=uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot07/cutting/DEMO'),
     binding_version=1
 FROM public.profile_systems system
-WHERE reinforcement.system_id=system.id AND system.code='DEMO_60' AND system.is_global=TRUE
+WHERE reinforcement.system_id=system.id AND system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE
  AND reinforcement.org_id IS NULL;
 
 INSERT INTO public.manufacturing_placement_policies (id,system_id,org_id,version,authority)
 SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/placement/DEMO_60/V2'),
  system.id,NULL,2,'{"schema_version":1,"policy_id":"DEMO_60_PLACEMENT_V2","version":2,"sliding_leaf_offsets":{"L1":{"x_mm":0.00,"y_mm":0.00,"x_pitches":0.00},"L2":{"x_mm":0.00,"y_mm":0.00,"x_pitches":1.00},"L3":{"x_mm":0.00,"y_mm":0.00,"x_pitches":2.00},"L4":{"x_mm":0.00,"y_mm":0.00,"x_pitches":3.00}},"sliding_infill_offsets":{"L1":{"x_mm":70.00,"y_mm":70.00,"x_pitches":0.00},"L2":{"x_mm":70.00,"y_mm":70.00,"x_pitches":0.00},"L3":{"x_mm":70.00,"y_mm":70.00,"x_pitches":0.00},"L4":{"x_mm":70.00,"y_mm":70.00,"x_pitches":0.00}},"bead_offsets":{"TOP":{"x_mm":0.00,"y_mm":0.00},"RIGHT":{"x_mm":0.00,"y_mm":0.00},"BOTTOM":{"x_mm":0.00,"y_mm":0.00},"LEFT":{"x_mm":0.00,"y_mm":0.00}}}'::jsonb
 FROM public.profile_systems system
-WHERE system.code='DEMO_60' AND system.is_global=TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.handle_requirement_policies (id,system_id,org_id,version,authority)
 SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/handles/DEMO_60/V2'),
  system.id,NULL,2,'{"schema_version":1,"policy_id":"DEMO_60_HANDLES_V2","version":2,"slots":[{"opening_type":"TURN_LEFT","leaf_slot":null,"leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"RIGHT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":-10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"TURN_RIGHT","leaf_slot":null,"leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"TILT_TURN_LEFT","leaf_slot":null,"leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"RIGHT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":-10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"TILT_TURN_RIGHT","leaf_slot":null,"leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_2L","leaf_slot":"L1","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"RIGHT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":-10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_2L","leaf_slot":"L2","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_3L","leaf_slot":"L1","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"RIGHT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":-10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_3L","leaf_slot":"L2","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_3L","leaf_slot":"L3","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_4L","leaf_slot":"L1","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"RIGHT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":-10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_4L","leaf_slot":"L2","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_4L","leaf_slot":"L3","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING_4L","leaf_slot":"L4","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING","leaf_slot":"L1","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"RIGHT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":-10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING","leaf_slot":"L2","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING","leaf_slot":"L3","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"SLIDING","leaf_slot":"L4","leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"AWNING","leaf_slot":null,"leaf_handedness":null,"handle_domain_slot":"PRIMARY","host_member_side":"BOTTOM","horizontal_reference":"HOST_MEMBER_CENTER","horizontal_offset_mm":0.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"DOOR_ENTRY","leaf_slot":null,"leaf_handedness":"LEFT","handle_domain_slot":"PRIMARY","host_member_side":"RIGHT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":-10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00},{"opening_type":"DOOR_ENTRY","leaf_slot":null,"leaf_handedness":"RIGHT","handle_domain_slot":"PRIMARY","host_member_side":"LEFT","horizontal_reference":"HOST_MEMBER_AXIS","horizontal_offset_mm":10.00,"permitted_vertical_references":["OUTER_TOP","OUTER_BOTTOM","LEAF_TOP","LEAF_BOTTOM"],"mounting_min_from_leaf_top_mm":0.00,"mounting_max_from_leaf_top_mm":3000.00}]}'::jsonb
 FROM public.profile_systems system
-WHERE system.code='DEMO_60' AND system.is_global=TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.reinforcement_cut_policies (id,system_id,org_id,version,authority)
 SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/reinforcement-cuts/DEMO_60/V1'),
  system.id,NULL,1,'{"schema_version":1,"policy_id":"DEMO_60_REINFORCEMENT_CUT_V1","version":1,"rules":[{"role":"FRAME","profile_angle_left":45.0,"profile_angle_right":45.0,"reinforcement_angle_left":90.0,"reinforcement_angle_right":90.0,"length_authority":"EXISTING_ENGINE","compatible_with_existing_length":true},{"role":"FRAME","profile_angle_left":45.0,"profile_angle_right":90.0,"reinforcement_angle_left":90.0,"reinforcement_angle_right":90.0,"length_authority":"EXISTING_ENGINE","compatible_with_existing_length":true},{"role":"SASH","profile_angle_left":45.0,"profile_angle_right":45.0,"reinforcement_angle_left":90.0,"reinforcement_angle_right":90.0,"length_authority":"EXISTING_ENGINE","compatible_with_existing_length":true},{"role":"MULLION_V","profile_angle_left":90.0,"profile_angle_right":90.0,"reinforcement_angle_left":90.0,"reinforcement_angle_right":90.0,"length_authority":"EXISTING_ENGINE","compatible_with_existing_length":true},{"role":"MULLION_H","profile_angle_left":90.0,"profile_angle_right":90.0,"reinforcement_angle_left":90.0,"reinforcement_angle_right":90.0,"length_authority":"EXISTING_ENGINE","compatible_with_existing_length":true}]}'::jsonb
 FROM public.profile_systems system
-WHERE system.code='DEMO_60' AND system.is_global=TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
@@ -590,7 +613,7 @@ SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/glass/DEMO_6
  system.id,NULL,'VIDRIO-BASE','VIDRIO-TERMINADO','Catálogo de demostración','EA',1,
  '{"source":"Referencia DEKOPEN","certified":"false"}'::jsonb,'4 Float Incoloro'
 FROM public.profile_systems system
-WHERE system.code='DEMO_60' AND system.is_global=TRUE
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.hardware_purchase_mappings
@@ -599,7 +622,7 @@ SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/hardware/'||
  kit.id,NULL,'COMPRA-'||kit.sku,'Catálogo de demostración','KIT',1,
  '{"source":"Referencia DEKOPEN","mode":"KIT_ONLY"}'::jsonb
 FROM public.hardware_kits kit JOIN public.profile_systems system ON system.id=kit.system_id
-WHERE system.code='DEMO_60' AND system.is_global=TRUE AND kit.org_id IS NULL
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE AND kit.org_id IS NULL
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.panel_purchase_authorities
@@ -608,7 +631,7 @@ SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/panel/'||pan
  panel.id,NULL,'COMPRA-'||panel.sku,'Catálogo de demostración','CUT_TO_SIZE','EA',1,
  '{"source":"Referencia DEKOPEN","certified":"false"}'::jsonb
 FROM public.infill_articles panel JOIN public.profile_systems system ON system.id=panel.system_id
-WHERE system.code='DEMO_60' AND system.is_global=TRUE AND panel.org_id IS NULL
+WHERE system.id='3067da09-3119-5ad0-a1d5-498cd2dfd753'::UUID AND system.is_global=TRUE AND panel.org_id IS NULL
 ON CONFLICT (id) DO NOTHING;
 END IF;
 END;
@@ -1077,19 +1100,19 @@ UPDATE public.profile_systems SET
         WHEN 'GLASS_45' THEN 2.00
     END,
     data_provenance = 'SEED_SYNTHETIC'
-WHERE is_global = TRUE AND org_id IS NULL
+WHERE is_global = TRUE AND org_id IS NULL AND version=1
   AND code IN ('DEMO_60', 'ALU_65', 'GLASS_45');
 UPDATE public.profile_articles a SET data_provenance = 'SEED_SYNTHETIC'
 FROM public.profile_systems s
-WHERE a.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+WHERE a.system_id = s.id AND s.version=1 AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
   AND a.org_id IS NULL;
 UPDATE public.infill_articles a SET data_provenance = 'SEED_SYNTHETIC'
 FROM public.profile_systems s
-WHERE a.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+WHERE a.system_id = s.id AND s.version=1 AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
   AND a.org_id IS NULL;
 UPDATE public.hardware_kits k SET data_provenance = 'SEED_SYNTHETIC'
 FROM public.profile_systems s
-WHERE k.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+WHERE k.system_id = s.id AND s.version=1 AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
   AND k.org_id IS NULL;
 -- Per-article masses used to arrive through engine fallbacks (1.20 / 1.70
 -- kg·m⁻¹); since §2 they are catalog authority. The synthetic reference
@@ -1099,7 +1122,7 @@ UPDATE public.profile_articles a SET
     weight_kg_m = 1.2000,
     steel_weight_kg_m = 1.7000
 FROM public.profile_systems s
-WHERE a.system_id = s.id AND s.code = 'DEMO_60'
+WHERE a.system_id = s.id AND s.version=1 AND s.code = 'DEMO_60'
   AND a.org_id IS NULL AND a.weight_kg_m IS NULL;
 END IF;
 
@@ -1108,3 +1131,48 @@ END;
 $post09$;
 
 COMMIT;
+
+-- On an empty installation the historical sources above do not exist when
+-- the D01 migration runs. Complete its synthetic copies after those sources
+-- have been seeded; never rewrite an existing policy or its history.
+DO $d01_seed$ BEGIN
+IF EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='profile_systems'
+      AND column_name='legacy_authority') THEN
+    INSERT INTO public.inspector_rule_configs(id,system_id,org_id,rule_id,params)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v2/'||s.code||'/inspection/'||r.rule_id),
+        s.id,NULL,r.rule_id,r.params
+    FROM public.profile_systems s CROSS JOIN public.inspector_rule_configs r
+    WHERE s.is_global AND s.is_demo AND s.version=2 AND s.org_id IS NULL
+      AND s.code IN ('DEMO_60','DEMO_70','DEMO_CORREDERA_60','DEMO_ALU_CORREDERA','DEMO_ALU_PRACTICABLE')
+      AND r.system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND r.org_id IS NULL
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.manufacturing_placement_policies(id,system_id,org_id,version,authority)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v2/'||s.code||'/manufacturing_placement_policies'),
+        s.id,NULL,p.version,jsonb_set(p.authority,'{policy_id}',to_jsonb(s.code||'_DEMO_V2'))
+    FROM public.profile_systems s CROSS JOIN LATERAL (
+        SELECT version,authority FROM public.manufacturing_placement_policies
+        WHERE system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND org_id IS NULL
+        ORDER BY version DESC,id LIMIT 1
+    ) p
+    WHERE s.is_global AND s.is_demo AND s.version=2 AND s.org_id IS NULL
+      AND s.code IN ('DEMO_60','DEMO_70','DEMO_CORREDERA_60','DEMO_ALU_CORREDERA','DEMO_ALU_PRACTICABLE')
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.handle_requirement_policies(id,system_id,org_id,version,authority)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v2/'||s.code||'/handle_requirement_policies'),
+        s.id,NULL,p.version,jsonb_set(p.authority,'{policy_id}',to_jsonb(s.code||'_DEMO_V2'))
+    FROM public.profile_systems s CROSS JOIN LATERAL (
+        SELECT version,authority FROM public.handle_requirement_policies
+        WHERE system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND org_id IS NULL
+        ORDER BY version DESC,id LIMIT 1
+    ) p
+    WHERE s.is_global AND s.is_demo AND s.version=2 AND s.org_id IS NULL
+      AND s.code IN ('DEMO_60','DEMO_70','DEMO_CORREDERA_60','DEMO_ALU_CORREDERA','DEMO_ALU_PRACTICABLE')
+    ON CONFLICT (id) DO NOTHING;
+END IF;
+END $d01_seed$;
