@@ -25,6 +25,7 @@ Content-oriented map of durable project knowledge.
 ## Quality
 
 - [Known risks and audit targets](quality/known-risks.md) — recurring failure modes and areas that require paranoid testing.
+- [AI outcome baseline](quality/ai-outcome-baseline.md) — 26 owner requests, rollback harness, real-provider measurement and fixture limits.
 
 ## Research
 

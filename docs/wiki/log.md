@@ -49,3 +49,12 @@ Append-only chronology. Keep newest entries at the bottom.
 
 - Merged PR #117 into `integracion/v1` at `023b8ba303b680ca50b6e10119ce4ee4514c9c38` after all four required GitHub checks passed on head `1f6f225c99c8faebec6f42a4a37f9bcf2514d5cd`.
 - Recorded the material acceptance, browser evidence and current-state limits; updated the queue to `mergeado`. `main` remains unchanged.
+
+## [2026-10-05] IA1 | outcome harness and diagnostic evidence
+
+- Added all 26 owner requests as YAML and a rollback-only agent POST → registered handler → job GET harness on the real local fixture and JWT. Applied proposals with the actual canvas command registry and assembly engine, without saving domain changes.
+- Classified provider/format/operation/grounding/context/outcome failures separately; retained raw rounds, rejected operations, exact structure and authoritative fixture facts. The documented baseline uses MOCK and the already configured real MiMo provider.
+- Repeated the 26 MOCK verdicts, structures, checks and rejections exactly. Added 20 oracle/recorder tests and a live PostgreSQL test that preserves the observer's role/claims across legacy projection scopes.
+- Preserved absent price/revision/OT/manufacturing authority as absence. Browser evidence shows that a completed job can carry rejected operations and no product change; IA2/IA3/P17 remain responsible for repairing these behaviors.
+- The baseline report, editorial scope, captures and integration metadata are recorded in the IA1 acceptance page. No production prompt, operation vocabulary, provider, public API, permission grant or formula was changed.
+- Closed a local gate-log redaction gap for the CLI's S3 table labels, with synthetic regression assertions and no saved credential values.
