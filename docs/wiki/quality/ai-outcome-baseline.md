@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: 353becaf
+verified_ref: 4e924c68440a6f87ab5464ce1f2f503f607a3208
 sources:
   - docs/cola/prompts/IA1-diagnostico-evals.md
   - backend/ai_gateway/evals/cases.yaml
@@ -18,13 +18,17 @@ sources:
 
 IA1 adds a 26-case harness using the real agent POST, registered worker handler and job GET under a local fixture JWT and PostgreSQL. Each case always rolls back the product setup, agent writes, route selection, audit and wallet debit. Proposals run through the frontend's `applyDesignOps` registry on a copy and the engine's assembly calculation endpoint. Exact graph, dimensions, openings, SKU, evidence and consequential-write oracles determine success.
 
-The report records raw round documents, provider/grounding failures, rejected operations and their validator reasons, real fixture truth, copied products and engine results. `make ai-evals` runs MOCK; the configured-provider command is documented in [the baseline report](../../ai/evals/README.md).
+The report records round documents with credential redaction, provider/grounding failures, rejected operations and their validator reasons, real fixture truth, copied products and engine results. The execution reference is captured before measuring, with committed source and a final source-consistency check. Fixture project identity is discovered after a clean-stack rebuild. `make ai-evals` runs MOCK; the configured-provider command is documented in [the baseline report](../../ai/evals/README.md).
+
+Graph edits also require an engine-accepted design. Compatibility refusals need negative catalog/engine authority; bedroom duplication preserves design/quantity and requires bedroom destinations; five percent uses the pricing fraction 0.05. Current applied pricing, existing cut plans and A/B comparison authority are loaded when present, rather than permanently marked absent.
 
 A PostgreSQL observer regression test verifies that its snapshot inspection restores the caller's role and claims. Legacy projections can restore `authenticated` before an outer worker transaction ends; the rollback harness contains that effect in its observation scope. No production permissions or grants were changed.
 
 ## Baseline boundary
 
 MOCK repeated all 26 verdicts/checks/structures/rejections exactly. The real MiMo configuration is used without printing or saving credential values. The report preserves a complete dated run; temperature zero does not guarantee identical responses from the external model.
+
+The corrected final harness measured MiMo at 6/26 (23.1%) and MOCK at 0/26. F01 retained the observed HTTP 429 as a provider failure. Both complete reports verified unchanged persistent state and unchanged executed source; the passing single-module handedness case E12 does not establish bay-directed editing in a divided frame.
 
 The casa fixture has 12 positions but no applied prices, emitted A/B revisions or optimized OT. Its catalog is synthetic and cannot authorize manufacturing. Cases needing absent truth retain `contexto_insuficiente`; raw zero prices cannot prove a ranking. Other cases expose missing bay/position operations, ambiguous wire fields, missing authoritative context and literal numeric grounding.
 

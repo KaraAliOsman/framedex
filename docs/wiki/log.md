@@ -58,3 +58,10 @@ Append-only chronology. Keep newest entries at the bottom.
 - Preserved absent price/revision/OT/manufacturing authority as absence. Browser evidence shows that a completed job can carry rejected operations and no product change; IA2/IA3/P17 remain responsible for repairing these behaviors.
 - The baseline report, editorial scope, captures and integration metadata are recorded in the IA1 acceptance page. No production prompt, operation vocabulary, provider, public API, permission grant or formula was changed.
 - Closed a local gate-log redaction gap for the CLI's S3 table labels, with synthetic regression assertions and no saved credential values.
+
+## [2026-10-05] IA1 | review corrections and clean-stack reproduction
+
+- Required engine acceptance in graph-edit scores; grounded sliding refusals in selected-system evaluation; required bedroom destinations/quantities and the exact commercial discount fraction.
+- Replaced permanent missing-price/cut-plan/comparison placeholders with current authoritative reads. Added credential redaction without mutating provider requests/responses, and sealed the execution reference before measuring.
+- Rebuilt the local fixture after Database Gate teardown and found that project UUIDs change. The harness now discovers CASA_LOMAS under the estimator's organization; all 26 MOCK cases repeated exact outcomes, structures, checks, rejections and facts on that rebuilt fixture.
+- Verified 39 harness regressions, 1097 backend unit tests and the live PostgreSQL observer. The final report is a complete run against the corrected harness; no best-case selection or production AI repair is credited to IA1.

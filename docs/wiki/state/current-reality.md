@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: 353becaf
+verified_ref: 4e924c68440a6f87ab5464ce1f2f503f607a3208
 sources:
   - repository main
   - P00 foundation PR #114
@@ -26,6 +26,8 @@ sources:
 The rollback-only local evaluation harness runs the 26 owner requests through the real agent endpoint, handler and job read. Proposed commands apply to copies via the canvas registry and the engine, with exact structural oracles and persistent-state checks. The dated MOCK/real-provider results and root causes are in [the baseline report](../../ai/evals/README.md); this acceptance measures the AI and does not claim that its failing capabilities were repaired.
 
 MOCK repeated the same 26 verdicts and structures. The local fixture has no applied prices, emitted A/B revisions or optimized OT; missing authority remains explicit. Browser evidence reproduces completed jobs with rejected operations and no saved design. IA2/IA3 must address these behaviors against the same outcome suite. No provider credential, public API, production prompt, operation vocabulary or engine formula changed in IA1.
+
+The corrected final baseline is MiMo 6/26 and MOCK 0/26, including the observed provider HTTP 429 in F01. Both reports verified unchanged persistent state and source. Graph scores require engine acceptance; compatibility refusals require catalog authority, duplication requires bedroom destinations, and existing applied prices/cut plans are loaded when present. The 39 oracle regressions and PostgreSQL observer regression passed after a clean-stack rebuild.
 
 ## Verified repository baseline
 

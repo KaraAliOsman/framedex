@@ -2,10 +2,14 @@
 
 IA1 entrega una medición de resultado y su línea base, sin cambiar el comportamiento de la IA. La referencia ejecutada, la configuración de proveedor pública y cada resultado están en [los JSON y el informe](../../../ai/evals/README.md). El SHA del squash se registra al integrar.
 
+La corrida final completa sobre `4e924c68440a6f87ab5464ce1f2f503f607a3208` cumple 6/26 pedidos con MiMo (23,1 %) y 0/26 con MOCK. F01 registra el HTTP 429 real. Ambas suites verifican persistencia intacta y fuentes intactas; MOCK repite exactamente todos los oráculos, estructuras, rechazos y hechos de autoridad.
+
 ## Recorridos y aislamiento
 
 - 26 pedidos del dueño por POST agente → handler real → GET trabajo, con JWT del fixture y PostgreSQL/RLS. MOCK y MiMo usan los proveedores existentes.
 - Las operaciones aceptadas se aplican con el registro real del canvas a una copia y se calculan con el motor; las medidas se comparan exactamente como Decimal. El producto/proyecto se conserva sin commit.
+- El oráculo de edición exige una respuesta válida del motor, separando geometría inválida de autoridad de fabricación incompleta. Las negativas de compatibilidad se contrastan con el sistema seleccionado; J03 exige destino en dormitorios y J05 usa la fracción comercial 0.05. Los precios aplicados y planes de corte existentes se leen de su autoridad, sin constantes que los mantengan ausentes en corridas futuras.
+- La referencia de fuente se captura antes de medir; el código debe estar commiteado y se verifica que no cambió durante la corrida. La reconstrucción del stack comprobó que el proyecto se descubre por CASA_LOMAS aun cuando su UUID cambia. Las respuestas y el informe redactan campos de credencial, JWT y valores privados del entorno sin alterar lo que recibe el agente.
 - Rollback del caso, de route, audit, wallet y jobs. Snapshot de tablas de tenant durante la propuesta y de persistencia al cerrar la suite. Una corrida exploratoria concurrente con jobs manuales fue rechazada por esa guarda y no es la línea base entregada.
 - Navegador Chromium: Proyectos → proyecto casa → editor → Orb → Agente → solicitud real E03 → trabajo del asistente. Los recorridos finales se inspeccionaron en 1440×900, 1280×800 y 1024×768, claro y oscuro. Se comprobaron cero escrituras de dominio; el POST al motor calcula y no guarda. El job puede decir COMPLETADO aun con rechazo de ops: es un hallazgo, no un resultado acreditado.
 - `ux:capture`: ocho combinaciones del asistente, incluyendo 390×844, antes y después. Cero desbordes en ambas corridas. No se modifica ninguna ruta, componente, CSS o API pública.
@@ -58,6 +62,6 @@ Momento de firma preservado: F8, Orb conectado al job observado. Idea §8 instru
 
 ## Verificación y límites
 
-Los gates locales `make lint`, `make typecheck`, `make test` y `make build` pasaron: motor 472 PASA + 2 xfail, backend 1078 PASA, frontend 697 PASA. La compilación no cambia OpenAPI/orval y se conserva el chequeo de reproducibilidad. Los oráculos tienen 20 tests y el test PostgreSQL del observador pasó sobre el stack real. El Database Gate completo pasó: 921 aserciones pgTAP, integración con RLS, los 11 recorridos Playwright y compatibilidad/migraciones pobladas en PostgreSQL 16. El teardown dejó libres los puertos y detuvo Supabase. Tras la corrección de redacción de logs pasaron nuevamente lint y los cinco tests del gate. Los cuatro checks de GitHub se registran al cerrar el PR.
+Los gates locales `make lint`, `make typecheck`, `make test` y `make build` pasaron: motor 472 PASA + 2 xfail, backend 1097 PASA, frontend 697 PASA. La compilación no cambia OpenAPI/orval y se conserva el chequeo de reproducibilidad. Los oráculos tienen 39 tests y el test PostgreSQL del observador pasó sobre el stack real, incluida la base recién reconstruida. El Database Gate completo pasó: 921 aserciones pgTAP, integración con RLS, los 11 recorridos Playwright y compatibilidad/migraciones pobladas en PostgreSQL 16. El teardown dejó libres los puertos y detuvo Supabase. Tras las correcciones de revisión se repitieron backend, oráculos, observador y ambas suites de evaluación; los cinco tests de logs también pasaron. Los cuatro checks de GitHub se registran al cerrar el PR.
 
 No hecho, por alcance: no se arreglan prompts, registro de ops, proveedor, fixture con autoridad de fabricación ni UI del asistente. No se inventan REV/OT para hacer pasar casos cuyo contexto falta. No hay nuevas decisiones comerciales ni integraciones externas. El arnés es exclusivo de DEBUG y PostgreSQL local; no se habilita como endpoint de producción.
