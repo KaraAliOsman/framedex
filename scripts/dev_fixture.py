@@ -719,22 +719,20 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
                 if str(policy.get("policy_id")) != str(handle_id):
                     continue
                 for req in policy.get("requirements") or []:
-                    suggested = (
-                        req.get("suggested_height_mm")
-                        or req.get("requested_height_mm")
-                        or "1050"
-                    )
-                    refs = req.get("permitted_vertical_references") or [
-                        "OUTER_BOTTOM"
-                    ]
+                    # Explicit DEMO design intent (not computed authority):
+                    # 400 mm down from the leaf top fits the short demo leaves.
+                    refs = req.get("permitted_vertical_references") or []
+                    if "LEAF_TOP" not in refs:
+                        raise RuntimeError("DEMO handle intent needs LEAF_TOP authority")
+                    requested = "400"
                     handle_intents.append(
                         {
                             "schema_version": 1,
                             "bay_id": req["bay_id"],
                             "leaf_id": req.get("leaf_id"),
                             "handle_domain_slot": req["handle_domain_slot"],
-                            "requested_height_mm": str(suggested),
-                            "vertical_reference": refs[0],
+                            "requested_height_mm": requested,
+                            "vertical_reference": "LEAF_TOP",
                         }
                     )
 
