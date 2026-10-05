@@ -8,6 +8,7 @@ Verificado el 05-10-2026 sobre `codex/P01-sistema-diseno`, desde la base `7e98f7
 - Catálogo: sesión Jefe de taller → crear serie → enviar campos incompletos → errores en español y foco en el primer campo. Cobranza: sesión Estimador → vivienda del fixture → Registrar pago → monto incompleto/decimal en CLP → error junto al campo y foco. Ambos temas; se verifica `noValidate` y **cero escrituras** de API para datos inválidos.
 - Regresión: **352 capturas por lado**, mismas rutas, roles, temas y cuatro viewports. [Comparación](comparacion.json): ningún detector aumenta su número de ocurrencias en una combinación y no aparece un desborde nuevo. Las capturas tienen compresión PNG sin pérdida, comprobada por igualdad de píxeles.
 - Inspección visual: manual claro/oscuro a 1024, taller a 390, proyecto a 1440 y los errores reales de Catálogo/Cobranza. Las capturas se enlazan debajo y los informes conservan sus límites.
+- Revisión de entradas: un identificador fiscal extranjero se conserva sin imponerle RUT; las entradas monetarias libres rechazan puntos decimales ambiguos; una edición numérica inválida borra el valor del consumidor y mantiene el borrador/error visibles. El manual también verifica precisión inválida, refoco y axe. Los tres E2E del lienzo pasaron con medidas agrupadas y foco delineado; sus aserciones exactas se actualizaron al contrato vigente, preservando cálculos, rollback, snapping y límite de pintura de 300 ms.
 
 | Evidencia | Enlace |
 |---|---|
@@ -76,4 +77,4 @@ Las decisiones sobre redondeo, texto atenuado accesible y contradicción DIN est
 
 No se añadió una traza ficticia: la respuesta actual de posición entrega huella, pero no fórmula/entradas/versión completas. `TraceButton` acepta ese contrato y expone la ausencia. Tampoco se fabricaron revisiones ni aprobación de catálogo para llenar capturas: los cinco enlaces de portal provisionales ejercitan errores, **no cinco cotizaciones emitidas**. Esta limitación permanece explícita para los encargos de cotización/portal. Los reportes conservan los errores HTTP/consola y desbordes heredados; la matriz es evidencia de regresión, no aceptación de toda la aplicación.
 
-Los cuatro gates locales pasaron: lint (incluye OpenAPI/orval y guardas), typecheck, test y build; 472 tests del motor con dos fallos esperados, 1.058 del backend y 677 del frontend. Los cuatro checks GitHub se registran en el PR antes del merge. No se modificaron API, migraciones ni fórmulas del motor.
+Los cuatro gates locales pasaron: lint (incluye OpenAPI/orval y guardas), typecheck, test y build; 472 tests del motor con dos fallos esperados, 1.058 del backend y 697 del frontend. Los cuatro checks GitHub se registran en el PR antes del merge. No se modificaron API, migraciones ni fórmulas del motor.

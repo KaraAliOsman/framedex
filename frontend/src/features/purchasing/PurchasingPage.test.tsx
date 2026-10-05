@@ -365,6 +365,9 @@ it("submits eligibility keys in canonical order even when visual order differs",
   fireEvent.change(form.querySelector('input[name="basis"]')!, {
     target: { value: "Selección humana explícita" },
   });
+  fireEvent.change(form.querySelector('input[name="tax_id"]')!, {
+    target: { value: "US-12345" },
+  });
   fireEvent.submit(form);
   await waitFor(() =>
     expect(apiMutator).toHaveBeenCalledWith(
@@ -378,6 +381,7 @@ it("submits eligibility keys in canonical order even when visual order differs",
   const body = JSON.parse(String((call[1] as { body: string }).body));
   expect(body.eligible_requirement_keys).toEqual([lowKey, glassRequirement.requirement_key]);
   expect(body.eligible_requirement_keys).toEqual([...body.eligible_requirement_keys].sort());
+  expect(body.supplier_details.tax_id).toBe("US-12345");
 });
 
 it("maps backend blocker codes to actionable labels", async () => {

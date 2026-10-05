@@ -140,7 +140,7 @@ export function ProjectPaymentsPanel({
     const nextKind: PaymentKindEnum =
       compareDecimal(collected, "0") > 0 && compareDecimal(balance, "0") > 0 ? "SALDO" : "ANTICIPO";
     setKind(nextKind);
-    if (nextKind === "SALDO") setAmount(decimalInputValue(balance));
+    if (nextKind === "SALDO") setAmount(decimalInputValue(balance).replace(".", ","));
     setBaseline({ kind: nextKind, method });
     setShowForm(true);
   }

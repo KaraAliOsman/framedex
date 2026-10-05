@@ -99,6 +99,16 @@ try {
           ),
         ).toEqual([]);
         await page.getByLabel("Nombre de muestra").fill("Muestra del taller");
+        await page.locator('input[name="dimension"]').fill("1249,123");
+        await page.getByRole("button", { name: "Comprobar formato" }).click();
+        await expect(page.locator('input[name="dimension"]')).toBeFocused();
+        await expect(page.locator('input[name="dimension"]')).toHaveValue("1249,123");
+        const precisionAxe = await new AxeBuilder({ page }).analyze();
+        expect(
+          precisionAxe.violations.filter(
+            (issue) => issue.impact === "serious" || issue.impact === "critical",
+          ),
+        ).toEqual([]);
         await page.locator('input[name="dimension"]').fill("1249,5");
         await page.getByLabel("Monto en pesos").fill("2.400");
         await page.getByRole("button", { name: "Comprobar formato" }).click();

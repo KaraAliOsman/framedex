@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import { t } from "../i18n/es-CL";
-import { formatDecimal, parseDecimalInput } from "../decimal";
+import { decimalInputValue, formatDecimal, parseDecimalInput } from "../decimal";
 import { DimLoader } from "./Signature";
 
 /* ---------- Button ---------- */
@@ -205,8 +205,8 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
 export type NumberFieldProps = Omit<TextInputProps, "value" | "onChange" | "type"> & {
   value: string;
   onValueChange: (value: string) => void;
-  /** Decimal places applied on blur (e.g. 0 for CLP, 1–2 for mm). The stored
-   * value is untouched while typing. */
+  /** Allowed precision (0 for CLP, 1–2 for mm). Invalid edits clear the caller's
+   * value instead of retaining a number that is no longer visible. */
   decimals?: number;
   /** Rendered when the value is empty and the field is not focused. */
   emptyPlaceholder?: string;
@@ -225,24 +225,29 @@ export function NumberField({
   const [draft, setDraft] = useState(value);
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
-  const displayed = focused ? draft : value === "" ? "" : formatDecimal(value, decimals, ".");
+  const field = useContext(FieldContext);
+  const displayed =
+    focused || error ? draft : value === "" ? "" : formatDecimal(value, decimals, ".");
   return (
     <span className="ui-number-field">
       <TextInput
         {...rest}
         data-precision={decimals}
         aria-describedby={
-          [rest["aria-describedby"], error ? errorId : ""].filter(Boolean).join(" ") || undefined
+          [rest["aria-describedby"] ?? field?.describedBy, error ? errorId : ""]
+            .filter(Boolean)
+            .join(" ") || undefined
         }
         invalid={Boolean(error) || rest.invalid}
         inputMode="decimal"
         onBlur={(event) => {
+          setFocused(false);
           const parsed = parseDecimalInput(draft, decimals);
           if (draft && parsed === null) {
+            onValueChange("");
             setError(`Escribe un número con hasta ${decimals} decimales.`);
           } else {
             setError(null);
-            setFocused(false);
           }
           onBlur?.(event);
         }}
@@ -253,10 +258,13 @@ export function NumberField({
           if (next === "" || parsed !== null) {
             onValueChange(parsed ?? "");
             setError(null);
+          } else {
+            onValueChange("");
+            setError(`Escribe un número con hasta ${decimals} decimales.`);
           }
         }}
         onFocus={(event) => {
-          setDraft(value.replace(".", ","));
+          if (!error) setDraft(decimalInputValue(value).replace(".", ","));
           setFocused(true);
           rest.onFocus?.(event);
         }}

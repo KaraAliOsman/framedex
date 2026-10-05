@@ -38,3 +38,9 @@ Append-only chronology. Keep newest entries at the bottom.
 - Removed unused Layout exports and CSS rules with browser plus source evidence. Recorded both legacy migration reduction and the full net stylesheet cost, including new primitives.
 - Added the editorial PR template, component manual, real form-validation captures and the before/after route comparison. Provisional portal references remain failure-state evidence and do not establish emitted quotations.
 - Verification and merge metadata are recorded in the P01 acceptance page, PR and current-reality page; later queue tasks remain pending until separately completed.
+
+## [2026-10-05] P01 | input review corrections
+
+- Restricted Chilean RUT validation to declared RUT inputs; supplier tax IDs retain their existing foreign-identifier contract.
+- Kept free-form money input strictly es-CL and localized backend-prefilled fractions explicitly. Invalid NumberField drafts now clear the consumer value and retain accessible help/error descriptions.
+- Updated exact canvas E2E expectations for constitution dimension grouping and outline focus. All three real canvas flows passed, including rollback and the existing 300 ms paint limit; no assertion was skipped or relaxed.

@@ -47,7 +47,7 @@ describe("domain controls", () => {
     fireEvent.focus(screen.getByLabelText("Monto"));
     fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "12,5" } });
     fireEvent.blur(screen.getByLabelText("Monto"));
-    expect(commit).not.toHaveBeenCalled();
+    expect(commit).toHaveBeenLastCalledWith("");
     expect(screen.getByRole("alert")).toHaveTextContent("hasta 0 decimales");
     expect(screen.getByLabelText("Monto")).toHaveAttribute("aria-invalid", "true");
   });
@@ -59,6 +59,56 @@ describe("domain controls", () => {
     expect(input).toHaveValue("1,249");
     fireEvent.change(input, { target: { value: "1,2491" } });
     expect(commit).toHaveBeenCalledWith("1.2491");
+  });
+  it("accepts backend trailing zeros at the declared input precision", () => {
+    const commit = vi.fn();
+    render(<NumberField aria-label="CLP" value="12500.0000" decimals={0} onValueChange={commit} />);
+    const input = screen.getByLabelText("CLP");
+    fireEvent.focus(input);
+    expect(input).toHaveValue("12500");
+    fireEvent.blur(input);
+    expect(input).not.toHaveAttribute("aria-invalid", "true");
+    expect(commit).not.toHaveBeenCalled();
+  });
+  it("cannot submit a previous number after an invalid edit outside ValidatedForm", () => {
+    const submit = vi.fn();
+    function Entry(): JSX.Element {
+      const [amount, setAmount] = useState("25");
+      return (
+        <div>
+          <NumberField aria-label="Monto" value={amount} onValueChange={setAmount} decimals={2} />
+          <Button onClick={() => submit(amount)}>Guardar</Button>
+        </div>
+      );
+    }
+    render(<Entry />);
+    const input = screen.getByLabelText("Monto");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "25,123" } });
+    fireEvent.blur(input);
+    expect(input).toHaveValue("25,123");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    expect(submit).toHaveBeenLastCalledWith("");
+    fireEvent.focus(input);
+    expect(input).toHaveValue("25,123");
+    fireEvent.change(input, { target: { value: "25,12" } });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+    expect(submit).toHaveBeenLastCalledWith("25.12");
+  });
+  it("keeps field help accessible together with its precision error", () => {
+    render(
+      <Field label="Ancho" help="Medida nominal del motor">
+        <NumberField value="" onValueChange={() => {}} decimals={1} />
+      </Field>,
+    );
+    const input = screen.getByLabelText("Ancho");
+    expect(input).toHaveAccessibleDescription("Medida nominal del motor");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "12,55" } });
+    expect(input).toHaveAccessibleDescription(
+      "Medida nominal del motor Escribe un número con hasta 1 decimales.",
+    );
   });
   it("searches accented options and skips disabled choices by keyboard", () => {
     function Choice(): JSX.Element {
@@ -148,6 +198,33 @@ describe("Spanish validation edge", () => {
     expect(validators.rut("76.123.456-0")).toBeNull();
     expect(validators.rut("76.123.456-1")).toContain("dígito verificador");
   });
+  it("accepts foreign supplier identifiers without imposing Chilean RUT semantics", () => {
+    const submit = vi.fn((event) => event.preventDefault());
+    render(
+      <ValidatedForm onSubmit={submit}>
+        <input name="tax_id" aria-label="Identificador fiscal" defaultValue="US-12345" />
+        <button type="submit">Guardar</button>
+      </ValidatedForm>,
+    );
+    fireEvent.submit(screen.getByRole("button").closest("form")!);
+    expect(submit).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+  it.each([{ name: "rut" }, { name: "client_rut" }, { name: "tax_id", "data-rut": "true" }])(
+    "checks declared RUT input $name",
+    (attributes) => {
+      const submit = vi.fn();
+      render(
+        <ValidatedForm onSubmit={submit}>
+          <input {...attributes} aria-label="RUT" defaultValue="76.123.456-1" />
+          <button type="submit">Guardar</button>
+        </ValidatedForm>,
+      );
+      fireEvent.submit(screen.getByRole("button").closest("form")!);
+      expect(submit).not.toHaveBeenCalled();
+      expect(screen.getByRole("alert")).toHaveTextContent("dígito verificador");
+    },
+  );
 });
 
 describe("tables and opening grammar", () => {

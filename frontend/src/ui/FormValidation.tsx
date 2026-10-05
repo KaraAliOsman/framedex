@@ -110,7 +110,11 @@ export function useSpanishValidation(schema: Readonly<Record<string, Validator>>
               : !value.trim();
       if (control.required && missingChoice) message = validators.required("");
       if (!message && value && input?.type === "email") message = validators.email(value);
-      if (!message && value && /rut|tax_id/i.test(control.name || control.id))
+      if (
+        !message &&
+        value &&
+        (/(?:^|_)rut$/i.test(control.name || control.id) || input?.dataset.rut === "true")
+      )
         message = validators.rut(value);
       if (!message && schema[control.name]) message = schema[control.name]!(value);
       if (!message && input?.dataset.validation && value) {
