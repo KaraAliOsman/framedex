@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: dd4ce1cca555d5e8fa1fa130c8b538c7c5c1aa43
+verified_ref: 2c9bbebc1cca6df125a4e0eeae14b22b71478b9e
 sources:
   - repository main
   - P00 foundation PR #114

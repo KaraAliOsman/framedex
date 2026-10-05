@@ -2,7 +2,7 @@
 |---|---|---|---|---|---|
 | P00 | 0 | mergeado | https://github.com/KaraAliOsman/framedex/pull/114 | a096f85b2e56e21eda024c1ec92a456ed9d30b03 | CI 4/4 verde; PR mergeado en integracion/v1. |
 | P01 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/117 | 023b8ba303b680ca50b6e10119ce4ee4514c9c38 | CI 4/4 verde; material v2, validación y evidencia antes/después aceptados. |
-| IA1 | 0b | en curso |  |  | Diagnóstico y línea base de evaluaciones con IA real. |
+| IA1 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/118 | 2c9bbebc1cca6df125a4e0eeae14b22b71478b9e | CI 4/4 verde; 26 casos aislados, línea base MiMo 3/26 y MOCK 0/26, 48 regresiones de oráculos. |
 | D01 | 0b | pendiente |  |  |  |
 | D02 | D1 | pendiente |  |  |  |
 | D03 | D1 | pendiente |  |  |  |
