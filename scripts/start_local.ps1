@@ -1,5 +1,5 @@
 # Start DEKOPEN local stack services
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 $root = if ($PSScriptRoot) { (Resolve-Path (Join-Path $PSScriptRoot "..")).Path } else { (Get-Location).Path }
 $logDir = Join-Path $root ".run"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
@@ -7,51 +7,62 @@ New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 # Load .env into process env
 Get-Content (Join-Path $root ".env") | ForEach-Object {
   if ($_ -match '^\s*([A-Z0-9_]+)=(.*)$') {
-    Set-Item -Path "Env:$($matches[1])" -Value $matches[2]
+    $value = $matches[2].Trim()
+    if (($value.StartsWith('"') -and $value.EndsWith('"')) -or
+        ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+      $value = $value.Substring(1, $value.Length - 2)
+    }
+    Set-Item -Path "Env:$($matches[1])" -Value $value
   }
 }
 
-Write-Host "DATABASE_URL=$env:DATABASE_URL"
-Write-Host "SUPABASE_URL=$env:SUPABASE_URL"
+Write-Host "Local environment loaded (values withheld)"
+$env:PYTHONUTF8 = "1"
+if (-not $env:WEASYPRINT_DLL_DIRECTORIES -and (Test-Path "C:/msys64/ucrt64/bin")) {
+  $env:WEASYPRINT_DLL_DIRECTORIES = "C:/msys64/ucrt64/bin"
+}
+if (-not $env:VITE_SUPABASE_URL) { $env:VITE_SUPABASE_URL = $env:SUPABASE_URL }
+if (-not $env:VITE_SUPABASE_ANON_KEY) { $env:VITE_SUPABASE_ANON_KEY = $env:SUPABASE_ANON_KEY }
+$listeners = Get-NetTCPConnection -LocalPort 8000,5173 -State Listen -ErrorAction SilentlyContinue
+if ($listeners) { throw "Ports 8000/5173 must be free; stop the existing stack first." }
 
 # Storage bucket
 docker exec supabase_db_dekopen psql -U postgres -d postgres -c "INSERT INTO storage.buckets (id, name, public) VALUES ('documents','documents', false) ON CONFLICT (id) DO NOTHING;"
+if ($LASTEXITCODE -ne 0) { throw "Local Supabase must be running before starting the app." }
 
 $py = Join-Path $root ".venv\Scripts\python.exe"
 
 # Django
-Start-Process -FilePath $py `
+$djangoProcess = Start-Process -FilePath $py `
   -ArgumentList @("backend\manage.py","runserver","127.0.0.1:8000","--noreload") `
   -WorkingDirectory $root `
   -RedirectStandardOutput "$logDir\django.out.log" `
   -RedirectStandardError "$logDir\django.err.log" `
-  -WindowStyle Hidden
+  -WindowStyle Hidden -PassThru
 Write-Host "Django launched"
 
 # Jobs worker
-Start-Process -FilePath $py `
+$jobsProcess = Start-Process -FilePath $py `
   -ArgumentList @("backend\manage.py","runjobs","--poll","1.5") `
   -WorkingDirectory $root `
   -RedirectStandardOutput "$logDir\jobs.out.log" `
   -RedirectStandardError "$logDir\jobs.err.log" `
-  -WindowStyle Hidden
+  -WindowStyle Hidden -PassThru
 Write-Host "Jobs worker launched"
 
 # Vite
-Start-Process -FilePath "cmd.exe" `
-  -ArgumentList @("/c","npm run dev > `"$logDir\vite.out.log`" 2> `"$logDir\vite.err.log`"") `
+$viteProcess = Start-Process -FilePath (Get-Command node.exe).Source `
+  -ArgumentList @("node_modules/vite/bin/vite.js","--host","127.0.0.1","--strictPort") `
   -WorkingDirectory (Join-Path $root "frontend") `
-  -WindowStyle Hidden
+  -RedirectStandardOutput "$logDir\vite.out.log" `
+  -RedirectStandardError "$logDir\vite.err.log" `
+  -WindowStyle Hidden -PassThru
 Write-Host "Vite launched"
 
+@{ django = $djangoProcess.Id; jobs = $jobsProcess.Id; vite = $viteProcess.Id } |
+  ConvertTo-Json | Set-Content -LiteralPath "$logDir\stack-pids.json"
 Start-Sleep -Seconds 6
-Write-Host "=== django err ==="
-Get-Content "$logDir\django.err.log" -ErrorAction SilentlyContinue | Select-Object -Last 20
-Write-Host "=== django out ==="
-Get-Content "$logDir\django.out.log" -ErrorAction SilentlyContinue | Select-Object -Last 10
-Write-Host "=== jobs ==="
-Get-Content "$logDir\jobs.err.log" -ErrorAction SilentlyContinue | Select-Object -Last 10
-Get-Content "$logDir\jobs.out.log" -ErrorAction SilentlyContinue | Select-Object -Last 10
-Write-Host "=== vite ==="
-Get-Content "$logDir\vite.out.log" -ErrorAction SilentlyContinue | Select-Object -Last 15
-Get-Content "$logDir\vite.err.log" -ErrorAction SilentlyContinue | Select-Object -Last 10
+if ($djangoProcess.HasExited -or $jobsProcess.HasExited -or $viteProcess.HasExited) {
+  throw "A local service exited; inspect the .run logs."
+}
+Write-Host "Local services running; process IDs in .run/stack-pids.json"

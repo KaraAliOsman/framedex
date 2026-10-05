@@ -703,8 +703,8 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
                 p.get("reinforcement_cut_policy_id"),
             )
 
-            # Merge workshop suggestions: one record per (bay, leaf); fill
-            # missing drains/closing points so R07/R08 can pass.
+            # Preserve prepared evidence verbatim, merging duplicate targets.
+            # The fixture must not invent or recalculate manufacturing values.
             merged: dict[tuple, dict] = {}
             for ann in p.get("workshop_suggestions") or []:
                 key = (ann.get("bay_id"), ann.get("leaf_id"))
@@ -712,36 +712,6 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
                 for k, v in ann.items():
                     if v not in (None, [], {}, "") and not row.get(k):
                         row[k] = v
-            for row in merged.values():
-                width = float(row.get("continuous_width_mm") or 0)
-                drains = row.get("bottom_drain_holes_mm")
-                if width <= 0 and drains:
-                    # derive a bound from the largest declared coordinate
-                    width = max(float(h) for h in drains) + 1.0
-                if drains in (None, [], {}):
-                    row["bottom_drain_holes_mm"] = None if width <= 800 else [
-                        f"{width * i / 4:.2f}" for i in (1, 2, 3)
-                    ]
-                else:
-                    clamped = sorted({float(h) for h in drains if 0 <= float(h) <= width})
-                    if not clamped and width > 800:
-                        clamped = [width * i / 4 for i in (1, 2, 3)]
-                    row["bottom_drain_holes_mm"] = (
-                        [f"{h:.2f}" for h in clamped] if clamped else None
-                    )
-                if row.get("closing_points_perimeter_mm") in (None, [], {}) and row.get("leaf_id") is not None:
-                    row["closing_points_perimeter_mm"] = [
-                        "0.00",
-                        "700.00",
-                        "1400.00",
-                        "2100.00",
-                        "2800.00",
-                        "3500.00",
-                    ]
-                if not row.get("finish_class"):
-                    row["finish_class"] = "WHITE"
-                if row.get("has_coupler") is None:
-                    row["has_coupler"] = False
             annotations = list(merged.values())
 
             handle_intents = []
@@ -803,12 +773,12 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
 
     def applied_operation(project_id: str) -> dict:
         detail = api(estimator, "GET", f"/projects/{project_id}/")
-        # Always refresh documentary inputs so clamped workshop fields land.
-        save_inputs(project_id)
         if detail.get("pricing_current") and detail.get(
             "current_pricing_operation_id"
         ):
             return {"id": detail["current_pricing_operation_id"]}
+        # Refresh only editable inputs; emitted inputs are immutable.
+        save_inputs(project_id)
         operation = api(
             estimator,
             "POST",
