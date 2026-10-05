@@ -17,7 +17,11 @@ import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
 import { consumeReturnTo } from "./auth/returnTo";
 import { LandingPage } from "./features/landing/LandingPage";
 
-export const DEV_ONLY_ROUTE_PATHS = ["/projects/demo/positions/g1/edit", "/benchmark"] as const;
+export const DEV_ONLY_ROUTE_PATHS = [
+  "/projects/demo/positions/g1/edit",
+  "/benchmark",
+  "/dev/ui",
+] as const;
 
 export function visibleDevOnlyRoutePaths(
   env: Pick<ImportMetaEnv, "DEV"> = import.meta.env,
@@ -97,6 +101,9 @@ const BenchmarkPage = lazy(async () => {
   const module = await import("./features/benchmark/BenchmarkPage");
   return { default: module.BenchmarkPage };
 });
+const UiPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/UiPage")).UiPage }))
+  : null;
 
 function isFloorRole(role: string | undefined): boolean {
   return ["INSTALLER", "OPERATOR"].includes(role ?? "");
@@ -183,6 +190,18 @@ export function AppRoutes(): JSX.Element {
         />
         {visibleDevOnlyRoutePaths().length > 0 && (
           <>
+            {UiPage ? (
+              <Route
+                path="/dev/ui"
+                element={
+                  <ReadyGuard>
+                    <Suspense fallback={<p role="status">Cargando el manual de componentes</p>}>
+                      <UiPage />
+                    </Suspense>
+                  </ReadyGuard>
+                }
+              />
+            ) : null}
             <Route
               path="/projects/demo/positions/g1/edit"
               element={

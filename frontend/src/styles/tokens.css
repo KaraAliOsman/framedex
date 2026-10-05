@@ -1,133 +1,156 @@
-/* DEKOPEN identity tokens — phase-01 visual contract.
-   Architectural workbench feel: warm light canvas, graphite ink, thin lines,
-   measured spacing, product as protagonist, petrol-teal accent. Dark theme
-   uses legible graphites. No gradients, glow, or glassmorphism.
-
-   Three tiers:
-   1. Interface color tokens — --theme-* (surface/text/border/focus/action/
-      danger/warning/success/info/disabled, distinct hover-vs-business state).
-   2. Physical material colors — --mat-* in the unthemed block: the real finish
-      of a product (PVC, foil, aluminium, glass, hardware). Theme-invariant by
-      contract: a foil-brown window keeps its finish in the dark theme; Studio,
-      print and the renderer may never restyle them as chrome.
-   3. Structural tokens — type/space/radius/shadow/z-index.
-
-   Aliases at the bottom retire the ad-hoc vocabulary older code pasted in;
-   keep them defined and migrate call sites opportunistically.
-
-   Type scale (contract): base 14px, labels 12–13, section titles 19px,
-   page titles 26px. Mono/tabular figures only where comparison improves.
-   Space scale: 4/8/12/16/24/32/48. Desktop controls ≈36px, touch 44px. */
-
-:root,
-:root[data-theme="light"] {
-  --theme-bg-canvas: #f7f6f3;
-  --theme-viewport-stage: #e8e9e5;
-  --theme-viewport-ground: #d3d5cf;
-  --theme-surface-panel: #ffffff;
-  --theme-surface-card: #f0efeb;
-  --theme-surface-hover: #e9e7e1;
-  --theme-border-subtle: #dcdad3;
-  --theme-border-strong: #b8b9b1;
-  --theme-text-primary: #24292c;
-  --theme-text-secondary: #545d60;
-  --theme-text-muted: #5f6a6c;
-  --theme-text-tertiary: #5f6a6c; /* smallest text tier — AA on panel surfaces */
-  --theme-accent: #0f817a;
-  --theme-accent-strong: #0b6b66;
-  --theme-accent-deep: #09524e;
-  --theme-accent-soft: #e4f3f1;
-  --theme-accent-ink: #0b4d49;
-  --theme-mark: #e56a32;
-  --theme-warning: #9c5306;
-  --theme-warning-soft: #fdf1e3;
-  --theme-success: #1e7a4c;
-  --theme-success-soft: #e3f2ea;
-  --theme-danger: #b3372f;
-  --theme-danger-soft: #fbe9e7;
-  --theme-danger-ink: #ffffff;
-  --theme-info: var(--theme-accent);
-  --theme-info-soft: var(--theme-accent-soft);
-  /* Technical states — UNKNOWN means the authority is absent (not "unset"),
-     BLOCKED means the domain refuses to proceed. Both are facts to act on,
-     so they get dedicated soft surfaces instead of reusing warning/danger. */
-  --theme-unknown: #5f6d69;
-  --theme-unknown-soft: #e7eceb;
-  --theme-blocked: #8c2f9b;
-  --theme-blocked-soft: #f3e8f7;
-  --theme-focus-ring: #0f817a;
-  --theme-selection: #d3ebe8;
-  --theme-disabled-bg: #eceeee;
-  --theme-disabled-ink: #76847f; /* 3.35:1 on disabled-bg — exempt from AA but readable */
-  --theme-disabled-border: #d5dbda;
-  --theme-skeleton: #e2e7e6;
-  --theme-skeleton-sheen: #f2f5f4;
-  --theme-glass-tint: rgba(15, 129, 122, 0.07);
-  --op-selected-row: #fdf3dc;
-  --shadow-raise: 0 1px 3px rgb(28 30 28 / 0.07), 0 3px 10px rgb(28 30 28 / 0.07);
-  --shadow-pop: 0 10px 28px rgb(28 30 28 / 0.14);
-  --shadow-modal: 0 12px 40px rgba(20, 24, 24, 0.2);
-
-  /* DEKOPEN orb identity — flat 2D. The sphere is intentionally identical
-   * across themes (the identity IS the dark orb); only the edge stroke
-   * adapts to the dark theme. */
-  --orb-mid: #2a3238;
-  --orb-deep: #171e23;
-  --orb-edge: rgba(10, 15, 18, 0.55);
-  /* Cyan capsule eyes + thin orbit line — the identity accent. */
-  --orb-eye: #0fd8ea;
-  --orb-eye-hi: #7cf3ff;
-  --orb-ribbon: #0fd8ea;
-  --orb-ribbon-soft: rgba(15, 216, 234, 0.42);
+/* Constitution §3. Physical materials are invariant; chrome uses functional roles. */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
 }
-
-:root[data-theme="dark"] {
-  --theme-bg-canvas: #14181a;
-  /* 3D stage stays lighter than the chrome so anthracite/PVC frames keep
-   * silhouette contrast — a neutral exhibition backdrop, not page chrome. */
-  --theme-viewport-stage: #262c2f;
-  --theme-viewport-ground: #1c2225;
-  --theme-surface-panel: #1b2124;
-  --theme-surface-card: #232a2d;
-  --theme-surface-hover: #2c3539;
-  --theme-border-subtle: #323c40;
-  --theme-border-strong: #4a585d;
-  --theme-text-primary: #edf2f1;
-  --theme-text-secondary: #a4b6b3;
-  --theme-text-muted: #81938f;
-  --theme-text-tertiary: #81938f;
-  --theme-accent: #2aa69b;
-  --theme-accent-strong: #45beb1;
-  --theme-accent-deep: #2aa69b;
-  --theme-accent-soft: #14312f;
-  --theme-accent-ink: #bfe6e0;
-  --theme-mark: #e8804a;
-  --theme-warning: #e09543;
-  --theme-warning-soft: #33231a;
-  --theme-success: #4caf7f;
-  --theme-success-soft: #16291f;
-  --theme-danger: #e06154;
-  --theme-danger-soft: #331d1a;
-  --theme-danger-ink: #ffffff;
-  --theme-info: var(--theme-accent);
-  --theme-info-soft: var(--theme-accent-soft);
-  --theme-unknown: #93a19d;
-  --theme-unknown-soft: #242c2f;
-  --theme-blocked: #c07ad1;
-  --theme-blocked-soft: #2b1f31;
-  --theme-focus-ring: #45beb1;
-  --theme-selection: #163a38;
-  --theme-disabled-bg: #222a2d;
-  --theme-disabled-ink: #6b7a76; /* 3.25:1 on disabled-bg */
-  --theme-disabled-border: #333d41;
-  --theme-skeleton: #262f33;
-  --theme-skeleton-sheen: #2f393d;
-  --theme-glass-tint: rgba(42, 166, 155, 0.1);
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+}
+:root {
+  --g-950: #161c1f;
+  --g-900: #252d31;
+  --g-700: #465158;
+  --g-500: #727d82;
+  --g-400: #9aa6a9;
+  --g-300: #cdd5d6;
+  --g-200: #e0e6e5;
+  --g-100: #eef2f1;
+  --g-50: #f5f7f6;
+  --g-25: #fcfdfc;
+  --teal-950: #042e2c;
+  --teal-900: #064440;
+  --teal-800: #075f5a;
+  --teal-700: #0b7770;
+  --teal-600: #0f8f85;
+  --teal-500: #20a79a;
+  --teal-400: #48bcaf;
+  --teal-300: #7fd4c8;
+  --teal-200: #b0e4dc;
+  --teal-100: #d4efea;
+  --teal-50: #e6f4f2;
+  --orange-700: #a84418;
+  --orange-600: #c24e1e;
+  --orange-500: #e56a32;
+  --orange-400: #ed8653;
+  --orange-300: #f3ac84;
+  --orange-100: #fbebe2;
+  --paper: #ffffff;
+  --scrim: rgb(22 28 31 / 42%);
+  --success-base: #1e7a4c;
+  --success-soft: #e3f2ea;
+  --success-ink: #13502f;
+  --warning-base: #b25e09;
+  --warning-soft: #fdf1e3;
+  --warning-ink: #7a3d05;
+  --danger-base: #b3372f;
+  --danger-soft: #fbe9e7;
+  --danger-ink: #7e1f19;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --type-display: 2rem;
+  --line-display: 2.25rem;
+  --type-title-l: 1.25rem;
+  --line-title-l: 1.625rem;
+  --type-title-m: 0.875rem;
+  --line-title-m: 1.125rem;
+  --type-label: 0.6875rem;
+  --line-label: 0.875rem;
+  --type-body: 0.8125rem;
+  --line-body: 1.125rem;
+  --type-dense: 0.75rem;
+  --line-dense: 1rem;
+  --type-dim: 0.8125rem;
+  --line-dim: 1rem;
+  --type-micro: 0.6875rem;
+  --type-workshop: 1rem;
+  --line-micro: 0.875rem;
+  --r-0: 0;
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-pill: 999px;
+  --e1: none;
+  --focus-ring: none;
+  --e2: 0 1px 2px rgb(22 28 31 / 5%), 0 4px 12px rgb(22 28 31 / 8%);
+  --e3: 0 2px 6px rgb(22 28 31 / 6%), 0 12px 32px rgb(22 28 31 / 14%);
+  --sheet: 0 1px 3px rgb(22 28 31 / 7%);
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-rail: 20;
+  --z-popover: 40;
+  --z-drawer: 50;
+  --z-dialog: 60;
+  --z-toast: 70;
+  --z-palette: 80;
+  --t-micro: 90ms;
+  --t-state: 160ms;
+  --t-spatial: 220ms;
+  --t-max: 280ms;
+  --t-exit: 120ms;
+  --ease-in: cubic-bezier(0.2, 0, 0.38, 1);
+  --ease-out: cubic-bezier(0.4, 0.14, 1, 1);
+  --density-compact: 28px;
+  --density-default: 32px;
+  --density-loose: 44px;
+  --control-height: var(--density-default);
+  --table-row-height: 32px;
+  --inspector-width: 320px;
+  --tree-width: 260px;
+  --tool-strip: 48px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --bp-tablet: 1100px;
+  --bp-phone: 720px;
+  --space-2px: 2px;
+  --space-4px: 4px;
+  --space-6px: 6px;
+  --space-8px: 8px;
+  --space-12px: 12px;
+  --space-16px: 16px;
+  --space-24px: 24px;
+  --space-32px: 32px;
+  --space-48px: 48px;
+  --space-64px: 64px;
   --op-selected-row: #3a3220;
-  --shadow-raise: 0 2px 10px rgba(0, 0, 0, 0.45);
-  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.55);
-  --shadow-modal: 0 12px 44px rgba(0, 0, 0, 0.6);
-
   --orb-mid: #313a41;
   --orb-deep: #1a2228;
   --orb-edge: rgba(233, 242, 241, 0.16);
@@ -135,32 +158,6 @@
   --orb-eye-hi: #96f6ff;
   --orb-ribbon: #12ddf0;
   --orb-ribbon-soft: rgba(18, 221, 240, 0.48);
-}
-
-:root {
-  /* Type — contract: base 14–15, labels 12–13, sections 18–20, pages 24–28.
-     Operational information never lives below 12px. */
-  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
-  --text-xs: 0.75rem;
-  --text-s: 0.8125rem;
-  --text-body: 0.9375rem;
-  --text-title: 1.1875rem;
-  --text-display: 1.625rem;
-
-  /* Space — 4px base grid: 4/8/12/16/24/32/48 */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-
-  /* Physical material colors — the product's real finish. Deliberately
-     defined once here, outside both themed blocks: a white-PVC or
-     foil-brown window must keep its identity in the dark theme, and print/
-     documents share the same finish. UI chrome never reuses these. */
   --mat-pvc-fill: #f4f7f6;
   --mat-pvc-edge: #b9c4c2;
   --mat-pvc-highlight: #ffffff;
@@ -181,9 +178,6 @@
   --mat-coupler: #5d6469;
   --mat-gasket: #2e3134;
   --mat-edge: #6b7075;
-  /* CNC op-kind marks — categorical diagram palette (drill/water/cut-mill/
-     edge/hardware), distinct from semantic accents; fixed across themes so
-     a machining drawing reads identically on screen and on paper. */
   --mat-op-mark: #7a5af8;
   --mat-op-mark-edge: #4c2fd1;
   --mat-op-drill: #2563eb;
@@ -197,14 +191,8 @@
   --mat-op-edge-work: #64748b;
   --mat-op-edge-work-edge: #334155;
   --mat-op-hardware: #b45309;
-  /* Opaque glass pane — physical, one legible tone in both themes (the
-     translucent tint let member slabs show through). Signature ink: the
-     pad is white paper sealed into the POD, so ink stays dark always. */
   --mat-glass-pane: #e9f2f1;
   --mat-signature-ink: #1a1f24;
-
-  /* Compatibility aliases — resolve to the invariant --mat-* palette so
-     existing render call sites keep working unchanged in both themes. */
   --member-pvc-fill: var(--mat-pvc-fill);
   --member-pvc-edge: var(--mat-pvc-edge);
   --member-pvc-highlight: var(--mat-pvc-highlight);
@@ -240,101 +228,284 @@
   --op-hardware: var(--mat-op-hardware);
   --theme-glass-pane: var(--mat-glass-pane);
   --signature-ink: var(--mat-signature-ink);
-
-  /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-pill: 999px;
-
-  /* Elevation — numbered scale; the named shadows resolve through it */
-  --elevation-0: none;
-  --elevation-1: var(--shadow-raise);
-  --elevation-2: var(--shadow-pop);
-  --elevation-3: var(--shadow-modal);
-
-  /* Density — row/control heights on the 4px grid */
-  --density-compact: 1.75rem;
-  --density-default: 2.25rem;
-  --density-loose: 2.75rem;
-  --control-height: var(--density-default);
-
-  /* Interaction */
-  --focus-ring: 0 0 0 2px var(--theme-bg-canvas), 0 0 0 4px var(--theme-focus-ring);
-  --motion-fast: 120ms;
-  --motion-base: 180ms;
-
-  /* Layers */
-  --z-island: 10;
-  --z-drawer: 30;
-  --z-overlay: 50;
-  --z-modal: 90;
-
-  /* Breakpoints (used by @media rules; documented as tokens for parity) */
-  --bp-tablet: 1100px;
-  --bp-phone: 720px;
-
-  /* Retired-vocabulary aliases — resolve to canonical tokens so older call
-     sites render correctly in both themes. New code uses --theme-* directly. */
-  --theme-surface: var(--theme-surface-panel);
-  --theme-surface-raised: var(--theme-surface-panel);
+}
+:root,
+[data-theme="light"],
+[data-density="document"] {
+  --bg-app: var(--g-50);
+  --surface-panel: var(--g-25);
+  --surface-card: var(--g-100);
+  --surface-sheet: var(--paper);
+  --surface-hover: #e2e8e7;
+  --surface-active: #d4dedd;
+  --surface-selected: var(--teal-50);
+  --border-subtle: var(--g-200);
+  --border-default: var(--g-300);
+  --border-strong: #a9b4b6;
+  --border-focus: var(--teal-600);
+  --text-primary: var(--g-950);
+  --text-secondary: var(--g-700);
+  --text-muted: var(--g-500);
+  --text-small-muted: var(--g-700);
+  --text-on-fill: var(--paper);
+  --text-disabled: var(--g-400);
+  --interactive: var(--teal-700);
+  --interactive-fill: var(--teal-800);
+  --interactive-hover: var(--teal-700);
+  --interactive-pressed: var(--teal-900);
+  --mark: var(--orange-500);
+  --state-success: var(--success-base);
+  --state-success-soft: var(--success-soft);
+  --state-success-ink: var(--success-ink);
+  --state-warning: var(--warning-base);
+  --state-warning-soft: var(--warning-soft);
+  --state-warning-ink: var(--warning-ink);
+  --state-danger: var(--danger-base);
+  --state-danger-soft: var(--danger-soft);
+  --state-danger-ink: var(--danger-ink);
+  --text-on-danger: var(--paper);
+  --state-info: var(--teal-700);
+  --state-info-soft: var(--teal-50);
+  --state-info-ink: var(--teal-900);
+  --state-person: var(--orange-500);
+  --state-person-soft: var(--orange-100);
+  --state-person-ink: var(--orange-700);
+  --canvas-sheet: var(--surface-sheet);
+  --canvas-grid: #dce4e2;
+  --canvas-grid-lines: #eaf0ee;
+  --canvas-member: var(--text-primary);
+  --canvas-dim: var(--text-secondary);
+  --canvas-dim-line: var(--text-muted);
+  --canvas-glazing: rgba(15, 143, 133, 0.07);
+  --canvas-glazing-stroke: var(--teal-600);
+  --canvas-opening-symbol: var(--text-secondary);
+  --canvas-selection: var(--teal-600);
+  --canvas-selection-fill: rgba(15, 143, 133, 0.08);
+  --canvas-handle: var(--mark);
+  --canvas-handle-stroke: var(--paper);
+  --canvas-snap: var(--success-base);
+  --canvas-preview: var(--mark);
+  --canvas-invalid: var(--state-danger);
+  --viewport-stage: #e0e6e5;
+  --viewport-ground: #cdd5d6;
+}
+[data-theme="dark"],
+[data-density="workshop"]:not([data-theme]) {
+  --bg-app: #0f1416;
+  --surface-panel: #151b1e;
+  --surface-card: #1b2326;
+  --surface-sheet: #182024;
+  --surface-hover: #243033;
+  --surface-active: #2f3c3f;
+  --surface-selected: #123b36;
+  --border-subtle: #243033;
+  --border-default: #2f3c3f;
+  --border-strong: #607074;
+  --border-focus: var(--teal-500);
+  --text-primary: #e7edec;
+  --text-secondary: #aeb9bb;
+  --text-muted: #86928f;
+  --text-small-muted: #aeb9bb;
+  --text-on-fill: var(--g-950);
+  --text-disabled: #86928f;
+  --interactive: var(--teal-400);
+  --interactive-fill: var(--teal-500);
+  --interactive-hover: var(--teal-400);
+  --interactive-pressed: var(--teal-300);
+  --mark: var(--orange-400);
+  --state-success: #4caf7f;
+  --state-success-soft: #16291f;
+  --state-success-ink: #86d0a7;
+  --state-warning: #e09543;
+  --state-warning-soft: #33231a;
+  --state-warning-ink: #f3bc7b;
+  --state-danger: #e06154;
+  --state-danger-soft: #331d1a;
+  --state-danger-ink: #f3a49b;
+  --text-on-danger: var(--g-950);
+  --state-info: var(--teal-400);
+  --state-info-soft: #123b36;
+  --state-info-ink: var(--teal-200);
+  --state-person: var(--orange-400);
+  --state-person-soft: #39251b;
+  --state-person-ink: var(--orange-300);
+  --canvas-sheet: var(--surface-sheet);
+  --canvas-grid: #2f3c3f;
+  --canvas-grid-lines: #243033;
+  --canvas-member: var(--text-primary);
+  --canvas-dim: var(--text-secondary);
+  --canvas-dim-line: var(--text-muted);
+  --canvas-glazing: rgba(72, 188, 175, 0.07);
+  --canvas-glazing-stroke: var(--teal-500);
+  --canvas-opening-symbol: var(--text-secondary);
+  --canvas-selection: var(--teal-500);
+  --canvas-selection-fill: rgba(15, 143, 133, 0.08);
+  --canvas-handle: var(--mark);
+  --canvas-handle-stroke: var(--paper);
+  --canvas-snap: var(--success-base);
+  --canvas-preview: var(--mark);
+  --canvas-invalid: var(--state-danger);
+  --viewport-stage: #262c2f;
+  --viewport-ground: #1c2225;
+}
+:root,
+[data-theme],
+[data-density="workshop"],
+[data-density="document"] {
+  --theme-bg-canvas: var(--bg-app);
+  --theme-viewport-stage: var(--viewport-stage);
+  --theme-viewport-ground: var(--viewport-ground);
+  --theme-surface-panel: var(--surface-panel);
+  --theme-surface-card: var(--surface-card);
+  --theme-surface-hover: var(--surface-hover);
+  --theme-border-subtle: var(--border-subtle);
+  --theme-border-strong: var(--border-strong);
+  --theme-text-primary: var(--text-primary);
+  --theme-text-secondary: var(--text-secondary);
+  --theme-text-muted: var(--text-small-muted);
+  --theme-text-tertiary: var(--text-small-muted);
+  --theme-accent: var(--interactive);
+  --theme-accent-strong: var(--interactive-fill);
+  --theme-accent-deep: var(--interactive-pressed);
+  --theme-accent-soft: var(--state-info-soft);
+  --theme-accent-ink: var(--state-info-ink);
+  --theme-mark: var(--mark);
+  --theme-warning: var(--state-warning-ink);
+  --theme-warning-soft: var(--state-warning-soft);
+  --theme-success: var(--state-success-ink);
+  --theme-success-soft: var(--state-success-soft);
+  --theme-danger: var(--state-danger);
+  --theme-danger-soft: var(--state-danger-soft);
+  --theme-danger-ink: var(--text-on-danger);
+  --theme-info: var(--state-info-ink);
+  --theme-info-soft: var(--state-info-soft);
+  --theme-unknown: var(--text-secondary);
+  --theme-unknown-soft: var(--surface-card);
+  --theme-blocked: var(--state-danger-ink);
+  --theme-blocked-soft: var(--state-danger-soft);
+  --theme-focus-ring: var(--border-focus);
+  --theme-selection: var(--surface-selected);
+  --theme-disabled-bg: var(--surface-card);
+  --theme-disabled-ink: var(--text-disabled);
+  --theme-disabled-border: var(--border-default);
+  --theme-skeleton: var(--border-subtle);
+  --theme-skeleton-sheen: var(--surface-card);
+  --theme-glass-tint: var(--canvas-glazing);
+  --op-selected-row: var(--surface-selected);
+  --shadow-raise: var(--e1);
+  --shadow-pop: var(--e2);
+  --shadow-modal: var(--e3);
+  --elevation-0: var(--e1);
+  --elevation-1: var(--e1);
+  --elevation-2: var(--e2);
+  --elevation-3: var(--e3);
+  --radius-sm: var(--r-1);
+  --radius-md: var(--r-2);
+  --radius-lg: var(--r-2);
+  --radius-xl: var(--r-2);
+  --radius-pill: var(--r-1);
+  --motion-fast: var(--t-micro);
+  --motion-base: var(--t-state);
+  --z-island: var(--z-sticky);
+  --z-overlay: var(--z-drawer);
+  --z-modal: var(--z-dialog);
+  --text-xs: var(--type-dense);
+  --text-s: var(--type-body);
+  --text-body: var(--type-body);
+  --text-title: var(--type-title-l);
+  --text-display: var(--type-display);
+  --theme-surface: var(--surface-panel);
+  --theme-surface-raised: var(--surface-panel);
   --theme-font-mono: var(--font-mono);
-  --surface-raised: var(--theme-surface-panel);
-  --surface-sunken: var(--theme-surface-card);
-  --accent: var(--theme-accent);
-  --ok: var(--theme-success);
-  --warn: var(--theme-warning);
-  --danger: var(--theme-danger);
-  --ink: var(--theme-text-primary);
-  --ink-muted: var(--theme-text-muted);
-  --ink-3: var(--theme-text-secondary);
-  --ink-faint: var(--theme-text-muted);
-  --text-dim: var(--theme-text-secondary);
-  --warning: var(--theme-warning);
-  --warning-soft: var(--theme-warning-soft);
-  --line-soft: var(--theme-border-subtle);
-  --line: var(--theme-border-subtle);
-  --line-strong: var(--theme-border-strong);
-  --border: var(--theme-border-subtle);
+  --surface-raised: var(--surface-panel);
+  --surface-sunken: var(--surface-card);
+  --accent: var(--interactive);
+  --ok: var(--state-success-ink);
+  --warn: var(--state-warning-ink);
+  --danger: var(--state-danger);
+  --ink: var(--text-primary);
+  --ink-muted: var(--text-small-muted);
+  --ink-3: var(--text-secondary);
+  --ink-faint: var(--text-small-muted);
+  --text-dim: var(--text-secondary);
+  --warning: var(--state-warning-ink);
+  --line-soft: var(--border-subtle);
+  --line: var(--border-subtle);
+  --line-strong: var(--border-strong);
+  --border: var(--border-default);
+  --font-size-xl: var(--type-title-l);
+  --model3d-backdrop: var(--viewport-stage);
+  --paper-2: var(--surface-sheet);
+  --radius-card: var(--r-2);
+  --radius-full: var(--r-1);
+  --radius-m: var(--r-2);
+  --radius-xs: var(--r-1);
+  --shadow-lg: var(--e3);
+  --text-m: var(--type-body);
+  --text-sm: var(--type-dense);
+  --text-subtle: var(--text-secondary);
+  --theme-accent-ghost: var(--state-info-soft);
+  --theme-bg: var(--bg-app);
+  --theme-border: var(--border-default);
+  --theme-canvas: var(--canvas-sheet);
+  --theme-fg: var(--text-primary);
+  --theme-fg-muted: var(--text-small-muted);
+  --theme-fg-primary: var(--text-primary);
+  --theme-fg-secondary: var(--text-secondary);
+  --theme-hover: var(--surface-hover);
+  --theme-line: var(--border-subtle);
+  --theme-ok: var(--state-success-ink);
+  --theme-on-primary: var(--text-on-fill);
+  --theme-primary: var(--interactive-fill);
+  --theme-radius: var(--r-2);
+  --theme-radius-pill: var(--r-1);
+  --theme-radius-sm: var(--r-1);
+  --theme-surface-2: var(--surface-card);
+  --theme-surface-alt: var(--surface-card);
+  --theme-surface-inset: var(--surface-card);
+  --theme-surface-page: var(--bg-app);
+  --theme-surface-sunken: var(--surface-card);
+  --theme-text: var(--text-primary);
+  --theme-text-dim: var(--text-secondary);
+  --theme-warn: var(--state-warning-ink);
+  --theme-warn-bg: var(--state-warning-soft);
+}
+[data-density="office"] {
+  --type-body: 0.8125rem;
+  --line-body: 1.125rem;
+  --control-height: 32px;
+  --table-row-height: 32px;
+}
+[data-density="workshop"] {
+  --type-body: 1rem;
+  --line-body: 1.375rem;
+  --type-label: 0.8125rem;
+  --line-label: 1.125rem;
+  --type-dim: 1rem;
+  --control-height: 44px;
+  --table-row-height: 48px;
+}
+[data-density="document"] {
+  --type-body: 0.875rem;
+  --line-body: 1.25rem;
+  --control-height: 40px;
+  --table-row-height: 40px;
 }
 
-/* Route-level error boundary: a crashed view keeps a recoverable frame. */
-.route-error {
-  min-height: 60vh;
-  display: grid;
-  place-items: center;
-  padding: var(--space-6, 24px);
+.sheet-miter {
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
 }
-.route-error-card {
-  max-width: 26rem;
-  text-align: center;
-  display: grid;
-  gap: var(--space-3, 12px);
+@media (max-width: 640px) {
+  [data-density="document"] {
+    --control-height: 44px;
+  }
 }
-.route-error-card h1 {
-  font-size: 1.25rem;
-  margin: 0;
-}
-.route-error-card p {
-  color: var(--theme-text-secondary, #5b6472);
-  margin: 0;
-}
-.route-error-actions {
-  display: flex;
-  gap: var(--space-2, 8px);
-  justify-content: center;
-}
-.route-error-actions button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--line, #d6dae2);
-  background: var(--accent, #1b5cff);
-  color: var(--theme-surface-panel);
-  font-weight: 600;
-  cursor: pointer;
-}
-.route-error-actions .route-error-secondary {
-  background: transparent;
-  color: var(--theme-text-primary, #1d2430);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

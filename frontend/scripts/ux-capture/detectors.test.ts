@@ -45,4 +45,13 @@ describe("ux-capture text detectors", () => {
     ]);
     expect(summary[0]).toMatchObject({ key: "uuid", count: 2, routes: ["a", "b"] });
   });
+  it("rejects English, emoji and exclamations while accepting technical glyphs", () => {
+    expect(detectTextFindings("Save ¡Listo! 😀").map((finding) => finding.kind)).toEqual([
+      "english-copy",
+      "emoji-copy",
+      "exclamation-copy",
+      "exclamation-copy",
+    ]);
+    expect(detectTextFindings("Guardar · 2 400 × 1 800 mm · DEMO_60")).toEqual([]);
+  });
 });

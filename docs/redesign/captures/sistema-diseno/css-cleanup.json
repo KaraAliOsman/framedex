@@ -1,0 +1,891 @@
+{
+  "method": "CSSOM browser matches plus conservative static and template-prefix reachability. Transient reachable states retained.",
+  "metrics": [
+    {
+      "file": "index.css",
+      "beforeLines": 2058,
+      "afterLines": 1688
+    },
+    {
+      "file": "ui/ui.css",
+      "beforeLines": 1002,
+      "afterLines": 379
+    },
+    {
+      "file": "features/canvas/canvas.css",
+      "beforeLines": 2297,
+      "afterLines": 1895
+    }
+  ],
+  "removed": [
+    {
+      "selector": ".context-title",
+      "reason": "No browser match and no static/dynamic class reference"
+    },
+    {
+      "selector": ".dashboard-head,\n.dashboard-empty",
+      "reason": "No browser match and no static/dynamic class reference"
+    },
+    {
+      "selector": ".dashboard-head",
+      "reason": "No browser match and no static/dynamic class reference"
+    },
+    {
+      "selector": ".dashboard-head h1",
+      "reason": "No browser match and no static/dynamic class reference"
+    },
+    {
+      "selector": ".dashboard-head .primary-action",
+      "reason": "No browser match and no static/dynamic class reference"
+    },
+    {
+      "selector": ".dashboard-sub",
+      "reason": "No browser match and no static/dynamic class reference"
+    },
+    {
+      "selector": ".ui-button,\nbutton.ui-button",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button:hover:not(:disabled)",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button--primary",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button--primary:hover:not(:disabled)",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button--danger",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button--danger:hover:not(:disabled)",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button--ghost",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button--ghost:hover:not(:disabled)",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button:disabled,\nbutton:disabled",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-icon-button",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-icon-button:hover",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ":is(a, button, input, select, textarea, [tabindex]):focus-visible",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": "::selection",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge__dot",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--success",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--success .ui-badge__dot",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--warning",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--warning .ui-badge__dot",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--danger",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--danger .ui-badge__dot",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--info",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--info .ui-badge__dot",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--unknown",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--unknown .ui-badge__dot",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--blocked",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--blocked .ui-badge__dot",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--neutral",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-badge--neutral .ui-badge__dot",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-empty",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-empty__title",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-empty__body",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-empty__action",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-empty--error",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-empty--denied",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-empty__glyph",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-skeleton",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-skeleton__line",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": "@keyframes  ui-sheen ",
+      "reason": "Decorative animation retired"
+    },
+    {
+      "selector": ".ui-banner",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-banner__title",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-banner__body",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-banner__action",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-banner--warning",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-banner--danger",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-banner--blocked",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-banner--unknown",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-banner--info",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-evidence",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-overlay",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ":root[data-theme=\"dark\"] .ui-overlay",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-dialog",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-dialog--s",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-dialog--l",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-dialog__header",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-dialog__title",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-dialog__body",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-dialog__text",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-dialog__footer",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-field",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-field__label",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-field__input",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-field__input:focus",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ":where(\n  .ui-button,\n  .ui-icon-button,\n  .ui-context-nav__link,\n  .ui-inline-edit,\n  .ui-field__input\n):focus-visible",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ":where(.ui-button, .ui-icon-button):disabled",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button--compact",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button--touch",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button__spinner",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-button__icon",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": "@keyframes  ui-spin ",
+      "reason": "Decorative animation retired"
+    },
+    {
+      "selector": ".ui-spinner",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-field__help",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-field__error",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-field__required",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-field--invalid .ui-field__input,\n.ui-field__input[aria-invalid=\"true\"]",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-input-affix",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-input-affix.is-invalid",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-input-affix:focus-within",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-input-affix__part",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-input-affix .ui-field__input--bare",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-input-affix .ui-field__input--bare:focus",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-select-wrap",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-select",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-select__chevron",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-select-wrap.is-invalid .ui-select",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-select-empty",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-table .ui-table__id",
+      "reason": "No browser match and no static/dynamic class reference"
+    },
+    {
+      "selector": ".ui-table--compact td",
+      "reason": "No browser match and no static/dynamic class reference"
+    },
+    {
+      "selector": ".ui-toast-region",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-toast",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": ".ui-toast--info",
+      "reason": "Replaced by canonical component stylesheet"
+    },
+    {
+      "selector": "@keyframes  model3d-slide ",
+      "reason": "Decorative animation retired"
+    },
+    {
+      "selector": "@keyframes  inspector-reveal ",
+      "reason": "Decorative animation retired"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-toolbar",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-toolbar__title",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-toolbar__spacer",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-context-nav",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-context-nav__link",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-context-nav__link:hover",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-context-nav__link.active",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-split",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-split--s",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-split--m",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-split--l",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-split__main",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-split__aside",
+      "reason": "Removed unused exported Layout primitives; source scan confirms no consumer"
+    }
+  ],
+  "deduplicated": [
+    {
+      "file": "frontend/src/auth/auth.css",
+      "selectors": [
+        ".auth-card form",
+        ".auth-form",
+        ".onboarding-systems",
+        ".organization-list"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/auth/auth.css",
+      "selectors": [
+        ".auth-card__header",
+        ".onboarding-head"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/auth/auth.css",
+      "selectors": [
+        ".auth-hint",
+        ".onboarding-sub"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/auth/auth.css",
+      "selectors": [
+        ".org-option",
+        ".onboarding-system"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/auth/auth.css",
+      "selectors": [
+        ".org-option__meta",
+        ".onboarding-system__meta"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/app/shell.css",
+      "selectors": [
+        ".app-rail__identity",
+        ".app-body"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/app/shell.css",
+      "selectors": [
+        ".app-rail__role",
+        ".org-switcher__role"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/app/shell.css",
+      "selectors": [
+        ".topbar-button__chevron",
+        ".org-switcher__chevron"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/app/dashboard.css",
+      "selectors": [
+        ".dashboard.jobs-page > *",
+        ".dashboard-continue .eyebrow"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/app/dashboard.css",
+      "selectors": [
+        ".dashboard-activity li + li",
+        ".dashboard-row + .dashboard-row,\n.dashboard-list li + li .dashboard-row"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selectors": [
+        ".ui-context-nav",
+        ".ui-tabs"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/features/canvas/Drawing.css",
+      "selectors": [
+        ".canvas-dim-wrap",
+        ".add-handle"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/features/canvas/Interactions.css",
+      "selectors": [
+        ".assistant-panel__preview",
+        ".alternatives-panel__result"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    },
+    {
+      "file": "frontend/src/features/canvas/Sections.css",
+      "selectors": [
+        ".star-toggle:hover:not(:disabled)",
+        ".star-toggle.is-active"
+      ],
+      "reason": "Identical declaration block; no intervening property override on the same selector family"
+    }
+  ],
+  "overriddenDeclarations": [],
+  "factoredDeclarationGroups": [
+    {
+      "file": "frontend/src/app/shell.css",
+      "selectors": [
+        ".rail-item",
+        ".app-rail__user",
+        ".app-topbar__actions",
+        ".org-switcher__current",
+        ".shell-menu__item"
+      ],
+      "sharedDeclarations": [
+        "align-items: center",
+        "display: flex",
+        "gap: var(--space-2)"
+      ]
+    },
+    {
+      "file": "frontend/src/app/shell.css",
+      "selectors": [
+        ".rail-icon-button",
+        ".topbar-search",
+        ".topbar-button",
+        ".crumbs__link"
+      ],
+      "sharedDeclarations": [
+        "align-items: center",
+        "color: var(--theme-text-secondary)",
+        "display: inline-flex"
+      ]
+    },
+    {
+      "file": "frontend/src/features/canvas/Tools.css",
+      "selectors": [
+        ".assembly-tools",
+        ".plan-inset",
+        ".model3d-inset"
+      ],
+      "sharedDeclarations": [
+        "background: var(--theme-surface-panel)",
+        "border-radius: var(--radius-md)",
+        "display: flex",
+        "flex-direction: column"
+      ]
+    },
+    {
+      "file": "frontend/src/features/canvas/Tree.css",
+      "selectors": [
+        ".assembly-statusbar",
+        ".object-tree",
+        ".viewport-island",
+        ".viewport-menu"
+      ],
+      "sharedDeclarations": [
+        "background: var(--theme-surface-panel)",
+        "border-radius: var(--radius-md)",
+        "display: flex"
+      ]
+    }
+  ],
+  "inheritedButtonDefaults": [
+    {
+      "file": "frontend/src/styles/base.css",
+      "selector": "button",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/ui/DomainStatus.css",
+      "selector": "button.production-chip",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/ui/DomainStatus.css",
+      "selector": "button.production-chip",
+      "property": "font-family",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-table [aria-sort] button",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selector": ".ui-tech__copy",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/projects/clients.css",
+      "selector": ".clients-empty__cta",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tools.css",
+      "selector": ".tool-button",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tools.css",
+      "selector": ".plan-inset__header button",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tools.css",
+      "selector": ".plan-toggle",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tools.css",
+      "selector": ".model3d-toolbar button",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tools.css",
+      "selector": ".model3d-toggle",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tree.css",
+      "selector": ".assembly-statusbar__issues",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tree.css",
+      "selector": ".viewport-button",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tree.css",
+      "selector": ".viewport-menu__item",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Inspector.css",
+      "selector": ".ghost-button",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Interactions.css",
+      "selector": ".context-menu__item",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Sections.css",
+      "selector": ".recents__chip",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Sections.css",
+      "selector": ".issue-fix",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/projects/clients.css",
+      "selector": ".clients-row",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Tree.css",
+      "selector": ".tree-label",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Inspector.css",
+      "selector": ".detail-levels__btn",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Inspector.css",
+      "selector": ".opening-choice",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Inspector.css",
+      "selector": ".issue-chip",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    },
+    {
+      "file": "frontend/src/features/canvas/Sections.css",
+      "selector": ".star-toggle",
+      "property": "cursor",
+      "reason": "Button-only literal JSX class; identical unconditional base button declaration"
+    }
+  ],
+  "sharedChipTones": [
+    {
+      "file": "frontend/src/ui/DomainStatus.css",
+      "selectors": [
+        ".production-chip.status-in_progress",
+        ".production-chip.delivery-on_route",
+        ".status-chip[data-status=\"quoted\"]",
+        ".status-chip[data-status=\"priced\"]"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    },
+    {
+      "file": "frontend/src/ui/DomainStatus.css",
+      "selectors": [
+        ".production-chip.status-hold",
+        ".production-chip.is-warn",
+        ".status-chip[data-status=\"frozen\"]"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    },
+    {
+      "file": "frontend/src/ui/DomainStatus.css",
+      "selectors": [
+        ".production-chip.status-completed",
+        ".production-chip.status-installed",
+        ".production-chip.is-ready",
+        ".production-chip.delivery-delivered",
+        ".status-chip[data-status=\"approved\"],\n.status-chip[data-status=\"in_production\"]",
+        ".status-chip[data-status=\"production\"]"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    },
+    {
+      "file": "frontend/src/ui/DomainStatus.css",
+      "selectors": [
+        ".production-chip.status-dispatched",
+        ".status-chip[data-status=\"completed\"]"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    },
+    {
+      "file": "frontend/src/ui/DomainStatus.css",
+      "selectors": [
+        ".production-chip.delivery-scheduled",
+        ".status-chip[data-status=\"evaluated\"]",
+        ".status-chip[data-status=\"pending\"]"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    },
+    {
+      "file": "frontend/src/ui/DomainStatus.css",
+      "selectors": [
+        ".production-chip.delivery-failed",
+        ".status-chip[data-status=\"cancelled\"]",
+        ".status-chip[data-status=\"declined\"],\n.status-chip[data-status=\"revoked\"]"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selectors": [
+        ".production-chip.status-done,\n.production-chip.status-completed",
+        ".production-chip.is-ready",
+        ".production-chip.imports-status-confirmed",
+        ".production-chip.imports-confidence-verified_structured"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selectors": [
+        ".production-chip.status-in_progress",
+        ".production-chip.imports-status-uploaded,\n.production-chip.imports-status-extracting"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    },
+    {
+      "file": "frontend/src/ui/LegacyPrimitives.css",
+      "selectors": [
+        ".production-chip.status-blocked,\n.production-chip.status-hold",
+        ".production-chip.imports-status-review_ready",
+        ".production-chip.imports-confidence-review_required"
+      ],
+      "reason": "Identical tone block for mutually exclusive JSX variants; no compound chip variants exist"
+    }
+  ]
+}

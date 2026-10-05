@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -362,7 +363,7 @@ export function CncWorkspace() {
                   </table>
                 )}
                 {machineForm ? (
-                  <form
+                  <ValidatedForm
                     className="cnc-form"
                     onSubmit={(event) => {
                       event.preventDefault();
@@ -526,7 +527,7 @@ export function CncWorkspace() {
                         {t("ui.cancel")}
                       </button>
                     </div>
-                  </form>
+                  </ValidatedForm>
                 ) : null}
               </div>
               <div>
@@ -611,7 +612,7 @@ export function CncWorkspace() {
                   </table>
                 )}
                 {toolForm ? (
-                  <form
+                  <ValidatedForm
                     className="cnc-form"
                     onSubmit={(event) => {
                       event.preventDefault();
@@ -726,7 +727,7 @@ export function CncWorkspace() {
                         {t("ui.cancel")}
                       </button>
                     </div>
-                  </form>
+                  </ValidatedForm>
                 ) : null}
               </div>
               <div>

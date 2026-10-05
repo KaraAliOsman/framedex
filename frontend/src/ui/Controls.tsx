@@ -1,5 +1,7 @@
 import {
   forwardRef,
+  createContext,
+  useContext,
   useId,
   useState,
   type ButtonHTMLAttributes,
@@ -9,11 +11,13 @@ import {
 } from "react";
 
 import { t } from "../i18n/es-CL";
+import { formatDecimal, parseDecimalInput } from "../decimal";
+import { DimLoader } from "./Signature";
 
 /* ---------- Button ---------- */
 
 export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
-export type ButtonSize = "default" | "compact" | "touch";
+export type ButtonSize = "default" | "compact" | "sm" | "md" | "touch";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -52,7 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   const classes = [
     "ui-button",
     VARIANT_CLASS[variant],
-    size === "compact" ? "ui-button--compact" : null,
+    size === "compact" || size === "sm" ? "ui-button--compact" : null,
     size === "touch" ? "ui-button--touch" : null,
     loading ? "is-loading" : null,
     className ?? null,
@@ -62,14 +66,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   return (
     <button
       aria-busy={loading || undefined}
+      data-variant={variant}
+      data-primary={variant === "primary" || undefined}
       className={classes}
       disabled={disabled || loading}
       ref={ref}
-      title={disabled ? disabledReason : rest.title}
       type={type}
       {...rest}
+      title={disabled ? (disabledReason ?? rest.title) : rest.title}
     >
-      {loading ? <span aria-hidden className="ui-button__spinner" /> : null}
+      {loading ? <DimLoader label="Procesando la acción" /> : null}
       {!loading && icon ? <span className="ui-button__icon">{icon}</span> : null}
       {/* The label stays mounted while loading so width doesn't collapse. */}
       <span className="ui-button__label">{children}</span>
@@ -89,6 +95,12 @@ export type FieldProps = {
   required?: boolean;
   children: ReactNode;
 };
+const FieldContext = createContext<{
+  id: string;
+  describedBy?: string;
+  invalid: boolean;
+  required?: boolean;
+} | null>(null);
 
 export function Field({
   label,
@@ -113,11 +125,18 @@ export function Field({
           </span>
         ) : null}
       </label>
-      {/* The control must carry id=fieldId and, when present,
-          aria-describedby={`${helpId} ${errorId}`} / aria-invalid. The
-          wrapped inputs below wire this automatically via FieldContext-free
-          convention: pass the ids down through clone-free props. */}
-      {children}
+      {/* Canonical controls inherit the label, help and error identifiers. */}
+      <FieldContext.Provider
+        value={{
+          id: fieldId,
+          describedBy:
+            [help ? helpId : "", error ? errorId : ""].filter(Boolean).join(" ") || undefined,
+          invalid: Boolean(error),
+          required,
+        }}
+      >
+        {children}
+      </FieldContext.Provider>
       {help ? (
         <p className="ui-field__help" id={helpId}>
           {help}
@@ -145,15 +164,23 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
   { suffix, prefix, invalid, className, ...rest },
   ref,
 ): JSX.Element {
+  const field = useContext(FieldContext);
+  const attributes = {
+    id: field?.id,
+    "aria-describedby": field?.describedBy,
+    required: field?.required,
+    ...rest,
+  };
+  const isInvalid = invalid ?? field?.invalid;
   if (suffix || prefix) {
     return (
-      <span className={`ui-input-affix${invalid ? " is-invalid" : ""}`}>
+      <span className={`ui-input-affix${isInvalid ? " is-invalid" : ""}`}>
         {prefix ? <span className="ui-input-affix__part">{prefix}</span> : null}
         <input
-          aria-invalid={invalid || undefined}
+          aria-invalid={isInvalid || undefined}
           className={`ui-field__input ui-field__input--bare ${className ?? ""}`}
           ref={ref}
-          {...rest}
+          {...attributes}
         />
         {suffix ? <span className="ui-input-affix__part">{suffix}</span> : null}
       </span>
@@ -161,10 +188,10 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
   }
   return (
     <input
-      aria-invalid={invalid || undefined}
+      aria-invalid={isInvalid || undefined}
       className={`ui-field__input ${className ?? ""}`}
       ref={ref}
-      {...rest}
+      {...attributes}
     />
   );
 });
@@ -173,7 +200,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function T
  * Numeric/money/dimension input: keeps the caller's string value verbatim,
  * applies optional presentation formatting only on blur, and treats empty,
  * zero and "unknown" as distinct states (empty stays empty; zero is a real
- * number; unknown is null rendered as —).
+ * number; an unavailable value stays explicitly unknown at the domain edge).
  */
 export type NumberFieldProps = Omit<TextInputProps, "value" | "onChange" | "type"> & {
   value: string;
@@ -188,35 +215,74 @@ export type NumberFieldProps = Omit<TextInputProps, "value" | "onChange" | "type
 export function NumberField({
   value,
   onValueChange,
-  decimals,
+  decimals = 2,
   suffix,
   emptyPlaceholder,
   onBlur,
   ...rest
 }: NumberFieldProps): JSX.Element {
   const [focused, setFocused] = useState(false);
-  const displayed =
-    !focused && decimals !== undefined && value !== "" && /^-?\d+(\.\d+)?$/.test(value)
-      ? Number(value).toLocaleString("es-CL", {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals,
-        })
-      : value;
+  const [draft, setDraft] = useState(value);
+  const [error, setError] = useState<string | null>(null);
+  const errorId = useId();
+  const displayed = focused ? draft : value === "" ? "" : formatDecimal(value, decimals, ".");
   return (
-    <TextInput
-      inputMode="decimal"
-      onBlur={(event) => {
-        setFocused(false);
-        onBlur?.(event);
-      }}
-      onChange={(event) => onValueChange(event.target.value)}
-      onFocus={() => setFocused(true)}
-      placeholder={emptyPlaceholder}
-      suffix={suffix}
-      type="text"
-      value={displayed}
-      {...rest}
-    />
+    <span className="ui-number-field">
+      <TextInput
+        {...rest}
+        data-precision={decimals}
+        aria-describedby={
+          [rest["aria-describedby"], error ? errorId : ""].filter(Boolean).join(" ") || undefined
+        }
+        invalid={Boolean(error) || rest.invalid}
+        inputMode="decimal"
+        onBlur={(event) => {
+          const parsed = parseDecimalInput(draft, decimals);
+          if (draft && parsed === null) {
+            setError(`Escribe un número con hasta ${decimals} decimales.`);
+          } else {
+            setError(null);
+            setFocused(false);
+          }
+          onBlur?.(event);
+        }}
+        onChange={(event) => {
+          const next = event.target.value;
+          setDraft(next);
+          const parsed = parseDecimalInput(next, decimals);
+          if (next === "" || parsed !== null) {
+            onValueChange(parsed ?? "");
+            setError(null);
+          }
+        }}
+        onFocus={(event) => {
+          setDraft(value.replace(".", ","));
+          setFocused(true);
+          rest.onFocus?.(event);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setDraft(value);
+            setError(null);
+            setFocused(false);
+          }
+          if (event.key === "Enter" && draft && parseDecimalInput(draft, decimals) === null) {
+            event.preventDefault();
+            setError(`Escribe un número con hasta ${decimals} decimales.`);
+          }
+          rest.onKeyDown?.(event);
+        }}
+        placeholder={emptyPlaceholder}
+        suffix={suffix}
+        type="text"
+        value={displayed}
+      />
+      {error ? (
+        <span className="ui-field__error" id={errorId} role="alert">
+          {error}
+        </span>
+      ) : null}
+    </span>
   );
 }
 
@@ -237,6 +303,7 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(funct
   { options, placeholder, emptyMessage, invalid, className, ...rest },
   ref,
 ) {
+  const field = useContext(FieldContext);
   if (options.length === 0 && emptyMessage) {
     return (
       <span className="ui-field__input ui-select-empty" role="note">
@@ -247,7 +314,10 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(funct
   return (
     <span className={`ui-select-wrap${invalid ? " is-invalid" : ""}`}>
       <select
-        aria-invalid={invalid || undefined}
+        aria-invalid={invalid || field?.invalid || undefined}
+        aria-describedby={field?.describedBy}
+        id={field?.id}
+        required={field?.required}
         className={`ui-field__input ui-select ${className ?? ""}`}
         ref={ref}
         {...rest}
@@ -273,5 +343,20 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(funct
 /* ---------- misc ---------- */
 
 export function Spinner({ label }: { label?: string }): JSX.Element {
-  return <span aria-label={label ?? t("ui.loading")} className="ui-spinner" role="status" />;
+  return <DimLoader label={label ?? t("ui.loading")} />;
+}
+
+export const TextField = TextInput;
+export const Select = SelectField;
+export function MoneyField({
+  currency = "CLP",
+  ...props
+}: NumberFieldProps & { currency?: "CLP" | "USD" | "UF" }): JSX.Element {
+  return (
+    <NumberField
+      {...props}
+      prefix={currency === "CLP" ? "$" : currency === "USD" ? "US$" : "UF"}
+      decimals={currency === "CLP" ? 0 : currency === "USD" ? 2 : 4}
+    />
+  );
 }

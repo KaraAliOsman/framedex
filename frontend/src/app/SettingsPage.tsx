@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../ui/FormValidation";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { Link } from "react-router-dom";
 
@@ -149,7 +150,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
         )}
       </p>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
-      <form className="payments-form" onSubmit={save}>
+      <ValidatedForm className="payments-form" onSubmit={save}>
         <label>
           {t("settings.flowEnv")}
           <select value={apiUrl} onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}>
@@ -196,7 +197,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
             {t("settings.flowSave")}
           </button>
         </div>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }
@@ -285,7 +286,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
           </tbody>
         </table>
       )}
-      <form className="payments-form" onSubmit={upload}>
+      <ValidatedForm className="payments-form" onSubmit={upload}>
         <label>
           {t("settings.siiCafFile")}
           <FilePick
@@ -316,7 +317,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
             {t("settings.siiCafUpload")}
           </button>
         </div>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }
@@ -406,7 +407,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
           </div>
         </dl>
       )}
-      <form className="payments-form" onSubmit={upload}>
+      <ValidatedForm className="payments-form" onSubmit={upload}>
         <label>
           {t("settings.siiCertFile")}
           <FilePick inputRef={pickRef} accept=".pfx,.p12" file={pickFile} onFile={setPickFile} />
@@ -428,7 +429,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
             {t("settings.siiCertUpload")}
           </button>
         </div>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }
@@ -557,7 +558,7 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
           <p className="settings-hint">{t("settings.brandingLogoEmpty")}</p>
         )}
       </div>
-      <form className="payments-form" onSubmit={save}>
+      <ValidatedForm className="payments-form" onSubmit={save}>
         <label>
           {t("settings.brandingName")}
           <input
@@ -608,8 +609,8 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
             {t("settings.brandingSave")}
           </button>
         </div>
-      </form>
-      <form className="payments-form" onSubmit={upload}>
+      </ValidatedForm>
+      <ValidatedForm className="payments-form" onSubmit={upload}>
         <label>
           {t("settings.brandingLogo")}
           <FilePick
@@ -629,7 +630,7 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
             </button>
           )}
         </div>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }

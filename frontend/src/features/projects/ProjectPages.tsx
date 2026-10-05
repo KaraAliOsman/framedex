@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -240,7 +241,7 @@ function ProjectMetadataForm({
       ? "projects.emailInvalid"
       : null;
   return (
-    <form
+    <ValidatedForm
       className="project-metadata-form"
       noValidate
       onSubmit={(event) => {
@@ -368,7 +369,7 @@ function ProjectMetadataForm({
           </button>
         </div>
       </fieldset>
-    </form>
+    </ValidatedForm>
   );
 }
 

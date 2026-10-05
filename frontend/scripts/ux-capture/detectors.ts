@@ -7,7 +7,10 @@ export type TextFindingKind =
   | "native-validation-english"
   | "mock"
   | "decimal-precision"
-  | "percent-precision";
+  | "percent-precision"
+  | "english-copy"
+  | "emoji-copy"
+  | "exclamation-copy";
 
 export type TextFinding = {
   kind: TextFindingKind;
@@ -21,7 +24,8 @@ type Detector = {
   include?(match: string, fullText: string): boolean;
 };
 
-const LEGITIMATE_CODES = /^(?:COT|OT)-P-\d{6}-REV-[A-Z](?:-\d{2})?$|^P-\d{6}$|^REV-[A-Z]$/;
+const LEGITIMATE_CODES =
+  /^(?:COT|OT)-P-\d{6}-REV-[A-Z](?:-\d{2})?$|^P-\d{6}$|^REV-[A-Z]$|^DEMO_60$/;
 
 const DETECTORS: Detector[] = [
   {
@@ -37,13 +41,21 @@ const DETECTORS: Detector[] = [
   { kind: "empty-js-value", pattern: /\b(?:undefined|NaN|null)\b/g },
   {
     kind: "raw-enum",
-    pattern: /\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b/g,
+    pattern:
+      /\b(?:[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+|SASH|FRAME|MULLION|COUPLER|QUEUED|SUCCEEDED|FAILED)\b/g,
     include: (match) => !LEGITIMATE_CODES.test(match),
   },
   { kind: "native-validation-english", pattern: /\b(?:Please|Fill out)\b/g },
   { kind: "mock", pattern: /\bMOCK\b/g },
   { kind: "decimal-precision", pattern: /(?:^|[^\d])[-+]?\d+[.,]\d{4,}\b/g },
   { kind: "percent-precision", pattern: /\b\d+[.,]\d{3,}\s*%/g },
+  {
+    kind: "english-copy",
+    pattern:
+      /\b(?:Dashboard|Settings|Save|Delete|Loading|Submit|Cancel|Coming soon|Something went wrong)\b/gi,
+  },
+  { kind: "emoji-copy", pattern: /[\u{1F300}-\u{1FAFF}]/gu },
+  { kind: "exclamation-copy", pattern: /[¡!]/g },
 ];
 
 function sampleAround(text: string, index: number, length: number): string {

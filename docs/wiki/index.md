@@ -18,6 +18,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Design system](product/design-system.md) — constitution tokens, technical primitives, exact presentation and regression guardrails.
+
 - [Current reality](state/current-reality.md) — volatile map of implementation state; must always carry a verification ref/date.
 
 ## Quality

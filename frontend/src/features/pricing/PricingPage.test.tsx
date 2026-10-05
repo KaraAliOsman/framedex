@@ -214,8 +214,19 @@ function result(id: string, state = "PREVIEW") {
 function previewButton() {
   return screen.getByRole("button", { name: t("pricing.preview") });
 }
-function submitPreview() {
-  fireEvent.submit(previewButton().closest("form")!);
+async function preparePreviewInputs() {
+  const form = previewButton().closest("form")!;
+  const project = form.querySelector<HTMLSelectElement>('select[name="project_id"]');
+  if (project) {
+    await waitFor(() => expect(project.options.length).toBeGreaterThan(1));
+    if (!project.value) fireEvent.change(project, { target: { value: "project-a" } });
+  }
+  const reason = form.querySelector<HTMLInputElement>('input[name="reason"]');
+  if (reason && !reason.value) fireEvent.change(reason, { target: { value: "Cotización" } });
+  return form;
+}
+async function submitPreview() {
+  fireEvent.submit(await preparePreviewInputs());
 }
 function changeFinancialInput() {
   fireEvent.change(screen.getByLabelText(t("pricing.discount")), { target: { value: "0.07" } });
@@ -237,10 +248,10 @@ it.each([false, true])(
       .mockImplementationOnce(() => a.promise)
       .mockImplementationOnce(() => b.promise);
     render(page(<CommercialPricingPage />));
-    submitPreview();
+    await submitPreview();
     changeFinancialInput();
     expect(previewButton()).toBeEnabled();
-    submitPreview();
+    await submitPreview();
     await settle(a, result("A"), failure);
     expect(previewButton()).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -259,9 +270,9 @@ it("preview B alone wins when B completes before A", async () => {
     .mockImplementationOnce(() => a.promise)
     .mockImplementationOnce(() => b.promise);
   render(page(<CommercialPricingPage />));
-  submitPreview();
+  await submitPreview();
   changeFinancialInput();
-  submitPreview();
+  await submitPreview();
   await settle(b, result("B"));
   await settle(a, result("A"));
   expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
@@ -273,7 +284,7 @@ it("current preview failure remains visible and releases its busy authority", as
   const task = deferred();
   vi.mocked(apiMutator).mockImplementationOnce(() => task.promise);
   render(page(<CommercialPricingPage />));
-  submitPreview();
+  await submitPreview();
   expect(previewButton()).toBeDisabled();
   await settle(task, null, true);
   expect(screen.getByRole("alert")).toHaveTextContent(t("pricing.calculateError"));
@@ -294,7 +305,7 @@ it.each(["apply", "reject"] as const)(
       .mockImplementationOnce(() => next.promise)
       .mockResolvedValueOnce({ data: [persisted] });
     render(page(<CommercialPricingPage />));
-    submitPreview();
+    await submitPreview();
     await screen.findByText("Proyecto: P-A · Cliente A · Casa A");
     fireEvent.change(screen.getByLabelText(t("pricing.reason")), { target: { value: "Reviewed" } });
     fireEvent.click(
@@ -303,7 +314,7 @@ it.each(["apply", "reject"] as const)(
       }),
     );
     changeFinancialInput();
-    submitPreview();
+    await submitPreview();
     await settle(mutation, persisted);
     expect(previewButton()).toBeDisabled();
     // The shown operation stays visible after the inputs moved — flagged
@@ -333,7 +344,7 @@ it.each(["apply", "reject"] as const)(
       .mockImplementationOnce(() => mutation.promise)
       .mockImplementationOnce(() => next.promise);
     render(page(<CommercialPricingPage />));
-    submitPreview();
+    await submitPreview();
     await screen.findByText("Proyecto: P-A · Cliente A · Casa A");
     fireEvent.change(screen.getByLabelText(t("pricing.reason")), { target: { value: "Reviewed" } });
     fireEvent.click(
@@ -342,7 +353,7 @@ it.each(["apply", "reject"] as const)(
       }),
     );
     changeFinancialInput();
-    submitPreview();
+    await submitPreview();
     await settle(mutation, null, true);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(previewButton()).toBeDisabled();
@@ -405,7 +416,7 @@ it.each([false, true])(
         </StrictMode>,
       ),
     );
-    submitPreview();
+    await submitPreview();
     const signal = vi.mocked(apiMutator).mock.calls[0]?.[1].signal;
     identity.id = "tenant-b";
     view.rerender(
@@ -416,7 +427,7 @@ it.each([false, true])(
       ),
     );
     expect(signal?.aborted).toBe(true);
-    submitPreview();
+    await submitPreview();
     await settle(a, result("A"), failure);
     expect(previewButton()).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -431,7 +442,7 @@ it("unmount settles a rejected request without unhandled publication", async () 
   const task = deferred();
   vi.mocked(apiMutator).mockImplementationOnce(() => task.promise);
   const view = render(page(<CommercialPricingPage />));
-  submitPreview();
+  await submitPreview();
   view.unmount();
   await settle(task, null, true);
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -449,7 +460,7 @@ it.each(["reload", "apply", "reject"] as const)(
     vi.mocked(apiMutator).mockImplementationOnce(() => task.promise);
     render(page(<CommercialPricingPage />));
     if (action !== "reload") {
-      submitPreview();
+      await submitPreview();
       await screen.findByText("Proyecto: P-A · Cliente A · Casa A");
       fireEvent.change(screen.getByLabelText(t("pricing.reason")), {
         target: { value: "Reviewed" },
@@ -502,19 +513,20 @@ it("a material request change voids the owner's discount attestation", async () 
     .mockImplementationOnce(() => first.promise)
     .mockImplementationOnce(() => second.promise);
   render(page(<CommercialPricingPage />));
+  await preparePreviewInputs();
   fireEvent.change(screen.getByLabelText(t("pricing.discount")), {
     target: { value: "0.25" },
   });
   fireEvent.click(confirmCheckbox());
   expect(confirmCheckbox()).toBeChecked();
-  submitPreview();
+  await submitPreview();
   await settle(first, { ...result("A"), discount_pct: "0.25" });
   expect(previewBodies()[0]?.confirmed).toBe(true);
   fireEvent.change(screen.getByLabelText(t("pricing.currency")), {
     target: { value: "USD" },
   });
   expect(confirmCheckbox()).not.toBeChecked();
-  submitPreview();
+  await submitPreview();
   expect(previewBodies()[1]?.confirmed).toBe(false);
   await settle(second, null, true);
   expect(screen.getByRole("alert")).toHaveTextContent(t("pricing.calculateError"));
@@ -570,7 +582,7 @@ it.each(["apply", "reject"] as const)(
       .mockImplementationOnce(() => task.promise)
       .mockResolvedValueOnce({ data: result("B") });
     render(page(<CommercialPricingPage />));
-    submitPreview();
+    await submitPreview();
     await screen.findByText("Proyecto: P-A · Cliente A · Casa A");
     fireEvent.change(screen.getByLabelText(t("pricing.reason")), { target: { value: "Reviewed" } });
     fireEvent.click(
@@ -579,7 +591,7 @@ it.each(["apply", "reject"] as const)(
       }),
     );
     changeFinancialInput();
-    submitPreview();
+    await submitPreview();
     await screen.findByText("Proyecto: P-B · Cliente B · Casa B");
     await settle(task, result("A", action === "reject" ? "REJECTED" : "APPLIED"));
     expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
@@ -833,7 +845,7 @@ it("lists human project identities before any pricing operation and submits only
   fireEvent.change(screen.getByLabelText(t("pricing.projectId")), {
     target: { value: "project-a" },
   });
-  submitPreview();
+  await submitPreview();
   expect(previewBodies()[0]?.project_id).toBe("project-a");
 });
 
@@ -870,7 +882,7 @@ it("keeps FX authority available for a bound foreign-currency project quote", as
   fireEvent.change(screen.getByLabelText(t("pricing.fxId")), {
     target: { value: "fx-snapshot-a" },
   });
-  submitPreview();
+  await submitPreview();
   expect(previewBodies()[0]).toMatchObject({
     project_id: "project-a",
     currency: "USD",
@@ -904,7 +916,7 @@ it("shows unit price, per-line discount and the position thumbnail on the decisi
       </Routes>
     </MemoryRouter>,
   );
-  submitPreview();
+  await submitPreview();
   // line_net is a position TOTAL — unit price and discount sit next to it.
   await screen.findByText(t("pricing.unitPrice"));
   expect(screen.getByText(formatMoney("31578.9474", "CLP"))).toBeInTheDocument();
@@ -929,7 +941,7 @@ it("keeps the positioned backend reason and links to the resolver surface", asyn
     .mockResolvedValueOnce({ data: { items: [] } })
     .mockRejectedValueOnce(failure);
   render(page(<CommercialPricingPage />));
-  submitPreview();
+  await submitPreview();
   await screen.findByRole("alert");
   expect(screen.getByRole("alert")).toHaveTextContent("P04 ·");
   expect(screen.getByRole("link", { name: t("pricing.fixInCostLists") })).toHaveAttribute(

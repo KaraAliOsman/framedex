@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -622,7 +623,7 @@ export function PortalQuotePage(): JSX.Element {
             {t("portal.validityExpired")}
           </p>
         ) : (
-          <form
+          <ValidatedForm
             className="portal-decision"
             onSubmit={(event: FormEvent<HTMLFormElement>) => {
               event.preventDefault();
@@ -702,7 +703,7 @@ export function PortalQuotePage(): JSX.Element {
             {!note.trim() ? (
               <p className="portal-decision__notehint">{t("portal.noteRequired")}</p>
             ) : null}
-          </form>
+          </ValidatedForm>
         )}
 
         <footer className="portal-proposal__brand">{t("portal.brand")}</footer>

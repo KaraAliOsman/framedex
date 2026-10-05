@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../ui/FormValidation";
 import { type FormEvent, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
@@ -138,7 +139,7 @@ export function MfaPage(): JSX.Element {
                 {t("auth.mfaManual")} <code data-testid="totp-secret">{factor.secret}</code>
               </p>
             ) : null}
-            <form className="auth-form" onSubmit={(event) => void verify(event)}>
+            <ValidatedForm className="auth-form" onSubmit={(event) => void verify(event)}>
               <label htmlFor="totp-code">{t("auth.mfaCode")}</label>
               <input
                 id="totp-code"
@@ -156,7 +157,7 @@ export function MfaPage(): JSX.Element {
               >
                 {busy ? t("auth.mfaVerifying") : t("auth.mfaVerify")}
               </button>
-            </form>
+            </ValidatedForm>
           </>
         )}
         {error ? (

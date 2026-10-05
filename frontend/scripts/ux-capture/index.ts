@@ -2,8 +2,10 @@ import { chromium, type Browser, type BrowserContext, type Page } from "@playwri
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import * as OTPAuth from "otpauth";
 
 import { detectTextFindings, summarizeFindings } from "./detectors.ts";
+import { detectPresentationFindings, type Observation } from "./presentation.ts";
 import {
   FIXTURE_USERS,
   THEMES,
@@ -32,6 +34,7 @@ type AuthSession = {
 type CaptureRecord = {
   routeId: string;
   path: string;
+  reachedPath: string;
   role: string;
   theme: string;
   viewport: string;
@@ -48,6 +51,12 @@ const supabaseUrl =
 const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? "";
 const djangoUrl = process.env.DJANGO_URL ?? "http://127.0.0.1:8000";
 const organizationId = process.env.DEKOPEN_FIXTURE_ORG_ID ?? "548b9ce5-746b-5a4a-9127-733c4dcd0582";
+const sessions = new Map<UxRole, AuthSession>();
+const coverage = new Map<
+  string,
+  { text: string; ranges: { start: number; end: number }[]; usedSelectors?: string[] }
+>();
+let ownedFactor: { id: string; session: AuthSession } | undefined;
 
 function parseArgs(argv: string[]): Args {
   const args: Args = { out: "docs/redesign/captures/ux-run" };
@@ -104,6 +113,8 @@ async function ensureVite(): Promise<ChildProcess | null> {
 }
 
 async function signIn(role: UxRole): Promise<AuthSession> {
+  const cached = sessions.get(role);
+  if (cached) return cached;
   const user = FIXTURE_USERS[role];
   const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
@@ -113,7 +124,45 @@ async function signIn(role: UxRole): Promise<AuthSession> {
   if (!response.ok) {
     throw new Error(`Could not sign in ${role}: HTTP ${response.status} ${await response.text()}`);
   }
-  return (await response.json()) as AuthSession;
+  let session = (await response.json()) as AuthSession;
+  if (role === "OWNER") {
+    // Exercise the real mandatory MFA boundary; never bypass it in the UI.
+    const headers = {
+      apikey: anonKey,
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+    };
+    const enroll = await fetch(`${supabaseUrl}/auth/v1/factors`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ factor_type: "totp", friendly_name: `ux-${Date.now()}` }),
+    });
+    if (!enroll.ok) throw new Error(`OWNER MFA enrollment -> ${enroll.status}`);
+    const factor = (await enroll.json()) as { id: string; totp: { secret: string } };
+    const challenge = await fetch(`${supabaseUrl}/auth/v1/factors/${factor.id}/challenge`, {
+      method: "POST",
+      headers,
+      body: "{}",
+    });
+    if (!challenge.ok) throw new Error(`OWNER MFA challenge -> ${challenge.status}`);
+    const { id: challengeId } = (await challenge.json()) as { id: string };
+    const code = new OTPAuth.TOTP({
+      secret: OTPAuth.Secret.fromBase32(factor.totp.secret),
+      algorithm: "SHA1",
+      digits: 6,
+      period: 30,
+    }).generate();
+    const verified = await fetch(`${supabaseUrl}/auth/v1/factors/${factor.id}/verify`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ challenge_id: challengeId, code }),
+    });
+    if (!verified.ok) throw new Error(`OWNER MFA verification -> ${verified.status}`);
+    session = { ...session, ...((await verified.json()) as AuthSession) };
+    ownedFactor = { id: factor.id, session };
+  }
+  sessions.set(role, session);
+  return session;
 }
 
 async function authenticatedFetch<T>(session: AuthSession, apiPath: string): Promise<T> {
@@ -179,34 +228,32 @@ async function prepareContext(
   viewport: { width: number; height: number },
   publicRoute: boolean,
 ): Promise<BrowserContext> {
-  const context = await browser.newContext({ baseURL: baseUrl, viewport });
+  const session = publicRoute ? null : await signIn(role);
+  const storageKey = `sb-${new URL(supabaseUrl).hostname.split(".")[0]}-auth-token`;
+  const context = await browser.newContext({
+    baseURL: baseUrl,
+    viewport,
+    storageState: session
+      ? {
+          cookies: [],
+          origins: [
+            {
+              origin: new URL(baseUrl).origin,
+              localStorage: [
+                { name: storageKey, value: JSON.stringify(session) },
+                { name: `dekopen.active_org.${session.user.id}`, value: organizationId },
+              ],
+            },
+          ],
+        }
+      : undefined,
+  });
   await context.addInitScript(
     ({ selectedTheme }) => {
       window.localStorage.setItem("dekopen.theme", selectedTheme);
     },
     { selectedTheme: theme },
   );
-  if (!publicRoute) {
-    const session = await signIn(role);
-    await context.addInitScript(
-      ({ authSession, orgId }) => {
-        window.localStorage.setItem(`dekopen.active_org.${authSession.user.id}`, orgId);
-        window.location.hash = "";
-      },
-      { authSession: session, orgId: organizationId },
-    );
-    const page = await context.newPage();
-    const expiresAt = session.expires_at ?? Math.floor(Date.now() / 1000) + session.expires_in;
-    await page.goto(
-      `/auth/callback#access_token=${session.access_token}&refresh_token=${session.refresh_token}&expires_in=${session.expires_in}&expires_at=${expiresAt}&token_type=${session.token_type}&type=magiclink`,
-    );
-    await page.waitForFunction(() =>
-      Object.keys(window.localStorage).some(
-        (key) => key.startsWith("sb-") && key.endsWith("-auth-token"),
-      ),
-    );
-    await page.close();
-  }
   return context;
 }
 
@@ -214,7 +261,7 @@ async function collectPresentationFindings(
   page: Page,
   workshop: boolean,
 ): Promise<{ kind: string; sample: string }[]> {
-  return page.evaluate((needsTouchTargets) => {
+  const observations: Observation[] = await page.evaluate(() => {
     function visible(element: Element): boolean {
       const style = window.getComputedStyle(element);
       const box = element.getBoundingClientRect();
@@ -222,29 +269,96 @@ async function collectPresentationFindings(
         style.visibility !== "hidden" && style.display !== "none" && box.width > 0 && box.height > 0
       );
     }
-    const findings: { kind: string; sample: string }[] = [];
+    function effectiveBackground(element: Element): string {
+      const layers: number[][] = [];
+      for (let current: Element | null = element; current; current = current.parentElement) {
+        const color =
+          getComputedStyle(current)
+            .backgroundColor.match(/[\d.]+/g)
+            ?.map(Number) ?? [];
+        if (color.length >= 3) layers.push([color[0]!, color[1]!, color[2]!, color[3] ?? 1]);
+      }
+      let rgb = [255, 255, 255];
+      for (const layer of layers.reverse())
+        rgb = rgb.map((value, index) => layer[index]! * layer[3]! + value * (1 - layer[3]!));
+      return `rgb(${rgb.join(", ")})`;
+    }
+    const probe = document.createElement("div");
+    probe.style.display = "none";
+    document.body.append(probe);
+    const allowedShadows = ["--e1", "--e2", "--e3", "--sheet", "--focus-ring"].map((token) => {
+      probe.style.boxShadow = `var(${token})`;
+      return getComputedStyle(probe).boxShadow;
+    });
+    probe.remove();
+    const observations: Observation[] = [];
     for (const element of Array.from(document.body.querySelectorAll("*"))) {
       if (!visible(element)) continue;
-      const text = (element.textContent ?? "").trim();
-      if (text && Number.parseFloat(window.getComputedStyle(element).fontSize) < 11) {
-        findings.push({ kind: "font-under-11", sample: text.slice(0, 120) });
+      const style = getComputedStyle(element);
+      const text = Array.from(element.childNodes)
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.textContent)
+        .join("")
+        .trim();
+      const box = element.getBoundingClientRect();
+      const interactive = element.matches("button,a,input,select,textarea,[role='button']");
+      let hasEffect = element.matches(
+        "a[href]:not([href='']):not([href='#']),input,select,textarea,summary",
+      );
+      const events = element.matches("button[type='submit']")
+        ? ["onClick", "onSubmit"]
+        : ["onClick", "onPointerDown", "onKeyDown"];
+      for (let current: Element | null = element; current; current = current.parentElement) {
+        const propsKey = Object.keys(current).find((key) => key.startsWith("__reactProps$"));
+        const props = propsKey
+          ? (current as unknown as Record<string, Record<string, unknown>>)[propsKey]
+          : undefined;
+        if (
+          events.some((name) => typeof props?.[name] === "function") ||
+          current.hasAttribute("onclick")
+        )
+          hasEffect = true;
       }
-      if (
-        needsTouchTargets &&
-        element instanceof HTMLElement &&
-        (element.matches("button,a,input,select,textarea,[role='button']") || element.tabIndex >= 0)
-      ) {
-        const box = element.getBoundingClientRect();
-        if (box.width < 44 || box.height < 44) {
-          findings.push({
-            kind: "touch-target-under-44",
-            sample: `${element.tagName.toLowerCase()} ${text.slice(0, 80)}`,
-          });
-        }
-      }
+      const region = element.closest("[data-region],form,aside,section,dialog") ?? document.body;
+      observations.push({
+        sample: `${element.tagName.toLowerCase()}.${element.getAttribute("class") ?? ""} ${(element.getAttribute("aria-label") ?? text).slice(0, 100)}`,
+        fontSize: parseFloat(style.fontSize),
+        radius: Math.max(
+          ...[
+            style.borderTopLeftRadius,
+            style.borderTopRightRadius,
+            style.borderBottomLeftRadius,
+            style.borderBottomRightRadius,
+          ].map(parseFloat),
+        ),
+        shadow: style.boxShadow,
+        allowedShadows,
+        backgroundImage: style.backgroundImage,
+        filter: style.filter,
+        backdropFilter: style.backdropFilter,
+        textColor: style.color,
+        backgroundColor: effectiveBackground(element),
+        hasText: text.length > 0,
+        largeText:
+          parseFloat(style.fontSize) >= 24 ||
+          (parseFloat(style.fontSize) >= 18.667 && parseInt(style.fontWeight) >= 600),
+        interactive,
+        disabled: element.matches(":disabled,[aria-disabled='true']"),
+        hasEffect,
+        width: box.width,
+        height: box.height,
+        statusDot: element.hasAttribute("data-status-dot"),
+        primary: element.matches(".ui-button--primary,[data-variant='primary']"),
+        region:
+          region.getAttribute("data-region") ??
+          region.id ??
+          region.getAttribute("class") ??
+          region.tagName,
+      });
     }
-    return findings;
-  }, workshop);
+    return observations;
+  });
+  return detectPresentationFindings(observations, workshop);
 }
 
 async function captureRoute(
@@ -256,6 +370,7 @@ async function captureRoute(
   outDir: string,
 ): Promise<CaptureRecord> {
   const page = await context.newPage();
+  await page.coverage.startCSSCoverage({ resetOnNavigation: false });
   const consoleErrors: string[] = [];
   const httpErrors: { url: string; status: number }[] = [];
   page.on("console", (message) => {
@@ -282,10 +397,57 @@ async function captureRoute(
   ];
   const screenshot = `${route.id}__${role}__${theme}__${viewportId}.png`;
   await page.screenshot({ path: path.join(outDir, screenshot), fullPage: true });
+  for (const sheet of await page.coverage.stopCSSCoverage()) {
+    const key = sheet.url.split("?")[0] || `inline-${sheet.text.length}`;
+    const previous = coverage.get(key);
+    coverage.set(key, { text: sheet.text, ranges: [...(previous?.ranges ?? []), ...sheet.ranges] });
+  }
+  // Vite injects anonymous <style> sheets that Chromium's URL-only coverage
+  // omits. Record matching CSSOM selectors too; removal also needs a source
+  // reachability check because this run cannot exercise every transient state.
+  const injected = await page.evaluate(() =>
+    Array.from(document.styleSheets).flatMap((sheet) => {
+      const owner = sheet.ownerNode;
+      if (!(owner instanceof HTMLStyleElement)) return [];
+      const usedSelectors: string[] = [];
+      function visit(rules: CSSRuleList): void {
+        for (const rule of Array.from(rules)) {
+          if (rule instanceof CSSMediaRule && !matchMedia(rule.conditionText).matches) continue;
+          if (rule instanceof CSSStyleRule) {
+            try {
+              if (document.querySelector(rule.selectorText)) usedSelectors.push(rule.selectorText);
+            } catch {
+              /* Browser-only pseudo-elements are retained by source evidence. */
+            }
+          } else if ("cssRules" in rule) visit((rule as CSSGroupingRule).cssRules);
+        }
+      }
+      visit(sheet.cssRules);
+      return [
+        {
+          url: owner.dataset.viteDevId ?? `inline-${owner.textContent?.length}`,
+          text: owner.textContent ?? "",
+          usedSelectors,
+        },
+      ];
+    }),
+  );
+  for (const sheet of injected) {
+    const previous = coverage.get(sheet.url);
+    coverage.set(sheet.url, {
+      text: sheet.text,
+      ranges: previous?.ranges ?? [],
+      usedSelectors: Array.from(
+        new Set([...(previous?.usedSelectors ?? []), ...sheet.usedSelectors]),
+      ),
+    });
+  }
+  const reachedPath = new URL(page.url()).pathname;
   await page.close();
   return {
     routeId: route.id,
     path: route.path,
+    reachedPath,
     role,
     theme,
     viewport: viewportId,
@@ -328,24 +490,39 @@ async function main(): Promise<void> {
     for (const route of routes) {
       const roles = route.public ? [route.roles[0] ?? "ESTIMATOR"] : route.roles;
       for (const role of roles.filter((item) => selectedRoles.has(item))) {
+        if (!route.public) await signIn(role);
         for (const theme of THEMES) {
-          for (const viewport of VIEWPORTS) {
-            const context = await prepareContext(
-              browser,
-              role,
-              theme,
-              viewport,
-              Boolean(route.public),
-            );
-            records.push(await captureRoute(context, route, role, theme, viewport.id, outDir));
-            await context.close();
-          }
+          await Promise.all(
+            VIEWPORTS.map(async (viewport) => {
+              const context = await prepareContext(
+                browser,
+                role,
+                theme,
+                viewport,
+                Boolean(route.public),
+              );
+              records.push(await captureRoute(context, route, role, theme, viewport.id, outDir));
+              console.log(`${records.length}: ${route.id} ${role} ${theme} ${viewport.id}`);
+              await context.close();
+            }),
+          );
+          await writeFile(
+            path.join(outDir, "records.partial.json"),
+            JSON.stringify(records, null, 2),
+          );
         }
       }
     }
   } finally {
     await browser.close();
     if (vite) vite.kill();
+    if (ownedFactor) {
+      const removed = await fetch(`${supabaseUrl}/auth/v1/factors/${ownedFactor.id}`, {
+        method: "DELETE",
+        headers: { apikey: anonKey, Authorization: `Bearer ${ownedFactor.session.access_token}` },
+      });
+      if (!removed.ok) throw new Error(`Fixture MFA teardown -> ${removed.status}`);
+    }
   }
   const report = {
     generatedAt: new Date().toISOString(),
@@ -355,6 +532,7 @@ async function main(): Promise<void> {
   };
   await writeFile(path.join(outDir, "report.json"), JSON.stringify(report, null, 2));
   await writeFile(path.join(outDir, "index.html"), htmlReport(records));
+  await writeFile(path.join(outDir, "coverage.json"), JSON.stringify(Object.fromEntries(coverage)));
 }
 
 await main();

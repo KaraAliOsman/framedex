@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../ui/FormValidation";
 import { type FormEvent, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
@@ -51,7 +52,7 @@ export function LoginPage(): JSX.Element {
           <h1 id="login-title">{t("auth.loginTitle")}</h1>
           <p className="auth-hint">{t("auth.loginDescription")}</p>
         </header>
-        <form className="auth-form" onSubmit={(event) => void submit(event)}>
+        <ValidatedForm className="auth-form" onSubmit={(event) => void submit(event)}>
           <label htmlFor="email">{t("auth.email")}</label>
           <input
             id="email"
@@ -70,7 +71,7 @@ export function LoginPage(): JSX.Element {
           >
             {busy ? t("auth.sending") : t("auth.sendMagicLink")}
           </button>
-        </form>
+        </ValidatedForm>
         {sent ? (
           <p role="status" className="auth-notice auth-notice--ok">
             {t("auth.magicLinkSent")}

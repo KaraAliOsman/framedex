@@ -3,11 +3,12 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: 739704ab8f81ded8f860d44d44adba0c33f96db4
+verified_ref: codex/P01-sistema-diseno
 sources:
   - repository main
   - P00 foundation PR #114
   - local stack fixes PR #116
+  - P01 local gates and browser evidence, 2026-10-05
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -68,7 +69,17 @@ Verification caveat: PR #114 passed the required GitHub checks (Lint & Typecheck
 
 PR #116 is merged at the verification ref and carries the four former local-only commits. The fixture preserves prepared workshop evidence, declares its synthetic handle intent against the leaf datum, and respects sealed inputs on repeats. The PowerShell launcher withholds environment values and cleans up only its own processes on failure.
 
-All four local make gates passed, including OpenAPI/orval reproducibility; the earlier `rpds` limitation did not recur. Required GitHub checks passed on PR #116. Docker Desktop currently fails to initialize its ingest socket before starting an engine; an isolated local WSL test daemon is being prepared. This environment issue does not establish any product capability as accepted. P01 remains in progress.
+All four local make gates passed, including OpenAPI/orval reproducibility; the earlier `rpds` limitation did not recur. Required GitHub checks passed on PR #116. Docker Desktop fails to initialize its ingest socket; an isolated local WSL test daemon now runs the Supabase verification stack without deleting the Desktop data. This environment recovery does not establish any product capability as accepted.
+
+## P01 design material verified 2026-10-05
+
+P01 supplies the constitution tokens, self-hosted IBM Plex fonts, Decimal-safe presentation, exhaustive generated-enum labels, Spanish form validation and reusable UI primitives. `/dev/ui` is development-only and reads project/BOM data through the authenticated API. Source guards ratchet against a committed baseline; live detectors preserve inherited findings instead of accepting them as compliant.
+
+The four local make gates passed with 472 engine tests (two expected failures), 1,058 backend tests and 677 frontend tests. The manual passed 22 theme/density/viewport combinations with no serious or critical axe findings, including errors and dialogs. Spanish validation passed four real Catalog/Payments flows with zero invalid API writes. The 352 before and 352 after route captures have no increased detector count in any combination and no new horizontal overflow.
+
+The migrated legacy CSS, including import entrypoints, shrank from 5,357 to 3,750 lines (30.00%). Including 792 lines of new primitive styles, the complete scoped graph has 4,542 lines (15.21% net reduction). See `docs/redesign/captures/sistema-diseno/aceptacion.md` for the scope, editorial rubric and evidence.
+
+Limits remain explicit: position responses do not provide the complete formula/input/engine-version trace; the trace component exposes its absence. Portal capture references exercise error states rather than five issued quotations. Product surfaces later in the queue still have inherited findings and are not accredited by the P01 material acceptance. P01 is awaiting its integration PR and the four required GitHub checks.
 
 ## Recent branch/PR caution
 

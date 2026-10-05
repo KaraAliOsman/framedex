@@ -43,7 +43,7 @@ export const FIXTURE_USERS: Record<UxRole, { email: string; password: string }> 
 
 export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
   return [
-    { id: "inicio", path: "/", roles: ["ESTIMATOR"] },
+    { id: "inicio", path: "/", roles: ["ESTIMATOR"], public: true },
     { id: "login", path: "/login", roles: ["ESTIMATOR"], public: true },
     { id: "panel", path: "/dashboard", roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] },
     { id: "proyectos", path: "/projects", roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] },

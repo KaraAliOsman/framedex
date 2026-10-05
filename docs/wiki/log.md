@@ -30,3 +30,11 @@ Append-only chronology. Keep newest entries at the bottom.
 - The Windows launcher withholds environment values, records owned process IDs, and tears down partial starts.
 - Local lint, typecheck, tests and build passed; OpenAPI/orval regeneration was reproducible. Docker Desktop's ingest-socket startup failure is being handled with an isolated WSL test daemon, without resetting Desktop data.
 - Advanced the queue to P01; no later task is represented as implemented or accepted.
+
+## [2026-10-05] P01 | constitution material and regression evidence
+
+- Implemented shared tokens, locally hosted Plex fonts, technical primitives, exact Decimal presentation, Spanish validation, exhaustive enum labels and source/live regression detectors on `codex/P01-sistema-diseno`.
+- Preserved backend/engine authority: editable payloads use the canonical value; missing trace/mass/U remain unknown with a cause. Recorded the historical DIN contradiction and the accessible small-muted role.
+- Removed unused Layout exports and CSS rules with browser plus source evidence. Recorded both legacy migration reduction and the full net stylesheet cost, including new primitives.
+- Added the editorial PR template, component manual, real form-validation captures and the before/after route comparison. Provisional portal references remain failure-state evidence and do not establish emitted quotations.
+- Verification and merge metadata are recorded in the P01 acceptance page, PR and current-reality page; later queue tasks remain pending until separately completed.

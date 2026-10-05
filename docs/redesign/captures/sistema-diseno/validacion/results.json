@@ -1,0 +1,34 @@
+[
+  {
+    "surface": "catalogo",
+    "theme": "light",
+    "nativeValidation": false,
+    "firstErrorFocused": true,
+    "writes": 0,
+    "result": "PASA"
+  },
+  {
+    "surface": "catalogo",
+    "theme": "dark",
+    "nativeValidation": false,
+    "firstErrorFocused": true,
+    "writes": 0,
+    "result": "PASA"
+  },
+  {
+    "surface": "cobranza",
+    "theme": "light",
+    "nativeValidation": false,
+    "firstErrorFocused": true,
+    "writes": 0,
+    "result": "PASA"
+  },
+  {
+    "surface": "cobranza",
+    "theme": "dark",
+    "nativeValidation": false,
+    "firstErrorFocused": true,
+    "writes": 0,
+    "result": "PASA"
+  }
+]

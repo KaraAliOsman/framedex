@@ -1,4 +1,6 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { fmtMm } from "../../format";
+import { decimalInputValue } from "../../decimal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -275,7 +277,7 @@ function CsvMmField({
   disabled: boolean;
   onCommit(value: string[] | null): void;
 }): JSX.Element {
-  const canonical = (values ?? []).map(fmtMm).join(", ");
+  const canonical = (values ?? []).map(decimalInputValue).join(", ");
   const [draft, setDraft] = useState(canonical);
   useEffect(() => setDraft(canonical), [canonical]);
   return (
@@ -292,7 +294,7 @@ function CsvMmField({
           const parsed = parseMmList(draft);
           if (parsed === null) {
             setDraft(canonical);
-          } else if (parsed.join(",") !== (values ?? []).map(fmtMm).join(",")) {
+          } else if (parsed.join(",") !== (values ?? []).map(decimalInputValue).join(",")) {
             onCommit(parsed.length > 0 ? parsed : null);
           }
         }}
@@ -314,18 +316,23 @@ function normalizePreparationMm(
 ): DocumentaryPreparationPosition {
   const annotations = position.workshop_annotations.map((annotation) => ({
     ...annotation,
-    bottom_drain_holes_mm: annotation.bottom_drain_holes_mm?.map(fmtMm) ?? null,
-    closing_points_perimeter_mm: annotation.closing_points_perimeter_mm?.map(fmtMm) ?? null,
+    bottom_drain_holes_mm: annotation.bottom_drain_holes_mm?.map(decimalInputValue) ?? null,
+    closing_points_perimeter_mm:
+      annotation.closing_points_perimeter_mm?.map(decimalInputValue) ?? null,
     continuous_width_mm:
-      annotation.continuous_width_mm == null ? null : fmtMm(annotation.continuous_width_mm),
+      annotation.continuous_width_mm == null
+        ? null
+        : decimalInputValue(annotation.continuous_width_mm),
   }));
   const structural = position.structural_inputs.map((input) => ({
     ...input,
-    required_ix_cm4: input.required_ix_cm4 == null ? null : fmtMm(input.required_ix_cm4),
+    required_ix_cm4:
+      input.required_ix_cm4 == null ? null : decimalInputValue(input.required_ix_cm4),
   }));
   const intents = position.handle_intents.map((intent) => ({
     ...intent,
-    requested_height_mm: intent.requested_height_mm === "" ? "" : fmtMm(intent.requested_height_mm),
+    requested_height_mm:
+      intent.requested_height_mm === "" ? "" : decimalInputValue(intent.requested_height_mm),
   }));
   return {
     ...position,
@@ -1359,7 +1366,7 @@ export function ProjectQuotationPanel({
         <p>{t("quotation.priceFirst")}</p>
       )}
       {preparation && (
-        <form className="quotation-form" onSubmit={(event) => void emit(event)}>
+        <ValidatedForm className="quotation-form" onSubmit={(event) => void emit(event)}>
           <label htmlFor="quotation-payment-terms">{t("quotation.paymentTerms")}</label>
           <textarea
             id="quotation-payment-terms"
@@ -2026,7 +2033,7 @@ export function ProjectQuotationPanel({
               {t("projects.cancel")}
             </button>
           </div>
-        </form>
+        </ValidatedForm>
       )}
       {(approvals.data?.length ?? 0) > 0 && (
         <div className="quotation-links">

@@ -1,3 +1,4 @@
+import { ValidatedForm } from "../../ui/FormValidation";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import { ApiError } from "../../api/apiMutator";
@@ -311,7 +312,7 @@ export function InventorySection({
             ))}
           </ul>
           {adjustTarget ? (
-            <form className="inventory-remnant-form" onSubmit={recordMovement}>
+            <ValidatedForm className="inventory-remnant-form" onSubmit={recordMovement}>
               <p className="purchasing-hint">
                 {adjustTarget.sku} · {adjustTarget.name}
               </p>
@@ -362,7 +363,7 @@ export function InventorySection({
               <button type="submit" disabled={busy}>
                 {t("inventory.movementSubmit")}
               </button>
-            </form>
+            </ValidatedForm>
           ) : null}
         </details>
       ) : null}
@@ -400,7 +401,7 @@ export function InventorySection({
         </label>
       </div>
       {showCreate ? (
-        <form className="inventory-remnant-form" onSubmit={createRemnant}>
+        <ValidatedForm className="inventory-remnant-form" onSubmit={createRemnant}>
           <label>
             {t("inventory.remnantKind")}
             <select
@@ -501,7 +502,7 @@ export function InventorySection({
           <button type="submit" disabled={busy}>
             {t("inventory.remnantCreate")}
           </button>
-        </form>
+        </ValidatedForm>
       ) : null}
       {visible.length > 0 ? (
         <table className="inventory-remnants">
