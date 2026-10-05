@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: codex/P01-sistema-diseno
+verified_ref: 023b8ba303b680ca50b6e10119ce4ee4514c9c38
 sources:
   - repository main
   - P00 foundation PR #114
@@ -79,7 +79,7 @@ The four local make gates passed with 472 engine tests (two expected failures), 
 
 The migrated legacy CSS, including import entrypoints, shrank from 5,357 to 3,750 lines (30.00%). Including 792 lines of new primitive styles, the complete scoped graph has 4,542 lines (15.21% net reduction). See `docs/redesign/captures/sistema-diseno/aceptacion.md` for the scope, editorial rubric and evidence.
 
-Limits remain explicit: position responses do not provide the complete formula/input/engine-version trace; the trace component exposes its absence. Portal capture references exercise error states rather than five issued quotations. Product surfaces later in the queue still have inherited findings and are not accredited by the P01 material acceptance. P01 is awaiting its integration PR and the four required GitHub checks.
+Limits remain explicit: position responses do not provide the complete formula/input/engine-version trace; the trace component exposes its absence. Portal capture references exercise error states rather than five issued quotations. Product surfaces later in the queue still have inherited findings and are not accredited by the P01 material acceptance. P01 is merged in PR #117 at `023b8ba303b680ca50b6e10119ce4ee4514c9c38` with all four required GitHub checks passing.
 
 ## Recent branch/PR caution
 

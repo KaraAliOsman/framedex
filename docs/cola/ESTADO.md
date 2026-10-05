@@ -1,7 +1,7 @@
 | ID | Ola | Estado | PR | SHA | Notas |
 |---|---|---|---|---|---|
 | P00 | 0 | mergeado | https://github.com/KaraAliOsman/framedex/pull/114 | a096f85b2e56e21eda024c1ec92a456ed9d30b03 | CI 4/4 verde; PR mergeado en integracion/v1. |
-| P01 | 0b | en curso |  |  | Tokens, primitivas y guardas de la constitución. |
+| P01 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/117 | 023b8ba303b680ca50b6e10119ce4ee4514c9c38 | CI 4/4 verde; material v2, validación y evidencia antes/después aceptados. |
 | IA1 | 0b | pendiente |  |  |  |
 | D01 | 0b | pendiente |  |  |  |
 | D02 | D1 | pendiente |  |  |  |

@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-05
 volatility: medium
-verified_ref: codex/P01-sistema-diseno
+verified_ref: 023b8ba303b680ca50b6e10119ce4ee4514c9c38
 sources:
   - docs/design/CONSTITUCION.md
   - docs/design/SISTEMA-V2.md
@@ -15,7 +15,7 @@ sources:
 
 # Sistema de diseño convertido en código
 
-**Hecho verificado en la rama P01:** tokens por rol, fuentes IBM Plex autoalojadas, primitivas técnicas, formatos Decimal, validación común en español, guardas con trinquete y detectores computados. `/dev/ui` consume las posiciones/BOM de la organización autenticada y existe solo en desarrollo. No acredita que las pantallas pendientes ya estén rediseñadas.
+**Hecho verificado en PR #117, merge `023b8ba303b680ca50b6e10119ce4ee4514c9c38`:** tokens por rol, fuentes IBM Plex autoalojadas, primitivas técnicas, formatos Decimal, validación común en español, guardas con trinquete y detectores computados. `/dev/ui` consume las posiciones/BOM de la organización autenticada y existe solo en desarrollo. No acredita que las pantallas pendientes ya estén rediseñadas.
 
 **Intención del dueño:** cada encargo adopta este material y conserva el oficio visible: inglete de la hoja, cota como cargador, gramática de aperturas y procedencia del número. El flujo productivo y los cálculos continúan gobernados por motor, catálogo y revisiones emitidas.
 

@@ -44,3 +44,8 @@ Append-only chronology. Keep newest entries at the bottom.
 - Restricted Chilean RUT validation to declared RUT inputs; supplier tax IDs retain their existing foreign-identifier contract.
 - Kept free-form money input strictly es-CL and localized backend-prefilled fractions explicitly. Invalid NumberField drafts now clear the consumer value and retain accessible help/error descriptions.
 - Updated exact canvas E2E expectations for constitution dimension grouping and outline focus. All three real canvas flows passed, including rollback and the existing 300 ms paint limit; no assertion was skipped or relaxed.
+
+## [2026-10-05] P01 | integration accepted
+
+- Merged PR #117 into `integracion/v1` at `023b8ba303b680ca50b6e10119ce4ee4514c9c38` after all four required GitHub checks passed on head `1f6f225c99c8faebec6f42a4a37f9bcf2514d5cd`.
+- Recorded the material acceptance, browser evidence and current-state limits; updated the queue to `mergeado`. `main` remains unchanged.
