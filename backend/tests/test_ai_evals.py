@@ -8,6 +8,8 @@ import pytest
 
 from ai_gateway.evals.outcomes import classify, evaluate, summarize
 from ai_gateway.evals.run import Recorder, load_cases
+from ai_gateway.evals.facts import frame_bar_count, priced_winner
+from ai_gateway.evals.redaction import redact_report
 
 
 def product(*, opening="FIXED"):
@@ -17,10 +19,12 @@ def product(*, opening="FIXED"):
     }]}}
 
 
-def verdict(case_id, before, after, *, result=None, truth=None, changes=None):
+def verdict(case_id, before, after, *, result=None, truth=None, changes=None, engine=None):
     case = next(c for c in load_cases() if c["id"] == case_id)
     return evaluate(case, before=before, after=after, result=result or {},
-                    truth=truth or {}, changed_tables=changes or [])
+                    truth=truth or {}, changed_tables=changes or [],
+                    engine_after=engine if engine is not None else {
+                        "http_status": 200, "result": {"status": "VALID", "issues": []}})
 
 
 def test_owner_suite_is_complete_and_keeps_typo_and_orientation():
@@ -38,6 +42,112 @@ def test_saying_dimensions_cannot_replace_the_edit():
     after = deepcopy(before)
     after["assembly"]["modules"][0].update(width_mm="1800.00", height_mm="1350.00")
     assert verdict("E03", before, after)["passed"]
+
+
+@pytest.mark.parametrize("engine", [
+    {"http_status": 400, "result": {"error": "invalid_tree"}},
+    {"http_status": 200, "result": {"status": "INVALID", "issues": []}},
+    {"http_status": 200, "result": {"status": "VALID", "issues": [{"severity": "error"}]}},
+])
+def test_exact_dimensions_do_not_pass_when_the_engine_rejects_the_design(engine):
+    before = product()
+    after = deepcopy(before)
+    after["assembly"]["modules"][0].update(width_mm="1800.00", height_mm="1350.00")
+    evaluated = verdict("E03", before, after, engine=engine)
+    assert not evaluated["passed"]
+    assert not next(c for c in evaluated["checks"] if c["check"] == "engine_accepts_design")["passed"]
+
+
+def test_missing_manufacturing_authority_does_not_mean_invalid_geometry():
+    before = product()
+    after = deepcopy(before)
+    after["assembly"]["modules"][0].update(width_mm="1800.00", height_mm="1350.00")
+    assert verdict("E03", before, after, engine={"http_status": 200, "result": {
+        "status": "MANUFACTURING_INCOMPLETE", "issues": [{"severity": "warning"}]}})["passed"]
+
+
+@pytest.mark.parametrize("supported", [True, None, False])
+def test_kitchen_refusal_requires_negative_catalog_engine_authority(supported):
+    before = product()
+    assert verdict("J02", before, before, truth={"sliding_supported": supported},
+                   result={"reply": "Este sistema no admite correderas."})["passed"] is (supported is False)
+
+
+def test_bedroom_copies_preserve_quantity_and_require_destinations():
+    before = product()
+    source = {"id": "source", "quantity": 2, "design": {"system_id": "system", "color": "WHITE"}}
+    proposed = [{"design": deepcopy(source["design"]), "quantity": 2, "location_tag": "Living"}
+                for _ in range(4)]
+    result = {"artifacts": [{"kind": "project_draft", "payload": {"positions": proposed}}]}
+    assert not verdict("J03", before, before, result=result, truth={"position_three": source})["passed"]
+    for p in proposed:
+        p["location_tag"] = "Dormitorio segundo piso"
+    assert verdict("J03", before, before, result=result, truth={"position_three": source})["passed"]
+    proposed[0]["quantity"] = 1
+    assert not verdict("J03", before, before, result=result, truth={"position_three": source})["passed"]
+
+
+def test_quantity_alternative_requires_a_typed_bedroom_allocation():
+    before = product()
+    source = {"id": "source", "quantity": 1, "design": {}}
+    change = {"position_id": "source", "quantity": 5}
+    result = {"artifacts": [{"kind": "project_draft", "payload": {"quantity_changes": [change]}}]}
+    assert not verdict("J03", before, before, result=result, truth={"position_three": source})["passed"]
+    change["allocations"] = [{"location_tag": "Dormitorios", "quantity": 4}]
+    assert verdict("J03", before, before, result=result, truth={"position_three": source})["passed"]
+    change["allocations"][0]["location_tag"] = "Living"
+    assert not verdict("J03", before, before, result=result, truth={"position_three": source})["passed"]
+
+
+@pytest.mark.parametrize(("fraction", "passes"), [("0.05", True), ("0.0500", True),
+                                                 ("5", False), ("5.00", False), ("cinco", False)])
+def test_discount_uses_the_pricing_fraction_contract(fraction, passes):
+    before = product()
+    assert verdict("J05", before, before, result={"state": "WAITING_FOR_APPROVAL", "artifacts": [
+        {"kind": "quote_draft", "payload": {"discount_pct": fraction}}]})["passed"] is passes
+
+
+def test_price_ranking_uses_the_current_applied_operation_and_exact_engine_lines():
+    project = {"id": "project", "current_revision": "REV-B", "pricing_current": True,
+               "current_pricing_operation_id": "applied", "positions": [
+                   {"position_index": 1, "id": "one", "price_net": "0.00"},
+                   {"position_index": 2, "id": "two", "price_net": "0.00"}]}
+    operation = {"id": "applied", "state": "APPLIED", "project_id": "project", "revision_code": "REV-B",
+                 "lines": [{"position_index": 1, "line_net": "9007199254740992.01"},
+                           {"position_index": 2, "line_net": "9007199254740992.02"}]}
+    assert priced_winner(project, [operation]) == "two"
+    assert priced_winner({**project, "pricing_current": False}, [operation]) is None
+    assert priced_winner(project, [{**operation, "state": "PREVIEW"}]) is None
+    assert priced_winner(project, [{**operation, "revision_code": "REV-A"}]) is None
+
+
+def test_cut_plan_counts_frame_profile_bars_and_preserves_absent_authority():
+    assert frame_bar_count({}) is None
+    cuts = [{"cuts": [{"source_kind": "PROFILE", "role": "FRAME"}]},
+            {"cuts": [{"source_kind": "PROFILE", "role": "FRAME"}]},
+            {"cuts": [{"source_kind": "REINFORCEMENT", "role": "FRAME"}]},
+            {"cuts": [{"source_kind": "PROFILE", "role": "SASH"}]}]
+    plan = {"workshop_cut_plan": cuts, "unplaced": []}
+    assert frame_bar_count({"optimization": {"bars": plan}}) == 2
+    assert frame_bar_count({"optimization": {"bars": {**plan, "unplaced": [{"piece": "unplaced"}]}}}) is None
+    assert frame_bar_count({"optimization": {"bars": {"workshop_cut_plan": []}}}) == 0
+
+
+def test_provider_echo_is_redacted_without_changing_the_gateway_response(monkeypatch):
+    monkeypatch.setenv("AI_GATEWAY_MIMO_API_KEY", "synthetic-private-provider-key")
+    document = {"reply": "synthetic-private-provider-key", "api_key": "another-secret",
+                "nested": {"secret_key": "nested-secret"}, "tokens_prompt": 2}
+    response = {"output": json.dumps(document)}
+    recorder = Recorder(lambda **kwargs: response)
+    assert recorder(input_payload={}) is response
+    assert json.loads(response["output"]) == document
+    saved = recorder.rounds[0]["document"]
+    assert saved["reply"] == "[redacted]"
+    assert saved["api_key"] == "[redacted]"
+    assert saved["nested"]["secret_key"] == "[redacted]"
+    assert saved["tokens_prompt"] == 2
+    jwt = "eyJfixture.payload.signature"
+    assert jwt not in json.dumps(redact_report({"reply": jwt}, environment={}))
 
 
 def test_mullioned_bays_are_not_separate_coupled_frames():

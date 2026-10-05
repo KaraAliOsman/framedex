@@ -9,8 +9,10 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any
+
+from ai_gateway.evals.facts import engine_accepted
 
 FAILURES = (
     "proveedor_no_configurado", "proveedor_error", "formato_invalido",
@@ -35,6 +37,17 @@ def nodes(product: dict) -> list[dict]:
 
 def _mm(value: Any) -> Decimal:
     return Decimal(str(value))
+
+
+def _exact_decimal(value: Any, expected: str) -> bool:
+    try:
+        return not isinstance(value, bool) and Decimal(str(value)) == Decimal(expected)
+    except InvalidOperation:
+        return False
+
+
+def _bedroom(position: dict) -> bool:
+    return "dormitorio" in str(position.get("location_tag") or position.get("location") or "").lower()
 
 
 def _narrative(result: dict) -> str:
@@ -68,7 +81,7 @@ def classify(error: str, rejected: list[dict], *, grounding: bool = False) -> st
 
 
 def evaluate(case: dict, *, before: dict, after: dict, result: dict,
-             truth: dict, changed_tables: list[str]) -> dict:
+             truth: dict, changed_tables: list[str], engine_after: dict) -> dict:
     """A matching sentence cannot pass a graph/money/stock mutation oracle."""
     checks: list[dict] = []
 
@@ -82,6 +95,11 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
     artifacts = result.get("artifacts") or []
     text = _narrative(result)
     expectation = case["expected"]
+    if expectation in {"two_fixed_bays", "fixed_tilt_left", "three_bays", "transom_400",
+                       "dimensions_1800_1350", "width_plus_200", "tilt_right"} or (
+            expectation == "glass_4_12_4" and after != before):
+        check("engine_accepts_design", engine_accepted(engine_after),
+              "HTTP 200, geometrically valid; manufacturing gaps remain explicit", engine_after)
     modules = after.get("assembly", {}).get("modules", [])
     all_nodes = nodes(after)
     bays = [n for n in all_nodes if n.get("type") == "BAY"]
@@ -201,28 +219,34 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
         proposed = [p for draft in drafts for p in draft.get("positions", [])]
         if expectation == "kitchen_position":
             valid = [p for p in proposed if p.get("opening_type") == "SLIDING_2L"
-                     and str(p.get("width_mm")) in {"1600", "1600.00"}
-                     and str(p.get("height_mm")) in {"1100", "1100.00"}
-                     and "cocina" in str(p.get("location", "")).lower()]
+                     and _exact_decimal(p.get("width_mm"), "1600")
+                     and _exact_decimal(p.get("height_mm"), "1100")
+                     and "cocina" in str(p.get("location_tag") or p.get("location") or "").lower()]
             check("new_position_or_incompatibility", bool(valid) or (
-                not proposed and not ops and bool(re.search(r"incompat|no admite", text))))
+                truth.get("sliding_supported") is False and not proposed and not ops
+                and bool(re.search(r"incompat|no admite", text))))
         else:
             source = truth.get("position_three")
             quantities = [change for draft in drafts for change in draft.get("quantity_changes", [])]
             quantity_alternative = source is not None and len(quantities) == 1 and (
                 quantities[0].get("position_id") == source["id"] and
                 quantities[0].get("quantity") == source["quantity"] + 4)
+            allocations = (quantities[0].get("allocations") or []) if quantity_alternative else []
+            quantity_alternative = quantity_alternative and bool(allocations) and all(
+                _bedroom(a) and isinstance(a.get("quantity"), int) and not isinstance(a["quantity"], bool)
+                and a["quantity"] > 0 for a in allocations) and sum(a["quantity"] for a in allocations) == 4
             check("four_exact_copies_or_quantity_plus_four", quantity_alternative or (
                   len(proposed) == 4 and source is not None and all(
-                      p.get("design") == source.get("design") for p in proposed)),
-                "4 new copies of position 3; quantity alternative requires a typed proposal", proposed)
+                      p.get("design") == source.get("design") and _bedroom(p)
+                      and p.get("quantity") == source["quantity"] for p in proposed)),
+                "4 bedroom copies preserving design/quantity, or +4 with typed bedroom allocations", proposed)
     elif expectation == "most_expensive":
         winner = truth.get("most_expensive")
         check("context_available", winner is not None, "engine-priced positions", winner)
         check("exact_priced_position", winner is not None and winner in result.get("references", []))
     elif expectation == "discount_proposal":
         payloads = [a.get("payload", {}) for a in artifacts if a.get("kind") == "quote_draft"]
-        check("discount_draft", any(str(p.get("discount_pct")) in {"5", "0.05", "5.00"}
+        check("discount_draft", any(_exact_decimal(p.get("discount_pct"), "0.05")
               for p in payloads), "typed 5 % quote draft", payloads)
         check("human_approval", result.get("state") == "WAITING_FOR_APPROVAL" or any(
             s.get("kind") == "prepare" for s in steps))

@@ -30,6 +30,8 @@ from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 import yaml
 
 from ai_gateway.evals.outcomes import canonical, classify, evaluate, summarize
+from ai_gateway.evals.facts import engine_accepted, frame_bar_count, priced_winner
+from ai_gateway.evals.redaction import redact_report
 
 ROOT = Path(__file__).resolve().parents[3]
 NAMESPACE = uuid5(NAMESPACE_URL, "https://dekopen.local/dev-fixture")
@@ -104,6 +106,9 @@ class Recorder:
             return output
         finally:
             entry["wall_latency_ms"] = round((time.perf_counter() - started) * 1000)
+            sanitized = redact_report(entry)
+            entry.clear()
+            entry.update(sanitized)
 
 
 def _snapshot(*, include_ai: bool = False) -> dict[str, str]:
@@ -237,6 +242,28 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
                        "WHERE org_id=%s AND order_type='WORKSHOP_OT' ORDER BY order_code", [ORG_ID])
         orders = cursor.fetchall()
     truth["work_order_code"] = str(orders[0][1]) if orders else None
+    if orders:
+        order_payload = orders[0][2]
+        if isinstance(order_payload, str):
+            order_payload = json.loads(order_payload)
+        truth["frame_bars"] = frame_bar_count(order_payload)
+    pricing_status, operations = _request(client, "get", "pricing/operations/")
+    if pricing_status == 200:
+        truth["most_expensive"] = priced_winner(project, operations)
+    if {"REV-A", "REV-B"} <= set(truth["revisions"]):
+        status, comparison = _request(client, "get",
+            f"documents/projects/{PROJECT_ID}/versions/compare/?base=REV-A&head=REV-B")
+        if status == 200:
+            truth["revision_differences"] = comparison.get("positions")
+    if case["expected"] == "kitchen_position":
+        kitchen = deepcopy(product)
+        module = kitchen["assembly"]["modules"][0]
+        module.update(width_mm="1600.00", height_mm="1100.00")
+        module["tree"]["opening_type"] = "SLIDING_2L"
+        compatibility = _engine_copy(client, kitchen, position["design"])
+        truth["sliding_compatibility_engine"] = compatibility
+        truth["sliding_supported"] = (engine_accepted(compatibility)
+                                      if compatibility.get("http_status") == 200 else None)
     production = _claims_context(claims, "production", {})
     truth["blocked_orders"] = [o for o in production.get("work_orders", []) if o.get("status") == "BLOCKED"]
     # Manager-only inventory coverage must not be inferred through estimator RLS.
@@ -361,7 +388,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
                                           }]}})
                         applied, _ = apply_copy(source_product, item["ops"])
                         engine = _engine_copy(client, applied, source["design"])
-                        batch_ok = batch_ok and engine["http_status"] == 200
+                        batch_ok = batch_ok and engine_accepted(engine)
                         batch_results.append({"position_id": item["position_id"], "product": applied,
                                               "engine": engine})
                 truth["batch_application_ok"] = batch_ok
@@ -370,7 +397,8 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
                 error_code = error_code or "canvas_registry_application_failed"
                 truth["batch_application_ok"] = False
             verdict = evaluate(case, before=before, after=after, result=result,
-                               truth=truth, changed_tables=changed)
+                               truth=truth, changed_tables=changed,
+                               engine_after=output.get("sandbox_engine_after") or {})
             if error_code:
                 verdict.update(passed=False, failure=classify(error_code, result.get("rejected") or []))
             output.update(verdict)
@@ -402,7 +430,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
     output["proposed_operations"] = proposed
     output["grounding_rejections"] = sum(r["phase"] == "grounding" for r in recorder.rounds)
     output["grounding_terminal_failure"] = error_code == "ai_agent_ungrounded"
-    return output
+    return redact_report(output)
 
 
 def main() -> int:
@@ -472,7 +500,7 @@ def main() -> int:
         "persistent_state_unchanged": unchanged, "summary": summarize(results), "cases": results,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
+    args.out.write_text(json.dumps(redact_report(report), ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
     print(f"{len(results)} cases recorded; persistent state {'unchanged' if unchanged else 'CHANGED'}.")
     # Product failures are baseline data; a broken harness/isolation is an error.
     return 0 if unchanged and not any(c.get("harness_error") for c in results) else 1
