@@ -107,29 +107,47 @@ class Recorder:
 
 
 def _snapshot(*, include_ai: bool = False) -> dict[str, str]:
+    from django.db import connection, transaction
+    from authentication.rls import tx_aborted
+
+    # Some legacy projection scopes restore `authenticated`, because their
+    # normal worker transaction ends immediately afterwards. Here the outer
+    # sandbox deliberately stays open. Inspect as the local connection owner
+    # without changing the actor/role used by any product endpoint or handler.
+    with transaction.atomic(), connection.cursor() as cursor:
+        cursor.execute("SELECT current_setting('role')")
+        previous_role = cursor.fetchone()[0]
+        cursor.execute("SET LOCAL ROLE NONE")
+        try:
+            return _snapshot_rows(cursor, include_ai=include_ai)
+        finally:
+            if not tx_aborted():
+                cursor.execute("SELECT set_config('role', %s, true)", [previous_role])
+
+
+def _snapshot_rows(cursor: Any, *, include_ai: bool) -> dict[str, str]:
     from django.db import connection
 
     snapshots = {}
-    with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT c.table_name FROM information_schema.columns c "
-            "JOIN information_schema.tables t USING (table_schema, table_name) "
-            "WHERE c.table_schema='public' AND c.column_name='org_id' "
-            "AND t.table_type='BASE TABLE' ORDER BY c.table_name"
-        )
-        tables = [r[0] for r in cursor.fetchall()]
-        for table in tables:
-            if table in AI_TABLES and not include_ai:
-                continue
-            quoted = connection.ops.quote_name(table)
-            cursor.execute(f"SELECT row_to_json(t) FROM public.{quoted} t WHERE org_id=%s", [ORG_ID])
-            rows = sorted(canonical(row[0]) for row in cursor.fetchall())
-            snapshots[table] = hashlib.sha256(canonical(rows).encode()).hexdigest()
-        if include_ai:
-            cursor.execute("SELECT row_to_json(t) FROM public.tenancy_organizations t WHERE id=%s", [ORG_ID])
-            snapshots["organization"] = hashlib.sha256(canonical(cursor.fetchall()).encode()).hexdigest()
-            cursor.execute("SELECT row_to_json(t) FROM public.ai_routes t WHERE capability='agent'")
-            snapshots["agent_route"] = hashlib.sha256(canonical(cursor.fetchall()).encode()).hexdigest()
+    cursor.execute(
+        "SELECT c.table_name FROM information_schema.columns c "
+        "JOIN information_schema.tables t USING (table_schema, table_name) "
+        "WHERE c.table_schema='public' AND c.column_name='org_id' "
+        "AND t.table_type='BASE TABLE' ORDER BY c.table_name"
+    )
+    tables = [r[0] for r in cursor.fetchall()]
+    for table in tables:
+        if table in AI_TABLES and not include_ai:
+            continue
+        quoted = connection.ops.quote_name(table)
+        cursor.execute(f"SELECT row_to_json(t) FROM public.{quoted} t WHERE org_id=%s", [ORG_ID])
+        rows = sorted(canonical(row[0]) for row in cursor.fetchall())
+        snapshots[table] = hashlib.sha256(canonical(rows).encode()).hexdigest()
+    if include_ai:
+        cursor.execute("SELECT row_to_json(t) FROM public.tenancy_organizations t WHERE id=%s", [ORG_ID])
+        snapshots["organization"] = hashlib.sha256(canonical(cursor.fetchall()).encode()).hexdigest()
+        cursor.execute("SELECT row_to_json(t) FROM public.ai_routes t WHERE capability='agent'")
+        snapshots["agent_route"] = hashlib.sha256(canonical(cursor.fetchall()).encode()).hexdigest()
     return snapshots
 
 

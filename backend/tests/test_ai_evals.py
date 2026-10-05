@@ -136,6 +136,7 @@ def test_technical_weight_is_exact_and_unknown_requires_cause():
     assert verdict("E09", before, before, result={"reply": "La hoja pesa 24,35 kg."}, truth=truth)["passed"]
     assert not verdict("E09", before, before, result={"reply": "La hoja pesa 24,34 kg."}, truth=truth)["passed"]
     assert verdict("E09", before, before, result={"reply": "Sin dato: falta la masa del perfil."})["passed"]
+    assert verdict("E09", before, before, result={"reply": "Sin dato: el contexto no trae el peso del motor."})["passed"]
     assert not verdict("E09", before, before, result={"reply": "Sin dato."})["passed"]
 
 

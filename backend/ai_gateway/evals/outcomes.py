@@ -168,7 +168,7 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
         weight = truth.get("right_leaf_weight")
         if weight is None:
             check("unknown_with_cause", bool(re.search(r"sin dato|no.*(?:peso|calcular|disponible)", text))
-                  and bool(re.search(r"autoridad|masa|motor|composici[oó]n|perfil|herrajes", text)))
+                  and bool(re.search(r"autoridad|masa|motor|composici[oó]n|perfil|herrajes|contexto|bom", text)))
             check("no_fabricated_weight", not re.search(r"\d+(?:[.,]\d+)?\s*(?:kg|kilos)", text))
         else:
             numbers = [Decimal(n.replace(",", ".")) for n in re.findall(
