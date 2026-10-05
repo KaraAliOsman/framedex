@@ -49,3 +49,26 @@ Append-only chronology. Keep newest entries at the bottom.
 
 - Merged PR #117 into `integracion/v1` at `023b8ba303b680ca50b6e10119ce4ee4514c9c38` after all four required GitHub checks passed on head `1f6f225c99c8faebec6f42a4a37f9bcf2514d5cd`.
 - Recorded the material acceptance, browser evidence and current-state limits; updated the queue to `mergeado`. `main` remains unchanged.
+
+## [2026-10-05] IA1 | outcome harness and diagnostic evidence
+
+- Added all 26 owner requests as YAML and a rollback-only agent POST → registered handler → job GET harness on the real local fixture and JWT. Applied proposals with the actual canvas command registry and assembly engine, without saving domain changes.
+- Classified provider/format/operation/grounding/context/outcome failures separately; retained raw rounds, rejected operations, exact structure and authoritative fixture facts. The documented baseline uses MOCK and the already configured real MiMo provider.
+- Repeated the 26 MOCK verdicts, structures, checks and rejections exactly. Added 20 oracle/recorder tests and a live PostgreSQL test that preserves the observer's role/claims across legacy projection scopes.
+- Preserved absent price/revision/OT/manufacturing authority as absence. Browser evidence shows that a completed job can carry rejected operations and no product change; IA2/IA3/P17 remain responsible for repairing these behaviors.
+- The baseline report, editorial scope, captures and integration metadata are recorded in the IA1 acceptance page. No production prompt, operation vocabulary, provider, public API, permission grant or formula was changed.
+- Closed a local gate-log redaction gap for the CLI's S3 table labels, with synthetic regression assertions and no saved credential values.
+
+## [2026-10-05] IA1 | review corrections and clean-stack reproduction
+
+- Required engine acceptance in graph-edit scores; grounded sliding refusals in selected-system evaluation; required bedroom destinations/quantities and the exact commercial discount fraction.
+- Replaced permanent missing-price/cut-plan/comparison placeholders with current authoritative reads. Added credential redaction without mutating provider requests/responses, and sealed the execution reference before measuring.
+- Rebuilt the local fixture after Database Gate teardown and found that project UUIDs change. The harness now discovers CASA_LOMAS under the estimator's organization; all 26 MOCK cases repeated exact outcomes, structures, checks, rejections and facts on that rebuilt fixture.
+- Verified 39 harness regressions, 1097 backend unit tests and the live PostgreSQL observer. The final report is a complete run against the corrected harness; no best-case selection or production AI repair is credited to IA1.
+
+## [2026-10-05] IA1 | final narrative false-positive audit
+
+- Required an actual offered glass alternative rather than a current-SKU mention, and a question about the missing window installation height rather than a note about the requested handle height. Rejected an explanation attributing LEFT/RIGHT to swing direction instead of hinge side.
+- Verified 48 harness regressions and all local lint/typecheck/unit gates: 472 engine + 2 xfail, 1106 backend and 697 frontend. Repeated complete isolated MOCK and MiMo suites on `dd4ce1cca555d5e8fa1fa130c8b538c7c5c1aa43`; MOCK outcomes/facts repeat exactly, MiMo passes E03/F01/G02 (3/26).
+- Retained a complete final run, replacing the earlier false-positive scores. Both source and persistence guards pass. F01 establishes the fixture's empty OT list; it does not establish diagnosis of a populated production fixture.
+- GitHub runs `37363249636` and `37367253485` cancelled jobs without acquiring hosted runners (runner id zero, no executed steps). Pinned the four CI jobs to Ubuntu 24.04, preserving every command, version, service and success requirement; final checks remain mandatory before integration.

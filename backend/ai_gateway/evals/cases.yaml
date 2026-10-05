@@ -1,0 +1,120 @@
+# Product-owner requests are preserved verbatim. Bracketed identifiers are
+# resolved from the real fixture and recorded separately as resolved_request.
+cases:
+  - id: E01
+    view: editor
+    request: divide la ventana en dos hojas iguales
+    setup: fixed
+    expected: two_fixed_bays
+  - id: E02
+    view: editor
+    request: la izquierda fija y la derecha oscilobatiente con la manilla a la derecha
+    setup: two_fixed
+    expected: fixed_tilt_left
+  - id: E03
+    view: editor
+    request: hazla de 1,8 metros de ancho por 1350 de alto
+    setup: fixed
+    expected: dimensions_1800_1350
+  - id: E04
+    view: editor
+    request: agrega un travesaño a 400 mm desde arriba para una banderola fija
+    setup: fixed
+    expected: transom_400
+  - id: E05
+    view: editor
+    request: cambia el vidrio a termopanel 4-12-4
+    setup: fixed
+    expected: glass_4_12_4
+  - id: E06
+    view: editor
+    request: pon vidrio laminado 4+4
+    setup: fixed
+    expected: unavailable_laminated
+  - id: E07
+    view: editor
+    request: conviértela en corredera de dos hojas
+    setup: fixed
+    expected: incompatible_sliding
+  - id: E08
+    view: editor
+    request: manilla a 1050 del piso
+    setup: fixed
+    expected: installation_question
+  - id: E09
+    view: editor
+    request: ¿cuánto pesa la hoja derecha?
+    setup: fixed_tilt
+    expected: engine_weight
+  - id: E10
+    view: editor
+    request: ¿por qué no puedo guardar?
+    setup: fixed
+    expected: engine_blockers
+  - id: E11
+    view: editor
+    request: aser la bentana 20 cm mas ancha
+    setup: fixed
+    expected: width_plus_200
+  - id: E12
+    view: editor
+    request: pon la manilla al otro lado
+    setup: tilt_left
+    expected: tilt_right
+  - id: E13
+    view: editor
+    request: 'tres hojas: fija al centro y abatibles a los lados'
+    setup: fixed
+    expected: three_bays
+  - id: J01
+    view: project
+    request: cambia el vidrio de todas las ventanas del segundo piso a [SKU existente]
+    expected: second_floor_glass
+  - id: J02
+    view: project
+    request: crea una corredera de 2 hojas de 1600 × 1100 para la cocina
+    expected: kitchen_position
+  - id: J03
+    view: project
+    request: duplica la posición 3 cuatro veces para los dormitorios
+    expected: four_duplicates
+  - id: J04
+    view: project
+    request: ¿cuál es la posición más cara y por qué?
+    expected: most_expensive
+  - id: J05
+    view: project
+    request: baja el precio un 5 %
+    expected: discount_proposal
+  - id: J06
+    view: project
+    request: emite la cotización
+    expected: prepare_quote
+  - id: J07
+    view: project
+    request: ¿qué falta para emitir?
+    expected: backend_missing
+  - id: J08
+    view: project
+    request: compara la REV-A con la REV-B
+    expected: revision_comparison
+  - id: F01
+    view: factory
+    request: ¿qué OT están bloqueadas y por qué?
+    expected: blocked_orders
+  - id: F02
+    view: factory
+    request: ¿cuántas barras de marco usa la OT [código]?
+    expected: frame_bars
+  - id: F03
+    view: factory
+    request: prepara la compra de lo que falta
+    expected: prepare_purchase
+  - id: G01
+    view: general
+    request: dame un precio aproximado de una ventana de 2 × 2 sin crearla
+    expected: offer_engine_draft
+  - id: G02
+    view: general
+    request: ¿qué diferencia hay entre oscilobatiente y abatible?
+    expected: opening_explanation

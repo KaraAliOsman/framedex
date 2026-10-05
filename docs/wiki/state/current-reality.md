@@ -3,12 +3,13 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: 023b8ba303b680ca50b6e10119ce4ee4514c9c38
+verified_ref: dd4ce1cca555d5e8fa1fa130c8b538c7c5c1aa43
 sources:
   - repository main
   - P00 foundation PR #114
   - local stack fixes PR #116
   - P01 local gates and browser evidence, 2026-10-05
+  - IA1 rollback harness and dated outcome evidence, 2026-10-05
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -19,6 +20,14 @@ sources:
 # Current reality
 
 **Warning:** this is a volatile navigation page. Re-check the repository before relying on it for implementation decisions.
+
+## IA1 outcome measurement verified 2026-10-05
+
+The rollback-only local evaluation harness runs the 26 owner requests through the real agent endpoint, handler and job read. Proposed commands apply to copies via the canvas registry and the engine, with exact structural oracles and persistent-state checks. The dated MOCK/real-provider results and root causes are in [the baseline report](../../ai/evals/README.md); this acceptance measures the AI and does not claim that its failing capabilities were repaired.
+
+MOCK repeated the same 26 verdicts and structures. The local fixture has no applied prices, emitted A/B revisions or optimized OT; missing authority remains explicit. Browser evidence reproduces completed jobs with rejected operations and no saved design. IA2/IA3 must address these behaviors against the same outcome suite. No provider credential, public API, production prompt, operation vocabulary or engine formula changed in IA1.
+
+The final baseline is MiMo 3/26 and MOCK 0/26. E03, F01 and G02 pass, with F01 limited to the real empty order list. Both reports verified unchanged persistent state and source. Graph scores require engine acceptance; compatibility refusals require catalog authority, duplication requires bedroom destinations, and existing applied prices/cut plans are loaded when present. The 48 oracle regressions include rejection of false glass offers, missing installation questions and contradictory handedness. The PostgreSQL observer regression passed after a clean-stack rebuild.
 
 ## Verified repository baseline
 

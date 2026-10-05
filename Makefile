@@ -1,4 +1,4 @@
-.PHONY: help lint typecheck test test-engine test-backend test-frontend test-mutations test-db build check goldgen runjobs
+.PHONY: help lint typecheck test test-engine test-backend test-frontend test-mutations test-db build check goldgen runjobs ai-evals
 
 PY := python
 NPM := npm --prefix frontend
@@ -14,6 +14,7 @@ help:
 	@echo "  make runjobs        - durable background-job worker (claim + execute queue)"
 	@echo "  make check          - lint + typecheck + test + build"
 	@echo "  make goldgen        - regenerate engine golden snapshots"
+	@echo "  make ai-evals       - 26 MOCK outcomes on a rollback-only local fixture"
 
 lint:
 	$(PY) -m ruff check .
@@ -53,6 +54,9 @@ build:
 
 runjobs:
 	$(PY) backend/manage.py runjobs
+
+ai-evals:
+	$(PY) scripts/ai_evals.py --provider MOCK --out docs/ai/evals/mock-latest.json
 
 check: lint typecheck test build
 

@@ -32,6 +32,8 @@ def test_failed_command_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_gate_logs_redact_secret_values_in_json_and_text() -> None:
+    assert "fixture-s3-secret" not in local_gates.redact("│ Secret Key │ fixture-s3-secret │")
+    assert "fixture-s3-access" not in local_gates.redact("│ Access Key │ fixture-s3-access │")
     assert '"JWT_SECRET":"[redacted]"' in local_gates.redact('{"JWT_SECRET":"fixture-secret"}')
     assert "JWT_SECRET=[redacted]" in local_gates.redact("JWT_SECRET=fixture-secret")
     assert "fixture-password" not in local_gates.redact("postgresql://postgres:fixture-password@localhost/db")
