@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: 4e924c68440a6f87ab5464ce1f2f503f607a3208
+verified_ref: dd4ce1cca555d5e8fa1fa130c8b538c7c5c1aa43
 sources:
   - docs/cola/prompts/IA1-diagnostico-evals.md
   - backend/ai_gateway/evals/cases.yaml
@@ -28,7 +28,7 @@ A PostgreSQL observer regression test verifies that its snapshot inspection rest
 
 MOCK repeated all 26 verdicts/checks/structures/rejections exactly. The real MiMo configuration is used without printing or saving credential values. The report preserves a complete dated run; temperature zero does not guarantee identical responses from the external model.
 
-The corrected final harness measured MiMo at 6/26 (23.1%) and MOCK at 0/26. F01 retained the observed HTTP 429 as a provider failure. Both complete reports verified unchanged persistent state and unchanged executed source; the passing single-module handedness case E12 does not establish bay-directed editing in a divided frame.
+The final 48-regression harness measured MiMo at 3/26 (11.5%) and MOCK at 0/26. E03, F01 and G02 pass; F01 verifies the genuinely empty order list, not a populated blocked-order diagnosis. Both complete reports verified unchanged persistent state and unchanged executed source. Earlier runs were replaced after fixing false positives: a current glass mention is not an offered alternative, a requested handle-height note is not the missing installation datum, and LEFT/RIGHT must not be described as the swing direction.
 
 The casa fixture has 12 positions but no applied prices, emitted A/B revisions or optimized OT. Its catalog is synthetic and cannot authorize manufacturing. Cases needing absent truth retain `contexto_insuficiente`; raw zero prices cannot prove a ranking. Other cases expose missing bay/position operations, ambiguous wire fields, missing authoritative context and literal numeric grounding.
 

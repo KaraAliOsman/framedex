@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: 4e924c68440a6f87ab5464ce1f2f503f607a3208
+verified_ref: dd4ce1cca555d5e8fa1fa130c8b538c7c5c1aa43
 sources:
   - repository main
   - P00 foundation PR #114
@@ -27,7 +27,7 @@ The rollback-only local evaluation harness runs the 26 owner requests through th
 
 MOCK repeated the same 26 verdicts and structures. The local fixture has no applied prices, emitted A/B revisions or optimized OT; missing authority remains explicit. Browser evidence reproduces completed jobs with rejected operations and no saved design. IA2/IA3 must address these behaviors against the same outcome suite. No provider credential, public API, production prompt, operation vocabulary or engine formula changed in IA1.
 
-The corrected final baseline is MiMo 6/26 and MOCK 0/26, including the observed provider HTTP 429 in F01. Both reports verified unchanged persistent state and source. Graph scores require engine acceptance; compatibility refusals require catalog authority, duplication requires bedroom destinations, and existing applied prices/cut plans are loaded when present. The 39 oracle regressions and PostgreSQL observer regression passed after a clean-stack rebuild.
+The final baseline is MiMo 3/26 and MOCK 0/26. E03, F01 and G02 pass, with F01 limited to the real empty order list. Both reports verified unchanged persistent state and source. Graph scores require engine acceptance; compatibility refusals require catalog authority, duplication requires bedroom destinations, and existing applied prices/cut plans are loaded when present. The 48 oracle regressions include rejection of false glass offers, missing installation questions and contradictory handedness. The PostgreSQL observer regression passed after a clean-stack rebuild.
 
 ## Verified repository baseline
 

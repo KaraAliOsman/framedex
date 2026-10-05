@@ -65,3 +65,10 @@ Append-only chronology. Keep newest entries at the bottom.
 - Replaced permanent missing-price/cut-plan/comparison placeholders with current authoritative reads. Added credential redaction without mutating provider requests/responses, and sealed the execution reference before measuring.
 - Rebuilt the local fixture after Database Gate teardown and found that project UUIDs change. The harness now discovers CASA_LOMAS under the estimator's organization; all 26 MOCK cases repeated exact outcomes, structures, checks, rejections and facts on that rebuilt fixture.
 - Verified 39 harness regressions, 1097 backend unit tests and the live PostgreSQL observer. The final report is a complete run against the corrected harness; no best-case selection or production AI repair is credited to IA1.
+
+## [2026-10-05] IA1 | final narrative false-positive audit
+
+- Required an actual offered glass alternative rather than a current-SKU mention, and a question about the missing window installation height rather than a note about the requested handle height. Rejected an explanation attributing LEFT/RIGHT to swing direction instead of hinge side.
+- Verified 48 harness regressions and all local lint/typecheck/unit gates: 472 engine + 2 xfail, 1106 backend and 697 frontend. Repeated complete isolated MOCK and MiMo suites on `dd4ce1cca555d5e8fa1fa130c8b538c7c5c1aa43`; MOCK outcomes/facts repeat exactly, MiMo passes E03/F01/G02 (3/26).
+- Retained a complete final run, replacing the earlier false-positive scores. Both source and persistence guards pass. F01 establishes the fixture's empty OT list; it does not establish diagnosis of a populated production fixture.
+- GitHub runs `37363249636` and `37367253485` cancelled jobs without acquiring hosted runners (runner id zero, no executed steps). Pinned the four CI jobs to Ubuntu 24.04, preserving every command, version, service and success requirement; final checks remain mandatory before integration.

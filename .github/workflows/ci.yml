@@ -10,7 +10,7 @@ on:
 jobs:
   lint-and-typecheck:
     name: Lint & Typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -44,7 +44,7 @@ jobs:
 
   test-suite:
     name: Test Suite
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -82,7 +82,7 @@ jobs:
 
   frontend-build:
     name: Frontend Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -101,7 +101,7 @@ jobs:
 
   database-gate:
     name: Database Gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7.0.1
 

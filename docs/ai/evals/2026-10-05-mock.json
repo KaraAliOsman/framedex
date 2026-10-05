@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-10-05T19:47:12.000299+00:00",
-  "verified_ref": "4e924c68440a6f87ab5464ce1f2f503f607a3208",
+  "generated_at": "2026-10-05T20:07:00.123768+00:00",
+  "verified_ref": "dd4ce1cca555d5e8fa1fa130c8b538c7c5c1aa43",
   "execution_source_unchanged": true,
   "provider": "MOCK",
   "provider_model": "deterministic-eval",
@@ -2715,7 +2715,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "a87d16a4-8689-4233-b31e-da0453d35461",
+        "audit_id": "8d9079b6-f11e-42c3-88b9-da365106dc41",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -2733,7 +2733,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1164,
+      "latency_ms": 1152,
       "rounds": [
         {
           "round": 1,
@@ -2791,7 +2791,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 38
+          "wall_latency_ms": 32
         }
       ],
       "round_count": 1,
@@ -6582,7 +6582,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "a3d2911e-c1fe-4c64-9a61-46a93c31bfef",
+        "audit_id": "f8dd5e1a-7e51-4c2b-98dc-d1a81b8e6b2e",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -6600,7 +6600,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1164,
+      "latency_ms": 1202,
       "rounds": [
         {
           "round": 1,
@@ -6660,7 +6660,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 30
+          "wall_latency_ms": 33
         }
       ],
       "round_count": 1,
@@ -9295,7 +9295,7 @@
       "rejected_operations": [],
       "error_code": "ai_agent_ungrounded",
       "changed_domain_tables": [],
-      "latency_ms": 1168,
+      "latency_ms": 1140,
       "rounds": [
         {
           "round": 1,
@@ -9343,7 +9343,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 34
+          "wall_latency_ms": 29
         },
         {
           "round": 2,
@@ -9398,7 +9398,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 37
+          "wall_latency_ms": 29
         }
       ],
       "round_count": 2,
@@ -12056,7 +12056,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "d0cc0515-4cfb-446d-85c4-2c5ec90edd6e",
+        "audit_id": "d2132886-0949-40ed-ae68-e094575da9f1",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -12074,7 +12074,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1123,
+      "latency_ms": 1137,
       "rounds": [
         {
           "round": 1,
@@ -12122,7 +12122,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 31
+          "wall_latency_ms": 32
         }
       ],
       "round_count": 1,
@@ -14530,7 +14530,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "6db696c7-d419-43c8-b593-eccbd0079556",
+        "audit_id": "6539a3a0-bfc3-4815-8c41-283ab2efed8d",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -14548,7 +14548,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1101,
+      "latency_ms": 1189,
       "rounds": [
         {
           "round": 1,
@@ -14596,7 +14596,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 31
+          "wall_latency_ms": 32
         }
       ],
       "round_count": 1,
@@ -17004,7 +17004,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "49e2add5-f75a-4264-999a-2a9640f6a150",
+        "audit_id": "75800c96-4e23-44d0-a727-dab170c03d2b",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -17022,7 +17022,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1147,
+      "latency_ms": 1139,
       "rounds": [
         {
           "round": 1,
@@ -17070,7 +17070,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 31
+          "wall_latency_ms": 33
         }
       ],
       "round_count": 1,
@@ -20608,7 +20608,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "26941a86-eee4-4ef4-b45d-46155ae4ed41",
+        "audit_id": "42f3dcbe-68c8-462a-9a98-cfa5a04d7b4c",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -20626,7 +20626,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1204,
+      "latency_ms": 1194,
       "rounds": [
         {
           "round": 1,
@@ -20686,7 +20686,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 31
+          "wall_latency_ms": 32
         }
       ],
       "round_count": 1,
@@ -23092,7 +23092,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "9bbe0513-15f1-45e7-8b10-b983664286c0",
+        "audit_id": "91f336dd-34ae-44ad-a17d-10fe94b27929",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -23110,7 +23110,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1132,
+      "latency_ms": 1104,
       "rounds": [
         {
           "round": 1,
@@ -23158,7 +23158,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 31
+          "wall_latency_ms": 37
         }
       ],
       "round_count": 1,
@@ -26238,7 +26238,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "9a470d96-cb9a-4050-9d8d-ca6e800b70fe",
+        "audit_id": "82abb004-e633-47b7-800d-7332fb2e7c29",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -26256,7 +26256,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1147,
+      "latency_ms": 1165,
       "rounds": [
         {
           "round": 1,
@@ -26304,7 +26304,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 30
+          "wall_latency_ms": 31
         }
       ],
       "round_count": 1,
@@ -28698,7 +28698,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "c094b0e6-b44a-44f1-983d-ea69c1466ba5",
+        "audit_id": "0ee0b1aa-9419-4f40-90a9-5b5347238369",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -28716,7 +28716,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1120,
+      "latency_ms": 1112,
       "rounds": [
         {
           "round": 1,
@@ -31393,7 +31393,7 @@
       "rejected_operations": [],
       "error_code": "ai_agent_ungrounded",
       "changed_domain_tables": [],
-      "latency_ms": 1185,
+      "latency_ms": 1229,
       "rounds": [
         {
           "round": 1,
@@ -31441,7 +31441,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 32
+          "wall_latency_ms": 33
         },
         {
           "round": 2,
@@ -34702,7 +34702,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "a76ee9be-d5d6-4b79-81bd-d68821eefebb",
+        "audit_id": "532d565c-be07-4dcd-a5d1-3ec7419b69df",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -34720,7 +34720,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1120,
+      "latency_ms": 1160,
       "rounds": [
         {
           "round": 1,
@@ -34768,7 +34768,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 32
+          "wall_latency_ms": 31
         }
       ],
       "round_count": 1,
@@ -37429,7 +37429,7 @@
             "surface": "position"
           }
         ],
-        "audit_id": "6cabd43b-7337-49ac-8f43-965f5c0fa6f1",
+        "audit_id": "5066dac5-4b68-4da8-94e7-ff5ef26111b2",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -37447,7 +37447,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1092,
+      "latency_ms": 1129,
       "rounds": [
         {
           "round": 1,
@@ -37495,7 +37495,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 31
+          "wall_latency_ms": 34
         }
       ],
       "round_count": 1,
@@ -39732,7 +39732,7 @@
             "surface": "project"
           }
         ],
-        "audit_id": "ca705ab2-2f93-4e75-82e0-3bd8bb9b0b00",
+        "audit_id": "071c9bf4-963e-450b-8ff1-06502506a8ac",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -39750,7 +39750,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1007,
+      "latency_ms": 1000,
       "rounds": [
         {
           "round": 1,
@@ -42705,7 +42705,7 @@
             "surface": "project"
           }
         ],
-        "audit_id": "8102a416-c28c-4c3a-b328-6c1816bedf06",
+        "audit_id": "bddac382-d3a3-4178-9cf1-8bc2786c054d",
         "rejected": [
           {
             "op": "batch_ops",
@@ -42821,7 +42821,7 @@
       ],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1029,
+      "latency_ms": 1094,
       "rounds": [
         {
           "round": 1,
@@ -42883,7 +42883,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 32
+          "wall_latency_ms": 34
         }
       ],
       "round_count": 1,
@@ -45112,7 +45112,7 @@
             "surface": "project"
           }
         ],
-        "audit_id": "05ce8f11-6588-43b2-9ad3-0004f85fa5f1",
+        "audit_id": "75668828-a1fa-4e4e-9599-ad25121fd6d1",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -45130,7 +45130,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1027,
+      "latency_ms": 1081,
       "rounds": [
         {
           "round": 1,
@@ -45177,7 +45177,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 32
+          "wall_latency_ms": 37
         }
       ],
       "round_count": 1,
@@ -47406,7 +47406,7 @@
             "surface": "project"
           }
         ],
-        "audit_id": "3b683ef8-4273-4b2b-96f8-8138414b646a",
+        "audit_id": "b8d1a70e-256b-43f1-842b-341fa50006d2",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -47424,7 +47424,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 995,
+      "latency_ms": 1019,
       "rounds": [
         {
           "round": 1,
@@ -47471,7 +47471,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 31
+          "wall_latency_ms": 37
         }
       ],
       "round_count": 1,
@@ -49700,7 +49700,7 @@
             "surface": "project"
           }
         ],
-        "audit_id": "e2a04969-0b61-4c20-af07-a0f45b19e589",
+        "audit_id": "724568c3-57bf-4fa2-8638-bda380812e7a",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -49718,7 +49718,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1021,
+      "latency_ms": 1044,
       "rounds": [
         {
           "round": 1,
@@ -49765,7 +49765,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 34
+          "wall_latency_ms": 33
         }
       ],
       "round_count": 1,
@@ -51988,7 +51988,7 @@
             "surface": "project"
           }
         ],
-        "audit_id": "9e6afe33-8b2c-4a65-bbeb-7b3134c2a0d2",
+        "audit_id": "0b22e94b-eb48-42c3-a116-8718ef531867",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -52006,7 +52006,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 997,
+      "latency_ms": 1005,
       "rounds": [
         {
           "round": 1,
@@ -52031,7 +52031,7 @@
           "model": "DEKOPEN Agente™",
           "tokens_prompt": 428,
           "tokens_completion": 49,
-          "latency_ms": 15,
+          "latency_ms": 0,
           "credits_debited": 8,
           "document": {
             "reply": "Revisé el contexto de Ventanas del Sur SpA para “emite la cotización”. Respuesta determinista del proveedor MOCK.",
@@ -52053,7 +52053,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 33
+          "wall_latency_ms": 35
         }
       ],
       "round_count": 1,
@@ -54276,7 +54276,7 @@
             "surface": "project"
           }
         ],
-        "audit_id": "8e1c5814-3c66-48d2-b469-afa13a0f3ac5",
+        "audit_id": "8d2cffee-62a1-43b6-a059-4879ec394d66",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -54294,7 +54294,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1014,
+      "latency_ms": 978,
       "rounds": [
         {
           "round": 1,
@@ -54341,7 +54341,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 31
+          "wall_latency_ms": 32
         }
       ],
       "round_count": 1,
@@ -56573,7 +56573,7 @@
             "surface": "project"
           }
         ],
-        "audit_id": "b1924918-3f1e-452f-a11e-0c955e5cf4a6",
+        "audit_id": "df833e17-c7ff-4b68-ad6d-3783de5e4261",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -56591,7 +56591,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1032,
+      "latency_ms": 1018,
       "rounds": [
         {
           "round": 1,
@@ -56638,7 +56638,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 34
+          "wall_latency_ms": 33
         }
       ],
       "round_count": 1,
@@ -58853,7 +58853,7 @@
             "surface": "production"
           }
         ],
-        "audit_id": "7895f087-deb3-4818-9c28-fb1d93cb7fd0",
+        "audit_id": "bf695797-48dc-4ca7-88d5-10f3ce87859c",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -58866,7 +58866,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1032,
+      "latency_ms": 983,
       "rounds": [
         {
           "round": 1,
@@ -58903,7 +58903,7 @@
             "claims": [],
             "questions": []
           },
-          "wall_latency_ms": 32
+          "wall_latency_ms": 30
         }
       ],
       "round_count": 1,
@@ -61124,7 +61124,7 @@
             "surface": "production"
           }
         ],
-        "audit_id": "1a414e64-7760-4faf-892e-6afe1b61a264",
+        "audit_id": "0360a63c-a728-4236-a843-62a02314c0ab",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -61137,7 +61137,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1007,
+      "latency_ms": 996,
       "rounds": [
         {
           "round": 1,
@@ -63401,7 +63401,7 @@
             "surface": "production"
           }
         ],
-        "audit_id": "a15566f0-f313-4ec9-ba34-a29f20b351c6",
+        "audit_id": "9dc9d796-22cb-4420-a080-591eae57e0f2",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -63414,7 +63414,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1031,
+      "latency_ms": 1011,
       "rounds": [
         {
           "round": 1,
@@ -63451,7 +63451,7 @@
             "claims": [],
             "questions": []
           },
-          "wall_latency_ms": 37
+          "wall_latency_ms": 33
         }
       ],
       "round_count": 1,
@@ -65686,7 +65686,7 @@
             "surface": "dashboard"
           }
         ],
-        "audit_id": "39ecd11e-59b2-4876-8974-7c2ab7f2a1ad",
+        "audit_id": "7642e2aa-1460-477c-9021-6619babd9e86",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -65708,7 +65708,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1042,
+      "latency_ms": 1026,
       "rounds": [
         {
           "round": 1,
@@ -65753,7 +65753,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 40
+          "wall_latency_ms": 34
         }
       ],
       "round_count": 1,
@@ -66028,6 +66028,12 @@
         },
         {
           "check": "no_technical_numbers",
+          "passed": true,
+          "expected": null,
+          "actual": null
+        },
+        {
+          "check": "consistent_handedness",
           "passed": true,
           "expected": null,
           "actual": null
@@ -67988,7 +67994,7 @@
             "surface": "dashboard"
           }
         ],
-        "audit_id": "867ba7b4-6f17-4004-8841-9db52544fb74",
+        "audit_id": "9f1944db-99ba-4891-b411-8995030cb59f",
         "rejected": [],
         "warnings": [],
         "artifacts": [],
@@ -68010,7 +68016,7 @@
       "rejected_operations": [],
       "error_code": "",
       "changed_domain_tables": [],
-      "latency_ms": 1016,
+      "latency_ms": 1024,
       "rounds": [
         {
           "round": 1,
@@ -68055,7 +68061,7 @@
             ],
             "questions": []
           },
-          "wall_latency_ms": 33
+          "wall_latency_ms": 34
         }
       ],
       "round_count": 1,
