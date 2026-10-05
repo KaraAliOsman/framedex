@@ -180,6 +180,8 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
                 re.search(r"(?:instal|antepecho|ventana.*piso|piso.*ventana)", q.lower())
                 for q in questions), "typed question about window installation height", questions)
         else:
+            check("selected_system_rejects_sliding", truth.get("sliding_supported") is False,
+                  "negative engine/catalog compatibility", truth.get("sliding_supported"))
             check("incompatibility_explained", bool(re.search(
                 r"incompat|no admite|no.*compatible|sistema.*(?:no permite|practicable)", text)))
     elif expectation == "engine_weight":

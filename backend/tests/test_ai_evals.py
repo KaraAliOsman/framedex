@@ -82,6 +82,13 @@ def test_kitchen_refusal_requires_negative_catalog_engine_authority(supported):
                    result={"reply": "Este sistema no admite correderas."})["passed"] is (supported is False)
 
 
+def test_mixed_fixture_does_not_credit_a_false_casement_incompatibility_claim():
+    before = product()
+    result = {"reply": "Este sistema practicable no admite correderas."}
+    assert not verdict("E07", before, before, truth={"sliding_supported": True}, result=result)["passed"]
+    assert verdict("E07", before, before, truth={"sliding_supported": False}, result=result)["passed"]
+
+
 def test_bedroom_copies_preserve_quantity_and_require_destinations():
     before = product()
     source = {"id": "source", "quantity": 2, "design": {"system_id": "system", "color": "WHITE"}}

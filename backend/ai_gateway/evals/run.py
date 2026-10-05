@@ -263,10 +263,11 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
             f"documents/projects/{project_id}/versions/compare/?base=REV-A&head=REV-B")
         if status == 200:
             truth["revision_differences"] = comparison.get("positions")
-    if case["expected"] == "kitchen_position":
+    if case["expected"] in {"kitchen_position", "incompatible_sliding"}:
         kitchen = deepcopy(product)
         module = kitchen["assembly"]["modules"][0]
-        module.update(width_mm="1600.00", height_mm="1100.00")
+        if case["expected"] == "kitchen_position":
+            module.update(width_mm="1600.00", height_mm="1100.00")
         module["tree"]["opening_type"] = "SLIDING_2L"
         compatibility = _engine_copy(client, kitchen, position["design"])
         truth["sliding_compatibility_engine"] = compatibility
