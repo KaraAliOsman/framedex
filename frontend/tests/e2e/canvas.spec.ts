@@ -163,7 +163,8 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   await expect(page.getByText("FIXED", { exact: true })).toBeVisible();
   await expect(page.getByTestId("canvas-glass-dimension")).toHaveText("904 × 904 mm");
   await expect(page.getByTestId("technical-frame")).toHaveText("1\u2009006 mm");
-  await expect(page.getByTestId("technical-reinforcement")).toHaveText("970 mm");
+  // The new sourced rule deducts 30 mm from the 1006 mm profile cut.
+  await expect(page.getByTestId("technical-reinforcement")).toHaveText("976 mm");
   await expect(page.getByTestId("technical-glass")).toHaveText("904 × 904 mm");
   await expect(page.getByTestId("technical-bead")).toHaveText("913 mm");
   expect(calculationRequests).toBe(1);

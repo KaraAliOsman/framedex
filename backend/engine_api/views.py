@@ -192,7 +192,9 @@ class EngineLayoutView(EngineCalculateView):
         )
         return {
             "calculation_hash": super().build_response(data, result, params)["calculation_hash"],
-            "nodes": node_layout(compute_geometry(root, params)),
+            "nodes": node_layout(compute_geometry(
+                root, params, is_foiled=data["color"] != "WHITE", finish=data["color"]
+            )),
         }
 
 

@@ -68,7 +68,7 @@ def _execute(request: Request, *, inspection: bool) -> Response:
             config = InspectorRepository().load(system_id, org_id)
             root = normalized_root_from_api(**arguments)
             computation = compute_geometry(
-                root, params, diagnostic=True, is_foiled=data["color"] != "WHITE"
+                root, params, diagnostic=True, is_foiled=data["color"] != "WHITE", finish=data["color"]
             )
             annotations = [WorkshopAnnotations.model_validate(item) for item in data["annotations"]]
             targets = {(o.bay_id, None) for o in computation.openings} | {

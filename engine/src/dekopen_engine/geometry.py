@@ -411,9 +411,9 @@ def _append_profile(
     length_mm = rounded_profile_cut(length_mm, article)
     if article.cut_rule is not None:
         if welded_ends != 1:
-            angle_left = angle_right = Decimal(article.cut_rule.angle_degrees)
+            angle_left = angle_right = Decimal(article.cut_rule.angle_degrees).quantize(Decimal("0.1"))
         else:
-            angle_left = Decimal(article.cut_rule.angle_degrees)
+            angle_left = Decimal(article.cut_rule.angle_degrees).quantize(Decimal("0.1"))
     if length_mm <= Decimal("0"):
         raise ValueError("Profile cut must be positive")
     if qty != len(placements) or len({item.semantic_member_id for item in placements}) != qty:
