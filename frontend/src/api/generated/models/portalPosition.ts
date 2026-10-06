@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CommercialHardware } from "./commercialHardware";
 
 export interface PortalPosition {
   id: string;
@@ -23,6 +24,7 @@ export interface PortalPosition {
   /** @nullable */
   color_exterior: string | null;
   glass_specs: string[];
+  commercial_hardware?: CommercialHardware[];
   /** @nullable */
   finish: string | null;
   /** @nullable */

@@ -643,10 +643,18 @@ def project_manufacturing_facts_v1(
             segment = trace_member.direct_segment
         elif trace_member.placement_domain is PlacementDomain.SLIDING_LEAF:
             assert trace_member.parent_leaf_id is not None
+            # Interlocks have their own immutable physical identity, while
+            # geometry declares which leaf edge hosts them. Keep the slot
+            # identity and project that explicit edge onto the placed leaf.
+            placement_side = trace_member.physical_member_slot
+            if trace_member.role is ProfileRole.INTERLOCK and placement_side in (
+                "INTERLOCK-LEFT", "INTERLOCK-RIGHT",
+            ):
+                placement_side = placement_side.removeprefix("INTERLOCK-")
             try:
                 segment = _segment_for_side(
                     leaf_rects[trace_member.parent_leaf_id],
-                    _member_side(trace_member.physical_member_slot),
+                    _member_side(placement_side),
                 )
             except KeyError as error:
                 raise ManufacturingAuthorityError("Sliding member parent leaf is missing") from error

@@ -1,0 +1,56 @@
+[
+  {
+    "name": "catalogo-1440-light",
+    "screenshot": "catalogo-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "catalogo-1280-light",
+    "screenshot": "catalogo-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "catalogo-1024-light",
+    "screenshot": "catalogo-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "catalogo-1440-dark",
+    "screenshot": "catalogo-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "catalogo-1280-dark",
+    "screenshot": "catalogo-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "catalogo-1024-dark",
+    "screenshot": "catalogo-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  }
+]

@@ -87,3 +87,26 @@ def test_snapshot_request_identity_and_response_contract() -> None:
     changed = deepcopy(request)
     changed["color"] = "CHANGED-HASH-INPUT"
     assert calculation_response(changed, golden_result())["calculation_hash"] != response["calculation_hash"]
+
+
+def test_expanded_sliding_hardware_preserves_exact_mass_on_reopen() -> None:
+    from dekopen_engine.geometry import calculate_geometry
+    from dekopen_engine.models import EngineResult
+    from dekopen_engine.snapshot import result_payload
+    from engine.tests.hardware_cases import hardware_case_inputs
+
+    _, params, node, _ = hardware_case_inputs()[2]
+    result = calculate_geometry(node, params)
+    payload = result_payload(result)
+    items = payload["hardware_items"]
+    assert isinstance(items, list) and isinstance(items[0], dict)
+    resolution = items[0]["resolution"]
+    assert isinstance(resolution, dict)
+    assert resolution["exact_leaf_weight_kg"] == "115.8952624"
+    reopened = EngineResult.model_validate_json(json.dumps(payload))
+    assert canonical_json(result_payload(reopened, exclude_unset=True)) == canonical_json(payload)
+
+
+def test_legacy_hardware_keeps_canonical_scale_without_resolution() -> None:
+    legacy = {"contents": [{"weight_kg": D("1.5"), "cut_length_mm": D("1200")}], "resolution": None}
+    assert canonical_json(legacy) == b'{"contents":[{"cut_length_mm":"1200.00","weight_kg":"1.50"}],"resolution":null}'

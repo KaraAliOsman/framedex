@@ -44,6 +44,11 @@ def stock_variant_key(
     openings)."""
     if physical_stock_identity:
         return str(physical_stock_identity)
+    if str(category or "") == "FITTING" and isinstance(specification, dict) and specification.get("oriented_height_mm") is not None:
+        # A cut-to-length transmission is not fungible with the same article
+        # at another length. Keep historical counted fittings' empty bucket.
+        length = Decimal(str(specification["oriented_height_mm"]))
+        return "LENGTH:" + format(length.normalize(), "f")
     if str(category or "") in _SPEC_KEYED_CATEGORIES and isinstance(
         specification, dict
     ) and specification:

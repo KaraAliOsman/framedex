@@ -362,6 +362,8 @@ def _trace_operations(
     derived = operations_from_plan(
         bars=bars, fact_units=fact_units, issues=ops_issues
     )
+    from production.service import _sealed_hardware_operations
+    derived.extend(_sealed_hardware_operations(version_snapshot, str(payload.get("position_id") or "") or None, fact_units, ops_issues))
     ops = [op.model_dump(mode="json") for op in derived]
     by_kind: dict[str, int] = {}
     for op in ops:

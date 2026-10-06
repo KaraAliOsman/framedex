@@ -20,6 +20,7 @@ from catalogs.evidence import EVIDENCE_TABLES, EVIDENCE_SCOPES, EVIDENCE_UNITS
 from dekopen_engine.models import OpeningCapability, PairedLeafRule
 from pydantic import TypeAdapter
 from pricing.repository import json_text
+from dekopen_engine.hardware_classes import parse_hardware_class
 
 KIT_OPENING_TYPES = sorted(
     {
@@ -443,6 +444,8 @@ class KitWriteSerializer(StrictSerializer):
             lower, upper = f"min_leaf_{axis}_mm", f"max_leaf_{axis}_mm"
             if lower in effective and upper in effective and effective[lower] > effective[upper]:
                 raise serializers.ValidationError({upper: "Maximum must not be below minimum."})
+        if effective.get("class_authority") is not None and effective.get("contents"):
+            raise serializers.ValidationError({"contents": "Una clase expandible declara sus componentes en la autoridad. Deja vacío el contenido histórico para evitar dos fuentes."})
         return attrs
 
     system_id = serializers.UUIDField(allow_null=True)
@@ -467,6 +470,25 @@ class KitWriteSerializer(StrictSerializer):
         min_value=Decimal("0.01"),
     )
     is_active = serializers.BooleanField()
+    class_authority = serializers.JSONField(required=False, allow_null=True)
+
+    def validate_class_authority(self, value):
+        if value is None:
+            return None
+        def reject_float(item):
+            if isinstance(item, float):
+                raise serializers.ValidationError("Usa texto decimal exacto en las reglas de herrajes.")
+            if isinstance(item, dict):
+                for child in item.values():
+                    reject_float(child)
+            elif isinstance(item, list):
+                for child in item:
+                    reject_float(child)
+        reject_float(value)
+        try:
+            return parse_hardware_class(value).model_dump(mode="json")
+        except (ValueError, TypeError) as error:
+            raise serializers.ValidationError(str(error)) from error
 
 
 class ReadinessBlockerSerializer(serializers.Serializer):

@@ -26,7 +26,7 @@ from dekopen_engine import (
 from dekopen_engine.contour import Contour
 from dekopen_engine.catalog_rules import CatalogRuleError
 from dekopen_engine.weight import MissingFabricationAuthority
-from dekopen_engine.models import PlanPoint, Opening, OpeningUse, HingedLayout
+from dekopen_engine.models import PlanPoint, Opening, OpeningUse, HingedLayout, HardwareSelection
 from dekopen_engine.openings import OpeningCapabilityError
 from dekopen_engine.glass_composition import GlassProduct, GlassProcessing
 import json
@@ -69,6 +69,7 @@ _NODE_FIELDS = {
     "is_sidelight",
     "panel_article_sku",
     "hardware_set_sku",
+    "hardware_selection",
     "handle_height_mm",
     "sill_height_mm",
     "door_handedness",
@@ -106,7 +107,7 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         raise InvalidEngineRequest("Every node requires string id and type")
 
     values: dict[str, object] = {"id": raw["id"]}
-    for field, model in (("opening", Opening), ("hinged_layout", HingedLayout)):
+    for field, model in (("opening", Opening), ("hinged_layout", HingedLayout), ("hardware_selection", HardwareSelection)):
         if raw.get(field) is not None:
             try:
                 values[field] = model.model_validate_json(json.dumps(raw[field], allow_nan=False))

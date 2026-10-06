@@ -1,4 +1,4 @@
-import { fmtMm, parseLocaleNumber } from "../../format";
+import { fmtMm, formatDecimal, parseLocaleNumber } from "../../format";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import "./canvas.css";
@@ -7,7 +7,6 @@ import type {
   DesignOptions,
   EngineAssemblyCalculateResponse,
   GlassSpecChoice,
-  KitChoice,
   PanelChoice,
   ProductIssue,
 } from "../../api/generated/models";
@@ -32,7 +31,7 @@ import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTreeView";
 import { buildObjectTree } from "./objectTree";
 import { resolveMembers, type MemberGeometry } from "./members";
-import { bayEnvelopeMm, rankKits } from "./kitCompatibility";
+import { HardwarePanel } from "./HardwarePanel";
 import { SectionView } from "./SectionView";
 import { SectionPreviewSvg } from "./SectionPreviewSvg";
 import {
@@ -97,7 +96,6 @@ import {
   openingChoices,
   physicalNodeLabel,
   visualOpening,
-  type Capability,
   type OpeningLeafFact,
 } from "./physicalOpenings";
 import { GlassSelector } from "../glass/GlassSelector";
@@ -194,9 +192,13 @@ export function issueText(
     if (name === "reason") continue;
     // Engine params arrive as str(Decimal) — "345.00" reads as technical
     // noise in a sentence; trim to the human form.
-    const human = /^-?\d+\.\d+0*$/.test(value)
-      ? value.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")
-      : value;
+    const human = name.endsWith("_kg")
+      ? formatDecimal(value, 1)
+      : name.endsWith("_mm")
+        ? fmtMm(value)
+        : /^-?\d+\.\d+0*$/.test(value)
+          ? value.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")
+          : value;
     text = text.replace(`{${name}}`, human);
   }
   const [kind, id] = issue.target.split(":", 2);
@@ -873,9 +875,8 @@ function BayInspector({
   glassSpecs,
   panelSkus,
   panelChoices,
-  kits,
-  members,
-  leafWeightKg,
+  organizationId,
+  color,
   busy,
   commit,
   onOpeningPreview,
@@ -889,10 +890,8 @@ function BayInspector({
   glassSpecs: GlassSpecChoice[];
   panelSkus: string[];
   panelChoices: PanelChoice[];
-  kits: KitChoice[];
-  members: MemberGeometry;
-  /** Engine-resolved leaf mass; null = undecidable (never assumed). */
-  leafWeightKg: number | null;
+  organizationId: string;
+  color: string;
   busy: boolean;
   commit(next: ProductJson): void;
   onOpeningPreview(next: ProductJson | null): void;
@@ -904,16 +903,6 @@ function BayInspector({
     ?.opening_leaves ?? []) as OpeningLeafFact[];
   const activeLeaf = physicalLeaves.find((leaf) => leaf.bay_id === bay.id && leaf.handle);
   const physicalHandle = activeLeaf?.handle;
-  const capability = ((options?.opening_capabilities ?? []) as Capability[]).find(
-    (cap) =>
-      bay.opening &&
-      cap.use === bay.opening_use &&
-      cap.movement === bay.opening.movement &&
-      cap.direction === bay.opening.direction &&
-      cap.leaf_role === bay.opening.leaf_role &&
-      cap.fixed_in_sash === bay.opening.fixed_in_sash &&
-      cap.hinge_sides.includes(bay.opening.hinge_side),
-  );
   const slidingLayout = resolvedSlidingLayout(bay);
   const bays = intentBays(module.tree);
   const bayOrdinal = bays.findIndex((node) => node.id === bay.id) + 1;
@@ -940,45 +929,8 @@ function BayInspector({
     });
   }
 
-  // Hardware picker context: bay envelope from the intent tree + the
-  // engine's leaf mass. The select ranks valid kits first; incompatible
-  // kits stay consultable with their reason but are not selectable as if
-  // they were equivalent (mandate 04). The engine re-checks at save.
-  const operable = opening !== "FIXED" && !(isDoor && bay.panel_article_sku);
-  const leafEnvelope = operable
-    ? bayEnvelopeMm(module.tree, bay.id, Number(module.width_mm), Number(module.height_mm), {
-        vertical: members.mullionV?.faceWidthMm ?? 0,
-        horizontal: members.mullionH?.faceWidthMm ?? 0,
-      })
-    : null;
-  const kitEvaluations = operable
-    ? rankKits(
-        capability ? kits.filter((kit) => capability.hardware_kit_skus.includes(kit.sku)) : kits,
-        {
-          opening: bay.opening
-            ? bay.opening_use === "DOOR"
-              ? "DOOR"
-              : bay.opening.movement === "TOP_HUNG"
-                ? "AWNING"
-                : bay.opening.movement
-            : opening,
-          leafWidthMm: activeLeaf
-            ? Number(activeLeaf.width_mm)
-            : leafEnvelope
-              ? Math.round(leafEnvelope.w * 10) / 10
-              : null,
-          leafHeightMm: activeLeaf
-            ? Number(activeLeaf.height_mm)
-            : leafEnvelope
-              ? Math.round(leafEnvelope.h * 10) / 10
-              : null,
-          leafWeightKg,
-        },
-      )
-    : [];
-  const selectableKits = kitEvaluations.filter((item) => item.fit !== "incompatible");
-  const incompatibleKits = kitEvaluations.filter((item) => item.fit === "incompatible");
-  const selectedKitEval = kitEvaluations.find((item) => item.kit.sku === bay.hardware_set_sku);
+  const operable = opening !== "FIXED";
+  const classHardware = options?.hardware_kits.some((kit) => kit.class_authority != null) ?? false;
 
   return (
     <section className="assembly-inspector" aria-label={t("assembly.bay")}>
@@ -1100,59 +1052,17 @@ function BayInspector({
           onChange={(next) => commit(setModuleSlidingLayout(product, module.id, next, bay.id))}
         />
       )}
-      {operable && kits.length > 0 && (
-        <details className="inspector-section" open={bay.hardware_set_sku != null}>
-          <summary>{t("assembly.hardware")}</summary>
-          <label className="assembly-field">
-            <span>{t("assembly.hardwareKit")}</span>
-            <select
-              aria-label={t("assembly.hardwareKit")}
-              disabled={busy}
-              value={bay.hardware_set_sku ?? ""}
-              onChange={(event) => patchBay({ hardware_set_sku: event.target.value || null })}
-            >
-              <option value="">{t("assembly.hardwareAuto")}</option>
-              {bay.hardware_set_sku != null &&
-                !selectableKits.some((item) => item.kit.sku === bay.hardware_set_sku) && (
-                  <option value={bay.hardware_set_sku}>{bay.hardware_set_sku}</option>
-                )}
-              {selectableKits.map((item) => (
-                <option key={item.kit.sku} value={item.kit.sku}>
-                  {item.kit.name}
-                  {item.fit === "undecidable" ? ` · ${t("assembly.kitUndecidable")}` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          {selectedKitEval && selectedKitEval.fit !== "compatible" && (
-            <p className="assembly-hint" role="status">
-              {selectedKitEval.fit === "undecidable"
-                ? t("assembly.kitUndecidableHint")
-                : t("assembly.kitIncompatibleHint")}
-              {" — "}
-              {selectedKitEval.reasons
-                .map((reason) => t(`assembly.kitReason.${reason}` as TranslationKey))
-                .join(" · ")}
-            </p>
-          )}
-          {incompatibleKits.length > 0 && (
-            <ul
-              className="assembly-kit-incompatible"
-              aria-label={t("assembly.kitIncompatibleList")}
-            >
-              {incompatibleKits.map((item) => (
-                <li key={item.kit.sku}>
-                  <span>{item.kit.name}</span>
-                  <small>
-                    {item.reasons
-                      .map((reason) => t(`assembly.kitReason.${reason}` as TranslationKey))
-                      .join(" · ")}
-                  </small>
-                </li>
-              ))}
-            </ul>
-          )}
-        </details>
+      {operable && (
+        <HardwarePanel
+          options={options}
+          module={module}
+          bay={bay}
+          organizationId={organizationId}
+          color={color}
+          busy={busy}
+          onPatch={patchBay}
+          onTree={(tree) => commit(setModuleTree(product, module.id, tree))}
+        />
       )}
       <details className="inspector-section" open>
         <summary>{t("inspector.glazing")}</summary>
@@ -1182,7 +1092,7 @@ function BayInspector({
             </select>
           </label>
         )}
-        {(!bay.opening || physicalHandle) && (
+        {!classHardware && (!bay.opening || physicalHandle) && (
           <DraftField
             label={t("assembly.handleHeight")}
             value={bay.handle_height_mm ?? physicalHandle?.height_from_bottom_mm ?? ""}
@@ -1199,7 +1109,7 @@ function BayInspector({
             onCommit={(value) => patchBay({ handle_height_mm: value })}
           />
         )}
-        {physicalHandle && (
+        {!classHardware && physicalHandle && (
           <p className="assembly-hint">
             Desde el borde inferior de la hoja ·{" "}
             {fmtMm(physicalHandle.minimum_height_from_bottom_mm)}–
@@ -2829,21 +2739,8 @@ export function AssemblyEditor({
             module={selectedBayModule}
             bay={selectedBayNode}
             product={product}
-            kits={options?.hardware_kits ?? []}
-            members={members}
-            leafWeightKg={
-              evaluation?.modules
-                ?.find((item) => item.module_id === selectedBayModule.id)
-                ?.result?.leaf_weights?.find((w) => w.bay_id === selectedBayNode.id)
-                ?.total_weight_kg != null
-                ? Number(
-                    evaluation.modules
-                      .find((item) => item.module_id === selectedBayModule.id)!
-                      .result!.leaf_weights!.find((w) => w.bay_id === selectedBayNode.id)!
-                      .total_weight_kg,
-                  )
-                : null
-            }
+            organizationId={organizationId}
+            color={inputs.color}
             glassSpecs={options?.glass_specs ?? []}
             panelSkus={panelSkus}
             panelChoices={options?.panel_choices ?? []}

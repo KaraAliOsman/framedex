@@ -19,4 +19,5 @@ export interface KitChoice {
   /** @nullable */
   weight_kg: string | null;
   contents: KitComponent[];
+  class_authority?: unknown | null;
 }

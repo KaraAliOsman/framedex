@@ -277,6 +277,7 @@ class _MemberPlacement:
 
 @dataclass(slots=True)
 class _GeometryAccumulator:
+    diagnose_catalog_limits: bool = False
     computation: GeometryComputation = field(default_factory=GeometryComputation)
     diagnostic: bool = False
     legacy_authority: bool = True
@@ -301,6 +302,21 @@ class _GeometryAccumulator:
 
 def _trace_point(x_mm: Decimal, y_mm: Decimal) -> TracePointV1:
     return TracePointV1(x_mm=x_mm, y_mm=y_mm)
+
+
+def _validate_leaf_limits(accumulator: _GeometryAccumulator, params: SystemParams,
+                          opening: BayOpeningType, *, bay_id: str, width_mm: Decimal,
+                          height_mm: Decimal, weight_kg: Decimal | None = None,
+                          check_weight: bool = False) -> None:
+    from dekopen_engine.catalog_rules import CatalogRuleError
+    try:
+        validate_leaf_limits(params, opening, bay_id=bay_id, width_mm=width_mm,
+            height_mm=height_mm, weight_kg=weight_kg, check_weight=check_weight)
+    except CatalogRuleError as error:
+        if not accumulator.diagnostic or not accumulator.diagnose_catalog_limits:
+            raise
+        accumulator.contract_valid = False
+        accumulator.computation.catalog_violations.append(error)
 
 
 def _trace_rect(rect: _Rect) -> TraceRectV1:
@@ -739,7 +755,7 @@ def _append_leaf(
     if opening_type is None:
         raise ValueError("Physical leaf requires an opening type")
     article = _article(params, leaf_profile_role(opening_type, params))
-    validate_leaf_limits(params, opening_type, bay_id=node.id,
+    _validate_leaf_limits(accumulator, params, opening_type, bay_id=node.id,
                          width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm)
     cut_start = len(accumulator.profile_cuts)
     steel_start = len(accumulator.reinforcements)
@@ -752,9 +768,11 @@ def _append_leaf(
         else PlacementDomain.DIRECT
     )
     capability = resolve_capability(node, params)
+    has_class = capability is not None and any(kit.class_authority is not None
+        for kit in params.available_hardware_kits if kit.sku in capability.hardware_kit_skus)
     physical_handle = (handle_fact(node_opening(node), capability,
         width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm,
-        requested_height_mm=node.handle_height_mm) if capability is not None else None)
+        requested_height_mm=None if has_class else node.handle_height_mm) if capability is not None else None)
     handedness = node.door_handedness
     if capability is not None and node.opening is not None:
         if node.opening.hinge_side.value == "LEFT":
@@ -1008,7 +1026,7 @@ def _append_leaf(
             rail_type=None, finished_width_mm=sash.finished_width_mm,
             finished_height_mm=sash.finished_height_mm, base_weight=base,
             candidates=[], selected_kit=None, exact_weight=base, opening=node.opening))
-        validate_leaf_limits(params, opening_type, bay_id=node.id,
+        _validate_leaf_limits(accumulator, params, opening_type, bay_id=node.id,
             width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm,
             weight_kg=base.total_weight_kg, check_weight=True)
         return
@@ -1022,6 +1040,8 @@ def _append_leaf(
         physical_opening=node.opening if capability is not None else None,
         opening_use=node_use(node),
         allowed_skus=capability.hardware_kit_skus if capability is not None else None,
+        selection=node.hardware_selection,
+        requested_handle_height_mm=node.handle_height_mm,
     )
     try:
         kit, exact_weight = resolve_hardware_evaluations(
@@ -1054,18 +1074,33 @@ def _append_leaf(
     )
     if kit is None or exact_weight is None:
         return
-    validate_leaf_limits(params, opening_type, bay_id=node.id,
+    _validate_leaf_limits(accumulator, params, opening_type, bay_id=node.id,
                          width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm,
                          weight_kg=exact_weight.total_weight_kg, check_weight=True)
-    accumulator.hardware_items.append(
-        HardwareItem(
+    selected = next(candidate for candidate in candidates if candidate.kit.sku == kit.sku)
+    contents = kit.contents
+    if selected.expansion is not None:
+        contents = selected.expansion.contents
+        if capability is not None and physical_handle is not None:
+            resolved_height = selected.expansion.resolution.handle_height_mm
+            if resolved_height is not None:
+                physical_handle = handle_fact(node_opening(node), capability,
+                    width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm,
+                    requested_height_mm=resolved_height,
+                    hardware_resolution=selected.expansion.resolution)
+                accumulator.semantic_leaves[-1] = accumulator.semantic_leaves[-1].model_copy(update={"opening_handle": physical_handle})
+                if direct_rect is not None:
+                    accumulator.opening_leaves[-1] = accumulator.opening_leaves[-1].model_copy(update={"handle": physical_handle})
+    hardware_item = HardwareItem(
             kit_sku=kit.sku,
             name=kit.name,
             bay_id=node.id,
             leaf_id=leaf_id,
-            contents=[component.model_copy() for component in kit.contents],
+            contents=[component.model_copy() for component in contents],
         )
-    )
+    if selected.expansion is not None:
+        hardware_item = hardware_item.model_copy(update={"resolution": selected.expansion.resolution})
+    accumulator.hardware_items.append(hardware_item)
     accumulator.leaf_weights.append(exact_weight.public_result(node.id, leaf_id))
 
 
@@ -1095,7 +1130,7 @@ def _append_frame_glazed_pane(
     width = rect.width_mm + _TWO * rebate_depth(params) - _TWO * clearance_mm
     height = rect.height_mm + _TWO * rebate_depth(params) - _TWO * clearance_mm
     if geometry_opening_type(node) is BayOpeningType.FIXED:
-        validate_leaf_limits(params, BayOpeningType.FIXED, bay_id=node.id,
+        _validate_leaf_limits(accumulator, params, BayOpeningType.FIXED, bay_id=node.id,
             width_mm=rect.width_mm, height_mm=rect.height_mm,
             weight_kg=exact_glass_weight(width, height, node.glass_spec, node.glass_product), check_weight=True)
     accumulator.glasses.append(
@@ -1276,6 +1311,7 @@ def _append_paired_leaves(
             "hinged_layout": None,
             "hardware_set_sku": leaf.hardware_set_sku or (
                 node.hardware_set_sku if leaf.opening.leaf_role is LeafRole.ACTIVE else None),
+            "hardware_selection": node.hardware_selection if leaf.opening.leaf_role is LeafRole.ACTIVE else None,
             "handle_height_mm": node.handle_height_mm if leaf.opening.leaf_role is LeafRole.ACTIVE else None})
         opening_type = geometry_opening_type(leaf_node)
         assert opening_type is not None
@@ -1322,7 +1358,7 @@ def _append_bay(
         )
     )
     if opening is BayOpeningType.FIXED and not (node.opening and node.opening.fixed_in_sash):
-        validate_leaf_limits(params, opening, bay_id=node.id,
+        _validate_leaf_limits(accumulator, params, opening, bay_id=node.id,
                              width_mm=rect.width_mm, height_mm=rect.height_mm)
         _append_frame_glazed_pane(
             accumulator,
@@ -1672,6 +1708,7 @@ def compute_geometry(
     *,
     is_foiled: bool = False,
     diagnostic: bool = False,
+    diagnose_catalog_limits: bool = False,
     finish: str | None = None,
 ) -> GeometryComputation:
     """Calculate Core geometry, mobile-leaf weights and selected hardware."""
@@ -1689,6 +1726,7 @@ def compute_geometry(
         raise ValueError("FRAME face produces a non-positive clear rectangle")
 
     accumulator = _GeometryAccumulator(
+        diagnose_catalog_limits=diagnose_catalog_limits,
         diagnostic=diagnostic,
         legacy_authority=params.uses_legacy_rules,
         is_foiled=is_foiled,

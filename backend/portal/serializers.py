@@ -19,6 +19,13 @@ class PortalOrganizationSerializer(serializers.Serializer):
     brand_logo_url = serializers.CharField(allow_null=True, allow_blank=True)
 
 
+class CommercialHardwareSerializer(serializers.Serializer):
+    handle_name = serializers.CharField(allow_null=True)
+    handle_color = serializers.CharField(allow_null=True)
+    options = serializers.ListField(child=serializers.CharField())
+    synthetic = serializers.BooleanField()
+
+
 class PortalPositionSerializer(serializers.Serializer):
     id = serializers.CharField(allow_blank=True)
     position_index = serializers.IntegerField(allow_null=True)
@@ -30,6 +37,7 @@ class PortalPositionSerializer(serializers.Serializer):
     color_interior = serializers.CharField(allow_null=True, allow_blank=True)
     color_exterior = serializers.CharField(allow_null=True, allow_blank=True)
     glass_specs = serializers.ListField(child=serializers.CharField())
+    commercial_hardware = CommercialHardwareSerializer(many=True, required=False)
     finish = serializers.CharField(allow_null=True, allow_blank=True)
     price_net = serializers.CharField(allow_null=True)
     discount_pct = serializers.CharField(allow_null=True, allow_blank=True)

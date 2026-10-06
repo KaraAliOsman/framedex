@@ -1,5 +1,6 @@
 from django.urls import path
 from production.glass_orders import ProductionGlassOrderView
+from production.hardware import VersionHardwarePickingView
 
 from production.views import (
     ProductionOrderDeliveryConfirmationView,
@@ -49,6 +50,7 @@ from production.views import (
 )
 
 urlpatterns = [
+    path("versions/<uuid:version_id>/hardware-picking/", VersionHardwarePickingView.as_view()),
     path("glass-orders/", ProductionGlassOrderView.as_view(), name="production-glass-orders"),
     path("prep/", ProductionPrepView.as_view(), name="production-prep"),
     path(

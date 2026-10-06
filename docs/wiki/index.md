@@ -18,6 +18,7 @@ Content-oriented map of durable project knowledge.
 - [Catalog authority by family](product/catalog-authority.md) — exact rules, historical migration, reviewed import and synthetic authority boundaries.
 - [Glass composition](product/glass-composition.md) — structured recipes, sourced safety, exact billing and sealed supplier orders.
 - [Physical openings](product/physical-openings.md) — sourced motion, active/passive compositions, handles and immutable legacy transport.
+- [Hardware classes](product/hardware-classes.md) — exact component expansion, handles/options, sealed picking and declared machining gaps.
 
 ## Current state
 

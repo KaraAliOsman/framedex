@@ -87,3 +87,23 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - La precisión del encuentro puede producir medios centésimos exactos. El
   motor conserva esos valores; los formatos de presentación no redondean el
   BOM ni el documento sellado a una autoridad distinta.
+
+## D04 · herrajes y fabricación (2026-10-06)
+
+- Clase automática: la prioridad pertenece a la familia de catálogo y solo se
+  usa si la masa y las restricciones son decidibles. El técnico puede fijar una
+  clase compatible en Avanzado, con diff, precio de herrajes y deshacer. Las
+  prioridades y fuentes se revisan/importan en Catálogo; no hay capacidad global
+  ficticia en Ajustes.
+- Manilla, color y altura proceden de la clase. El rango es editable según su
+  ficha; alturas fijas o referidas al borde superior se mantienen fijas. No se
+  asigna una manilla activa a la hoja pasiva. D05 ampliará acabados de perfiles.
+- Las opciones se ofrecen solamente si la fuente las declara. Un dato RC
+  requiere su fuente; la seguridad sintética DEMO no acredita una clase RC.
+- El delta corresponde a herrajes netos por hoja, incluida merma/margen vigente.
+  La división añade otra hoja y montante: su precio total se confirma cotizando.
+  No se presenta el delta parcial como precio final de la posición.
+- Sin coordenadas, cara, herramienta, profundidad, cobertura o pieza inequívoca,
+  el mecanizado queda declarado no emitido y bloquea completar esa estación. El
+  proveedor configura la autoridad mediante la plantilla de Catálogo. P14 la
+  conecta a las máquinas; no se adopta un mecanizado por defecto.

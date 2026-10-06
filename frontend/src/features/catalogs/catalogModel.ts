@@ -559,6 +559,7 @@ export function writeFromDraft<R extends Resource>(
   limits?: SystemWriteRequest["dimensional_limits"],
   openingCapabilities?: unknown[],
   pairedRule?: unknown,
+  hardwareClass?: unknown,
 ): Writes[R] {
   const flat: Record<string, unknown> = {};
   for (const field of groupsFor(resource, draft).flatMap((group) => group.fields)) {
@@ -606,6 +607,7 @@ export function writeFromDraft<R extends Resource>(
     if (pairedRule !== undefined) values.paired_leaf_rule = pairedRule;
   }
   if (resource === "hardware-kits") {
+    if (hardwareClass !== undefined) values.class_authority = hardwareClass;
     values.contents = contents.map((item) => ({
       sku: item.sku.trim(),
       name: item.name.trim(),

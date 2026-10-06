@@ -287,6 +287,8 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
             "color_interior": value.get("color_interior"),
             "color_exterior": value.get("color_exterior"),
             "glass_specs": glass_specs,
+            "commercial_hardware": [{key: item.get(key) for key in ("handle_name", "handle_color", "options", "synthetic")}
+                for item in value.get("commercial_hardware") or []],
             "finish": finish or None,
             # Unpriced legacy lines stay null — a "$0" reads as free, never as
             # "not priced".

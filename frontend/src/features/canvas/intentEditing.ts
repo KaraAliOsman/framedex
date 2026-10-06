@@ -100,6 +100,7 @@ export type IntentNode = {
   is_sidelight?: boolean | null;
   panel_article_sku?: string | null;
   hardware_set_sku?: string | null;
+  hardware_selection?: import("./hardwareContracts").HardwareSelection | null;
   handle_height_mm?: string | null;
   /** Declared hinge side of a DOOR_ENTRY leaf (DIN: LEFT = hinges left).
    * Doors carry no side in their opening_type, so handedness is declared
@@ -331,6 +332,7 @@ const BAY_SPEC_KEYS = [
   "is_sidelight",
   "panel_article_sku",
   "hardware_set_sku",
+  "hardware_selection",
   "handle_height_mm",
   "door_handedness",
 ] as const;

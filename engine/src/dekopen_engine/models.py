@@ -325,6 +325,201 @@ HardwareComponentCategory = Literal[
 ]
 
 
+class HardwareQuantityRule(EngineModel):
+    """A declared count plus increments after a dimension/weight threshold."""
+    base: int = Field(ge=0)
+    axis: Literal["WIDTH", "HEIGHT", "PERIMETER", "WEIGHT"] | None = None
+    threshold: Decimal | None = Field(default=None, ge=0)
+    step: Decimal | None = Field(default=None, gt=0)
+    increment: int = Field(default=1, ge=1)
+
+    @model_validator(mode="after")
+    def complete_rule(self) -> HardwareQuantityRule:
+        if (self.axis is None) != (self.threshold is None and self.step is None):
+            raise ValueError("La regla de cantidad requiere eje, umbral y paso.")
+        if self.axis is not None and (self.threshold is None or self.step is None):
+            raise ValueError("La regla de cantidad requiere umbral y paso.")
+        return self
+
+
+class HardwareLengthRule(EngineModel):
+    axis: Literal["WIDTH", "HEIGHT", "PERIMETER", "FIXED"]
+    deduction_mm: Decimal = Field(ge=0)
+    fixed_mm: Decimal | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def fixed_length_is_explicit(self) -> HardwareLengthRule:
+        if (self.axis == "FIXED") != (self.fixed_mm is not None):
+            raise ValueError("El largo fijo requiere su medida explícita.")
+        return self
+
+
+class HardwareMachiningRule(EngineModel):
+    code: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    kind: Literal["LOCK_PREP", "HINGE_PREP", "SLOT", "DRILL", "MILLING", "HANDLE_PREP"]
+    host_side: Literal["TOP", "BOTTOM", "LEFT", "RIGHT", "HINGE", "CLOSING"]
+    host_scope: Literal["LEAF", "OUTER_FRAME"] | None = None
+    # Distances along the physical member from its start. No coordinates =
+    # declared work, not an emitted operation or a fabricated default.
+    positions_mm: list[Decimal] = Field(default_factory=list)
+    covered_quantity: int | None = Field(default=None, ge=1)
+    face: Literal["OUTSIDE_FACE", "INSIDE_FACE", "TOP_EDGE", "BOTTOM_EDGE"] | None = None
+    tool_id: str | None = None
+    depth_mm: Decimal | None = Field(default=None, gt=0)
+    source: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def machining_positions_are_physical(self) -> HardwareMachiningRule:
+        if any(position < 0 for position in self.positions_mm) or len(self.positions_mm) != len(set(self.positions_mm)):
+            raise ValueError("Las coordenadas de mecanizado deben ser positivas y únicas.")
+        return self
+
+
+class HardwareComponentRule(EngineModel):
+    sku: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    category: HardwareComponentCategory
+    quantity: HardwareQuantityRule
+    length: HardwareLengthRule | None = None
+    price_unit: Literal["EA", "M"]
+    weight_kg: Decimal | None = Field(default=None, ge=0)
+    weight_kg_m: Decimal | None = Field(default=None, ge=0)
+    purchasing_sku: str = Field(min_length=1)
+    manufacturer_name: str = Field(min_length=1)
+    source: str = Field(min_length=1)
+    machining: list[HardwareMachiningRule] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def measurement_authority(self) -> HardwareComponentRule:
+        if self.price_unit == "M" and self.length is None:
+            raise ValueError("El componente por metro requiere una regla de largo.")
+        if self.weight_kg is not None and self.weight_kg_m is not None:
+            raise ValueError("Declara una sola base de masa por componente.")
+        if self.weight_kg_m is not None and self.length is None:
+            raise ValueError("La masa por metro requiere una regla de largo.")
+        return self
+
+
+class HardwareHandleColor(EngineModel):
+    code: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    component: HardwareComponentRule
+
+
+class HardwareHandleModel(EngineModel):
+    code: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    model: Literal["STANDARD", "KEY", "BUTTON", "ESCUTCHEON"]
+    colors: list[HardwareHandleColor] = Field(min_length=1)
+    default_color: str
+    vertical_rule: Literal["CENTER", "FIXED", "RANGE", "TOP_OFFSET"]
+    default_height_mm: Decimal | None = Field(default=None, gt=0)
+    minimum_from_bottom_mm: Decimal = Field(ge=0)
+    minimum_from_top_mm: Decimal = Field(ge=0)
+    source: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def explicit_handle(self) -> HardwareHandleModel:
+        codes = [color.code for color in self.colors]
+        if len(codes) != len(set(codes)) or self.default_color not in codes:
+            raise ValueError("Los colores de manilla deben ser únicos e incluir el predeterminado.")
+        if self.vertical_rule != "CENTER" and self.default_height_mm is None:
+            raise ValueError("La manilla fija o por rango requiere altura declarada.")
+        if any(color.component.category != "HANDLE" for color in self.colors):
+            raise ValueError("El modelo de manilla debe declarar un componente manilla.")
+        return self
+
+
+class HardwareOption(EngineModel):
+    code: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    kind: Literal["SECURITY", "LIMITER", "MICROVENTILATION", "HIDDEN_HINGES", "OTHER"]
+    components: list[HardwareComponentRule] = Field(min_length=1)
+    replaces_skus: list[str] = Field(default_factory=list)
+    security_rating: str | None = None
+    source: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def security_has_a_source(self) -> HardwareOption:
+        if self.security_rating is not None and self.kind != "SECURITY":
+            raise ValueError("Una clase de seguridad requiere una opción de seguridad con fuente.")
+        return self
+
+
+class HardwareClassAuthority(EngineModel):
+    schema_version: Literal[1] = 1
+    family_code: str = Field(min_length=1)
+    family_name: str = Field(min_length=1)
+    class_code: str = Field(min_length=1)
+    class_name: str = Field(min_length=1)
+    priority: int = Field(ge=0)
+    source: str = Field(min_length=1)
+    synthetic: bool
+    minimum_width_height_ratio: Decimal | None = Field(default=None, gt=0)
+    maximum_width_height_ratio: Decimal | None = Field(default=None, gt=0)
+    minimum_stay_height_mm: Decimal | None = Field(default=None, gt=0)
+    components: list[HardwareComponentRule] = Field(min_length=1)
+    handles: list[HardwareHandleModel] = Field(default_factory=list)
+    default_handle: str | None = None
+    options: list[HardwareOption] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def class_contract(self) -> HardwareClassAuthority:
+        for items in (self.components, self.handles, self.options):
+            codes = [item.sku if isinstance(item, HardwareComponentRule) else item.code for item in items]
+            if len(codes) != len(set(codes)):
+                raise ValueError("Los componentes, modelos y opciones deben tener códigos únicos.")
+        if self.handles and self.default_handle not in {item.code for item in self.handles}:
+            raise ValueError("La clase debe declarar su manilla predeterminada.")
+        if not self.handles and self.default_handle is not None:
+            raise ValueError("Una clase sin manillas no puede declarar una predeterminada.")
+        if (self.minimum_width_height_ratio is not None and self.maximum_width_height_ratio is not None
+                and self.minimum_width_height_ratio > self.maximum_width_height_ratio):
+            raise ValueError("El rango de relación ancho/alto está invertido.")
+        base_skus = {item.sku for item in self.components}
+        if any(set(option.replaces_skus) - base_skus for option in self.options):
+            raise ValueError("Una opción solo puede sustituir componentes declarados en la clase.")
+        return self
+
+
+class HardwareSelection(EngineModel):
+    handle_code: str | None = None
+    color_code: str | None = None
+    option_codes: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def unique_options(self) -> HardwareSelection:
+        if len(self.option_codes) != len(set(self.option_codes)):
+            raise ValueError("Las opciones vendibles no pueden repetirse.")
+        return self
+
+
+class HardwareResolution(EngineModel):
+    family_name: str
+    class_name: str
+    class_code: str
+    source: str
+    synthetic: bool
+    width_mm: Decimal
+    height_mm: Decimal
+    exact_leaf_weight_kg: Decimal | None
+    max_leaf_weight_kg: Decimal
+    min_leaf_width_mm: Decimal
+    max_leaf_width_mm: Decimal
+    min_leaf_height_mm: Decimal
+    max_leaf_height_mm: Decimal
+    handle_code: str | None
+    handle_name: str | None
+    handle_color: str | None
+    handle_color_code: str | None
+    handle_height_mm: Decimal | None
+    handle_minimum_mm: Decimal | None
+    handle_maximum_mm: Decimal | None
+    options: list[str]
+    option_codes: list[str]
+
+
 class HardwareComponent(EngineModel):
     sku: str
     name: str
@@ -335,6 +530,24 @@ class HardwareComponent(EngineModel):
     # drainage and consumables instead of guessing from a name. Contents
     # sealed before the field existed decode as OTHER (mandate §9).
     category: HardwareComponentCategory = "OTHER"
+    cut_length_mm: Decimal | None = Field(default=None, gt=0)
+    weight_kg: Decimal | None = Field(default=None, ge=0)
+    purchasing_sku: str | None = None
+    manufacturer_name: str | None = None
+    price_unit: Literal["EA", "M"] | None = None
+    price_quantity: Decimal | None = Field(default=None, gt=0)
+    reason: str | None = None
+    source: str | None = None
+    machining: list[HardwareMachiningRule] = Field(default_factory=list)
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_component(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        for key in ("cut_length_mm", "weight_kg", "purchasing_sku", "manufacturer_name", "price_unit",
+                    "price_quantity", "reason", "source", "machining"):
+            if key not in self.model_fields_set:
+                result.pop(key, None)
+        return result
 
 
 class HardwareItem(EngineModel):
@@ -345,6 +558,14 @@ class HardwareItem(EngineModel):
     bay_id: str
     leaf_id: str | None = None
     contents: list[HardwareComponent] = Field(default_factory=list)
+    resolution: HardwareResolution | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_item(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        if "resolution" not in self.model_fields_set:
+            result.pop("resolution", None)
+        return result
 
 
 class HardwareKitRule(EngineModel):
@@ -362,6 +583,7 @@ class HardwareKitRule(EngineModel):
     contents: list[HardwareComponent] = Field(default_factory=list)
     weight_kg: Decimal | None = None
     carriage_capacity_kg: Decimal | None = None
+    class_authority: HardwareClassAuthority | None = None
 
 
 class SectionPoint(EngineModel):
@@ -680,6 +902,7 @@ class ParametricNode(EngineModel):
     is_sidelight: bool = False
     panel_article_sku: str | None = None
     hardware_set_sku: str | None = None
+    hardware_selection: HardwareSelection | None = None
     handle_height_mm: Decimal | None = None
     # Declared hinge side of a DOOR_ENTRY leaf (DIN convention: LEFT =
     # hinges on the left, handle on the right). Doors carry no side in
@@ -702,7 +925,7 @@ class ParametricNode(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_legacy_presence(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        for key in ("opening", "opening_use", "hinged_layout"):
+        for key in ("opening", "opening_use", "hinged_layout", "hardware_selection"):
             if key not in self.model_fields_set:
                 result.pop(key, None)
         return result

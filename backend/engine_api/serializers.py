@@ -100,6 +100,15 @@ class HardwareComponentSerializer(serializers.Serializer):
         required=False,
         default="OTHER",
     )
+    cut_length_mm = serializers.CharField(required=False, allow_null=True)
+    weight_kg = serializers.CharField(required=False, allow_null=True)
+    purchasing_sku = serializers.CharField(required=False, allow_null=True)
+    manufacturer_name = serializers.CharField(required=False, allow_null=True)
+    price_unit = serializers.ChoiceField(choices=["EA", "M"], required=False, allow_null=True)
+    price_quantity = serializers.CharField(required=False, allow_null=True)
+    reason = serializers.CharField(required=False, allow_null=True)
+    source = serializers.CharField(required=False, allow_null=True)
+    machining = serializers.ListField(child=serializers.JSONField(), required=False)
 
 
 class HardwareItemSerializer(serializers.Serializer):
@@ -110,6 +119,7 @@ class HardwareItemSerializer(serializers.Serializer):
     bay_id = serializers.CharField()
     leaf_id = serializers.CharField(allow_null=True)
     contents = HardwareComponentSerializer(many=True)
+    resolution = serializers.JSONField(required=False, allow_null=True)
 
 
 class FittingPieceSerializer(serializers.Serializer):

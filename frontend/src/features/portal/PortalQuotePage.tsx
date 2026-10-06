@@ -131,6 +131,7 @@ function groupPositions(positions: PortalPosition[]): {
       position.color_interior,
       position.color_exterior,
       position.glass_specs,
+      position.commercial_hardware,
       position.price_net,
       position.parametric_tree,
     ]);
@@ -177,6 +178,7 @@ function PositionGroupCard({
   const [variant, setVariant] = useState<"studio" | "elevation">("studio");
   const specs = position.glass_specs ?? [];
   const finished = position.finish ?? null;
+  const hardware = position.commercial_hardware ?? [];
   const members = positionMembers(position);
   const hasPrice = position.price_net != null && group.totalNet !== null;
   const totalNet = group.totalNet;
@@ -242,6 +244,16 @@ function PositionGroupCard({
               <dd>{finished}</dd>
             </div>
           ) : null}
+          {hardware.map((item, index) => (
+            <div key={index}>
+              <dt>Manilla y opciones{item.synthetic ? " · DEMO" : ""}</dt>
+              <dd>
+                {[item.handle_name, item.handle_color, ...item.options]
+                  .filter(Boolean)
+                  .join(" · ") || "Sin manilla de accionamiento"}
+              </dd>
+            </div>
+          ))}
           {Number(position.discount_pct) > 0 ? (
             <div>
               <dt>{t("portal.discount")}</dt>

@@ -512,6 +512,9 @@ def _pack_html(
         bars=[CutBar.model_validate_json(json.dumps(b)) for b in bars],
         fact_units=fact_units,
     )
+    from production.service import _sealed_hardware_operations
+    hardware_issues = []
+    ops.extend(_sealed_hardware_operations(snapshot, str(payload.get("position_id") or "") or None, fact_units, hardware_issues))
 
     def titleblock(name: str) -> str:
         return (
@@ -733,6 +736,19 @@ def _pack_html(
             + "</section>"
         )
     # ---- machining ----
+    from production.service import _picking_payload
+    from dekopen_engine.models import HardwareItem
+    picking = _picking_payload([(HardwareItem.model_validate_json(json.dumps(item)), quantity, order_code)
+        for item in (payload.get("materials") or {}).get("hardware_items") or []])
+    if picking:
+        body += '<section class="pack-section"><h2>Picking de herrajes</h2>' + _table(
+            ["Componente", "Cantidad", "Largo de corte (mm)"],
+            [[row["name"], row["quantity"], _fmt_mm(row["cut_length_mm"]) if row["cut_length_mm"] is not None else "No cortable"]
+                for row in picking], ["", "dimension", "dimension"]) + '</section>'
+    if hardware_issues:
+        body += '<section class="pack-section"><h2>Mecanizados declarados no emitidos</h2>' + _table(
+            ["Componente", "Trabajo", "Causa"],
+            [[issue["component_name"], issue["declaration"], issue["detail"]] for issue in hardware_issues], ["", "", ""]) + '</section>'
     member_ops = [op for op in ops if op.host_kind == "MEMBER"]
     saw_ops = [op for op in ops if op.kind == OperationKind.SAW_CUT]
     body += '<section class="pack-section"><h2>Mecanizado</h2>'

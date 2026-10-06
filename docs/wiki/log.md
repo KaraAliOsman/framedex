@@ -219,3 +219,45 @@ PR #121 mergeado con squash 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd
 en integracion/v1. Lint & Typecheck, Test Suite, Frontend Build y Database Gate
 PASA en la revisión final. Estado y referencias de verificación actualizados;
 procesos propios de Django, worker y Vite detenidos. D04 es el siguiente encargo.
+
+## 2026-10-06 — D04 · clases, expansión y picking sellado
+
+La rama añade autoridades de familia/clase, manilla/color/opciones y reglas
+tipadas de cantidad/largo/masa. Se eliminó el ranking paralelo del frontend.
+Motor, importación CSV/XLSX, SQL/RLS, revisión y compra/stock conservan la misma
+expansión. El snapshot nuevo preserva la precisión sin cambiar hashes históricos;
+se corrigió la proyección de ambos encuentros de corredera a sus lados físicos.
+
+El proyecto de doce posiciones se guarda, cotiza, sella, libera y genera PDF/pack.
+El picking coincide por cada SKU/largo/fuente y cantidad, sin doble kit. Las
+coordenadas ausentes siguen declaradas no emitidas y bloquean completar MACHINING.
+La división propuesta se calcula estrictamente; diagnosticar un límite no acepta
+el BOM inválido. F6, diff/delta, aplicar/deshacer y manillas se recorren en ambos
+temas. Los PDF se rasterizaron y revisaron completos. La aceptación distingue
+catálogos sintéticos, precio parcial de herrajes y pendientes P14/D05/D06/D08.
+Los checks finales y el merge se registrarán cuando estén comprobados.
+
+## 2026-10-06 — D04 · autoridad en una instalación vacía
+
+El gate limpio encontró una diferencia de orden: las fuentes canónicas de
+inspección/fabricación/manillas se cargan en seed.sql después de las migraciones.
+El generador D04 completa sus copias v4 al final de la semilla, con las mismas
+identidades deterministas y sin reescribir políticas. Tres comprobaciones pgTAP
+verifican las catorce reglas y ambas políticas en cada una de las seis series.
+El descubrimiento ofrece v4; los ensayos de emisión/proyecto conservan todas
+sus aserciones y actualizan sus selectores de v3 a la versión vigente. El CRUD
+del catálogo sigue usando su copia v2 sin referencias. En Docker Desktop, el
+gate aislado usa 18000 para Django por la reserva de 8000 del runtime local;
+esto adapta el transporte y conserva los checks y la configuración del producto.
+
+## 2026-10-06 — D04 · cierre local
+
+Lint, typecheck, test y build pasan con 605 pruebas del motor (+2 xfail históricos),
+1 174 backend y 715 frontend. El Database Gate pasa 1 008 pgTAP, 294 integración,
+once Chromium y todos los upgrades poblados PostgreSQL 16, incluido el D04 con
+diez tipologías históricas y autoridad aplicada/emitida intacta. La recaptura de
+producción elimina los hallazgos nuevos de objetivos táctiles; las 24 comparaciones
+de editor/catálogo/producción tienen cero regresiones. Las consultas de herrajes
+adoptan el esqueleto y la cota de espera del sistema de diseño; el recorrido final
+vuelve a comprobar F6, opciones, persistencia, reparación/división, deshacer y roles.
+CI y merge se registrarán una vez comprobados en GitHub.

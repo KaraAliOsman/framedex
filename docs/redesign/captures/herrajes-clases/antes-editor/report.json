@@ -1,0 +1,1880 @@
+{
+  "generatedAt": "2026-10-06T17:34:42.086Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "reachedPath": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__390x844.png",
+      "overflowX": true,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Deshacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Rehacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-action Guardar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Ubicación del vano"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Buscar diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Alejar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button viewport-button--percent Opciones de zoom"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Acercar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Ajustar a la vista"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.model3d-toggle Vista 3D"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Vista general"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn is-active Diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Técnica"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button is-danger Eliminar unidad"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice is-active Fijo"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Proyectante"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de dos hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de tres hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de cuatro hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera (distribución libre)"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Puerta de acceso"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en vertical"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en horizontal"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Convertir a vidrio sin marco"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Modificar con DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar alternativas"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "reachedPath": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Deshacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Rehacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-action Guardar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Ubicación del vano"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Buscar diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Alejar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button viewport-button--percent Opciones de zoom"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Acercar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Ajustar a la vista"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.model3d-toggle Vista 3D"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Vista general"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn is-active Diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Técnica"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button is-danger Eliminar unidad"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice is-active Fijo"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Proyectante"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de dos hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de tres hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de cuatro hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera (distribución libre)"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Puerta de acceso"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en vertical"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en horizontal"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Convertir a vidrio sin marco"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Modificar con DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar alternativas"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "reachedPath": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "span.brand DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Deshacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Rehacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-action Guardar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Ubicación del vano"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Buscar diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Alejar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button viewport-button--percent Opciones de zoom"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Acercar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Ajustar a la vista"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.model3d-toggle Vista 3D"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Vista general"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn is-active Diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Técnica"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button is-danger Eliminar unidad"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice is-active Fijo"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Proyectante"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de dos hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de tres hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de cuatro hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera (distribución libre)"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Puerta de acceso"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en vertical"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en horizontal"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Convertir a vidrio sin marco"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Modificar con DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar alternativas"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "reachedPath": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "span.brand DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Deshacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Rehacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-action Guardar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Ubicación del vano"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Buscar diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Alejar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button viewport-button--percent Opciones de zoom"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Acercar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Ajustar a la vista"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.model3d-toggle Vista 3D"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Vista general"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn is-active Diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Técnica"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button is-danger Eliminar unidad"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice is-active Fijo"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Proyectante"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de dos hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de tres hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de cuatro hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera (distribución libre)"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Puerta de acceso"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en vertical"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en horizontal"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Convertir a vidrio sin marco"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Modificar con DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar alternativas"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "reachedPath": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__390x844.png",
+      "overflowX": true,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Deshacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Rehacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-action Guardar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Ubicación del vano"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Buscar diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Alejar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button viewport-button--percent Opciones de zoom"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Acercar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Ajustar a la vista"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.model3d-toggle Vista 3D"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Vista general"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn is-active Diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Técnica"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button is-danger Eliminar unidad"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice is-active Fijo"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Proyectante"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de dos hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de tres hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de cuatro hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera (distribución libre)"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Puerta de acceso"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en vertical"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en horizontal"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Convertir a vidrio sin marco"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Modificar con DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar alternativas"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "reachedPath": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Deshacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Rehacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-action Guardar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Ubicación del vano"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Buscar diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Alejar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button viewport-button--percent Opciones de zoom"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Acercar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Ajustar a la vista"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.model3d-toggle Vista 3D"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Vista general"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn is-active Diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Técnica"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button is-danger Eliminar unidad"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice is-active Fijo"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Proyectante"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de dos hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de tres hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de cuatro hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera (distribución libre)"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Puerta de acceso"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en vertical"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en horizontal"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Convertir a vidrio sin marco"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Modificar con DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar alternativas"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "reachedPath": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "span.brand DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Deshacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Rehacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-action Guardar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Ubicación del vano"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Buscar diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Alejar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button viewport-button--percent Opciones de zoom"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Acercar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Ajustar a la vista"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.model3d-toggle Vista 3D"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Vista general"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn is-active Diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Técnica"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button is-danger Eliminar unidad"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice is-active Fijo"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Proyectante"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de dos hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de tres hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de cuatro hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera (distribución libre)"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Puerta de acceso"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en vertical"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en horizontal"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Convertir a vidrio sin marco"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Modificar con DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar alternativas"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "reachedPath": "/projects/9feb92fe-f0a6-4237-b6d8-2c714a9d0f3c/positions/af0268d6-86c1-434b-926c-9ff3871e293b/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "span.brand DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Deshacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button. Rehacer"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-action Guardar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Ubicación del vano"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. Buscar diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.starter-card "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Alejar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button viewport-button--percent Opciones de zoom"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Acercar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.viewport-button Ajustar a la vista"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.model3d-toggle Vista 3D"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Vista general"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn is-active Diseño"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.detail-levels__btn Técnica"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button is-danger Eliminar unidad"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice is-active Fijo"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Abatible derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente izquierda"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Oscilobatiente derecha"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Proyectante"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de dos hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de tres hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera de cuatro hojas"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Corredera (distribución libre)"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.opening-choice Puerta de acceso"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en vertical"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Dividir en horizontal"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "input. "
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Convertir a vidrio sin marco"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.ghost-button Modificar con DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "textarea.assistant-panel__prompt "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "button.primary-button Generar alternativas"
+        }
+      ]
+    }
+  ],
+  "topFindings": [
+    {
+      "key": "radius-over-4",
+      "count": 416,
+      "routes": [
+        "posicion-edicion"
+      ],
+      "sample": "button. Deshacer"
+    },
+    {
+      "key": "font-under-11",
+      "count": 20,
+      "routes": [
+        "posicion-edicion"
+      ],
+      "sample": "text.section-preview__axis-label GLAZING"
+    }
+  ]
+}

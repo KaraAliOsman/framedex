@@ -99,10 +99,34 @@ class ProductionOrderMakingSerializer(serializers.Serializer):
     location_tag = serializers.CharField(required=False, allow_null=True)
 
 
+class HardwarePickingRowSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    unit = serializers.CharField()
+    quantity = serializers.CharField()
+    cut_length_mm = serializers.CharField(allow_null=True)
+    source = serializers.CharField(allow_null=True)
+    targets = serializers.ListField(child=serializers.CharField())
+
+
+class HardwareMachiningGapSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    kind = serializers.CharField()
+    component_sku = serializers.CharField()
+    component_name = serializers.CharField()
+    declaration = serializers.CharField()
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    source = serializers.CharField()
+    detail = serializers.CharField()
+
+
 class ProductionOrderDetailSerializer(ProductionOrderSerializer):
     steps = ProductionStepSerializer(many=True)
     events = ProductionStepEventSerializer(many=True)
     making = ProductionOrderMakingSerializer(allow_null=True, required=False)
+    hardware_picking = HardwarePickingRowSerializer(many=True, required=False)
+    hardware_machining = HardwareMachiningGapSerializer(many=True, required=False)
     delivery_address = serializers.CharField(allow_null=True, required=False)
     dispatch_note_code = serializers.CharField(allow_null=True, required=False)
     dispatch_note_voided = serializers.BooleanField()

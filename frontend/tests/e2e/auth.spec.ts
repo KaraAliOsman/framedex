@@ -11,6 +11,7 @@ const anonKey = requiredEnvironment("SUPABASE_ANON_KEY");
 const serviceRoleKey = requiredEnvironment("SUPABASE_SERVICE_ROLE_KEY");
 const mailpitUrl = environment("MAILPIT_URL") ?? "http://127.0.0.1:25324";
 const djangoUrl = environment("DJANGO_URL") ?? "http://127.0.0.1:8000";
+const demoSeriesLabel = "PVC practicable 60 mm · herrajes v4 · DEMO · sintético, sin certificación";
 
 type FixtureUser = {
   email: string;
@@ -330,7 +331,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
-    label: "PVC practicable 60 mm · aperturas v3 · DEMO · sintético, sin certificación",
+    label: demoSeriesLabel,
   });
   // The catalog recipe determines thickness; the inspector selects one product.
   const glass = page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]');
@@ -530,7 +531,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
-    label: "PVC practicable 60 mm · aperturas v3 · DEMO · sintético, sin certificación",
+    label: demoSeriesLabel,
   });
   await page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]').click();
   await expect(page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]')).toHaveAttribute(

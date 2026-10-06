@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CategoryEnum } from "./categoryEnum";
+import type { HardwareComponentPriceUnit } from "./hardwareComponentPriceUnit";
 
 export interface HardwareComponent {
   sku: string;
@@ -14,4 +15,20 @@ export interface HardwareComponent {
   qty: string;
   unit: string;
   category?: CategoryEnum;
+  /** @nullable */
+  cut_length_mm?: string | null;
+  /** @nullable */
+  weight_kg?: string | null;
+  /** @nullable */
+  purchasing_sku?: string | null;
+  /** @nullable */
+  manufacturer_name?: string | null;
+  price_unit?: (typeof HardwareComponentPriceUnit)[keyof typeof HardwareComponentPriceUnit] | null;
+  /** @nullable */
+  price_quantity?: string | null;
+  /** @nullable */
+  reason?: string | null;
+  /** @nullable */
+  source?: string | null;
+  machining?: unknown[];
 }

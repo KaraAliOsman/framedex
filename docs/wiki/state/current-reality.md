@@ -22,6 +22,27 @@ sources:
 
 # Current reality
 
+## D04 verification on its working branch, 2026-10-06
+
+The D04 branch adds sourced class/component/handle authority, exact Decimal
+expansion and component pricing, F6 explanation, reviewed class/split proposals
+and sealed picking by order/revision. New DEMO v4 authorities are additive.
+The four goldens include a genuinely heavy slider; the live twelve-position
+fixture uses safety glass and does not assert every slider selects that class.
+Legacy snapshots and applied/issued commercial authority remain byte-identical
+under the populated PostgreSQL 16 upgrade.
+
+Machining without complete sourced coordinates, face/tool/depth/coverage and a
+unique host remains declared but unissued. It cannot complete MACHINING. Customer
+documents and portal receive only model/color/options, never the engineering
+component detail. New editor, catalog and workshop surfaces have browser evidence;
+the final gate/CI/merge record will be appended after it actually completes.
+
+See [hardware classes](../product/hardware-classes.md) and
+[D04 acceptance](../../redesign/captures/herrajes-clases/aceptacion.md). This branch
+section is not a claim that D04 is already merged; the frontmatter still names
+the last integrated verification ref.
+
 ## D03 physical openings merged and verified, 2026-10-06
 
 Physical motion is independent of composition and window/door use. Twenty-one

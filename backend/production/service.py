@@ -22,7 +22,9 @@ import segno
 
 from dekopen_engine.cutting import CutBar, optimize_cut, pieces_from_result
 from dekopen_engine.manufacturing import ManufacturingFactsV1
-from dekopen_engine.models import EngineResult
+from dekopen_engine.models import EngineResult, HardwareItem
+from dekopen_engine.hardware_classes import hardware_picking
+from dekopen_engine.hardware_machining import hardware_operations
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from dekopen_engine.operations import (
     NeutralOpsPostProcessor,
@@ -219,6 +221,21 @@ def _member_ops_for_station(
             kind_label = "Ref. montaje"
         expected[str(op["operation_id"])] = f"{code} · {kind_label}"
     return expected
+
+
+def _require_hardware_machining_authority(*, org_id: UUID, order: dict[str, object]) -> None:
+    if not order.get("project_version_id"):
+        return
+    version = one("SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
+        [str(order["project_version_id"]), str(org_id)], "work_order_missing_version")
+    snapshot = _decoded(version["snapshot_json"])
+    position_id = str(_decoded(order.get("payload_json")).get("position_id") or "") or None
+    issues: list[dict[str, object]] = []
+    _sealed_hardware_operations(snapshot, position_id, _operations_fact_units(snapshot, position_id), issues)
+    if issues:
+        raise DocumentaryError("step_ops_incomplete",
+            detail="Hay mecanizados de herrajes declarados no emitidos. Completa la autoridad del catálogo y emite una nueva revisión antes de completar esta estación.",
+            extra={"hardware_machining": issues})
 
 
 def _ensure_work_centers(
@@ -513,6 +530,15 @@ def _routing(
         end_milling_overlap_mm=end_milling_overlap_mm,
         has_handles=has_handles,
     )
+    # Unemitted declarations occupy a station too: their gaps require an
+    # explicit workshop review before the operator completes that work.
+    declared = {
+        declaration["kind"]
+        for kit in engine_result.get("hardware_items") or []
+        for component in kit.get("contents") or []
+        for declaration in component.get("machining") or []
+    }
+    emitting.update(declared)
     # Stations that own a kind the sealed facts will emit — claimed here so
     # _station_has_work can't prune the station its op is mapped to.
     mapped_emitting = {
@@ -520,6 +546,8 @@ def _routing(
         for kind, station in operation_map.items()
         if str(kind) in emitting
     }
+    hardware_stations = {str(operation_map.get(kind) or "MACHINING") for kind in declared}
+    mapped_emitting.update(hardware_stations)
     routing: list[str] = []
     for station in stations:
         if not isinstance(station, dict):
@@ -536,6 +564,8 @@ def _routing(
             mapped_emitting=mapped_emitting,
         ):
             routing.append(code)
+    for code in sorted(hardware_stations-set(routing)):
+        routing.insert(1, code)
     return routing
 
 
@@ -1426,6 +1456,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     # snapshot. Only workshop fields cross; commercial data never leaves
     # the documentary context.
     output["making"] = None
+    sealed_snapshot = {}
     if order["project_version_id"]:
         position_id = _decoded(order["payload_json"]).get("position_id")
         with documentary_backend():
@@ -1462,6 +1493,13 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                 )
             }
     output["steps"] = [_public_step(step) for step in steps]
+    materials = (output.get("payload") or {}).get("materials") or {}
+    items = [HardwareItem.model_validate_json(json.dumps(item)) for item in materials.get("hardware_items") or []]
+    quantity = int((output.get("payload") or {}).get("quantity") or 1)
+    output["hardware_picking"] = _picking_payload([(item, quantity, str(order["order_code"])) for item in items])
+    machining_issues = []
+    hardware_operations(items=items, fact_units=_operations_fact_units(sealed_snapshot, str(position_id) if sealed_snapshot else None), issues=machining_issues)
+    output["hardware_machining"] = machining_issues
     output["events"] = [
         {
             "id": str(event["id"]),
@@ -1765,6 +1803,8 @@ def transition_step(
         # every machining op routed to this station must be declared — the
         # event records WHICH ops ran, not just that someone pressed done.
         ops_executed: list[str] | None = None
+        if action == "COMPLETE" and str(step["code"]) == "MACHINING":
+            _require_hardware_machining_authority(org_id=org_id, order=order)
         if (
             action == "COMPLETE"
             and str(step["code"]) in _OPS_EVIDENCE_STATIONS
@@ -2646,6 +2686,35 @@ def _operations_fact_units(
     ]
 
 
+def _sealed_hardware_operations(version_snapshot, position_id, fact_units, issues):
+    operations = []
+    for position in version_snapshot.get("bom") or []:
+        if position_id and str(position.get("position_id")) != position_id:
+            continue
+        items = [HardwareItem.model_validate_json(json.dumps(item))
+            for item in (position.get("engine_result") or {}).get("hardware_items") or []]
+        scoped_units = [unit for unit in fact_units if unit.position_id == str(position.get("position_id"))]
+        operations.extend(hardware_operations(items=items, fact_units=scoped_units, issues=issues))
+    return operations
+
+
+def _picking_payload(items):
+    return [{key: str(value) if isinstance(value, Decimal) else value for key, value in row.items()}
+        for row in hardware_picking(items)]
+
+
+def version_hardware_picking(*, org_id: UUID, version_id: UUID):
+    with documentary_backend():
+        snapshot = _decoded(one("SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
+            [str(version_id), str(org_id)], "version_not_found")["snapshot_json"])
+    indexes = {str(position["id"]): position["position_index"] for position in snapshot.get("positions") or []}
+    items = [(HardwareItem.model_validate_json(json.dumps(item)), int(position["quantity"]),
+        f"Posición {indexes.get(str(position['position_id']), ordinal)}")
+        for ordinal, position in enumerate(snapshot.get("bom") or [], 1)
+        for item in (position.get("engine_result") or {}).get("hardware_items") or []]
+    return {"rows": _picking_payload(items)}
+
+
 # Workshop annotations that contractually name a machine operation kind:
 # drains and perimeter closing points are machining work, and a declared
 # handle intent is HANDLE_PREP. When the sealed payload declares one but
@@ -2741,6 +2810,7 @@ def export_operations(
         ops = operations_from_plan(
             bars=bars, fact_units=fact_units, issues=ops_issues
         )
+        ops.extend(_sealed_hardware_operations(version_snapshot, str(payload.get("position_id") or "") or None, fact_units, ops_issues))
         ops_issues.extend(
             _declared_intent_gaps(
                 version_snapshot,

@@ -80,11 +80,17 @@ import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
 import { CncPanel } from "./CncPanel";
 import { CncWorkspace } from "./CncWorkspace";
 import { GlassOrderPanel } from "../glass/GlassOrderPanel";
+import { HardwarePicking } from "./HardwarePicking";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import { OperatorStepCard, type QcCheckInput } from "./OperatorCard";
 import { TracePieceMatches, TracePlan, TraceStock } from "./TraceView";
 import type { PieceMatch } from "./TraceView";
 import "./production.css";
+
+function stockUnitLabel(unit?: string): string {
+  if (!unit) return "Sin dato";
+  return tOptional(`purchasing.unitValue.${unit}.one`) ?? "Sin dato";
+}
 
 type WorkOrderMaterials = {
   profile_cuts?: unknown[];
@@ -1884,6 +1890,12 @@ export function ProductionPage(): JSX.Element {
                 );
               })()}
               <GlassOrderPanel orderIds={[detail.id]} />
+              <HardwarePicking
+                rows={detail.hardware_picking ?? []}
+                gaps={detail.hardware_machining ?? []}
+                versionId={detail.project_version_id ?? null}
+                organizationId={auth.me?.active_organization?.id ?? ""}
+              />
               {(() => {
                 const optimization = detail.payload?.optimization as
                   WorkOrderOptimization | undefined;
@@ -2324,8 +2336,9 @@ export function ProductionPage(): JSX.Element {
                             <p className="production-optimize-purchases production-stock-short">
                               {t("production.optimizeBuy")}:{" "}
                               {shortRows
-                                .map((row) =>
-                                  `${row.sku ?? row.name ?? "?"} × ${row.short} ${row.unit ?? ""}`.trim(),
+                                .map(
+                                  (row) =>
+                                    `${row.name ?? "Material sin nombre"} × ${fmtMm(row.short)} ${stockUnitLabel(row.unit)}`,
                                 )
                                 .concat(
                                   unmapped.map(
@@ -2364,7 +2377,11 @@ export function ProductionPage(): JSX.Element {
                                       <tr key={`${row.kind ?? ""}-${row.sku ?? ""}-${index}`}>
                                         <td>{row.name ?? row.sku ?? "—"}</td>
                                         <td>
-                                          {row.sku ?? "—"} · {row.unit ?? ""}
+                                          {stockUnitLabel(row.unit)}
+                                          <details>
+                                            <summary>Detalles técnicos</summary>
+                                            <code>{row.sku ?? "Sin dato"}</code>
+                                          </details>
                                         </td>
                                         <td>{row.on_hand ?? "0"}</td>
                                         <td>{row.needed ?? "0"}</td>
