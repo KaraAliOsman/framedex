@@ -1263,6 +1263,7 @@ export function setModuleGlass(
   moduleId: string,
   glassArticleSku: string | null,
   glassSpec?: string | null,
+  authority?: Partial<IntentNode>,
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module) return product;
@@ -1274,11 +1275,31 @@ export function setModuleGlass(
         // The article is the composition authority: pick one and its spec is
         // sealed (null spec stays null — honest MISSING, never a thickness).
         glass_spec: glassArticleSku == null ? node.glass_spec : (glassSpec ?? null),
+        // A legacy/typed SKU edit must clear a previously selected recipe;
+        // a full catalog choice declares composition and total thickness together.
+        ...(node.glass_product ? { glass_product: null } : {}),
+        ...authority,
       };
     }
     return { ...node, children: node.children?.map(withGlass) };
   }
   return replaceModule(product, moduleId, { ...module, tree: withGlass(module.tree) });
+}
+
+/** Leaf metadata edits preserve each bay's recipe and its immutable authority. */
+export function setModuleBaySpec(
+  product: ProductJson,
+  moduleId: string,
+  patch: Partial<IntentNode>,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  function update(node: IntentNode): IntentNode {
+    return node.type === "BAY"
+      ? { ...node, ...patch }
+      : { ...node, children: node.children?.map(update) };
+  }
+  return replaceModule(product, moduleId, { ...module, tree: update(module.tree) });
 }
 
 export function moduleGlassSku(module: ProductModuleJson): string | null {

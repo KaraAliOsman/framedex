@@ -1,4 +1,5 @@
 import { normalizeDimensionCandidate } from "./snapping";
+import type { GlassProduct, GlassProcessing } from "../glass/glassModel";
 
 export const OPENINGS = [
   "FIXED",
@@ -88,6 +89,10 @@ export type IntentNode = {
   glass_thickness_mm?: string | null;
   glass_spec?: string | null;
   glass_article_sku?: string | null;
+  glass_product?: GlassProduct | null;
+  glass_processing?: GlassProcessing | null;
+  sill_height_mm?: string | null;
+  is_sidelight?: boolean | null;
   panel_article_sku?: string | null;
   hardware_set_sku?: string | null;
   handle_height_mm?: string | null;
@@ -300,6 +305,10 @@ const BAY_SPEC_KEYS = [
   "glass_thickness_mm",
   "glass_spec",
   "glass_article_sku",
+  "glass_product",
+  "glass_processing",
+  "sill_height_mm",
+  "is_sidelight",
   "panel_article_sku",
   "hardware_set_sku",
   "handle_height_mm",
@@ -313,7 +322,7 @@ const BAY_SPEC_KEYS = [
 export function baySpec(node: IntentNode): Partial<IntentNode> {
   const spec: Record<string, unknown> = {};
   for (const key of BAY_SPEC_KEYS) {
-    spec[key] = node[key] ?? null;
+    spec[key] = node[key] ?? (key === "is_sidelight" ? false : null);
   }
   return spec;
 }

@@ -123,3 +123,41 @@ Lint & Typecheck, Test Suite, Frontend Build y Database Gate. El código y las
 capturas sustentan la aceptación específica de D01; el catálogo sigue sintético
 y no certifica datos de fabricante. Se actualiza ESTADO y el resumen de cinco
 líneas de la ola. D02 continúa como siguiente encargo; `main` no se modificó.
+
+## 2026-10-05 — D02: composición de vidrio y autoridad del pedido
+
+La rama `codex/D02-vidrios-compuestos` agrega recetas, propiedades y límites con
+fuente, reglas editables y la décima hoja de ingesta. Las autoridades publicadas
+son inmutables y no se falsifican al guardar una posición. Una variante de tenant
+con SKU nuevo puede ampliar una serie global congelada, sin sustituirla. Los
+goldens nuevos verifican PVB, junquillo, área mínima y cargos exactos; se conservan
+los goldens históricos.
+
+Se recorrieron reglas, aviso en bahía, alternativa, deshacer/rehacer, compositor,
+diff/publicación y guardado/reapertura. Las 36 capturas finales no tienen nuevos
+hallazgos en el vidrio. Una cotización real de 12 posiciones generó 12 OT y 24
+etiquetas con cortes idénticos al BOM sellado; PDF/CSV se descargaron en navegador.
+La revisión editorial corrigió la herencia de radios/densidad del inspector,
+contraste, precisión visible, fuentes Windows y DEMO multipágina. Los límites
+anteriores del editor y Producción no se atribuyen como resueltos por D02.
+
+La norma oficial, propiedades del proveedor y datos de PVB/tarifas pendientes se
+registran en ACTIVACION. La sección a escala y el aviso localizado sustentan el
+momento de firma y la mejora del flujo. Véanse la página de composición y el
+informe de aceptación; el cierre del PR y sus checks se registra después del gate.
+
+## 2026-10-06 — D02 · verificación aislada y scripts reproducibles
+
+El Database Gate completo pasa: 959 pgTAP, 280 integración, 11 Chromium,
+PostgreSQL 16 y upgrades poblados. La validación rechaza quitar la receta de un
+SKU estructurado; la notación histórica tampoco elude una regla obligatoria.
+Los fixtures unitarios que aíslan el catálogo usan una lectura legacy opt-in,
+sin modificar los guardas de producción ni sus pruebas de integración.
+
+La ejecución directa de los verificadores publicados encontró la colisión de
+unidad del fixture. Se corrigió a partir del contrato de precio del motor y de
+las tarifas NUMERIC del catálogo DEMO, incluyendo sus procesos. La lista sintética
+se repara idempotentemente; los precios/documentos ya sellados permanecen intactos.
+La inspección visual encontró una página de continuación del pedido sin DEMO;
+ahora utiliza la misma cabecera repetida que los documentos y una prueba comprueba
+la marca en cada página. Las correcciones y su evidencia se incluyen en D02.

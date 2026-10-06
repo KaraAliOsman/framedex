@@ -7,6 +7,7 @@ from dekopen_engine.hardware import HardwareCandidateEvaluation
 from dekopen_engine.manufacturing_trace import GeometryManufacturingTraceV1
 from dekopen_engine.models import BayOpeningType, EngineResult, HardwareKitRule, RailType
 from dekopen_engine.weight import ExactLeafWeight
+from dekopen_engine.glass_composition import GlassProduct
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,6 +21,7 @@ class InfillTechnicalFacts:
     height_mm: Decimal
     exact_area_m2: Decimal
     bead_supported: bool
+    glass_product: GlassProduct | None = None
 
 
 @dataclass(frozen=True, slots=True)

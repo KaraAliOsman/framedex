@@ -332,12 +332,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
     label: "PVC practicable 60 mm · DEMO · sintético, sin certificación",
   });
-  // Canvas-first editor: the single module is already selected on the drawing;
-  // glazing choices live in its contextual inspector, not a separate form.
-  await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
-  await page
-    .getByRole("combobox", { name: "Vidrio", exact: true })
-    .selectOption("DEMO_60-VIDRIO-4");
+  // The catalog recipe determines thickness; the inspector selects one product.
+  const glass = page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]');
+  await glass.click();
+  await expect(glass).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
@@ -534,10 +532,11 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
     label: "PVC practicable 60 mm · DEMO · sintético, sin certificación",
   });
-  await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
-  await page
-    .getByRole("combobox", { name: "Vidrio", exact: true })
-    .selectOption("DEMO_60-VIDRIO-4");
+  await page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]').click();
+  await expect(page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]')).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   const dividedCalculation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&

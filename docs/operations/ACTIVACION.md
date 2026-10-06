@@ -61,3 +61,29 @@ Este indice no contiene secretos. Los valores reales se cargan como variables de
 | Variables    | `AI_GATEWAY_MIMO_API_KEY`, `AI_GATEWAY_MIMO_BASE_URL`, `AI_GATEWAY_MIMO_MODEL`, `AI_GATEWAY_ROUTE_PROVIDER`.                  |
 | Activacion   | Cargar variables en backend y worker, seleccionar proveedor MIMO en rutas IA y ejecutar una consulta controlada.              |
 | Verificacion | Job IA termina con proveedor real, auditoria queda registrada y ningun valor secreto aparece en logs, HTML o bundle frontend. |
+
+## Vidrios: norma y fichas del proveedor (D02)
+
+1. Obtenga la norma NCh 135/2 que su organización puede usar y la fuente/página de
+   cada regla. En la décima hoja **Reglas de vidrio** de `catalogo-v1.xlsx`, declare
+   código, nombre, zona, clases admitidas, umbrales, fuente, `synthetic=false` y
+   `mandatory` según su decisión. No copie tablas de la norma sin permiso.
+2. Importe la hoja en Catálogo › Importar, revise sus candidatos y el diff, y
+   publique con el dueño o encargado de taller. También puede mantener las reglas
+   en Ajustes › Reglas de vidrio. Los ejemplos DEMO no sirven como regla oficial.
+3. Obtenga del vidriero composiciones, códigos de compra, propiedades Ug/g/TL,
+   clase, límites y fuentes. Publique recetas desde el compositor o la hoja
+   Vidrios. Para un laminado, cargue el espesor y la densidad de cada PVB con su
+   fuente: el sistema conserva **Sin dato** cuando falten.
+4. Cargue costos por m² y SKU/unidad de templado, pulido, perforación y palillaje,
+   incluidos mínimo facturable y costos por metro o cruce. Revise una cotización y
+   la explicación de sus cargos antes de emitirla.
+5. Configure `DEKOPEN_PUBLIC_APP_URL` con el origen público de la aplicación,
+   reinicie backend/worker y descargue un pedido de una OT sellada. Escanee una
+   etiqueta como encargado de taller y compruebe proyecto, revisión, pieza y BOM.
+6. Compare PDF/CSV con el BOM sellado. Acuerde la precisión con el proveedor si
+   aparecen cortes decimales; no los redondee. El templado se solicita a la medida
+   exacta. Un vidrio con contorno necesita adjuntar el plano de fabricación.
+
+No se envía el pedido a terceros desde esta superficie. Descargarlo y revisarlo
+son acciones locales; cualquier envío futuro conserva el clic humano explícito.

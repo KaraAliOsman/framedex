@@ -47,3 +47,25 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   escaneo sin texto muestra la limitación; no se simula OCR. IA3 verificará la ruta
   multimodal antes de habilitarla. El proveedor se configura en el backend y su
   credencial permanece exclusivamente en el entorno.
+
+## D02 · vidrio y seguridad (2026-10-05)
+
+- Las reglas de NCh 135/2 empiezan vacías. **Revisar ejemplos DEMO** propone zonas
+  sintéticas de puerta, paño lateral, antepecho bajo y paño grande, con fuente y
+  aviso. No transcribe ni certifica una norma. El dueño o encargado revisa el diff
+  y configura fuente, zona, clases y obligatoriedad en Ajustes › Reglas de vidrio,
+  o importa la norma aportada mediante Catálogo › Importar › Reglas de vidrio.
+- Una regla es recomendación salvo obligatoriedad explícita. La ausencia de
+  altura sobre el piso provoca revisión, sin presumir una altura segura.
+- Masa del PVB: sin espesor, densidad y fuente no se muestra un peso estimado. El
+  proveedor aporta esos campos en el compositor; Ug, g, transmisión y clase
+  permanecen **Sin dato** hasta recibir su ficha. Las variantes exigen publicación
+  revisada antes de asignarse al producto.
+- El mínimo facturable y los recargos se configuran por producto mediante sus
+  autoridades de precio. Un proceso declarado sin tarifa no se cotiza como gratis.
+- El pedido mantiene los decimales del motor cuando existan y pide confirmar esa
+  precisión con el vidriero. Las medidas enteras se imprimen sin decimales. No hay
+  preferencia de redondeo que cambie la autoridad de fabricación.
+- Las etiquetas enlazan a la aplicación mediante `DEKOPEN_PUBLIC_APP_URL`,
+  configurada en el entorno de backend. El QR identifica el infill sellado y
+  conserva el acceso autenticado del taller.

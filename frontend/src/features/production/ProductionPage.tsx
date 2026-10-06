@@ -79,12 +79,7 @@ type StationQueueGroup = {
 import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
 import { CncPanel } from "./CncPanel";
 import { CncWorkspace } from "./CncWorkspace";
-import {
-  GlassSummary,
-  glassSummaryCsv,
-  type GlassPiece,
-  type PolishingEntry,
-} from "./GlassSummary";
+import { GlassOrderPanel } from "../glass/GlassOrderPanel";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import { OperatorStepCard, type QcCheckInput } from "./OperatorCard";
 import { TracePieceMatches, TracePlan, TraceStock } from "./TraceView";
@@ -273,6 +268,7 @@ const actionLabel: Record<StepAction, Parameters<typeof t>[0]> = {
 };
 
 export function ProductionPage(): JSX.Element {
+  const [glassBatch, setGlassBatch] = useState<string[]>([]);
   const auth = useAuthSession();
   const role = auth.me?.active_organization?.role ?? "";
   const [params, setParams] = useSearchParams();
@@ -1348,6 +1344,20 @@ export function ProductionPage(): JSX.Element {
               </ul>
             </section>
           ) : null}
+
+          <details className="glass-batch">
+            <summary>{t("glass.batch")}</summary>
+            <p>{t("glass.batchHelp")}</p>
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={!glassBatch.length}
+              onClick={() => setGlassBatch([])}
+            >
+              {t("glass.batchClear")}
+            </button>
+            <GlassOrderPanel orderIds={glassBatch} />
+          </details>
           <div
             className="production-filters"
             role="group"
@@ -1477,6 +1487,22 @@ export function ProductionPage(): JSX.Element {
           <ul>
             {filteredOrders.map((order) => (
               <li key={order.id}>
+                <label className="glass-batch-choice">
+                  <input
+                    type="checkbox"
+                    checked={glassBatch.includes(order.id)}
+                    disabled={!glassBatch.includes(order.id) && glassBatch.length >= 100}
+                    onChange={(event) =>
+                      setGlassBatch((ids) =>
+                        event.target.checked
+                          ? [...ids, order.id]
+                          : ids.filter((id) => id !== order.id),
+                      )
+                    }
+                  />
+                  {t("glass.batchSelect")} {order.order_code}
+                </label>
+
                 <button
                   type="button"
                   className={
@@ -1857,23 +1883,7 @@ export function ProductionPage(): JSX.Element {
                   </dl>
                 );
               })()}
-              {(() => {
-                const materials = detail.payload?.materials as WorkOrderMaterials | undefined;
-                const glasses = (materials?.glasses ?? []) as GlassPiece[];
-                if (!glasses.length) return null;
-                const polishing = (detail.payload?.glass_polishing ?? []) as PolishingEntry[];
-                const quantity = Math.max(1, Number(detail.quantity) || 1);
-                return (
-                  <GlassSummary
-                    glasses={glasses}
-                    polishing={polishing}
-                    quantity={quantity}
-                    onExport={(groups) =>
-                      downloadCnc(detail.order_code, `glass.csv`, glassSummaryCsv(groups, quantity))
-                    }
-                  />
-                );
-              })()}
+              <GlassOrderPanel orderIds={[detail.id]} />
               {(() => {
                 const optimization = detail.payload?.optimization as
                   WorkOrderOptimization | undefined;

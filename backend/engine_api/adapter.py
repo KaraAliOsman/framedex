@@ -27,6 +27,8 @@ from dekopen_engine.contour import Contour
 from dekopen_engine.catalog_rules import CatalogRuleError
 from dekopen_engine.weight import MissingFabricationAuthority
 from dekopen_engine.models import PlanPoint
+from dekopen_engine.glass_composition import GlassProduct, GlassProcessing
+import json
 from dekopen_engine.product import (
     ConnectionKind,
     EdgeSide,
@@ -59,9 +61,14 @@ _NODE_FIELDS = {
     "glass_thickness_mm",
     "glass_spec",
     "glass_article_sku",
+    "glass_product",
+    "glass_processing",
+    "sill_height_mm",
+    "is_sidelight",
     "panel_article_sku",
     "hardware_set_sku",
     "handle_height_mm",
+    "sill_height_mm",
     "door_handedness",
     "sliding_layout",
 }
@@ -123,6 +130,17 @@ def parse_parametric_node(payload: object) -> ParametricNode:
 
     if "sliding_layout" in raw and raw["sliding_layout"] is not None:
         values["sliding_layout"] = _parse_sliding_layout(raw["sliding_layout"])
+
+    for field, model_type in (("glass_product", GlassProduct), ("glass_processing", GlassProcessing)):
+        if raw.get(field) is not None:
+            try:
+                values[field] = model_type.model_validate_json(json.dumps(raw[field], allow_nan=False))
+            except (ValueError, TypeError) as error:
+                raise InvalidEngineRequest("Revisa la composición y los procesos del vidrio.") from error
+    if "is_sidelight" in raw:
+        if not isinstance(raw["is_sidelight"], bool):
+            raise InvalidEngineRequest("is_sidelight must be a boolean")
+        values["is_sidelight"] = raw["is_sidelight"]
 
     if "door_handedness" in raw and raw["door_handedness"] is not None:
         if raw["door_handedness"] not in ("LEFT", "RIGHT"):

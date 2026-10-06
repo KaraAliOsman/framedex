@@ -41,7 +41,8 @@ from dekopen_engine.geometry import (
     resolve_bead_rule,
     resolved_sliding_layout,
 )
-from dekopen_engine.glass import derive_net_glass_thickness
+from dekopen_engine.glass import derive_net_glass_thickness, glass_piece_metadata
+from dekopen_engine.glass_composition import glass_mass_per_m2, net_glass_thickness
 from dekopen_engine.hardware import NoCompatibleHardwareKit
 from dekopen_engine.manufacturing_trace import (
     Axis,
@@ -1272,17 +1273,20 @@ def _evaluate_contour_module(
     if leaf.glass_thickness_mm is None or leaf.glass_spec is None:
         raise ValueError(f"contour region {leaf.id} requires glass_thickness_mm and glass_spec")
 
-    thickness_net = derive_net_glass_thickness(leaf.glass_spec)
+    thickness_net = (net_glass_thickness(leaf.glass_product.composition) if leaf.glass_product
+                     else derive_net_glass_thickness(leaf.glass_spec))
+    mass_per_m2 = (glass_mass_per_m2(leaf.glass_product) if leaf.glass_product else
+                   None if thickness_net is None else thickness_net * Decimal("2.50"))
     validate_leaf_limits(params, BayOpeningType.FIXED, bay_id=leaf.id,
         width_mm=module.width_mm, height_mm=module.height_mm, check_weight=True,
-        weight_kg=None if thickness_net is None else
-            fill_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50"))
+        weight_kg=None if mass_per_m2 is None else
+            fill_area_mm2 / Decimal("1000000") * mass_per_m2)
     area_m2 = (fill_area_mm2 / Decimal("1000000")).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
     weight_kg = (
-        None if thickness_net is None else
-        (fill_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
+        None if mass_per_m2 is None else
+        (fill_area_mm2 / Decimal("1000000") * mass_per_m2).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
     )
@@ -1305,6 +1309,7 @@ def _evaluate_contour_module(
             thickness_net_mm=(None if thickness_net is None else
                               thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
             glass_spec=leaf.glass_spec,
+            **glass_piece_metadata(leaf.glass_product, leaf.glass_processing, fill_area_mm2 / Decimal("1000000")),
             article_sku=leaf.glass_article_sku,
             # An axis-aligned rect fill is the classic rectangle — `shape`
             # stays None so production sheet-nests it like any other pane.
@@ -1513,14 +1518,17 @@ def _evaluate_frameless_module(
     glasses: list[GlassPiece] = []
     fittings: list[FittingPiece] = []
 
-    thickness_net = derive_net_glass_thickness(leaf.glass_spec)
+    thickness_net = (net_glass_thickness(leaf.glass_product.composition) if leaf.glass_product
+                     else derive_net_glass_thickness(leaf.glass_spec))
+    mass_per_m2 = (glass_mass_per_m2(leaf.glass_product) if leaf.glass_product else
+                   None if thickness_net is None else thickness_net * Decimal("2.50"))
     pane_area_mm2 = module.width_mm * module.height_mm
     area_m2 = (pane_area_mm2 / Decimal("1000000")).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
     weight_kg = (
-        None if thickness_net is None else
-        (pane_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
+        None if mass_per_m2 is None else
+        (pane_area_mm2 / Decimal("1000000") * mass_per_m2).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
     )
@@ -1540,6 +1548,7 @@ def _evaluate_frameless_module(
             thickness_net_mm=(None if thickness_net is None else
                               thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
             glass_spec=leaf.glass_spec,
+            **glass_piece_metadata(leaf.glass_product, leaf.glass_processing, area_m2),
             article_sku=leaf.glass_article_sku,
             exposed_edges=[edge.value for edge in exposed],
         )

@@ -58,6 +58,11 @@ _FONTS = "".join(
     ]
 )
 
+_DEMO_NOTICE_CSS = """
+.demo-notice { position: running(demoNotice); border-bottom: 0.5pt solid #465158; padding: 1mm 0; font-size: 8pt; }
+@page { @top-left { content: element(demoNotice); } }
+"""
+
 _CSS = _FONTS + """
 @page { size: letter portrait; margin: 13mm 12mm 22mm; @bottom-center { content: element(titleblock); } }
 * { box-sizing: border-box; } body { color: #161C1F; font: 9.5pt 'IBM Plex Sans', sans-serif; margin: 0; }
@@ -330,8 +335,12 @@ def _url_fetcher(url: str, *args: object, **kwargs: object) -> object:
 
         return URLFetcher(allowed_protocols={"data"}).fetch(url)
     if url.startswith("file://"):
-        target = Path(url.removeprefix("file://")).resolve()
-        if target.parent == _FONTS_DIR and target.suffix == ".ttf":
+        from urllib.parse import urlsplit
+        from urllib.request import url2pathname
+
+        parsed = urlsplit(url)
+        target = Path(url2pathname(parsed.path)).resolve()
+        if not parsed.netloc and target.parent == _FONTS_DIR.resolve() and target.suffix == ".ttf":
             from weasyprint import URLFetcher
 
             return URLFetcher(allowed_protocols={"file"}).fetch(url)
@@ -2564,7 +2573,7 @@ def render_pdf_document(
         body = _doc08(snapshot)
     else:
         raise DocumentaryError("pdf_document_type_invalid")
-    if snapshot.get("is_demo") or any(isinstance(position, dict) and position.get("is_demo")
+    if snapshot.get("is_demo") or _has_synthetic_glass(snapshot) or any(isinstance(position, dict) and position.get("is_demo")
                                      for position in snapshot.get("positions", [])):
         body = '<p class="demo-notice"><strong>DEMO</strong> · Catálogo sintético, sin certificación. Medidas y precios de prueba.</p>' + body
     # Order-scoped payloads (DOC-02/DOC-04/DOC-07) carry `order`, not
@@ -2579,7 +2588,8 @@ def render_pdf_document(
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
         f"<title>{title}</title>"
-        f"<style>{_CSS}.demo-notice {{ border: 1pt solid #465158; padding: 2mm; font-size: 8pt; }}</style></head><body>{body}</body></html>"
+        f"<style>{_CSS}{_DEMO_NOTICE_CSS}</style></head><body>"
+        f"{body}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
         pdf_identifier=pdf_identifier,
@@ -2587,6 +2597,14 @@ def render_pdf_document(
     if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
         raise DocumentaryError("pdf_generation_failed")
     return content, _PDF_MEDIA
+
+
+def _has_synthetic_glass(value):
+    if isinstance(value, dict):
+        product = value.get("glass_product")
+        return bool(isinstance(product, dict) and product.get("synthetic")) or any(
+            _has_synthetic_glass(child) for child in value.values())
+    return isinstance(value, list) and any(_has_synthetic_glass(child) for child in value)
 
 
 _PAYMENT_KIND_ES = {"ANTICIPO": "Anticipo", "PARCIAL": "Abono parcial", "SALDO": "Saldo"}

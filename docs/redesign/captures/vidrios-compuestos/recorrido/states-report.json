@@ -1,0 +1,41 @@
+{
+  "result": "PASA",
+  "transport_fault_only": [
+    "estado-carga-transporte",
+    "estado-error-transporte"
+  ],
+  "domain_records": [
+    {
+      "name": "estado-vacio-real",
+      "screenshot": "estado-vacio-real.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": []
+    },
+    {
+      "name": "estado-bloqueado-real",
+      "screenshot": "estado-bloqueado-real.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": []
+    },
+    {
+      "name": "regla-obligatoria-rechaza-guardar",
+      "screenshot": "regla-obligatoria-rechaza-guardar.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": []
+    },
+    {
+      "name": "estado-error-transporte",
+      "screenshot": "estado-error-transporte.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": []
+    }
+  ]
+}

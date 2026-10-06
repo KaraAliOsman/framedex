@@ -1,4 +1,5 @@
 import { parseLocaleNumber } from "../../format";
+import { asGlassProduct, glassChoicePatch } from "../glass/glassModel";
 import { t } from "../../i18n/es-CL";
 import type {
   CommandArgs,
@@ -445,12 +446,28 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
         kind: "choice",
         id: "glass",
         label: t("cmd.glassLabel"),
-        options: ctx.catalog.glassSkus.map((value) => ({ value, label: value })),
+        options: ctx.catalog.glassSkus.map((value) => ({
+          value,
+          label:
+            asGlassProduct(ctx.catalog.glassSpecs?.find((choice) => choice.sku === value)?.product)
+              ?.name ??
+            ctx.catalog.glassSpecs?.find((choice) => choice.sku === value)?.spec ??
+            value,
+        })),
       },
     ],
     apply: (ctx, args) => {
       const id = args.module ?? selectedModule(ctx)?.id;
-      return id ? setModuleGlass(ctx.product, id, args.glass ?? null) : ctx.product;
+      const choice = ctx.catalog.glassSpecs?.find((item) => item.sku === args.glass);
+      return id
+        ? setModuleGlass(
+            ctx.product,
+            id,
+            args.glass ?? null,
+            choice?.spec,
+            choice ? glassChoicePatch(choice) : undefined,
+          )
+        : ctx.product;
     },
     describe: (args) => `${moduleLabel(args)}: vidrio ${args.glass ?? "?"}`,
     ai: {

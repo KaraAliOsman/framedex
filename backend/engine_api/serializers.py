@@ -71,6 +71,10 @@ class GlassPieceSerializer(serializers.Serializer):
     exposed_edges = serializers.ListField(
         child=serializers.CharField(), allow_null=True
     )
+    composition = serializers.JSONField(required=False, allow_null=True)
+    thickness_total_mm = serializers.CharField(required=False, allow_null=True)
+    billable_area_m2 = serializers.CharField(required=False, allow_null=True)
+    processing = serializers.JSONField(required=False, allow_null=True)
 
 
 class PanelPieceSerializer(serializers.Serializer):

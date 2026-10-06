@@ -16,6 +16,7 @@ Content-oriented map of durable project knowledge.
 - [Product vision](product/vision.md) — what DEKOPEN is trying to become and what it is explicitly not.
 - [Fenestration + UX principles](product/fenestration-and-ux.md) — domain/interaction rules that prevent visually plausible but physically wrong software.
 - [Catalog authority by family](product/catalog-authority.md) — exact rules, historical migration, reviewed import and synthetic authority boundaries.
+- [Glass composition](product/glass-composition.md) — structured recipes, sourced safety, exact billing and sealed supplier orders.
 
 ## Current state
 

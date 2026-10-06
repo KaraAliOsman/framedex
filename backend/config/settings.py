@@ -100,6 +100,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = _csv_env("CORS_ALLOWED_ORIGINS", "http://127.0.0.1:5173")
 CORS_ALLOW_CREDENTIALS = False
+DEKOPEN_PUBLIC_APP_URL = os.environ.get("DEKOPEN_PUBLIC_APP_URL", "http://127.0.0.1:5173").rstrip("/")
 CORS_ALLOW_HEADERS = (*default_headers, "x-organization-id")
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://127.0.0.1:25321").rstrip("/")

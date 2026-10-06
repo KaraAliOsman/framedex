@@ -1,0 +1,272 @@
+{
+  "geometry": {
+    "fittings": [],
+    "glasses": [
+      {
+        "area_m2": "0.1532",
+        "article_sku": null,
+        "bay_id": "safe",
+        "billable_area_m2": "0.35",
+        "composition": {
+          "layers": [
+            {
+              "interlayers": [
+                {
+                  "density_kg_m3": "1070",
+                  "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                  "thickness_mm": "0.38",
+                  "type": "PVB"
+                }
+              ],
+              "kind": "PANE",
+              "plies": [
+                {
+                  "coating_face": null,
+                  "color": "CLEAR",
+                  "supplier_sku": null,
+                  "thickness_mm": "3",
+                  "type": "FLOAT"
+                },
+                {
+                  "coating_face": null,
+                  "color": "CLEAR",
+                  "supplier_sku": null,
+                  "thickness_mm": "3",
+                  "type": "FLOAT"
+                }
+              ]
+            },
+            {
+              "gas": "AIR",
+              "kind": "CHAMBER",
+              "sealant": null,
+              "spacer": "ALUMINIUM",
+              "width_mm": "13.62"
+            },
+            {
+              "interlayers": [],
+              "kind": "PANE",
+              "plies": [
+                {
+                  "coating_face": null,
+                  "color": "CLEAR",
+                  "supplier_sku": null,
+                  "thickness_mm": "4",
+                  "type": "TEMPERED"
+                }
+              ]
+            }
+          ]
+        },
+        "exposed_edges": null,
+        "glass_spec": "3+3 PVB 0,38 / 13,62 aire / 4 templado",
+        "height_mm": "304.00",
+        "leaf_id": null,
+        "processing": {
+          "bars_horizontal": 1,
+          "bars_vertical": 1,
+          "holes": 2,
+          "polished_edges": [
+            "TOP",
+            "BOTTOM",
+            "LEFT",
+            "RIGHT"
+          ]
+        },
+        "shape": null,
+        "thickness_net_mm": "10.00",
+        "thickness_total_mm": "24.00",
+        "weight_kg": "3.89",
+        "width_mm": "504.00"
+      }
+    ],
+    "hardware_items": [],
+    "leaf_weights": [],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "606.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "safe",
+        "leaf_id": null,
+        "length_mm": "513.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "safe",
+        "leaf_id": null,
+        "length_mm": "313.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": []
+  },
+  "pane": {
+    "area_m2": "0.1800",
+    "article_sku": "DEMO_60-GLASS-SAFE",
+    "bay_id": "safe",
+    "billable_area_m2": "0.35",
+    "composition": {
+      "layers": [
+        {
+          "interlayers": [
+            {
+              "density_kg_m3": "1070",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "thickness_mm": "0.38",
+              "type": "PVB"
+            }
+          ],
+          "kind": "PANE",
+          "plies": [
+            {
+              "coating_face": null,
+              "color": "CLEAR",
+              "supplier_sku": null,
+              "thickness_mm": "3",
+              "type": "FLOAT"
+            },
+            {
+              "coating_face": null,
+              "color": "CLEAR",
+              "supplier_sku": null,
+              "thickness_mm": "3",
+              "type": "FLOAT"
+            }
+          ]
+        },
+        {
+          "gas": "AIR",
+          "kind": "CHAMBER",
+          "sealant": null,
+          "spacer": "ALUMINIUM",
+          "width_mm": "13.62"
+        },
+        {
+          "interlayers": [],
+          "kind": "PANE",
+          "plies": [
+            {
+              "coating_face": null,
+              "color": "CLEAR",
+              "supplier_sku": null,
+              "thickness_mm": "4",
+              "type": "TEMPERED"
+            }
+          ]
+        }
+      ]
+    },
+    "exposed_edges": null,
+    "glass_spec": "3+3 PVB 0,38 / 13,62 aire / 4 templado",
+    "height_mm": "300",
+    "leaf_id": null,
+    "processing": {
+      "bars_horizontal": 1,
+      "bars_vertical": 1,
+      "holes": 2,
+      "polished_edges": [
+        "TOP",
+        "BOTTOM",
+        "LEFT",
+        "RIGHT"
+      ]
+    },
+    "shape": null,
+    "thickness_net_mm": "10.00",
+    "thickness_total_mm": "24.00",
+    "weight_kg": "4.57",
+    "width_mm": "600"
+  },
+  "price": {
+    "area_m2": "0.18",
+    "bars_crossings": 1,
+    "bars_length_m": "0.9",
+    "billable_area_m2": "0.35",
+    "charges": [
+      {
+        "kind": "Vidrio",
+        "quantity": "0.35",
+        "sku": "DEMO_60-GLASS-SAFE",
+        "total_cost": "15750.00",
+        "unit": "M2",
+        "unit_cost": "45000"
+      },
+      {
+        "kind": "Templado",
+        "quantity": "0.35",
+        "sku": "DEMO_60-GLASS-TEMPER",
+        "total_cost": "2100.00",
+        "unit": "M2",
+        "unit_cost": "6000"
+      },
+      {
+        "kind": "Canto pulido",
+        "quantity": "1.8",
+        "sku": "DEMO_60-GLASS-POLISH",
+        "total_cost": "4500.0",
+        "unit": "M",
+        "unit_cost": "2500"
+      },
+      {
+        "kind": "Perforación",
+        "quantity": "2",
+        "sku": "DEMO_60-GLASS-DRILL",
+        "total_cost": "3600",
+        "unit": "EA",
+        "unit_cost": "1800"
+      },
+      {
+        "kind": "Palillaje por metro",
+        "quantity": "0.9",
+        "sku": "DEMO_60-GLASS-BAR",
+        "total_cost": "3150.0",
+        "unit": "M",
+        "unit_cost": "3500"
+      },
+      {
+        "kind": "Cruce de palillaje",
+        "quantity": "1",
+        "sku": "DEMO_60-GLASS-CROSS",
+        "total_cost": "900",
+        "unit": "EA",
+        "unit_cost": "900"
+      }
+    ],
+    "total_cost": "30000.00"
+  }
+}

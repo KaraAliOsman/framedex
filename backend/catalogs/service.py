@@ -266,7 +266,7 @@ def _contents_json(components):
     return "[" + ",".join(encoded) + "]"
 
 
-_JSONB_FIELDS = {"contents", "section", "finishes", "sliding_parameters",
+_JSONB_FIELDS = {"product", "contents", "section", "finishes", "sliding_parameters",
                  "dimensional_limits", "cut_rule", "reinforcement_rule", "provenance"}
 
 

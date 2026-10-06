@@ -90,7 +90,7 @@ def test_pricing_request_cannot_supply_cost_or_actor():
     assert not PriceRequestSerializer(data=data).is_valid()
 
 
-def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
+def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_glass_read_model):
     """A contoured glass piece prices by polygon area, never by bounding box."""
     from types import SimpleNamespace
 
@@ -140,7 +140,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
     position = {
         "system_id": "sys", "width_mm": Decimal("2000"),
         "height_mm": Decimal("1000"),
-        "parametric_tree": {"id": "B1", "glass_article_sku": "V4"},
+        "parametric_tree": {"id": "B1", "type": "BAY", "glass_article_sku": "V4"},
         "color_interior": "WHITE", "color_exterior": "WHITE",
     }
     params_repo = SimpleNamespace(
@@ -162,7 +162,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
     assert total == Decimal("180")
 
 
-def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch):
+def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_read_model):
     """Frameless fittings are real material: each declared SKU must resolve an
     'EA' cost-list entry or the quote fails — never silently priced at zero."""
     from types import SimpleNamespace

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from decimal import Decimal
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer, model_validator
+
+from dekopen_engine.glass_composition import GlassComposition, GlassProcessing, GlassProduct, total_glass_thickness
 
 
 class EngineModel(BaseModel):
@@ -137,6 +139,20 @@ class GlassPiece(EngineModel):
     # polishing authority consumes this as its suggested preselection; a
     # framed pane leaves it None.
     exposed_edges: list[str] | None = None
+    composition: GlassComposition | None = None
+    thickness_total_mm: Decimal | None = None
+    billable_area_m2: Decimal | None = None
+    processing: GlassProcessing | None = None
+
+    @model_serializer(mode="wrap")
+    def serialize_glass(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        # Additive composition metadata must not change the hash of a
+        # historical piece that never declared these fields.
+        for key in ("composition", "thickness_total_mm", "billable_area_m2", "processing"):
+            if key not in self.model_fields_set:
+                result.pop(key, None)
+        return result
 
 
 HARDWARE_COMPONENT_CATEGORIES = (
@@ -483,6 +499,10 @@ class ParametricNode(EngineModel):
     glass_thickness_mm: Decimal | None = None
     glass_spec: str | None = None
     glass_article_sku: str | None = None
+    glass_product: GlassProduct | None = None
+    glass_processing: GlassProcessing | None = None
+    sill_height_mm: Decimal | None = Field(default=None, ge=0)
+    is_sidelight: bool = False
     panel_article_sku: str | None = None
     hardware_set_sku: str | None = None
     handle_height_mm: Decimal | None = None
@@ -495,6 +515,14 @@ class ParametricNode(EngineModel):
     # fully defines the unit — slots, moving/fixed kind, rail assignment.
     # Absent, the SLIDING_*L presets map to canonical layouts.
     sliding_layout: SlidingLayout | None = None
+
+    @model_validator(mode="after")
+    def declared_glass_package(self) -> ParametricNode:
+        if self.glass_product is not None:
+            thickness = total_glass_thickness(self.glass_product.composition)
+            if thickness is None or thickness != self.glass_thickness_mm:
+                raise ValueError("El espesor del junquillo debe ser el espesor total de la composición.")
+        return self
 
 
 class ProfileCut(EngineModel):

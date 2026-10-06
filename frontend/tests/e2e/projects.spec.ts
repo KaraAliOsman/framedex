@@ -106,19 +106,18 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       .selectOption(manual.systemId),
   );
 
-  // The compositional canvas evaluates live: picking the glazing thickness in
-  // the contextual inspector is enough to reach VALID (the spec seeds itself).
+  // Choosing the catalog product derives thickness and evaluates the live canvas.
   await responseTo<EngineAssemblyCalculateResponse>(
     page,
     "POST",
     "/api/v1/engine/assembly/calculate/",
     200,
-    () =>
-      page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("24.00"),
+    () => page.locator('[data-glass-sku="DEMO_60-VIDRIO-4-16-4"]').click(),
   );
-  await page
-    .getByRole("combobox", { name: "Vidrio", exact: true })
-    .selectOption("DEMO_60-VIDRIO-4-16-4");
+  await expect(page.locator('[data-glass-sku="DEMO_60-VIDRIO-4-16-4"]')).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
 
   const initial = await responseTo<PositionResponse>(

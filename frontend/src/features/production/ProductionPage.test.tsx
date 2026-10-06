@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiMutator } from "../../api/apiMutator";
@@ -87,9 +88,13 @@ describe("ProductionPage", () => {
   it("lists work orders and opens the detail with steps", async () => {
     render(
       <MemoryRouter initialEntries={["/production"]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     const orderButton = await screen.findByRole("button", { name: /OT-REV-A-01/ });
@@ -104,9 +109,13 @@ describe("ProductionPage", () => {
   it("starts a step through the transition endpoint", async () => {
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     const start = (await screen.findAllByRole("button", { name: t("production.actionStart") }))[0];
@@ -124,9 +133,13 @@ describe("ProductionPage", () => {
     identity.role = "ESTIMATOR";
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     await waitFor(() => expect(screen.getByText("OT-REV-A-01")).toBeTruthy());
@@ -138,9 +151,13 @@ describe("ProductionPage", () => {
   it("cancels a work order after a danger prompt", async () => {
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: t("production.cancelButton") }));
@@ -168,9 +185,13 @@ describe("ProductionPage", () => {
     });
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: t("production.materialRecheck") }));
@@ -190,9 +211,13 @@ describe("ProductionPage", () => {
     });
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     await waitFor(() => expect(screen.getByText("OT-REV-A-01")).toBeTruthy());
@@ -217,9 +242,13 @@ describe("ProductionPage", () => {
     identity.role = "OPERATOR";
     const { unmount } = render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     await waitFor(() => expect(screen.getByText("OT-REV-A-01")).toBeTruthy());
@@ -228,9 +257,13 @@ describe("ProductionPage", () => {
     identity.role = "WORKSHOP_MANAGER";
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     await waitFor(() =>

@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-05
 volatility: medium
-verified_ref: d8fbe5071fdb346555f7ef4df3e91160cfb5dfe0
+verified_ref: codex/D02-vidrios-compuestos
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -11,6 +11,7 @@ sources:
   - supabase/migrations/20261229000300_catalog_review_interchange.sql
   - scripts/check_catalog_family_upgrade.py
   - docs/redesign/captures/sistemas-catalogo/aceptacion.md
+  - docs/wiki/product/glass-composition.md
 ---
 
 # Autoridad de catálogo por familia
@@ -44,7 +45,8 @@ datos en recomendaciones de fabricación para productos nuevos.
 
 ## Ingesta y revisión
 
-La plantilla oficial tiene nueve hojas y conserva los lexemas numéricos del XLSX.
+La plantilla oficial actual tiene diez hojas y conserva los lexemas numéricos del XLSX.
+D02 agregó **Reglas de vidrio**; la versión integrada en D01 tenía nueve hojas.
 Las fórmulas se rechazan como autoridad; los errores identifican fila y columna.
 PDF con texto, planillas, correo y texto pegado usan extracción y candidatos
 tipados. La IA necesita evidencia literal para cada valor; LOW y valores sin
@@ -73,8 +75,9 @@ semilla certifican valores.
 La verificación real MiMo produjo 31 candidatos de un PDF sintético: 324 campos
 HIGH con soporte y 27 UNKNOWN. No se publicó el PDF. La ruta de este proveedor es
 de texto: fotos y escaneos sin texto indican la limitación; IA3 debe verificar una
-ruta multimodal antes de ampliarla. D02–D07 aportarán autoridades especializadas
-de vidrio, paneles, herrajes, colores, accesorios y formas. El uso de la plantilla
+ruta multimodal antes de ampliarla. D02 agrega [composición y reglas de vidrio](glass-composition.md).
+D03–D07 aportarán autoridades especializadas
+de aperturas, herrajes, colores, accesorios y vano. El uso de la plantilla
 en esas hojas no equivale a aceptar todavía todas esas capacidades.
 
 La evidencia y las limitaciones están en [la aceptación](../../redesign/captures/sistemas-catalogo/aceptacion.md).

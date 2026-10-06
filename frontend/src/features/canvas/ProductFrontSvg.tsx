@@ -1495,6 +1495,8 @@ export function ProductFrontContent({
   onCommitDivide,
   onMoveDivision,
   onResizeSeam,
+  glassNotices = {},
+  onGlassNotice,
 }: {
   product: ProductJson;
   members: MemberGeometry;
@@ -1535,6 +1537,11 @@ export function ProductFrontContent({
   onCommitDivide?(moduleId: string, bayId: string | null, offsetMm?: string): void;
   onMoveDivision?(moduleId: string, divisionId: string, offsetMm: string): void;
   onResizeSeam?(seamIndex: number, deltaMm: number): void;
+  glassNotices?: Record<
+    string,
+    { message: string; alternativeSku?: string; alternativeName?: string }
+  >;
+  onGlassNotice?(moduleId: string, bayId: string, alternativeSku?: string): void;
 }): JSX.Element {
   const { couplings } = product.assembly;
   const frameT = members.frame.faceWidthMm;
@@ -1981,6 +1988,65 @@ export function ProductFrontContent({
                   />
                 </>
               )}
+              {!preview &&
+                onGlassNotice &&
+                bayRegions(
+                  module.tree,
+                  { x: x + frameT, y: top + frameT, w: w - frameT * 2, h: h - frameT * 2 },
+                  { x, y: top },
+                  members,
+                ).map(({ id, region }) => {
+                  const notice = glassNotices[`${module.id}/${id}`];
+                  if (!notice) return null;
+                  const badgeW = Math.min(region.w, 240 / sheetScale);
+                  const badgeH = 40 / sheetScale;
+                  const badgeX = region.x + (region.w - badgeW) / 2;
+                  const badgeY = region.y + region.h / 2 - badgeH / 2;
+                  return (
+                    <g
+                      key={id}
+                      className="glass-bay-notice"
+                      role="button"
+                      tabIndex={disabled ? -1 : 0}
+                      aria-label={`${notice.message}${notice.alternativeName ? ` · ${t("glass.useAlternative")} ${notice.alternativeName}` : ""}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (!disabled) onGlassNotice(module.id, id, notice.alternativeSku);
+                      }}
+                      onKeyDown={(event) => {
+                        if ((event.key === "Enter" || event.key === " ") && !disabled) {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onGlassNotice(module.id, id, notice.alternativeSku);
+                        }
+                      }}
+                    >
+                      <title>
+                        {notice.message}
+                        {notice.alternativeName
+                          ? ` · ${t("glass.useAlternative")} ${notice.alternativeName}`
+                          : ""}
+                      </title>
+                      <rect x={badgeX} y={badgeY} width={badgeW} height={badgeH} />
+                      <text
+                        x={badgeX + 8 / sheetScale}
+                        y={badgeY + 15 / sheetScale}
+                        fontSize={11 / sheetScale}
+                      >
+                        {t("glass.notice")} · {t("glass.selector")}
+                      </text>
+                      <text
+                        x={badgeX + 8 / sheetScale}
+                        y={badgeY + 31 / sheetScale}
+                        fontSize={11 / sheetScale}
+                      >
+                        {notice.alternativeName
+                          ? `${t("glass.useAlternative")} ${notice.alternativeName.slice(0, 26)}${notice.alternativeName.length > 26 ? "…" : ""}`
+                          : t("glass.reviewRequired")}
+                      </text>
+                    </g>
+                  );
+                })}
               {dividePreview?.moduleId === module.id && (
                 <line className="divide-preview-line" {...dividePreview.line} />
               )}

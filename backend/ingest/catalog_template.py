@@ -113,6 +113,22 @@ SCHEMAS: dict[str, tuple[Column, ...]] = {
         c("commercial_sku", "SKU comercial por color", required=True),
         c("physical_stock_identity", "Identidad de stock", required=True), SOURCE),
     "Vidrios": (SYSTEM, SKU, c("glass_spec", "Composición de vidrio", required=True),
+        c("name", "Nombre comercial"), c("synthetic", "Ejemplo sintético", "boolean"),
+        c("ug", "Ug de proveedor (W/m²K)", "positive"),
+        c("solar_factor", "Factor solar g de proveedor", "decimal"),
+        c("light_transmittance", "Transmisión luminosa de proveedor", "decimal"),
+        c("safety_class", "Clase NCh 135 de proveedor", choices={"A":"A", "B":"B", "C":"C"}),
+        c("weight_kg_m2", "Peso declarado de proveedor (kg/m²)", "positive"),
+        c("minimum_area_m2", "Área mínima facturable (m²)", "decimal"),
+        c("min_width_mm", "Ancho mínimo de vidrio (mm)", "positive"),
+        c("max_width_mm", "Ancho máximo de vidrio (mm)", "positive"),
+        c("min_height_mm", "Alto mínimo de vidrio (mm)", "positive"),
+        c("max_height_mm", "Alto máximo de vidrio (mm)", "positive"),
+        c("max_area_m2", "Área máxima de vidrio (m²)", "positive"),
+        c("max_aspect_ratio", "Relación de aspecto máxima de vidrio", "positive"),
+        c("tempering_sku", "SKU recargo templado"), c("polishing_sku", "SKU recargo pulido"),
+        c("drilling_sku", "SKU recargo perforación"), c("bars_per_m_sku", "SKU palillaje por metro"),
+        c("bars_per_crossing_sku", "SKU palillaje por cruce"),
         c("purchasing_sku", "SKU de compra", required=True), c("manufacturer_name", "Fabricante", required=True),
         c("version", "Versión", "integer", True),
         c("glass_thickness_mm", "Espesor para junquillo (mm)", "positive"),
@@ -120,6 +136,14 @@ SCHEMAS: dict[str, tuple[Column, ...]] = {
         c("gasket_interior_mm", "Junta interior (mm)", "decimal"),
         c("gasket_exterior_mm", "Junta exterior (mm)", "decimal"),
         c("cut_add_mm", "Adición al corte de junquillo (mm)", "decimal"), SOURCE),
+    "Reglas de vidrio": (c("code", "Código de regla", required=True), NAME,
+        c("zone", "Zona de riesgo", required=True, choices={"DOOR":"Puerta", "SIDELIGHT":"Panel lateral",
+            "LOW_PANE":"Paño bajo", "LARGE_PANE":"Gran ventanal"}),
+        c("maximum_sill_mm", "Antepecho de referencia (mm)", "decimal"),
+        c("minimum_area_m2", "Área de referencia (m²)", "positive"),
+        c("required_classes", "Clases admitidas separadas por |", "list", True),
+        c("mandatory", "Obligatoria", "boolean", True),
+        c("synthetic", "Ejemplo sintético", "boolean", True), SOURCE),
     "Herrajes": (SYSTEM, SKU, NAME, c("opening_type", "Apertura", required=True, choices={
         "TURN": "Practicable", "TILT_TURN": "Oscilobatiente", "SLIDING": "Corredera",
         "DOOR": "Puerta", "AWNING": "Proyectante"}),
@@ -301,7 +325,7 @@ def parse_structured(kind: str, content: bytes) -> list[dict] | None:
             continue
         labels = {column.label: column.key for column in SCHEMAS[name]}
         headers = next((index for index, row in enumerate(table)
-                        if row.get("A") == SYSTEM.label), None)
+                        if row.get("A") == SCHEMAS[name][0].label), None)
         if headers is None:
             raise ValueError(f"Hoja ‘{name}’: falta la fila de encabezados oficiales.")
         columns = {letter: labels[label] for letter, label in table[headers].items() if label in labels}

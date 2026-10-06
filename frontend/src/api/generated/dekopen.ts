@@ -128,6 +128,13 @@ import type {
   FlowConfirmationRequest,
   FreezeRequestRequest,
   FreezeResponse,
+  GlassOrder,
+  GlassPreviewInputRequest,
+  GlassPreviewOutput,
+  GlassRulesOutput,
+  GlassRulesRequest,
+  GlassVariantOutput,
+  GlassVariantRequest,
   GlobalSearchParams,
   ImportConfirmRequest,
   ImportConfirmResponse,
@@ -189,6 +196,7 @@ import type {
   PriceRequestRequest,
   PriceResponse,
   ProcessProfileOptionList,
+  ProductionGlassOrderParams,
   ProductionOrderDeliveryConfirmationParams,
   ProductionOrderDetail,
   ProductionOrderDispatchNoteParams,
@@ -3803,6 +3811,299 @@ export const catalogEvidenceReview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(evidenceReviewInputRequest),
+  });
+};
+
+export type catalogGlassPreviewResponse200 = {
+  data: GlassPreviewOutput;
+  status: 200;
+};
+
+export type catalogGlassPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogGlassPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogGlassPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogGlassPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogGlassPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogGlassPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogGlassPreviewResponseSuccess = catalogGlassPreviewResponse200 & {
+  headers: Headers;
+};
+export type catalogGlassPreviewResponseError = (
+  | catalogGlassPreviewResponse400
+  | catalogGlassPreviewResponse401
+  | catalogGlassPreviewResponse403
+  | catalogGlassPreviewResponse404
+  | catalogGlassPreviewResponse409
+  | catalogGlassPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogGlassPreviewResponse =
+  catalogGlassPreviewResponseSuccess | catalogGlassPreviewResponseError;
+
+export const getCatalogGlassPreviewUrl = () => {
+  return `/api/v1/catalogs/glass/preview/`;
+};
+
+export const catalogGlassPreview = async (
+  glassPreviewInputRequest: GlassPreviewInputRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogGlassPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogGlassPreviewResponse>(getCatalogGlassPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(glassPreviewInputRequest),
+  });
+};
+
+export type catalogGlassRulesResponse200 = {
+  data: GlassRulesOutput;
+  status: 200;
+};
+
+export type catalogGlassRulesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogGlassRulesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogGlassRulesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogGlassRulesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogGlassRulesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogGlassRulesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogGlassRulesResponseSuccess = catalogGlassRulesResponse200 & {
+  headers: Headers;
+};
+export type catalogGlassRulesResponseError = (
+  | catalogGlassRulesResponse400
+  | catalogGlassRulesResponse401
+  | catalogGlassRulesResponse403
+  | catalogGlassRulesResponse404
+  | catalogGlassRulesResponse409
+  | catalogGlassRulesResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogGlassRulesResponse =
+  catalogGlassRulesResponseSuccess | catalogGlassRulesResponseError;
+
+export const getCatalogGlassRulesUrl = () => {
+  return `/api/v1/catalogs/glass/rules/`;
+};
+
+export const catalogGlassRules = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogGlassRulesResponse> => {
+  return apiMutator<catalogGlassRulesResponse>(getCatalogGlassRulesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogGlassRulesReplaceResponse200 = {
+  data: GlassRulesOutput;
+  status: 200;
+};
+
+export type catalogGlassRulesReplaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogGlassRulesReplaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogGlassRulesReplaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogGlassRulesReplaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogGlassRulesReplaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogGlassRulesReplaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogGlassRulesReplaceResponseSuccess = catalogGlassRulesReplaceResponse200 & {
+  headers: Headers;
+};
+export type catalogGlassRulesReplaceResponseError = (
+  | catalogGlassRulesReplaceResponse400
+  | catalogGlassRulesReplaceResponse401
+  | catalogGlassRulesReplaceResponse403
+  | catalogGlassRulesReplaceResponse404
+  | catalogGlassRulesReplaceResponse409
+  | catalogGlassRulesReplaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogGlassRulesReplaceResponse =
+  catalogGlassRulesReplaceResponseSuccess | catalogGlassRulesReplaceResponseError;
+
+export const getCatalogGlassRulesReplaceUrl = () => {
+  return `/api/v1/catalogs/glass/rules/`;
+};
+
+export const catalogGlassRulesReplace = async (
+  glassRulesRequest: GlassRulesRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogGlassRulesReplaceResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogGlassRulesReplaceResponse>(getCatalogGlassRulesReplaceUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(glassRulesRequest),
+  });
+};
+
+export type catalogGlassVariantPublishResponse201 = {
+  data: GlassVariantOutput;
+  status: 201;
+};
+
+export type catalogGlassVariantPublishResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogGlassVariantPublishResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogGlassVariantPublishResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogGlassVariantPublishResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogGlassVariantPublishResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogGlassVariantPublishResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogGlassVariantPublishResponseSuccess = catalogGlassVariantPublishResponse201 & {
+  headers: Headers;
+};
+export type catalogGlassVariantPublishResponseError = (
+  | catalogGlassVariantPublishResponse400
+  | catalogGlassVariantPublishResponse401
+  | catalogGlassVariantPublishResponse403
+  | catalogGlassVariantPublishResponse404
+  | catalogGlassVariantPublishResponse409
+  | catalogGlassVariantPublishResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogGlassVariantPublishResponse =
+  catalogGlassVariantPublishResponseSuccess | catalogGlassVariantPublishResponseError;
+
+export const getCatalogGlassVariantPublishUrl = () => {
+  return `/api/v1/catalogs/glass/variants/`;
+};
+
+export const catalogGlassVariantPublish = async (
+  glassVariantRequest: GlassVariantRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogGlassVariantPublishResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogGlassVariantPublishResponse>(getCatalogGlassVariantPublishUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(glassVariantRequest),
   });
 };
 
@@ -9936,6 +10237,104 @@ export const productionCncWorkspace = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<productionCncWorkspaceResponse> => {
   return apiMutator<productionCncWorkspaceResponse>(getProductionCncWorkspaceUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionGlassOrderResponse200ApplicationJson = {
+  data: GlassOrder;
+  status: 200;
+};
+
+export type productionGlassOrderResponse200ApplicationPdf = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionGlassOrderResponse200TextCsv = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionGlassOrderResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionGlassOrderResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionGlassOrderResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionGlassOrderResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionGlassOrderResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionGlassOrderResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionGlassOrderResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionGlassOrderResponseSuccess = (
+  | productionGlassOrderResponse200ApplicationJson
+  | productionGlassOrderResponse200ApplicationPdf
+  | productionGlassOrderResponse200TextCsv
+) & {
+  headers: Headers;
+};
+export type productionGlassOrderResponseError = (
+  | productionGlassOrderResponse400
+  | productionGlassOrderResponse401
+  | productionGlassOrderResponse403
+  | productionGlassOrderResponse404
+  | productionGlassOrderResponse409
+  | productionGlassOrderResponse422
+  | productionGlassOrderResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionGlassOrderResponse =
+  productionGlassOrderResponseSuccess | productionGlassOrderResponseError;
+
+export const getProductionGlassOrderUrl = (params: ProductionGlassOrderParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/production/glass-orders/?${stringifiedParams}`
+    : `/api/v1/production/glass-orders/`;
+};
+
+export const productionGlassOrder = async (
+  params: ProductionGlassOrderParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionGlassOrderResponse> => {
+  return apiMutator<productionGlassOrderResponse>(getProductionGlassOrderUrl(params), {
     ...options,
     method: "GET",
   });

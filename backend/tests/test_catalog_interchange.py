@@ -12,14 +12,14 @@ from ingest.catalog_ai import parse_response
 from ingest.catalog_template import SCHEMAS, candidate, export_csv, normalize, parse_structured
 
 @pytest.mark.parametrize("sheet", list(SCHEMAS))
-def test_nine_sheet_csv_roundtrip_with_evidence(sheet):
+def test_ten_sheet_csv_roundtrip_with_evidence(sheet):
     original = [row for row in catalog_rows() if row["sheet"] == sheet]
     assert original and not any(row["errors"] for row in original)
     parsed = parse_structured("CSV", export_csv(sheet, original))
     assert [row["values"] for row in parsed] == [row["values"] for row in original]
     assert all(field["ref"].startswith(sheet + "!") for row in parsed for field in row["fields"].values())
 
-def test_official_xlsx_is_nine_sheet_empty_template():
+def test_official_xlsx_is_ten_sheet_empty_template():
     from ingest.catalog_template import _xlsx_tables
     content = Path("backend/ingest/templates/catalogo-v1.xlsx").read_bytes()
     assert {name for name, _ in _xlsx_tables(content)} == set(SCHEMAS)
@@ -111,14 +111,16 @@ def test_scanned_source_never_promotes_provider_confidence():
 
 def test_preview_new_catalog_all_types_is_stable_and_rejects_duplicates(monkeypatch):
     monkeypatch.setattr(catalog_review, "rows", lambda sql, params: [{"allowed": True}] if "pricing_role" in sql else [])
+    monkeypatch.setattr(catalog_review.glass_catalog, "rules_snapshot", lambda org: {"items": [], "revision": "sha256:empty", "configured": False})
     original = catalog_rows()
     assert not any(row["errors"] for row in original)
     imported = {"id": uuid4()}
-    changes, errors, token = catalog_review._plan(uuid4(), imported, deepcopy(original))
+    org_id = uuid4()
+    changes, errors, token = catalog_review._plan(org_id, imported, deepcopy(original))
     assert errors == []
-    assert len(changes) == len(original)+len([row for row in original if row["sheet"]=="Vidrios"])
-    assert {"profile_systems", "profile_articles", "glazing_bead_matrix", "hardware_kits", "glass_purchase_mappings", "catalog_color_skus", "cost_list_items"} == {change.table for change in changes}
-    assert token == catalog_review._plan(uuid4(), imported, deepcopy(original))[2]
+    assert len(changes) == len(original)+2*len([row for row in original if row["sheet"]=="Vidrios"])
+    assert {"profile_systems", "profile_articles", "glazing_bead_matrix", "hardware_kits", "glass_purchase_mappings", "catalog_glass_compositions", "glass_safety_rule_sets", "catalog_color_skus", "cost_list_items"} == {change.table for change in changes}
+    assert token == catalog_review._plan(org_id, imported, deepcopy(original))[2]
     duplicate = deepcopy(original[0])
     duplicate["key"] = "duplicate"
     _, errors, _ = catalog_review._plan(uuid4(), imported, deepcopy(original) + [duplicate])

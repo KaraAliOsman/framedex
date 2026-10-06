@@ -77,7 +77,7 @@ def test_persisted_quotation_inputs_carry_a_bounded_finish_string():
     ).is_valid()
 
 
-def test_calculation_matches_engine_and_inputs_are_not_changed(monkeypatch):
+def test_calculation_matches_engine_and_inputs_are_not_changed(monkeypatch, legacy_glass_read_model):
     monkeypatch.setattr(SystemParamsRepository, "load_visible", lambda *_: demo_60_params())
     serializer = PositionWriteSerializer(
         data={"location_tag": "Cocina", "quantity": 1, "design": g1_request()}
@@ -158,7 +158,7 @@ def test_revision_sequence_is_excel_style_without_skips():
     assert next_revision_code("REV-AA") == "REV-AB"
 
 
-def test_unassigned_couplers_save_as_manufacturing_incomplete(monkeypatch):
+def test_unassigned_couplers_save_as_manufacturing_incomplete(monkeypatch, legacy_glass_read_model):
     """Declared-but-unassigned couplers are warnings: the BOM is complete
     structurally, so the position persists as a draft. Sealing/production
     stay gated downstream."""
@@ -182,7 +182,7 @@ def test_unassigned_couplers_save_as_manufacturing_incomplete(monkeypatch):
     assert result["calculation_hash"].startswith("sha256:")
 
 
-def test_valid_assembly_saves_with_prefixed_bom(monkeypatch):
+def test_valid_assembly_saves_with_prefixed_bom(monkeypatch, legacy_glass_read_model):
     from backend.tests.factories import SYSTEM_ID
     from backend.tests.test_engine_assembly import COUPLER_ARTICLE, bow_product
 
@@ -349,7 +349,7 @@ def test_position_public_reads_new_glass_metadata_fields():
     assert public["bom"]["glasses"] == stored_glasses
 
 
-def test_manufacturing_incomplete_assembly_saves_as_draft(monkeypatch):
+def test_manufacturing_incomplete_assembly_saves_as_draft(monkeypatch, legacy_glass_read_model):
     """An arch (member_bending_required warnings) carries a complete BOM —
     it persists as a draft position while INVALID evaluations still refuse.
     Sealing/production stay gated downstream."""
@@ -507,7 +507,7 @@ def test_module_geometry_failure_refuses_to_save(monkeypatch):
         ("SLIDING", "SLIDING"),
     ],
 )
-def test_sliding_openings_survive_save_typology(opening, expected, monkeypatch):
+def test_sliding_openings_survive_save_typology(opening, expected, monkeypatch, legacy_glass_read_model):
     """New sliding openings must reach persistence: a successful calculation
     whose typology previously fell to 422 now derives a real label."""
     monkeypatch.setattr(
