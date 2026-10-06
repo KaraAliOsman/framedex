@@ -154,7 +154,7 @@ class AdminView(APIView):
     @extend_schema(operation_id='pricing_admin_list',parameters=[ACTIVE_ORGANIZATION_HEADER],
                    responses={200:AdminResponseSerializer,**ERRORS},tags=['pricing'])
     def get(self,request,resource):
-        allowed = ('OWNER','WORKSHOP_MANAGER') if resource in ('cost-lists','cost-items') else ('OWNER',)
+        allowed = ('OWNER','WORKSHOP_MANAGER') if resource in ('cost-lists','cost-items','demo-costs') else ('OWNER',)
         with scope(request,allowed) as (_,_,org):
             output = admin_list(resource,org)
         return Response(json.loads(json_text({'items':output})))

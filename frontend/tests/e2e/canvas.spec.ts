@@ -135,8 +135,20 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   await page.goto("/projects/demo/positions/g1/edit");
   const systemsResponse = await systemsResponsePromise;
   const systemsPayload = (await systemsResponse.json()) as {
-    systems: Array<{ id: string; code: string; is_demo: boolean }>;
+    systems: Array<{ id: string; code: string; is_demo: boolean; quote_ready: boolean }>;
   };
+  expect(
+    systemsPayload.systems
+      .filter((system) => system.is_demo && system.quote_ready)
+      .map((system) => system.code)
+      .sort(),
+  ).toEqual([
+    "DEMO_60",
+    "DEMO_70",
+    "DEMO_ALU_CORREDERA",
+    "DEMO_ALU_PRACTICABLE",
+    "DEMO_CORREDERA_60",
+  ]);
   const discovered = systemsPayload.systems.filter(
     (system) => system.code === "DEMO_60" && system.is_demo,
   );
@@ -161,11 +173,12 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   await expect(page.getByLabel("Ancho nominal (mm)")).toHaveValue("1000.00");
   await expect(page.getByLabel("Alto nominal (mm)")).toHaveValue("1000.00");
   await expect(page.getByText("FIXED", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("canvas-glass-dimension")).toHaveText("910 × 910 mm");
+  await expect(page.getByTestId("canvas-glass-dimension")).toHaveText("904 × 904 mm");
   await expect(page.getByTestId("technical-frame")).toHaveText("1\u2009006 mm");
-  await expect(page.getByTestId("technical-reinforcement")).toHaveText("970 mm");
-  await expect(page.getByTestId("technical-glass")).toHaveText("910 × 910 mm");
-  await expect(page.getByTestId("technical-bead")).toHaveText("919 mm");
+  // The new sourced rule deducts 30 mm from the 1006 mm profile cut.
+  await expect(page.getByTestId("technical-reinforcement")).toHaveText("976 mm");
+  await expect(page.getByTestId("technical-glass")).toHaveText("904 × 904 mm");
+  await expect(page.getByTestId("technical-bead")).toHaveText("913 mm");
   expect(calculationRequests).toBe(1);
 
   const width = page.getByLabel("Ancho nominal (mm)");
@@ -215,7 +228,7 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   );
   await page.mouse.up();
   await expect(width).toHaveValue("1050.00");
-  await expect(page.getByTestId("canvas-glass-dimension")).toHaveText("960 × 910 mm");
+  await expect(page.getByTestId("canvas-glass-dimension")).toHaveText("954 × 904 mm");
   const snappedRequest = await snappedRequestPromise;
   expect(snappedRequest.postDataJSON().nominal_width_mm).toBe("1050.00");
 
@@ -264,11 +277,11 @@ for (const theme of ["light", "dark"] as const) {
       purchase_list: Array<{ commercial_sku: string }>;
       workshop_cut_plan: Array<{ cuts: Array<{ workshop_sku: string; length_mm: string }> }>;
     };
-    expect(cuts.purchase_list.map((line) => line.commercial_sku)).toContain("COMPRA-MARCO");
+    expect(cuts.purchase_list.map((line) => line.commercial_sku)).toContain("COMPRA-DEMO_60-MARCO");
     expect(
       cuts.workshop_cut_plan
         .flatMap((bar) => bar.cuts)
-        .some((cut) => cut.workshop_sku === "MARCO" && cut.length_mm === "1006.00"),
+        .some((cut) => cut.workshop_sku === "DEMO_60-MARCO" && cut.length_mm === "1006.00"),
     ).toBe(true);
     expect(cutResponse.request().postDataJSON()).not.toHaveProperty("cuts");
     await expect(modal.locator(".inspector-semaphore")).toHaveAttribute("data-status", "RED");
@@ -310,12 +323,12 @@ for (const theme of ["light", "dark"] as const) {
     await expect(modal.locator(".is-corrected")).toHaveCSS("animation-duration", "0.3s");
     await modal.getByRole("button", { name: "Corte 1D", exact: true }).click();
     await expect(modal.getByRole("heading", { name: "Pedido", exact: true })).toBeVisible();
-    await expect(modal.getByText("COMPRA-MARCO", { exact: true })).toBeVisible();
+    await expect(modal.getByText("COMPRA-DEMO_60-MARCO", { exact: true })).toBeVisible();
     await expect(modal.getByRole("heading", { name: "Plan de corte de taller" })).toBeVisible();
-    await expect(modal.getByText("MARCO", { exact: true }).first()).toBeVisible();
+    await expect(modal.getByText("DEMO_60-MARCO", { exact: true }).first()).toBeVisible();
     await modal.screenshot({ path: `test-results/shot07-${theme}.png` });
     await modal.getByRole("button", { name: "Cerrar revisión" }).click();
     await expect(modal).not.toBeVisible();
-    await expect(page.getByTestId("canvas-glass-dimension")).toHaveText("910 × 910 mm");
+    await expect(page.getByTestId("canvas-glass-dimension")).toHaveText("904 × 904 mm");
   });
 }

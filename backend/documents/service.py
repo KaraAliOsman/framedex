@@ -658,6 +658,13 @@ def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
     return [result[key] for key in sorted(result)]
 
 
+def _position_finish(position: Mapping[str, object]) -> str:
+    interior, exterior = position.get("color_interior"), position.get("color_exterior")
+    if interior == exterior and isinstance(interior, str):
+        return interior
+    return "FOILED"
+
+
 def _position_calculations(
     *,
     tree: dict[str, object],
@@ -699,7 +706,9 @@ def _position_calculations(
         module_specs = [(None, None)]
     for module_id, module in module_specs:
         if module is not None and module.contour is not None:
-            computation, _contour_issues = contour_module_computation(module, params)
+            computation, _contour_issues = contour_module_computation(
+                module, params, is_foiled=color != "WHITE", finish=color
+            )
             if computation is None:
                 raise DocumentaryError("documentary_geometry_incomplete")
         elif module is not None and module.frameless is not None:
@@ -720,7 +729,9 @@ def _position_calculations(
                 color=color,
                 params=params,
             )
-            computation = compute_geometry(module_root, params, diagnostic=True)
+            computation = compute_geometry(
+                module_root, params, diagnostic=True, is_foiled=color != "WHITE", finish=color
+            )
         if computation.result is None or computation.manufacturing_trace is None:
             raise DocumentaryError("documentary_geometry_incomplete")
         module_tree = module.tree.model_dump(mode="json") if module is not None else tree
@@ -1095,7 +1106,7 @@ def freeze_revision_a(
             for row in rows(
                 """
                 SELECT id::text, material::text, end_milling_overlap_mm,
-                       process_profile_id::text
+                       process_profile_id::text, is_demo
                 FROM public.profile_systems
                 WHERE id = ANY(%s::uuid[])
                 """,
@@ -1106,11 +1117,7 @@ def freeze_revision_a(
             position_id = str(position["id"])
             tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
             is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
-            color = (
-                "WHITE"
-                if position["color_interior"] == "WHITE" and position["color_exterior"] == "WHITE"
-                else "FOILED"
-            )
+            color = _position_finish(position)
             system_id = UUID(str(position["system_id"]))
             params = SystemParamsRepository().load_visible(system_id, org_id)
             calculations, result = _position_calculations(
@@ -1418,6 +1425,7 @@ def freeze_revision_a(
                 "color_exterior": str(position["color_exterior"]),
                 "location_tag": location_tag,
                 "system_name": str(position["system_name"]),
+                "is_demo": bool(system_facts_by_id.get(str(system_id), {}).get("is_demo", False)),
                 "price_net": D(str(position["price_net"])),
                 "discount_pct": str(position["discount_pct"]),
                 "parametric_tree": tree,
@@ -1484,6 +1492,7 @@ def freeze_revision_a(
         )
         sealed_at = datetime.now(timezone.utc)
         snapshot = {
+            "is_demo": any(item.get("is_demo") for item in position_inputs),
             "schema_version": 1,
             "canonical_version": DOCUMENTARY_CANONICAL_VERSION,
             "project_id": project_id,
@@ -1760,11 +1769,7 @@ def prepare_documentary_inputs(
         reinforcement_options = reinforcement.get(system_id, [])
 
         tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
-        color = (
-            "WHITE"
-            if position.get("color_interior") == "WHITE" and position.get("color_exterior") == "WHITE"
-            else "FOILED"
-        )
+        color = _position_finish(position)
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
         calculations, result = _position_calculations(
             tree=tree,
@@ -2016,11 +2021,7 @@ def save_documentary_inputs(
         pos = positions_by_id[str(item["position_id"])]
         system_id_uuid = UUID(str(pos["system_id"]))
         tree = _json_object(pos["parametric_tree"], "invalid_parametric_tree")
-        color = (
-            "WHITE"
-            if pos.get("color_interior") == "WHITE" and pos.get("color_exterior") == "WHITE"
-            else "FOILED"
-        )
+        color = _position_finish(pos)
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
         calculations, result = _position_calculations(
             tree=tree,

@@ -27,7 +27,7 @@ class LeafTechnicalFacts:
     bay_id: str
     leaf_id: str | None
     opening_type: BayOpeningType
-    rail_type: RailType
+    rail_type: RailType | None
     finished_width_mm: Decimal
     finished_height_mm: Decimal
     base_weight: ExactLeafWeight

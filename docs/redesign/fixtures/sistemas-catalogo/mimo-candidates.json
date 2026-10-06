@@ -1,0 +1,3663 @@
+{
+  "source": "ficha-sintetica.pdf",
+  "method": "MIMO",
+  "model": "primalabs-ai/MiMo-V2.6-Pro",
+  "candidates": [
+    {
+      "key": "ai0",
+      "row": 1,
+      "sheet": "Sistemas",
+      "errors": [
+        {
+          "field": "finishes",
+          "column": "Colores separados por |",
+          "message": "Fila 1, columna ‘Colores separados por |’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "name": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; name = Sistema de prueba 60; system_family = CASEMENT; material = PVC; depth_mm = 60.00; chamber_count = 5; sash_overlap_mm = 8.00; glass_clearance_white_mm = 3.00;",
+          "method": "AI",
+          "literal": "Sistema de prueba 60",
+          "proposed": "Sistema de prueba 60",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "version": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "1",
+          "proposed": 1,
+          "confidence": "HIGH"
+        },
+        "depth_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; name = Sistema de prueba 60; system_family = CASEMENT; material = PVC; depth_mm = 60.00; chamber_count = 5; sash_overlap_mm = 8.00; glass_clearance_white_mm = 3.00;",
+          "method": "AI",
+          "literal": "60.00",
+          "proposed": "60.00",
+          "confidence": "HIGH"
+        },
+        "finishes": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "[\"WHITE\", \"FOILED\"]",
+          "proposed": "WHITE|FOILED",
+          "confidence": "LOW"
+        },
+        "material": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; name = Sistema de prueba 60; system_family = CASEMENT; material = PVC; depth_mm = 60.00; chamber_count = 5; sash_overlap_mm = 8.00; glass_clearance_white_mm = 3.00;",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "is_active": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "True",
+          "proposed": true,
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; name = Sistema de prueba 60; system_family = CASEMENT; material = PVC; depth_mm = 60.00; chamber_count = 5; sash_overlap_mm = 8.00; glass_clearance_white_mm = 3.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "manufacturer": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "chamber_count": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; name = Sistema de prueba 60; system_family = CASEMENT; material = PVC; depth_mm = 60.00; chamber_count = 5; sash_overlap_mm = 8.00; glass_clearance_white_mm = 3.00;",
+          "method": "AI",
+          "literal": "5",
+          "proposed": 5,
+          "confidence": "HIGH"
+        },
+        "hook_depth_mm": {
+          "ref": "página 1",
+          "quote": "glass_clearance_foil_mm = 5.00; corner_bracket_loss_mm = 0.00; hook_depth_mm = 0.00; door_threshold_mm = 30.00; door_bottom_clearance_mm = 20.00; door_leaf_side_clearance_mm = 7.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "system_family": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; name = Sistema de prueba 60; system_family = CASEMENT; material = PVC; depth_mm = 60.00; chamber_count = 5; sash_overlap_mm = 8.00; glass_clearance_white_mm = 3.00;",
+          "method": "AI",
+          "literal": "CASEMENT",
+          "proposed": "CASEMENT",
+          "confidence": "HIGH"
+        },
+        "rebate_depth_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "15.00",
+          "proposed": "15.00",
+          "confidence": "HIGH"
+        },
+        "sash_overlap_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; name = Sistema de prueba 60; system_family = CASEMENT; material = PVC; depth_mm = 60.00; chamber_count = 5; sash_overlap_mm = 8.00; glass_clearance_white_mm = 3.00;",
+          "method": "AI",
+          "literal": "8.00",
+          "proposed": "8.00",
+          "confidence": "HIGH"
+        },
+        "door_threshold_mm": {
+          "ref": "página 1",
+          "quote": "glass_clearance_foil_mm = 5.00; corner_bracket_loss_mm = 0.00; hook_depth_mm = 0.00; door_threshold_mm = 30.00; door_bottom_clearance_mm = 20.00; door_leaf_side_clearance_mm = 7.00;",
+          "method": "AI",
+          "literal": "30.00",
+          "proposed": "30.00",
+          "confidence": "HIGH"
+        },
+        "sliding.rail_type": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "sliding.end_add_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "sliding.rail_count": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "chamber_clearance_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "sliding.separate_rail": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "corner_bracket_loss_mm": {
+          "ref": "página 1",
+          "quote": "glass_clearance_foil_mm = 5.00; corner_bracket_loss_mm = 0.00; hook_depth_mm = 0.00; door_threshold_mm = 30.00; door_bottom_clearance_mm = 20.00; door_leaf_side_clearance_mm = 7.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "end_milling_overlap_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "4.00",
+          "proposed": "4.00",
+          "confidence": "HIGH"
+        },
+        "glass_clearance_foil_mm": {
+          "ref": "página 1",
+          "quote": "glass_clearance_foil_mm = 5.00; corner_bracket_loss_mm = 0.00; hook_depth_mm = 0.00; door_threshold_mm = 30.00; door_bottom_clearance_mm = 20.00; door_leaf_side_clearance_mm = 7.00;",
+          "method": "AI",
+          "literal": "5.00",
+          "proposed": "5.00",
+          "confidence": "HIGH"
+        },
+        "door_bottom_clearance_mm": {
+          "ref": "página 1",
+          "quote": "glass_clearance_foil_mm = 5.00; corner_bracket_loss_mm = 0.00; hook_depth_mm = 0.00; door_threshold_mm = 30.00; door_bottom_clearance_mm = 20.00; door_leaf_side_clearance_mm = 7.00;",
+          "method": "AI",
+          "literal": "20.00",
+          "proposed": "20.00",
+          "confidence": "HIGH"
+        },
+        "glass_clearance_white_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; name = Sistema de prueba 60; system_family = CASEMENT; material = PVC; depth_mm = 60.00; chamber_count = 5; sash_overlap_mm = 8.00; glass_clearance_white_mm = 3.00;",
+          "method": "AI",
+          "literal": "3.00",
+          "proposed": "3.00",
+          "confidence": "HIGH"
+        },
+        "sliding.pulley_height_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "sliding.central_overlap_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "sliding.interlock_required": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "door_leaf_side_clearance_mm": {
+          "ref": "página 1",
+          "quote": "glass_clearance_foil_mm = 5.00; corner_bracket_loss_mm = 0.00; hook_depth_mm = 0.00; door_threshold_mm = 30.00; door_bottom_clearance_mm = 20.00; door_leaf_side_clearance_mm = 7.00;",
+          "method": "AI",
+          "literal": "7.00",
+          "proposed": "7.00",
+          "confidence": "HIGH"
+        },
+        "sliding.lateral_clearance_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "sliding.glazing_deduction_width_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "sliding.glazing_deduction_height_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm = 15.00; end_milling_overlap_mm = 4.00; finishes = [\"WHITE\", \"FOILED\"]; version = 1; is_active = True",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "name": "Sistema de prueba 60",
+        "source": "ficha-sintetica-d01.pdf",
+        "version": 1,
+        "depth_mm": "60.00",
+        "finishes": null,
+        "material": "PVC",
+        "is_active": true,
+        "system_code": "FICHA-D01",
+        "manufacturer": null,
+        "chamber_count": 5,
+        "hook_depth_mm": "0.00",
+        "system_family": "CASEMENT",
+        "rebate_depth_mm": "15.00",
+        "sash_overlap_mm": "8.00",
+        "door_threshold_mm": "30.00",
+        "sliding.rail_type": null,
+        "sliding.end_add_mm": null,
+        "sliding.rail_count": null,
+        "chamber_clearance_mm": null,
+        "sliding.separate_rail": null,
+        "corner_bracket_loss_mm": "0.00",
+        "end_milling_overlap_mm": "4.00",
+        "glass_clearance_foil_mm": "5.00",
+        "door_bottom_clearance_mm": "20.00",
+        "glass_clearance_white_mm": "3.00",
+        "sliding.pulley_height_mm": null,
+        "sliding.central_overlap_mm": null,
+        "sliding.interlock_required": null,
+        "door_leaf_side_clearance_mm": "7.00",
+        "sliding.lateral_clearance_mm": null,
+        "sliding.glazing_deduction_width_mm": null,
+        "sliding.glazing_deduction_height_mm": null
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    },
+    {
+      "key": "ai1",
+      "row": 2,
+      "sheet": "Perfiles",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; name = PVC practicable 60 mm · MARCO; role = FRAME; material = PVC; face_width_mm = 60.00; commercial_length_mm = 6000.00; weight_kg_m =",
+          "method": "AI",
+          "literal": "DEMO_60-MARCO",
+          "proposed": "DEMO_60-MARCO",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; name = PVC practicable 60 mm · MARCO; role = FRAME; material = PVC; face_width_mm = 60.00; commercial_length_mm = 6000.00; weight_kg_m =",
+          "method": "AI",
+          "literal": "PVC practicable 60 mm · MARCO",
+          "proposed": "PVC practicable 60 mm · MARCO",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; name = PVC practicable 60 mm · MARCO; role = FRAME; material = PVC; face_width_mm = 60.00; commercial_length_mm = 6000.00; weight_kg_m =",
+          "method": "AI",
+          "literal": "FRAME",
+          "proposed": "FRAME",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "material": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; name = PVC practicable 60 mm · MARCO; role = FRAME; material = PVC; face_width_mm = 60.00; commercial_length_mm = 6000.00; weight_kg_m =",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; name = PVC practicable 60 mm · MARCO; role = FRAME; material = PVC; face_width_mm = 60.00; commercial_length_mm = 6000.00; weight_kg_m =",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "weight_kg_m": {
+          "ref": "página 1",
+          "quote": "1.1535; steel_weight_kg_m = 1.7000",
+          "method": "AI",
+          "literal": "1.1535",
+          "proposed": "1.1535",
+          "confidence": "HIGH"
+        },
+        "face_width_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; name = PVC practicable 60 mm · MARCO; role = FRAME; material = PVC; face_width_mm = 60.00; commercial_length_mm = 6000.00; weight_kg_m =",
+          "method": "AI",
+          "literal": "60.00",
+          "proposed": "60.00",
+          "confidence": "HIGH"
+        },
+        "steel_weight_kg_m": {
+          "ref": "página 1",
+          "quote": "1.1535; steel_weight_kg_m = 1.7000",
+          "method": "AI",
+          "literal": "1.7000",
+          "proposed": "1.7000",
+          "confidence": "HIGH"
+        },
+        "commercial_length_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; name = PVC practicable 60 mm · MARCO; role = FRAME; material = PVC; face_width_mm = 60.00; commercial_length_mm = 6000.00; weight_kg_m =",
+          "method": "AI",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-MARCO",
+        "name": "PVC practicable 60 mm · MARCO",
+        "role": "FRAME",
+        "source": "ficha-sintetica-d01.pdf",
+        "material": "PVC",
+        "system_code": "FICHA-D01",
+        "weight_kg_m": "1.1535",
+        "face_width_mm": "60.00",
+        "steel_weight_kg_m": "1.7000",
+        "commercial_length_mm": "6000.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai2",
+      "row": 3,
+      "sheet": "Perfiles",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; name = PVC practicable 60 mm · HOJA; role = SASH; material = PVC; face_width_mm = 75.00; commercial_length_mm = 6000.00; weight_kg_m = 1.3550;",
+          "method": "AI",
+          "literal": "DEMO_60-HOJA",
+          "proposed": "DEMO_60-HOJA",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; name = PVC practicable 60 mm · HOJA; role = SASH; material = PVC; face_width_mm = 75.00; commercial_length_mm = 6000.00; weight_kg_m = 1.3550;",
+          "method": "AI",
+          "literal": "PVC practicable 60 mm · HOJA",
+          "proposed": "PVC practicable 60 mm · HOJA",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; name = PVC practicable 60 mm · HOJA; role = SASH; material = PVC; face_width_mm = 75.00; commercial_length_mm = 6000.00; weight_kg_m = 1.3550;",
+          "method": "AI",
+          "literal": "SASH",
+          "proposed": "SASH",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "material": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; name = PVC practicable 60 mm · HOJA; role = SASH; material = PVC; face_width_mm = 75.00; commercial_length_mm = 6000.00; weight_kg_m = 1.3550;",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; name = PVC practicable 60 mm · HOJA; role = SASH; material = PVC; face_width_mm = 75.00; commercial_length_mm = 6000.00; weight_kg_m = 1.3550;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "weight_kg_m": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; name = PVC practicable 60 mm · HOJA; role = SASH; material = PVC; face_width_mm = 75.00; commercial_length_mm = 6000.00; weight_kg_m = 1.3550;",
+          "method": "AI",
+          "literal": "1.3550",
+          "proposed": "1.3550",
+          "confidence": "HIGH"
+        },
+        "face_width_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; name = PVC practicable 60 mm · HOJA; role = SASH; material = PVC; face_width_mm = 75.00; commercial_length_mm = 6000.00; weight_kg_m = 1.3550;",
+          "method": "AI",
+          "literal": "75.00",
+          "proposed": "75.00",
+          "confidence": "HIGH"
+        },
+        "steel_weight_kg_m": {
+          "ref": "página 1",
+          "quote": "steel_weight_kg_m = 1.7000",
+          "method": "AI",
+          "literal": "1.7000",
+          "proposed": "1.7000",
+          "confidence": "HIGH"
+        },
+        "commercial_length_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; name = PVC practicable 60 mm · HOJA; role = SASH; material = PVC; face_width_mm = 75.00; commercial_length_mm = 6000.00; weight_kg_m = 1.3550;",
+          "method": "AI",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-HOJA",
+        "name": "PVC practicable 60 mm · HOJA",
+        "role": "SASH",
+        "source": "ficha-sintetica-d01.pdf",
+        "material": "PVC",
+        "system_code": "FICHA-D01",
+        "weight_kg_m": "1.3550",
+        "face_width_mm": "75.00",
+        "steel_weight_kg_m": "1.7000",
+        "commercial_length_mm": "6000.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai3",
+      "row": 4,
+      "sheet": "Perfiles",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; name = PVC practicable 60 mm · POSTE-V; role = MULLION_V; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "DEMO_60-POSTE-V",
+          "proposed": "DEMO_60-POSTE-V",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; name = PVC practicable 60 mm · POSTE-V; role = MULLION_V; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC practicable 60 mm · POSTE-V",
+          "proposed": "PVC practicable 60 mm · POSTE-V",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; name = PVC practicable 60 mm · POSTE-V; role = MULLION_V; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "MULLION_V",
+          "proposed": "MULLION_V",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "material": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; name = PVC practicable 60 mm · POSTE-V; role = MULLION_V; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; name = PVC practicable 60 mm · POSTE-V; role = MULLION_V; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "weight_kg_m": {
+          "ref": "página 1",
+          "quote": "weight_kg_m = 1.6066; steel_weight_kg_m = 1.7000",
+          "method": "AI",
+          "literal": "1.6066",
+          "proposed": "1.6066",
+          "confidence": "HIGH"
+        },
+        "face_width_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; name = PVC practicable 60 mm · POSTE-V; role = MULLION_V; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "80.00",
+          "proposed": "80.00",
+          "confidence": "HIGH"
+        },
+        "steel_weight_kg_m": {
+          "ref": "página 1",
+          "quote": "weight_kg_m = 1.6066; steel_weight_kg_m = 1.7000",
+          "method": "AI",
+          "literal": "1.7000",
+          "proposed": "1.7000",
+          "confidence": "HIGH"
+        },
+        "commercial_length_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; name = PVC practicable 60 mm · POSTE-V; role = MULLION_V; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-POSTE-V",
+        "name": "PVC practicable 60 mm · POSTE-V",
+        "role": "MULLION_V",
+        "source": "ficha-sintetica-d01.pdf",
+        "material": "PVC",
+        "system_code": "FICHA-D01",
+        "weight_kg_m": "1.6066",
+        "face_width_mm": "80.00",
+        "steel_weight_kg_m": "1.7000",
+        "commercial_length_mm": "6000.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai4",
+      "row": 5,
+      "sheet": "Perfiles",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; name = PVC practicable 60 mm · POSTE-H; role = MULLION_H; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "DEMO_60-POSTE-H",
+          "proposed": "DEMO_60-POSTE-H",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; name = PVC practicable 60 mm · POSTE-H; role = MULLION_H; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC practicable 60 mm · POSTE-H",
+          "proposed": "PVC practicable 60 mm · POSTE-H",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; name = PVC practicable 60 mm · POSTE-H; role = MULLION_H; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "MULLION_H",
+          "proposed": "MULLION_H",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "material": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; name = PVC practicable 60 mm · POSTE-H; role = MULLION_H; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; name = PVC practicable 60 mm · POSTE-H; role = MULLION_H; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m = 0.8499; steel_weight_kg_m = 1.7000",
+          "method": "AI",
+          "literal": "0.8499",
+          "proposed": "0.8499",
+          "confidence": "HIGH"
+        },
+        "face_width_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; name = PVC practicable 60 mm · POSTE-H; role = MULLION_H; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "80.00",
+          "proposed": "80.00",
+          "confidence": "HIGH"
+        },
+        "steel_weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m = 0.8499; steel_weight_kg_m = 1.7000",
+          "method": "AI",
+          "literal": "1.7000",
+          "proposed": "1.7000",
+          "confidence": "HIGH"
+        },
+        "commercial_length_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; name = PVC practicable 60 mm · POSTE-H; role = MULLION_H; material = PVC; face_width_mm = 80.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-POSTE-H",
+        "name": "PVC practicable 60 mm · POSTE-H",
+        "role": "MULLION_H",
+        "source": "ficha-sintetica-d01.pdf",
+        "material": "PVC",
+        "system_code": "FICHA-D01",
+        "weight_kg_m": "0.8499",
+        "face_width_mm": "80.00",
+        "steel_weight_kg_m": "1.7000",
+        "commercial_length_mm": "6000.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai5",
+      "row": 6,
+      "sheet": "Perfiles",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; name = PVC practicable 60 mm · JQ-24; role = GLAZING_BEAD; material = PVC; face_width_mm = 24.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "DEMO_60-JQ-24",
+          "proposed": "DEMO_60-JQ-24",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; name = PVC practicable 60 mm · JQ-24; role = GLAZING_BEAD; material = PVC; face_width_mm = 24.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC practicable 60 mm · JQ-24",
+          "proposed": "PVC practicable 60 mm · JQ-24",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; name = PVC practicable 60 mm · JQ-24; role = GLAZING_BEAD; material = PVC; face_width_mm = 24.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "GLAZING_BEAD",
+          "proposed": "GLAZING_BEAD",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "material": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; name = PVC practicable 60 mm · JQ-24; role = GLAZING_BEAD; material = PVC; face_width_mm = 24.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; name = PVC practicable 60 mm · JQ-24; role = GLAZING_BEAD; material = PVC; face_width_mm = 24.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m = 1.1705",
+          "method": "AI",
+          "literal": "1.1705",
+          "proposed": "1.1705",
+          "confidence": "HIGH"
+        },
+        "face_width_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; name = PVC practicable 60 mm · JQ-24; role = GLAZING_BEAD; material = PVC; face_width_mm = 24.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "24.00",
+          "proposed": "24.00",
+          "confidence": "HIGH"
+        },
+        "steel_weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m = 1.1705",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "commercial_length_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; name = PVC practicable 60 mm · JQ-24; role = GLAZING_BEAD; material = PVC; face_width_mm = 24.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-JQ-24",
+        "name": "PVC practicable 60 mm · JQ-24",
+        "role": "GLAZING_BEAD",
+        "source": "ficha-sintetica-d01.pdf",
+        "material": "PVC",
+        "system_code": "FICHA-D01",
+        "weight_kg_m": "1.1705",
+        "face_width_mm": "24.00",
+        "steel_weight_kg_m": null,
+        "commercial_length_mm": "6000.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai6",
+      "row": 7,
+      "sheet": "Perfiles",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; name = PVC practicable 60 mm · JQ-14; role = GLAZING_BEAD; material = PVC; face_width_mm = 14.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "DEMO_60-JQ-14",
+          "proposed": "DEMO_60-JQ-14",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; name = PVC practicable 60 mm · JQ-14; role = GLAZING_BEAD; material = PVC; face_width_mm = 14.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC practicable 60 mm · JQ-14",
+          "proposed": "PVC practicable 60 mm · JQ-14",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; name = PVC practicable 60 mm · JQ-14; role = GLAZING_BEAD; material = PVC; face_width_mm = 14.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "GLAZING_BEAD",
+          "proposed": "GLAZING_BEAD",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "material": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; name = PVC practicable 60 mm · JQ-14; role = GLAZING_BEAD; material = PVC; face_width_mm = 14.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; name = PVC practicable 60 mm · JQ-14; role = GLAZING_BEAD; material = PVC; face_width_mm = 14.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m = 1.1660",
+          "method": "AI",
+          "literal": "1.1660",
+          "proposed": "1.1660",
+          "confidence": "HIGH"
+        },
+        "face_width_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; name = PVC practicable 60 mm · JQ-14; role = GLAZING_BEAD; material = PVC; face_width_mm = 14.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "14.00",
+          "proposed": "14.00",
+          "confidence": "HIGH"
+        },
+        "steel_weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m = 1.1660",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "commercial_length_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; name = PVC practicable 60 mm · JQ-14; role = GLAZING_BEAD; material = PVC; face_width_mm = 14.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-JQ-14",
+        "name": "PVC practicable 60 mm · JQ-14",
+        "role": "GLAZING_BEAD",
+        "source": "ficha-sintetica-d01.pdf",
+        "material": "PVC",
+        "system_code": "FICHA-D01",
+        "weight_kg_m": "1.1660",
+        "face_width_mm": "14.00",
+        "steel_weight_kg_m": null,
+        "commercial_length_mm": "6000.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai7",
+      "row": 8,
+      "sheet": "Perfiles",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; name = PVC practicable 60 mm · JQ-10; role = GLAZING_BEAD; material = PVC; face_width_mm = 10.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "DEMO_60-JQ-10",
+          "proposed": "DEMO_60-JQ-10",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; name = PVC practicable 60 mm · JQ-10; role = GLAZING_BEAD; material = PVC; face_width_mm = 10.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC practicable 60 mm · JQ-10",
+          "proposed": "PVC practicable 60 mm · JQ-10",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; name = PVC practicable 60 mm · JQ-10; role = GLAZING_BEAD; material = PVC; face_width_mm = 10.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "GLAZING_BEAD",
+          "proposed": "GLAZING_BEAD",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "material": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; name = PVC practicable 60 mm · JQ-10; role = GLAZING_BEAD; material = PVC; face_width_mm = 10.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; name = PVC practicable 60 mm · JQ-10; role = GLAZING_BEAD; material = PVC; face_width_mm = 10.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m = 1.4243",
+          "method": "AI",
+          "literal": "1.4243",
+          "proposed": "1.4243",
+          "confidence": "HIGH"
+        },
+        "face_width_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; name = PVC practicable 60 mm · JQ-10; role = GLAZING_BEAD; material = PVC; face_width_mm = 10.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "10.00",
+          "proposed": "10.00",
+          "confidence": "HIGH"
+        },
+        "steel_weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m = 1.4243",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "commercial_length_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; name = PVC practicable 60 mm · JQ-10; role = GLAZING_BEAD; material = PVC; face_width_mm = 10.00; commercial_length_mm = 6000.00;",
+          "method": "AI",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-JQ-10",
+        "name": "PVC practicable 60 mm · JQ-10",
+        "role": "GLAZING_BEAD",
+        "source": "ficha-sintetica-d01.pdf",
+        "material": "PVC",
+        "system_code": "FICHA-D01",
+        "weight_kg_m": "1.4243",
+        "face_width_mm": "10.00",
+        "steel_weight_kg_m": null,
+        "commercial_length_mm": "6000.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai8",
+      "row": 9,
+      "sheet": "Roles y reglas de corte",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; role = FRAME; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "DEMO_60-MARCO",
+          "proposed": "DEMO_60-MARCO",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; role = FRAME; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "FRAME",
+          "proposed": "FRAME",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "rounding": {
+          "ref": "página 1",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "UP",
+          "proposed": "UP",
+          "confidence": "HIGH"
+        },
+        "cut_step_mm": {
+          "ref": "página 1",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "0.01",
+          "proposed": "0.01",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; role = FRAME; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "angle_degrees": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; role = FRAME; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "45",
+          "proposed": "45",
+          "confidence": "HIGH"
+        },
+        "meeting_deduction_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; role = FRAME; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "welding_loss_per_end_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; role = FRAME; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "3.00",
+          "proposed": "3.00",
+          "confidence": "HIGH"
+        },
+        "joint_deduction_per_end_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; role = FRAME; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-MARCO",
+        "role": "FRAME",
+        "source": "ficha-sintetica-d01.pdf",
+        "rounding": "UP",
+        "cut_step_mm": "0.01",
+        "system_code": "FICHA-D01",
+        "angle_degrees": 45,
+        "meeting_deduction_mm": "0.00",
+        "welding_loss_per_end_mm": "3.00",
+        "joint_deduction_per_end_mm": "0.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai9",
+      "row": 10,
+      "sheet": "Roles y reglas de corte",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; role = SASH; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00; cut_step_mm =",
+          "method": "AI",
+          "literal": "DEMO_60-HOJA",
+          "proposed": "DEMO_60-HOJA",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; role = SASH; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00; cut_step_mm =",
+          "method": "AI",
+          "literal": "SASH",
+          "proposed": "SASH",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "rounding": {
+          "ref": "página 1",
+          "quote": "0.01; rounding = UP",
+          "method": "AI",
+          "literal": "UP",
+          "proposed": "UP",
+          "confidence": "HIGH"
+        },
+        "cut_step_mm": {
+          "ref": "página 1",
+          "quote": "0.01; rounding = UP",
+          "method": "AI",
+          "literal": "0.01",
+          "proposed": "0.01",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; role = SASH; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00; cut_step_mm =",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "angle_degrees": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; role = SASH; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00; cut_step_mm =",
+          "method": "AI",
+          "literal": "45",
+          "proposed": "45",
+          "confidence": "HIGH"
+        },
+        "meeting_deduction_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; role = SASH; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00; cut_step_mm =",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "welding_loss_per_end_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; role = SASH; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00; cut_step_mm =",
+          "method": "AI",
+          "literal": "3.00",
+          "proposed": "3.00",
+          "confidence": "HIGH"
+        },
+        "joint_deduction_per_end_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; role = SASH; angle_degrees = 45; welding_loss_per_end_mm = 3.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00; cut_step_mm =",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-HOJA",
+        "role": "SASH",
+        "source": "ficha-sintetica-d01.pdf",
+        "rounding": "UP",
+        "cut_step_mm": "0.01",
+        "system_code": "FICHA-D01",
+        "angle_degrees": 45,
+        "meeting_deduction_mm": "0.00",
+        "welding_loss_per_end_mm": "3.00",
+        "joint_deduction_per_end_mm": "0.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai10",
+      "row": 11,
+      "sheet": "Roles y reglas de corte",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; role = MULLION_V; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "DEMO_60-POSTE-V",
+          "proposed": "DEMO_60-POSTE-V",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; role = MULLION_V; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "MULLION_V",
+          "proposed": "MULLION_V",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "rounding": {
+          "ref": "página 1",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "UP",
+          "proposed": "UP",
+          "confidence": "HIGH"
+        },
+        "cut_step_mm": {
+          "ref": "página 1",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "0.01",
+          "proposed": "0.01",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; role = MULLION_V; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "angle_degrees": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; role = MULLION_V; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "90",
+          "proposed": "90",
+          "confidence": "HIGH"
+        },
+        "meeting_deduction_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; role = MULLION_V; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "welding_loss_per_end_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; role = MULLION_V; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "joint_deduction_per_end_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; role = MULLION_V; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-POSTE-V",
+        "role": "MULLION_V",
+        "source": "ficha-sintetica-d01.pdf",
+        "rounding": "UP",
+        "cut_step_mm": "0.01",
+        "system_code": "FICHA-D01",
+        "angle_degrees": 90,
+        "meeting_deduction_mm": "0.00",
+        "welding_loss_per_end_mm": "0.00",
+        "joint_deduction_per_end_mm": "0.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai11",
+      "row": 12,
+      "sheet": "Roles y reglas de corte",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; role = MULLION_H; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "DEMO_60-POSTE-H",
+          "proposed": "DEMO_60-POSTE-H",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; role = MULLION_H; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "MULLION_H",
+          "proposed": "MULLION_H",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "rounding": {
+          "ref": "página 2",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "UP",
+          "proposed": "UP",
+          "confidence": "HIGH"
+        },
+        "cut_step_mm": {
+          "ref": "página 2",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "0.01",
+          "proposed": "0.01",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; role = MULLION_H; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "angle_degrees": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; role = MULLION_H; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "90",
+          "proposed": "90",
+          "confidence": "HIGH"
+        },
+        "meeting_deduction_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; role = MULLION_H; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "welding_loss_per_end_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; role = MULLION_H; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "joint_deduction_per_end_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; role = MULLION_H; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-POSTE-H",
+        "role": "MULLION_H",
+        "source": "ficha-sintetica-d01.pdf",
+        "rounding": "UP",
+        "cut_step_mm": "0.01",
+        "system_code": "FICHA-D01",
+        "angle_degrees": 90,
+        "meeting_deduction_mm": "0.00",
+        "welding_loss_per_end_mm": "0.00",
+        "joint_deduction_per_end_mm": "0.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai12",
+      "row": 13,
+      "sheet": "Roles y reglas de corte",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "DEMO_60-JQ-24",
+          "proposed": "DEMO_60-JQ-24",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "GLAZING_BEAD",
+          "proposed": "GLAZING_BEAD",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "rounding": {
+          "ref": "página 2",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "UP",
+          "proposed": "UP",
+          "confidence": "HIGH"
+        },
+        "cut_step_mm": {
+          "ref": "página 2",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "0.01",
+          "proposed": "0.01",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "angle_degrees": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "90",
+          "proposed": "90",
+          "confidence": "HIGH"
+        },
+        "meeting_deduction_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "welding_loss_per_end_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "joint_deduction_per_end_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-24; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-JQ-24",
+        "role": "GLAZING_BEAD",
+        "source": "ficha-sintetica-d01.pdf",
+        "rounding": "UP",
+        "cut_step_mm": "0.01",
+        "system_code": "FICHA-D01",
+        "angle_degrees": 90,
+        "meeting_deduction_mm": "0.00",
+        "welding_loss_per_end_mm": "0.00",
+        "joint_deduction_per_end_mm": "0.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai13",
+      "row": 14,
+      "sheet": "Roles y reglas de corte",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "DEMO_60-JQ-14",
+          "proposed": "DEMO_60-JQ-14",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "GLAZING_BEAD",
+          "proposed": "GLAZING_BEAD",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "rounding": {
+          "ref": "página 2",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "UP",
+          "proposed": "UP",
+          "confidence": "HIGH"
+        },
+        "cut_step_mm": {
+          "ref": "página 2",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "0.01",
+          "proposed": "0.01",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "angle_degrees": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "90",
+          "proposed": "90",
+          "confidence": "HIGH"
+        },
+        "meeting_deduction_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "welding_loss_per_end_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "joint_deduction_per_end_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-14; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-JQ-14",
+        "role": "GLAZING_BEAD",
+        "source": "ficha-sintetica-d01.pdf",
+        "rounding": "UP",
+        "cut_step_mm": "0.01",
+        "system_code": "FICHA-D01",
+        "angle_degrees": 90,
+        "meeting_deduction_mm": "0.00",
+        "welding_loss_per_end_mm": "0.00",
+        "joint_deduction_per_end_mm": "0.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai14",
+      "row": 15,
+      "sheet": "Roles y reglas de corte",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "DEMO_60-JQ-10",
+          "proposed": "DEMO_60-JQ-10",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "GLAZING_BEAD",
+          "proposed": "GLAZING_BEAD",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "rounding": {
+          "ref": "página 2",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "UP",
+          "proposed": "UP",
+          "confidence": "HIGH"
+        },
+        "cut_step_mm": {
+          "ref": "página 2",
+          "quote": "cut_step_mm = 0.01; rounding = UP",
+          "method": "AI",
+          "literal": "0.01",
+          "proposed": "0.01",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "angle_degrees": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "90",
+          "proposed": "90",
+          "confidence": "HIGH"
+        },
+        "meeting_deduction_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "welding_loss_per_end_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "joint_deduction_per_end_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-JQ-10; role = GLAZING_BEAD; angle_degrees = 90; welding_loss_per_end_mm = 0.00; joint_deduction_per_end_mm = 0.00; meeting_deduction_mm = 0.00;",
+          "method": "AI",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-JQ-10",
+        "role": "GLAZING_BEAD",
+        "source": "ficha-sintetica-d01.pdf",
+        "rounding": "UP",
+        "cut_step_mm": "0.01",
+        "system_code": "FICHA-D01",
+        "angle_degrees": 90,
+        "meeting_deduction_mm": "0.00",
+        "welding_loss_per_end_mm": "0.00",
+        "joint_deduction_per_end_mm": "0.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai15",
+      "row": 16,
+      "sheet": "Refuerzos",
+      "errors": [
+        {
+          "field": "required_finishes",
+          "column": "Colores obligatorios separados por |",
+          "message": "Fila 16, columna ‘Colores obligatorios separados por |’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; reinforcement_sku = DEMO_60-ACERO-MARCO; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "DEMO_60-MARCO",
+          "proposed": "DEMO_60-MARCO",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "screw_sku": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "DEMO_60-TORNILLO-REF",
+          "proposed": "DEMO_60-TORNILLO-REF",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; reinforcement_sku = DEMO_60-ACERO-MARCO; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "screws_per_m": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "4.0000",
+          "proposed": "4.0000",
+          "confidence": "HIGH"
+        },
+        "screw_weight_kg": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "0.003000",
+          "proposed": "0.003000",
+          "confidence": "HIGH"
+        },
+        "cut_deduction_mm": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "30.00",
+          "proposed": "30.00",
+          "confidence": "HIGH"
+        },
+        "minimum_length_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; reinforcement_sku = DEMO_60-ACERO-MARCO; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "1000.00",
+          "proposed": "1000.00",
+          "confidence": "HIGH"
+        },
+        "reinforcement_sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; reinforcement_sku = DEMO_60-ACERO-MARCO; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "DEMO_60-ACERO-MARCO",
+          "proposed": "DEMO_60-ACERO-MARCO",
+          "confidence": "HIGH"
+        },
+        "required_finishes": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "[\"FOILED\", \"DARK\"]",
+          "proposed": "FOILED|DARK",
+          "confidence": "LOW"
+        },
+        "reinforcement_type": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; reinforcement_sku = DEMO_60-ACERO-MARCO; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "Acero galvanizado DEMO",
+          "proposed": "Acero galvanizado DEMO",
+          "confidence": "HIGH"
+        },
+        "required_non_white": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "True",
+          "proposed": true,
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-MARCO",
+        "source": "ficha-sintetica-d01.pdf",
+        "screw_sku": "DEMO_60-TORNILLO-REF",
+        "system_code": "FICHA-D01",
+        "screws_per_m": "4.0000",
+        "screw_weight_kg": "0.003000",
+        "cut_deduction_mm": "30.00",
+        "minimum_length_mm": "1000.00",
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "required_finishes": null,
+        "reinforcement_type": "Acero galvanizado DEMO",
+        "required_non_white": true
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    },
+    {
+      "key": "ai16",
+      "row": 17,
+      "sheet": "Refuerzos",
+      "errors": [
+        {
+          "field": "required_finishes",
+          "column": "Colores obligatorios separados por |",
+          "message": "Fila 17, columna ‘Colores obligatorios separados por |’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; reinforcement_sku = DEMO_60-ACERO-HOJA; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "DEMO_60-HOJA",
+          "proposed": "DEMO_60-HOJA",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "screw_sku": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "DEMO_60-TORNILLO-REF",
+          "proposed": "DEMO_60-TORNILLO-REF",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; reinforcement_sku = DEMO_60-ACERO-HOJA; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "screws_per_m": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "4.0000",
+          "proposed": "4.0000",
+          "confidence": "HIGH"
+        },
+        "screw_weight_kg": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "0.003000",
+          "proposed": "0.003000",
+          "confidence": "HIGH"
+        },
+        "cut_deduction_mm": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "30.00",
+          "proposed": "30.00",
+          "confidence": "HIGH"
+        },
+        "minimum_length_mm": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; reinforcement_sku = DEMO_60-ACERO-HOJA; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "1000.00",
+          "proposed": "1000.00",
+          "confidence": "HIGH"
+        },
+        "reinforcement_sku": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; reinforcement_sku = DEMO_60-ACERO-HOJA; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "DEMO_60-ACERO-HOJA",
+          "proposed": "DEMO_60-ACERO-HOJA",
+          "confidence": "HIGH"
+        },
+        "required_finishes": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "[\"FOILED\", \"DARK\"]",
+          "proposed": "FOILED|DARK",
+          "confidence": "LOW"
+        },
+        "reinforcement_type": {
+          "ref": "página 1",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-HOJA; reinforcement_sku = DEMO_60-ACERO-HOJA; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "Acero galvanizado DEMO",
+          "proposed": "Acero galvanizado DEMO",
+          "confidence": "HIGH"
+        },
+        "required_non_white": {
+          "ref": "página 1",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 30.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "True",
+          "proposed": true,
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-HOJA",
+        "source": "ficha-sintetica-d01.pdf",
+        "screw_sku": "DEMO_60-TORNILLO-REF",
+        "system_code": "FICHA-D01",
+        "screws_per_m": "4.0000",
+        "screw_weight_kg": "0.003000",
+        "cut_deduction_mm": "30.00",
+        "minimum_length_mm": "1000.00",
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "required_finishes": null,
+        "reinforcement_type": "Acero galvanizado DEMO",
+        "required_non_white": true
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    },
+    {
+      "key": "ai17",
+      "row": 18,
+      "sheet": "Refuerzos",
+      "errors": [
+        {
+          "field": "required_finishes",
+          "column": "Colores obligatorios separados por |",
+          "message": "Fila 18, columna ‘Colores obligatorios separados por |’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; reinforcement_sku = DEMO_60-ACERO-POSTE-V; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "DEMO_60-POSTE-V",
+          "proposed": "DEMO_60-POSTE-V",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "screw_sku": {
+          "ref": "página 2",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "DEMO_60-TORNILLO-REF",
+          "proposed": "DEMO_60-TORNILLO-REF",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; reinforcement_sku = DEMO_60-ACERO-POSTE-V; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "screws_per_m": {
+          "ref": "página 2",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "4.0000",
+          "proposed": "4.0000",
+          "confidence": "HIGH"
+        },
+        "screw_weight_kg": {
+          "ref": "página 2",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "0.003000",
+          "proposed": "0.003000",
+          "confidence": "HIGH"
+        },
+        "cut_deduction_mm": {
+          "ref": "página 2",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "10.00",
+          "proposed": "10.00",
+          "confidence": "HIGH"
+        },
+        "minimum_length_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; reinforcement_sku = DEMO_60-ACERO-POSTE-V; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "1000.00",
+          "proposed": "1000.00",
+          "confidence": "HIGH"
+        },
+        "reinforcement_sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; reinforcement_sku = DEMO_60-ACERO-POSTE-V; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "DEMO_60-ACERO-POSTE-V",
+          "proposed": "DEMO_60-ACERO-POSTE-V",
+          "confidence": "HIGH"
+        },
+        "required_finishes": {
+          "ref": "página 2",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "[\"FOILED\", \"DARK\"]",
+          "proposed": "FOILED|DARK",
+          "confidence": "LOW"
+        },
+        "reinforcement_type": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-V; reinforcement_sku = DEMO_60-ACERO-POSTE-V; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes =",
+          "method": "AI",
+          "literal": "Acero galvanizado DEMO",
+          "proposed": "Acero galvanizado DEMO",
+          "confidence": "HIGH"
+        },
+        "required_non_white": {
+          "ref": "página 2",
+          "quote": "[\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "True",
+          "proposed": true,
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-POSTE-V",
+        "source": "ficha-sintetica-d01.pdf",
+        "screw_sku": "DEMO_60-TORNILLO-REF",
+        "system_code": "FICHA-D01",
+        "screws_per_m": "4.0000",
+        "screw_weight_kg": "0.003000",
+        "cut_deduction_mm": "10.00",
+        "minimum_length_mm": "1000.00",
+        "reinforcement_sku": "DEMO_60-ACERO-POSTE-V",
+        "required_finishes": null,
+        "reinforcement_type": "Acero galvanizado DEMO",
+        "required_non_white": true
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    },
+    {
+      "key": "ai18",
+      "row": 19,
+      "sheet": "Refuerzos",
+      "errors": [
+        {
+          "field": "required_finishes",
+          "column": "Colores obligatorios separados por |",
+          "message": "Fila 19, columna ‘Colores obligatorios separados por |’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; reinforcement_sku = DEMO_60-ACERO-POSTE-H; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes",
+          "method": "AI",
+          "literal": "DEMO_60-POSTE-H",
+          "proposed": "DEMO_60-POSTE-H",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "screw_sku": {
+          "ref": "página 2",
+          "quote": "= [\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "DEMO_60-TORNILLO-REF",
+          "proposed": "DEMO_60-TORNILLO-REF",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; reinforcement_sku = DEMO_60-ACERO-POSTE-H; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "screws_per_m": {
+          "ref": "página 2",
+          "quote": "= [\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "4.0000",
+          "proposed": "4.0000",
+          "confidence": "HIGH"
+        },
+        "screw_weight_kg": {
+          "ref": "página 2",
+          "quote": "= [\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "0.003000",
+          "proposed": "0.003000",
+          "confidence": "HIGH"
+        },
+        "cut_deduction_mm": {
+          "ref": "página 2",
+          "quote": "= [\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "10.00",
+          "proposed": "10.00",
+          "confidence": "HIGH"
+        },
+        "minimum_length_mm": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; reinforcement_sku = DEMO_60-ACERO-POSTE-H; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes",
+          "method": "AI",
+          "literal": "1000.00",
+          "proposed": "1000.00",
+          "confidence": "HIGH"
+        },
+        "reinforcement_sku": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; reinforcement_sku = DEMO_60-ACERO-POSTE-H; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes",
+          "method": "AI",
+          "literal": "DEMO_60-ACERO-POSTE-H",
+          "proposed": "DEMO_60-ACERO-POSTE-H",
+          "confidence": "HIGH"
+        },
+        "required_finishes": {
+          "ref": "página 2",
+          "quote": "= [\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "[\"FOILED\", \"DARK\"]",
+          "proposed": "FOILED|DARK",
+          "confidence": "LOW"
+        },
+        "reinforcement_type": {
+          "ref": "página 2",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-POSTE-H; reinforcement_sku = DEMO_60-ACERO-POSTE-H; reinforcement_type = Acero galvanizado DEMO; minimum_length_mm = 1000.00; required_finishes",
+          "method": "AI",
+          "literal": "Acero galvanizado DEMO",
+          "proposed": "Acero galvanizado DEMO",
+          "confidence": "HIGH"
+        },
+        "required_non_white": {
+          "ref": "página 2",
+          "quote": "= [\"FOILED\", \"DARK\"]; required_non_white = True; cut_deduction_mm = 10.00; screws_per_m = 4.0000; screw_sku = DEMO_60-TORNILLO-REF; screw_weight_kg = 0.003000",
+          "method": "AI",
+          "literal": "True",
+          "proposed": true,
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-POSTE-H",
+        "source": "ficha-sintetica-d01.pdf",
+        "screw_sku": "DEMO_60-TORNILLO-REF",
+        "system_code": "FICHA-D01",
+        "screws_per_m": "4.0000",
+        "screw_weight_kg": "0.003000",
+        "cut_deduction_mm": "10.00",
+        "minimum_length_mm": "1000.00",
+        "reinforcement_sku": "DEMO_60-ACERO-POSTE-H",
+        "required_finishes": null,
+        "reinforcement_type": "Acero galvanizado DEMO",
+        "required_non_white": true
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    },
+    {
+      "key": "ai19",
+      "row": 20,
+      "sheet": "Límites",
+      "errors": [],
+      "fields": {
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = FIXED; min_leaf_width_mm = 200.00; max_leaf_width_mm = 4500.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 3000.00; min_aspect_ratio =",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = FIXED; min_leaf_width_mm = 200.00; max_leaf_width_mm = 4500.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 3000.00; min_aspect_ratio =",
+          "method": "AI",
+          "literal": "FIXED",
+          "proposed": "FIXED",
+          "confidence": "HIGH"
+        },
+        "max_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "6.0000",
+          "proposed": "6.0000",
+          "confidence": "HIGH"
+        },
+        "min_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "0.2000",
+          "proposed": "0.2000",
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = FIXED; min_leaf_width_mm = 200.00; max_leaf_width_mm = 4500.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 3000.00; min_aspect_ratio =",
+          "method": "AI",
+          "literal": "4500.00",
+          "proposed": "4500.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = FIXED; min_leaf_width_mm = 200.00; max_leaf_width_mm = 4500.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 3000.00; min_aspect_ratio =",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = FIXED; min_leaf_width_mm = 200.00; max_leaf_width_mm = 4500.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 3000.00; min_aspect_ratio =",
+          "method": "AI",
+          "literal": "3000.00",
+          "proposed": "3000.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 3",
+          "quote": "0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = FIXED; min_leaf_width_mm = 200.00; max_leaf_width_mm = 4500.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 3000.00; min_aspect_ratio =",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "source": "ficha-sintetica-d01.pdf",
+        "system_code": "FICHA-D01",
+        "opening_type": "FIXED",
+        "max_aspect_ratio": "6.0000",
+        "min_aspect_ratio": "0.2000",
+        "max_leaf_width_mm": "4500.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "3000.00",
+        "max_leaf_weight_kg": null,
+        "min_leaf_height_mm": "200.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai20",
+      "row": 21,
+      "sheet": "Límites",
+      "errors": [],
+      "fields": {
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg",
+          "method": "AI",
+          "literal": "TURN_LEFT",
+          "proposed": "TURN_LEFT",
+          "confidence": "HIGH"
+        },
+        "max_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "= 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "6.0000",
+          "proposed": "6.0000",
+          "confidence": "HIGH"
+        },
+        "min_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "= 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "0.2000",
+          "proposed": "0.2000",
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg",
+          "method": "AI",
+          "literal": "1600.00",
+          "proposed": "1600.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg",
+          "method": "AI",
+          "literal": "2500.00",
+          "proposed": "2500.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 3",
+          "quote": "= 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "150.0000",
+          "proposed": "150.0000",
+          "confidence": "HIGH"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "source": "ficha-sintetica-d01.pdf",
+        "system_code": "FICHA-D01",
+        "opening_type": "TURN_LEFT",
+        "max_aspect_ratio": "6.0000",
+        "min_aspect_ratio": "0.2000",
+        "max_leaf_width_mm": "1600.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "2500.00",
+        "max_leaf_weight_kg": "150.0000",
+        "min_leaf_height_mm": "200.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai21",
+      "row": 22,
+      "sheet": "Límites",
+      "errors": [],
+      "fields": {
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "TURN_RIGHT",
+          "proposed": "TURN_RIGHT",
+          "confidence": "HIGH"
+        },
+        "max_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "6.0000",
+          "proposed": "6.0000",
+          "confidence": "HIGH"
+        },
+        "min_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "0.2000",
+          "proposed": "0.2000",
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "1600.00",
+          "proposed": "1600.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "2500.00",
+          "proposed": "2500.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "150.0000",
+          "proposed": "150.0000",
+          "confidence": "HIGH"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "source": "ficha-sintetica-d01.pdf",
+        "system_code": "FICHA-D01",
+        "opening_type": "TURN_RIGHT",
+        "max_aspect_ratio": "6.0000",
+        "min_aspect_ratio": "0.2000",
+        "max_leaf_width_mm": "1600.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "2500.00",
+        "max_leaf_weight_kg": "150.0000",
+        "min_leaf_height_mm": "200.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai22",
+      "row": 23,
+      "sheet": "Límites",
+      "errors": [],
+      "fields": {
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "TILT_TURN_LEFT",
+          "proposed": "TILT_TURN_LEFT",
+          "confidence": "HIGH"
+        },
+        "max_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "6.0000",
+          "proposed": "6.0000",
+          "confidence": "HIGH"
+        },
+        "min_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "0.2000",
+          "proposed": "0.2000",
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "1600.00",
+          "proposed": "1600.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "2500.00",
+          "proposed": "2500.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "150.0000",
+          "proposed": "150.0000",
+          "confidence": "HIGH"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_LEFT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "source": "ficha-sintetica-d01.pdf",
+        "system_code": "FICHA-D01",
+        "opening_type": "TILT_TURN_LEFT",
+        "max_aspect_ratio": "6.0000",
+        "min_aspect_ratio": "0.2000",
+        "max_leaf_width_mm": "1600.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "2500.00",
+        "max_leaf_weight_kg": "150.0000",
+        "min_leaf_height_mm": "200.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai23",
+      "row": 24,
+      "sheet": "Límites",
+      "errors": [],
+      "fields": {
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "TILT_TURN_RIGHT",
+          "proposed": "TILT_TURN_RIGHT",
+          "confidence": "HIGH"
+        },
+        "max_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "6.0000",
+          "proposed": "6.0000",
+          "confidence": "HIGH"
+        },
+        "min_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "0.2000",
+          "proposed": "0.2000",
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "1600.00",
+          "proposed": "1600.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "2500.00",
+          "proposed": "2500.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 3",
+          "quote": "max_leaf_weight_kg = 150.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "150.0000",
+          "proposed": "150.0000",
+          "confidence": "HIGH"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = TILT_TURN_RIGHT; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "source": "ficha-sintetica-d01.pdf",
+        "system_code": "FICHA-D01",
+        "opening_type": "TILT_TURN_RIGHT",
+        "max_aspect_ratio": "6.0000",
+        "min_aspect_ratio": "0.2000",
+        "max_leaf_width_mm": "1600.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "2500.00",
+        "max_leaf_weight_kg": "150.0000",
+        "min_leaf_height_mm": "200.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai24",
+      "row": 25,
+      "sheet": "Límites",
+      "errors": [],
+      "fields": {
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg =",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg =",
+          "method": "AI",
+          "literal": "AWNING",
+          "proposed": "AWNING",
+          "confidence": "HIGH"
+        },
+        "max_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "45.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "6.0000",
+          "proposed": "6.0000",
+          "confidence": "HIGH"
+        },
+        "min_aspect_ratio": {
+          "ref": "página 3",
+          "quote": "45.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "0.2000",
+          "proposed": "0.2000",
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg =",
+          "method": "AI",
+          "literal": "1600.00",
+          "proposed": "1600.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg =",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg =",
+          "method": "AI",
+          "literal": "2500.00",
+          "proposed": "2500.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 3",
+          "quote": "45.0000; min_aspect_ratio = 0.2000; max_aspect_ratio = 6.0000",
+          "method": "AI",
+          "literal": "45.0000",
+          "proposed": "45.0000",
+          "confidence": "HIGH"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00; min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg =",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "source": "ficha-sintetica-d01.pdf",
+        "system_code": "FICHA-D01",
+        "opening_type": "AWNING",
+        "max_aspect_ratio": "6.0000",
+        "min_aspect_ratio": "0.2000",
+        "max_leaf_width_mm": "1600.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "2500.00",
+        "max_leaf_weight_kg": "45.0000",
+        "min_leaf_height_mm": "200.00"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai25",
+      "row": 26,
+      "sheet": "Colores y SKU por color",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; finish = WHITE; commercial_sku = COMPRA-MARCO-BLANCO; physical_stock_identity = MARCO-BLANCO",
+          "method": "AI",
+          "literal": "DEMO_60-MARCO",
+          "proposed": "DEMO_60-MARCO",
+          "confidence": "HIGH"
+        },
+        "finish": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; finish = WHITE; commercial_sku = COMPRA-MARCO-BLANCO; physical_stock_identity = MARCO-BLANCO",
+          "method": "AI",
+          "literal": "WHITE",
+          "proposed": "WHITE",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; finish = WHITE; commercial_sku = COMPRA-MARCO-BLANCO; physical_stock_identity = MARCO-BLANCO",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "commercial_sku": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; finish = WHITE; commercial_sku = COMPRA-MARCO-BLANCO; physical_stock_identity = MARCO-BLANCO",
+          "method": "AI",
+          "literal": "COMPRA-MARCO-BLANCO",
+          "proposed": "COMPRA-MARCO-BLANCO",
+          "confidence": "HIGH"
+        },
+        "physical_stock_identity": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-MARCO; finish = WHITE; commercial_sku = COMPRA-MARCO-BLANCO; physical_stock_identity = MARCO-BLANCO",
+          "method": "AI",
+          "literal": "MARCO-BLANCO",
+          "proposed": "MARCO-BLANCO",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-MARCO",
+        "finish": "WHITE",
+        "source": "ficha-sintetica-d01.pdf",
+        "system_code": "FICHA-D01",
+        "commercial_sku": "COMPRA-MARCO-BLANCO",
+        "physical_stock_identity": "MARCO-BLANCO"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai26",
+      "row": 27,
+      "sheet": "Vidrios",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4-16-4; glass_spec = 4-16-4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4-16-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "DEMO_60-VIDRIO-4-16-4",
+          "proposed": "DEMO_60-VIDRIO-4-16-4",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "version": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4-16-4; glass_spec = 4-16-4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4-16-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "1",
+          "proposed": 1,
+          "confidence": "HIGH"
+        },
+        "glass_spec": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4-16-4; glass_spec = 4-16-4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4-16-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "4-16-4 Float Incoloro",
+          "proposed": "4-16-4 Float Incoloro",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4-16-4; glass_spec = 4-16-4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4-16-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "purchasing_sku": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4-16-4; glass_spec = 4-16-4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4-16-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "DEMO_60-VIDRIO-4-16-4",
+          "proposed": "DEMO_60-VIDRIO-4-16-4",
+          "confidence": "HIGH"
+        },
+        "manufacturer_name": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4-16-4; glass_spec = 4-16-4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4-16-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "Proveedor de prueba",
+          "proposed": "Proveedor de prueba",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-VIDRIO-4-16-4",
+        "source": "ficha-sintetica-d01.pdf",
+        "version": 1,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "system_code": "FICHA-D01",
+        "purchasing_sku": "DEMO_60-VIDRIO-4-16-4",
+        "manufacturer_name": "Proveedor de prueba"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai27",
+      "row": 28,
+      "sheet": "Vidrios",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4; glass_spec = 4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "DEMO_60-VIDRIO-4",
+          "proposed": "DEMO_60-VIDRIO-4",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "version": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4; glass_spec = 4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "1",
+          "proposed": 1,
+          "confidence": "HIGH"
+        },
+        "glass_spec": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4; glass_spec = 4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "4 Float Incoloro",
+          "proposed": "4 Float Incoloro",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4; glass_spec = 4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "purchasing_sku": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4; glass_spec = 4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "DEMO_60-VIDRIO-4",
+          "proposed": "DEMO_60-VIDRIO-4",
+          "confidence": "HIGH"
+        },
+        "manufacturer_name": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-VIDRIO-4; glass_spec = 4 Float Incoloro; purchasing_sku = DEMO_60-VIDRIO-4; manufacturer_name = Proveedor de prueba; version = 1",
+          "method": "AI",
+          "literal": "Proveedor de prueba",
+          "proposed": "Proveedor de prueba",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-VIDRIO-4",
+        "source": "ficha-sintetica-d01.pdf",
+        "version": 1,
+        "glass_spec": "4 Float Incoloro",
+        "system_code": "FICHA-D01",
+        "purchasing_sku": "DEMO_60-VIDRIO-4",
+        "manufacturer_name": "Proveedor de prueba"
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "HIGH_CANDIDATE"
+    },
+    {
+      "key": "ai28",
+      "row": 29,
+      "sheet": "Herrajes",
+      "errors": [
+        {
+          "field": "contents",
+          "column": "Componentes (JSON)",
+          "message": "Fila 29, columna ‘Componentes (JSON)’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "sku": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TURN; name = Kit PVC practicable 60 mm · practicable; opening_type = TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "DEMO_60-KIT-TURN",
+          "proposed": "DEMO_60-KIT-TURN",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TURN; name = Kit PVC practicable 60 mm · practicable; opening_type = TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "Kit PVC practicable 60 mm · practicable",
+          "proposed": "Kit PVC practicable 60 mm · practicable",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "contents": {
+          "ref": "página 3",
+          "quote": "\"DEMO_60-MANILLA\", \"name\": \"Manilla DEMO\", \"qty\": \"1\", \"unit\": \"EA\", \"category\": \"HANDLE\"}, {\"sku\": \"DEMO_60-BISAGRA\", \"name\": \"Bisagra DEMO\", \"qty\": \"2\", \"unit\": \"EA\", \"category\": \"HINGE\"}]",
+          "method": "AI",
+          "literal": "[{\"sku\": \"DEMO_60-MANILLA\", \"name\": \"Manilla DEMO\", \"qty\": \"1\", \"unit\": \"EA\", \"category\": \"HANDLE\"}, {\"sku\": \"DEMO_60-BISAGRA\", \"name\": \"Bisagra DEMO\", \"qty\": \"2\", \"unit\": \"EA\", \"category\": \"HINGE\"}]",
+          "proposed": [
+            {
+              "qty": "1",
+              "sku": "DEMO_60-MANILLA",
+              "name": "Manilla DEMO",
+              "unit": "EA",
+              "category": "HANDLE"
+            },
+            {
+              "qty": "2",
+              "sku": "DEMO_60-BISAGRA",
+              "name": "Bisagra DEMO",
+              "unit": "EA",
+              "category": "HINGE"
+            }
+          ],
+          "confidence": "LOW"
+        },
+        "is_active": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "True",
+          "proposed": true,
+          "confidence": "HIGH"
+        },
+        "rail_type": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "dual",
+          "proposed": "dual",
+          "confidence": "HIGH"
+        },
+        "weight_kg": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "2.50",
+          "proposed": "2.50",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TURN; name = Kit PVC practicable 60 mm · practicable; opening_type = TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TURN; name = Kit PVC practicable 60 mm · practicable; opening_type = TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "TURN",
+          "proposed": "TURN",
+          "confidence": "HIGH"
+        },
+        "carriages_qty": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "0",
+          "proposed": 0,
+          "confidence": "HIGH"
+        },
+        "stay_arms_qty": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "1",
+          "proposed": 1,
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TURN; name = Kit PVC practicable 60 mm · practicable; opening_type = TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "1600.00",
+          "proposed": "1600.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 3",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TURN; name = Kit PVC practicable 60 mm · practicable; opening_type = TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "2500.00",
+          "proposed": "2500.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "150.00",
+          "proposed": "150.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "carriage_capacity_kg": {
+          "ref": "página 3",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-KIT-TURN",
+        "name": "Kit PVC practicable 60 mm · practicable",
+        "source": "ficha-sintetica-d01.pdf",
+        "contents": null,
+        "is_active": true,
+        "rail_type": "dual",
+        "weight_kg": "2.50",
+        "system_code": "FICHA-D01",
+        "opening_type": "TURN",
+        "carriages_qty": 0,
+        "stay_arms_qty": 1,
+        "max_leaf_width_mm": "1600.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "2500.00",
+        "max_leaf_weight_kg": "150.00",
+        "min_leaf_height_mm": "200.00",
+        "carriage_capacity_kg": null
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    },
+    {
+      "key": "ai29",
+      "row": 30,
+      "sheet": "Herrajes",
+      "errors": [
+        {
+          "field": "contents",
+          "column": "Componentes (JSON)",
+          "message": "Fila 30, columna ‘Componentes (JSON)’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "sku": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TILT_TURN; name = Kit PVC practicable 60 mm · oscilobatiente; opening_type = TILT_TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "DEMO_60-KIT-TILT_TURN",
+          "proposed": "DEMO_60-KIT-TILT_TURN",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TILT_TURN; name = Kit PVC practicable 60 mm · oscilobatiente; opening_type = TILT_TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "Kit PVC practicable 60 mm · oscilobatiente",
+          "proposed": "Kit PVC practicable 60 mm · oscilobatiente",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "contents": {
+          "ref": "página 4",
+          "quote": "\"DEMO_60-MANILLA\", \"name\": \"Manilla DEMO\", \"qty\": \"1\", \"unit\": \"EA\", \"category\": \"HANDLE\"}, {\"sku\": \"DEMO_60-BISAGRA\", \"name\": \"Bisagra DEMO\", \"qty\": \"2\", \"unit\": \"EA\", \"category\": \"HINGE\"}]",
+          "method": "AI",
+          "literal": "[{\"sku\": \"DEMO_60-MANILLA\", \"name\": \"Manilla DEMO\", \"qty\": \"1\", \"unit\": \"EA\", \"category\": \"HANDLE\"}, {\"sku\": \"DEMO_60-BISAGRA\", \"name\": \"Bisagra DEMO\", \"qty\": \"2\", \"unit\": \"EA\", \"category\": \"HINGE\"}]",
+          "proposed": [
+            {
+              "qty": "1",
+              "sku": "DEMO_60-MANILLA",
+              "name": "Manilla DEMO",
+              "unit": "EA",
+              "category": "HANDLE"
+            },
+            {
+              "qty": "2",
+              "sku": "DEMO_60-BISAGRA",
+              "name": "Bisagra DEMO",
+              "unit": "EA",
+              "category": "HINGE"
+            }
+          ],
+          "confidence": "LOW"
+        },
+        "is_active": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "True",
+          "proposed": true,
+          "confidence": "HIGH"
+        },
+        "rail_type": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "dual",
+          "proposed": "dual",
+          "confidence": "HIGH"
+        },
+        "weight_kg": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "2.50",
+          "proposed": "2.50",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TILT_TURN; name = Kit PVC practicable 60 mm · oscilobatiente; opening_type = TILT_TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TILT_TURN; name = Kit PVC practicable 60 mm · oscilobatiente; opening_type = TILT_TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "TILT_TURN",
+          "proposed": "TILT_TURN",
+          "confidence": "HIGH"
+        },
+        "carriages_qty": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "0",
+          "proposed": 0,
+          "confidence": "HIGH"
+        },
+        "stay_arms_qty": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "1",
+          "proposed": 1,
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TILT_TURN; name = Kit PVC practicable 60 mm · oscilobatiente; opening_type = TILT_TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "1600.00",
+          "proposed": "1600.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-TILT_TURN; name = Kit PVC practicable 60 mm · oscilobatiente; opening_type = TILT_TURN; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "2500.00",
+          "proposed": "2500.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "150.00",
+          "proposed": "150.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "carriage_capacity_kg": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 150.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 1; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-KIT-TILT_TURN",
+        "name": "Kit PVC practicable 60 mm · oscilobatiente",
+        "source": "ficha-sintetica-d01.pdf",
+        "contents": null,
+        "is_active": true,
+        "rail_type": "dual",
+        "weight_kg": "2.50",
+        "system_code": "FICHA-D01",
+        "opening_type": "TILT_TURN",
+        "carriages_qty": 0,
+        "stay_arms_qty": 1,
+        "max_leaf_width_mm": "1600.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "2500.00",
+        "max_leaf_weight_kg": "150.00",
+        "min_leaf_height_mm": "200.00",
+        "carriage_capacity_kg": null
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    },
+    {
+      "key": "ai30",
+      "row": 31,
+      "sheet": "Herrajes",
+      "errors": [
+        {
+          "field": "contents",
+          "column": "Componentes (JSON)",
+          "message": "Fila 31, columna ‘Componentes (JSON)’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "sku": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-AWNING; name = Kit PVC practicable 60 mm · proyectante; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "DEMO_60-KIT-AWNING",
+          "proposed": "DEMO_60-KIT-AWNING",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-AWNING; name = Kit PVC practicable 60 mm · proyectante; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "Kit PVC practicable 60 mm · proyectante",
+          "proposed": "Kit PVC practicable 60 mm · proyectante",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "ficha-sintetica-d01.pdf",
+          "quote": "ficha-sintetica-d01.pdf",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "contents": {
+          "ref": "página 4",
+          "quote": "\"DEMO_60-MANILLA\", \"name\": \"Manilla DEMO\", \"qty\": \"1\", \"unit\": \"EA\", \"category\": \"HANDLE\"}, {\"sku\": \"DEMO_60-BISAGRA\", \"name\": \"Bisagra DEMO\", \"qty\": \"2\", \"unit\": \"EA\", \"category\": \"HINGE\"}]",
+          "method": "AI",
+          "literal": "[{\"sku\": \"DEMO_60-MANILLA\", \"name\": \"Manilla DEMO\", \"qty\": \"1\", \"unit\": \"EA\", \"category\": \"HANDLE\"}, {\"sku\": \"DEMO_60-BISAGRA\", \"name\": \"Bisagra DEMO\", \"qty\": \"2\", \"unit\": \"EA\", \"category\": \"HINGE\"}]",
+          "proposed": [
+            {
+              "qty": "1",
+              "sku": "DEMO_60-MANILLA",
+              "name": "Manilla DEMO",
+              "unit": "EA",
+              "category": "HANDLE"
+            },
+            {
+              "qty": "2",
+              "sku": "DEMO_60-BISAGRA",
+              "name": "Bisagra DEMO",
+              "unit": "EA",
+              "category": "HINGE"
+            }
+          ],
+          "confidence": "LOW"
+        },
+        "is_active": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "True",
+          "proposed": true,
+          "confidence": "HIGH"
+        },
+        "rail_type": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "dual",
+          "proposed": "dual",
+          "confidence": "HIGH"
+        },
+        "weight_kg": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "2.50",
+          "proposed": "2.50",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-AWNING; name = Kit PVC practicable 60 mm · proyectante; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "FICHA-D01",
+          "proposed": "FICHA-D01",
+          "confidence": "HIGH"
+        },
+        "opening_type": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-AWNING; name = Kit PVC practicable 60 mm · proyectante; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "AWNING",
+          "proposed": "AWNING",
+          "confidence": "HIGH"
+        },
+        "carriages_qty": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "0",
+          "proposed": 0,
+          "confidence": "HIGH"
+        },
+        "stay_arms_qty": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "2",
+          "proposed": 2,
+          "confidence": "HIGH"
+        },
+        "max_leaf_width_mm": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-AWNING; name = Kit PVC practicable 60 mm · proyectante; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "1600.00",
+          "proposed": "1600.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_width_mm": {
+          "ref": "página 4",
+          "quote": "system_code = FICHA-D01; sku = DEMO_60-KIT-AWNING; name = Kit PVC practicable 60 mm · proyectante; opening_type = AWNING; min_leaf_width_mm = 200.00; max_leaf_width_mm = 1600.00;",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_height_mm": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "2500.00",
+          "proposed": "2500.00",
+          "confidence": "HIGH"
+        },
+        "max_leaf_weight_kg": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "45.00",
+          "proposed": "45.00",
+          "confidence": "HIGH"
+        },
+        "min_leaf_height_mm": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "200.00",
+          "proposed": "200.00",
+          "confidence": "HIGH"
+        },
+        "carriage_capacity_kg": {
+          "ref": "página 4",
+          "quote": "min_leaf_height_mm = 200.00; max_leaf_height_mm = 2500.00; max_leaf_weight_kg = 45.00; weight_kg = 2.50; rail_type = dual; carriages_qty = 0; stay_arms_qty = 2; is_active = True; contents = [{\"sku\":",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "LOW"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "DEMO_60-KIT-AWNING",
+        "name": "Kit PVC practicable 60 mm · proyectante",
+        "source": "ficha-sintetica-d01.pdf",
+        "contents": null,
+        "is_active": true,
+        "rail_type": "dual",
+        "weight_kg": "2.50",
+        "system_code": "FICHA-D01",
+        "opening_type": "AWNING",
+        "carriages_qty": 0,
+        "stay_arms_qty": 2,
+        "max_leaf_width_mm": "1600.00",
+        "min_leaf_width_mm": "200.00",
+        "max_leaf_height_mm": "2500.00",
+        "max_leaf_weight_kg": "45.00",
+        "min_leaf_height_mm": "200.00",
+        "carriage_capacity_kg": null
+      },
+      "evidence": {
+        "document_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    }
+  ],
+  "warnings": []
+}

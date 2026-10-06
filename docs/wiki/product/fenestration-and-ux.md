@@ -24,6 +24,11 @@ Therefore:
 
 Compatibility belongs in domain data/rules, not visual guesswork.
 
+D01 makes this boundary executable for new products using catalog family and
+per-opening dimensional limits. Saved historical authority is preserved rather
+than silently recalculated. See [catalog authority](catalog-authority.md) for the
+migration and reviewed-import contract.
+
 ## Opening graphics are semantic
 
 Opening symbols must communicate:

@@ -8,7 +8,7 @@ import inspect
 import pytest
 
 from dekopen_engine import ParametricNode, SystemParams, calculate_geometry
-from dekopen_engine import geometry, hardware
+from dekopen_engine import catalog_rules, geometry, hardware
 from engine.tests.test_shot06_core import core_node
 
 CORE_CONSUMERS: dict[str, Callable[..., object]] = {
@@ -20,32 +20,35 @@ CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "sash_overlap_mm": geometry.single_rectangular_sash_geometry,
     "glass_clearance_white_mm": geometry.compute_geometry,
     "glass_clearance_foil_mm": geometry.compute_geometry,
-    "pulley_height_mm": geometry._append_sliding,
-    "central_overlap_mm": geometry._append_sliding,
-    "sliding_end_add_mm": geometry._append_sliding,
+    "pulley_height_mm": catalog_rules.sliding_parameters,
+    "central_overlap_mm": catalog_rules.sliding_parameters,
+    "sliding_end_add_mm": catalog_rules.sliding_parameters,
     "door_threshold_mm": geometry._append_door,
     "door_bottom_clearance_mm": geometry._append_door,
     "rail_type": hardware.evaluate_hardware_candidates,
     "available_hardware_kits": hardware.evaluate_hardware_candidates,
-    "sliding_glazing_deduction_width_mm": geometry._append_leaf,
-    "sliding_glazing_deduction_height_mm": geometry._append_leaf,
+    "sliding_glazing_deduction_width_mm": catalog_rules.sliding_parameters,
+    "sliding_glazing_deduction_height_mm": catalog_rules.sliding_parameters,
     "door_leaf_side_clearance_mm": geometry._append_door,
     "available_panel_rules": geometry._append_leaf,
-    "rail_count": geometry.rail_count,
+    "rail_count": catalog_rules.sliding_parameters,
+    "system_family": catalog_rules.validate_family,
+    "sliding": catalog_rules.sliding_parameters,
+    "dimensional_limits": catalog_rules.validate_leaf_limits,
 }
 METADATA = {"system_code", "depth_mm"}
 RESERVED = {"sliding_lateral_clearance_mm", "corner_bracket_loss_mm", "hook_depth_mm"}
 # Input-validity authority consumed by the API adapter (finish membership gates
 # `color`), not a formula input — `backend/engine_api/adapter.py` reads it.
-API_BOUNDARY = {"finishes"}
+API_BOUNDARY = {"finishes", "legacy_authority"}
 
 
 def test_every_system_parameter_has_an_explicit_scope() -> None:
     assert (
-        len(CORE_CONSUMERS) == 20
+        len(CORE_CONSUMERS) == 23
         and len(METADATA) == 2
         and len(RESERVED) == 3
-        and len(API_BOUNDARY) == 1
+        and len(API_BOUNDARY) == 2
     )
     assert (
         set(CORE_CONSUMERS) | METADATA | RESERVED | API_BOUNDARY

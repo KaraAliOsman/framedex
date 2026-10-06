@@ -7,9 +7,13 @@
  */
 import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
 import type { MaterialEnum } from "./materialEnum";
+import type { ProfileCutRuleRequest } from "./profileCutRuleRequest";
+import type { ProfileReinforcementRuleRequest } from "./profileReinforcementRuleRequest";
 import type { ProfileSectionRequest } from "./profileSectionRequest";
 
 export interface PatchedArticleWriteRequest {
+  cut_rule?: ProfileCutRuleRequest | null;
+  reinforcement_rule?: ProfileReinforcementRuleRequest | null;
   system_id?: string;
   /**
    * @minLength 1

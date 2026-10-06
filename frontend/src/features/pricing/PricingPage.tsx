@@ -482,6 +482,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
   return (
     <section className="pricing-page">
       <PageHeader context={t("pricing.subtitle")} title={t("pricing.title")} />
+      <DemoCosts request={request} />
       <Tabs
         items={sections.map((name, index) => ({
           disabled: busy,
@@ -2261,6 +2262,67 @@ function CommercialDraft({
         <button disabled={busy}>{t("pricing.createDraft")}</button>
       </ValidatedForm>
       {error && <p role="alert">{error}</p>}
+    </details>
+  );
+}
+
+function DemoCosts({ request }: { request: RequestFn }): JSX.Element {
+  const [opened, setOpened] = useState(false);
+  const [items, setItems] = useState<Row[]>([]);
+  const [error, setError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    if (!opened) return;
+    let active = true;
+    setError(false);
+    setLoaded(false);
+    void request<{ items: Row[] }>("admin/demo-costs/")
+      .then((result) => {
+        if (active) {
+          setItems(result.items);
+          setLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (active) setError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [opened, request]);
+  return (
+    <details
+      className="pricing-demo-costs"
+      onToggle={(event) => setOpened(event.currentTarget.open)}
+    >
+      <summary>DEMO · precios sintéticos de arranque</summary>
+      <p>
+        Generados con semilla fija. Se aplican solo a los SKU de sistemas DEMO cuando no hay un
+        costo del proveedor. No representan precios certificados.
+      </p>
+      {error ? (
+        <p role="alert">
+          No se pudieron cargar los costos DEMO. Cierra y vuelve a abrir esta sección.
+        </p>
+      ) : loaded === false ? (
+        <p role="status">Cargando costos DEMO…</p>
+      ) : items.length === 0 ? (
+        <p>No hay costos DEMO disponibles. Revisa el catálogo de arranque.</p>
+      ) : (
+        <div className="pricing-demo-rows">
+          {items.map((item) => (
+            <div key={String(item.id)}>
+              <span>
+                {item.system_name} · {item.sku}
+              </span>
+              <strong>
+                {formatMoney(String(item.unit_cost))} /{" "}
+                {{ BAR: "barra", M2: "m²", KIT: "kit", EA: "unidad" }[String(item.unit)]}
+              </strong>
+            </div>
+          ))}
+        </div>
+      )}
     </details>
   );
 }

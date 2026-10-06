@@ -8,7 +8,10 @@
 import type { CatalogReadiness } from "./catalogReadiness";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { MaterialEnum } from "./materialEnum";
-import type { RailTypeEnum } from "./railTypeEnum";
+import type { SlidingSystemParameters } from "./slidingSystemParameters";
+import type { SystemDimensionalLimit } from "./systemDimensionalLimit";
+import type { SystemResponseRailType } from "./systemResponseRailType";
+import type { SystemResponseSystemFamily } from "./systemResponseSystemFamily";
 
 /**
  * Read-only provenance/review state — written only by import jobs and
@@ -21,6 +24,10 @@ export interface SystemResponse {
   /** @nullable */
   readonly technical_reviewed_by: string | null;
   readonly review_pending: boolean;
+  system_family:
+    (typeof SystemResponseSystemFamily)[keyof typeof SystemResponseSystemFamily] | null;
+  sliding_parameters?: SlidingSystemParameters | null;
+  dimensional_limits?: SystemDimensionalLimit[];
   /** @maxLength 150 */
   name: string;
   /** @maxLength 50 */
@@ -39,14 +46,26 @@ export interface SystemResponse {
   glass_clearance_white_mm: string;
   /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
   glass_clearance_foil_mm: string;
-  /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
-  pulley_height_mm: string;
-  /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
-  central_overlap_mm: string;
-  /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
-  sliding_lateral_clearance_mm: string;
-  /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
-  sliding_end_add_mm: string;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,2}(?:\.\d{0,2})?$
+   */
+  pulley_height_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,2}(?:\.\d{0,2})?$
+   */
+  central_overlap_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,2}(?:\.\d{0,2})?$
+   */
+  sliding_lateral_clearance_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,2}(?:\.\d{0,2})?$
+   */
+  sliding_end_add_mm?: string | null;
   /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
   corner_bracket_loss_mm: string;
   /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
@@ -55,11 +74,17 @@ export interface SystemResponse {
   door_threshold_mm: string;
   /** @pattern ^-?\d{0,2}(?:\.\d{0,2})?$ */
   door_bottom_clearance_mm: string;
-  rail_type: RailTypeEnum;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  sliding_glazing_deduction_width_mm: string;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  sliding_glazing_deduction_height_mm: string;
+  rail_type?: (typeof SystemResponseRailType)[keyof typeof SystemResponseRailType] | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  sliding_glazing_deduction_width_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  sliding_glazing_deduction_height_mm?: string | null;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   door_leaf_side_clearance_mm: string;
   /**

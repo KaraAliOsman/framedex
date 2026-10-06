@@ -20,12 +20,14 @@ from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
 from catalogs import evidence as catalog_evidence
 from ingest.catalog_parser import ROLES, parse_catalog_lines
+from ingest.catalog_template import parse_structured, candidate as make_candidate, MAX_ROWS
+from ingest.catalog_ai import compile_catalog
 from ingest.extract import extract_tagged, kind_for, safe_file_name, sniffed_kind
 from jobs import service as jobs_service
 from pricing.repository import rows, write
 
 MAX_UPLOAD_BYTES = 15_000_000
-MAX_CANDIDATES = 200
+MAX_CANDIDATES = MAX_ROWS
 JOB_TYPE = "ingest.catalog.extract"
 
 # Missing manufacturing data stays UNKNOWN (NULL) — a supplier document that
@@ -55,13 +57,22 @@ def _public(row: dict) -> dict:
     def _stamp(value):
         return value.isoformat() if hasattr(value, "isoformat") else value
 
+    candidates = _as_list(row["candidates"])
+    if row["status"] in ("CONFIRMED", "UNDONE") and any(entry.get("sheet") for entry in candidates):
+        published = rows(
+            "SELECT candidates FROM public.catalog_import_publications "
+            "WHERE org_id=%s AND import_id=%s AND action='PUBLISH' "
+            "ORDER BY created_at DESC LIMIT 1", [row["org_id"], row["id"]],
+        )
+        if published:
+            candidates = _as_list(published[0]["candidates"])
     return {
         "id": str(row["id"]),
         "file_name": row["file_name"],
         "kind": row["kind"],
         "status": row["status"],
         "system_id": str(row["system_id"]) if row["system_id"] else None,
-        "candidates": _as_list(row["candidates"]),
+        "candidates": candidates,
         "warnings": _as_list(row["warnings"]),
         "result": _as_list(row["result"]),
         "error_code": row["error_code"],
@@ -88,12 +99,12 @@ def create_catalog_import(
     content: bytes,
     content_type: str,
 ) -> dict:
-    kind = kind_for(file_name)
+    kind = kind_for(file_name, allow_text=True)
     if kind is None:
         raise contract_error(
             422,
             "catalog_import_kind_unsupported",
-            "Formato no soportado. Sube un PDF, XLSX, CSV o imagen (png, jpg, webp).",
+            "Sube un PDF, XLSX, CSV, texto, correo o imagen (png, jpg, webp).",
         )
     if not content or len(content) > MAX_UPLOAD_BYTES:
         raise contract_error(
@@ -126,8 +137,8 @@ def create_catalog_import(
             with documentary_backend():
                 row = rows(
                     "INSERT INTO public.catalog_imports("
-                    "id, org_id, file_name, kind, storage_path, created_by)"
-                    " VALUES (%s,%s,%s,%s,%s,%s) RETURNING *",
+                    "id, org_id, file_name, kind, storage_path, created_by,contains_costs)"
+                    " VALUES (%s,%s,%s,%s,%s,%s,TRUE) RETURNING *",
                     [str(import_id), str(org_id), file_name, kind, storage_path, str(actor_id)],
                 )[0]
             # job_runs is a service-owned table — service_role only, inside the
@@ -264,49 +275,32 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
     except Exception:
         tagged = None
         warnings.append("catalog.source_parse_failed")
-    candidates = parse_catalog_lines(tagged or [])
-    if not candidates:
-        from ai_gateway.service import ProviderError, invoke
-
+    try:
+        candidates = parse_structured(row["kind"], content)
+    except Exception as error:
+        candidates = []
+        warnings.append(str(error) if isinstance(error, ValueError) else
+                        "No se pudo leer la estructura del archivo. Descarga la plantilla oficial e intenta de nuevo.")
+    if candidates is None:
         try:
-            vision = invoke(
-                org_id=org_id,
-                user_id=actor_id,
-                capability="catalog_compile",
-                operation_key=f"catalog:{import_id}:compile",
-                input_payload={
-                    # Stable identity only — the gateway resolves the row
-                    # under the active org and signs its canonical object, so
-                    # the audited input survives a job retry and replays the
-                    # paid compile instead of minting a new URL.
-                    "file_name": row["file_name"],
-                    "kind": row["kind"],
-                    "source": {"kind": "catalog_import", "id": str(import_id)},
-                    "target": "profile_articles",
-                },
-            )
-            audit_id = vision["audit_id"]
-            vision_candidates = parse_catalog_lines(str(vision["output"]).splitlines())
-            if vision_candidates:
-                candidates = vision_candidates
-            else:
-                warnings.append("catalog.compile_no_candidates")
-        except ProviderError as error:
-            warnings.append(f"catalog.compile_failed:{error.code}")
+            candidates, audit_id = compile_catalog(org_id=org_id, actor_id=actor_id,
+                import_id=import_id, kind=row["kind"], file_name=row["file_name"], tagged=tagged or [])
+            if not tagged:
+                warnings.append("La fuente no tiene texto verificable. Revisa cada valor en la imagen o sube un PDF con texto.")
         except Exception as error:
-            code = getattr(error, "contract_code", "ai_gateway_error")
-            warnings.append(f"catalog.compile_failed:{code}")
+            code = getattr(error, "contract_code", None) or getattr(error, "code", "ai_gateway_error")
+            warnings.append(f"No se pudo analizar con IA ({code}). Puedes usar la plantilla manual.")
+            candidates = []
+            for index, legacy in enumerate(parse_catalog_lines(tagged or [])):
+                raw = {**legacy, "system_code": None, "material": None,
+                       "source": f"{row['file_name']} · {legacy.get('source_ref','')}"}
+                candidates.append(make_candidate("Perfiles", raw, key=f"text{index}", row=index + 1, method="MANUAL"))
     for candidate in candidates:
         # Evidence's document id = the import row — review can trace every
         # field back to the exact document it was extracted from.
         candidate.setdefault("evidence", {})["document_id"] = str(import_id)
     if not candidates:
         warnings.append("catalog.no_candidates")
-    else:
-        _reconcile(org_id, candidates)
-        missing = _series_gaps(candidates)
-        if missing:
-            warnings.append(f"catalog.series_incomplete:{missing}")
     if len(candidates) > MAX_CANDIDATES:
         candidates = candidates[:MAX_CANDIDATES]
         warnings.append("catalog.candidates_capped")
@@ -314,12 +308,13 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
         with documentary_backend():
             updated = rows(
                 "UPDATE public.catalog_imports SET status='REVIEW_READY', "
-                "candidates=%s::jsonb, warnings=%s::jsonb, audit_id=%s, updated_at=now() "
+                "candidates=%s::jsonb, warnings=%s::jsonb, audit_id=%s,contains_costs=%s, updated_at=now() "
                 "WHERE id=%s AND status='EXTRACTING' RETURNING *",
                 [
                     json.dumps(candidates, default=str),
                     json.dumps(warnings),
                     audit_id,
+                    bool(audit_id) or any(entry.get("sheet") == "Precios de costo" for entry in candidates),
                     str(import_id),
                 ],
             )
@@ -369,6 +364,11 @@ def confirm_catalog_import(
         if not found:
             raise CatalogImportError("catalog_import_not_found")
         row = found[0]
+        if any(entry.get("sheet") for entry in _as_list(row["candidates"])):
+            raise contract_error(
+                409, "catalog_diff_required",
+                "Revisa el diff de las nueve hojas y publica desde la revisión del catálogo.",
+            )
         if row["status"] == "CONFIRMED":
             return {
                 "import": _public(row),

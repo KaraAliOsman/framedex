@@ -29,6 +29,7 @@ EVIDENCE_TABLES = {
     "glass_purchase_mappings",
     "fitting_purchase_mappings",
     "catalog_imports",
+    "catalog_color_skus",
 }
 
 # How each authority row reaches its system_id (for scoping an evidence list

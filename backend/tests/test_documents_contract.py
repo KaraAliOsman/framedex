@@ -432,6 +432,33 @@ def test_pdf_producer_emits_concrete_file_with_distinct_hash(monkeypatch: pytest
     assert file_sha256(content) not in {"a" * 64, "b" * 64}
 
 
+@pytest.mark.parametrize("demo", [False, True])
+def test_demo_warning_uses_only_frozen_document_authority(monkeypatch, demo):
+    html_sources = []
+
+    class RecordedHTML:
+        def __init__(self, *, string, url_fetcher):
+            html_sources.append(string)
+
+        def write_pdf(self, **kwargs):
+            return b"%PDF-recorded"
+
+    monkeypatch.setattr("weasyprint.HTML", RecordedHTML)
+    snapshot = revision_snapshot()
+    snapshot["positions"][0]["is_demo"] = demo
+    render_pdf_document("DOC-01", snapshot, pdf_identifier="c" * 64)
+    order = order_snapshot("SUPPLIER_GLASS_PO")
+    order["is_demo"] = demo
+    render_pdf_document("DOC-02", order, pdf_identifier="d" * 64)
+    assert all(("<strong>DEMO</strong>" in source) is demo for source in html_sources)
+    content, _ = render_order_xlsx("DOC-02", order)
+    book = load_workbook(BytesIO(content), read_only=True, data_only=False)
+    try:
+        assert any(cell.value == "DEMO" for sheet in book for row in sheet for cell in row) is demo
+    finally:
+        book.close()
+
+
 def test_xlsx_is_deterministic_exact_text_and_no_formula_authority(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

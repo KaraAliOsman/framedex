@@ -14,6 +14,7 @@ import type {
 } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
 import { fmtMm } from "../../format";
+import { domainLabel } from "../../i18n/domainLabels";
 import { centerKindLabel, opKindLabel, stationCodeLabel } from "../production/labels";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import type { Resource, Row, catalogApi } from "./catalogModel";
@@ -194,9 +195,26 @@ function ReadinessLadder({
   /** Blocker text arrives with the raw system UUID embedded — it means
    * this very record, so name it instead of showing a hex fragment. */
   const labelFor = (text: string) =>
-    text.replace(UUID_RE, (id) =>
-      id.toLowerCase() === String(system.id).toLowerCase() ? system.name : id.slice(0, 8),
-    );
+    text
+      .replace(UUID_RE, (id) =>
+        id.toLowerCase() === String(system.id).toLowerCase()
+          ? system.name
+          : "referencia del catálogo",
+      )
+      .replace(
+        /\b(CRIMP|CUT|GLAZE|HARDWARE|MACHINING|PACK|QC|SASH_ASSEMBLE)\b/g,
+        (code) =>
+          ({
+            CRIMP: "Engaste",
+            CUT: "Corte",
+            GLAZE: "Acristalado",
+            HARDWARE: "Herrajes",
+            MACHINING: "Mecanizado",
+            PACK: "Embalaje",
+            QC: "Control de calidad",
+            SASH_ASSEMBLE: "Armado de hoja",
+          })[code] ?? "Operación de taller",
+      );
   // Levels carry cumulative blocker lists — attribute each blocker to the
   // first level that reports it so nothing repeats down the ladder.
   const blockerRows: { level: string; blocker: (typeof levels)[number]["blockers"][number] }[] = [];
@@ -498,12 +516,7 @@ export function SystemWorkspaceView({
     <div className="ws">
       <header className="ws-identity" id="ws.system">
         <div className="ws-identity-head">
-          <h2>
-            {system.name}{" "}
-            <code title={system.code}>
-              {system.code.length > 16 ? `${system.code.slice(0, 16)}…` : system.code}
-            </code>
-          </h2>
+          <h2>{system.name} </h2>
           <div className="ws-identity-meta">
             {system.manufacturer && <span className="ws-chip">{system.manufacturer}</span>}
             {system.family && <span className="ws-chip">{system.family}</span>}
@@ -838,7 +851,7 @@ export function SystemWorkspaceView({
                       </td>
                       <td>{map.manufacturer_name}</td>
                       <td>{map.supplier_name ?? wst("unknown")}</td>
-                      <td>{map.purchase_unit}</td>
+                      <td>{domainLabel(map.purchase_unit)}</td>
                       <td>{ct(map.is_active ? "active" : "inactive")}</td>
                     </tr>
                   );

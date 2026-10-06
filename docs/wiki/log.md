@@ -76,3 +76,40 @@ Append-only chronology. Keep newest entries at the bottom.
 ## 2026-10-05 — IA1 integrado con línea base y CI verificadas
 
 PR #118 mergeado en `integracion/v1` con squash `2c9bbebc1cca6df125a4e0eeae14b22b71478b9e`. La corrida medida conserva su referencia `dd4ce1cc`: MiMo 3/26, MOCK 0/26 y 48 regresiones de oráculos, sin escrituras persistentes ni cambios de fuente. Los cuatro checks de GitHub pasaron sobre `2a41f7421cf6b767e80ec6f4dc7250cada67dbd8` (run 37370890838); el incidente alojado se recuperó con runners temporales de un solo job en Ubuntu 24.04, conservando cada gate. Se completaron SQLite y tzdata ausentes en la imagen mínima antes de los reintentos. La variable y los runners se retiraron al cerrar; `main` y el catálogo de producción no se modificaron. Evidencia: `docs/ai/evals/README.md` y `docs/redesign/captures/diagnostico-evals/aceptacion.md`.
+
+## 2026-10-05 — D01 · autoridad de catálogo y revisión
+
+La rama D01 introduce familias separadas, reglas exactas de corte/refuerzo, límites
+con fuente y cinco series DEMO reproducibles. La migración preserva cortes y hashes
+históricos; el registro append-only conserva el BOM anterior. La plantilla de
+nueve hojas y MiMo real convergen en candidatos, diff revisado y publicación con
+procedencia, seguida de exportación o deshacer atómico si no se usó la autoridad.
+El PDF sintético produjo 31 candidatos, 324 HIGH respaldados y 27 UNKNOWN, sin
+publicación. La UI declara la limitación de escaneos sin texto. Los límites de
+alcance y la rúbrica están en `docs/redesign/captures/sistemas-catalogo/aceptacion.md`;
+la síntesis está en `product/catalog-authority.md`. Integración y SHA se registran
+cuando pase el Database Gate completo y los cuatro checks del PR.
+
+## 2026-10-05 — D01 · cierre de verificación local
+
+La referencia `0514eaaf317a0bd9cef6deb0d75becbc404be999` comprueba las cinco series
+DEMO como cotizables con la misma disponibilidad que consume el editor. La regla
+de refuerzo sustituye las exigencias históricas de acero en perfiles nuevos; un
+riel sin regla no adquiere un refuerzo ficticio. El Database Gate limpio pasó
+lint SQL, 936 pgTAP, 274 pruebas RLS, 11 recorridos Chromium y PostgreSQL 16 con
+cuatro verificadores poblados. Pasan también lint, typecheck, build, 482 pruebas
+del motor (dos xfail históricos), 1 139 backend y 704 frontend. La igualdad de BOM
+al calcular/documentar se comprueba para blanco, foliado y oscuro. Solo se cambió
+la escala de 124 ángulos del golden nuevo; los históricos permanecen idénticos.
+Los checks del PR y su merge se registrarán antes de avanzar a D02.
+
+## 2026-10-05 — D01 · drill de mutaciones tras separar fórmulas
+
+La instrumentación histórica buscaba cuatro expresiones de corredera que ahora
+consumen la autoridad separada `sliding`. Se actualizó a esas mismas expresiones
+y se añadieron soldadura, encuentro y refuerzo por regla de familia. El workspace
+temporal copia solo el manifest sintético puro compartido con la semilla para
+ejecutar sus goldens. El baseline pasa y las 28 desviaciones de ±0,01 mm mueren
+por aserciones numéricas; no se omite ni relaja ningún punto histórico. La primera
+corrida de Test Suite del PR #119 falló sobre la instrumentación anterior; el
+head corregido debe pasar los cuatro checks antes del merge.

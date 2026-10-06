@@ -244,6 +244,8 @@
 }
 .org-switcher__current:disabled {
   cursor: default;
+  opacity: 1;
+  color: var(--text-primary);
 }
 .org-switcher__name {
   font-size: var(--text-s);
@@ -386,9 +388,9 @@
   outline: none;
 }
 .skip-link {
-  background: var(--theme-accent);
-  border-radius: 0 0 0.375rem 0;
-  color: var(--theme-accent-ink);
+  background: var(--interactive-fill);
+  border-radius: 0 0 var(--r-2) 0;
+  color: var(--text-on-fill);
   font-size: var(--type-title-m);
   font-weight: 600;
   left: 0;

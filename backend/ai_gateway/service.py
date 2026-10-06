@@ -19,7 +19,7 @@ from uuid import UUID
 from authentication.errors import contract_error
 from ai_gateway.providers import ProviderError, provider_for
 from billing import wallet
-from documents.repository import DocumentaryError, rows
+from documents.repository import DocumentaryError, documentary_backend, rows
 from documents.storage import readable_storage_key
 
 RETENTION_DAYS = 90
@@ -65,10 +65,11 @@ def _source_document_path(org_id: UUID, source: object) -> str | None:
             "La referencia de documento no es válida.",
         )
     table, prefix = table_prefix
-    found = rows(
-        f"SELECT storage_path FROM {table} WHERE id=%s AND org_id=%s",
-        [str(source_id), str(org_id)],
-    )
+    with documentary_backend():
+        found = rows(
+            f"SELECT storage_path FROM {table} WHERE id=%s AND org_id=%s",
+            [str(source_id), str(org_id)],
+        )
     if not found:
         raise contract_error(
             404,

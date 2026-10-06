@@ -136,7 +136,18 @@ export const test = base.extend<{
       });
 
       const systemSelect = projection(
-        ["id", "name", "code", "material", "chamber_count", "rail_type", "version"],
+        [
+          "id",
+          "name",
+          "code",
+          "material",
+          "chamber_count",
+          "rail_type",
+          "rail_count",
+          "version",
+          "system_family",
+          "finishes",
+        ],
         [
           "depth_mm",
           "sash_overlap_mm",
@@ -154,12 +165,14 @@ export const test = base.extend<{
           "sliding_glazing_deduction_height_mm",
           "door_leaf_side_clearance_mm",
           "chamber_clearance_mm",
+          "rebate_depth_mm",
+          "end_milling_overlap_mm",
         ],
       );
       const sources = await readRows(
         "profile_systems",
         "code=eq.DEMO_60&org_id=is.null&is_global=eq.true&is_demo=eq.true" +
-          `&is_active=eq.true&select=${systemSelect}`,
+          `&version=eq.2&legacy_authority=eq.false&is_active=eq.true&select=${systemSelect}`,
       );
       expect(sources).toHaveLength(1);
       const source = sources[0]!;
@@ -193,7 +206,16 @@ export const test = base.extend<{
       });
 
       const articleSelect = projection(
-        ["id", "sku", "name", "role", "material", "reinforcement_sku"],
+        [
+          "id",
+          "sku",
+          "name",
+          "role",
+          "material",
+          "reinforcement_sku",
+          "cut_rule",
+          "reinforcement_rule",
+        ],
         [
           "face_width_mm",
           "commercial_length_mm",
@@ -238,7 +260,7 @@ export const test = base.extend<{
       const beads = await readRows(
         "glazing_bead_matrix",
         `system_id=eq.${sourceId}&org_id=is.null&is_active=eq.true` +
-          `&glass_thickness_mm=eq.20&select=${beadSelect}`,
+          `&glass_thickness_mm=eq.4&select=${beadSelect}`,
       );
       expect(beads).toHaveLength(1);
       const bead = beads[0]!;
@@ -275,21 +297,22 @@ export const test = base.extend<{
       const kits = await readRows(
         "hardware_kits",
         `system_id=eq.${sourceId}&org_id=is.null&is_active=eq.true` +
-          `&sku=eq.KIT-TURN&select=${kitSelect}`,
+          `&sku=eq.DEMO_60-KIT-TURN&select=${kitSelect}`,
       );
       expect(kits).toHaveLength(1);
       const kit = kits[0]!;
 
-      // KIT-TURN carries categorized contents (hinge/lever/lock). Assert the
+      // The family catalog carries categorized hinge/handle contents. Assert the
       // component SKU set — not the exact decimal serialization, which
       // JavaScript binary floating point cannot round-trip.
       const contentsText = text(kit.contents);
-      for (const sku of ["DEMO-BIS-60", "DEMO-MAN-PRACT", "DEMO-CREM-60"]) {
+      for (const sku of ["DEMO_60-BISAGRA", "DEMO_60-MANILLA"]) {
         expect(contentsText).toContain(sku);
       }
       expect(kit.opening_type).toBe("TURN");
       await insert("hardware_kits", {
         ...kit,
+        sku: "KIT-TURN",
         org_id: organizationId,
         system_id: systemId,
         contents: [],

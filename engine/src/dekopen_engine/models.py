@@ -20,6 +20,14 @@ class MaterialType(str, Enum):
     ALUMINIUM = "ALUMINIUM"
 
 
+class SystemFamily(str, Enum):
+    CASEMENT = "CASEMENT"
+    SLIDING = "SLIDING"
+    LIFT_SLIDE = "LIFT_SLIDE"
+    DOOR = "DOOR"
+    FACADE_FIXED = "FACADE_FIXED"
+
+
 class RailType(str, Enum):
     DUAL = "dual"
     MONO = "mono"
@@ -37,6 +45,14 @@ class ProfileRole(str, Enum):
     THRESHOLD = "THRESHOLD"
     # Continuous edge channel seating a frameless glass pane (mandate §14).
     CHANNEL = "CHANNEL"
+    SLIDING_SASH = "SLIDING_SASH"
+    INTERLOCK = "INTERLOCK"
+    RAIL = "RAIL"
+    DOOR_SASH = "DOOR_SASH"
+    FRAME_EXTENSION = "FRAME_EXTENSION"
+    SILL = "SILL"
+    COVER_TRIM = "COVER_TRIM"
+    PLINTH = "PLINTH"
 
 
 class NodeType(str, Enum):
@@ -267,6 +283,31 @@ class ProfileSection(EngineModel):
         return self
 
 
+class ProfileCutRule(EngineModel):
+    """Reviewed profile-specific cutting authority; all allowances are explicit."""
+
+    angle_degrees: Literal[45, 90]
+    welding_loss_per_end_mm: Decimal = Field(ge=0)
+    joint_deduction_per_end_mm: Decimal = Field(ge=0)
+    meeting_deduction_mm: Decimal = Field(ge=0)
+    cut_step_mm: Decimal = Field(gt=0)
+    rounding: Literal["UP", "NEAREST", "DOWN"]
+    source: str = Field(min_length=1)
+
+
+class ProfileReinforcementRule(EngineModel):
+    reinforcement_sku: str = Field(min_length=1)
+    reinforcement_type: str = Field(min_length=1)
+    minimum_length_mm: Decimal = Field(ge=0)
+    required_finishes: tuple[str, ...]
+    required_non_white: bool
+    cut_deduction_mm: Decimal = Field(ge=0)
+    screws_per_m: Decimal = Field(gt=0)
+    screw_sku: str = Field(min_length=1)
+    screw_weight_kg: Decimal | None = Field(default=None, ge=0)
+    source: str = Field(min_length=1)
+
+
 class EffectiveProfileArticle(EngineModel):
     sku: str
     role: ProfileRole
@@ -285,6 +326,8 @@ class EffectiveProfileArticle(EngineModel):
     # Bar length the article sells in — None means the catalog never
     # declared one and no stock-length check can run (UNKNOWN, not infinite).
     commercial_length_mm: Decimal | None = None
+    cut_rule: ProfileCutRule | None = None
+    reinforcement_rule: ProfileReinforcementRule | None = None
 
 
 class GlazingBeadRule(EngineModel):
@@ -329,8 +372,47 @@ class LeafWeight(EngineModel):
     weight_unknown_reasons: list[str] = Field(default_factory=list)
 
 
+class SlidingSystemParameters(EngineModel):
+    pulley_height_mm: Decimal = Field(ge=0)
+    central_overlap_mm: Decimal = Field(ge=0)
+    lateral_clearance_mm: Decimal = Field(ge=0)
+    end_add_mm: Decimal = Field(ge=0)
+    glazing_deduction_width_mm: Decimal = Field(ge=0)
+    glazing_deduction_height_mm: Decimal = Field(ge=0)
+    rail_type: RailType
+    rail_count: int = Field(ge=1)
+    separate_rail: bool
+    interlock_required: bool
+
+
+class SystemDimensionalLimit(EngineModel):
+    opening_type: BayOpeningType
+    min_leaf_width_mm: Decimal = Field(gt=0)
+    max_leaf_width_mm: Decimal = Field(gt=0)
+    min_leaf_height_mm: Decimal = Field(gt=0)
+    max_leaf_height_mm: Decimal = Field(gt=0)
+    max_leaf_weight_kg: Decimal | None = Field(default=None, gt=0)
+    min_aspect_ratio: Decimal = Field(gt=0)
+    max_aspect_ratio: Decimal = Field(gt=0)
+    source: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def ordered(self) -> "SystemDimensionalLimit":
+        if (self.min_leaf_width_mm > self.max_leaf_width_mm
+                or self.min_leaf_height_mm > self.max_leaf_height_mm
+                or self.min_aspect_ratio > self.max_aspect_ratio):
+            raise ValueError("Los límites mínimos no pueden superar los máximos.")
+        return self
+
+
 class SystemParams(EngineModel):
     system_code: str
+    # None decodes pre-family snapshots. New catalogs must declare a family;
+    # they never gain legacy mixed-family permission from a guessed value.
+    system_family: SystemFamily | None = None
+    legacy_authority: bool = False
+    sliding: SlidingSystemParameters | None = None
+    dimensional_limits: tuple[SystemDimensionalLimit, ...] = ()
     depth_mm: Decimal
     material: MaterialType = MaterialType.PVC
     effective_profile_articles: dict[ProfileRole, EffectiveProfileArticle]
@@ -342,15 +424,15 @@ class SystemParams(EngineModel):
     sash_overlap_mm: Decimal = Decimal("8.00")
     glass_clearance_white_mm: Decimal = Decimal("3.00")
     glass_clearance_foil_mm: Decimal = Decimal("5.00")
-    pulley_height_mm: Decimal = Decimal("12.00")
-    central_overlap_mm: Decimal = Decimal("35.00")
-    sliding_lateral_clearance_mm: Decimal = Decimal("0.00")
-    sliding_end_add_mm: Decimal = Decimal("6.00")
+    pulley_height_mm: Decimal | None = None
+    central_overlap_mm: Decimal | None = None
+    sliding_lateral_clearance_mm: Decimal | None = None
+    sliding_end_add_mm: Decimal | None = None
     corner_bracket_loss_mm: Decimal = Decimal("0.00")
     hook_depth_mm: Decimal = Decimal("0.00")
     door_threshold_mm: Decimal = Decimal("30.00")
     door_bottom_clearance_mm: Decimal = Decimal("20.00")
-    rail_type: RailType = RailType.DUAL
+    rail_type: RailType | None = None
     # Physical rails the frame profile provides. None = derive from
     # rail_type (MONO=1, DUAL=2); a catalog with a triple-rail profile
     # declares it explicitly — layouts may never exceed this capacity.
@@ -359,10 +441,34 @@ class SystemParams(EngineModel):
     # Finishes the series actually sells — the estimator picks only declared
     # ones; every non-WHITE finish consumes the foil clearances.
     finishes: tuple[str, ...] = ("WHITE",)
-    sliding_glazing_deduction_width_mm: Decimal
-    sliding_glazing_deduction_height_mm: Decimal
+    sliding_glazing_deduction_width_mm: Decimal | None = None
+    sliding_glazing_deduction_height_mm: Decimal | None = None
     door_leaf_side_clearance_mm: Decimal
     available_panel_rules: dict[str, PanelRule] = Field(default_factory=dict)
+
+    @property
+    def uses_legacy_rules(self) -> bool:
+        return self.system_family is None or self.legacy_authority
+
+    @model_validator(mode="after")
+    def family_parameters(self) -> "SystemParams":
+        if self.uses_legacy_rules:
+            for name in ("sliding_glazing_deduction_width_mm", "sliding_glazing_deduction_height_mm"):
+                if getattr(self, name) is None:
+                    raise ValueError(f"{name}: falta la autoridad histórica explícita.")
+            return self
+        legacy = (self.pulley_height_mm, self.central_overlap_mm,
+                  self.sliding_lateral_clearance_mm, self.sliding_end_add_mm,
+                  self.sliding_glazing_deduction_width_mm,
+                  self.sliding_glazing_deduction_height_mm, self.rail_type, self.rail_count)
+        if self.system_family is not None and any(value is not None for value in legacy):
+            raise ValueError("Los parámetros de corredera deben declararse en su familia.")
+        if self.system_family in (SystemFamily.SLIDING, SystemFamily.LIFT_SLIDE):
+            if self.sliding is None:
+                raise ValueError("Faltan los parámetros de la familia corredera.")
+        elif self.system_family is not None and self.sliding is not None:
+            raise ValueError("Una familia practicable, puerta o fijo no lleva parámetros de corredera.")
+        return self
 
 
 class ParametricNode(EngineModel):

@@ -175,7 +175,10 @@ export function issueText(
   const key = ISSUE_KEYS[issue.code];
   // Unmapped engine codes still read as sentences — a chip that shows
   // "R02_LEAF_PROPORTION" asks the user to decode our own identifier.
-  let text = key ? t(key) : issue.code.toLowerCase().replace(/_/g, " ");
+  let text = key
+    ? t(key)
+    : (issue.params.reason ?? "Revisa la compatibilidad y los datos del catálogo.");
+  if (issue.params.source) text += " Fuente: " + issue.params.source;
   for (const [name, value] of Object.entries(issue.params)) {
     if (name === "reason") continue;
     // Engine params arrive as str(Decimal) — "345.00" reads as technical
@@ -856,6 +859,7 @@ function SlidingPanelsEditor({
  * glazing and handle placement edit on this leaf alone, through the same
  * normalized request-tree every other canvas edit uses. */
 function BayInspector({
+  options,
   module,
   bay,
   product,
@@ -871,6 +875,7 @@ function BayInspector({
   commit,
   onAskAssistant,
 }: {
+  options?: DesignOptions;
   module: ProductModuleJson;
   bay: IntentNode;
   product: ProductJson;
@@ -955,6 +960,7 @@ function BayInspector({
           {t("assembly.bay")} {bayOrdinal} · {t("assembly.module")} {moduleOrdinal}
         </h4>
       </header>
+      <CatalogLimitNotice options={options} opening={opening} />
       <ProvenanceStrip
         items={[
           { label: t("assembly.opening"), state: "DECLARED" },
@@ -983,7 +989,9 @@ function BayInspector({
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
         <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
-          {OPENING_OPTIONS.map(([value, labelKey]) => {
+          {OPENING_OPTIONS.filter(
+            ([value]) => !options?.system_family || options.compatible_openings.includes(value),
+          ).map(([value, labelKey]) => {
             const doorBlocked = value === "DOOR_ENTRY" && !isTopBay;
             return (
               <button
@@ -1526,6 +1534,7 @@ function TechnicalPanel({
 }
 
 function ModuleInspector({
+  options,
   module,
   product,
   members,
@@ -1540,6 +1549,7 @@ function ModuleInspector({
   commit,
   onAskAssistant,
 }: {
+  options?: DesignOptions;
   module: ProductJson["assembly"]["modules"][number];
   product: ProductJson;
   members: MemberGeometry;
@@ -1581,6 +1591,7 @@ function ModuleInspector({
           ×
         </button>
       </header>
+      <CatalogLimitNotice options={options} opening={opening} />
       <ProvenanceStrip
         items={[
           { label: t("inspector.dimensions"), state: "DECLARED" },
@@ -1597,7 +1608,9 @@ function ModuleInspector({
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
         <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
-          {OPENING_OPTIONS.map(([value, labelKey]) => (
+          {OPENING_OPTIONS.filter(
+            ([value]) => !options?.system_family || options.compatible_openings.includes(value),
+          ).map(([value, labelKey]) => (
             <button
               key={value}
               type="button"
@@ -2705,6 +2718,7 @@ export function AssemblyEditor({
           )
         ) : selectedModule ? (
           <ModuleInspector
+            options={options}
             module={selectedModule}
             product={product}
             members={members}
@@ -2725,6 +2739,7 @@ export function AssemblyEditor({
           />
         ) : selectedBayModule && selectedBayNode ? (
           <BayInspector
+            options={options}
             module={selectedBayModule}
             bay={selectedBayNode}
             product={product}
@@ -2867,5 +2882,37 @@ export function AssemblyEditor({
         )}
       </footer>
     </div>
+  );
+}
+
+function CatalogLimitNotice({
+  options,
+  opening,
+}: {
+  options?: DesignOptions;
+  opening: string;
+}): JSX.Element | null {
+  if (!options?.system_family) return null;
+  const rule = options.dimensional_limits.find((item) => item.opening_type === opening);
+  return (
+    <details className="inspector-section">
+      <summary>Límites del sistema y fuente</summary>
+      {rule ? (
+        <>
+          <p>
+            Ancho de hoja: {fmtMm(rule.min_leaf_width_mm)}–{fmtMm(rule.max_leaf_width_mm)} mm. Alto:{" "}
+            {fmtMm(rule.min_leaf_height_mm)}–{fmtMm(rule.max_leaf_height_mm)} mm.
+          </p>
+          <p>
+            Peso máximo:{" "}
+            {rule.max_leaf_weight_kg == null ? "Sin dato" : fmtMm(rule.max_leaf_weight_kg) + " kg"}.
+            Relación alto/ancho: {fmtMm(rule.min_aspect_ratio)}–{fmtMm(rule.max_aspect_ratio)}.
+          </p>
+          <p>Fuente: {rule.source}</p>
+        </>
+      ) : (
+        <p>Sin dato: declara los límites de esta apertura en Catálogo antes de calcular.</p>
+      )}
+    </details>
   );
 }

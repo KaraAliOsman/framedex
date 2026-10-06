@@ -12,8 +12,14 @@ import type { HandlePolicy } from "./handlePolicy";
 import type { KitChoice } from "./kitChoice";
 import type { PanelChoice } from "./panelChoice";
 import type { ProfileChoice } from "./profileChoice";
+import type { SystemDimensionalLimit } from "./systemDimensionalLimit";
 
 export interface DesignOptions {
+  /** @nullable */
+  system_family: string | null;
+  is_demo: boolean;
+  compatible_openings: string[];
+  dimensional_limits: SystemDimensionalLimit[];
   profiles: ProfileChoice[];
   glazing_thicknesses: string[];
   hardware_kits: KitChoice[];

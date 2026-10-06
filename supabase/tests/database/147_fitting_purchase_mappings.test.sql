@@ -31,7 +31,7 @@ SELECT ok(
 INSERT INTO public.profile_systems
 SELECT (jsonb_populate_record(NULL::public.profile_systems,to_jsonb(source)||
  jsonb_build_object('id','55710000-0000-4000-8000-000000000001','code','PGTAP9','technical_locked',false,'is_demo',false))).*
-FROM public.profile_systems source WHERE code='DEMO_60';
+FROM public.profile_systems source WHERE code='DEMO_60' AND version=1;
 
 INSERT INTO public.fitting_purchase_mappings
     (system_id,org_id,technical_sku,purchasing_sku,manufacturer_name,purchase_unit,version,provenance)

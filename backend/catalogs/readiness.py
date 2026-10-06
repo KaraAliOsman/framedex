@@ -119,19 +119,32 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
             fabrication_missing.append("rebate_depth_mm")
         if params.end_milling_overlap_mm is None:
             fabrication_missing.append("end_milling_overlap_mm")
-        if params.material is MaterialType.PVC:
+        if params.uses_legacy_rules and params.material is MaterialType.PVC:
             fabrication_missing += [
                 article.sku
                 for role, article in params.effective_profile_articles.items()
                 if role is not ProfileRole.THRESHOLD
                 and (article.welding_loss_mm is None or article.reinforcement_gap_mm is None)
             ]
-        sash = params.effective_profile_articles.get(ProfileRole.SASH)
-        if sash is not None and (
-            sash.weight_kg_m is None
-            or (bool(sash.reinforcement_sku) and sash.steel_weight_kg_m is None)
-        ):
-            fabrication_missing.append(sash.sku)
+        if not params.uses_legacy_rules:
+            fabrication_missing += [
+                article.sku
+                for role, article in params.effective_profile_articles.items()
+                if article.cut_rule is None or (
+                    params.material is MaterialType.PVC
+                    and role not in (ProfileRole.GLAZING_BEAD, ProfileRole.RAIL,
+                                     ProfileRole.THRESHOLD, ProfileRole.CHANNEL)
+                    and article.reinforcement_rule is None
+                )
+            ]
+        for role in (ProfileRole.SASH, ProfileRole.SLIDING_SASH, ProfileRole.DOOR_SASH):
+            sash = params.effective_profile_articles.get(role)
+            if sash is not None and (
+                sash.weight_kg_m is None
+                or ((bool(sash.reinforcement_sku) or sash.reinforcement_rule is not None)
+                    and sash.steel_weight_kg_m is None)
+            ):
+                fabrication_missing.append(sash.sku)
         fabrication_missing += [
             kit.sku for kit in params.available_hardware_kits if kit.weight_kg is None
         ]
@@ -202,7 +215,9 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
             # so the catalog-level duty is that every declared sku resolves
             # unambiguously (load_purchase_authorities raises on duplicates).
             catalogued = rows(
-                "SELECT sku, reinforcement_sku, role::text FROM public.profile_articles "
+                "SELECT sku, reinforcement_sku, role::text, "
+                "reinforcement_rule->>'reinforcement_sku' AS declared_reinforcement_sku "
+                "FROM public.profile_articles "
                 "WHERE system_id=%s "
                 "AND (org_id IS NULL OR org_id=%s)",
                 [system_id, org_id],
@@ -218,9 +233,12 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                 for article in catalogued:
                     if article["role"] in ("THRESHOLD", "GLAZING_BEAD", "CHANNEL"):
                         continue
+                    if not params.uses_legacy_rules and article["declared_reinforcement_sku"] is None:
+                        continue
                     stock, _ = CuttingRepository().reinforcement_stock(
                         system_id, org_id, article["sku"],
-                        article["reinforcement_sku"], "WHITE")
+                        (article["reinforcement_sku"] if params.uses_legacy_rules
+                         else article["declared_reinforcement_sku"]), "WHITE")
                     steels.add(stock.workshop_sku)
             glass = rows("SELECT technical_sku FROM public.glass_purchase_mappings "
                          "WHERE system_id=%s AND (org_id IS NULL OR org_id=%s)", [system_id, org_id])

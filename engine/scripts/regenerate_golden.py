@@ -10,8 +10,15 @@ from pathlib import Path
 from dekopen_engine import EngineResult, ParametricNode, calculate_geometry
 from dekopen_engine.snapshot import calculation_response
 from engine.tests.catalog import demo_60_params
+from engine.tests.catalog_families import family_cases
 
 SNAPSHOT = Path(__file__).resolve().parents[1] / "tests" / "golden_example.json"
+FAMILY_SNAPSHOT = SNAPSHOT.with_name("golden_catalog_families.json")
+
+
+def generated_family_bytes() -> bytes:
+    return (json.dumps(family_cases(), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)
+            + "\n").encode("utf-8")
 
 
 def golden_request() -> dict[str, object]:
@@ -60,11 +67,13 @@ def main() -> None:
     parser.add_argument("--check", action="store_true", help="Compare bytes; never rewrite")
     args = parser.parse_args()
     if args.check:
-        if not check_snapshot():
+        if (not check_snapshot() or not FAMILY_SNAPSHOT.is_file()
+                or FAMILY_SNAPSHOT.read_bytes() != generated_family_bytes()):
             raise SystemExit("Golden byte drift: run make goldgen explicitly and review the diff")
         print("Golden byte check: PASS (read-only)")
     else:
         SNAPSHOT.write_bytes(generated_bytes())
+        FAMILY_SNAPSHOT.write_bytes(generated_family_bytes())
         print(f"Generated {SNAPSHOT.relative_to(SNAPSHOT.parents[2]).as_posix()}")
 
 

@@ -39,9 +39,8 @@ SELECT policies_are(
     'public', 'catalog_imports',
     ARRAY[
         'catalog_imports_member_read',
-        'catalog_imports_member_insert',
-        'catalog_imports_member_update',
-        'catalog_imports_backend'
+        'catalog_imports_backend',
+        'catalog_import_catalog_read'
     ],
     'exactly the member + backend policies'
 );

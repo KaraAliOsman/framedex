@@ -4,6 +4,10 @@ import type { DesignOptions } from "../../api/generated/models";
 import { resolveMembers } from "./members";
 
 const CATALOG: DesignOptions = {
+  system_family: null,
+  is_demo: false,
+  compatible_openings: [],
+  dimensional_limits: [],
   profiles: [
     { sku: "FRAME-70", role: "FRAME", name: "Marco 70", material: "PVC", face_width_mm: "70.00" },
     { sku: "SASH-80", role: "SASH", name: "Hoja 80", material: "PVC", face_width_mm: "80.00" },

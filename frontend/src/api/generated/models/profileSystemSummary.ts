@@ -7,6 +7,8 @@
  */
 
 export interface ProfileSystemSummary {
+  /** @nullable */
+  system_family: string | null;
   id: string;
   code: string;
   name: string;

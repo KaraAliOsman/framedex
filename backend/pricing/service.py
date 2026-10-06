@@ -132,7 +132,7 @@ def position_cost(repo, position, rules):
         profile_stocks = {}
         steel_stocks = {}
         tree = decoded(position['parametric_tree'])
-        color = 'WHITE' if position['color_interior']=='WHITE' and position['color_exterior']=='WHITE' else 'FOILED'
+        color = position['color_interior']
         result = engine_result_from_api(
             tree=tree, color=color, params=params,
             nominal_width_mm=position['width_mm'],
@@ -157,7 +157,7 @@ def position_cost(repo, position, rules):
             with connection.cursor() as cursor:
                 cursor.execute('SET LOCAL ROLE pricing_backend')
     tree = decoded(position['parametric_tree'])
-    color = 'WHITE' if position['color_interior']=='WHITE' and position['color_exterior']=='WHITE' else 'FOILED'
+    color = position['color_interior']
     materials = []
     composition = []
     for cut in result.profile_cuts:

@@ -198,6 +198,7 @@ def test_engine_systems_returns_only_the_minimal_contract(
                 "code": "DEMO_60",
                 "name": "Sistema Demo 60mm PVC",
                 "is_demo": True,
+                "system_family": None,
                 "quote_ready": False,
                 "readiness_reasons": ["manufacturing"],
             }

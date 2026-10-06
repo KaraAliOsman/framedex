@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
 from dekopen_engine.models import (
-    HardwareKitRule, LeafWeight, ProfileCut, ProfileRole,
+    FittingPiece, HardwareKitRule, LeafWeight, ProfileCut, ProfileRole,
     ReinforcementPiece, SystemParams,
 )
 
@@ -81,13 +81,15 @@ def base_leaf_weight(
     *, profile_cuts: Sequence[ProfileCut], reinforcements: Sequence[ReinforcementPiece],
     infill_weight_kg: Decimal | None, params: SystemParams,
     infill_unknown_reason: str | None = None,
+    fittings: Sequence[FittingPiece] = (),
 ) -> ExactLeafWeight:
     """Consume one leaf's cuts; frame, beads and threshold never enter its mass."""
     pvc: Decimal | None = Decimal("0")
     steel: Decimal | None = Decimal("0")
     reasons: list[str] = []
     for cut in profile_cuts:
-        if cut.role is not ProfileRole.SASH:
+        if cut.role not in (ProfileRole.SASH, ProfileRole.SLIDING_SASH,
+                            ProfileRole.DOOR_SASH, ProfileRole.INTERLOCK):
             continue
         article = params.effective_profile_articles[cut.role]
         if article.sku != cut.sku:
@@ -101,7 +103,8 @@ def base_leaf_weight(
         else:
             pvc = _accumulate(pvc, cut.length_mm / _METRE * cut.qty * density)
     for piece in reinforcements:
-        if piece.role is not ProfileRole.SASH:
+        if piece.role not in (ProfileRole.SASH, ProfileRole.SLIDING_SASH,
+                              ProfileRole.DOOR_SASH, ProfileRole.INTERLOCK):
             continue
         article = params.effective_profile_articles[piece.role]
         if article.sku != piece.parent_profile_sku:
@@ -116,7 +119,20 @@ def base_leaf_weight(
             steel = _accumulate(steel, piece.length_mm / _METRE * piece.qty * density)
     if infill_weight_kg is None:
         reasons.append(infill_unknown_reason or "missing_infill_mass")
-    return ExactLeafWeight(pvc, steel, infill_weight_kg,
+    screws: Decimal | None = Decimal("0")
+    for fitting in fittings:
+        rules = [article.reinforcement_rule for article in params.effective_profile_articles.values()
+                 if article.reinforcement_rule is not None
+                 and article.reinforcement_rule.screw_sku == fitting.sku]
+        masses = {rule.screw_weight_kg for rule in rules}
+        if len(masses) != 1 or None in masses:
+            screws = None
+            reasons.append(f"missing_screw_mass:{fitting.sku}")
+        else:
+            mass = next(iter(masses))
+            assert mass is not None
+            screws = _accumulate(screws, mass * fitting.qty)
+    return ExactLeafWeight(pvc, steel, infill_weight_kg, screws,
                            weight_unknown_reasons=tuple(reasons))
 
 
@@ -131,5 +147,5 @@ def with_hardware_weight(
         )
     return ExactLeafWeight(
         base.pvc_weight_kg, base.steel_weight_kg, base.infill_weight_kg,
-        kit.weight_kg, base.weight_unknown_reasons,
+        _accumulate(base.hardware_weight_kg, kit.weight_kg), base.weight_unknown_reasons,
     )

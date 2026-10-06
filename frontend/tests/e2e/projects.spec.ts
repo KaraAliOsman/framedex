@@ -114,8 +114,11 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     "/api/v1/engine/assembly/calculate/",
     200,
     () =>
-      page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("20.00"),
+      page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("24.00"),
   );
+  await page
+    .getByRole("combobox", { name: "Vidrio", exact: true })
+    .selectOption("DEMO_60-VIDRIO-4-16-4");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
 
   const initial = await responseTo<PositionResponse>(
@@ -127,7 +130,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   );
   // Single-unit saves fold to the classic contract; the saved BOM is the
   // engine result for the folded design (bay ids are unnamespaced there).
-  expect(initial.bom?.glasses?.[0]?.thickness_net_mm).toBe("20.00");
+  expect(initial.bom?.glasses?.[0]?.thickness_net_mm).toBe("8.00");
   expect(initial.bom?.profile_cuts?.length).toBeGreaterThan(0);
   expect(initial.quantity).toBe(2);
   const positionApi = `/api/v1/positions/${initial.id}/`;
@@ -170,7 +173,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
           .click(),
     )
   ).bom!;
-  expect(editedBom.hardware_items![0]!.kit_sku).toBe("KIT-TURN");
+  expect(editedBom.hardware_items![0]!.kit_sku).toBe("DEMO_60-KIT-TURN");
 
   // Inject a transport failure only; successful writes still use the real backend.
   await page.route(`**${positionApi}`, async (route) => {
@@ -195,7 +198,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     parametric_tree: { type: "BAY", opening_type: "TURN_RIGHT" },
   });
   expect(saved.bom?.hardware_items).toHaveLength(1);
-  expect(saved.bom?.hardware_items?.[0]?.kit_sku).toBe("KIT-TURN");
+  expect(saved.bom?.hardware_items?.[0]?.kit_sku).toBe("DEMO_60-KIT-TURN");
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   const bom = page.locator("details.project-bom");

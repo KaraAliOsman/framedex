@@ -23,6 +23,72 @@ class ImportUploadSerializer(StrictSerializer):
     file = serializers.FileField()
 
 
+class CatalogReviewItemSerializer(StrictSerializer):
+    key = serializers.CharField(max_length=40)
+    values = serializers.DictField()
+
+
+class CatalogReviewRequestSerializer(StrictSerializer):
+    items = CatalogReviewItemSerializer(many=True, min_length=1, max_length=2000)
+
+
+class CatalogPublishRequestSerializer(CatalogReviewRequestSerializer):
+    review_token = serializers.RegexField(regex=r"^sha256:[0-9a-f]{64}$")
+    reviewed = serializers.BooleanField()
+
+    def validate_reviewed(self, value):
+        if value is not True:
+            raise serializers.ValidationError("Revisa el diff y confirma la publicación.")
+        return value
+
+
+class CatalogUndoRequestSerializer(StrictSerializer):
+    confirmed = serializers.BooleanField()
+
+    def validate_confirmed(self, value):
+        if value is not True:
+            raise serializers.ValidationError("Confirma que quieres deshacer esta publicación.")
+        return value
+
+
+class CatalogReviewErrorSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    field = serializers.CharField()
+    message = serializers.CharField()
+
+
+class CatalogChangeSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    sheet = serializers.CharField()
+    action = serializers.ChoiceField(choices=["create", "update", "none"])
+    before = serializers.DictField(allow_null=True)
+    after = serializers.DictField()
+
+
+class CatalogReviewResponseSerializer(serializers.Serializer):
+    review_token = serializers.CharField()
+    errors = CatalogReviewErrorSerializer(many=True)
+    changes = CatalogChangeSerializer(many=True)
+
+
+class CatalogTemplateColumnSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    label = serializers.CharField()
+    kind = serializers.CharField()
+    required = serializers.BooleanField()
+    choices = serializers.DictField(allow_null=True)
+
+
+class CatalogTemplateSheetSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    columns = CatalogTemplateColumnSerializer(many=True)
+
+
+class CatalogTemplateSchemaSerializer(serializers.Serializer):
+    version = serializers.CharField()
+    sheets = CatalogTemplateSheetSerializer(many=True)
+
+
 class ImportResponseSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     file_name = serializers.CharField()

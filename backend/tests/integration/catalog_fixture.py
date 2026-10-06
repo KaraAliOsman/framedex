@@ -38,7 +38,7 @@ def copy_fixed_catalog(org, code="DEMO_60", global_scope=False):
     tenant-override precedence tests can write their own org rows on top.
     """
     scope_org = None if global_scope else org
-    source = one("SELECT * FROM public.profile_systems WHERE code=%s AND is_global", [code])
+    source = one("SELECT * FROM public.profile_systems WHERE code=%s AND is_global AND version=1", [code])
     target = uuid4()
 
     def insert(table, row):

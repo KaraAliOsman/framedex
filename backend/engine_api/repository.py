@@ -22,7 +22,13 @@ from dekopen_engine import (
     ProfileRole,
     RailType,
     SystemParams,
+    SystemFamily,
+    SlidingSystemParameters,
+    SystemDimensionalLimit,
+    ProfileCutRule,
+    ProfileReinforcementRule,
 )
+from pydantic import TypeAdapter
 from dekopen_engine.manufacturing import HandleRequirementPolicyV1, handle_policy_from_json
 
 
@@ -40,6 +46,7 @@ class VisibleProfileSystem:
     code: str
     name: str
     is_demo: bool
+    system_family: str | None = None
 
     def public_dict(self) -> dict[str, object]:
         return {
@@ -47,6 +54,7 @@ class VisibleProfileSystem:
             "code": self.code,
             "name": self.name,
             "is_demo": self.is_demo,
+            "system_family": self.system_family,
         }
 
 
@@ -88,6 +96,10 @@ def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectivePro
         steel_weight_kg_m=_decimal_or_none(row[offset + 6]),
         reinforcement_sku=(str(row[offset + 7]) if row[offset + 7] is not None else None),
         commercial_length_mm=_decimal_or_none(row[offset + 10]),
+        cut_rule=(ProfileCutRule.model_validate_json(str(row[offset + 11]))
+                  if len(row) > offset + 11 and row[offset + 11] is not None else None),
+        reinforcement_rule=(ProfileReinforcementRule.model_validate_json(str(row[offset + 12]))
+                            if len(row) > offset + 12 and row[offset + 12] is not None else None),
     )
 
 
@@ -106,21 +118,24 @@ class SystemParamsRepository:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, code, name, is_demo
+                SELECT id, code, name, is_demo, system_family
                 FROM public.profile_systems
                 WHERE is_active = TRUE
+                  AND system_family IS NOT NULL
+                  AND NOT legacy_authority
                   AND (is_global = TRUE OR org_id = %s)
                 ORDER BY is_demo DESC, code ASC, id ASC
                 """,
                 [active_org_id],
             )
-            rows: Sequence[tuple[object, object, object, object]] = cursor.fetchall()
+            rows: Sequence[tuple[object, ...]] = cursor.fetchall()
         return tuple(
             VisibleProfileSystem(
                 id=row[0] if isinstance(row[0], UUID) else UUID(str(row[0])),
                 code=str(row[1]),
                 name=str(row[2]),
                 is_demo=bool(row[3]),
+                system_family=str(row[4]) if len(row) > 4 and row[4] is not None else None,
             )
             for row in rows
         )
@@ -138,7 +153,8 @@ class SystemParamsRepository:
                        sliding_glazing_deduction_width_mm,
                        sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
                        rail_count, rebate_depth_mm, end_milling_overlap_mm,
-                       finishes::text
+                       finishes::text, system_family, sliding_parameters::text,
+                       dimensional_limits::text, legacy_authority
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -148,6 +164,8 @@ class SystemParamsRepository:
             system = cursor.fetchone()
         if system is None:
             raise SystemNotFound
+        if len(system) > 25 and system[22] is None and not system[25]:
+            raise UnsupportedCatalogContract("Sin dato: declara la familia del sistema.")
 
         articles = self._load_articles(system_id, active_org_id)
         rules = self._load_glazing_rules(system_id, active_org_id)
@@ -158,6 +176,12 @@ class SystemParamsRepository:
 
         return SystemParams(
             system_code=str(system[0]),
+            system_family=SystemFamily(str(system[22])) if len(system) > 22 and system[22] is not None else None,
+            legacy_authority=bool(system[25]) if len(system) > 25 else False,
+            sliding=(SlidingSystemParameters.model_validate_json(str(system[23]))
+                     if len(system) > 23 and system[23] is not None else None),
+            dimensional_limits=(TypeAdapter(tuple[SystemDimensionalLimit, ...]).validate_json(str(system[24]))
+                                if len(system) > 24 and system[24] is not None else ()),
             depth_mm=_decimal(system[1]),
             material=MaterialType(str(system[2])),
             effective_profile_articles=articles,
@@ -165,17 +189,17 @@ class SystemParamsRepository:
             sash_overlap_mm=_decimal(system[3]),
             glass_clearance_white_mm=_decimal(system[4]),
             glass_clearance_foil_mm=_decimal(system[5]),
-            pulley_height_mm=_decimal(system[6]),
-            central_overlap_mm=_decimal(system[7]),
-            sliding_lateral_clearance_mm=_decimal(system[8]),
-            sliding_end_add_mm=_decimal(system[9]),
+            pulley_height_mm=_decimal_or_none(system[6]),
+            central_overlap_mm=_decimal_or_none(system[7]),
+            sliding_lateral_clearance_mm=_decimal_or_none(system[8]),
+            sliding_end_add_mm=_decimal_or_none(system[9]),
             corner_bracket_loss_mm=_decimal(system[10]),
             hook_depth_mm=_decimal(system[11]),
             door_threshold_mm=_decimal(system[12]),
             door_bottom_clearance_mm=_decimal(system[13]),
-            rail_type=RailType(str(system[14])),
-            sliding_glazing_deduction_width_mm=_decimal(system[15]),
-            sliding_glazing_deduction_height_mm=_decimal(system[16]),
+            rail_type=RailType(str(system[14])) if system[14] is not None else None,
+            sliding_glazing_deduction_width_mm=_decimal_or_none(system[15]),
+            sliding_glazing_deduction_height_mm=_decimal_or_none(system[16]),
             door_leaf_side_clearance_mm=_decimal(system[17]),
             rail_count=None if system[18] is None else int(system[18]),
             rebate_depth_mm=_decimal_or_none(system[19]),
@@ -194,7 +218,7 @@ class SystemParamsRepository:
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
                        reinforcement_sku, material::text, section::text,
-                       commercial_length_mm
+                       commercial_length_mm, cut_rule::text, reinforcement_rule::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                 ORDER BY sku
@@ -230,7 +254,7 @@ class SystemParamsRepository:
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
                        reinforcement_sku, material::text, section::text,
-                       commercial_length_mm
+                       commercial_length_mm, cut_rule::text, reinforcement_rule::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                   AND role = 'COUPLER'
@@ -274,7 +298,8 @@ class SystemParamsRepository:
                        article.welding_loss_mm, article.reinforcement_gap_mm,
                        article.weight_kg_m, article.steel_weight_kg_m,
                        article.reinforcement_sku, article.material::text,
-                       article.section::text, article.commercial_length_mm
+                       article.section::text, article.commercial_length_mm,
+                       article.cut_rule::text, article.reinforcement_rule::text
                 FROM public.glazing_bead_matrix AS matrix
                 JOIN public.profile_articles AS article
                   ON article.id = matrix.bead_article_id

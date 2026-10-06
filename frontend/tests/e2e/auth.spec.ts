@@ -289,12 +289,13 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   const lists = await request.get(`${djangoUrl}/api/v1/pricing/admin/cost-lists/`, { headers });
   const listId = (await lists.json()).items[0].id as string;
   for (const [sku, unit] of [
-    ["COMPRA-MARCO", "BAR"],
-    ["COMPRA-JQ-24", "BAR"],
-    ["COMPRA-POSTE-V", "BAR"],
-    ["COMPRA-ACERO-MARCO", "BAR"],
-    ["COMPRA-ACERO-POSTE-V", "BAR"],
-    ["VIDRIO-BASE", "M2"],
+    ["COMPRA-DEMO_60-MARCO", "BAR"],
+    ["COMPRA-DEMO_60-JQ-24", "BAR"],
+    ["COMPRA-DEMO_60-POSTE-V", "BAR"],
+    ["COMPRA-DEMO_60-ACERO-MARCO", "BAR"],
+    ["COMPRA-DEMO_60-ACERO-POSTE-V", "BAR"],
+    ["DEMO_60-TORNILLO-REF", "EA"],
+    ["DEMO_60-VIDRIO-4", "M2"],
   ]) {
     await api("admin/cost-items/", {
       values: { cost_list_id: listId, sku, unit, item_type: "PROFILE", unit_cost: "100" },
@@ -329,12 +330,14 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
-    label: "Sistema Demo 60mm PVC — referencia sintética · Catálogo de demostración",
+    label: "PVC practicable 60 mm · DEMO · sintético, sin certificación",
   });
   // Canvas-first editor: the single module is already selected on the drawing;
   // glazing choices live in its contextual inspector, not a separate form.
   await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
-  await page.getByRole("combobox", { name: "Vidrio", exact: true }).selectOption("VIDRIO-BASE");
+  await page
+    .getByRole("combobox", { name: "Vidrio", exact: true })
+    .selectOption("DEMO_60-VIDRIO-4");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
@@ -529,10 +532,12 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
-    label: "Sistema Demo 60mm PVC — referencia sintética · Catálogo de demostración",
+    label: "PVC practicable 60 mm · DEMO · sintético, sin certificación",
   });
   await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
-  await page.getByRole("combobox", { name: "Vidrio", exact: true }).selectOption("VIDRIO-BASE");
+  await page
+    .getByRole("combobox", { name: "Vidrio", exact: true })
+    .selectOption("DEMO_60-VIDRIO-4");
   const dividedCalculation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&

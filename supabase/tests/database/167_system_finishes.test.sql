@@ -25,7 +25,7 @@ SELECT ok(
 -- Demo PVC series declares blanco + foliado (foil clearances exist for it).
 SELECT ok(
     (SELECT finishes @> '"FOILED"'::jsonb
-     FROM public.profile_systems WHERE code = 'DEMO_60' AND is_global),
+     FROM public.profile_systems WHERE code = 'DEMO_60' AND version=1 AND is_global),
     'DEMO_60 declares FOILED alongside WHITE'
 );
 

@@ -551,3 +551,32 @@
 .pricing-fix {
   font-weight: 600;
 }
+.pricing-demo-costs {
+  border-block: 1px solid var(--border);
+  padding-block: var(--space-3);
+  margin-block: var(--space-3);
+}
+.pricing-demo-costs summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.pricing-demo-rows {
+  display: grid;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+.pricing-demo-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+.pricing-demo-rows span {
+  overflow-wrap: anywhere;
+}
+.pricing-demo-rows strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

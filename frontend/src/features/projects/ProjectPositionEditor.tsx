@@ -852,12 +852,19 @@ function PositionWorkspace({
               }}
             >
               <option value="">{t("projects.chooseSystem")}</option>
+              {systemId &&
+                systems.data &&
+                !systems.data.some((system) => system.id === systemId) && (
+                  <option value={systemId}>
+                    Catálogo histórico del producto{options.data?.is_demo ? " · DEMO" : ""}
+                  </option>
+                )}
               {systems.data
                 ?.filter((system) => system.quote_ready)
                 .map((system) => (
                   <option key={system.id} value={system.id}>
-                    {system.name}
-                    {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+                    {system.is_demo ? system.name.replace(/\s*·\s*DEMO\s*$/u, "") : system.name}
+                    {system.is_demo ? " · DEMO · sintético, sin certificación" : ""}
                   </option>
                 ))}
             </select>
@@ -905,6 +912,9 @@ function PositionWorkspace({
           >
             <summary>{t("assembly.starterLibrary")}</summary>
             <StarterGallery
+              allowedOpenings={
+                options.data?.system_family ? options.data.compatible_openings : undefined
+              }
               members={resolveMembers(options.data)}
               disabled={busy}
               onPick={pickStarter}

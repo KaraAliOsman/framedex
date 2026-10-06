@@ -84,9 +84,8 @@ def real_rows(django_db_blocker: DjangoDbBlocker) -> Iterator[RLSFixtures]:
                     cursor.execute(
                         "INSERT INTO public.profile_systems "
                         "(id, org_id, name, code, depth_mm, is_global, is_active, "
-                        "sliding_glazing_deduction_width_mm, sliding_glazing_deduction_height_mm, "
-                        "door_leaf_side_clearance_mm) "
-                        "VALUES (%s, %s, %s, %s, 60.00, FALSE, TRUE, 20.00, 20.00, 7.00)",
+                        "system_family, door_leaf_side_clearance_mm) "
+                        "VALUES (%s, %s, %s, %s, 60.00, FALSE, TRUE, 'CASEMENT', 7.00)",
                         [systems[name], org_id, f"System {name}", f"RLS_{name}"],
                     )
                     cursor.execute(
@@ -117,11 +116,12 @@ def real_rows(django_db_blocker: DjangoDbBlocker) -> Iterator[RLSFixtures]:
                         [organizations[org], tokens[user].user_id, active],
                     )
                 cursor.execute(
-                    "SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'"
+                    "SELECT id FROM public.profile_systems WHERE code = 'DEMO_60' AND version=1"
                 )
                 demo_system = cursor.fetchone()[0]
                 cursor.execute(
-                    "SELECT code, id FROM public.profile_systems WHERE is_global = TRUE"
+                    "SELECT code, id FROM public.profile_systems WHERE is_global = TRUE "
+                    "AND NOT legacy_authority AND is_active AND system_family IS NOT NULL"
                 )
                 global_systems = {code: row_id for code, row_id in cursor.fetchall()}
             yield RLSFixtures(
@@ -368,10 +368,11 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
     systems = response.json()["systems"]
     demo = next(system for system in systems if system["code"] == "DEMO_60")
     assert demo == {
-        "id": str(real_rows.demo_system),
+        "id": str(real_rows.global_systems["DEMO_60"]),
         "code": "DEMO_60",
-        "name": "Sistema Demo 60mm PVC — referencia sintética",
+        "name": "PVC practicable 60 mm · DEMO",
         "is_demo": True,
+        "system_family": "CASEMENT",
         "quote_ready": True,
         "readiness_reasons": [],
     }
@@ -380,7 +381,7 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
         str(real_rows.systems[tenant]),
     }
     assert all(set(system) == {
-        "id", "code", "name", "is_demo", "quote_ready", "readiness_reasons",
+        "id", "code", "name", "is_demo", "quote_ready", "readiness_reasons", "system_family",
     } for system in systems)
     own = next(system for system in systems if system["id"] == str(real_rows.systems[tenant]))
     assert own["quote_ready"] is False
@@ -427,12 +428,12 @@ def test_shot06_all_28_catalog_fields_reach_typed_engine(real_rows: RLSFixtures)
 
     with authenticated_rls_context(real_rows.tokens["A"].claims):
         loaded = SystemParamsRepository().load_visible(real_rows.demo_system, real_rows.organizations["A"])
-    expected = demo_60_params()
+    expected = demo_60_params().model_copy(update={"legacy_authority": True, "rail_count": 2})
     actual_fields = loaded.model_dump()
     expected_fields = expected.model_dump()
     actual_fields["available_hardware_kits"] = sorted(actual_fields["available_hardware_kits"], key=lambda k: k["sku"])
     expected_fields["available_hardware_kits"] = sorted(expected_fields["available_hardware_kits"], key=lambda k: k["sku"])
-    assert len(SystemParams.model_fields) == len(actual_fields) == 26
+    assert len(SystemParams.model_fields) == len(actual_fields) == 30
     # The demo seed declares the same synthetic per-article masses the engine
     # fixture carries — mass authority must reach the typed model
     # field-for-field rather than arriving through a fallback.

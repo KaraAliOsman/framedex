@@ -1,4 +1,5 @@
 import type { ProfileSection } from "../../api/generated/models";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { memberSurface } from "./materials";
 import "./SectionPreviewSvg.css";
@@ -104,17 +105,11 @@ export function SectionPreviewSvg({
             </text>
           </g>
         ))}
-        <text
-          className="section-preview__dims"
-          x={bounds.minX + widthMm / 2}
-          y={bounds.minY + heightMm + PAD_MM}
-          fontSize={fontSize}
-          textAnchor="middle"
-        >
-          {`${widthMm} × ${heightMm} mm`}
-        </text>
       </svg>
-      <figcaption>{provenance}</figcaption>
+      <figcaption>
+        <span className="section-preview__dims">{`${fmtMm(widthMm)} × ${fmtMm(heightMm)} mm`}</span>
+        <span>{provenance}</span>
+      </figcaption>
     </figure>
   );
 }

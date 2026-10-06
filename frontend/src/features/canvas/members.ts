@@ -118,7 +118,15 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
   const sashOverlap = Number(options?.sash_overlap_mm);
   return {
     frame: member(options, "FRAME", FALLBACK.frame),
-    sash: member(options, "SASH", FALLBACK.sash),
+    sash: member(
+      options,
+      options?.profiles.some((profile) => profile.role === "SLIDING_SASH")
+        ? "SLIDING_SASH"
+        : options?.profiles.some((profile) => profile.role === "DOOR_SASH")
+          ? "DOOR_SASH"
+          : "SASH",
+      FALLBACK.sash,
+    ),
     mullionV: options?.profiles.some((item) => item.role === "MULLION_V")
       ? member(options, "MULLION_V", FALLBACK.mullion)
       : null,

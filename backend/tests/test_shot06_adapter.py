@@ -72,6 +72,6 @@ def test_system_params_contract_accounts_for_every_field() -> None:
         "door_bottom_clearance_mm", "rail_type", "available_hardware_kits",
         "sliding_glazing_deduction_width_mm",
         "sliding_glazing_deduction_height_mm", "door_leaf_side_clearance_mm", "available_panel_rules",
-        "rail_count", "finishes",
+        "rail_count", "finishes", "system_family", "sliding", "dimensional_limits", "legacy_authority",
     }
-    assert len(demo_60_params().model_dump()) == 26
+    assert len(demo_60_params().model_dump()) == 30

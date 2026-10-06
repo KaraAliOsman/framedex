@@ -28,11 +28,10 @@ VALUES ('77777777-0000-4000-8000-000000000001',
         'dddddddd-0000-4000-8000-000000000001', 'WORKSHOP_MANAGER');
 INSERT INTO public.profile_systems (
     id, org_id, name, code, depth_mm,
-    sliding_glazing_deduction_width_mm, sliding_glazing_deduction_height_mm,
-    door_leaf_side_clearance_mm)
+    system_family, door_leaf_side_clearance_mm)
 VALUES ('77777777-aaaa-4555-8555-555555555555',
         '77777777-0000-4000-8000-000000000001',
-        'Serie Evidencia 60', 'EVD-60', 60.00, 0.00, 0.00, 0.00);
+        'Serie Evidencia 60', 'EVD-60', 60.00, 'CASEMENT', 0.00);
 
 INSERT INTO public.catalog_parameter_evidence (
     org_id, authority_table, row_id, field_name, value_text, unit, scope,
