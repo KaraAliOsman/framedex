@@ -26,8 +26,11 @@
   stroke-width: 1.6;
   vector-effect: non-scaling-stroke;
 }
-.handle-lever line {
+.handle-lever line,
+.handle-lever path {
+  fill: none;
   stroke: var(--theme-accent-ink);
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .handle-lever .handle-datum-flag {
@@ -167,4 +170,31 @@
   border: 1px solid var(--theme-border);
   border-radius: var(--radius-md);
   background: var(--theme-surface);
+}
+.opening-preview-label {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  max-width: 70%;
+  color: var(--theme-accent-ink);
+  background: var(--theme-bg-canvas);
+  font-family: var(--font-sans);
+  font-size: var(--type-dense);
+  padding: var(--space-1) var(--space-2);
+  z-index: var(--z-island);
+}
+.leaf-role-label {
+  fill: var(--theme-text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--type-title-l);
+}
+.assembly-view-label {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  color: var(--theme-text-secondary);
+  background: var(--theme-bg-canvas);
+  padding: var(--space-1) var(--space-2);
+  pointer-events: none;
+  z-index: var(--z-island);
 }

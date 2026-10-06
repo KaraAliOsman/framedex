@@ -37,6 +37,10 @@ from dekopen_engine.technical_facts import (
     SpanTechnicalFacts,
 )
 from dekopen_engine.panel import build_panel_piece, exact_panel_weight
+from dekopen_engine.openings import (
+    geometry_opening_type, handle_fact, node_opening, node_use, normalize_opening_tree,
+    resolve_capability,
+)
 from dekopen_engine.weight import (
     MissingFabricationAuthority, base_leaf_weight,
 )
@@ -60,6 +64,7 @@ from dekopen_engine.models import (
     SlidingPanel,
     SlidingPanelKind,
     SystemParams,
+    OpeningMovement, OpeningUse, LeafRole, LeafOpeningFact,
 )
 
 _TWO = Decimal("2")
@@ -79,6 +84,7 @@ SUPPORTED_OPENING_TYPES = frozenset(
         BayOpeningType.SLIDING,
         BayOpeningType.AWNING,
         BayOpeningType.DOOR_ENTRY,
+        BayOpeningType.DOOR_DOUBLE,
     }
 )
 
@@ -135,15 +141,16 @@ def resolved_sliding_layout(node: ParametricNode) -> SlidingLayout:
     """Explicit layout wins; otherwise the SLIDING_*L preset supplies one."""
     if node.sliding_layout is not None:
         return node.sliding_layout
-    if node.opening_type is BayOpeningType.SLIDING:
+    if geometry_opening_type(node) is BayOpeningType.SLIDING:
         raise SlidingLayoutError(
             "sliding_layout_invalid",
             f"BAY {node.id} opening SLIDING requires a sliding_layout",
             {"bay": node.id},
         )
     try:
-        assert node.opening_type is not None
-        return _SLIDING_PRESETS[node.opening_type]
+        opening_type = geometry_opening_type(node)
+        assert opening_type is not None
+        return _SLIDING_PRESETS[opening_type]
     except KeyError as error:
         raise SlidingLayoutError(
             "sliding_layout_invalid",
@@ -289,6 +296,7 @@ class _GeometryAccumulator:
     semantic_members: list[SemanticMemberTraceV1] = field(default_factory=list)
     semantic_leaves: list[SemanticLeafTraceV1] = field(default_factory=list)
     semantic_infills: list[SemanticInfillTraceV1] = field(default_factory=list)
+    opening_leaves: list[LeafOpeningFact] = field(default_factory=list)
 
 
 def _trace_point(x_mm: Decimal, y_mm: Decimal) -> TracePointV1:
@@ -725,11 +733,13 @@ def _append_leaf(
     clearance_mm: Decimal,
     slot_pitch_mm: Decimal | None = None,
     interlock_sides: tuple[str, ...] = (),
+    inversor_side: str | None = None,
 ) -> None:
-    if node.opening_type is None:
+    opening_type = geometry_opening_type(node)
+    if opening_type is None:
         raise ValueError("Physical leaf requires an opening type")
-    article = _article(params, leaf_profile_role(node.opening_type, params))
-    validate_leaf_limits(params, node.opening_type, bay_id=node.id,
+    article = _article(params, leaf_profile_role(opening_type, params))
+    validate_leaf_limits(params, opening_type, bay_id=node.id,
                          width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm)
     cut_start = len(accumulator.profile_cuts)
     steel_start = len(accumulator.reinforcements)
@@ -738,9 +748,19 @@ def _append_leaf(
     assembly = f"BAY:{node.id}:LEAF:{leaf_slot}"
     placement_domain: Literal[PlacementDomain.DIRECT, PlacementDomain.SLIDING_LEAF] = (
         PlacementDomain.SLIDING_LEAF
-        if node.opening_type in _SLIDING_OPENING_TYPES
+        if opening_type in _SLIDING_OPENING_TYPES
         else PlacementDomain.DIRECT
     )
+    capability = resolve_capability(node, params)
+    physical_handle = (handle_fact(node_opening(node), capability,
+        width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm,
+        requested_height_mm=node.handle_height_mm) if capability is not None else None)
+    handedness = node.door_handedness
+    if capability is not None and node.opening is not None:
+        if node.opening.hinge_side.value == "LEFT":
+            handedness = "LEFT"
+        elif node.opening.hinge_side.value == "RIGHT":
+            handedness = "RIGHT"
     accumulator.semantic_leaves.append(
         SemanticLeafTraceV1(
             semantic_leaf_id=semantic_leaf_id,
@@ -749,12 +769,14 @@ def _append_leaf(
             bay_id=node.id,
             leaf_id=leaf_id,
             leaf_slot=leaf_slot,
-            opening_type=node.opening_type,
+            opening_type=opening_type,
             door_handedness=(
-                node.door_handedness
-                if node.opening_type is BayOpeningType.DOOR_ENTRY
+                handedness
+                if opening_type is BayOpeningType.DOOR_ENTRY
                 else None
             ),
+            opening=node.opening if capability is not None else None,
+            opening_handle=physical_handle,
             placement_domain=placement_domain,
             reference_rect=_trace_rect(reference_rect),
             slot_pitch_mm=slot_pitch_mm,
@@ -821,9 +843,27 @@ def _append_leaf(
         bay_id=node.id,
         leaf_id=leaf_id,
     )
+    if inversor_side is not None:
+        paired_rule = params.paired_leaf_rule
+        assert paired_rule is not None and direct_rect is not None
+        inversor = _article(params, ProfileRole.INVERSOR)
+        length = sash.finished_height_mm - _TWO * paired_rule.inversor_end_deduction_mm
+        if length <= Decimal("0"):
+            raise ValueError("La deducción del inversor supera el alto de la hoja.")
+        x = direct_rect.x_mm if inversor_side == "LEFT" else direct_rect.right_mm
+        _append_profile(accumulator, article=inversor, length_mm=length, qty=1,
+            welded_ends=None, bay_id=node.id, leaf_id=leaf_id,
+            placements=[_MemberPlacement(
+                semantic_member_id=f"{semantic_leaf_id}/INVERSOR",
+                topology_path=topology_path, assembly=assembly, leaf_slot=leaf_slot,
+                physical_member_slot="INVERSOR", axis=Axis.VERTICAL,
+                placement_domain=PlacementDomain.DIRECT,
+                direct_segment=_trace_segment(x, direct_rect.y_mm + paired_rule.inversor_end_deduction_mm,
+                    x, direct_rect.bottom_mm - paired_rule.inversor_end_deduction_mm),
+                parent_leaf_id=semantic_leaf_id)])
     width = _pocket_dimension(sash.finished_width_mm, article, params, clearance_mm)
     height = _pocket_dimension(sash.finished_height_mm, article, params, clearance_mm)
-    if node.opening_type in _SLIDING_OPENING_TYPES:
+    if opening_type in _SLIDING_OPENING_TYPES:
         sliding = sliding_parameters(params)
         width -= sliding.glazing_deduction_width_mm
         height -= sliding.glazing_deduction_height_mm
@@ -841,7 +881,7 @@ def _append_leaf(
                 ) for side in interlock_sides], bay_id=node.id, leaf_id=leaf_id,
             )
     infill_kind: Literal["GLASS", "PANEL"]
-    if node.opening_type is BayOpeningType.DOOR_ENTRY:
+    if opening_type is BayOpeningType.DOOR_ENTRY and (node.panel_article_sku is not None or node.opening is None):
         if node.panel_article_sku is None:
             raise ValueError(f"DOOR_ENTRY {node.id} requires panel_article_sku")
         try:
@@ -904,7 +944,7 @@ def _append_leaf(
         )
     )
     semantic_infill_id = f"{semantic_leaf_id}/infill"
-    sliding_infill = node.opening_type in _SLIDING_OPENING_TYPES
+    sliding_infill = opening_type in _SLIDING_OPENING_TYPES
     direct_infill_rect = None
     if not sliding_infill:
         assert direct_rect is not None
@@ -955,19 +995,38 @@ def _append_leaf(
         infill_unknown_reason=infill_reason,
         fittings=accumulator.fittings[fittings_start:],
     )
-    assert node.opening_type is not None
+    if capability is not None and direct_rect is not None:
+        accumulator.opening_leaves.append(LeafOpeningFact(
+            bay_id=node.id, leaf_id=leaf_id, opening=node_opening(node), use=node_use(node),
+            x_mm=direct_rect.x_mm, y_mm=direct_rect.y_mm,
+            width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm,
+            handle=physical_handle, source=capability.source))
+    if node.opening is not None and node.opening.movement is OpeningMovement.FIXED:
+        accumulator.leaf_weights.append(base.public_result(node.id, leaf_id))
+        accumulator.computation.leaves.append(LeafTechnicalFacts(
+            bay_id=node.id, leaf_id=leaf_id, opening_type=opening_type,
+            rail_type=None, finished_width_mm=sash.finished_width_mm,
+            finished_height_mm=sash.finished_height_mm, base_weight=base,
+            candidates=[], selected_kit=None, exact_weight=base, opening=node.opening))
+        validate_leaf_limits(params, opening_type, bay_id=node.id,
+            width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm,
+            weight_kg=base.total_weight_kg, check_weight=True)
+        return
     candidates = evaluate_hardware_candidates(
-        opening=node.opening_type,
+        opening=opening_type,
         width_mm=sash.finished_width_mm,
         height_mm=sash.finished_height_mm,
         base_weight=base,
         params=params,
         explicit_sku=node.hardware_set_sku,
+        physical_opening=node.opening if capability is not None else None,
+        opening_use=node_use(node),
+        allowed_skus=capability.hardware_kit_skus if capability is not None else None,
     )
     try:
         kit, exact_weight = resolve_hardware_evaluations(
             candidates,
-            opening=node.opening_type,
+            opening=opening_type,
             explicit_sku=node.hardware_set_sku,
             leaf_width_mm=sash.finished_width_mm,
             leaf_height_mm=sash.finished_height_mm,
@@ -981,20 +1040,21 @@ def _append_leaf(
         LeafTechnicalFacts(
             bay_id=node.id,
             leaf_id=leaf_id,
-            opening_type=node.opening_type,
+            opening_type=opening_type,
             rail_type=(sliding_parameters(params).rail_type
-                       if node.opening_type in _SLIDING_OPENING_TYPES else None),
+                       if opening_type in _SLIDING_OPENING_TYPES else None),
             finished_width_mm=sash.finished_width_mm,
             finished_height_mm=sash.finished_height_mm,
             base_weight=base,
             candidates=candidates,
             selected_kit=kit,
             exact_weight=exact_weight,
+            opening=node.opening if capability is not None else None,
         )
     )
     if kit is None or exact_weight is None:
         return
-    validate_leaf_limits(params, node.opening_type, bay_id=node.id,
+    validate_leaf_limits(params, opening_type, bay_id=node.id,
                          width_mm=sash.finished_width_mm, height_mm=sash.finished_height_mm,
                          weight_kg=exact_weight.total_weight_kg, check_weight=True)
     accumulator.hardware_items.append(
@@ -1034,7 +1094,7 @@ def _append_frame_glazed_pane(
     leaf_id = f"{node.id}:{leaf_slot}" if leaf_slot is not None else None
     width = rect.width_mm + _TWO * rebate_depth(params) - _TWO * clearance_mm
     height = rect.height_mm + _TWO * rebate_depth(params) - _TWO * clearance_mm
-    if node.opening_type is BayOpeningType.FIXED:
+    if geometry_opening_type(node) is BayOpeningType.FIXED:
         validate_leaf_limits(params, BayOpeningType.FIXED, bay_id=node.id,
             width_mm=rect.width_mm, height_mm=rect.height_mm,
             weight_kg=exact_glass_weight(width, height, node.glass_spec, node.glass_product), check_weight=True)
@@ -1119,8 +1179,9 @@ def _append_sliding(
     """
     layout = resolved_sliding_layout(node)
     validate_sliding_layout(layout, params)
-    assert node.opening_type is not None
-    article = _article(params, leaf_profile_role(node.opening_type, params))
+    opening_type = geometry_opening_type(node)
+    assert opening_type is not None
+    article = _article(params, leaf_profile_role(opening_type, params))
     sliding = sliding_parameters(params)
     if sliding.separate_rail:
         rail = _article(params, ProfileRole.RAIL)
@@ -1199,6 +1260,36 @@ def _append_sliding(
         slot_x += pitches[index]
 
 
+def _append_paired_leaves(
+    accumulator: _GeometryAccumulator, *, node: ParametricNode, outer_rect: _Rect,
+    reference_rect: _Rect, topology_path: str, params: SystemParams,
+    clearance_mm: Decimal,
+) -> None:
+    layout, rule = node.hinged_layout, params.paired_leaf_rule
+    if layout is None or rule is None:
+        raise MissingFabricationAuthority("Sin dato: declara las hojas activa/pasiva y la regla del inversor.")
+    width = (outer_rect.width_mm + rule.meeting_overlap_mm - rule.meeting_gap_mm) / _TWO
+    if width <= Decimal("0"):
+        raise ValueError("El encuentro produce una hoja de ancho no positivo.")
+    for index, leaf in enumerate(layout.leaves):
+        leaf_node = node.model_copy(update={"opening": leaf.opening, "opening_type": None,
+            "hinged_layout": None,
+            "hardware_set_sku": leaf.hardware_set_sku or (
+                node.hardware_set_sku if leaf.opening.leaf_role is LeafRole.ACTIVE else None),
+            "handle_height_mm": node.handle_height_mm if leaf.opening.leaf_role is LeafRole.ACTIVE else None})
+        opening_type = geometry_opening_type(leaf_node)
+        assert opening_type is not None
+        article = _article(params, leaf_profile_role(opening_type, params))
+        sash = _jointed_sash(width, outer_rect.height_mm, article, params)
+        x = outer_rect.x_mm + (width - rule.meeting_overlap_mm + rule.meeting_gap_mm) * index
+        _append_leaf(accumulator, node=leaf_node, leaf_id=leaf.slot, leaf_slot=leaf.slot,
+            topology_path=topology_path, reference_rect=reference_rect,
+            direct_rect=_Rect(x, outer_rect.y_mm, width, outer_rect.height_mm), sash=sash,
+            params=params, clearance_mm=clearance_mm,
+            inversor_side=("RIGHT" if leaf.slot == "LEFT" else "LEFT")
+                if leaf.opening.leaf_role is LeafRole.PASSIVE else None)
+
+
 def _append_bay(
     accumulator: _GeometryAccumulator,
     *,
@@ -1208,12 +1299,12 @@ def _append_bay(
     params: SystemParams,
     clearance_mm: Decimal,
 ) -> None:
-    opening = node.opening_type
+    opening = geometry_opening_type(node)
     if opening is None:
         raise ValueError(f"BAY {node.id} requires opening_type")
     if opening not in SUPPORTED_OPENING_TYPES:
         raise NotImplementedError(f"{opening.value} geometry is outside SHOT-06 Core")
-    if opening is BayOpeningType.DOOR_ENTRY:
+    if opening in (BayOpeningType.DOOR_ENTRY, BayOpeningType.DOOR_DOUBLE) and node.opening is None:
         raise NotImplementedError("DOOR_ENTRY requires a top-level BAY in SHOT-06 Core")
     accumulator.computation.openings.append(
         OpeningTechnicalFacts(
@@ -1230,7 +1321,7 @@ def _append_bay(
             ),
         )
     )
-    if opening is BayOpeningType.FIXED:
+    if opening is BayOpeningType.FIXED and not (node.opening and node.opening.fixed_in_sash):
         validate_leaf_limits(params, opening, bay_id=node.id,
                              width_mm=rect.width_mm, height_mm=rect.height_mm)
         _append_frame_glazed_pane(
@@ -1246,7 +1337,12 @@ def _append_bay(
         )
         return
     article = _article(params, leaf_profile_role(opening, params))
-    if opening in _OPERABLE_OPENING_TYPES:
+    if opening in (BayOpeningType.DOOR_ENTRY, BayOpeningType.DOOR_DOUBLE):
+        sash = _jointed_sash(rect.width_mm - _TWO * params.door_leaf_side_clearance_mm,
+            rect.height_mm - params.door_bottom_clearance_mm + params.sash_overlap_mm, article, params)
+        direct_rect = _Rect(rect.x_mm + params.door_leaf_side_clearance_mm,
+            rect.y_mm - params.sash_overlap_mm, sash.finished_width_mm, sash.finished_height_mm)
+    else:
         sash = single_rectangular_sash_geometry(rect.width_mm, rect.height_mm, article, params)
         direct_rect = _Rect(
             rect.x_mm - params.sash_overlap_mm,
@@ -1254,6 +1350,11 @@ def _append_bay(
             sash.finished_width_mm,
             sash.finished_height_mm,
         )
+    if node.hinged_layout is not None:
+        _append_paired_leaves(accumulator, node=node, outer_rect=direct_rect,
+            reference_rect=rect, topology_path=topology_path, params=params, clearance_mm=clearance_mm)
+    elif (opening in _OPERABLE_OPENING_TYPES or opening is BayOpeningType.DOOR_ENTRY
+          or (node.opening and node.opening.fixed_in_sash)):
         _append_leaf(
             accumulator,
             node=node,
@@ -1277,7 +1378,7 @@ def _append_bay(
         )
 
 
-def _append_door(
+def _append_door_frame(
     accumulator: _GeometryAccumulator,
     *,
     node: ParametricNode,
@@ -1286,14 +1387,7 @@ def _append_door(
     nominal_width_mm: Decimal,
     nominal_height_mm: Decimal,
     clearance_mm: Decimal,
-) -> None:
-    accumulator.computation.openings.append(
-        OpeningTechnicalFacts(
-            bay_id=node.id,
-            width_mm=nominal_width_mm,
-            height_mm=nominal_height_mm,
-        )
-    )
+) -> _Rect:
     frame = _article(params, ProfileRole.FRAME)
     per_end = joint_adjustment_per_end(params, frame)
     _append_profile(
@@ -1374,6 +1468,22 @@ def _append_door(
             )
         ],
     )
+    return _Rect(frame.face_width_mm, frame.face_width_mm, clear_width,
+                 nominal_height_mm - frame.face_width_mm - params.door_threshold_mm)
+
+
+def _append_door(
+    accumulator: _GeometryAccumulator, *, node: ParametricNode, topology_path: str,
+    params: SystemParams, nominal_width_mm: Decimal, nominal_height_mm: Decimal,
+    clearance_mm: Decimal,
+) -> None:
+    accumulator.computation.openings.append(OpeningTechnicalFacts(
+        bay_id=node.id, width_mm=nominal_width_mm, height_mm=nominal_height_mm))
+    reference_rect = _append_door_frame(accumulator, node=node, topology_path=topology_path,
+        params=params, nominal_width_mm=nominal_width_mm, nominal_height_mm=nominal_height_mm,
+        clearance_mm=clearance_mm)
+    frame = _article(params, ProfileRole.FRAME)
+    clear_width = reference_rect.width_mm
     outer_width = clear_width - _TWO * params.door_leaf_side_clearance_mm
     outer_height = (
         nominal_height_mm
@@ -1384,18 +1494,17 @@ def _append_door(
     )
     sash = _jointed_sash(outer_width, outer_height,
                         _article(params, leaf_profile_role(BayOpeningType.DOOR_ENTRY, params)), params)
-    reference_rect = _Rect(
-        frame.face_width_mm,
-        frame.face_width_mm,
-        clear_width,
-        nominal_height_mm - frame.face_width_mm - params.door_threshold_mm,
-    )
     direct_rect = _Rect(
         frame.face_width_mm + params.door_leaf_side_clearance_mm,
         frame.face_width_mm - params.sash_overlap_mm,
         sash.finished_width_mm,
         sash.finished_height_mm,
     )
+    if node.hinged_layout is not None:
+        _append_paired_leaves(accumulator, node=node, outer_rect=direct_rect,
+            reference_rect=reference_rect, topology_path=topology_path,
+            params=params, clearance_mm=clearance_mm)
+        return
     _append_leaf(
         accumulator,
         node=node,
@@ -1567,6 +1676,7 @@ def compute_geometry(
 ) -> GeometryComputation:
     """Calculate Core geometry, mobile-leaf weights and selected hardware."""
 
+    root = normalize_opening_tree(root, params)
     validate_family(root, params)
     if params.material not in (MaterialType.PVC, MaterialType.ALUMINIUM):
         raise NotImplementedError(f"{params.material.value} geometry is not supported")
@@ -1589,7 +1699,10 @@ def compute_geometry(
     )
     clearance_mm = params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
     top_path = f"root/{top.id}"
-    if top.type is NodeType.BAY and top.opening_type is BayOpeningType.DOOR_ENTRY:
+    if top.opening_type is BayOpeningType.DOOR_DOUBLE:
+        raise NotImplementedError("La puerta doble histórica no declara su composición activa/pasiva.")
+    if top.type is NodeType.BAY and geometry_opening_type(top) in (
+            BayOpeningType.DOOR_ENTRY, BayOpeningType.DOOR_DOUBLE):
         accumulator.computation.node_dimensions[top.id] = (nominal_width_mm, nominal_height_mm)
         _append_door(
             accumulator,
@@ -1601,19 +1714,24 @@ def compute_geometry(
             clearance_mm=clearance_mm,
         )
     else:
-        _append_frame(
-            accumulator,
-            frame_article=frame_article,
-            params=params,
-            nominal_width_mm=nominal_width_mm,
-            nominal_height_mm=nominal_height_mm,
-        )
-        frame_clear_rect = _Rect(
-            x_mm=frame_article.face_width_mm,
-            y_mm=frame_article.face_width_mm,
-            width_mm=clear_width_mm,
-            height_mm=clear_height_mm,
-        )
+        def has_structured_door(node: ParametricNode) -> bool:
+            return (node.opening is not None and node_use(node) is OpeningUse.DOOR
+                    and node.opening.movement is not OpeningMovement.FIXED) or any(
+                        has_structured_door(child) for child in node.children)
+
+        if has_structured_door(top):
+            frame_clear_rect = _append_door_frame(accumulator, node=top, topology_path=top_path,
+                params=params, nominal_width_mm=nominal_width_mm,
+                nominal_height_mm=nominal_height_mm, clearance_mm=clearance_mm)
+        else:
+            _append_frame(
+                accumulator, frame_article=frame_article, params=params,
+                nominal_width_mm=nominal_width_mm, nominal_height_mm=nominal_height_mm,
+            )
+            frame_clear_rect = _Rect(
+                x_mm=frame_article.face_width_mm, y_mm=frame_article.face_width_mm,
+                width_mm=clear_width_mm, height_mm=clear_height_mm,
+            )
         _walk_node(
             accumulator,
             node=top,
@@ -1642,6 +1760,9 @@ def compute_geometry(
             fittings=accumulator.fittings,
             leaf_weights=accumulator.leaf_weights,
         )
+        if accumulator.opening_leaves:
+            accumulator.computation.result = accumulator.computation.result.model_copy(
+                update={"opening_leaves": accumulator.opening_leaves})
     return accumulator.computation
 
 

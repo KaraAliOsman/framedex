@@ -1,4 +1,5 @@
 import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
+import { visualOpening } from "./physicalOpenings";
 import { SLIDING_PRESETS } from "./intentEditing";
 import {
   findNode,
@@ -1204,6 +1205,9 @@ export function setModuleOpening(
       // evaluate, so it seeds the 2-leaf topology the user then edits.
       return {
         ...cleared,
+        opening: null,
+        opening_use: null,
+        hinged_layout: null,
         sliding_layout: opening === "SLIDING" ? structuredClone(SLIDING_PRESETS.SLIDING_2L!) : null,
       };
     }
@@ -1254,7 +1258,7 @@ export function modulePrimaryBay(module: ProductModuleJson): IntentNode | null {
 
 export function moduleOpening(module: ProductModuleJson): Opening {
   const bay = modulePrimaryBay(module);
-  return bay?.opening_type ?? "FIXED";
+  return bay ? visualOpening(bay) : "FIXED";
 }
 
 /** Commercial glass SKU on every bay of a module — pricing authority. */
@@ -1433,7 +1437,7 @@ export function splitModuleBay(
   const bay = division.bayId
     ? (intentBays(root).find((item) => item.id === division.bayId) ?? null)
     : modulePrimaryBay(module);
-  if (!bay || moduleOpening(module) === "DOOR_ENTRY") return product;
+  if (!bay || (!bay.opening && moduleOpening(module) === "DOOR_ENTRY")) return product;
   const size = division.type === "SPLIT_V" ? Number(module.width_mm) : Number(module.height_mm);
   if (!Number.isFinite(size) || size <= 0) return product;
   const region = baySpanOnAxis(root, bay.id, division.type === "SPLIT_V", size, members);
@@ -1533,8 +1537,11 @@ export function copyBaySpec(
   // Osc-izq onto an Osc-der leaf would silently break the mirrored pair.
   // A bay with no declared opening adopts the source's.
   const payload = { ...spec };
-  if (targetNode?.opening_type) {
+  if (targetNode?.opening_type || targetNode?.opening) {
     delete payload.opening_type;
+    delete payload.opening;
+    delete payload.opening_use;
+    delete payload.hinged_layout;
     delete payload.door_handedness;
     delete payload.sliding_layout;
   }

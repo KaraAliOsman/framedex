@@ -19,6 +19,10 @@ export interface HandleRequirement {
   host_member_side:
     (typeof HandleRequirementHostMemberSide)[keyof typeof HandleRequirementHostMemberSide] | null;
   requires_handedness?: boolean;
+  default_height_mm?: string;
+  default_height_from_leaf_top_mm?: string;
+  default_vertical_reference?: string;
+  source?: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,4})?$ */
   outer_height_mm: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,4})?$ */

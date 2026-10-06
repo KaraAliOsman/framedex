@@ -3,7 +3,7 @@
 from decimal import Decimal
 from dataclasses import dataclass
 
-from dekopen_engine.models import BayOpeningType, HardwareKitRule, SystemParams
+from dekopen_engine.models import BayOpeningType, HardwareKitRule, SystemParams, Opening, OpeningUse, OpeningMovement
 from dekopen_engine.weight import ExactLeafWeight, with_hardware_weight
 from dekopen_engine.catalog_rules import SLIDING_OPENINGS, sliding_parameters
 
@@ -57,15 +57,23 @@ class HardwareCandidateEvaluation:
 def evaluate_hardware_candidates(
     *, opening: BayOpeningType, width_mm: Decimal, height_mm: Decimal,
     base_weight: ExactLeafWeight, params: SystemParams, explicit_sku: str | None = None,
+    physical_opening: Opening | None = None, opening_use: OpeningUse = OpeningUse.WINDOW,
+    allowed_skus: tuple[str, ...] | None = None,
 ) -> list[HardwareCandidateEvaluation]:
     candidates: list[HardwareCandidateEvaluation] = []
     for kit in params.available_hardware_kits:
+        if allowed_skus is not None and kit.sku not in allowed_skus:
+            continue
         if explicit_sku is not None and kit.sku != explicit_sku:
             continue
         exact = with_hardware_weight(base_weight, kit, params)
         total = exact.total_weight_kg
+        normalized = ("DOOR" if opening_use is OpeningUse.DOOR else
+            "AWNING" if physical_opening.movement is OpeningMovement.TOP_HUNG else
+            "SLIDING" if physical_opening.movement is OpeningMovement.SLIDE else
+            physical_opening.movement.value) if physical_opening is not None else normalize_opening_type(opening)
         candidates.append(HardwareCandidateEvaluation(
-            kit=kit, opening_match=kit.opening_type == normalize_opening_type(opening),
+            kit=kit, opening_match=kit.opening_type == normalized,
             rail_match=(kit.rail_type is params.rail_type if params.uses_legacy_rules
                         else kit.rail_type is sliding_parameters(params).rail_type
                         if opening in SLIDING_OPENINGS else True),

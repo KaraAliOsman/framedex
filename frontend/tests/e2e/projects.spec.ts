@@ -167,8 +167,11 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       200,
       () =>
         page
-          .locator(".opening-grid")
-          .getByRole("button", { name: "Abatible derecha", exact: true })
+          .locator(".opening-palette")
+          .getByRole("button", {
+            name: "Abatible hacia adentro — bisagras a la derecha",
+            exact: true,
+          })
           .click(),
     )
   ).bom!;
@@ -194,7 +197,17 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     system_id: manual.systemId,
     nominal_width_mm: "1100.25",
     nominal_height_mm: "1050.50",
-    parametric_tree: { type: "BAY", opening_type: "TURN_RIGHT" },
+    parametric_tree: {
+      type: "BAY",
+      opening_use: "WINDOW",
+      opening: {
+        movement: "TURN",
+        hinge_side: "RIGHT",
+        direction: "INWARD",
+        leaf_role: "SINGLE",
+        fixed_in_sash: false,
+      },
+    },
   });
   expect(saved.bom?.hardware_items).toHaveLength(1);
   expect(saved.bom?.hardware_items?.[0]?.kit_sku).toBe("DEMO_60-KIT-TURN");
@@ -267,7 +280,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
   await expect(page.getByRole("textbox", { name: "Alto mm" })).toHaveValue("1050.50");
   await expect(
-    page.locator(".opening-grid").getByRole("button", { name: "Abatible derecha", exact: true }),
+    page.locator(".opening-palette").getByRole("button", {
+      name: "Abatible hacia adentro — bisagras a la derecha",
+      exact: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
   // The canvas sheet overlays the summary on this layout; open the details
   // declaratively instead of clicking through the overlay.

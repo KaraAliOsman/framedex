@@ -70,6 +70,8 @@ SCHEMAS: dict[str, tuple[Column, ...]] = {
         c("rebate_depth_mm", "Rebaje (mm)", "decimal"), c("end_milling_overlap_mm", "Solape fresado (mm)", "decimal"),
         c("chamber_clearance_mm", "Holgura de cámara (mm)", "positive"),
         c("finishes", "Colores separados por |", "list", True), c("manufacturer", "Fabricante"),
+        c("opening_capabilities", "Capacidades de apertura con fuente", "json"),
+        c("paired_leaf_rule", "Regla de encuentro con inversor", "json"),
         c("version", "Versión", "integer", True), c("is_active", "Activo", "boolean", True),
         c("sliding.pulley_height_mm", "Altura rodamiento (mm)", "decimal"),
         c("sliding.central_overlap_mm", "Traslape central (mm)", "decimal"),

@@ -12,10 +12,17 @@ from dekopen_engine.snapshot import calculation_response
 from engine.tests.catalog import demo_60_params
 from engine.tests.catalog_families import family_cases
 from engine.tests.glass_cases import glass_cases
+from engine.tests.opening_cases import opening_cases
 
 SNAPSHOT = Path(__file__).resolve().parents[1] / "tests" / "golden_example.json"
 FAMILY_SNAPSHOT = SNAPSHOT.with_name("golden_catalog_families.json")
 GLASS_SNAPSHOT = SNAPSHOT.with_name("golden_glass_products.json")
+OPENING_SNAPSHOT = SNAPSHOT.with_name("golden_openings.json")
+
+
+def generated_opening_bytes() -> bytes:
+    return (json.dumps(opening_cases(), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)
+            + "\n").encode("utf-8")
 
 
 def generated_glass_bytes() -> bytes:
@@ -79,11 +86,14 @@ def main() -> None:
             raise SystemExit("Golden byte drift: run make goldgen explicitly and review the diff")
         if not GLASS_SNAPSHOT.is_file() or GLASS_SNAPSHOT.read_bytes() != generated_glass_bytes():
             raise SystemExit("Glass golden byte drift: run make goldgen and review the diff")
+        if not OPENING_SNAPSHOT.is_file() or OPENING_SNAPSHOT.read_bytes() != generated_opening_bytes():
+            raise SystemExit("Opening golden byte drift: run make goldgen and review the diff")
         print("Golden byte check: PASS (read-only)")
     else:
         SNAPSHOT.write_bytes(generated_bytes())
         FAMILY_SNAPSHOT.write_bytes(generated_family_bytes())
         GLASS_SNAPSHOT.write_bytes(generated_glass_bytes())
+        OPENING_SNAPSHOT.write_bytes(generated_opening_bytes())
         print(f"Generated {SNAPSHOT.relative_to(SNAPSHOT.parents[2]).as_posix()}")
 
 

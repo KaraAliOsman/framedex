@@ -380,6 +380,24 @@ function heightBounds(
   }
 }
 
+/** Physical defaults are coordinates already resolved by the engine. Legacy
+ * policies still use the midpoint of their declared permitted span. */
+function defaultHandleHeight(
+  requirement: HandleRequirement,
+  reference: HandleIntent["vertical_reference"],
+  bounds: [string, string] | null,
+): string {
+  if (reference === "LEAF_BOTTOM" && requirement.default_height_mm !== undefined)
+    return requirement.default_height_mm;
+  if (reference === "LEAF_TOP" && requirement.default_height_from_leaf_top_mm !== undefined)
+    return requirement.default_height_from_leaf_top_mm;
+  const minimum = bounds ? parseDecimal(bounds[0]) : null;
+  const maximum = bounds ? parseDecimal(bounds[1]) : null;
+  return minimum !== null && maximum !== null
+    ? formatDecimal(midpointDecimal(minimum, maximum))
+    : "";
+}
+
 /** Dropping or switching the handle policy must not leave intents whose
  * (bay, leaf, slot) no longer exists — freeze rejects extra intents — and a
  * retained intent's reference must still be permitted by the new rule. */
@@ -428,7 +446,7 @@ function reconciledHandlePolicy(
     return [
       {
         ...intent,
-        requested_height_mm: formatDecimal(midpointDecimal(boundMin, boundMax)),
+        requested_height_mm: defaultHandleHeight(requirement, intent.vertical_reference, bounds),
       },
     ];
   });
@@ -478,7 +496,10 @@ function seedHandleIntents(position: DocumentaryPreparationPosition): {
   const seededKeys: string[] = [];
   for (const requirement of requirements) {
     if (intentFor(position, requirement)) continue;
-    const reference = requirement.permitted_vertical_references[0];
+    const reference =
+      requirement.default_vertical_reference === "LEAF_BOTTOM"
+        ? "LEAF_BOTTOM"
+        : requirement.permitted_vertical_references[0];
     if (!reference) continue;
     const bounds = heightBounds(position, requirement, reference);
     const boundMin = bounds ? parseDecimal(bounds[0]) : null;
@@ -488,7 +509,7 @@ function seedHandleIntents(position: DocumentaryPreparationPosition): {
       bay_id: requirement.bay_id,
       leaf_id: requirement.leaf_id,
       handle_domain_slot: requirement.handle_domain_slot,
-      requested_height_mm: formatDecimal(midpointDecimal(boundMin, boundMax)),
+      requested_height_mm: defaultHandleHeight(requirement, reference, bounds),
       vertical_reference: reference,
     };
     intents.push(intent);
@@ -530,7 +551,7 @@ function reseedHandleIntents(
     return [
       {
         ...intent,
-        requested_height_mm: formatDecimal(midpointDecimal(boundMin, boundMax)),
+        requested_height_mm: defaultHandleHeight(requirement, intent.vertical_reference, bounds),
       },
     ];
   });
@@ -1504,10 +1525,9 @@ export function ProjectQuotationPanel({
                     // The policy's permitted span midpoint is the sane
                     // default — visible, editable, still the estimator's
                     // call; true authority stays the sealed intent.
-                    const defaultHeight =
-                      boundMin !== null && boundMax !== null
-                        ? formatDecimal(midpointDecimal(boundMin, boundMax))
-                        : "";
+                    const defaultHeight = reference
+                      ? defaultHandleHeight(requirement, reference, bounds)
+                      : "";
                     return (
                       <div className="handle-row" key={intentKey(requirement)}>
                         <div className="handle-leaf">
@@ -1517,7 +1537,11 @@ export function ProjectQuotationPanel({
                               ? t("quotation.handednessRequired")
                               : requirement.host_member_side === "LEFT"
                                 ? t("quotation.sideLeft")
-                                : t("quotation.sideRight")}
+                                : requirement.host_member_side === "TOP"
+                                  ? "Borde superior"
+                                  : requirement.host_member_side === "BOTTOM"
+                                    ? "Borde inferior"
+                                    : t("quotation.sideRight")}
                             {requirement.handle_domain_slot !== "PRIMARY" &&
                               ` · ${requirement.handle_domain_slot}`}
                           </span>
@@ -1546,6 +1570,9 @@ export function ProjectQuotationPanel({
                             <span className="handle-bounds">
                               {t("quotation.handleBounds")} {bounds[0]}–{bounds[1]} mm
                             </span>
+                          )}
+                          {requirement.source && (
+                            <span className="handle-bounds">Fuente: {requirement.source}</span>
                           )}
                         </div>
                         <div className="handle-field">

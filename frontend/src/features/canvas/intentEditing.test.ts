@@ -215,6 +215,9 @@ describe("rectangular intent", () => {
       intentBays(withExtra).find((node) => node.id === "bay-a"),
     );
     expect(baySpec(bay)).toEqual({
+      opening: null,
+      opening_use: null,
+      hinged_layout: null,
       opening_type: "FIXED",
       sliding_layout: null,
       door_handedness: null,

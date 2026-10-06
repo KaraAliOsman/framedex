@@ -11,7 +11,8 @@ from html import escape
 from pathlib import Path
 
 from dekopen_engine.contour import Contour, contour_points
-from dekopen_engine.models import PlanPoint
+from dekopen_engine.models import HingedLayout, Opening, OpeningUse, PlanPoint
+from dekopen_engine.openings import opening_label
 from dekopen_engine.product import ElevationMember, elevation_layout
 from documents.repository import DocumentaryError
 from engine_api.adapter import parse_product_model
@@ -578,10 +579,55 @@ def _hardware_marks(opening: str, handedness: str, ix: Decimal, iy: Decimal,
         )
 
 
+def _physical_leaf_svg(fact: dict[str, object], out: list[str],
+                       pal: dict[str, str | None], origin: tuple[Decimal, Decimal]) -> None:
+    """Draw the sealed engine rectangle and handle, without inferring leaf sizes."""
+    try:
+        opening = Opening.model_validate_json(json.dumps(fact["opening"]))
+    except (ValueError, KeyError) as error:
+        raise DocumentaryError("invalid_frozen_opening") from error
+    x, y = origin[0] + _num(fact["x_mm"]), origin[1] + _num(fact["y_mm"])
+    width, height = _num(fact["width_mm"]), _num(fact["height_mm"])
+    stroke = _pt(min(width, height) / Decimal("120"))
+    attrs = (f'data-motion="{opening.movement.value}" data-hinge="{opening.hinge_side.value}" '
+             f'data-direction="{opening.direction.value}" data-leaf-role="{opening.leaf_role.value}"')
+    out.append(f'<g {attrs}><rect x="{_pt(x)}" y="{_pt(y)}" width="{_pt(width)}" '
+               f'height="{_pt(height)}" fill="{pal["bay_fill"]}" stroke="{pal["bay_edge"]}" '
+               f'stroke-width="{stroke}"/>')
+    left, right = x + width * Decimal("0.2"), x + width * Decimal("0.8")
+    top, bottom = y + height * Decimal("0.2"), y + height * Decimal("0.8")
+    mx, my = x + width / 2, y + height / 2
+    dash = (f' stroke-dasharray="{_pt(min(width, height) * Decimal("0.04"))} '
+            f'{_pt(min(width, height) * Decimal("0.03"))}"'
+            if opening.direction.value == "OUTWARD" else "")
+    paths = []
+    if opening.movement.value in ("TURN", "TILT_TURN"):
+        paths.append(f'M{_pt(left)} {_pt(top)}L{_pt(right)} {_pt(my)}L{_pt(left)} {_pt(bottom)}'
+                     if opening.hinge_side.value == "LEFT" else
+                     f'M{_pt(right)} {_pt(top)}L{_pt(left)} {_pt(my)}L{_pt(right)} {_pt(bottom)}')
+    if opening.movement.value in ("TILT", "TILT_TURN"):
+        paths.append(f'M{_pt(left)} {_pt(bottom)}L{_pt(mx)} {_pt(top)}L{_pt(right)} {_pt(bottom)}')
+    if opening.movement.value == "TOP_HUNG":
+        paths.append(f'M{_pt(left)} {_pt(top)}L{_pt(mx)} {_pt(bottom)}L{_pt(right)} {_pt(top)}')
+    for path in paths:
+        out.append(f'<path d="{path}" fill="none" stroke="{pal["glyph"]}" '
+                   f'stroke-width="{stroke}"{dash}/>')
+    handle = fact.get("handle")
+    if isinstance(handle, dict):
+        hx, hy = x + _num(handle["x_mm"]), y + _num(handle["y_mm"])
+        size = min(width, height) * Decimal("0.04")
+        end_x, end_y = (hx + size, hy) if handle["side"] in ("TOP", "BOTTOM") else (hx, hy + size)
+        out.append(f'<path data-handle="true" d="M{_pt(hx)} {_pt(hy)}L{_pt(end_x)} {_pt(end_y)}" '
+                   f'fill="none" stroke="{pal["hardware"] or pal["glyph"]}" stroke-width="{stroke}"/>')
+    out.append('</g>')
+
+
 def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
                   width: Decimal, height: Decimal, out: list[str],
                   marker: str, glyph_only: bool = False,
-                  pal: dict[str, str | None] | None = None) -> None:
+                  pal: dict[str, str | None] | None = None,
+                  physical: dict[str, list[dict[str, object]]] | None = None,
+                  origin: tuple[Decimal, Decimal] = (Decimal("0"), Decimal("0"))) -> None:
     if pal is None:
         pal = _PAL_TECH
     node_type = str(node.get("type"))
@@ -593,7 +639,7 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
     if node_type == "ROOT":
         if len(children) != 1 or not isinstance(children[0], dict):
             raise DocumentaryError("invalid_frozen_parametric_tree")
-        _svg_elements(children[0], x, y, width, height, out, marker, glyph_only)
+        _svg_elements(children[0], x, y, width, height, out, marker, glyph_only, pal, physical, origin)
         return
     if node_type in ("SPLIT_V", "SPLIT_H"):
         offset = node.get("split_offset_mm")
@@ -609,16 +655,16 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
                 f'y2="{_pt(y + height)}" stroke="{pal["split"]}" stroke-width="'
                 f'{_pt(height / Decimal("60"))}"/>'
             )
-            _svg_elements(first, x, y, split, height, out, marker, glyph_only, pal)
-            _svg_elements(second, x + split, y, width - split, height, out, marker, glyph_only, pal)
+            _svg_elements(first, x, y, split, height, out, marker, glyph_only, pal, physical, origin)
+            _svg_elements(second, x + split, y, width - split, height, out, marker, glyph_only, pal, physical, origin)
         else:
             out.append(
                 f'<line x1="{_pt(x)}" y1="{_pt(y + split)}" x2="{_pt(x + width)}" '
                 f'y2="{_pt(y + split)}" stroke="{pal["split"]}" stroke-width="'
                 f'{_pt(width / Decimal("60"))}"/>'
             )
-            _svg_elements(first, x, y, width, split, out, marker, glyph_only, pal)
-            _svg_elements(second, x, y + split, width, height - split, out, marker, glyph_only, pal)
+            _svg_elements(first, x, y, width, split, out, marker, glyph_only, pal, physical, origin)
+            _svg_elements(second, x, y + split, width, height - split, out, marker, glyph_only, pal, physical, origin)
         return
     if node_type != "BAY":
         raise DocumentaryError("invalid_frozen_parametric_tree")
@@ -645,7 +691,16 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
                 f'{_pt(ix)},{_pt(iy + ih * Decimal("0.72"))}" fill="{pal["sheen"]}" '
                 'fill-opacity="0.45"/>'
             )
-    opening = node.get("opening_type")
+    structured = node.get("opening")
+    if isinstance(structured, dict) and not node.get("opening_type"):
+        if structured.get("movement") != "SLIDE":
+            facts = (physical or {}).get(str(node.get("id")), [])
+            if not facts and (structured.get("movement") != "FIXED" or structured.get("fixed_in_sash")):
+                raise DocumentaryError("frozen_opening_geometry_missing")
+            for fact in facts:
+                _physical_leaf_svg(fact, out, pal, origin)
+            return
+    opening = "SLIDING" if isinstance(structured, dict) and structured.get("movement") == "SLIDE" else node.get("opening_type")
     mx, my = ix + iw / 2, iy + ih / 2
     if opening in ("TURN_LEFT", "TILT_TURN_LEFT"):
         out.append(
@@ -855,6 +910,19 @@ def _position_svg(
     position: dict[str, object], *, commercial: bool = False, marker_key: str = ""
 ) -> str:
     tree = _object(position.get("parametric_tree"), "invalid_frozen_parametric_tree")
+    def facts_for(module_id: str | None = None) -> dict[str, list[dict[str, object]]]:
+        grouped: dict[str, list[dict[str, object]]] = {}
+        for fact in position.get("opening_leaves", []):
+            if not isinstance(fact, dict):
+                raise DocumentaryError("invalid_frozen_opening")
+            bay = str(fact.get("bay_id"))
+            if module_id is not None:
+                prefix = module_id + "|"
+                if not bay.startswith(prefix):
+                    continue
+                bay = bay.removeprefix(prefix)
+            grouped.setdefault(bay, []).append(fact)
+        return grouped
     pal = _commercial_palette(position) if commercial else _PAL_TECH
     # The same position can be drawn twice on a page (hero + card): the
     # marker id must stay unique or the second SVG's arrows mis-resolve.
@@ -935,7 +1003,7 @@ def _position_svg(
                 _svg_elements(
                     _object(module.get("tree"), "invalid_frozen_parametric_tree"),
                     x, baseline, module_width, module_height, elements, marker,
-                    glyph_only=True, pal=pal,
+                    glyph_only=True, pal=pal, physical=facts_for(str(module.get("id"))), origin=(x, baseline),
                 )
             elif frameless is not None:
                 _frameless_pane(
@@ -946,7 +1014,7 @@ def _position_svg(
                 _svg_elements(
                     _object(module.get("tree"), "invalid_frozen_parametric_tree"),
                     x, baseline, module_width, module_height, elements, marker,
-                    pal=pal,
+                    pal=pal, physical=facts_for(str(module.get("id"))), origin=(x, baseline),
                 )
             # Module-id labels drop on sliver modules — squeezed text
             # colliding with the next unit's label reads worse than none.
@@ -992,12 +1060,13 @@ def _position_svg(
         height = _num(position.get("height_mm"))
         if width <= 0 or height <= 0:
             raise DocumentaryError("svg_dimension_invalid")
-        _svg_elements(tree, Decimal("0"), Decimal("0"), width, height, elements, marker, pal=pal)
+        _svg_elements(tree, Decimal("0"), Decimal("0"), width, height, elements, marker,
+                      pal=pal, physical=facts_for())
     return (
         f'<svg viewBox="0 0 {_pt(width)} {_pt(height)}" '
         'xmlns="http://www.w3.org/2000/svg" role="img" '
         f'aria-label="Vano {_value(position.get("position_index"))}">'
-        + "".join(elements) + "</svg>"
+        + '<title>Vista interior</title>' + "".join(elements) + "</svg>"
     )
 
 
@@ -1218,8 +1287,8 @@ def _doc01(snapshot: dict[str, object]) -> str:
         hero_figure = (
             '<div class="cover-figure">'
             + _position_svg(ref, commercial=True, marker_key="hero")
-            + '<div class="figcap">'
-            + escape(_TYPOLOGY_ES.get(_value(ref.get("typology")), _value(ref.get("typology"))))
+            + '<div class="figcap">Vista interior · '
+            + escape(_product_caption(ref))
             + " · "
             + escape(_dim(ref.get("width_mm")))
             + " × "
@@ -1328,7 +1397,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
         doors = sum(
             bucket["quantity"]
             for key, bucket in groups.items()
-            if str(key[0]).startswith("DOOR")
+            if _product_caption(bucket["ref_position"]).startswith("Puerta")
         )
         windows = total_units - doors
         systems = sorted({
@@ -1380,7 +1449,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
                 [
                     _list(bucket["indexes"]),
                     _list(bucket["locations"]),
-                    _TYPOLOGY_ES.get(key[0], key[0]),
+                    _product_caption(bucket["ref_position"]),
                     bucket["quantity"],
                     _money(bucket["price_net"], currency) if bucket["priced"] else "—",
                 ]
@@ -1422,7 +1491,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
                 f'<li><span class="plabel">Apertura</span> {escape(", ".join(openings))}</li>'
             )
         spec_items.append(
-            '<li><span class="plabel">Vista</span> Exterior</li>'
+            '<li><span class="plabel">Vista</span> Interior</li>'
         )
         spec_items.append(
             f'<li><span class="plabel">Vidrio / relleno</span> {escape(specs)}</li>'
@@ -1469,7 +1538,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
             '<figure class="pcard">'
             f'<div class="pcard-fig">{_figure(ref, "c" + bucket["indexes"][0])}</div>'
             '<div class="pcard-body">'
-            f'<h3>{escape(_TYPOLOGY_ES.get(typology, typology))}</h3>'
+            f'<h3>{escape(_product_caption(ref))}</h3>'
             f'<p class="pcard-dims">{escape(_dim(width_mm))} × {escape(_dim(height_mm))} mm</p>'
             f'<p style="margin:0 0 2mm"><strong>Cantidad:</strong> '
             f'{escape(_value(bucket["quantity"]))}</p>'
@@ -2908,6 +2977,39 @@ _CATEGORY_ES = {
     "ACCESSORY": "Accesorio", "FITTING": "Fijación",
 }
 
+def _product_caption(position: dict[str, object]) -> str:
+    """A commercial name from the sealed opening, separate from tariff buckets."""
+    bays: list[dict] = []
+    def walk(node):
+        if not isinstance(node, dict):
+            return
+        if node.get("type") == "BAY" and isinstance(node.get("opening"), dict):
+            bays.append(node)
+        for child in node.get("children") or []:
+            walk(child)
+        if node.get("version") == "product-v2":
+            for module in (node.get("assembly") or {}).get("modules") or []:
+                walk(module.get("tree"))
+    walk(position.get("parametric_tree"))
+    if not bays:
+        raw = _value(position.get("typology"))
+        return _TYPOLOGY_ES.get(raw, raw)
+    doors = [bay for bay in bays if bay.get("opening_use") == "DOOR" and bay["opening"]["movement"] != "FIXED"]
+    if doors:
+        if any(bay["opening"]["movement"] == "FIXED" for bay in bays):
+            return "Puerta con lateral fijo"
+        return "Puerta doble" if doors[0].get("hinged_layout") else "Puerta simple"
+    if len(bays) != 1:
+        return "Conjunto"
+    bay = bays[0]
+    if bay.get("hinged_layout"):
+        return "Francesa de 2 hojas"
+    opening = bay["opening"]
+    return {"FIXED": "Fijo en hoja" if opening.get("fixed_in_sash") else "Fijo en marco",
+        "TURN": "Abatible", "TILT": "Banderola", "TILT_TURN": "Oscilobatiente",
+        "TOP_HUNG": "Proyectante", "SLIDE": "Corredera"}[opening["movement"]]
+
+
 def _opening_labels(tree: dict[str, object]) -> list[str]:
     """Distinct human opening names declared in the sealed tree (e.g.
     "Oscilobatiente · izquierda") — the card reads what the product
@@ -2917,8 +3019,18 @@ def _opening_labels(tree: dict[str, object]) -> list[str]:
     def walk(node: object) -> None:
         if not isinstance(node, dict):
             return
+        physical = node.get("opening")
         opening = str(node.get("opening_type") or "")
-        if opening and opening != "FIXED":
+        if isinstance(physical, dict):
+            try:
+                label = opening_label(Opening.model_validate_json(json.dumps(physical)),
+                    OpeningUse(str(node.get("opening_use") or "WINDOW")),
+                    HingedLayout.model_validate_json(json.dumps(node["hinged_layout"])) if node.get("hinged_layout") else None)
+            except ValueError as error:
+                raise DocumentaryError("invalid_frozen_opening") from error
+            if label not in labels:
+                labels.append(label)
+        elif opening and opening != "FIXED":
             label = _TYPOLOGY_ES.get(opening, opening)
             hand = str(node.get("door_handedness") or "")
             if hand == "LEFT":

@@ -122,6 +122,7 @@ def real_rows(django_db_blocker: DjangoDbBlocker) -> Iterator[RLSFixtures]:
                 cursor.execute(
                     "SELECT code, id FROM public.profile_systems WHERE is_global = TRUE "
                     "AND NOT legacy_authority AND is_active AND system_family IS NOT NULL"
+                    " ORDER BY code,version,id"
                 )
                 global_systems = {code: row_id for code, row_id in cursor.fetchall()}
             yield RLSFixtures(
@@ -370,7 +371,7 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
     assert demo == {
         "id": str(real_rows.global_systems["DEMO_60"]),
         "code": "DEMO_60",
-        "name": "PVC practicable 60 mm · DEMO",
+        "name": "PVC practicable 60 mm · aperturas v3 · DEMO",
         "is_demo": True,
         "system_family": "CASEMENT",
         "quote_ready": True,
@@ -433,7 +434,12 @@ def test_shot06_all_28_catalog_fields_reach_typed_engine(real_rows: RLSFixtures)
     expected_fields = expected.model_dump()
     actual_fields["available_hardware_kits"] = sorted(actual_fields["available_hardware_kits"], key=lambda k: k["sku"])
     expected_fields["available_hardware_kits"] = sorted(expected_fields["available_hardware_kits"], key=lambda k: k["sku"])
-    assert len(SystemParams.model_fields) == len(actual_fields) == 30
+    assert len(SystemParams.model_fields) == len(actual_fields) == 33
+    assert actual_fields["opening_capabilities"] == ()
+    assert actual_fields["paired_leaf_rule"] is None
+    compatible = actual_fields.pop("compatible_opening_systems")
+    assert compatible and all(capabilities for _, capabilities in compatible)
+    expected_fields.pop("compatible_opening_systems")
     # The demo seed declares the same synthetic per-article masses the engine
     # fixture carries — mass authority must reach the typed model
     # field-for-field rather than arriving through a fallback.

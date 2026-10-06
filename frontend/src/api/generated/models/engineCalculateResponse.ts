@@ -21,6 +21,7 @@ export interface EngineCalculateResponse {
   fittings: FittingPiece[];
   hardware_items: HardwareItem[];
   leaf_weights: LeafWeight[];
+  opening_leaves?: unknown[];
   /** @pattern ^sha256:[0-9a-f]{64}$ */
   calculation_hash: string;
 }

@@ -49,6 +49,7 @@ function assemblyErrorCode(error: unknown): string {
 export function useAssemblyCalculation(
   organizationId: string,
   inputs: CanvasDesignInputs,
+  retainPrevious = true,
 ): {
   evaluation: EngineAssemblyCalculateResponse | null;
   isPending: boolean;
@@ -67,7 +68,7 @@ export function useAssemblyCalculation(
     // A fresh product key resets data to undefined mid-fetch; keeping the
     // last valid evaluation stops the plan inset, 3D view and BOM from
     // unmounting on every canvas commit.
-    placeholderData: (previous) => previous,
+    placeholderData: retainPrevious ? (previous) => previous : undefined,
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
   });

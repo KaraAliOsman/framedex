@@ -15,6 +15,8 @@ from dekopen_engine.glass_composition import glass_mass_per_m2, net_glass_thickn
 from pricing.repository import commercial_backend, PricingRepository
 from dekopen_engine.commercial import PricingError
 from django.utils import timezone
+from dekopen_engine.openings import opening_label
+from dekopen_engine.models import Opening
 
 
 class ProfileChoiceSerializer(serializers.Serializer):
@@ -114,6 +116,8 @@ class DesignOptionsSerializer(serializers.Serializer):
     system_family = serializers.CharField(allow_null=True)
     is_demo = serializers.BooleanField()
     compatible_openings = serializers.ListField(child=serializers.CharField())
+    opening_capabilities = serializers.ListField(child=serializers.JSONField(), required=False)
+    paired_leaf_rule = serializers.JSONField(allow_null=True, required=False)
     dimensional_limits = SystemDimensionalLimitSerializer(many=True)
     profiles = ProfileChoiceSerializer(many=True)
     glazing_thicknesses = serializers.ListField(child=serializers.CharField())
@@ -182,6 +186,12 @@ class DesignOptionsView(APIView):
                     "is_demo": bool(rows("SELECT is_demo FROM public.profile_systems WHERE id=%s", [system_id])[0]["is_demo"]),
                     "compatible_openings": sorted(opening.value for opening in FAMILY_OPENINGS[params.system_family])
                         if params.system_family else [],
+                    "opening_capabilities": [{**cap.model_dump(mode="json"), "choices": [
+                        {"opening": (opening := Opening(movement=cap.movement, hinge_side=hinge,
+                            direction=cap.direction, leaf_role=cap.leaf_role, fixed_in_sash=cap.fixed_in_sash)).model_dump(mode="json"),
+                         "label": opening_label(opening, cap.use)} for hinge in cap.hinge_sides]}
+                        for cap in params.opening_capabilities],
+                    "paired_leaf_rule": params.paired_leaf_rule.model_dump(mode="json") if params.paired_leaf_rule else None,
                     "dimensional_limits": [rule.model_dump() for rule in params.dimensional_limits],
                     "profiles": [
                         {

@@ -171,3 +171,34 @@ El gate incluyó la base limpia, RLS, Chromium, PostgreSQL 16 y datos poblados.
 La aceptación conserva sus límites de certificación y los hallazgos heredados;
 36 capturas verifican la nueva superficie de vidrio. Se registra el cierre en
 ESTADO; el stack propio quedó detenido. D03 es el siguiente encargo de la cola.
+
+## 2026-10-06 — D03 · aperturas, autoridad y migración histórica
+
+La rama D03 declara movimiento físico separado de composición/uso y conserva los
+doce transportes históricos. Se verifican 21 variantes con goldens, cotización
+emitida de diez páginas, preview calculado, edición y MiMo real. Catálogo mantiene
+fuentes, publicación revisada, deshacer, Decimal exacto y permisos del servidor.
+Los seis catálogos DEMO v3 no reescriben v1/v2. El primer gate completo detectó
+tarifas duplicadas en SKU compartidos; el generador conserva la autoridad exacta
+anterior y rechaza conflictos de unidad/tarifa. El upgrade incluye esas filas.
+
+La puerta con lateral conserva el bloqueo R05 sin inercia del montante; una carga
+ficticia del ensayo no acredita viento. Las otras veinte variantes completan
+fabricación en la integración. La constitución gobierna el vértice del símbolo,
+incluso cuando el tablero histórico difiere. D04/D08/P04/P05 siguen pendientes.
+La página de aperturas, current reality, riesgos, decisiones y ACTIVACION enlazan
+la evidencia y sus límites. El cierre de gates/CI y el merge se registran después
+de comprobarlos; este registro no convierte la rama en un encargo mergeado.
+
+## 2026-10-06 — D03 · cierre de verificación local
+
+El gate de navegador expuso una asimetría de vidrio histórico añadido después
+de D02: descubrimiento resolvía la notación, pero guardado no. Ambos leen la misma
+autoridad y dos regresiones HTTP conservan el rechazo de propiedades falsificadas.
+La portada declara su vista; se emitió un documento nuevo sin reescribir el anterior.
+La cascada de controles deja de sobrescribir árbol/herramientas; miniaturas y
+cantidades conservan los radios de la constitución. Las recapturas no incorporan
+hallazgos nuevos, aunque mantienen los problemas heredados de P01 para P04/P08.
+Los gates locales pasan 581 motor, 1 159 backend, 715 frontend, 986 pgTAP,
+285 integración, 11 Chromium y los upgrades poblados PG16. MiMo real, publicación,
+deshacer, permisos y doce capturas finales de estilos pasan; la ruta IA se restauró.

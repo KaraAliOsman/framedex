@@ -12,6 +12,7 @@ import type {
   ProductIssue,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { domainLabel } from "../../i18n/domainLabels";
 import {
   formatShortcut,
   resolveCommands,
@@ -91,6 +92,14 @@ import {
   type ProductModuleJson,
 } from "./productEditing";
 import { OPENING_OPTIONS } from "./openings";
+import { OpeningPalette } from "./OpeningPalette";
+import {
+  openingChoices,
+  physicalNodeLabel,
+  visualOpening,
+  type Capability,
+  type OpeningLeafFact,
+} from "./physicalOpenings";
 import { GlassSelector } from "../glass/GlassSelector";
 import { glassChoicePatch, asGlassProduct } from "../glass/glassModel";
 import { glassContext, useGlassChecks } from "../glass/useGlassPreview";
@@ -869,6 +878,7 @@ function BayInspector({
   leafWeightKg,
   busy,
   commit,
+  onOpeningPreview,
   onAskAssistant,
 }: {
   options?: DesignOptions;
@@ -885,10 +895,25 @@ function BayInspector({
   leafWeightKg: number | null;
   busy: boolean;
   commit(next: ProductJson): void;
+  onOpeningPreview(next: ProductJson | null): void;
   onAskAssistant?(): void;
 }): JSX.Element {
-  const opening = bay.opening_type ?? "FIXED";
-  const isDoor = opening === "DOOR_ENTRY";
+  const opening = visualOpening(bay);
+  const isDoor = opening === "DOOR_ENTRY" || opening === "DOOR_DOUBLE";
+  const physicalLeaves = (evaluation?.modules?.find((item) => item.module_id === module.id)?.result
+    ?.opening_leaves ?? []) as OpeningLeafFact[];
+  const activeLeaf = physicalLeaves.find((leaf) => leaf.bay_id === bay.id && leaf.handle);
+  const physicalHandle = activeLeaf?.handle;
+  const capability = ((options?.opening_capabilities ?? []) as Capability[]).find(
+    (cap) =>
+      bay.opening &&
+      cap.use === bay.opening_use &&
+      cap.movement === bay.opening.movement &&
+      cap.direction === bay.opening.direction &&
+      cap.leaf_role === bay.opening.leaf_role &&
+      cap.fixed_in_sash === bay.opening.fixed_in_sash &&
+      cap.hinge_sides.includes(bay.opening.hinge_side),
+  );
   const slidingLayout = resolvedSlidingLayout(bay);
   const bays = intentBays(module.tree);
   const bayOrdinal = bays.findIndex((node) => node.id === bay.id) + 1;
@@ -906,6 +931,9 @@ function BayInspector({
     // door always carries declared handedness (manufacture refuses to guess).
     patchBay({
       opening_type: next,
+      opening: null,
+      opening_use: null,
+      hinged_layout: null,
       sliding_layout: next === "SLIDING" ? structuredClone(SLIDING_PRESETS.SLIDING_2L!) : null,
       panel_article_sku: next === "DOOR_ENTRY" ? (bay.panel_article_sku ?? null) : null,
       door_handedness: next === "DOOR_ENTRY" ? (bay.door_handedness ?? "LEFT") : null,
@@ -924,12 +952,29 @@ function BayInspector({
       })
     : null;
   const kitEvaluations = operable
-    ? rankKits(kits, {
-        opening,
-        leafWidthMm: leafEnvelope ? Math.round(leafEnvelope.w * 10) / 10 : null,
-        leafHeightMm: leafEnvelope ? Math.round(leafEnvelope.h * 10) / 10 : null,
-        leafWeightKg,
-      })
+    ? rankKits(
+        capability ? kits.filter((kit) => capability.hardware_kit_skus.includes(kit.sku)) : kits,
+        {
+          opening: bay.opening
+            ? bay.opening_use === "DOOR"
+              ? "DOOR"
+              : bay.opening.movement === "TOP_HUNG"
+                ? "AWNING"
+                : bay.opening.movement
+            : opening,
+          leafWidthMm: activeLeaf
+            ? Number(activeLeaf.width_mm)
+            : leafEnvelope
+              ? Math.round(leafEnvelope.w * 10) / 10
+              : null,
+          leafHeightMm: activeLeaf
+            ? Number(activeLeaf.height_mm)
+            : leafEnvelope
+              ? Math.round(leafEnvelope.h * 10) / 10
+              : null,
+          leafWeightKg,
+        },
+      )
     : [];
   const selectableKits = kitEvaluations.filter((item) => item.fit !== "incompatible");
   const incompatibleKits = kitEvaluations.filter((item) => item.fit === "incompatible");
@@ -970,31 +1015,64 @@ function BayInspector({
       />
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
-        <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
-          {OPENING_OPTIONS.filter(
-            ([value]) => !options?.system_family || options.compatible_openings.includes(value),
-          ).map(([value, labelKey]) => {
-            const doorBlocked = value === "DOOR_ENTRY" && !isTopBay;
-            return (
-              <button
-                key={value}
-                type="button"
-                className={`opening-choice${opening === value ? " is-active" : ""}`}
-                title={doorBlocked ? t("assembly.doorTopOnly") : t(labelKey)}
-                aria-label={t(labelKey)}
-                aria-pressed={opening === value}
-                disabled={busy || doorBlocked}
-                onClick={() => pickOpening(value)}
-              >
-                <svg viewBox="0 0 100 100" aria-hidden="true">
-                  <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
-                  <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
-                </svg>
-              </button>
-            );
-          })}
-        </div>
-        {isDoor && (
+        {options?.opening_capabilities?.length ? (
+          <OpeningPalette
+            options={options}
+            bay={bay}
+            disabled={busy}
+            onPick={(patch) =>
+              commit(
+                setModuleTree(
+                  product,
+                  module.id,
+                  updateBay(module.tree, bay.id, {
+                    ...patch,
+                    is_sidelight:
+                      patch.opening_use === "DOOR" &&
+                      patch.opening?.movement === "FIXED" &&
+                      !isTopBay,
+                  }),
+                ),
+              )
+            }
+            onPreview={(patch) =>
+              onOpeningPreview(
+                patch
+                  ? setModuleTree(product, module.id, updateBay(module.tree, bay.id, patch))
+                  : null,
+              )
+            }
+          />
+        ) : (
+          <>
+            {" "}
+            <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
+              {OPENING_OPTIONS.filter(
+                ([value]) => !options?.system_family || options.compatible_openings.includes(value),
+              ).map(([value, labelKey]) => {
+                const doorBlocked = value === "DOOR_ENTRY" && !isTopBay;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`opening-choice${opening === value ? " is-active" : ""}`}
+                    title={doorBlocked ? t("assembly.doorTopOnly") : t(labelKey)}
+                    aria-label={t(labelKey)}
+                    aria-pressed={opening === value}
+                    disabled={busy || doorBlocked}
+                    onClick={() => pickOpening(value)}
+                  >
+                    <svg viewBox="0 0 100 100" aria-hidden="true">
+                      <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
+                      <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
+                    </svg>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+        {isDoor && !bay.opening && (
           <label className="assembly-field">
             <span>{t("assembly.hingeSide")}</span>
             <select
@@ -1010,7 +1088,9 @@ function BayInspector({
             </select>
           </label>
         )}
-        {isDoor && !isTopBay && <p className="assembly-hint">{t("assembly.doorTopOnly")}</p>}
+        {isDoor && !bay.opening && !isTopBay && (
+          <p className="assembly-hint">{t("assembly.doorTopOnly")}</p>
+        )}
       </details>
       {slidingLayout && (
         <SlidingPanelsEditor
@@ -1102,14 +1182,31 @@ function BayInspector({
             </select>
           </label>
         )}
-        <DraftField
-          label={t("assembly.handleHeight")}
-          value={bay.handle_height_mm ?? ""}
-          unit="mm"
-          disabled={busy}
-          normalize={normalizeMm}
-          onCommit={(value) => patchBay({ handle_height_mm: value })}
-        />
+        {(!bay.opening || physicalHandle) && (
+          <DraftField
+            label={t("assembly.handleHeight")}
+            value={bay.handle_height_mm ?? physicalHandle?.height_from_bottom_mm ?? ""}
+            unit="mm"
+            disabled={
+              busy ||
+              Boolean(
+                physicalHandle &&
+                physicalHandle.minimum_height_from_bottom_mm ===
+                  physicalHandle.maximum_height_from_bottom_mm,
+              )
+            }
+            normalize={normalizeMm}
+            onCommit={(value) => patchBay({ handle_height_mm: value })}
+          />
+        )}
+        {physicalHandle && (
+          <p className="assembly-hint">
+            Desde el borde inferior de la hoja ·{" "}
+            {fmtMm(physicalHandle.minimum_height_from_bottom_mm)}–
+            {fmtMm(physicalHandle.maximum_height_from_bottom_mm)} mm. Fuente:{" "}
+            {physicalHandle.source}
+          </p>
+        )}
       </details>
       {onAskAssistant && (
         <div className="inspector-actions">
@@ -1277,6 +1374,7 @@ function ElementSummary({ title, rows }: { title: string; rows: [string, string]
  * the module's cuts/glass/hardware, or just the pieces tagged to one bay. */
 function TechnicalPanel({
   evaluation,
+  options,
   moduleId,
   bayId,
   moduleIndex,
@@ -1285,6 +1383,7 @@ function TechnicalPanel({
   widthMm,
 }: {
   evaluation: EngineAssemblyCalculateResponse | null;
+  options?: DesignOptions;
   moduleId?: string;
   bayId?: string | null;
   moduleIndex?: (moduleId: string) => number;
@@ -1297,6 +1396,23 @@ function TechnicalPanel({
   const entries = (evaluation?.modules ?? []).filter(
     (entry) => !moduleId || entry.module_id === moduleId,
   );
+  const names = new Map([
+    ...(options?.profiles ?? []).map((article) => [article.sku, article.name] as const),
+    ...(options?.glazing_beads ?? []).map(
+      (article) => [article.sku, `Junquillo para ${fmtMm(article.glass_thickness_mm)} mm`] as const,
+    ),
+    ...(options?.glass_specs ?? []).map(
+      (article) =>
+        [
+          article.sku,
+          asGlassProduct(article.product)?.name ??
+            article.spec ??
+            "Sin dato: falta el nombre del vidrio",
+        ] as const,
+    ),
+    ...(options?.panel_choices ?? []).map((article) => [article.sku, article.name] as const),
+    ...(options?.hardware_kits ?? []).map((article) => [article.sku, article.name] as const),
+  ]);
   if (entries.length === 0) {
     return (
       <section className="assembly-inspector">
@@ -1306,6 +1422,9 @@ function TechnicalPanel({
   }
   return (
     <div className="tech-panel">
+      <p className="inspector-note">
+        Fuente: cálculo del motor con la versión elegida del catálogo.
+      </p>
       {members && widthMm !== undefined && widthMm > 0 && (
         <details className="inspector-section" open>
           <summary>{t("assembly.sectionView")}</summary>
@@ -1340,7 +1459,7 @@ function TechnicalPanel({
                 <table className="tech-table">
                   <thead>
                     <tr>
-                      <th>{t("assembly.techSku")}</th>
+                      <th>Perfil</th>
                       <th>{t("assembly.techLength")}</th>
                       <th>{t("assembly.techQty")}</th>
                     </tr>
@@ -1348,8 +1467,10 @@ function TechnicalPanel({
                   <tbody>
                     {cuts.map((cut, index) => (
                       <tr key={`${cut.sku}-${index}`}>
-                        <td>{cut.sku}</td>
-                        <td>{Number(cut.length_mm).toFixed(0)}</td>
+                        <td title={cut.sku}>
+                          {names.get(cut.sku) ?? "Sin dato: falta el nombre del perfil"}
+                        </td>
+                        <td>{fmtMm(cut.length_mm)}</td>
                         <td>{cut.qty}</td>
                       </tr>
                     ))}
@@ -1370,9 +1491,12 @@ function TechnicalPanel({
                   <tbody>
                     {glasses.map((glass, index) => (
                       <tr key={`${glass.bay_id}-${index}`}>
-                        <td>{glass.article_sku ?? "—"}</td>
+                        <td title={glass.article_sku ?? undefined}>
+                          {names.get(glass.article_sku ?? "") ??
+                            "Sin dato: falta el nombre del vidrio"}
+                        </td>
                         <td>
-                          {Number(glass.width_mm).toFixed(0)} × {Number(glass.height_mm).toFixed(0)}
+                          {fmtMm(glass.width_mm)} × {fmtMm(glass.height_mm)} mm
                         </td>
                       </tr>
                     ))}
@@ -1393,9 +1517,11 @@ function TechnicalPanel({
                   <tbody>
                     {panels.map((panel, index) => (
                       <tr key={`${panel.bay_id}-${index}`}>
-                        <td>{panel.sku}</td>
+                        <td title={panel.sku}>
+                          {names.get(panel.sku) ?? "Sin dato: falta el nombre del panel"}
+                        </td>
                         <td>
-                          {Number(panel.width_mm).toFixed(0)} × {Number(panel.height_mm).toFixed(0)}
+                          {fmtMm(panel.width_mm)} × {fmtMm(panel.height_mm)} mm
                         </td>
                       </tr>
                     ))}
@@ -1409,14 +1535,14 @@ function TechnicalPanel({
                 <table className="tech-table">
                   <thead>
                     <tr>
-                      <th>{t("assembly.techSku")}</th>
+                      <th>Herraje</th>
                       <th>{t("assembly.techQty")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {fittings.map((fit, index) => (
                       <tr key={`${fit.sku}-${index}`}>
-                        <td>{fit.sku}</td>
+                        <td title={fit.sku}>{names.get(fit.sku) ?? domainLabel(fit.kind)}</td>
                         <td>{fit.qty}</td>
                       </tr>
                     ))}
@@ -1444,6 +1570,7 @@ function ModuleInspector({
   couplerSkus,
   busy,
   commit,
+  onOpeningPreview,
   onAskAssistant,
 }: {
   options?: DesignOptions;
@@ -1458,10 +1585,11 @@ function ModuleInspector({
   couplerSkus: string[];
   busy: boolean;
   commit(next: ProductJson): void;
+  onOpeningPreview(next: ProductJson | null): void;
   onAskAssistant?(): void;
 }): JSX.Element {
   const opening = moduleOpening(module);
-  const isDoor = opening === "DOOR_ENTRY";
+  const isDoor = opening === "DOOR_ENTRY" && !modulePrimaryBay(module)?.opening;
   const slidingBay = isSlidingOpening(opening) ? modulePrimaryBay(module) : null;
   const slidingLayout = slidingBay ? resolvedSlidingLayout(slidingBay) : null;
   const ordinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
@@ -1503,27 +1631,58 @@ function ModuleInspector({
       />
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
-        <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
-          {OPENING_OPTIONS.filter(
-            ([value]) => !options?.system_family || options.compatible_openings.includes(value),
-          ).map(([value, labelKey]) => (
-            <button
-              key={value}
-              type="button"
-              className={`opening-choice${opening === value ? " is-active" : ""}`}
-              title={t(labelKey)}
-              aria-label={t(labelKey)}
-              aria-pressed={opening === value}
-              disabled={busy}
-              onClick={() => commit(setModuleOpening(product, module.id, value))}
-            >
-              <svg viewBox="0 0 100 100" aria-hidden="true">
-                <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
-                <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
-              </svg>
-            </button>
-          ))}
-        </div>
+        {options?.opening_capabilities?.length && modulePrimaryBay(module) ? (
+          <OpeningPalette
+            options={options}
+            bay={modulePrimaryBay(module)!}
+            disabled={busy}
+            onPick={(patch) =>
+              commit(
+                setModuleTree(
+                  product,
+                  module.id,
+                  updateBay(module.tree, modulePrimaryBay(module)!.id, patch),
+                ),
+              )
+            }
+            onPreview={(patch) =>
+              onOpeningPreview(
+                patch
+                  ? setModuleTree(
+                      product,
+                      module.id,
+                      updateBay(module.tree, modulePrimaryBay(module)!.id, patch),
+                    )
+                  : null,
+              )
+            }
+          />
+        ) : (
+          <>
+            {" "}
+            <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
+              {OPENING_OPTIONS.filter(
+                ([value]) => !options?.system_family || options.compatible_openings.includes(value),
+              ).map(([value, labelKey]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`opening-choice${opening === value ? " is-active" : ""}`}
+                  title={t(labelKey)}
+                  aria-label={t(labelKey)}
+                  aria-pressed={opening === value}
+                  disabled={busy}
+                  onClick={() => commit(setModuleOpening(product, module.id, value))}
+                >
+                  <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
+                    <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
         <div className="inspector-actions">
           <button
             type="button"
@@ -1808,12 +1967,21 @@ export function AssemblyEditor({
   const specClipboard = useCanvasStore((state) => state.specClipboard);
   const lastMutation = useCanvasStore((state) => state.lastMutation);
   const product = inputs.product;
+  const [openingPreviewProduct, setOpeningPreviewProduct] = useState<ProductJson | null>(null);
+  const previewInputs = { ...inputs, product: openingPreviewProduct };
+  const openingPreview = useAssemblyCalculation(organizationId, previewInputs, false);
+  const previewReady =
+    openingPreviewProduct !== null && openingPreview.evaluation?.status === "VALID";
   const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
+  const drawingEvaluation = previewReady ? openingPreview.evaluation : evaluation;
   const issues = evaluation?.issues ?? [];
   const glassChecks = useGlassChecks(organizationId, product, options, evaluation);
   const members = useMemo(() => resolveMembers(options), [options]);
   const [tool, setTool] = useState<EditorTool>("select");
-  const [treeOpen, setTreeOpen] = useState(true);
+  const [treeOpen, setTreeOpen] = useState(
+    () =>
+      typeof window.matchMedia !== "function" || !window.matchMedia("(max-width: 1279px)").matches,
+  );
   /** Right-rail detail level — overview/design/technical over the same
    * selection; complexity stays hidden until the user asks for it. */
   const [detail, setDetail] = useState<DetailLevel>("design");
@@ -1928,6 +2096,8 @@ export function AssemblyEditor({
       product,
       selection,
       catalog: {
+        openingChoices: openingChoices(options),
+        compatibleOpenings: options?.compatible_openings,
         glassThicknesses: options?.glazing_thicknesses ?? [],
         glassSkus,
         glassSpecs: options?.glass_specs,
@@ -2244,6 +2414,16 @@ export function AssemblyEditor({
           }
         }}
       >
+        <span className="assembly-view-label">Vista interior</span>
+        {openingPreviewProduct && (
+          <span className="opening-preview-label" role="status">
+            {openingPreview.isPending
+              ? "Calculando vista previa…"
+              : previewReady
+                ? "Vista previa · elige para aplicar"
+                : "Esta composición requiere ajustar sus medidas o datos del catálogo"}
+          </span>
+        )}
         <CanvasViewport
           contentBox={frontBox}
           selectionBox={selectionBox}
@@ -2251,7 +2431,13 @@ export function AssemblyEditor({
           contentEpoch={contentEpoch}
         >
           <ProductFrontContent
-            product={product}
+            openingFacts={Object.fromEntries(
+              (drawingEvaluation?.modules ?? []).map((item) => [
+                item.module_id,
+                (item.result?.opening_leaves ?? []) as unknown as OpeningLeafFact[],
+              ]),
+            )}
+            product={previewReady ? openingPreviewProduct! : product}
             members={members}
             selectedId={selectedModule?.id ?? null}
             issues={issues}
@@ -2523,6 +2709,7 @@ export function AssemblyEditor({
         {detail === "technical" ? (
           <TechnicalPanel
             evaluation={evaluation}
+            options={options}
             moduleId={selectedBayModule?.id ?? selectedModule?.id}
             bayId={selectedBayNode && selectedBayModule ? selectedBayNode.id : null}
             moduleIndex={(moduleId) => modules.findIndex((module) => module.id === moduleId) + 1}
@@ -2541,11 +2728,12 @@ export function AssemblyEditor({
                 ],
                 [
                   t("assembly.opening"),
-                  t(
-                    OPENING_OPTIONS.find(
-                      ([value]) => value === moduleOpening(selectedModule),
-                    )?.[1] ?? "intent.fixed",
-                  ),
+                  physicalNodeLabel(modulePrimaryBay(selectedModule)!) ??
+                    t(
+                      OPENING_OPTIONS.find(
+                        ([value]) => value === moduleOpening(selectedModule),
+                      )?.[1] ?? "intent.fixed",
+                    ),
                 ],
                 [t("assembly.bayCount"), String(intentBays(selectedModule.tree).length)],
                 [
@@ -2562,11 +2750,12 @@ export function AssemblyEditor({
               rows={[
                 [
                   t("assembly.opening"),
-                  t(
-                    OPENING_OPTIONS.find(
-                      ([value]) => value === (selectedBayNode.opening_type ?? "FIXED"),
-                    )?.[1] ?? "intent.fixed",
-                  ),
+                  physicalNodeLabel(selectedBayNode) ??
+                    t(
+                      OPENING_OPTIONS.find(
+                        ([value]) => value === (selectedBayNode.opening_type ?? "FIXED"),
+                      )?.[1] ?? "intent.fixed",
+                    ),
                 ],
                 [
                   t("assembly.glass"),
@@ -2613,6 +2802,7 @@ export function AssemblyEditor({
           )
         ) : selectedModule ? (
           <ModuleInspector
+            onOpeningPreview={setOpeningPreviewProduct}
             options={options}
             evaluation={evaluation}
             module={selectedModule}
@@ -2633,6 +2823,7 @@ export function AssemblyEditor({
           />
         ) : selectedBayModule && selectedBayNode ? (
           <BayInspector
+            onOpeningPreview={setOpeningPreviewProduct}
             options={options}
             evaluation={evaluation}
             module={selectedBayModule}

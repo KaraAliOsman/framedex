@@ -34,6 +34,38 @@ from pricing.repository import admin_write
 pytestmark = pytest.mark.rls_integration
 
 
+@pytest.mark.parametrize("sku,net_mm", [("DEMO_60-VIDRIO-4", "4.00"),
+    ("DEMO_60-VIDRIO-4-16-4", "8.00")])
+def test_post_d02_notation_uses_the_same_authority_on_discovery_and_save(real_rows, sku, net_mm):
+    set_role(real_rows, "ESTIMATOR")
+    client = client_for(real_rows)
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=3")["id"]
+    options = client.get(f"/api/v1/projects/design-options/{system}/")
+    assert options.status_code == 200, options.data
+    choice = next(item for item in options.data["glass_specs"] if item["sku"] == sku)
+    project = client.post("/api/v1/projects/", {"name": "D03 historical glass notation",
+        "client_name": "Synthetic fixture"}, format="json")
+    assert project.status_code == 201, project.data
+    payload = {"quantity": 1, "location_tag": "Vidrio del catálogo", "design": {
+        "system_id": str(system), "nominal_width_mm": "1000", "nominal_height_mm": "1000",
+        "color": "WHITE", "parametric_tree": {"id": "B1", "type": "BAY", "opening_type": "FIXED",
+            "glass_article_sku": sku, "glass_product": choice["product"], "glass_spec": choice["spec"],
+            "glass_thickness_mm": choice["total_thickness_mm"], "sill_height_mm": "900"}}}
+    path = f"/api/v1/projects/{project.data['id']}/positions/"
+    saved = client.post(path, payload, format="json")
+    assert saved.status_code == 201, saved.data
+    reopened = client.get(f"/api/v1/positions/{saved.data['id']}/")
+    assert reopened.status_code == 200, reopened.data
+    assert reopened.data["design"]["parametric_tree"]["glass_product"] == choice["product"]
+    assert reopened.data["bom"]["glasses"][0]["thickness_net_mm"] == net_mm
+    forged = deepcopy(payload)
+    forged["design"]["parametric_tree"]["glass_product"]["properties"]["ug"] = {
+        "value": "1.1", "source": "Undeclared synthetic claim"}
+    rejected = client.post(path, forged, format="json")
+    assert rejected.status_code == 409, rejected.data
+    assert rejected.data["error"]["code"] == "glass_authority_changed"
+
+
 def test_structured_recipe_survives_save_price_freeze_and_supplier_order(documentary_tenant):
     org, _, users, _ = documentary_tenant
     owner = users["OWNER"]

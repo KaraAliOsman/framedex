@@ -1,6 +1,7 @@
 """Schema-backed manual catalogs and exact hardware component quantities."""
 
 from decimal import Decimal, InvalidOperation
+import json
 
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -16,13 +17,16 @@ from dekopen_engine.models import (
     polygon_self_intersects,
 )
 from catalogs.evidence import EVIDENCE_TABLES, EVIDENCE_SCOPES, EVIDENCE_UNITS
+from dekopen_engine.models import OpeningCapability, PairedLeafRule
+from pydantic import TypeAdapter
+from pricing.repository import json_text
 
 KIT_OPENING_TYPES = sorted(
     {
         normalize_opening_type(opening)
         for opening in SUPPORTED_OPENING_TYPES
         if opening is not BayOpeningType.FIXED
-    }
+    } | {"TILT"}
 )
 
 
@@ -133,10 +137,51 @@ class SystemDimensionalLimitSerializer(CompleteAuthoritySerializer):
         return attrs
 
 
+class OpeningAuthorityJSONField(serializers.JSONField):
+    """Nested catalog Decimals cross HTTP as exact strings, never JSON floats."""
+
+    def to_representation(self, value):
+        return json.loads(json_text(value))
+
+    def to_internal_value(self, value):
+        # CatalogJSONParser already preserves JSON numeric lexemes as Decimal;
+        # service validation also receives the first serializer's Decimals.
+        try:
+            value = json.loads(json_text(value))
+        except (TypeError, ValueError):
+            self.fail("invalid")
+        return super().to_internal_value(value)
+
+
 class SystemWriteSerializer(StrictSerializer):
     system_family = serializers.ChoiceField(choices=[item.value for item in SystemFamily])
     sliding_parameters = SlidingSystemParametersSerializer(required=False, allow_null=True)
     dimensional_limits = SystemDimensionalLimitSerializer(many=True, required=False)
+    opening_capabilities = OpeningAuthorityJSONField(required=False, allow_null=True)
+    paired_leaf_rule = OpeningAuthorityJSONField(required=False, allow_null=True)
+
+    def validate_opening_capabilities(self, value):
+        if value is None:
+            return None
+        try:
+            capabilities = TypeAdapter(tuple[OpeningCapability, ...]).validate_json(json_text(value))
+            if len(capabilities) > 100:
+                raise ValueError("Demasiadas capacidades.")
+            signatures = [(cap.use, cap.movement, cap.direction, cap.leaf_role, cap.fixed_in_sash, hinge)
+                          for cap in capabilities for hinge in cap.hinge_sides]
+            if len(signatures) != len(set(signatures)):
+                raise ValueError("Capacidades contradictorias.")
+            return [cap.model_dump() for cap in capabilities]
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Completa las capacidades con movimiento, bisagras, dirección, rol, herrajes y fuente.") from None
+
+    def validate_paired_leaf_rule(self, value):
+        if value is None:
+            return None
+        try:
+            return PairedLeafRule.model_validate_json(json_text(value)).model_dump()
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Completa los traslapes y descuentos del inversor con su fuente.") from None
 
     def validate(self, attrs):
         effective = {**(self.instance or {}), **attrs}
@@ -145,6 +190,13 @@ class SystemWriteSerializer(StrictSerializer):
                   "sliding_end_add_mm", "sliding_glazing_deduction_width_mm",
                   "sliding_glazing_deduction_height_mm", "rail_type")
         if family is not None:
+            for capability in effective.get("opening_capabilities") or []:
+                movement, use = capability["movement"], capability["use"]
+                if ((use == "DOOR") != (family == "DOOR") or
+                    family == "FACADE_FIXED" and movement != "FIXED" or
+                    family in ("SLIDING", "LIFT_SLIDE") and movement not in ("FIXED", "SLIDE", "LIFT_SLIDE") or
+                    family == "CASEMENT" and movement in ("SLIDE", "LIFT_SLIDE")):
+                    raise serializers.ValidationError({"opening_capabilities": "La capacidad no corresponde a esta familia de sistema."})
             if any(effective.get(key) is not None for key in legacy):
                 raise serializers.ValidationError({key: "Este parámetro vive en la ficha de corredera."
                     for key in legacy if effective.get(key) is not None})

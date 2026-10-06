@@ -30,6 +30,7 @@ from dekopen_engine import (
 )
 from pydantic import TypeAdapter
 from dekopen_engine.manufacturing import HandleRequirementPolicyV1, handle_policy_from_json
+from dekopen_engine.models import OpeningCapability, PairedLeafRule
 
 
 class SystemNotFound(LookupError):
@@ -118,12 +119,13 @@ class SystemParamsRepository:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, code, name, is_demo, system_family
-                FROM public.profile_systems
-                WHERE is_active = TRUE
+                SELECT id, code, name, is_demo, system_family FROM (
+                SELECT DISTINCT ON (org_id,code) id, code, name, is_demo, system_family, version
+                FROM public.profile_systems WHERE is_active = TRUE
                   AND system_family IS NOT NULL
                   AND NOT legacy_authority
                   AND (is_global = TRUE OR org_id = %s)
+                ORDER BY org_id,code,version DESC,id) versions
                 ORDER BY is_demo DESC, code ASC, id ASC
                 """,
                 [active_org_id],
@@ -154,7 +156,8 @@ class SystemParamsRepository:
                        sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
                        rail_count, rebate_depth_mm, end_milling_overlap_mm,
                        finishes::text, system_family, sliding_parameters::text,
-                       dimensional_limits::text, legacy_authority
+                       dimensional_limits::text, legacy_authority,
+                       opening_capabilities::text,paired_leaf_rule::text
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -182,6 +185,11 @@ class SystemParamsRepository:
                      if len(system) > 23 and system[23] is not None else None),
             dimensional_limits=(TypeAdapter(tuple[SystemDimensionalLimit, ...]).validate_json(str(system[24]))
                                 if len(system) > 24 and system[24] is not None else ()),
+            opening_capabilities=(TypeAdapter(tuple[OpeningCapability, ...]).validate_json(str(system[26]))
+                if len(system) > 26 and system[26] is not None else ()),
+            paired_leaf_rule=(PairedLeafRule.model_validate_json(str(system[27]))
+                if len(system) > 27 and system[27] is not None else None),
+            compatible_opening_systems=self.load_opening_systems(active_org_id) if len(system) > 26 else (),
             depth_mm=_decimal(system[1]),
             material=MaterialType(str(system[2])),
             effective_profile_articles=articles,
@@ -208,6 +216,15 @@ class SystemParamsRepository:
             available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
         )
+
+    def load_opening_systems(self, active_org_id: UUID) -> tuple[tuple[str, tuple[OpeningCapability, ...]], ...]:
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT DISTINCT ON (org_id,code) name,opening_capabilities::text
+                FROM public.profile_systems WHERE is_active AND opening_capabilities IS NOT NULL
+                AND (is_global OR org_id=%s) ORDER BY org_id,code,version DESC,id""", [active_org_id])
+            data = cursor.fetchall()
+        adapter = TypeAdapter(tuple[OpeningCapability, ...])
+        return tuple((str(row[0]), adapter.validate_json(str(row[1]))) for row in data)
 
     def _load_articles(
         self, system_id: UUID, active_org_id: UUID

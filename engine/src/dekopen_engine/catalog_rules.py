@@ -7,6 +7,7 @@ from dekopen_engine.models import (
     MaterialType, RailType, SlidingSystemParameters, SystemFamily, SystemParams,
 )
 from dekopen_engine.weight import MissingFabricationAuthority
+from dekopen_engine.openings import geometry_opening_type
 
 SLIDING_OPENINGS = frozenset({BayOpeningType.SLIDING, BayOpeningType.SLIDING_2L,
                              BayOpeningType.SLIDING_3L, BayOpeningType.SLIDING_4L})
@@ -40,15 +41,16 @@ def validate_family(root: ParametricNode, params: SystemParams) -> None:
     while pending:
         node = pending.pop()
         pending.extend(node.children)
-        if node.opening_type is not None and node.opening_type not in allowed:
+        opening = geometry_opening_type(node)
+        if opening is not None and opening not in allowed:
             compatible = [family.value for family, choices in FAMILY_OPENINGS.items()
-                          if node.opening_type in choices]
+                          if opening in choices]
             names = ", ".join(FAMILY_NAMES[SystemFamily(value)] for value in compatible)
             raise CatalogRuleError("system_family_incompatible",
                 f"El sistema {params.system_code} es {FAMILY_NAMES[params.system_family]} "
                 f"y no admite esta apertura. Elige un sistema de {names}.",
                 {"bay": node.id, "system": params.system_code,
-                 "family": params.system_family.value, "opening": node.opening_type.value,
+                 "family": params.system_family.value, "opening": opening.value,
                  "compatible_families": ",".join(compatible)})
 
 

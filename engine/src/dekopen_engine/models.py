@@ -81,6 +81,165 @@ class BayOpeningType(str, Enum):
     DOOR_DOUBLE = "DOOR_DOUBLE"
 
 
+class OpeningMovement(str, Enum):
+    FIXED = "FIXED"
+    TURN = "TURN"
+    TILT = "TILT"
+    TILT_TURN = "TILT_TURN"
+    TOP_HUNG = "TOP_HUNG"
+    BOTTOM_HUNG = "BOTTOM_HUNG"
+    SLIDE = "SLIDE"
+    LIFT_SLIDE = "LIFT_SLIDE"
+    PARALLEL_SLIDE = "PARALLEL_SLIDE"
+    FOLD = "FOLD"
+    PIVOT_V = "PIVOT_V"
+    PIVOT_H = "PIVOT_H"
+    VERTICAL_SLIDE = "VERTICAL_SLIDE"
+
+
+class HingeSide(str, Enum):
+    LEFT = "LEFT"
+    RIGHT = "RIGHT"
+    TOP = "TOP"
+    BOTTOM = "BOTTOM"
+    NONE = "NONE"
+
+
+class OpeningDirection(str, Enum):
+    INWARD = "INWARD"
+    OUTWARD = "OUTWARD"
+
+
+class LeafRole(str, Enum):
+    ACTIVE = "ACTIVE"
+    PASSIVE = "PASSIVE"
+    SINGLE = "SINGLE"
+
+
+class OpeningUse(str, Enum):
+    WINDOW = "WINDOW"
+    DOOR = "DOOR"
+
+
+class Opening(EngineModel):
+    """Physical motion; leaf count and window/door use belong to composition."""
+
+    movement: OpeningMovement
+    hinge_side: HingeSide
+    direction: OpeningDirection
+    leaf_role: LeafRole = LeafRole.SINGLE
+    fixed_in_sash: bool = False
+
+    @model_validator(mode="after")
+    def physical_motion(self) -> Opening:
+        if self.fixed_in_sash and self.movement is not OpeningMovement.FIXED:
+            raise ValueError("Solo un fijo puede estar instalado en hoja.")
+        if self.movement in (OpeningMovement.FIXED, OpeningMovement.SLIDE):
+            if self.hinge_side is not HingeSide.NONE or self.leaf_role is not LeafRole.SINGLE:
+                raise ValueError("Un fijo o una corredera no declara bisagras ni hoja activa/pasiva.")
+        elif self.movement in (OpeningMovement.TURN, OpeningMovement.TILT_TURN):
+            # NONE preserves the honest unknown handedness of old doors. New
+            # authoring requires LEFT/RIGHT at the capability boundary.
+            if self.hinge_side not in (HingeSide.LEFT, HingeSide.RIGHT, HingeSide.NONE):
+                raise ValueError("Una abatible necesita bisagras laterales.")
+        elif self.movement is OpeningMovement.TILT:
+            if self.hinge_side is not HingeSide.BOTTOM or self.direction is not OpeningDirection.INWARD:
+                raise ValueError("El abatimiento interior lleva bisagras abajo.")
+        elif self.movement is OpeningMovement.TOP_HUNG:
+            if self.hinge_side is not HingeSide.TOP or self.direction is not OpeningDirection.OUTWARD:
+                raise ValueError("La proyectante lleva bisagras arriba y abre hacia afuera.")
+        return self
+
+
+class HingedLeaf(EngineModel):
+    slot: Literal["LEFT", "RIGHT"]
+    opening: Opening
+    hardware_set_sku: str | None = None
+
+
+class HingedLayout(EngineModel):
+    """Two leaves meeting on an inversor, without a fixed central mullion."""
+
+    leaves: tuple[HingedLeaf, HingedLeaf]
+
+    @model_validator(mode="after")
+    def active_and_passive(self) -> HingedLayout:
+        left, right = self.leaves
+        if (left.slot, right.slot) != ("LEFT", "RIGHT"):
+            raise ValueError("Ordena las hojas izquierda y derecha en vista interior.")
+        if (left.opening.hinge_side, right.opening.hinge_side) != (HingeSide.LEFT, HingeSide.RIGHT):
+            raise ValueError("Las bisagras deben quedar en los extremos del marco.")
+        if {left.opening.leaf_role, right.opening.leaf_role} != {LeafRole.ACTIVE, LeafRole.PASSIVE}:
+            raise ValueError("La composición necesita una hoja activa y una pasiva con falleba.")
+        if any(leaf.opening.movement not in (OpeningMovement.TURN, OpeningMovement.TILT_TURN)
+               for leaf in self.leaves):
+            raise ValueError("La francesa necesita dos hojas practicables.")
+        if left.opening.direction is not right.opening.direction:
+            raise ValueError("Ambas hojas deben abrir hacia el mismo lado.")
+        if any(leaf.opening.fixed_in_sash for leaf in self.leaves):
+            raise ValueError("Una hoja de la francesa no puede ser fija.")
+        return self
+
+
+class PairedLeafRule(EngineModel):
+    meeting_overlap_mm: Decimal = Field(ge=0)
+    meeting_gap_mm: Decimal = Field(ge=0)
+    inversor_end_deduction_mm: Decimal = Field(ge=0)
+    source: str = Field(min_length=1)
+
+
+class OpeningHandleRule(EngineModel):
+    """Height relative to the physical leaf, never a guessed display fraction."""
+
+    vertical_reference: Literal["CENTER", "LEAF_BOTTOM", "LEAF_TOP"]
+    default_height_mm: Decimal | None = Field(default=None, ge=0)
+    minimum_from_top_mm: Decimal = Field(ge=0)
+    minimum_from_bottom_mm: Decimal = Field(ge=0)
+    closing_edge_offset_mm: Decimal = Field(ge=0)
+    source: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def declared_height(self) -> OpeningHandleRule:
+        if self.vertical_reference != "CENTER" and self.default_height_mm is None:
+            raise ValueError("La altura de manilla requiere un valor de la fuente.")
+        return self
+
+
+class OpeningCapability(EngineModel):
+    use: OpeningUse
+    movement: OpeningMovement
+    direction: OpeningDirection
+    leaf_role: LeafRole
+    fixed_in_sash: bool = False
+    hinge_sides: tuple[HingeSide, ...] = Field(min_length=1)
+    hardware_kit_skus: tuple[str, ...] = ()
+    handle_rule: OpeningHandleRule | None = None
+    source: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def declared_hardware(self) -> OpeningCapability:
+        for hinge in self.hinge_sides:
+            Opening(movement=self.movement, hinge_side=hinge, direction=self.direction,
+                    leaf_role=self.leaf_role, fixed_in_sash=self.fixed_in_sash)
+        if self.use is OpeningUse.DOOR and self.movement not in (OpeningMovement.FIXED, OpeningMovement.TURN):
+            raise ValueError("La capacidad de puerta debe declarar un giro o un fijo lateral.")
+        if self.movement is OpeningMovement.FIXED:
+            if self.hardware_kit_skus or self.handle_rule is not None:
+                raise ValueError("Un fijo no lleva herrajes de apertura ni manilla.")
+        elif not self.hardware_kit_skus:
+            raise ValueError("Declara los herrajes que respaldan esta capacidad.")
+        elif (self.movement is not OpeningMovement.SLIDE and self.leaf_role is not LeafRole.PASSIVE
+              and self.handle_rule is None):
+            raise ValueError("Declara la regla de manilla con su fuente.")
+        if self.leaf_role is LeafRole.PASSIVE and self.handle_rule is not None:
+            raise ValueError("La hoja pasiva lleva falleba, sin manilla de accionamiento.")
+        if len(self.hinge_sides) != len(set(self.hinge_sides)):
+            raise ValueError("Las bisagras de la capacidad están duplicadas.")
+        if len(self.hardware_kit_skus) != len(set(self.hardware_kit_skus)):
+            raise ValueError("Los herrajes de la capacidad están duplicados.")
+        return self
+
+
 class SlidingPanelKind(str, Enum):
     MOVING = "MOVING"  # rides a rail — a sliding sash leaf
     FIXED = "FIXED"  # glazed in-frame — an "O" panel
@@ -461,6 +620,11 @@ class SystemParams(EngineModel):
     sliding_glazing_deduction_height_mm: Decimal | None = None
     door_leaf_side_clearance_mm: Decimal
     available_panel_rules: dict[str, PanelRule] = Field(default_factory=dict)
+    opening_capabilities: tuple[OpeningCapability, ...] = ()
+    paired_leaf_rule: PairedLeafRule | None = None
+    # Visible compatible system names enrich refusals; this is presentation
+    # context, never a fabrication authority or a numeric input.
+    compatible_opening_systems: tuple[tuple[str, tuple[OpeningCapability, ...]], ...] = ()
 
     @property
     def uses_legacy_rules(self) -> bool:
@@ -468,6 +632,14 @@ class SystemParams(EngineModel):
 
     @model_validator(mode="after")
     def family_parameters(self) -> "SystemParams":
+        signatures: set[tuple[OpeningUse, OpeningMovement, OpeningDirection, LeafRole, bool, HingeSide]] = set()
+        for capability in self.opening_capabilities:
+            for hinge in capability.hinge_sides:
+                signature = (capability.use, capability.movement, capability.direction,
+                             capability.leaf_role, capability.fixed_in_sash, hinge)
+                if signature in signatures:
+                    raise ValueError("El catálogo declara capacidades de apertura contradictorias.")
+                signatures.add(signature)
         if self.uses_legacy_rules:
             for name in ("sliding_glazing_deduction_width_mm", "sliding_glazing_deduction_height_mm"):
                 if getattr(self, name) is None:
@@ -496,6 +668,9 @@ class ParametricNode(EngineModel):
     mullion_profile_sku: str | None = None
     children: list[ParametricNode] = Field(default_factory=list)
     opening_type: BayOpeningType | None = None
+    opening: Opening | None = None
+    opening_use: OpeningUse | None = None
+    hinged_layout: HingedLayout | None = None
     glass_thickness_mm: Decimal | None = None
     glass_spec: str | None = None
     glass_article_sku: str | None = None
@@ -523,6 +698,14 @@ class ParametricNode(EngineModel):
             if thickness is None or thickness != self.glass_thickness_mm:
                 raise ValueError("El espesor del junquillo debe ser el espesor total de la composición.")
         return self
+
+    @model_serializer(mode="wrap")
+    def preserve_legacy_presence(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        for key in ("opening", "opening_use", "hinged_layout"):
+            if key not in self.model_fields_set:
+                result.pop(key, None)
+        return result
 
 
 class ProfileCut(EngineModel):
@@ -565,6 +748,31 @@ class ReinforcementPiece(EngineModel):
     sagitta_mm: Decimal | None = None
 
 
+class OpeningHandleFact(EngineModel):
+    side: HingeSide
+    x_mm: Decimal
+    y_mm: Decimal
+    height_from_bottom_mm: Decimal
+    minimum_height_from_bottom_mm: Decimal
+    maximum_height_from_bottom_mm: Decimal
+    minimum_from_top_mm: Decimal
+    maximum_from_top_mm: Decimal
+    source: str
+
+
+class LeafOpeningFact(EngineModel):
+    bay_id: str
+    leaf_id: str | None
+    opening: Opening
+    use: OpeningUse
+    x_mm: Decimal
+    y_mm: Decimal
+    width_mm: Decimal
+    height_mm: Decimal
+    handle: OpeningHandleFact | None
+    source: str
+
+
 class EngineResult(EngineModel):
     profile_cuts: list[ProfileCut]
     reinforcements: list[ReinforcementPiece]
@@ -573,3 +781,11 @@ class EngineResult(EngineModel):
     fittings: list[FittingPiece] = Field(default_factory=list)
     hardware_items: list[HardwareItem] = Field(default_factory=list)
     leaf_weights: list[LeafWeight] = Field(default_factory=list)
+    opening_leaves: list[LeafOpeningFact] = Field(default_factory=list)
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_bom(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        if "opening_leaves" not in self.model_fields_set:
+            result.pop("opening_leaves", None)
+        return result

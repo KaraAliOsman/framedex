@@ -15,6 +15,8 @@ export interface PatchedSystemWriteRequest {
   system_family?: SystemFamilyEnum;
   sliding_parameters?: SlidingSystemParametersRequest | null;
   dimensional_limits?: SystemDimensionalLimitRequest[];
+  opening_capabilities?: unknown | null;
+  paired_leaf_rule?: unknown | null;
   /**
    * @minLength 1
    * @maxLength 150

@@ -9,7 +9,8 @@ import type {
   DesignOpState,
 } from "../commands/types";
 import type { IntentNode, Opening } from "./intentEditing";
-import { baySpec, findNode, parentSplitOf } from "./intentEditing";
+import { baySpec, findNode, parentSplitOf, updateBay } from "./intentEditing";
+import { choicePatch, physicalNodeLabel, structuredOpeningPatch } from "./physicalOpenings";
 import { OPENING_OPTIONS } from "./openings";
 import { runCommand } from "../commands/registry";
 import { unlinkCoupling, usedEdges } from "./assemblyGraph";
@@ -25,6 +26,7 @@ import {
   insertModuleBetween,
   moduleGlassThicknessMm,
   moduleNeighbors,
+  modulePrimaryBay,
   modulePanelSku,
   removeModuleBay,
   removeModuleDivision,
@@ -412,26 +414,56 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     title: "cmd.setOpening",
     keywords: ["apertura", "hoja", "fijo", "oscilobatiente", "puerta", "corredera"],
     applicable: (ctx) => selectedModule(ctx) !== null,
-    params: () => [
+    params: (ctx) => [
       {
         kind: "choice",
         id: "opening",
         label: t("cmd.openingLabel"),
-        options: OPENING_OPTIONS.map(([value, key]) => ({ value, label: t(key) })),
+        options: ctx.catalog.openingChoices?.length
+          ? ctx.catalog.openingChoices.map((choice) => ({
+              value: JSON.stringify(choicePatch(choice)),
+              label: choice.label,
+            }))
+          : OPENING_OPTIONS.filter(
+              ([value]) =>
+                !ctx.catalog.compatibleOpenings?.length ||
+                ctx.catalog.compatibleOpenings.includes(value),
+            ).map(([value, key]) => ({ value, label: t(key) })),
       },
     ],
     apply: (ctx, args) => {
       const id = args.module ?? selectedModule(ctx)?.id;
+      if (id && args.opening?.startsWith("{")) {
+        const module = ctx.product.assembly.modules.find((item) => item.id === id);
+        const bay = module ? modulePrimaryBay(module) : null;
+        try {
+          const patch = structuredOpeningPatch(JSON.parse(args.opening));
+          return module && bay && patch
+            ? setModuleTree(ctx.product, id, updateBay(module.tree, bay.id, patch))
+            : ctx.product;
+        } catch {
+          return ctx.product;
+        }
+      }
       return id && args.opening
         ? setModuleOpening(ctx.product, id, args.opening as Opening)
         : ctx.product;
     },
-    describe: (args) =>
-      `${moduleLabel(args)}: ${OPENING_LABELS[args.opening as Opening] ?? args.opening ?? "?"}`,
+    describe: (args) => {
+      try {
+        const patch = structuredOpeningPatch(JSON.parse(args.opening ?? ""));
+        if (patch?.opening)
+          return `${moduleLabel(args)}: ${physicalNodeLabel({ ...patch, id: "opening-proposal", type: "BAY" })}`;
+      } catch {
+        /* Legacy transport has a human label below. */
+      }
+      return `${moduleLabel(args)}: ${OPENING_LABELS[args.opening as Opening] ?? "Apertura sin dato"}`;
+    },
     ai: {
       op: "set_opening",
       decode: (op, product, state) => {
-        const opening = text(op.opening);
+        const physical = structuredOpeningPatch(op);
+        const opening = physical ? JSON.stringify(physical) : text(op.opening);
         return opening ? decodeModule(op, product, state, { opening }) : null;
       },
     },

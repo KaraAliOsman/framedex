@@ -41,6 +41,11 @@ Opening symbols must communicate:
 
 A stylish but ambiguous symbol is a defect.
 
+D03 implements sourced physical motion and active/passive compositions with
+matching engine handles and interior-view drawings. The historical icon board
+has the opposite apex convention; constitution §3.6 governs the current product.
+See [physical openings](physical-openings.md) for verified behavior and limits.
+
 Use one coherent grammar across Studio, quotations and manufacturing documents, with deliberate simplification by audience.
 
 ## Composition

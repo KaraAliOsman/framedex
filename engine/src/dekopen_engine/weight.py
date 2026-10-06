@@ -89,7 +89,7 @@ def base_leaf_weight(
     reasons: list[str] = []
     for cut in profile_cuts:
         if cut.role not in (ProfileRole.SASH, ProfileRole.SLIDING_SASH,
-                            ProfileRole.DOOR_SASH, ProfileRole.INTERLOCK):
+                            ProfileRole.DOOR_SASH, ProfileRole.INTERLOCK, ProfileRole.INVERSOR):
             continue
         article = params.effective_profile_articles[cut.role]
         if article.sku != cut.sku:
@@ -104,7 +104,7 @@ def base_leaf_weight(
             pvc = _accumulate(pvc, cut.length_mm / _METRE * cut.qty * density)
     for piece in reinforcements:
         if piece.role not in (ProfileRole.SASH, ProfileRole.SLIDING_SASH,
-                              ProfileRole.DOOR_SASH, ProfileRole.INTERLOCK):
+                              ProfileRole.DOOR_SASH, ProfileRole.INTERLOCK, ProfileRole.INVERSOR):
             continue
         article = params.effective_profile_articles[piece.role]
         if article.sku != piece.parent_profile_sku:

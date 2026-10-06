@@ -2,7 +2,7 @@
 from uuid import UUID, uuid4
 import json
 import pytest
-from django.db import DatabaseError, transaction
+from django.db import DatabaseError, connection, transaction
 from authentication.errors import ContractAPIException
 from authentication.rls import catalog_backend
 from backend.tests.catalog_interchange_fixture import catalog_rows
@@ -80,6 +80,47 @@ def test_nine_sheet_publication_atomic_provenance_and_undo(documentary_tenant):
             assert len(rows("SELECT mapping_id FROM public.catalog_glass_retractions WHERE org_id=%s",[org]))==len(history)
             with pytest.raises(DatabaseError), transaction.atomic():
                 one("UPDATE public.glass_purchase_mappings SET id=id WHERE id=%s RETURNING id",[history[0]["id"]])
+
+
+def test_physical_catalog_publication_and_full_retirement_keep_active_guards(documentary_tenant):
+    from catalogs.demo_openings import opening_manifest
+    from dekopen_engine.models import OpeningCapability
+
+    org, _, users, _ = documentary_tenant
+    actor = users["OWNER"]
+    candidates = catalog_rows()
+    capabilities = next(row["params"]["opening_capabilities"] for row in opening_manifest() if row["code"] == "DEMO_60")
+    values = candidates[0]["values"]
+    values.update(opening_capabilities=[cap for cap in capabilities
+        if cap["leaf_role"] == "SINGLE" and cap["movement"] in ("FIXED", "TURN") and not cap["fixed_in_sash"]],
+        paired_leaf_rule=None, chamber_clearance_mm=None)
+    import_id, items = imported(org, actor, candidates)
+    with as_user(actor):
+        diff = catalog_review.preview(org_id=org, import_id=import_id, items=items)
+        assert not diff["errors"], diff["errors"]
+        published = catalog_review.publish(org_id=org, actor_id=actor, import_id=import_id,
+            items=items, review_token=diff["review_token"])
+        assert not published["errors"]
+        with connection.cursor() as cursor:
+            cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
+        system = next(row for row in service.list_rows(service.SYSTEMS, org) if row["code"] == "PROVEEDOR-60")
+        assert [OpeningCapability.model_validate_json(json_text(cap)) for cap in system["opening_capabilities"]] == [
+            OpeningCapability.model_validate_json(json_text(cap)) for cap in values["opening_capabilities"]]
+        with pytest.raises(DatabaseError), transaction.atomic(), catalog_backend():
+            one("UPDATE public.hardware_kits SET is_active=FALSE WHERE system_id=%s AND sku='DEMO_60-KIT-TURN' RETURNING id", [system["id"]])
+        with connection.cursor() as cursor:
+            cursor.execute("SET CONSTRAINTS ALL DEFERRED")
+        undone = catalog_review.undo_publication(org_id=org, actor_id=actor, import_id=import_id)
+        assert undone["import"]["status"] == "UNDONE"
+        with connection.cursor() as cursor:
+            cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
+        retired = service.retrieve(service.SYSTEMS, org, system["id"])
+        assert not retired["is_active"]
+        assert retired["opening_capabilities"] == system["opening_capabilities"]
+        assert not rows("SELECT id FROM public.hardware_kits WHERE system_id=%s AND is_active", [system["id"]])
+        assert len(rows("SELECT id FROM public.catalog_import_publications WHERE import_id=%s", [import_id])) == 2
+        with pytest.raises(DatabaseError), transaction.atomic(), catalog_backend():
+            one("UPDATE public.profile_systems SET is_active=TRUE WHERE id=%s RETURNING id", [system["id"]])
 
 def test_no_bypass_and_error_prevents_every_write(documentary_tenant):
     org,_,users,_=documentary_tenant

@@ -28,6 +28,8 @@ export interface SystemResponse {
     (typeof SystemResponseSystemFamily)[keyof typeof SystemResponseSystemFamily] | null;
   sliding_parameters?: SlidingSystemParameters | null;
   dimensional_limits?: SystemDimensionalLimit[];
+  opening_capabilities?: unknown | null;
+  paired_leaf_rule?: unknown | null;
   /** @maxLength 150 */
   name: string;
   /** @maxLength 50 */

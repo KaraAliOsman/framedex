@@ -119,6 +119,11 @@ def inspect(data: InspectorInput, config: InspectorConfig) -> InspectorResult:
 
     for leaf in data.computation.leaves:
         bay, leaf_id = leaf.bay_id, leaf.leaf_id
+        if leaf.opening_type is BayOpeningType.FIXED:
+            # Fixed-in-sash has mass and glazing, but no moving hardware.
+            for rule in ("R01", "R02", "R03", "R08", "R11"):
+                record(rule, _NA, bay, leaf_id)
+            continue
         kit = leaf.selected_kit
         weight = leaf.exact_weight
         candidates = [c for c in leaf.candidates if c.opening_match and c.rail_match]
@@ -164,7 +169,8 @@ def inspect(data: InspectorInput, config: InspectorConfig) -> InspectorResult:
             state = (_MISSING if opening is None else _NA if opening.width_mm <= config.R12.width_trigger_mm
                      else _MISSING if ix is None else _FAIL if ix < config.R12.minimum_ix_cm4 else _PASS)
             record("R12", state, bay, leaf_id)
-        if leaf.opening_type is BayOpeningType.AWNING:
+        if leaf.opening_type is BayOpeningType.AWNING and (
+                leaf.opening is None or leaf.opening.movement.value == "TOP_HUNG"):
             state = (_PASS if h <= config.R13.height_trigger_mm else _MISSING if kit is None else
                      _FAIL if kit.stay_arms_qty < config.R13.required_stay_arms else _PASS)
             record("R13", state, bay, leaf_id)

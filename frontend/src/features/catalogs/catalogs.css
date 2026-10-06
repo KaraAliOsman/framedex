@@ -26,6 +26,13 @@
   color: var(--theme-text-secondary);
   line-height: 1.5;
 }
+.catalog-layout[hidden] {
+  display: none;
+}
+.catalog-review-field > div,
+.catalog-diff-values > div > * {
+  min-width: 0;
+}
 
 .catalog-heading,
 .catalog-toolbar {
@@ -44,6 +51,11 @@
 
 .catalog-status {
   min-height: 1.75rem;
+}
+.catalog-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .catalog-layout {
@@ -171,6 +183,31 @@
   width: 100%;
   min-width: 0;
   padding: 0.4rem 0.5rem;
+}
+
+.catalog input[type="checkbox"] {
+  width: var(--space-16px);
+  height: var(--space-16px);
+  min-height: var(--space-16px);
+  margin: 0;
+  padding: 0;
+  accent-color: var(--interactive-fill);
+}
+.catalog label:has(> input[type="checkbox"]) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  max-width: 100%;
+  margin-inline-end: var(--space-3);
+  vertical-align: middle;
+}
+.catalog label:has(> input[type="checkbox"]) > input {
+  flex: 0 0 var(--space-16px);
+}
+.catalog input[inputmode="decimal"] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .catalog-table-scroll {
@@ -992,4 +1029,19 @@
   .catalog-import-entry {
     flex-direction: column;
   }
+}
+.ws-technical-code {
+  min-width: 0;
+  max-width: 100%;
+}
+.ws-technical-code summary {
+  cursor: pointer;
+  min-height: var(--control-height);
+  color: var(--theme-accent-ink);
+}
+.ws-technical-code code {
+  display: block;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--type-dense);
 }

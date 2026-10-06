@@ -28,6 +28,7 @@ from dekopen_engine.inspection_models import (
 )
 from dekopen_engine.inspector import inspect
 from dekopen_engine.manufacturing import (
+    handle_rules_for_leaf,
     HandleIntentV1,
     HandleRequirementPolicyV1,
     ManufacturingFactsV1,
@@ -46,7 +47,7 @@ from dekopen_engine.product import (
     frameless_module_computation,
 )
 from dekopen_engine.purchasing import (
-    FittingSelectionV1,
+    fitting_selections_v1,
     HardwareSelectionV1,
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
@@ -189,28 +190,7 @@ def _handle_rules_for_leaf(
     handedness matches, and pinned rules win over wildcards when both
     match. Keeping the predicate in one place keeps the preparation UI and
     the freeze-time projection agreeing on which intents are required."""
-    matching = [
-        rule
-        for rule in slots
-        if rule.opening_type is leaf.opening_type
-        and (rule.leaf_slot is None or rule.leaf_slot == leaf.leaf_slot)
-        and (rule.leaf_handedness is None or rule.leaf_handedness == leaf.door_handedness)
-    ]
-    if leaf.door_handedness is not None:
-        # Pinned rules win per domain slot only — a wildcard rule for a
-        # slot with no pinned entry must still match.
-        pinned_slots = {
-            rule.handle_domain_slot
-            for rule in matching
-            if rule.leaf_handedness == leaf.door_handedness
-        }
-        matching = [
-            rule
-            for rule in matching
-            if rule.leaf_handedness is not None
-            or rule.handle_domain_slot not in pinned_slots
-        ]
-    return matching
+    return handle_rules_for_leaf(slots, leaf)
 
 
 def _missing_handle_intents(
@@ -323,6 +303,10 @@ def _handle_policy_requirements(
                         }
                     ),
                     "leaf_rects": _leaf_rects(leaf, placement_authorities),
+                    **({"default_height_mm": str(leaf.opening_handle.height_from_bottom_mm),
+                        "default_height_from_leaf_top_mm": str(leaf.opening_handle.y_mm),
+                        "default_vertical_reference": "LEAF_BOTTOM", "source": leaf.opening_handle.source}
+                       if leaf.opening_handle is not None else {}),
                 }
             )
             continue
@@ -335,6 +319,10 @@ def _handle_policy_requirements(
                     "opening_type": leaf.opening_type.value,
                     "handle_domain_slot": rule.handle_domain_slot,
                     "host_member_side": rule.host_member_side.value,
+                    **({"default_height_mm": str(leaf.opening_handle.height_from_bottom_mm),
+                        "default_height_from_leaf_top_mm": str(leaf.opening_handle.y_mm),
+                        "default_vertical_reference": "LEAF_BOTTOM", "source": leaf.opening_handle.source}
+                       if leaf.opening_handle is not None else {}),
                     "requires_handedness": False,
                     "outer_height_mm": str(item["nominal_height_mm"]),
                     "mounting_min_from_leaf_top_mm": str(
@@ -378,14 +366,17 @@ def _synthesized_handle_intents(
         children = node.get("children")
         if isinstance(children, list):
             stack.extend(children)
-    if not declared:
-        return intents
     covered = {
         (item.bay_id, item.leaf_id, item.handle_domain_slot) for item in intents
     }
     merged = list(intents)
     for leaf in trace.leaves:
-        height = declared.get(leaf.bay_id)
+        if leaf.opening is not None:
+            if leaf.opening_handle is None:
+                continue
+            height = leaf.opening_handle.height_from_bottom_mm
+        else:
+            height = declared.get(leaf.bay_id)
         if height is None or (leaf.bay_id, leaf.leaf_id, "PRIMARY") in covered:
             continue
         merged.append(HandleIntentV1(
@@ -393,7 +384,7 @@ def _synthesized_handle_intents(
             leaf_id=leaf.leaf_id,
             handle_domain_slot="PRIMARY",
             requested_height_mm=height,
-            vertical_reference=VerticalReference.OUTER_BOTTOM,
+            vertical_reference=VerticalReference.LEAF_BOTTOM if leaf.opening is not None else VerticalReference.OUTER_BOTTOM,
         ))
     return merged
 
@@ -1330,14 +1321,7 @@ def freeze_revision_a(
                 quantity=item.qty,
                 contents=item.contents,
             ) for repetition in range(1, quantity + 1) for item in result.hardware_items]
-            fittings = [FittingSelectionV1(
-                repetition_index=repetition,
-                bay_id=item.bay_id,
-                leaf_id=item.leaf_id,
-                technical_sku=item.sku,
-                kind=item.kind,
-                quantity=item.qty,
-            ) for repetition in range(1, quantity + 1) for item in result.fittings]
+            fittings = fitting_selections_v1(result.fittings, quantity)
             polishing = glass_polishing(position["glass_polishing"])
             glass_targets = {
                 (
@@ -1429,6 +1413,8 @@ def freeze_revision_a(
                 "price_net": D(str(position["price_net"])),
                 "discount_pct": str(position["discount_pct"]),
                 "parametric_tree": tree,
+                **({"opening_leaves": current_bom["opening_leaves"]}
+                   if current_bom.get("opening_leaves") else {}),
                 "workshop_annotations": [item.model_dump(mode="python") for item in annotations],
                 "structural_inputs": [item.model_dump(mode="python") for item in structural],
                 "glass_polishing": [item.model_dump(mode="python") for item in polishing],
@@ -2196,6 +2182,7 @@ def _compare_position(row: dict[str, object]) -> dict[str, object]:
         "price_net": str(row.get("price_net") or ""),
         "discount_pct": str(row.get("discount_pct") or ""),
         "parametric_tree": row.get("parametric_tree"),
+        **({"opening_leaves": row["opening_leaves"]} if row.get("opening_leaves") else {}),
         "calculation_hash": str(row.get("calculation_hash") or ""),
         "documentary_signature": documentary_canonical_json_v1(
             {key: row.get(key) for key in _DOCUMENTARY_SLICE}

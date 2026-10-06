@@ -44,6 +44,7 @@ from dekopen_engine.geometry import (
 from dekopen_engine.glass import derive_net_glass_thickness, glass_piece_metadata
 from dekopen_engine.glass_composition import glass_mass_per_m2, net_glass_thickness
 from dekopen_engine.hardware import NoCompatibleHardwareKit
+from dekopen_engine.openings import OpeningCapabilityError
 from dekopen_engine.manufacturing_trace import (
     Axis,
     GeometryManufacturingTraceV1,
@@ -983,7 +984,7 @@ def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
     def leaf(leaf_id: str | None) -> str | None:
         return f"{prefix}{leaf_id}" if leaf_id is not None else None
 
-    return EngineResult(
+    prefixed = EngineResult(
         profile_cuts=[
             cut.model_copy(
                 update={"bay_id": bay(cut.bay_id), "leaf_id": leaf(cut.leaf_id)}
@@ -1039,6 +1040,11 @@ def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
             for weight in result.leaf_weights
         ],
     )
+    if "opening_leaves" in result.model_fields_set:
+        prefixed = prefixed.model_copy(update={"opening_leaves": [fact.model_copy(
+            update={"bay_id": bay(fact.bay_id), "leaf_id": leaf(fact.leaf_id)})
+            for fact in result.opening_leaves]})
+    return prefixed
 
 
 def _single_region_leaf(tree: ParametricNode) -> ParametricNode | None:
@@ -1881,7 +1887,7 @@ def evaluate_product(
                     params=issue_params,
                 )
             )
-        except (SlidingLayoutError, CatalogRuleError) as error:
+        except (SlidingLayoutError, CatalogRuleError, OpeningCapabilityError) as error:
             module_issues.append(
                 ProductIssue(
                     code=error.code,
@@ -2191,6 +2197,9 @@ def evaluate_product(
                 weight for r in aggregated for weight in r.leaf_weights
             ],
         )
+        if any("opening_leaves" in result.model_fields_set for result in aggregated):
+            bom = bom.model_copy(update={"opening_leaves": [
+                fact for result in aggregated for fact in result.opening_leaves]})
 
     if any(issue.severity is Severity.ERROR for issue in issues):
         status = ProductStatus.INVALID

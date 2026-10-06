@@ -19647,6 +19647,11 @@ components:
           type: array
           items:
             type: string
+        opening_capabilities:
+          type: array
+          items: {}
+        paired_leaf_rule:
+          nullable: true
         dimensional_limits:
           type: array
           items:
@@ -20393,6 +20398,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LeafWeight'
+        opening_leaves:
+          type: array
+          items: {}
         calculation_hash:
           type: string
           pattern: ^sha256:[0-9a-f]{64}$
@@ -20565,6 +20573,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LeafWeight'
+        opening_leaves:
+          type: array
+          items: {}
       required:
       - fittings
       - glasses
@@ -21526,6 +21537,14 @@ components:
         requires_handedness:
           type: boolean
           default: false
+        default_height_mm:
+          type: string
+        default_height_from_leaf_top_mm:
+          type: string
+        default_vertical_reference:
+          type: string
+        source:
+          type: string
         outer_height_mm:
           type: string
           format: decimal
@@ -21649,10 +21668,14 @@ components:
       enum:
       - LEFT
       - RIGHT
+      - TOP
+      - BOTTOM
       type: string
       description: |-
         * `LEFT` - LEFT
         * `RIGHT` - RIGHT
+        * `TOP` - TOP
+        * `BOTTOM` - BOTTOM
     ImportConfirmRequest:
       type: object
       properties:
@@ -22289,6 +22312,7 @@ components:
       - AWNING
       - DOOR
       - SLIDING
+      - TILT
       - TILT_TURN
       - TURN
       type: string
@@ -22296,6 +22320,7 @@ components:
         * `AWNING` - AWNING
         * `DOOR` - DOOR
         * `SLIDING` - SLIDING
+        * `TILT` - TILT
         * `TILT_TURN` - TILT_TURN
         * `TURN` - TURN
     KitResponse:
@@ -23756,6 +23781,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SystemDimensionalLimitRequest'
+        opening_capabilities:
+          nullable: true
+        paired_leaf_rule:
+          nullable: true
         name:
           type: string
           minLength: 1
@@ -28049,6 +28078,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SystemDimensionalLimit'
+        opening_capabilities:
+          nullable: true
+        paired_leaf_rule:
+          nullable: true
         name:
           type: string
           maxLength: 150
@@ -28271,6 +28304,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SystemDimensionalLimitRequest'
+        opening_capabilities:
+          nullable: true
+        paired_leaf_rule:
+          nullable: true
         name:
           type: string
           minLength: 1

@@ -1176,3 +1176,48 @@ IF EXISTS (SELECT 1 FROM information_schema.columns
     ON CONFLICT (id) DO NOTHING;
 END IF;
 END $d01_seed$;
+
+-- On an empty installation the historical sources above do not exist when
+-- the D03 migration runs. Complete its synthetic copies after those sources
+-- have been seeded; never rewrite an existing policy or its history.
+DO $d03_seed$ BEGIN
+IF EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='profile_systems'
+      AND column_name='legacy_authority') THEN
+    INSERT INTO public.inspector_rule_configs(id,system_id,org_id,rule_id,params)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v3/'||s.code||'/inspection/'||r.rule_id),
+        s.id,NULL,r.rule_id,r.params
+    FROM public.profile_systems s CROSS JOIN public.inspector_rule_configs r
+    WHERE s.is_global AND s.is_demo AND s.version=3 AND s.org_id IS NULL
+      AND s.code IN ('DEMO_60','DEMO_70','DEMO_CORREDERA_60','DEMO_ALU_CORREDERA','DEMO_ALU_PRACTICABLE','DEMO_PUERTA_70')
+      AND r.system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND r.org_id IS NULL
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.manufacturing_placement_policies(id,system_id,org_id,version,authority)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v3/'||s.code||'/manufacturing_placement_policies'),
+        s.id,NULL,p.version,jsonb_set(p.authority,'{policy_id}',to_jsonb(s.code||'_DEMO_V3'))
+    FROM public.profile_systems s CROSS JOIN LATERAL (
+        SELECT version,authority FROM public.manufacturing_placement_policies
+        WHERE system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND org_id IS NULL
+        ORDER BY version DESC,id LIMIT 1
+    ) p
+    WHERE s.is_global AND s.is_demo AND s.version=3 AND s.org_id IS NULL
+      AND s.code IN ('DEMO_60','DEMO_70','DEMO_CORREDERA_60','DEMO_ALU_CORREDERA','DEMO_ALU_PRACTICABLE','DEMO_PUERTA_70')
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.handle_requirement_policies(id,system_id,org_id,version,authority)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v3/'||s.code||'/handle_requirement_policies'),
+        s.id,NULL,p.version,jsonb_set(p.authority,'{policy_id}',to_jsonb(s.code||'_DEMO_V3'))
+    FROM public.profile_systems s CROSS JOIN LATERAL (
+        SELECT version,authority FROM public.handle_requirement_policies
+        WHERE system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND org_id IS NULL
+        ORDER BY version DESC,id LIMIT 1
+    ) p
+    WHERE s.is_global AND s.is_demo AND s.version=3 AND s.org_id IS NULL
+      AND s.code IN ('DEMO_60','DEMO_70','DEMO_CORREDERA_60','DEMO_ALU_CORREDERA','DEMO_ALU_PRACTICABLE','DEMO_PUERTA_70')
+    ON CONFLICT (id) DO NOTHING;
+END IF;
+END $d03_seed$;
