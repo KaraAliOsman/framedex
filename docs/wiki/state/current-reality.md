@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-06
 volatility: high
-verified_ref: codex/D03-aperturas-tipologias
+verified_ref: 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd
 sources:
   - repository main
   - P00 foundation PR #114
@@ -22,7 +22,7 @@ sources:
 
 # Current reality
 
-## D03 physical openings verified on its work branch, 2026-10-06
+## D03 physical openings merged and verified, 2026-10-06
 
 Physical motion is independent of composition and window/door use. Twenty-one
 variants have exact cut/hardware/leaf-weight goldens. Legacy enum transports keep
@@ -53,7 +53,8 @@ See [physical openings](../product/physical-openings.md),
 tests, eleven Chromium flows and populated PostgreSQL 16 upgrades. Full-route
 captures have no new findings; the existing payment integration 403 and mobile
 editor/project overflow remain documented for P04/P08. PR/merge completion is
-recorded after its four CI checks pass.
+recorded in PR #121, squash `8aa84f7ec8bb15bc7ca7117811cb77e862da04bd` on
+`integracion/v1`; all four CI checks pass on the final reviewed head.
 
 Structured door use preserves glass safety in preview, persisted edits and
 repricing. Six browser captures and live integration cover mandatory rules;

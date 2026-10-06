@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-06
 volatility: medium
-verified_ref: codex/D03-aperturas-tipologias
+verified_ref: 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd
 sources:
   - engine/src/dekopen_engine/openings.py
   - engine/src/dekopen_engine/models.py

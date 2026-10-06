@@ -212,3 +212,10 @@ vista previa, guardado y precio conservan seguridad; las parejas se filtran por
 capacidad completa. Gates locales: 581 motor, 1 161 backend, 717 frontend,
 986 pgTAP, 287 integración, 11 Chromium y upgrades poblados PASS. El navegador
 comprueba la puerta en seis tamaños/temas y restaura las reglas del fixture.
+
+## 2026-10-06 — D03 integrado
+
+PR #121 mergeado con squash 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd
+en integracion/v1. Lint & Typecheck, Test Suite, Frontend Build y Database Gate
+PASA en la revisión final. Estado y referencias de verificación actualizados;
+procesos propios de Django, worker y Vite detenidos. D04 es el siguiente encargo.
