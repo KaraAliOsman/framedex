@@ -650,10 +650,8 @@ def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
 
 
 def _position_finish(position: Mapping[str, object]) -> str:
-    interior, exterior = position.get("color_interior"), position.get("color_exterior")
-    if interior == exterior and isinstance(interior, str):
-        return interior
-    return "FOILED"
+    from projects.finishes import position_finish_code
+    return position_finish_code(position)
 
 
 def _position_calculations(
@@ -673,6 +671,9 @@ def _position_calculations(
     module recomputes on its own tree, the ``module.id`` becoming the
     ``"<module_id>|<id>"`` namespace used by the persisted BOM.
     """
+    from dekopen_engine.finishes import prepare_finish, finish_result, validate_finish_size
+    validate_finish_size(params, color, width_mm, height_mm)
+    params = prepare_finish(params, color)
     calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]] = []
     is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
     coupler_articles = (
@@ -728,7 +729,7 @@ def _position_calculations(
         module_tree = module.tree.model_dump(mode="json") if module is not None else tree
         calculations.append((module_id, computation, module_tree))
         if not is_assembly:
-            result = computation.result
+            result = finish_result(computation.result, params, color)
     if result is None:
         raise DocumentaryError("documentary_geometry_incomplete")
     return calculations, result
@@ -1363,6 +1364,7 @@ def freeze_revision_a(
                     quantity=quantity,
                     color=color,
                     location_tag=location_tag,
+                    reinforcement_color=result.finish.combination.reinforcement_stock_code if result.finish else None,
                     manufacturing_units=units,
                     hardware=hardware,
                     fittings=fittings,
@@ -1388,6 +1390,7 @@ def freeze_revision_a(
                 org_id=org_id,
                 color=color,
                 profile_skus=profile_skus,
+                finish_authority=params.finish_authority,
                 reinforcement_skus=reinforcement_skus,
                 glass_skus=glass_skus,
                 hardware_skus={item.technical_kit_sku for item in hardware
@@ -1408,6 +1411,7 @@ def freeze_revision_a(
                 "height_mm": D(str(position["height_mm"])),
                 "color_interior": str(position["color_interior"]),
                 "color_exterior": str(position["color_exterior"]),
+                **({"resolved_finish": result.finish.model_dump(mode="python")} if result.finish is not None else {}),
                 "location_tag": location_tag,
                 "system_name": str(position["system_name"]),
                 "is_demo": bool(system_facts_by_id.get(str(system_id), {}).get("is_demo", False)),
@@ -1676,7 +1680,7 @@ def prepare_documentary_inputs(
     positions = rows(
         "SELECT position.id,position.system_id,position.location_tag,position.width_mm,"
         "position.height_mm,position.color_interior,position.color_exterior,"
-        "position.parametric_tree,system.name AS system_name "
+        "position.parametric_tree,position.bom_snapshot,system.name AS system_name "
         "FROM public.project_positions position JOIN public.profile_systems system "
         "ON system.id=position.system_id WHERE position.project_id=%s AND position.org_id=%s "
         "ORDER BY position.position_index",
@@ -2000,7 +2004,7 @@ def save_documentary_inputs(
         if project["status"] != "DRAFT":
             raise DocumentaryError("documentary_inputs_require_draft")
         positions = rows(
-            "SELECT id,system_id,width_mm,height_mm,color_interior,color_exterior,parametric_tree "
+            "SELECT id,system_id,width_mm,height_mm,color_interior,color_exterior,parametric_tree,bom_snapshot "
             "FROM public.project_positions WHERE project_id=%s AND org_id=%s "
             "ORDER BY position_index FOR UPDATE",
             [project_id, org_id],

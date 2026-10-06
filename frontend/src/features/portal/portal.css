@@ -319,10 +319,7 @@
   position: relative;
   border-radius: var(--radius-md);
   overflow: hidden;
-  /* Studio backdrop — white PVC on near-white canvas washed the render out. */
-  background:
-    radial-gradient(120% 90% at 50% 25%, rgba(255, 255, 255, 0.75), transparent 62%),
-    linear-gradient(180deg, var(--theme-surface-hover) 0%, var(--theme-border-subtle) 100%);
+  background: var(--theme-surface-hover);
 }
 
 .portal-position__views {
@@ -337,6 +334,26 @@
   opacity: 0.92;
 }
 
+.portal-position__faces {
+  display: flex;
+  gap: var(--space-1);
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
+}
+.portal-position__faces .portal-face-toggle {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--r-1);
+  background: var(--theme-surface-panel);
+  color: var(--theme-text-primary);
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--type-dense);
+}
+.portal-position__faces .portal-face-toggle[aria-pressed="true"] {
+  border-color: var(--theme-accent);
+  color: var(--theme-accent-ink);
+}
 .portal-view-toggle {
   border: 0;
   background: transparent;

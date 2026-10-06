@@ -19,7 +19,7 @@ import {
   roundDecimalToInt,
   type DecimalValue,
 } from "../projects/decimal";
-import { reSkinMembers, type MemberGeometry } from "../canvas/members";
+import { reSkinMembers, withFinishMembers, type MemberGeometry } from "../canvas/members";
 import "./portal.css";
 import { formatDate, formatMoney } from "../money";
 
@@ -33,7 +33,12 @@ const FINISH_SURFACES: [RegExp, string][] = [
   [/aluminio|aluminum|anodiz|natural/i, "ALUMINIUM"],
 ];
 
-function positionMembers(position: PortalPosition): MemberGeometry {
+function positionMembers(
+  position: PortalPosition,
+  face: "interior" | "exterior" = "interior",
+): MemberGeometry {
+  if (position.resolved_finish)
+    return withFinishMembers(THUMB_MEMBERS, position.resolved_finish, face);
   const text =
     `${position.color_interior ?? ""} ${position.color_exterior ?? ""} ${position.finish ?? ""}`
       .normalize("NFD")
@@ -132,6 +137,7 @@ function groupPositions(positions: PortalPosition[]): {
       position.color_exterior,
       position.glass_specs,
       position.commercial_hardware,
+      position.resolved_finish,
       position.price_net,
       position.parametric_tree,
     ]);
@@ -176,10 +182,11 @@ function PositionGroupCard({
 }): JSX.Element {
   const { position } = group;
   const [variant, setVariant] = useState<"studio" | "elevation">("studio");
+  const [face, setFace] = useState<"interior" | "exterior">("interior");
   const specs = position.glass_specs ?? [];
   const finished = position.finish ?? null;
   const hardware = position.commercial_hardware ?? [];
-  const members = positionMembers(position);
+  const members = positionMembers(position, face);
   const hasPrice = position.price_net != null && group.totalNet !== null;
   const totalNet = group.totalNet;
   const grossLine =
@@ -212,6 +219,32 @@ function PositionGroupCard({
             {t("portal.viewTechnical")}
           </button>
         </div>
+        <div className="portal-position__faces" role="group" aria-label="Cara de la ventana">
+          <button
+            type="button"
+            aria-pressed={face === "interior"}
+            className="portal-face-toggle"
+            onClick={() => setFace("interior")}
+          >
+            Vista interior
+          </button>
+          <button
+            type="button"
+            aria-pressed={face === "exterior"}
+            className="portal-face-toggle"
+            onClick={() => setFace("exterior")}
+          >
+            Vista exterior
+          </button>
+        </div>
+        {position.resolved_finish &&
+          (position.resolved_finish.interior.approximate ||
+            position.resolved_finish.exterior.approximate) && (
+            <p>
+              Color aproximado; revise la muestra del fabricante.
+              {position.resolved_finish.interior.synthetic ? " · DEMO" : ""}
+            </p>
+          )}
       </div>
       <div className="portal-position__body">
         <p className="portal-position__id">

@@ -32,6 +32,7 @@ from pydantic import TypeAdapter
 from dekopen_engine.manufacturing import HandleRequirementPolicyV1, handle_policy_from_json
 from dekopen_engine.models import OpeningCapability, PairedLeafRule, HardwareClassAuthority
 from dekopen_engine.hardware_classes import parse_hardware_class
+from dekopen_engine.finish_models import FinishAuthority
 
 
 class SystemNotFound(LookupError):
@@ -169,7 +170,7 @@ class SystemParamsRepository:
                        rail_count, rebate_depth_mm, end_milling_overlap_mm,
                        finishes::text, system_family, sliding_parameters::text,
                        dimensional_limits::text, legacy_authority,
-                       opening_capabilities::text,paired_leaf_rule::text
+                       opening_capabilities::text,paired_leaf_rule::text,finish_authority::text
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -225,6 +226,9 @@ class SystemParamsRepository:
             rebate_depth_mm=_decimal_or_none(system[19]),
             end_milling_overlap_mm=_decimal_or_none(system[20]),
             finishes=tuple(json.loads(system[21])) if system[21] else ("WHITE",),
+            **({"finish_authority": FinishAuthority.model_validate_json(system[28]),
+                "finish_profile_skus": self._load_finish_skus(system_id, active_org_id)}
+               if len(system) > 28 and system[28] is not None else {}),
             available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
         )
@@ -237,6 +241,19 @@ class SystemParamsRepository:
             data = cursor.fetchall()
         adapter = TypeAdapter(tuple[OpeningCapability, ...])
         return tuple((str(row[0]), adapter.validate_json(str(row[1]))) for row in data)
+
+    def _load_finish_skus(self, system_id: UUID, org_id: UUID) -> dict[str, dict[str, str]]:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT c.finish,a.sku,c.commercial_sku FROM public.catalog_color_skus c "
+                "JOIN public.profile_articles a ON a.id=c.profile_article_id "
+                "WHERE c.system_id=%s AND c.is_active AND (c.org_id=%s OR c.org_id IS NULL) ORDER BY c.finish,a.sku", [system_id, org_id])
+            values = cursor.fetchall()
+        result: dict[str, dict[str, str]] = {}
+        for code, sku, commercial in values:
+            if sku in result.setdefault(code, {}):
+                raise UnsupportedCatalogContract("Hay SKU por color contradictorios. Revisa el catálogo.")
+            result[code][sku] = commercial
+        return result
 
     def _load_articles(
         self, system_id: UUID, active_org_id: UUID

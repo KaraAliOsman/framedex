@@ -10,6 +10,11 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { buildScene3D, type LeafMotion, type Scene3D, type Solid3D } from "./Product3DScene";
 import { solidToGeometry } from "./scene3dGeometry";
 import {
+  disposeFinishMaterials,
+  finishGeometryMaterials,
+  prepareFinishTextures,
+} from "./finishMaterials3d";
+import {
   contactShadowTexture,
   foilGrainTexture,
   runLength,
@@ -203,22 +208,55 @@ function SolidMesh({
   clipPlane: THREE.Plane | null;
   onPick(owner: string): void;
 }): JSX.Element {
-  const geometry = useMemo(() => solidToGeometry(solid), [solid]);
+  const geometry = useMemo(
+    () => (solid.kind === "box" ? new THREE.BoxGeometry(...solid.size) : solidToGeometry(solid)),
+    [solid],
+  );
+  const [textureEpoch, setTextureEpoch] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    if (solid.finish)
+      void prepareFinishTextures(solid.finish).then(() => {
+        if (alive) setTextureEpoch((value) => value + 1);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [solid.finish]);
+  const faceMaterials = useMemo(
+    () =>
+      geometry && solid.finish && mode === "commercial"
+        ? finishGeometryMaterials(geometry, solid.finish)
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loaded texture becomes available
+    [geometry, solid.finish, mode, textureEpoch],
+  );
+  useEffect(
+    () => () => {
+      if (faceMaterials) disposeFinishMaterials(faceMaterials);
+    },
+    [faceMaterials],
+  );
+  useEffect(() => {
+    for (const item of faceMaterials ?? []) {
+      item.clippingPlanes = clipPlane ? [clipPlane] : [];
+      item.needsUpdate = true;
+    }
+  }, [faceMaterials, clipPlane]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- theme re-resolves
   // the same tokens against the new CSS variable values.
   const material = useMemo(() => solidMaterial(solid, mode), [solid, mode]);
   const color = useMemo(
-    () => tokenColor(material.colorToken, material.colorFallback),
+    () =>
+      solid.hardwareColor && mode === "commercial"
+        ? new THREE.Color().setRGB(
+            ...(solid.hardwareColor.linear_rgb.map(Number) as [number, number, number]),
+            THREE.LinearSRGBColorSpace,
+          )
+        : tokenColor(material.colorToken, material.colorFallback),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [material, theme],
-  );
-  // Selection glows in the accent hue — warning amber washed side faces
-  // brown and read as a material tint (visual QA pass on /benchmark).
-  const emissive = useMemo(
-    () => (selected ? tokenColor("--theme-accent", "rgb(15,129,122)") : "rgb(0,0,0)"),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selected, theme],
+    [solid.hardwareColor, mode, material, theme],
   );
   const map = useMemo(
     () =>
@@ -253,29 +291,37 @@ function SolidMesh({
         onPick(solid.owner);
       }}
     >
-      {solid.kind === "box" && <boxGeometry args={solid.size} />}
-      <meshStandardMaterial
-        color={color}
-        map={map ?? undefined}
-        transparent={material.transparent}
-        opacity={material.opacity}
-        depthWrite={!material.glass}
-        roughness={material.roughness}
-        metalness={material.metalness}
-        emissive={emissive}
-        emissiveIntensity={selected ? 0.38 : 0}
-        // An empty array — never undefined: r3f applies this prop onto
-        // material.clippingPlanes and three's WebGLClipping crashes on a
-        // missing .length, leaving the whole canvas blank once Corte was
-        // toggled off.
-        clippingPlanes={clipPlane ? [clipPlane] : []}
-      />
+      {faceMaterials ? (
+        <primitive attach="material" object={faceMaterials} dispose={null} />
+      ) : (
+        <meshStandardMaterial
+          color={color}
+          map={map ?? undefined}
+          transparent={material.transparent}
+          opacity={material.opacity}
+          depthWrite={!material.glass}
+          roughness={material.roughness}
+          metalness={material.metalness}
+          // An empty array — never undefined: r3f applies this prop onto
+          // material.clippingPlanes and three's WebGLClipping crashes on a
+          // missing .length, leaving the whole canvas blank once Corte was
+          // toggled off.
+          clippingPlanes={clipPlane ? [clipPlane] : []}
+        />
+      )}
       {/* Approximate member boxes (no declared catalog section) get the
        * schematic edge look — visually distinct from a real extruded
        * profile so convention never masquerades as authority. */}
-      {(solid.approximate === true || mode === "technical") &&
+      {(selected || solid.approximate === true || mode === "technical") &&
         (solid.kind === "box" || solid.kind === "profile") && (
-          <Edges scale={1.002} color={tokenColor("--model3d-edge", "rgb(107,112,117)")} />
+          <Edges
+            scale={1.002}
+            color={
+              selected
+                ? tokenColor("--theme-accent", "rgb(15,129,122)")
+                : tokenColor("--model3d-edge", "rgb(107,112,117)")
+            }
+          />
         )}
     </mesh>
   );

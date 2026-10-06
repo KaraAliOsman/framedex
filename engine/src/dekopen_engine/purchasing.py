@@ -193,6 +193,7 @@ class AccessoryScheduleV1(EngineModel):
 
 
 class PositionPurchaseInputV1(EngineModel):
+    reinforcement_color: str | None = None
     schema_version: Literal[1] = 1
     position_id: str
     position_index: int = Field(ge=1)
@@ -558,7 +559,7 @@ def project_purchase_requirements_v1(
                     source_kind=PhysicalSourceKind.REINFORCEMENT,
                     workshop_sku=reinforcement.workshop_sku,
                     material=CutMaterial.STEEL,
-                    color=position.color,
+                    color=position.reinforcement_color or position.color,
                     length_mm=reinforcement.cut_length_mm,
                     position_id=position.position_id,
                     bay_id=parent.bay_id,

@@ -1,0 +1,482 @@
+[
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-editor",
+    "baseline_ref": "ef0a4137",
+    "before": 37,
+    "after": 37,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": true,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-editor",
+    "baseline_ref": "ef0a4137",
+    "before": 37,
+    "after": 37,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-editor",
+    "baseline_ref": "ef0a4137",
+    "before": 38,
+    "after": 38,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-editor",
+    "baseline_ref": "ef0a4137",
+    "before": 38,
+    "after": 38,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-editor",
+    "baseline_ref": "ef0a4137",
+    "before": 37,
+    "after": 37,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": true,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-editor",
+    "baseline_ref": "ef0a4137",
+    "before": 38,
+    "after": 38,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-editor",
+    "baseline_ref": "ef0a4137",
+    "before": 38,
+    "after": 38,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-editor",
+    "baseline_ref": "ef0a4137",
+    "before": 37,
+    "after": 37,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "390x844"
+    ],
+    "baseline": "docs/redesign/captures/herrajes-clases/base-poblada-catalogo",
+    "baseline_ref": "dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1024x768"
+    ],
+    "baseline": "docs/redesign/captures/herrajes-clases/base-poblada-catalogo",
+    "baseline_ref": "dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1280x800"
+    ],
+    "baseline": "docs/redesign/captures/herrajes-clases/base-poblada-catalogo",
+    "baseline_ref": "dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1440x900"
+    ],
+    "baseline": "docs/redesign/captures/herrajes-clases/base-poblada-catalogo",
+    "baseline_ref": "dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1440x900"
+    ],
+    "baseline": "docs/redesign/captures/herrajes-clases/base-poblada-catalogo",
+    "baseline_ref": "dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "390x844"
+    ],
+    "baseline": "docs/redesign/captures/herrajes-clases/base-poblada-catalogo",
+    "baseline_ref": "dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1280x800"
+    ],
+    "baseline": "docs/redesign/captures/herrajes-clases/base-poblada-catalogo",
+    "baseline_ref": "dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1024x768"
+    ],
+    "baseline": "docs/redesign/captures/herrajes-clases/base-poblada-catalogo",
+    "baseline_ref": "dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "portal",
+    "route": [
+      "portal-vigente",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-portal",
+    "baseline_ref": "ef0a4137",
+    "before": 20,
+    "after": 15,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "portal",
+    "route": [
+      "portal-vigente",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-portal",
+    "baseline_ref": "ef0a4137",
+    "before": 22,
+    "after": 15,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "portal",
+    "route": [
+      "portal-vigente",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-portal",
+    "baseline_ref": "ef0a4137",
+    "before": 22,
+    "after": 15,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "portal",
+    "route": [
+      "portal-vigente",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-portal",
+    "baseline_ref": "ef0a4137",
+    "before": 20,
+    "after": 15,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "portal",
+    "route": [
+      "portal-vigente",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-portal",
+    "baseline_ref": "ef0a4137",
+    "before": 21,
+    "after": 15,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "portal",
+    "route": [
+      "portal-vigente",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-portal",
+    "baseline_ref": "ef0a4137",
+    "before": 22,
+    "after": 15,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "portal",
+    "route": [
+      "portal-vigente",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-portal",
+    "baseline_ref": "ef0a4137",
+    "before": 20,
+    "after": 15,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "portal",
+    "route": [
+      "portal-vigente",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "baseline": "docs/redesign/captures/colores-acabados/antes-portal",
+    "baseline_ref": "ef0a4137",
+    "before": 20,
+    "after": 15,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  }
+]

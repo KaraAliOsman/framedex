@@ -1,0 +1,1451 @@
+{
+  "aluminio-anodizado": {
+    "bom": {
+      "finish": {
+        "base": null,
+        "combination": {
+          "allowed_handle_colors": [
+            "WHITE",
+            "BLACK"
+          ],
+          "base": null,
+          "code": "ANODIZED_SILVER",
+          "exterior": "ANODIZED_SILVER",
+          "extra_lead_days": null,
+          "glass_clearance_mm": "5",
+          "interior": "ANODIZED_SILVER",
+          "max_leaf_height_mm": null,
+          "max_leaf_width_mm": null,
+          "max_position_height_mm": null,
+          "max_position_width_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_stock_code": "WHITE",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "surcharge": {
+            "amount": "6500",
+            "currency": "CLP",
+            "kind": "FIXED",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+          },
+          "synthetic": true
+        },
+        "exterior": {
+          "approximate": true,
+          "code": "ANODIZED_SILVER",
+          "gloss": null,
+          "kind": "ANODIZED",
+          "linear_rgb": [
+            "0.50",
+            "0.52",
+            "0.53"
+          ],
+          "manufacturer_code": "DEMO-ANODIZED_SILVER",
+          "name": "Anodizado plata",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "handle_colors": [
+          {
+            "approximate": true,
+            "code": "WHITE",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.78",
+              "0.79",
+              "0.76"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-WHITE",
+            "name": "Blanco",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          },
+          {
+            "approximate": true,
+            "code": "BLACK",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.012",
+              "0.014",
+              "0.015"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-BLACK",
+            "name": "Negro",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          }
+        ],
+        "interior": {
+          "approximate": true,
+          "code": "ANODIZED_SILVER",
+          "gloss": null,
+          "kind": "ANODIZED",
+          "linear_rgb": [
+            "0.50",
+            "0.52",
+            "0.53"
+          ],
+          "manufacturer_code": "DEMO-ANODIZED_SILVER",
+          "name": "Anodizado plata",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "profile_skus": {
+          "DEMO_ALU_PRACTICABLE-JQ-10": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-ANODIZED_SILVER",
+          "DEMO_ALU_PRACTICABLE-MARCO": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-ANODIZED_SILVER"
+        }
+      },
+      "fittings": [],
+      "glasses": [
+        {
+          "area_m2": "0.5846",
+          "article_sku": "DEMO_ALU_PRACTICABLE-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "740.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "11.69",
+          "width_mm": "790.00"
+        }
+      ],
+      "hardware_items": [],
+      "leaf_weights": [],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-ANODIZED_SILVER",
+          "leaf_id": null,
+          "length_mm": "896.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-MARCO",
+          "stock_color": "ANODIZED_SILVER"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-ANODIZED_SILVER",
+          "leaf_id": null,
+          "length_mm": "846.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-MARCO",
+          "stock_color": "ANODIZED_SILVER"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-ANODIZED_SILVER",
+          "leaf_id": null,
+          "length_mm": "799.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-JQ-10",
+          "stock_color": "ANODIZED_SILVER"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-ANODIZED_SILVER",
+          "leaf_id": null,
+          "length_mm": "749.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-JQ-10",
+          "stock_color": "ANODIZED_SILVER"
+        }
+      ],
+      "reinforcements": []
+    },
+    "profile_cost": "100000",
+    "surcharge": "6500"
+  },
+  "aluminio-madera": {
+    "bom": {
+      "finish": {
+        "base": null,
+        "combination": {
+          "allowed_handle_colors": [
+            "WHITE",
+            "BLACK"
+          ],
+          "base": null,
+          "code": "WOOD_WALNUT",
+          "exterior": "WOOD_WALNUT",
+          "extra_lead_days": 0,
+          "glass_clearance_mm": "5",
+          "interior": "WOOD_WALNUT",
+          "max_leaf_height_mm": null,
+          "max_leaf_width_mm": null,
+          "max_position_height_mm": null,
+          "max_position_width_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_stock_code": "WHITE",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "surcharge": {
+            "amount": "750",
+            "currency": "CLP",
+            "kind": "PER_M",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+          },
+          "synthetic": true
+        },
+        "exterior": {
+          "approximate": true,
+          "code": "WOOD_WALNUT",
+          "gloss": "0.18",
+          "kind": "WOOD_EFFECT",
+          "linear_rgb": [
+            "0.12",
+            "0.046",
+            "0.013"
+          ],
+          "manufacturer_code": "DEMO-WOOD_WALNUT",
+          "name": "Efecto madera nogal",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "handle_colors": [
+          {
+            "approximate": true,
+            "code": "WHITE",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.78",
+              "0.79",
+              "0.76"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-WHITE",
+            "name": "Blanco",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          },
+          {
+            "approximate": true,
+            "code": "BLACK",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.012",
+              "0.014",
+              "0.015"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-BLACK",
+            "name": "Negro",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          }
+        ],
+        "interior": {
+          "approximate": true,
+          "code": "WOOD_WALNUT",
+          "gloss": "0.18",
+          "kind": "WOOD_EFFECT",
+          "linear_rgb": [
+            "0.12",
+            "0.046",
+            "0.013"
+          ],
+          "manufacturer_code": "DEMO-WOOD_WALNUT",
+          "name": "Efecto madera nogal",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "profile_skus": {
+          "DEMO_ALU_PRACTICABLE-JQ-10": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-WOOD_WALNUT",
+          "DEMO_ALU_PRACTICABLE-MARCO": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-WOOD_WALNUT"
+        }
+      },
+      "fittings": [],
+      "glasses": [
+        {
+          "area_m2": "0.5846",
+          "article_sku": "DEMO_ALU_PRACTICABLE-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "740.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "11.69",
+          "width_mm": "790.00"
+        }
+      ],
+      "hardware_items": [],
+      "leaf_weights": [],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-WOOD_WALNUT",
+          "leaf_id": null,
+          "length_mm": "896.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-MARCO",
+          "stock_color": "WOOD_WALNUT"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-WOOD_WALNUT",
+          "leaf_id": null,
+          "length_mm": "846.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-MARCO",
+          "stock_color": "WOOD_WALNUT"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-WOOD_WALNUT",
+          "leaf_id": null,
+          "length_mm": "799.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-JQ-10",
+          "stock_color": "WOOD_WALNUT"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-WOOD_WALNUT",
+          "leaf_id": null,
+          "length_mm": "749.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-JQ-10",
+          "stock_color": "WOOD_WALNUT"
+        }
+      ],
+      "reinforcements": []
+    },
+    "profile_cost": "100000",
+    "surcharge": "4935.00"
+  },
+  "aluminio-ral": {
+    "bom": {
+      "finish": {
+        "base": null,
+        "combination": {
+          "allowed_handle_colors": [
+            "WHITE",
+            "BLACK"
+          ],
+          "base": null,
+          "code": "WHITE_RAL7016",
+          "exterior": "RAL7016",
+          "extra_lead_days": 0,
+          "glass_clearance_mm": "5",
+          "interior": "RAL9016",
+          "max_leaf_height_mm": null,
+          "max_leaf_width_mm": null,
+          "max_position_height_mm": null,
+          "max_position_width_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_stock_code": "WHITE",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "surcharge": {
+            "amount": "12.5",
+            "currency": "CLP",
+            "kind": "PERCENT",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+          },
+          "synthetic": true
+        },
+        "exterior": {
+          "approximate": true,
+          "code": "RAL7016",
+          "gloss": "0.30",
+          "kind": "RAL",
+          "linear_rgb": [
+            "0.034",
+            "0.042",
+            "0.044"
+          ],
+          "manufacturer_code": "DEMO-RAL7016",
+          "name": "Gris antracita RAL 7016",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "handle_colors": [
+          {
+            "approximate": true,
+            "code": "WHITE",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.78",
+              "0.79",
+              "0.76"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-WHITE",
+            "name": "Blanco",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          },
+          {
+            "approximate": true,
+            "code": "BLACK",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.012",
+              "0.014",
+              "0.015"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-BLACK",
+            "name": "Negro",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          }
+        ],
+        "interior": {
+          "approximate": true,
+          "code": "RAL9016",
+          "gloss": "0.70",
+          "kind": "RAL",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-RAL9016",
+          "name": "Blanco tráfico RAL 9016",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "profile_skus": {
+          "DEMO_ALU_PRACTICABLE-JQ-10": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-WHITE_RAL7016",
+          "DEMO_ALU_PRACTICABLE-MARCO": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-WHITE_RAL7016"
+        }
+      },
+      "fittings": [],
+      "glasses": [
+        {
+          "area_m2": "0.5846",
+          "article_sku": "DEMO_ALU_PRACTICABLE-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "740.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "11.69",
+          "width_mm": "790.00"
+        }
+      ],
+      "hardware_items": [],
+      "leaf_weights": [],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-WHITE_RAL7016",
+          "leaf_id": null,
+          "length_mm": "896.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-MARCO",
+          "stock_color": "WHITE_RAL7016"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-WHITE_RAL7016",
+          "leaf_id": null,
+          "length_mm": "846.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-MARCO",
+          "stock_color": "WHITE_RAL7016"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-WHITE_RAL7016",
+          "leaf_id": null,
+          "length_mm": "799.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-JQ-10",
+          "stock_color": "WHITE_RAL7016"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-WHITE_RAL7016",
+          "leaf_id": null,
+          "length_mm": "749.00",
+          "material": "ALUMINIUM",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_ALU_PRACTICABLE-JQ-10",
+          "stock_color": "WHITE_RAL7016"
+        }
+      ],
+      "reinforcements": []
+    },
+    "profile_cost": "100000",
+    "surcharge": "12500.0"
+  },
+  "pvc-antracita-interior": {
+    "bom": {
+      "finish": {
+        "base": {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "MASS",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "combination": {
+          "allowed_handle_colors": [
+            "WHITE",
+            "BLACK"
+          ],
+          "base": "WHITE",
+          "code": "ANTHRACITE_WHITE",
+          "exterior": "WHITE",
+          "extra_lead_days": 5,
+          "glass_clearance_mm": "6",
+          "interior": "ANTHRACITE",
+          "max_leaf_height_mm": "2500",
+          "max_leaf_width_mm": "1400",
+          "max_position_height_mm": "3000",
+          "max_position_width_mm": "6000",
+          "reinforcement_required": true,
+          "reinforcement_stock_code": "WHITE",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "surcharge": {
+            "amount": "12.5",
+            "currency": "CLP",
+            "kind": "PERCENT",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+          },
+          "synthetic": true
+        },
+        "exterior": {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "MASS",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "handle_colors": [
+          {
+            "approximate": true,
+            "code": "WHITE",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.78",
+              "0.79",
+              "0.76"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-WHITE",
+            "name": "Blanco",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          },
+          {
+            "approximate": true,
+            "code": "BLACK",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.012",
+              "0.014",
+              "0.015"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-BLACK",
+            "name": "Negro",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          }
+        ],
+        "interior": {
+          "approximate": true,
+          "code": "ANTHRACITE",
+          "gloss": "0.18",
+          "kind": "FOIL",
+          "linear_rgb": [
+            "0.034",
+            "0.042",
+            "0.044"
+          ],
+          "manufacturer_code": "DEMO-ANTHRACITE",
+          "name": "Antracita",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "profile_skus": {
+          "DEMO_60-JQ-10": "COMPRA-V5-DEMO_60-JQ-10-ANTHRACITE_WHITE",
+          "DEMO_60-MARCO": "COMPRA-V5-DEMO_60-MARCO-ANTHRACITE_WHITE"
+        }
+      },
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "0.5969",
+          "article_sku": "DEMO_60-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "748.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "11.94",
+          "width_mm": "798.00"
+        }
+      ],
+      "hardware_items": [],
+      "leaf_weights": [],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-ANTHRACITE_WHITE",
+          "leaf_id": null,
+          "length_mm": "906.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO",
+          "stock_color": "ANTHRACITE_WHITE"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-ANTHRACITE_WHITE",
+          "leaf_id": null,
+          "length_mm": "856.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO",
+          "stock_color": "ANTHRACITE_WHITE"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-ANTHRACITE_WHITE",
+          "leaf_id": null,
+          "length_mm": "807.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10",
+          "stock_color": "ANTHRACITE_WHITE"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-ANTHRACITE_WHITE",
+          "leaf_id": null,
+          "length_mm": "757.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10",
+          "stock_color": "ANTHRACITE_WHITE"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "876.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "826.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "profile_cost": "100000",
+    "surcharge": "12500.0"
+  },
+  "pvc-blanco": {
+    "bom": {
+      "finish": {
+        "base": {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "MASS",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "combination": {
+          "allowed_handle_colors": [
+            "WHITE",
+            "BLACK"
+          ],
+          "base": "WHITE",
+          "code": "WHITE",
+          "exterior": "WHITE",
+          "extra_lead_days": 0,
+          "glass_clearance_mm": "5",
+          "interior": "WHITE",
+          "max_leaf_height_mm": null,
+          "max_leaf_width_mm": null,
+          "max_position_height_mm": null,
+          "max_position_width_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_stock_code": "WHITE",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "surcharge": {
+            "amount": "0",
+            "currency": "CLP",
+            "kind": "NONE",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+          },
+          "synthetic": true
+        },
+        "exterior": {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "MASS",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "handle_colors": [
+          {
+            "approximate": true,
+            "code": "WHITE",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.78",
+              "0.79",
+              "0.76"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-WHITE",
+            "name": "Blanco",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          },
+          {
+            "approximate": true,
+            "code": "BLACK",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.012",
+              "0.014",
+              "0.015"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-BLACK",
+            "name": "Negro",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          }
+        ],
+        "interior": {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "MASS",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "profile_skus": {
+          "DEMO_60-JQ-10": "COMPRA-V5-DEMO_60-JQ-10-WHITE",
+          "DEMO_60-MARCO": "COMPRA-V5-DEMO_60-MARCO-WHITE"
+        }
+      },
+      "fittings": [],
+      "glasses": [
+        {
+          "area_m2": "0.6000",
+          "article_sku": "DEMO_60-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "750.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "12.00",
+          "width_mm": "800.00"
+        }
+      ],
+      "hardware_items": [],
+      "leaf_weights": [],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-WHITE",
+          "leaf_id": null,
+          "length_mm": "906.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO",
+          "stock_color": "WHITE"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-WHITE",
+          "leaf_id": null,
+          "length_mm": "856.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO",
+          "stock_color": "WHITE"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-WHITE",
+          "leaf_id": null,
+          "length_mm": "809.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10",
+          "stock_color": "WHITE"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-WHITE",
+          "leaf_id": null,
+          "length_mm": "759.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10",
+          "stock_color": "WHITE"
+        }
+      ],
+      "reinforcements": []
+    },
+    "profile_cost": "100000",
+    "surcharge": "0"
+  },
+  "pvc-coextruido": {
+    "bom": {
+      "finish": {
+        "base": {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "MASS",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "combination": {
+          "allowed_handle_colors": [
+            "WHITE",
+            "BLACK"
+          ],
+          "base": "WHITE",
+          "code": "COEX_GREY",
+          "exterior": "COEX_GREY",
+          "extra_lead_days": 5,
+          "glass_clearance_mm": "6",
+          "interior": "COEX_GREY",
+          "max_leaf_height_mm": "2500",
+          "max_leaf_width_mm": "1400",
+          "max_position_height_mm": "3000",
+          "max_position_width_mm": "6000",
+          "reinforcement_required": true,
+          "reinforcement_stock_code": "WHITE",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "surcharge": {
+            "amount": "6500",
+            "currency": "CLP",
+            "kind": "FIXED",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+          },
+          "synthetic": true
+        },
+        "exterior": {
+          "approximate": true,
+          "code": "COEX_GREY",
+          "gloss": "0.22",
+          "kind": "COEXTRUDED",
+          "linear_rgb": [
+            "0.15",
+            "0.17",
+            "0.18"
+          ],
+          "manufacturer_code": "DEMO-COEX_GREY",
+          "name": "Gris coextruido",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "handle_colors": [
+          {
+            "approximate": true,
+            "code": "WHITE",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.78",
+              "0.79",
+              "0.76"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-WHITE",
+            "name": "Blanco",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          },
+          {
+            "approximate": true,
+            "code": "BLACK",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.012",
+              "0.014",
+              "0.015"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-BLACK",
+            "name": "Negro",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          }
+        ],
+        "interior": {
+          "approximate": true,
+          "code": "COEX_GREY",
+          "gloss": "0.22",
+          "kind": "COEXTRUDED",
+          "linear_rgb": [
+            "0.15",
+            "0.17",
+            "0.18"
+          ],
+          "manufacturer_code": "DEMO-COEX_GREY",
+          "name": "Gris coextruido",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "profile_skus": {
+          "DEMO_60-JQ-10": "COMPRA-V5-DEMO_60-JQ-10-COEX_GREY",
+          "DEMO_60-MARCO": "COMPRA-V5-DEMO_60-MARCO-COEX_GREY"
+        }
+      },
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "0.5969",
+          "article_sku": "DEMO_60-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "748.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "11.94",
+          "width_mm": "798.00"
+        }
+      ],
+      "hardware_items": [],
+      "leaf_weights": [],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-COEX_GREY",
+          "leaf_id": null,
+          "length_mm": "906.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO",
+          "stock_color": "COEX_GREY"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-COEX_GREY",
+          "leaf_id": null,
+          "length_mm": "856.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO",
+          "stock_color": "COEX_GREY"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-COEX_GREY",
+          "leaf_id": null,
+          "length_mm": "807.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10",
+          "stock_color": "COEX_GREY"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-COEX_GREY",
+          "leaf_id": null,
+          "length_mm": "757.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10",
+          "stock_color": "COEX_GREY"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "876.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "826.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "profile_cost": "100000",
+    "surcharge": "6500"
+  },
+  "pvc-nogal-exterior": {
+    "bom": {
+      "finish": {
+        "base": {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "MASS",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "combination": {
+          "allowed_handle_colors": [
+            "WHITE",
+            "BLACK"
+          ],
+          "base": "WHITE",
+          "code": "WHITE_WALNUT",
+          "exterior": "WALNUT",
+          "extra_lead_days": 5,
+          "glass_clearance_mm": "6",
+          "interior": "WHITE",
+          "max_leaf_height_mm": "2500",
+          "max_leaf_width_mm": "1400",
+          "max_position_height_mm": "3000",
+          "max_position_width_mm": "6000",
+          "reinforcement_required": true,
+          "reinforcement_stock_code": "WHITE",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "surcharge": {
+            "amount": "750",
+            "currency": "CLP",
+            "kind": "PER_M",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+          },
+          "synthetic": true
+        },
+        "exterior": {
+          "approximate": true,
+          "code": "WALNUT",
+          "gloss": "0.18",
+          "kind": "FOIL",
+          "linear_rgb": [
+            "0.12",
+            "0.046",
+            "0.013"
+          ],
+          "manufacturer_code": "DEMO-WALNUT",
+          "name": "Nogal",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "handle_colors": [
+          {
+            "approximate": true,
+            "code": "WHITE",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.78",
+              "0.79",
+              "0.76"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-WHITE",
+            "name": "Blanco",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          },
+          {
+            "approximate": true,
+            "code": "BLACK",
+            "gloss": "0.30",
+            "kind": "RAL",
+            "linear_rgb": [
+              "0.012",
+              "0.014",
+              "0.015"
+            ],
+            "manufacturer_code": "DEMO-MANILLA-BLACK",
+            "name": "Negro",
+            "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+            "synthetic": true,
+            "texture_path": null
+          }
+        ],
+        "interior": {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "MASS",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        "profile_skus": {
+          "DEMO_60-JQ-10": "COMPRA-V5-DEMO_60-JQ-10-WHITE_WALNUT",
+          "DEMO_60-MARCO": "COMPRA-V5-DEMO_60-MARCO-WHITE_WALNUT"
+        }
+      },
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "0.5969",
+          "article_sku": "DEMO_60-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "748.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "11.94",
+          "width_mm": "798.00"
+        }
+      ],
+      "hardware_items": [],
+      "leaf_weights": [],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-WHITE_WALNUT",
+          "leaf_id": null,
+          "length_mm": "906.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO",
+          "stock_color": "WHITE_WALNUT"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-WHITE_WALNUT",
+          "leaf_id": null,
+          "length_mm": "856.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO",
+          "stock_color": "WHITE_WALNUT"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-WHITE_WALNUT",
+          "leaf_id": null,
+          "length_mm": "807.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10",
+          "stock_color": "WHITE_WALNUT"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-WHITE_WALNUT",
+          "leaf_id": null,
+          "length_mm": "757.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10",
+          "stock_color": "WHITE_WALNUT"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "876.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "826.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "profile_cost": "100000",
+    "surcharge": "4989.00"
+  }
+}

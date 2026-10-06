@@ -249,7 +249,9 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                          "WHERE system_id=%s AND (org_id IS NULL OR org_id=%s)", [system_id, org_id])
             if not glass:
                 raise DocumentaryError("glass_purchase_mapping_required")
-            load_purchase_authorities(system_id=system_id, org_id=org_id, color="WHITE",
+            load_purchase_authorities(system_id=system_id, org_id=org_id,
+                color=params.finishes[0] if params.finish_authority is not None else "WHITE",
+                finish_authority=params.finish_authority,
                 profile_skus={article["sku"] for article in catalogued},
                 reinforcement_skus=steels,
                 glass_skus={row["technical_sku"] for row in glass},

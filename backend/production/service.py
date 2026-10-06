@@ -613,11 +613,13 @@ def _work_order_payload(
         "quantity": position.get("quantity", 1),
         "color": color,
         "materials": {
+            **({"finish": engine["finish"]} if engine.get("finish") else {}),
+            **{
             key: engine.get(key) or []
             for key in (
                 "profile_cuts", "reinforcements", "glasses", "panels",
                 "fittings", "hardware_items",
-            )
+            )},
         },
         "glass_polishing": list(polishing or []),
         "routing": _routing(
@@ -816,14 +818,13 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             for pos in snapshot.get("positions") or []
             if pos.get("id")
         }
-        # The sealed color is what the cut optimizer's stock variants are
-        # named after — WHITE only when both faces are WHITE, else FOILED.
+        # New finish charts seal a stock combination. Historical revisions
+        # keep their original WHITE/FOILED identity.
         color_by_position = {
             str(pos.get("id")): (
-                "WHITE"
-                if pos.get("color_interior") == "WHITE"
-                and pos.get("color_exterior") == "WHITE"
-                else "FOILED"
+                pos["resolved_finish"]["combination"]["code"] if pos.get("resolved_finish") else (
+                    "WHITE" if pos.get("color_interior") == "WHITE" and pos.get("color_exterior") == "WHITE" else "FOILED"
+                )
             )
             for pos in snapshot.get("positions") or []
             if pos.get("id")
@@ -4012,6 +4013,7 @@ def _order_optimize_context(
             "fittings": materials.get("fittings") or [],
             "hardware_items": materials.get("hardware_items") or [],
             "leaf_weights": materials.get("leaf_weights") or [],
+            "finish": materials.get("finish"),
         },
         strict=False,
     )
@@ -4235,6 +4237,7 @@ def optimize_work_order(
                 "fittings": materials.get("fittings") or [],
                 "hardware_items": materials.get("hardware_items") or [],
                 "leaf_weights": materials.get("leaf_weights") or [],
+                "finish": materials.get("finish"),
             },
             strict=False,
         )

@@ -51,6 +51,7 @@ import {
 } from "../canvas/productEditing";
 
 import "./projects.css";
+import { FinishSelector } from "./FinishSelector";
 
 export function ProjectPositionEditor(): JSX.Element {
   const { id = "", posId = "" } = useParams();
@@ -879,30 +880,42 @@ function PositionWorkspace({
               {t("projects.loading")}
             </p>
           )}
-          <label className="position-head__color">
-            <span>{t("projects.color")}</span>
-            <select
-              className="assembly-select"
-              aria-label={t("projects.color")}
-              disabled={busy || declaredColors.length === 0}
-              value={inputs.color}
-              onChange={(event) =>
-                useCanvasStore.getState().commitInputs({
-                  ...inputs,
-                  color: event.target.value as CanvasDesignInputs["color"],
-                })
-              }
-            >
-              {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
-              {colorChoices.map((color) => (
-                <option key={color} value={color}>
-                  {tDynamic("projects.color", color)}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!options.data?.finish_authority && (
+            <label className="position-head__color">
+              <span>{t("projects.color")}</span>
+              <select
+                className="assembly-select"
+                aria-label={t("projects.color")}
+                disabled={busy || declaredColors.length === 0}
+                value={inputs.color}
+                onChange={(event) =>
+                  useCanvasStore.getState().commitInputs({
+                    ...inputs,
+                    color: event.target.value as CanvasDesignInputs["color"],
+                  })
+                }
+              >
+                {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
+                {colorChoices.map((color) => (
+                  <option key={color} value={color}>
+                    {tDynamic("projects.color", color)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
       </fieldset>
+      {options.data?.finish_authority && (
+        <FinishSelector
+          authority={options.data.finish_authority}
+          value={inputs.color}
+          design={designPayload(inputs, declaredColors)}
+          organizationId={orgId}
+          disabled={busy}
+          onChange={(color) => useCanvasStore.getState().commitInputs({ ...inputs, color })}
+        />
+      )}
       <div className="position-body">
         <div className="position-workspace">
           <details

@@ -7,6 +7,7 @@
  */
 import type { CatalogReadiness } from "./catalogReadiness";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
+import type { FinishAuthority } from "./finishAuthority";
 import type { MaterialEnum } from "./materialEnum";
 import type { SlidingSystemParameters } from "./slidingSystemParameters";
 import type { SystemDimensionalLimit } from "./systemDimensionalLimit";
@@ -30,6 +31,7 @@ export interface SystemResponse {
   dimensional_limits?: SystemDimensionalLimit[];
   opening_capabilities?: unknown | null;
   paired_leaf_rule?: unknown | null;
+  finish_authority?: FinishAuthority | null;
   /** @maxLength 150 */
   name: string;
   /** @maxLength 50 */

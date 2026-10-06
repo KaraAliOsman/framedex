@@ -133,3 +133,26 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 6. Conecte herramientas y máquina siguiendo P14, compruebe su programa frente a
    la ficha y una pieza de ensayo. Las series DEMO v4 y sus packs no certifican
    fabricación ni reemplazan la validación del fabricante.
+
+## Colores y acabados por caras (D05)
+
+1. Obtenga la carta y las reglas técnicas del fabricante por sistema: códigos,
+   nombres, proceso, base de PVC, caras permitidas, muestra lineal y fuente.
+   Declare RAL/brillo o anodizado cuando corresponda. Indique aproximación;
+   agregue una textura local solo si la ficha la aporta.
+2. Declare combinaciones, holgura de vidrio, refuerzo obligatorio, límites de
+   posición/hoja, colores compatibles de manilla y días adicionales. No use los
+   valores sintéticos DEMO para fabricar ni invente un plazo ausente.
+3. Complete **Colores y SKU por color** para cada perfil/combinación: SKU de
+   compra, fabricante, identidad física, color de stock, regla de corte, versión
+   y unidad. Mantenga separado el acabado real del acero. Registre existencias
+   con esa misma autoridad; una barra blanca no cubre una ventana bicolor.
+4. Declare recargo por metro de perfil, porcentaje del costo o fijo por posición,
+   moneda y fuente; complete costo/lista vigente y reglas comerciales. Revise el
+   delta calculado contra la combinación base antes de cotizar.
+5. Importe o edite con dueño/encargado, revise el diff y publique por clic.
+   Compruebe interior/exterior, igual caras, manillas, guardar/reabrir, precio,
+   PDF y portal. Compare el color con una muestra física del fabricante.
+6. Emita una revisión nueva y verifique compras, reservas y optimización por
+   combinación. Conserve las revisiones anteriores y su carta sellada. Las
+   series DEMO v5 son autoridades adicionales, sin certificación.

@@ -21,6 +21,8 @@ from dekopen_engine.models import OpeningCapability, PairedLeafRule
 from pydantic import TypeAdapter
 from pricing.repository import json_text
 from dekopen_engine.hardware_classes import parse_hardware_class
+from dekopen_engine.finish_models import FinishAuthority
+from engine_api.finish_serializers import FinishAuthoritySerializer
 
 KIT_OPENING_TYPES = sorted(
     {
@@ -160,6 +162,18 @@ class SystemWriteSerializer(StrictSerializer):
     dimensional_limits = SystemDimensionalLimitSerializer(many=True, required=False)
     opening_capabilities = OpeningAuthorityJSONField(required=False, allow_null=True)
     paired_leaf_rule = OpeningAuthorityJSONField(required=False, allow_null=True)
+    finish_authority = OpeningAuthorityJSONField(required=False, allow_null=True)
+
+    def validate_finish_authority(self, value):
+        if value is None:
+            return None
+        try:
+            # This authority stores exact decimal strings. Catalog JSONB's
+            # legacy numeric encoder must never turn its channels into JSON
+            # numbers after human-reviewed publication.
+            return FinishAuthority.model_validate_json(json_text(value)).model_dump(mode="json")
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Completa la carta, los colores lineales, las caras permitidas, la base, las reglas y sus fuentes con decimales exactos.") from None
 
     def validate_opening_capabilities(self, value):
         if value is None:
@@ -186,6 +200,12 @@ class SystemWriteSerializer(StrictSerializer):
 
     def validate(self, attrs):
         effective = {**(self.instance or {}), **attrs}
+        finish = effective.get("finish_authority")
+        if finish is not None:
+            if "material" in effective and finish["material"] != effective["material"]:
+                raise serializers.ValidationError({"finish_authority": "La carta debe corresponder al material de la serie."})
+            if "finishes" in effective and set(effective["finishes"]) != {combo["code"] for combo in finish["combinations"]}:
+                raise serializers.ValidationError({"finishes": "Declara exactamente las identidades de las combinaciones de la carta."})
         family = effective.get("system_family")
         legacy = ("pulley_height_mm", "central_overlap_mm", "sliding_lateral_clearance_mm",
                   "sliding_end_add_mm", "sliding_glazing_deduction_width_mm",
@@ -528,6 +548,7 @@ class ProvenanceFieldsMixin(serializers.Serializer):
 
 
 class SystemResponseSerializer(ProvenanceFieldsMixin, SystemWriteSerializer):
+    finish_authority = FinishAuthoritySerializer(required=False, allow_null=True)
     system_family = serializers.ChoiceField(choices=[item.value for item in SystemFamily], allow_null=True)
     readiness = CatalogReadinessSerializer(read_only=True)
     revision = serializers.CharField(read_only=True)

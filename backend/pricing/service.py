@@ -151,7 +151,8 @@ def position_cost(repo, position, rules):
         tree = decoded(position['parametric_tree'])
         from catalogs.glass import validate_design_products, enforce_design_glass
         validate_design_products(repo.org_id, position['system_id'], tree)
-        color = position['color_interior']
+        from projects.finishes import position_finish_code
+        color = position_finish_code(position)
         result = engine_result_from_api(
             tree=tree, color=color, params=params,
             nominal_width_mm=position['width_mm'],
@@ -177,7 +178,7 @@ def position_cost(repo, position, rules):
             with connection.cursor() as cursor:
                 cursor.execute('SET LOCAL ROLE pricing_backend')
     tree = decoded(position['parametric_tree'])
-    color = position['color_interior']
+    color = position_finish_code(position)
     materials = []
     composition = []
     for cut in result.profile_cuts:
@@ -187,6 +188,19 @@ def position_cost(repo, position, rules):
         composition.append({'kind':'PROFILE','sku':stock.commercial_sku,
                             'quantity':str((cut.length_mm*cut.qty/D('1000')).quantize(D('0.001'))),
                             'unit':'M','cost':str(cost.quantize(D('0.0001')))})
+    from dekopen_engine.finishes import finish_surcharge
+    if result.finish is not None:
+        surcharge_rule = result.finish.combination.surcharge
+        priced_result = result.model_copy(update={"finish": result.finish.model_copy(update={
+            "combination": result.finish.combination.model_copy(update={"surcharge": surcharge_rule.model_copy(update={
+                "amount": (repo.convert(surcharge_rule.amount, surcharge_rule.currency)
+                           if surcharge_rule.kind in {"FIXED", "PER_M"} else surcharge_rule.amount),
+                "currency": repo.currency})})})})
+        surcharge = finish_surcharge(priced_result, sum(materials, D('0')), repo.currency)
+        materials.append(surcharge)
+        composition.append({'kind':'FINISH','sku':color,'quantity':'1','unit':'EA',
+            'cost':str(surcharge.quantize(D('0.0001'))), 'source':surcharge_rule.source,
+            'rule':surcharge_rule.model_dump(mode='json')})
     for steel in result.reinforcements:
         stock = steel_stocks[(steel.parent_profile_sku,steel.reinforcement_sku)]
         cost = linear_cost(repo,stock.commercial_sku,steel.length_mm*steel.qty,stock.stock_length_mm)

@@ -14,6 +14,7 @@ import subprocess
 import sys
 from threading import Thread
 import time
+import tomllib
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -102,6 +103,26 @@ def running_environment() -> dict[str, str]:
     return result
 
 
+def require_disposable_stack(docker: str) -> None:
+    """A clean gate must never adopt an existing project's database or backup."""
+    config = tomllib.loads((ROOT / "supabase/config.toml").read_text(encoding="utf-8"))
+    project = config.get("project_id")
+    if not isinstance(project, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", project):
+        raise RuntimeError("Clean database gate requires an explicit valid Supabase project_id")
+    selector = f"label=com.supabase.cli.project={project}"
+    resources = [
+        [docker, "ps", "-aq", "--filter", selector],
+        [docker, "volume", "ls", "-q", "--filter", selector],
+        # Older CLI resources may have the database name without modern labels.
+        [docker, "ps", "-aq", "--filter", f"name=^supabase_db_{project}$"],
+    ]
+    if any(run(command, capture=True).strip() for command in resources):
+        raise RuntimeError(
+            "Clean database gate refuses existing Supabase containers or volumes; "
+            "use an isolated project with no previous data. No start, reset or stop was executed."
+        )
+
+
 def start_clean_stack() -> dict[str, str]:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -111,6 +132,7 @@ def start_clean_stack() -> dict[str, str]:
     version = run([supabase, "--version"], capture=True).strip()
     if version != CLI_VERSION:
         raise RuntimeError(f"Supabase CLI must be exactly {CLI_VERSION}; found {version}")
+    require_disposable_stack(docker)
     started = False
     try:
         run([supabase, "start"])
@@ -275,6 +297,7 @@ def verify_postgres16() -> None:
         import check_glass_upgrade
         import check_opening_upgrade
         import check_hardware_upgrade
+        import check_finish_upgrade
 
         check_migration_upgrades.verify(container)
         check_pricing_upgrade.verify(container)
@@ -283,6 +306,7 @@ def verify_postgres16() -> None:
         check_glass_upgrade.verify(container)
         check_opening_upgrade.verify(container)
         check_hardware_upgrade.verify(container)
+        check_finish_upgrade.verify(container)
     finally:
         if owned:
             run([docker, "rm", "--force", container])

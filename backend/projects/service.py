@@ -143,6 +143,8 @@ def position_public(row):
         "parametric_tree": decoded(row["parametric_tree"]),
     }
     stored = decoded(row["bom_snapshot"])
+    if isinstance(stored, dict) and stored.get("finish"):
+        design["color"] = stored["finish"]["combination"]["code"]
     try:
         payload = {key: value for key, value in stored.items() if key != "calculation_hash"}
         result = EngineResult.model_validate_json(json_text(payload))
@@ -506,8 +508,8 @@ def save_position(org_id, project_id, data, *, position_id=None):
         design["system_id"],
         design["nominal_width_mm"],
         design["nominal_height_mm"],
-        design["color"],
-        design["color"],
+        bom["finish"]["interior"]["code"] if bom.get("finish") else design["color"],
+        bom["finish"]["exterior"]["code"] if bom.get("finish") else design["color"],
         json_text(design["parametric_tree"]),
         json_text(bom),
     ]

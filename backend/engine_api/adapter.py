@@ -25,6 +25,7 @@ from dekopen_engine import (
 )
 from dekopen_engine.contour import Contour
 from dekopen_engine.catalog_rules import CatalogRuleError
+from dekopen_engine.finishes import resolve_finish
 from dekopen_engine.weight import MissingFabricationAuthority
 from dekopen_engine.models import PlanPoint, Opening, OpeningUse, HingedLayout, HardwareSelection
 from dekopen_engine.openings import OpeningCapabilityError
@@ -356,6 +357,7 @@ def normalized_root_from_api(
     color: str,
     params: SystemParams,
 ) -> ParametricNode:
+    resolve_finish(params, color)
     if color not in params.finishes:
         raise InvalidEngineRequest(
             f"finish '{color}' is not declared for system {params.system_code}"
@@ -577,6 +579,7 @@ def evaluate_assembly_from_api(
     params: SystemParams,
     coupler_articles: dict[str, EffectiveProfileArticle] | None = None,
 ) -> ProductEvaluation:
+    resolve_finish(params, color)
     if color not in params.finishes:
         raise InvalidEngineRequest(
             f"finish '{color}' is not declared for system {params.system_code}"
@@ -586,9 +589,10 @@ def evaluate_assembly_from_api(
         if isinstance(product, ProductModel)
         else parse_product_model(product)
     )
-    return evaluate_product(
+    evaluation = evaluate_product(
         model, params, coupler_articles=coupler_articles, is_foiled=color != "WHITE", finish=color
     )
+    return evaluation
 
 
 def is_product_tree(payload: object) -> bool:

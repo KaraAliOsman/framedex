@@ -1,4 +1,10 @@
-import type { PlanGeometry, PlanModule } from "../../api/generated/models";
+import type {
+  FinishColor,
+  PlanGeometry,
+  PlanModule,
+  ResolvedFinish,
+} from "../../api/generated/models";
+import { bayHardwareColor } from "./finishHardware";
 import type { ContourJson, ProductJson, ProductModuleJson } from "./productEditing";
 import { modulePrimaryBay, resolveStacks } from "./productEditing";
 import type { IntentNode } from "./intentEditing";
@@ -36,6 +42,8 @@ export type SolidKind =
   | "spacer";
 
 export interface BoxSolid {
+  hardwareColor?: FinishColor;
+  finish?: ResolvedFinish;
   kind: "box";
   owner: string;
   surface: SolidKind;
@@ -56,6 +64,8 @@ export interface BoxSolid {
  * module-local outline (x right, y up — the contour space). The extrusion
  * spans z0..z0+depth so glazing can sit inside the profile depth. */
 export interface ShapeSolid {
+  hardwareColor?: FinishColor;
+  finish?: ResolvedFinish;
   kind: "shape";
   owner: string;
   surface: SolidKind;
@@ -78,6 +88,8 @@ export interface ShapeSolid {
  * posts); the run spans a0..a1 and the (u,v) origin sits at (u0, v0).
  * Never approximate — the polygon IS the manufacturer declaration. */
 export interface ProfileSolid {
+  hardwareColor?: FinishColor;
+  finish?: ResolvedFinish;
   kind: "profile";
   owner: string;
   surface: SolidKind;
@@ -100,6 +112,8 @@ export interface ProfileSolid {
 
 /** Coupler wedge in world space: a plan polygon (x,z) extruded vertically. */
 export interface PrismSolid {
+  hardwareColor?: FinishColor;
+  finish?: ResolvedFinish;
   kind: "prism";
   owner: string;
   surface: SolidKind;
@@ -847,7 +861,7 @@ function hingeAt(
  * marked schematic); the handle's family, faces and datum come from
  * `resolveHardwareVisual` — impossible declared positions draw clamped
  * AND report a diagnostic, never silently corrected. */
-function hardwareSolids(
+function uncoloredHardwareSolids(
   solids: Solid3D[],
   owner: string,
   bay: IntentNode,
@@ -991,6 +1005,16 @@ function hardwareSolids(
     if (spec.handle.exterior) {
       leverOnFace(solids, owner, stileX, handleY, zExterior, -1, approximate);
     }
+  }
+}
+
+function hardwareSolids(...args: Parameters<typeof uncoloredHardwareSolids>): void {
+  const [solids, , bay, , , , , members] = args;
+  const start = solids.length;
+  uncoloredHardwareSolids(...args);
+  const color = bayHardwareColor(members, bay);
+  for (const solid of solids.slice(start)) {
+    if (solid.surface === "handle") solid.hardwareColor = color;
   }
 }
 
@@ -1227,7 +1251,10 @@ function leafSolids(
         // surface bar on an inner track would punch through the leaf that
         // crosses in front of it; those always draw the flush cup.
         const kind: HandleKind = index === 0 ? visual.handle.kind : "recessed_pull";
+        const from = solids.length;
         slidingPull(solids, owner, kind, stileX, pullCy, z0, sashW, !visual.handle.kitBound);
+        for (const solid of solids.slice(from))
+          solid.hardwareColor = bayHardwareColor(members, bay);
       }
       tagLeaf(solids, leafFrom, leafId);
       // Presentation only: a leaf slides toward its neighbouring slot(s),
@@ -2141,6 +2168,20 @@ export function buildScene3D(
     }
   }
 
+  if (members.finish) {
+    const coated = new Set<SolidKind>([
+      "frame",
+      "sash",
+      "mullion",
+      "coupler",
+      "bead",
+      "threshold",
+      "track",
+    ]);
+    for (const solid of [...moduleScenes.flatMap((module) => module.solids), ...couplers]) {
+      if (coated.has(solid.surface)) solid.finish = members.finish;
+    }
+  }
   if (worldPoints.length === 0) {
     return {
       modules: moduleScenes,

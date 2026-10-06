@@ -19,6 +19,8 @@ import { formatDate, formatDateTime, formatDecimal, fmtMm, formatMoney } from ".
 import { domainLabel } from "../../i18n/domainLabels";
 import { useConfirm } from "../../ui/ConfirmDialog";
 import { OpeningCapabilitiesEditor, type PairedRule } from "./OpeningCapabilitiesEditor";
+import { FinishAuthorityEditor } from "./FinishAuthorityEditor";
+import type { FinishAuthority } from "../../api/generated/models";
 import { physicalLabel, type Capability } from "../canvas/physicalOpenings";
 
 type Evidence = { ref?: string; quote?: string; confidence?: string; proposed?: unknown };
@@ -66,6 +68,10 @@ function errorText(error: unknown): string {
 }
 function display(value: unknown, column?: CatalogTemplateColumn, field?: string): string {
   if (value == null || value === "") return "Sin dato";
+  if ((field ?? column?.key) === "finish_authority" && typeof value === "object") {
+    const chart = value as FinishAuthority;
+    return `${chart.colors?.length ?? 0} muestras · ${chart.combinations?.length ?? 0} combinaciones · ${chart.source ?? "Fuente sin dato"}`;
+  }
   if (field === "opening_capabilities" && Array.isArray(value))
     return (
       (value as Capability[])
@@ -259,7 +265,18 @@ export function CatalogImportsPanel({
   function patch(key: string, field: string, value: unknown): void {
     setRows((current) =>
       current.map((row) =>
-        row.key === key ? { ...row, values: { ...row.values, [field]: value } } : row,
+        row.key === key
+          ? {
+              ...row,
+              values: {
+                ...row.values,
+                [field]: value,
+                ...(field === "finish_authority" && value
+                  ? { finishes: (value as FinishAuthority).combinations.map((c) => c.code) }
+                  : {}),
+              },
+            }
+          : row,
       ),
     );
     setDiff(null);
@@ -608,6 +625,7 @@ export function CatalogImportsPanel({
                 </div>
                 {sheet.columns.map((column) => {
                   if (column.key === "paired_leaf_rule") return null;
+                  if (column.key === "finishes" && selected.values.finish_authority) return null;
                   const evidence = selected.fields[column.key] ?? {};
                   const value = selected.values[column.key];
                   const errors = diff
@@ -623,7 +641,13 @@ export function CatalogImportsPanel({
                         {column.required && <small>Requerido</small>}
                       </label>
                       <div>
-                        {column.key === "opening_capabilities" ? (
+                        {column.key === "finish_authority" ? (
+                          <FinishAuthorityEditor
+                            value={(value as FinishAuthority | null) ?? null}
+                            material={String(selected.values.material ?? "PVC")}
+                            onChange={(next) => patch(selected.key, column.key, next)}
+                          />
+                        ) : column.key === "opening_capabilities" ? (
                           <OpeningCapabilitiesEditor
                             capabilities={Array.isArray(value) ? (value as Capability[]) : []}
                             paired={(selected.values.paired_leaf_rule as PairedRule | null) ?? null}
@@ -691,7 +715,9 @@ export function CatalogImportsPanel({
                           {evidence.ref?.replace(/^(.+)!([A-Z]+[0-9]+)$/u, "$1 · celda $2") ||
                             "Sin referencia"}
                         </span>
-                        {column.kind === "json" || /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
+                        {column.kind === "json" ||
+                        column.key === "finishes" ||
+                        /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
                           <details>
                             <summary>Ver texto original de la fuente</summary>
                             <blockquote>
@@ -915,6 +941,8 @@ function DiffFields({
     return (
       <div className="catalog-diff-values">
         {Object.entries(after).map(([key, value]) => {
+          if (key === "finishes" && (after as Record<string, unknown>).finish_authority)
+            return null;
           if (
             key.endsWith("_id") ||
             [
@@ -935,6 +963,32 @@ function DiffFields({
             return null;
           const previous =
             before && typeof before === "object" ? (before as Record<string, unknown>)[key] : null;
+          if (key === "finish_authority")
+            return (
+              <section key={key} aria-label="Comparación de carta por caras">
+                {(
+                  [
+                    ["Antes de publicar", previous],
+                    ["Carta a publicar", value],
+                  ] as const
+                ).map(([label, chart]) => (
+                  <details key={label} open={label === "Carta a publicar"}>
+                    <summary>{label}</summary>
+                    {chart ? (
+                      <fieldset disabled>
+                        <FinishAuthorityEditor
+                          value={chart as FinishAuthority}
+                          material={(chart as FinishAuthority).material}
+                          onChange={() => {}}
+                        />
+                      </fieldset>
+                    ) : (
+                      <p>Sin carta por caras.</p>
+                    )}
+                  </details>
+                ))}
+              </section>
+            );
           if (
             value &&
             typeof value === "object" &&

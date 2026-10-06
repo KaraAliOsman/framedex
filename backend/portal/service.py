@@ -272,7 +272,7 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
         finish = ""
         try:
             glass_specs = frozen_glass_specs(value)
-            finish = finish_label(value.get("color_interior"), value.get("color_exterior"))
+            finish = finish_label(value.get("color_interior"), value.get("color_exterior"), value.get("resolved_finish"))
         except DocumentaryError:
             glass_specs = []
             finish = ""
@@ -286,6 +286,10 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
             "height_mm": str(value.get("height_mm") or ""),
             "color_interior": value.get("color_interior"),
             "color_exterior": value.get("color_exterior"),
+            # Customer rendering needs the sealed samples, not the workshop's
+            # commercial profile/stock bindings. Keep the issued authority intact.
+            **({"resolved_finish": {**value["resolved_finish"], "profile_skus": {}}}
+               if value.get("resolved_finish") else {}),
             "glass_specs": glass_specs,
             "commercial_hardware": [{key: item.get(key) for key in ("handle_name", "handle_color", "options", "synthetic")}
                 for item in value.get("commercial_hardware") or []],

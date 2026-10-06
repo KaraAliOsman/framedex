@@ -3,6 +3,7 @@
 from rest_framework import serializers
 
 from dekopen_engine.models import HARDWARE_COMPONENT_CATEGORIES
+from engine_api.finish_serializers import ResolvedFinishSerializer
 
 
 class DecimalStringField(serializers.DecimalField):
@@ -21,6 +22,8 @@ class EngineCalculateRequestSerializer(serializers.Serializer):
 
 
 class ProfileCutSerializer(serializers.Serializer):
+    commercial_sku = serializers.CharField(required=False, allow_null=True)
+    stock_color = serializers.CharField(required=False, allow_null=True)
     sku = serializers.CharField()
     role = serializers.CharField()
     material = serializers.ChoiceField(choices=["PVC", "ALUMINIUM"])
@@ -156,6 +159,7 @@ class LeafWeightSerializer(serializers.Serializer):
 
 
 class EngineResultPayloadSerializer(serializers.Serializer):
+    finish = ResolvedFinishSerializer(required=False, allow_null=True)
     profile_cuts = ProfileCutSerializer(many=True)
     reinforcements = ReinforcementSerializer(many=True)
     glasses = GlassPieceSerializer(many=True)

@@ -52,8 +52,13 @@ def _identity_identities(org_id: UUID, authority_ids: set[str]) -> dict[str, dic
         """,
         [str(org_id), listed],
     )
+    finishes = rows(
+        "SELECT id::text AS authority_id,commercial_sku,physical_stock_identity "
+        "FROM public.catalog_color_skus WHERE (org_id=%s OR org_id IS NULL) AND id=ANY(%s::uuid[])",
+        [str(org_id), listed],
+    )
     merged: dict[str, dict[str, str | None]] = {}
-    for row in [*profile, *reinforce]:
+    for row in [*profile, *reinforce, *finishes]:
         merged[str(row["authority_id"])] = {
             "purchasing_sku": str(row["commercial_sku"]),
             "physical_stock_identity": row.get("physical_stock_identity"),

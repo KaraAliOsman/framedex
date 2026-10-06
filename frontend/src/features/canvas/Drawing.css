@@ -3,9 +3,13 @@
 .member-threshold {
   stroke-width: 2.5;
 }
+.product-front-svg {
+  --finish-bead-color: var(--member-pvc-edge);
+  --finish-handle-color: var(--theme-accent-ink);
+}
 .member-bead {
   fill: none;
-  stroke: var(--member-pvc-edge);
+  stroke: var(--finish-bead-color, var(--member-pvc-edge));
   stroke-width: 1.4;
   vector-effect: non-scaling-stroke;
 }
@@ -29,7 +33,7 @@
 .handle-lever line,
 .handle-lever path {
   fill: none;
-  stroke: var(--theme-accent-ink);
+  stroke: var(--finish-handle-color, var(--theme-accent-ink));
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
@@ -188,13 +192,37 @@
   font-family: var(--font-sans);
   font-size: var(--type-title-l);
 }
-.assembly-view-label {
+.assembly-view-choices {
   position: absolute;
   top: var(--space-3);
   left: var(--space-3);
   color: var(--theme-text-secondary);
   background: var(--theme-bg-canvas);
   padding: var(--space-1) var(--space-2);
-  pointer-events: none;
+  display: flex;
+  gap: var(--space-1);
   z-index: var(--z-island);
+}
+.assembly-view-choices button.assembly-face {
+  border: 1px solid var(--theme-border);
+  color: var(--theme-text-secondary);
+  background: var(--theme-surface);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  min-height: var(--control-height);
+}
+.assembly-view-choices button[aria-pressed="true"] {
+  color: var(--theme-accent-ink);
+  border-color: var(--theme-accent);
+}
+.product-front-svg.is-exterior text {
+  transform: scaleX(-1);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.product-front-svg.is-exterior .handle-lever {
+  display: none;
+}
+.product-front-svg.is-exterior .module-bay--door .handle-lever {
+  display: initial;
 }

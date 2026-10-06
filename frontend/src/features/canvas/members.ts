@@ -3,7 +3,10 @@ import type {
   HandlePolicy,
   KitChoice,
   ProfileSection,
+  FinishColor,
+  ResolvedFinish,
 } from "../../api/generated/models";
+import { chartFinish, type FinishFace } from "./finishColors";
 
 /** Drawing hierarchy resolved from the catalog: member face widths and the
  * system's rebate/overlap geometry. Everything optional — the demo/DOM paths
@@ -11,6 +14,8 @@ import type {
  * reads as a real window. */
 
 export interface MemberSpec {
+  finish?: ResolvedFinish;
+  faceFinish?: FinishColor;
   sku: string | null;
   /** Human catalog name for the resolved article — what the UI shows;
    * the SKU stays available for identity, not display. */
@@ -23,6 +28,8 @@ export interface MemberSpec {
 }
 
 export interface MemberGeometry {
+  finish?: ResolvedFinish;
+  viewFace?: FinishFace;
   frame: MemberSpec;
   sash: MemberSpec;
   mullionV: MemberSpec | null;
@@ -77,7 +84,11 @@ function member(
   };
 }
 
-export function resolveMembers(options: DesignOptions | undefined): MemberGeometry {
+export function resolveMembers(
+  options: DesignOptions | undefined,
+  finishCode?: string,
+  face: FinishFace = "interior",
+): MemberGeometry {
   const couplers = new Map<string, MemberSpec>();
   for (const item of options?.coupler_profiles ?? []) {
     const faceWidth = Number(item.face_width_mm);
@@ -116,7 +127,7 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
   });
   const rebate = Number(options?.rebate_depth_mm);
   const sashOverlap = Number(options?.sash_overlap_mm);
-  return {
+  const base: MemberGeometry = {
     frame: member(options, "FRAME", FALLBACK.frame),
     sash: member(
       options,
@@ -162,6 +173,30 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
     sashOverlapMm:
       Number.isFinite(sashOverlap) && sashOverlap >= 0 ? sashOverlap : FALLBACK.sashOverlap,
     signature,
+  };
+  const finish = finishCode ? chartFinish(options?.finish_authority, finishCode) : null;
+  return finish ? withFinishMembers(base, finish, face) : base;
+}
+
+export function withFinishMembers(
+  base: MemberGeometry,
+  finish: ResolvedFinish,
+  face: FinishFace = "interior",
+): MemberGeometry {
+  const spec = (item: MemberSpec | null): MemberSpec | null =>
+    item ? { ...item, finish, faceFinish: finish[face] } : null;
+  return {
+    ...base,
+    finish,
+    viewFace: face,
+    frame: spec(base.frame)!,
+    sash: spec(base.sash)!,
+    mullionV: spec(base.mullionV),
+    mullionH: spec(base.mullionH),
+    threshold: spec(base.threshold),
+    beadSpecFor: (thickness) => spec(base.beadSpecFor(thickness)),
+    couplerFor: (sku) => spec(base.couplerFor(sku)),
+    signature: JSON.stringify([base.signature, finish, face]),
   };
 }
 

@@ -88,7 +88,7 @@ def _fetch(resource, where, params, *, lock=False):
                 row[name] = json.loads(
                     row[name],
                     parse_float=Decimal,
-                    parse_int=int if name == "class_authority" else Decimal,
+                    parse_int=int if name in {"class_authority", "finish_authority"} else Decimal,
                 )
         row["revision"] = catalog_revision(row)
     return result
@@ -266,7 +266,7 @@ def _contents_json(components):
     return "[" + ",".join(encoded) + "]"
 
 
-_JSONB_FIELDS = {"class_authority", "opening_capabilities", "paired_leaf_rule", "product", "contents", "section", "finishes", "sliding_parameters",
+_JSONB_FIELDS = {"finish_authority", "class_authority", "opening_capabilities", "paired_leaf_rule", "product", "contents", "section", "finishes", "sliding_parameters",
                  "dimensional_limits", "cut_rule", "reinforcement_rule", "provenance"}
 
 

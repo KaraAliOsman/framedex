@@ -272,3 +272,52 @@ current-reality y la wiki de herrajes registran esa referencia. Los 111 PNG
 se comprobaron y optimizaron sin pérdida; el índice auditado no contiene valores
 del entorno privado. El pase editorial R1–R20 y sus dos rondas quedan en el PR.
 La cola continúa con D05 y conserva los límites de autoridad de fabricación.
+
+## 2026-10-06 — D05 · colores, caras y continuidad comercial
+
+La carta declara procesos de PVC/aluminio, RGB lineal exacto, base, combinaciones,
+fuentes, reglas y recargos. La combinación es la identidad comercial/stock; el
+acero conserva su acabado independiente. Motor, API, importación, 2D/3D,
+cotización, documento y portal usan la misma autoridad sellada. Siete acabados
+completan precio, emisión y OT optimizadas. Guardar espera la evaluación actual;
+deshacer vuelve a publicarla desde caché. La publicación humana y reapertura
+conservan strings decimales de precisión extensa, con regresión HTTP.
+
+La matriz de editor/catálogo y portal, cinco estados, publicación/deshacer y
+cuatro folios PDF tienen evidencia; el PDF mantiene la paginación heredada para
+P09. Los catálogos v5 son aditivos, sintéticos y no acreditan fabricación real.
+El cierre local/CI y el merge se registrarán tras comprobarlos.
+
+El incidente de sincronización del gate se conserva en operations y aceptación:
+un reset alcanzó el stack local ajeno y no se puede afirmar supervivencia de
+sus datos. No se tocó su Git ni main. El entorno ignora identidad original antes
+de escribir config y cada llamada CLI exige ruta/proyecto/puertos propios.
+El gate del repositorio también rechaza contenedores o volúmenes existentes,
+incluidos detenidos y sin etiqueta moderna; nueve pruebas del harness pasan.
+
+## 2026-10-06 — D05 · cierre de recorridos y regresiones diagnósticas
+
+El gate detectó referencias E2E a v4 frente al descubrimiento v5. Las aserciones
+conservan precisión y comprueban la holgura de la carta actual. También detectó
+un hash diferente en inspección: su entrada diagnóstica omitía preparar el
+acabado. La geometría común aplica la carta a cálculo, inspector y layout;
+siete casos contra goldens y dos regresiones HTTP preservan la identidad con
+corte. Los tres recorridos canvas pasan, con pintura inferior a 300 ms.
+
+El portal excluye los bindings internos de compra y conserva las muestras
+selladas. La matriz final recorre caras/igual/undo/guardar/reabrir y el portal
+en cuatro anchos. Cinco estados y publicación/deshacer pasan. El barrido
+formal tiene 24 comparaciones sin regresiones ni errores nuevos; se elimina el
+degradado heredado de miniaturas. Los 80 PNG se comprueban sin pérdida.
+Gates locales: 623 motor (+2 xfail históricos), 1 179 backend y 719 frontend;
+PG16 y los ocho upgrades poblados pasan. El gate limpio/CI aún se cierra.
+
+## 2026-10-06 — D05 · gate aislado completo
+
+El Database Gate termina con 1 031 pruebas pgTAP en 73 archivos, 304 pruebas de
+integración, 11 recorridos de navegador y los ocho upgrades poblados PG16.
+La limpieza verifica ausencia de contenedores/volúmenes del proyecto propio.
+Lint, typecheck, test y build también pasan; 24 comparaciones formales no tienen
+hallazgos nuevos y la auditoría de los 221 archivos cambiados no detecta valores
+privados del entorno ni tokens de evidencia. El incidente previo permanece
+visible y su ejecución se excluye de aceptación. El cierre CI/merge sigue pendiente.

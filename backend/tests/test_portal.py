@@ -299,6 +299,22 @@ def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) ->
     }
 
 
+def test_customer_finish_preserves_sealed_faces_without_internal_profile_bindings() -> None:
+    from engine.tests.finish_cases import finish_cases
+
+    finish = finish_cases()["pvc-nogal-exterior"]["bom"]["finish"]
+    sealed = {"positions": [{"resolved_finish": finish, "color_interior": "WHITE", "color_exterior": "WALNUT"}]}
+    original = json.dumps(sealed, sort_keys=True)
+    out = service._sealed_positions({"snapshot_json": sealed})[0]["resolved_finish"]
+    assert out["interior"] == finish["interior"]
+    assert out["exterior"] == finish["exterior"]
+    assert out["base"] == finish["base"]
+    assert out["combination"] == finish["combination"]
+    assert out["profile_skus"] == {}
+    assert finish["profile_skus"]
+    assert json.dumps(sealed, sort_keys=True) == original
+
+
 def test_decide_approves_project_and_replays(monkeypatch) -> None:
     _roles(monkeypatch)
     approval = _approval()

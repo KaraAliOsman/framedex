@@ -49,7 +49,7 @@ def _json_value(value: object, field: str = "", *, exact_recipe: bool = False) -
         # sliding leaves, which do not carry opening_leaves. Legacy kits have
         # no resolution and therefore retain their canonical byte scale.
         structured = bool(value.get("opening_leaves")) or value.get("resolution") is not None
-        return {key: _json_value(item, key, exact_recipe=exact_recipe or structured or key in {"composition", "glass_product"})
+        return {key: _json_value(item, key, exact_recipe=exact_recipe or structured or key in {"composition", "glass_product", "finish"})
                 for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [_json_value(item, exact_recipe=exact_recipe) for item in value]

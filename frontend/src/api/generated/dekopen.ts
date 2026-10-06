@@ -124,6 +124,8 @@ import type {
   EvidenceList,
   EvidenceReviewInputRequest,
   EvidenceRow,
+  FinishPreviewRequestRequest,
+  FinishPreviewResponse,
   FlowAcknowledgement,
   FlowConfirmationRequest,
   FreezeRequestRequest,
@@ -16639,6 +16641,88 @@ export const projectDesignOptions = async (
   return apiMutator<projectDesignOptionsResponse>(getProjectDesignOptionsUrl(systemId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type projectFinishPreviewResponse200 = {
+  data: FinishPreviewResponse;
+  status: 200;
+};
+
+export type projectFinishPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectFinishPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectFinishPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectFinishPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectFinishPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectFinishPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectFinishPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectFinishPreviewResponseSuccess = projectFinishPreviewResponse200 & {
+  headers: Headers;
+};
+export type projectFinishPreviewResponseError = (
+  | projectFinishPreviewResponse400
+  | projectFinishPreviewResponse401
+  | projectFinishPreviewResponse403
+  | projectFinishPreviewResponse404
+  | projectFinishPreviewResponse409
+  | projectFinishPreviewResponse422
+  | projectFinishPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectFinishPreviewResponse =
+  projectFinishPreviewResponseSuccess | projectFinishPreviewResponseError;
+
+export const getProjectFinishPreviewUrl = () => {
+  return `/api/v1/projects/finish-preview/`;
+};
+
+export const projectFinishPreview = async (
+  finishPreviewRequestRequest: FinishPreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectFinishPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectFinishPreviewResponse>(getProjectFinishPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(finishPreviewRequestRequest),
   });
 };
 

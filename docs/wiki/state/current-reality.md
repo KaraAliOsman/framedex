@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-06
 volatility: high
-verified_ref: dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f
+verified_ref: codex/D05-colores-acabados
 sources:
   - repository main
   - P00 foundation PR #114
@@ -14,6 +14,7 @@ sources:
   - D02 glass recipes, persisted quotation/orders and browser evidence, 2026-10-05
   - D03 physical openings, browser and immutable upgrade evidence, 2026-10-06
   - D04 hardware classes PR #122, CI four required checks, 2026-10-06
+  - D05 sourced face/stock/surcharge authority and browser evidence, 2026-10-06
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -22,6 +23,32 @@ sources:
 ---
 
 # Current reality
+
+## D05 · carta por caras verificada en la rama, 2026-10-06
+
+La carta tipada declara proceso, muestra lineal, base, caras compatibles,
+restricciones, fuente, recargo y plazo. El motor resuelve refuerzo, holgura,
+límites y SKU por combinación. El delta comercial incorpora tarifa, merma y
+margen vigentes; ante datos ausentes explica Sin dato. Stock, compras, reservas
+y corte conservan la combinación física y el acabado independiente del acero.
+
+Editor, 2D/3D, portal y PDF consumen la misma carta sellada. Se comprobaron
+elegir caras, igual caras, deshacer, guardar/reabrir, siete cotizaciones/OT,
+edición/importación/diff/publicación/deshacer y los cinco estados. La escritura
+humana conserva canales de precisión extensa como strings decimales exactos.
+DEMO v5 se agrega sin reescribir v1–v4 ni BOM/hashes/precios/revisiones históricos.
+Gates locales PASA: 623 motor (+2 xfail históricos), 1 179 backend, 719 frontend,
+1 031 pgTAP, 304 integración, 11 E2E y ocho upgrades poblados PG16. La aceptación
+registra el cierre de CI al completarse el PR.
+
+Véanse [carta por caras](../product/color-finishes.md) y
+[aceptación D05](../../redesign/captures/colores-acabados/aceptacion.md).
+El cromo y la paginación heredados siguen pendientes de P04/P09/P19.
+Un [incidente del gate local](../../operations/INCIDENTE-GATE-2026-10-06.md)
+alcanzó la base local ajena; no se acredita conservación de sus datos anteriores.
+La evidencia afectada no cuenta como aceptación. La sincronización/CLI locales
+tienen guardas de identidad y el gate del repo rechaza adoptar contenedores o
+volúmenes previos, con regresiones que comprueban ausencia de start/reset/stop.
 
 ## D04 hardware classes merged and verified, 2026-10-06
 
