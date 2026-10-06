@@ -63,6 +63,11 @@ xfail históricos**, **1 139 de backend**, **704 de frontend**. OpenAPI/orval se
 regeneran sin drift; los source guards permanecen activos. El byte-check de
 goldens es de solo lectura y pasa.
 
+El drill de mutaciones detecta **28/28** desviaciones reales de ±0,01 mm en
+copias temporales. Conserva los puntos históricos, sigue las cuatro fórmulas de
+corredera tras su separación y añade soldadura, descuento de unión y refuerzo
+de las reglas nuevas. Ejecuta los casos históricos y los goldens por familia.
+
 Los 11 recorridos generales de Chromium pasan con el catálogo por familia:
 emisión de revisiones A/B, apertura de documentos, vano compuesto, guardado y
 reapertura de proyectos, catálogo y autenticación real. El recorrido detectó una

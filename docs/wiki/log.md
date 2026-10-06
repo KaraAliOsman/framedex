@@ -102,3 +102,14 @@ del motor (dos xfail históricos), 1 139 backend y 704 frontend. La igualdad de 
 al calcular/documentar se comprueba para blanco, foliado y oscuro. Solo se cambió
 la escala de 124 ángulos del golden nuevo; los históricos permanecen idénticos.
 Los checks del PR y su merge se registrarán antes de avanzar a D02.
+
+## 2026-10-05 — D01 · drill de mutaciones tras separar fórmulas
+
+La instrumentación histórica buscaba cuatro expresiones de corredera que ahora
+consumen la autoridad separada `sliding`. Se actualizó a esas mismas expresiones
+y se añadieron soldadura, encuentro y refuerzo por regla de familia. El workspace
+temporal copia solo el manifest sintético puro compartido con la semilla para
+ejecutar sus goldens. El baseline pasa y las 28 desviaciones de ±0,01 mm mueren
+por aserciones numéricas; no se omite ni relaja ningún punto histórico. La primera
+corrida de Test Suite del PR #119 falló sobre la instrumentación anterior; el
+head corregido debe pasar los cuatro checks antes del merge.
