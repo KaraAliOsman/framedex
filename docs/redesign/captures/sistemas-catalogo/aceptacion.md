@@ -26,6 +26,10 @@ sus precios y los documentos de prueba están marcados DEMO.
   retiran mediante historial inmutable; no se eliminan documentos ni auditoría.
 - Permisos: dueño/encargado publican, estimador consulta. RLS separa organizaciones
   y los costos se mantienen en el contexto autorizado de precios.
+- Disponibilidad: las cinco series DEMO pasan el mismo gate de cotización que
+  consume el editor. La corredera usa sus reglas de refuerzo declaradas; el riel
+  sin regla de acero no exige un refuerzo ficticio. Una prueba RLS comprueba las
+  cinco familias y el navegador verifica su descubrimiento como cotizables.
 
 ## Flujos de navegador
 
@@ -55,13 +59,25 @@ rediseñados por D01. El editor no necesita 390 px para la aceptación de este e
 ## Verificación automática
 
 Lint, typecheck, test y build pasan. Resultado: **482 pruebas del motor y dos
-xfail históricos**, **1 136 de backend**, **704 de frontend**. OpenAPI/orval se
+xfail históricos**, **1 139 de backend**, **704 de frontend**. OpenAPI/orval se
 regeneran sin drift; los source guards permanecen activos. El byte-check de
 goldens es de solo lectura y pasa.
 
-Database Gate: pendiente de cierre de la corrida limpia. Se exige lint SQL,
-pgTAP, integración RLS, navegador de autenticación y PostgreSQL 16, con el
-verificador poblado de migración. No se acepta D01 hasta que pase completo.
+Los 11 recorridos generales de Chromium pasan con el catálogo por familia:
+emisión de revisiones A/B, apertura de documentos, vano compuesto, guardado y
+reapertura de proyectos, catálogo y autenticación real. El recorrido detectó una
+diferencia de escala en ángulos de corte (`45` frente a `45.0`) entre el resultado
+del motor y su contrato canónico. La regla entrega ahora la misma escala exacta.
+`make goldgen` solo cambió la escala de 124 ángulos en el golden nuevo de familias;
+los históricos permanecen idénticos. Tres regresiones comprueban que el acabado
+blanco, foliado u oscuro declarado produce el mismo BOM al calcular y documentar.
+
+Database Gate: **PASA completo sobre base limpia**: lint SQL, 936 pruebas pgTAP,
+274 de integración RLS, los 11 recorridos de Chromium y PostgreSQL 16. Pasan los
+cuatro verificadores de actualización poblada, incluido el de D01 con siete
+posiciones, cortes/hash exactos y autoridad comercial/emitida conservada. La
+corrida cerró los servidores y la pila de Supabase. Los cuatro checks del PR
+siguen siendo obligatorios antes del merge.
 
 ## Pase editorial
 

@@ -3,13 +3,14 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: 2c9bbebc1cca6df125a4e0eeae14b22b71478b9e
+verified_ref: 0514eaaf317a0bd9cef6deb0d75becbc404be999
 sources:
   - repository main
   - P00 foundation PR #114
   - local stack fixes PR #116
   - P01 local gates and browser evidence, 2026-10-05
   - IA1 rollback harness and dated outcome evidence, 2026-10-05
+  - D01 catalog authorities, interchange and browser evidence, 2026-10-05
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -31,6 +32,13 @@ review, a transactional diff, explicit publication and guarded undo. Original
 evidence survives reviewer corrections. No PDF candidate was published during the
 real-provider verification. The measured source produced 31 candidates, 324 supported
 HIGH fields and 27 UNKNOWN fields. Scans without text remain an explicit limitation.
+
+All five new DEMO series are quote-ready through the same authenticated catalog
+discovery used by the editor. The readiness check consumes their declared cut and
+reinforcement rules, including sliding sash mass and rail authority. Local unit
+gates pass, as do 936 pgTAP, 274 integration tests and 11 Chromium end-to-end flows.
+The complete clean Database Gate also passes independent PostgreSQL 16 and all
+four populated-upgrade verifiers. The four PR CI checks must close before integration.
 
 Verification details and the acceptance scope are in
 [the D01 report](../../redesign/captures/sistemas-catalogo/aceptacion.md) and

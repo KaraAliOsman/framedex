@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-05
 volatility: medium
-verified_ref: codex/D01-sistemas-catalogo
+verified_ref: 0514eaaf317a0bd9cef6deb0d75becbc404be999
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py
@@ -28,6 +28,11 @@ aplica los descuentos, pérdidas por extremo y redondeo usando Decimal; el refue
 depende del largo y acabado y produce sus tornillos en el BOM. Los goldens nuevos
 incluyen perfiles, junquillos, correderas y el contraste blanco/foliado de 900 mm.
 Los goldens históricos permanecen byte por byte.
+
+Las cinco series DEMO pasan el gate real de cotización. La disponibilidad de
+refuerzos usa la regla declarada por perfil, incluidos hoja de corredera y riel;
+no exige acero donde el catálogo nuevo no lo declara. La integración RLS y el
+descubrimiento de sistemas del navegador verifican esta coincidencia.
 
 La migración conserva la autoridad histórica para posiciones existentes, incluso
 si la familia antigua mezclaba aperturas. Solo los borradores exclusivamente DEMO

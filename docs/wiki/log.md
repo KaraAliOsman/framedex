@@ -89,3 +89,16 @@ publicación. La UI declara la limitación de escaneos sin texto. Los límites d
 alcance y la rúbrica están en `docs/redesign/captures/sistemas-catalogo/aceptacion.md`;
 la síntesis está en `product/catalog-authority.md`. Integración y SHA se registran
 cuando pase el Database Gate completo y los cuatro checks del PR.
+
+## 2026-10-05 — D01 · cierre de verificación local
+
+La referencia `0514eaaf317a0bd9cef6deb0d75becbc404be999` comprueba las cinco series
+DEMO como cotizables con la misma disponibilidad que consume el editor. La regla
+de refuerzo sustituye las exigencias históricas de acero en perfiles nuevos; un
+riel sin regla no adquiere un refuerzo ficticio. El Database Gate limpio pasó
+lint SQL, 936 pgTAP, 274 pruebas RLS, 11 recorridos Chromium y PostgreSQL 16 con
+cuatro verificadores poblados. Pasan también lint, typecheck, build, 482 pruebas
+del motor (dos xfail históricos), 1 139 backend y 704 frontend. La igualdad de BOM
+al calcular/documentar se comprueba para blanco, foliado y oscuro. Solo se cambió
+la escala de 124 ángulos del golden nuevo; los históricos permanecen idénticos.
+Los checks del PR y su merge se registrarán antes de avanzar a D02.
