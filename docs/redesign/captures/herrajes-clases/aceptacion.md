@@ -132,7 +132,10 @@ Los once recorridos Chromium y todos los upgrades poblados PostgreSQL 16 pasan;
 hash, dinero aplicado, snapshot emitido y catálogo histórico intactos. El gate
 local usa Django en 18000 por la reserva de 8000 de Docker Desktop; adapta solo
 el transporte del clon aislado, sin quitar ninguna comprobación ni cambiar la app.
-Los cuatro checks de CI se registran después de verificar el head publicado.
+Los cuatro checks obligatorios de CI aprobaron el head publicado
+`a3bac97d33af40223e6a225ca768f91d28843ed6`: Lint & Typecheck, Test Suite,
+Frontend Build y Database Gate. El [PR #122](https://github.com/KaraAliOsman/framedex/pull/122)
+se integró con squash `dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f` el 06-10-2026.
 Los goldens históricos no cambian; el nuevo se generó con `make goldgen` y se
 revisó la expansión, masa, costos y ambos encuentros de corredera.
 

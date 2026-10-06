@@ -6,7 +6,7 @@
 | D01 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/119 | d8fbe5071fdb346555f7ef4df3e91160cfb5dfe0 | CI 4/4 verde; cinco series cotizables, revisión/undo, 936 pgTAP, 274 RLS, 11 E2E y 28/28 mutaciones. |
 | D02 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/120 | 407f4ffd609a2dd4536e3e3c765eb7117c69715f | CI 4/4 verde; recetas con autoridad, reglas con fuente, 12 OT y 24 etiquetas, 959 pgTAP, 280 RLS, 11 E2E y 28/28 mutaciones. |
 | D03 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/121 | 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd | CI 4/4 verde; 21 aperturas, seguridad de puerta, preview/undo, 986 pgTAP, 287 RLS, 11 E2E y compatibilidad histórica exacta. |
-| D04 | D1 | en curso |  |  | Familias, clases y expansión con autoridad; picking y mecanizados declarados. |
+| D04 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/122 | dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f | CI 4/4 verde; clases y expansión exacta, F6/diff/undo, picking de 12 OT, 1008 pgTAP, 294 RLS, 11 E2E y upgrade histórico intacto. |
 | D05 | D2 | pendiente |  |  |  |
 | D06 | D2 | pendiente |  |  |  |
 | D07 | D2 | pendiente |  |  |  |

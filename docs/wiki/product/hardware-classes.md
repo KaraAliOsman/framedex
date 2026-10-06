@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-06
 volatility: medium
-verified_ref: codex/D04-herrajes-clases
+verified_ref: dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f
 sources:
   - engine/src/dekopen_engine/hardware_classes.py
   - engine/src/dekopen_engine/hardware_machining.py
@@ -16,6 +16,10 @@ sources:
 # Herrajes por familia y clase
 
 ## Hechos comprobados en D04
+
+Integrado por [PR #122](https://github.com/KaraAliOsman/framedex/pull/122),
+con los cuatro checks obligatorios aprobados el 06-10-2026. La referencia
+verificada es el squash en `integracion/v1`.
 
 La clase pertenece al sistema y al movimiento físico de D03. Sus rangos,
 prioridad, relación ancho/alto, altura mínima de compás, componentes, manillas y

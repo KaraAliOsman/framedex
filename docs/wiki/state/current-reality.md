@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-06
 volatility: high
-verified_ref: 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd
+verified_ref: dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f
 sources:
   - repository main
   - P00 foundation PR #114
@@ -13,6 +13,7 @@ sources:
   - D01 catalog authorities, interchange and browser evidence, 2026-10-05
   - D02 glass recipes, persisted quotation/orders and browser evidence, 2026-10-05
   - D03 physical openings, browser and immutable upgrade evidence, 2026-10-06
+  - D04 hardware classes PR #122, CI four required checks, 2026-10-06
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -22,7 +23,7 @@ sources:
 
 # Current reality
 
-## D04 verification on its working branch, 2026-10-06
+## D04 hardware classes merged and verified, 2026-10-06
 
 The D04 branch adds sourced class/component/handle authority, exact Decimal
 expansion and component pricing, F6 explanation, reviewed class/split proposals
@@ -35,13 +36,16 @@ under the populated PostgreSQL 16 upgrade.
 Machining without complete sourced coordinates, face/tool/depth/coverage and a
 unique host remains declared but unissued. It cannot complete MACHINING. Customer
 documents and portal receive only model/color/options, never the engineering
-component detail. New editor, catalog and workshop surfaces have browser evidence;
-the final gate/CI/merge record will be appended after it actually completes.
+component detail. New editor, catalog and workshop surfaces have browser evidence.
+PR #122 passed all four required CI checks and was squash-merged at
+`dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f` in `integracion/v1`.
+Local gates passed 605 engine tests, 1,174 backend tests and 715 frontend tests;
+the Database Gate passed 1,008 pgTAP checks, 294 integration tests, eleven
+Chromium flows and populated PostgreSQL 16 upgrades. R1–R20 pass for D04.
 
 See [hardware classes](../product/hardware-classes.md) and
-[D04 acceptance](../../redesign/captures/herrajes-clases/aceptacion.md). This branch
-section is not a claim that D04 is already merged; the frontmatter still names
-the last integrated verification ref.
+[D04 acceptance](../../redesign/captures/herrajes-clases/aceptacion.md). Historical
+chrome findings remain explicit for their later redesign assignments.
 
 ## D03 physical openings merged and verified, 2026-10-06
 

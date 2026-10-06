@@ -261,3 +261,14 @@ de editor/catálogo/producción tienen cero regresiones. Las consultas de herraj
 adoptan el esqueleto y la cota de espera del sistema de diseño; el recorrido final
 vuelve a comprobar F6, opciones, persistencia, reparación/división, deshacer y roles.
 CI y merge se registrarán una vez comprobados en GitHub.
+
+## 2026-10-06 — D04 · integración aceptada
+
+El [PR #122](https://github.com/KaraAliOsman/framedex/pull/122) aprobó Lint &
+Typecheck, Test Suite, Frontend Build y Database Gate sobre
+`a3bac97d33af40223e6a225ca768f91d28843ed6`. Se integró mediante squash
+`dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f` en `integracion/v1`; ESTADO,
+current-reality y la wiki de herrajes registran esa referencia. Los 111 PNG
+se comprobaron y optimizaron sin pérdida; el índice auditado no contiene valores
+del entorno privado. El pase editorial R1–R20 y sus dos rondas quedan en el PR.
+La cola continúa con D05 y conserva los límites de autoridad de fabricación.
