@@ -72,6 +72,7 @@ class KitChoiceSerializer(serializers.Serializer):
     # quantities. The design surface uses it to bind visual hardware to the
     # selected kit instead of inventing positions and counts (phase-03).
     contents = KitComponentSerializer(many=True)
+    class_authority = serializers.JSONField(required=False, allow_null=True)
 
 
 class HandleSlotSerializer(serializers.Serializer):
@@ -218,6 +219,7 @@ class DesignOptionsView(APIView):
                             "max_leaf_height_mm": str(item.max_leaf_height_mm),
                             "max_leaf_weight_kg": str(item.max_leaf_weight_kg),
                             "weight_kg": None if item.weight_kg is None else str(item.weight_kg),
+                            "class_authority": None if item.class_authority is None else item.class_authority.model_dump(mode="json"),
                             "contents": [
                                 {
                                     "sku": component.sku,

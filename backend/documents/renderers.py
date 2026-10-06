@@ -1502,6 +1502,16 @@ def _doc01(snapshot: dict[str, object]) -> str:
                 f'<li><span class="plabel">Acabado</span> {escape(finish)}</li>'
             )
         schedule = ref.get("accessory_schedule")
+        hardware_labels = []
+        for hardware in ref.get("commercial_hardware") or []:
+            if not isinstance(hardware, dict):
+                continue
+            label = " · ".join(str(value) for value in (hardware.get("handle_name"), hardware.get("handle_color")) if value)
+            if label:
+                hardware_labels.append("Manilla " + label)
+            hardware_labels.extend(str(value) for value in hardware.get("options") or [])
+        if hardware_labels:
+            spec_items.append(f'<li><span class="plabel">Manilla y opciones</span> {escape("; ".join(dict.fromkeys(hardware_labels)))}</li>')
         schedule_items = (
             [item for item in schedule.get("items") or [] if isinstance(item, dict)]
             if isinstance(schedule, dict)

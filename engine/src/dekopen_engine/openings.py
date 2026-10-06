@@ -5,7 +5,7 @@ from decimal import Decimal
 from dekopen_engine.models import (
     BayOpeningType, HingeSide, HingedLayout, LeafRole, Opening, OpeningCapability,
     OpeningDirection, OpeningHandleFact, OpeningMovement, OpeningUse, ParametricNode,
-    SystemParams,
+    SystemParams, HardwareResolution,
 )
 
 IMPLEMENTED_MOVEMENTS = frozenset({OpeningMovement.FIXED, OpeningMovement.TURN,
@@ -185,7 +185,8 @@ def geometry_opening_type(node: ParametricNode) -> BayOpeningType | None:
 
 
 def handle_fact(opening: Opening, capability: OpeningCapability, *, width_mm: Decimal,
-                height_mm: Decimal, requested_height_mm: Decimal | None = None) -> OpeningHandleFact | None:
+                height_mm: Decimal, requested_height_mm: Decimal | None = None,
+                hardware_resolution: HardwareResolution | None = None) -> OpeningHandleFact | None:
     rule = capability.handle_rule
     if rule is None:
         if requested_height_mm is not None:
@@ -196,7 +197,13 @@ def handle_fact(opening: Opening, capability: OpeningCapability, *, width_mm: De
     if side is None:  # Sliding hardware uses its own slot/track authority.
         return None
     minimum, maximum = rule.minimum_from_top_mm, height_mm - rule.minimum_from_bottom_mm
-    if requested_height_mm is not None:
+    if hardware_resolution is not None and hardware_resolution.handle_height_mm is not None:
+        assert hardware_resolution.handle_minimum_mm is not None
+        assert hardware_resolution.handle_maximum_mm is not None
+        minimum = height_mm-hardware_resolution.handle_maximum_mm
+        maximum = height_mm-hardware_resolution.handle_minimum_mm
+        y = height_mm-hardware_resolution.handle_height_mm
+    elif requested_height_mm is not None:
         y = height_mm - requested_height_mm
     elif side is HingeSide.TOP:
         y = rule.closing_edge_offset_mm
@@ -223,7 +230,8 @@ def handle_fact(opening: Opening, capability: OpeningCapability, *, width_mm: De
         height_from_bottom_mm=height_mm-y,
         minimum_height_from_bottom_mm=height_mm-maximum,
         maximum_height_from_bottom_mm=height_mm-minimum,
-        minimum_from_top_mm=minimum, maximum_from_top_mm=maximum, source=rule.source)
+        minimum_from_top_mm=minimum, maximum_from_top_mm=maximum,
+        source=rule.source if hardware_resolution is None else hardware_resolution.source)
 
 
 def opening_label(opening: Opening, use: OpeningUse = OpeningUse.WINDOW,

@@ -228,7 +228,19 @@ def position_cost(repo, position, rules):
         composition.append({'kind':'PANEL','sku':panel.sku,
                             'quantity':str(panel_area.quantize(D('0.0001'))),
                             'unit':'M2','cost':str(cost.quantize(D('0.0001')))})
+    from dekopen_engine.hardware_classes import hardware_component_cost
     for kit in result.hardware_items:
+        if kit.resolution is not None:
+            for component in kit.contents:
+                cost = hardware_component_cost(component, repo.cost(component.sku, component.price_unit)) * kit.qty
+                materials.append(cost)
+                composition.append({'kind':'HARDWARE','sku':component.sku,
+                    'quantity':str(component.price_quantity * kit.qty), 'unit':component.price_unit,
+                    'cost':str(cost.quantize(D('0.0001'))),
+                    'hardware_class':kit.resolution.class_name,
+                    'cut_length_mm':None if component.cut_length_mm is None else str(component.cut_length_mm),
+                    'source':component.source})
+            continue
         cost = repo.cost(kit.kit_sku,'KIT') * kit.qty
         materials.append(cost)
         composition.append({'kind':'HARDWARE','sku':kit.kit_sku,

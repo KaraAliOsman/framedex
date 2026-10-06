@@ -1,0 +1,6338 @@
+[
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "produccion__WORKSHOP_MANAGER__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-toggle Menú de navegación"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Notificaciones"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Rastrear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-prep-release Liberar"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter is-active Todas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Liberada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En espera"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Completada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Despachada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Instalada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Cancelada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Con escasez"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Listas para despacho"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.cnc-panel-toggle Centros CNC y herramientas"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-chip is-warn Versión: 52 faltantes más"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Generar packing"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Corte de perfiles"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Mecanizado"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Soldadura"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Limpieza de esquinas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Montaje de herrajes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Vidriado y paneles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Control de calidad"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Embalaje"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "produccion__WORKSHOP_MANAGER__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-context__back ‹ Panel"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Cola"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Sin material"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Despacho"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Notificaciones"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Rastrear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-prep-release Liberar"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter is-active Todas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Liberada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En espera"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Completada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Despachada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Instalada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Cancelada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Con escasez"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Listas para despacho"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.cnc-panel-toggle Centros CNC y herramientas"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-chip is-warn Versión: 52 faltantes más"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Generar packing"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Corte de perfiles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Mecanizado"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Soldadura"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Limpieza de esquinas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Montaje de herrajes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Vidriado y paneles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Control de calidad"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Embalaje"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "produccion__WORKSHOP_MANAGER__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-context__back ‹ Panel"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Cola"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Sin material"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Despacho"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Notificaciones"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Rastrear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-prep-release Liberar"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter is-active Todas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Liberada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En espera"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Completada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Despachada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Instalada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Cancelada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Con escasez"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Listas para despacho"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.cnc-panel-toggle Centros CNC y herramientas"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-chip is-warn Versión: 52 faltantes más"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Generar packing"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Corte de perfiles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Mecanizado"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Soldadura"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Limpieza de esquinas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Montaje de herrajes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Vidriado y paneles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Control de calidad"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Embalaje"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "produccion__WORKSHOP_MANAGER__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-toggle Menú de navegación"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Notificaciones"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Rastrear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-prep-release Liberar"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter is-active Todas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Liberada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En espera"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Completada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Despachada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Instalada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Cancelada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Con escasez"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Listas para despacho"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.cnc-panel-toggle Centros CNC y herramientas"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-chip is-warn Versión: 52 faltantes más"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Generar packing"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Corte de perfiles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Mecanizado"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Soldadura"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Limpieza de esquinas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Montaje de herrajes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Vidriado y paneles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Control de calidad"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Embalaje"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "produccion__WORKSHOP_MANAGER__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-toggle Menú de navegación"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Notificaciones"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Rastrear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-prep-release Liberar"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter is-active Todas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Liberada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En espera"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Completada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Despachada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Instalada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Cancelada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Con escasez"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Listas para despacho"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.cnc-panel-toggle Centros CNC y herramientas"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-chip is-warn Versión: 52 faltantes más"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Generar packing"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Corte de perfiles"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Mecanizado"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Soldadura"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Limpieza de esquinas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Montaje de herrajes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Vidriado y paneles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Control de calidad"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Embalaje"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "produccion__WORKSHOP_MANAGER__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-context__back ‹ Panel"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Cola"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Sin material"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Despacho"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Notificaciones"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Rastrear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-prep-release Liberar"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter is-active Todas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Liberada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En espera"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Completada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Despachada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Instalada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Cancelada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Con escasez"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Listas para despacho"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.cnc-panel-toggle Centros CNC y herramientas"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-chip is-warn Versión: 52 faltantes más"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Generar packing"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Corte de perfiles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Mecanizado"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Soldadura"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Limpieza de esquinas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Montaje de herrajes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Vidriado y paneles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Control de calidad"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Embalaje"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "produccion__WORKSHOP_MANAGER__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-context__back ‹ Panel"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Cola"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Sin material"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Despacho"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Notificaciones"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Rastrear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-prep-release Liberar"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter is-active Todas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Liberada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En espera"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Completada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Despachada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Instalada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Cancelada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Con escasez"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Listas para despacho"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.cnc-panel-toggle Centros CNC y herramientas"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-chip is-warn Versión: 52 faltantes más"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Generar packing"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Corte de perfiles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Mecanizado"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Soldadura"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Limpieza de esquinas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Montaje de herrajes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Vidriado y paneles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Control de calidad"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Embalaje"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "produccion__WORKSHOP_MANAGER__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-toggle Menú de navegación"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Notificaciones"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Rastrear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-prep-release Liberar"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter is-active Todas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Liberada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter En espera"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Completada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Despachada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Instalada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Cancelada"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Con escasez"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-filter Listas para despacho"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.cnc-panel-toggle Centros CNC y herramientas"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-chip is-warn Versión: 52 faltantes más"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Generar packing"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Corte de perfiles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Mecanizado"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Soldadura"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Limpieza de esquinas"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Montaje de herrajes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Vidriado y paneles"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Control de calidad"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.production-step-operator Embalaje"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Bloquear"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button. Anotar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  }
+]

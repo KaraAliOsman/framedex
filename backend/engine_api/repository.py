@@ -30,7 +30,8 @@ from dekopen_engine import (
 )
 from pydantic import TypeAdapter
 from dekopen_engine.manufacturing import HandleRequirementPolicyV1, handle_policy_from_json
-from dekopen_engine.models import OpeningCapability, PairedLeafRule
+from dekopen_engine.models import OpeningCapability, PairedLeafRule, HardwareClassAuthority
+from dekopen_engine.hardware_classes import parse_hardware_class
 
 
 class SystemNotFound(LookupError):
@@ -70,6 +71,17 @@ def _decimal(value: object) -> Decimal:
 
 def _decimal_or_none(value: object) -> Decimal | None:
     return None if value is None else _decimal(value)
+
+
+def _hardware_class(value: object) -> HardwareClassAuthority | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise UnsupportedCatalogContract("Hardware class must be raw JSON text")
+    try:
+        return parse_hardware_class(value)
+    except ValueError as error:
+        raise UnsupportedCatalogContract("invalid_hardware_class_authority") from error
 
 
 def _section(value: object) -> ProfileSection | None:
@@ -378,7 +390,8 @@ class SystemParamsRepository:
                 SELECT sku, name, opening_type, min_leaf_width_mm,
                        max_leaf_width_mm, min_leaf_height_mm, max_leaf_height_mm,
                        max_leaf_weight_kg, rail_type, carriages_qty,
-                       stay_arms_qty, contents::text, weight_kg, carriage_capacity_kg
+                       stay_arms_qty, contents::text, weight_kg, carriage_capacity_kg,
+                       class_authority::text
                 FROM public.hardware_kits
                 WHERE system_id = %s AND is_active = TRUE
                   AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
@@ -403,6 +416,7 @@ class SystemParamsRepository:
                 contents=_hardware_contents(row[11]),
                 weight_kg=_decimal(row[12]) if row[12] is not None else None,
                 carriage_capacity_kg=_decimal(row[13]) if row[13] is not None else None,
+                class_authority=_hardware_class(row[14]),
             )
             for row in rows
         ]

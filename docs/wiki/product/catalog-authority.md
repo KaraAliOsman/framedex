@@ -67,8 +67,7 @@ precios del dueño y no aparecen en auditoría de IA para otros roles.
 
 ## Intención del dueño y límites
 
-El catálogo de arranque usa cinco series DEMO y precios reproducibles con semilla
-20261005. Insignias en catálogo, editor, costos y documentos declaran que son
+El catálogo de arranque usa cinco series DEMO y precios reproducibles con semilla 20261005. Insignias en catálogo, editor, costos y documentos declaran que son
 sintéticos. La importación de una fuente real requiere revisión; ni la IA ni la
 semilla certifican valores.
 
@@ -76,8 +75,9 @@ La verificación real MiMo produjo 31 candidatos de un PDF sintético: 324 campo
 HIGH con soporte y 27 UNKNOWN. No se publicó el PDF. La ruta de este proveedor es
 de texto: fotos y escaneos sin texto indican la limitación; IA3 debe verificar una
 ruta multimodal antes de ampliarla. D02 agrega [composición y reglas de vidrio](glass-composition.md).
-D03–D07 aportarán autoridades especializadas
-de aperturas, herrajes, colores, accesorios y vano. El uso de la plantilla
-en esas hojas no equivale a aceptar todavía todas esas capacidades.
+D03 y D04 añaden [aperturas físicas](physical-openings.md) y
+[clases de herrajes](hardware-classes.md), con sus propias pruebas y autoridad.
+D05–D07 aportarán colores, accesorios y vano. El uso de la plantilla en esas
+hojas no equivale a aceptar todavía todas esas capacidades.
 
 La evidencia y las limitaciones están en [la aceptación](../../redesign/captures/sistemas-catalogo/aceptacion.md).

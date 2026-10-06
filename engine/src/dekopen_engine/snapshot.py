@@ -44,7 +44,11 @@ def _json_value(value: object, field: str = "", *, exact_recipe: bool = False) -
         # Structured pairs can have exact half hundredths of a millimetre
         # (e.g. 800.005 mm). Only their additive result contract preserves the
         # full precision; historical BOM bytes and hashes retain their scale.
-        structured = bool(value.get("opening_leaves"))
+        # Expanded hardware carries exact component lengths and masses. Its
+        # additive resolution contract must survive save/reopen even for
+        # sliding leaves, which do not carry opening_leaves. Legacy kits have
+        # no resolution and therefore retain their canonical byte scale.
+        structured = bool(value.get("opening_leaves")) or value.get("resolution") is not None
         return {key: _json_value(item, key, exact_recipe=exact_recipe or structured or key in {"composition", "glass_product"})
                 for key, item in value.items()}
     if isinstance(value, (list, tuple)):

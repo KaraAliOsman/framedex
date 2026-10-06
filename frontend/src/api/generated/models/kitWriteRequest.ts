@@ -56,4 +56,5 @@ export interface KitWriteRequest {
    */
   carriage_capacity_kg?: string | null;
   is_active: boolean;
+  class_authority?: unknown | null;
 }

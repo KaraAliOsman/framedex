@@ -12056,6 +12056,76 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/versions/{version_id}/hardware-picking/:
+    get:
+      operationId: production_version_hardware_picking
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: version_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionHardwarePicking'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/versions/{version_id}/release/:
     post:
       operationId: production_release
@@ -15132,6 +15202,82 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowAcknowledgement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/hardware-preview/:
+    post:
+      operationId: hardware_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HardwarePreviewRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HardwarePreviewRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HardwarePreviewRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwarePreview'
           description: ''
         '400':
           content:
@@ -18844,6 +18990,26 @@ components:
       - reconciliation_required
       - registration_state
       - scheduled_changes
+    CommercialHardware:
+      type: object
+      properties:
+        handle_name:
+          type: string
+          nullable: true
+        handle_color:
+          type: string
+          nullable: true
+        options:
+          type: array
+          items:
+            type: string
+        synthetic:
+          type: boolean
+      required:
+      - handle_color
+      - handle_name
+      - options
+      - synthetic
     CompositionLine:
       type: object
       properties:
@@ -21620,6 +21786,49 @@ components:
       - mounting_min_from_leaf_top_mm
       - opening_type
       - permitted_vertical_references
+    HardwareCandidate:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        compatible:
+          type: boolean
+        selected:
+          type: boolean
+        violations:
+          type: array
+          items:
+            type: string
+        resolution:
+          nullable: true
+        contents:
+          type: array
+          items: {}
+        price_net:
+          type: string
+          nullable: true
+        price_reason:
+          type: string
+          nullable: true
+        delta_net:
+          type: string
+          nullable: true
+        class_authority:
+          nullable: true
+      required:
+      - class_authority
+      - compatible
+      - contents
+      - delta_net
+      - name
+      - price_net
+      - price_reason
+      - resolution
+      - selected
+      - sku
+      - violations
     HardwareComponent:
       type: object
       properties:
@@ -21636,6 +21845,35 @@ components:
           allOf:
           - $ref: '#/components/schemas/CategoryEnum'
           default: OTHER
+        cut_length_mm:
+          type: string
+          nullable: true
+        weight_kg:
+          type: string
+          nullable: true
+        purchasing_sku:
+          type: string
+          nullable: true
+        manufacturer_name:
+          type: string
+          nullable: true
+        price_unit:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/PriceUnitEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        price_quantity:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        machining:
+          type: array
+          items: {}
       required:
       - name
       - qty
@@ -21661,6 +21899,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HardwareComponent'
+        resolution:
+          nullable: true
       required:
       - bay_id
       - contents
@@ -21669,6 +21909,145 @@ components:
       - name
       - qty
       - unit
+    HardwareLeafPreview:
+      type: object
+      properties:
+        leaf_id:
+          type: string
+          nullable: true
+        editable:
+          type: boolean
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareCandidate'
+        recommendation_sku:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+      required:
+      - candidates
+      - editable
+      - height_mm
+      - leaf_id
+      - message
+      - recommendation_sku
+      - width_mm
+    HardwareMachiningGap:
+      type: object
+      properties:
+        code:
+          type: string
+        kind:
+          type: string
+        component_sku:
+          type: string
+        component_name:
+          type: string
+        declaration:
+          type: string
+        bay_id:
+          type: string
+        leaf_id:
+          type: string
+          nullable: true
+        source:
+          type: string
+        detail:
+          type: string
+      required:
+      - bay_id
+      - code
+      - component_name
+      - component_sku
+      - declaration
+      - detail
+      - kind
+      - leaf_id
+      - source
+    HardwarePickingRow:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        unit:
+          type: string
+        quantity:
+          type: string
+        cut_length_mm:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        targets:
+          type: array
+          items:
+            type: string
+      required:
+      - cut_length_mm
+      - name
+      - quantity
+      - sku
+      - source
+      - targets
+      - unit
+    HardwarePreview:
+      type: object
+      properties:
+        leaves:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareLeafPreview'
+        pricing_basis:
+          type: string
+        is_demo:
+          type: boolean
+        division:
+          nullable: true
+      required:
+      - division
+      - is_demo
+      - leaves
+      - pricing_basis
+    HardwarePreviewRequestRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        bay_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+        parametric_tree: {}
+      required:
+      - bay_id
+      - color
+      - height_mm
+      - parametric_tree
+      - system_id
+      - width_mm
     HostMemberSideEnum:
       enum:
       - LEFT
@@ -22273,6 +22652,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/KitComponent'
+        class_authority:
+          nullable: true
       required:
       - contents
       - max_leaf_height_mm
@@ -22410,6 +22791,8 @@ components:
           nullable: true
         is_active:
           type: boolean
+        class_authority:
+          nullable: true
         revision:
           type: string
           readOnly: true
@@ -22503,6 +22886,8 @@ components:
           nullable: true
         is_active:
           type: boolean
+        class_authority:
+          nullable: true
       required:
       - carriages_qty
       - contents
@@ -23736,6 +24121,8 @@ components:
           nullable: true
         is_active:
           type: boolean
+        class_authority:
+          nullable: true
     PatchedProjectUpdateRequest:
       type: object
       properties:
@@ -24456,6 +24843,10 @@ components:
           type: array
           items:
             type: string
+        commercial_hardware:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommercialHardware'
         finish:
           type: string
           nullable: true
@@ -24976,6 +25367,14 @@ components:
         * `APPLIED` - APPLIED
         * `REJECTED` - REJECTED
         * `WITHDRAWN` - WITHDRAWN
+    PriceUnitEnum:
+      enum:
+      - EA
+      - M
+      type: string
+      description: |-
+        * `EA` - EA
+        * `M` - M
     PricingModeEnum:
       enum:
       - COST_PLUS_MARGIN
@@ -25261,6 +25660,14 @@ components:
           allOf:
           - $ref: '#/components/schemas/ProductionOrderMaking'
           nullable: true
+        hardware_picking:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwarePickingRow'
+        hardware_machining:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareMachiningGap'
         delivery_address:
           type: string
           nullable: true
@@ -28498,6 +28905,15 @@ components:
       required:
       - email
       - id
+    VersionHardwarePicking:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwarePickingRow'
+      required:
+      - rows
     VerticalReferenceEnum:
       enum:
       - OUTER_TOP

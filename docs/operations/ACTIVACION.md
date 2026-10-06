@@ -109,3 +109,27 @@ son acciones locales; cualquier envío futuro conserva el clic humano explícito
 
 Las series DEMO v3 no modifican v1/v2. Un SKU compartido conserva su tarifa exacta;
 una unidad o tarifa distinta debe tener su autoridad comercial identificable.
+
+## Herrajes: familias, clases y mecanizados (D04)
+
+1. Obtenga la ficha del fabricante por serie y movimiento, con familia, clase,
+   rangos de ancho/alto, masa admitida, relación de aspecto y altura mínima del
+   compás. Declare su prioridad y fuente en `class_authority` de **Herrajes** en
+   la plantilla. Los kits históricos pueden seguir su camino anterior.
+2. Registre cada SKU y código de compra, cantidad por umbral, largo fijo o
+   deducción, masa unitaria o por metro y costo/unidad. Un componente cortable
+   debe conservar su largo y la unidad de precio correspondiente. No declare dos
+   tarifas diferentes para el mismo SKU/unidad sin una autoridad identificable.
+3. Registre modelos/colores de manilla y su artículo, referencia y rango de
+   altura. Las opciones vendibles indican componentes añadidos o reemplazados,
+   precio y fuente. Una certificación RC necesita evidencia del fabricante.
+4. Importe, revise el diff y publique por clic del dueño o encargado. Compruebe
+   dos tamaños, umbrales de cantidad/masa, F6, elegir/deshacer y guardar/reabrir.
+   Cotice, emita una revisión y compare picking por SKU y largo con su BOM.
+5. Para mecanizar, aporte pieza/ámbito anfitrión, lado físico, cara, coordenadas,
+   herramienta, profundidad y cobertura de cantidad de la ficha. Lo incompleto
+   permanece **declarado no emitido**; completar la estación exige resolverlo
+   en catálogo y emitir una nueva revisión, sin modificar la ya sellada.
+6. Conecte herramientas y máquina siguiendo P14, compruebe su programa frente a
+   la ficha y una pieza de ensayo. Las series DEMO v4 y sus packs no certifican
+   fabricación ni reemplazan la validación del fabricante.

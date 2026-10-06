@@ -35,8 +35,10 @@ from projects.views import (
     ProjectInvoiceDteEnvioView,
 )
 from projects.options import DesignOptionsView
+from projects.hardware import HardwarePreviewView
 
 urlpatterns = [
+    path("projects/hardware-preview/", HardwarePreviewView.as_view()),
     path("projects/design-options/<uuid:system_id>/", DesignOptionsView.as_view()),
     path("projects/flow/confirm/<uuid:link_id>/", FlowPaymentConfirmView.as_view()),
     path("organization/branding/", OrganizationBrandingView.as_view()),

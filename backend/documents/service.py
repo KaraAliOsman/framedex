@@ -1390,7 +1390,8 @@ def freeze_revision_a(
                 profile_skus=profile_skus,
                 reinforcement_skus=reinforcement_skus,
                 glass_skus=glass_skus,
-                hardware_skus={item.technical_kit_sku for item in hardware},
+                hardware_skus={item.technical_kit_sku for item in hardware
+                    if not item.contents or not all(component.purchasing_sku is not None for component in item.contents)},
                 panel_skus=panel_skus,
                 fitting_skus={item.technical_sku for item in fittings},
             )
@@ -1415,6 +1416,13 @@ def freeze_revision_a(
                 "parametric_tree": tree,
                 **({"opening_leaves": current_bom["opening_leaves"]}
                    if current_bom.get("opening_leaves") else {}),
+                **({"commercial_hardware": [{
+                    "handle_name": item.resolution.handle_name,
+                    "handle_color": item.resolution.handle_color,
+                    "options": item.resolution.options,
+                    "synthetic": item.resolution.synthetic,
+                } for item in result.hardware_items if item.resolution is not None]}
+                    if any(item.resolution is not None for item in result.hardware_items) else {}),
                 "workshop_annotations": [item.model_dump(mode="python") for item in annotations],
                 "structural_inputs": [item.model_dump(mode="python") for item in structural],
                 "glass_polishing": [item.model_dump(mode="python") for item in polishing],

@@ -338,7 +338,7 @@ def bar_stock_needs(
         if bar.get("source") == "NEW" and bar.get("stock_authority_id")
     }
     identities = _identity_identities(org_id, ids)
-    grouped: dict[tuple[str, str], dict[str, Any]] = {}
+    grouped: dict[tuple[str, str, str], dict[str, Any]] = {}
     missing: list[dict[str, Any]] = []
     for bar in bars:
         if bar.get("source") != "NEW":
@@ -403,7 +403,7 @@ def unit_stock_needs(
     needs: list[dict[str, Any]] = []
     unmapped: list[str] = []
 
-    kit_skus = {str(item["kit_sku"]) for item in hardware_items if item.get("kit_sku")}
+    kit_skus = {str(item["kit_sku"]) for item in hardware_items if item.get("kit_sku") and not item.get("resolution")}
     kit_map = _mapping_rows(
         org_id, system_id,
         """
@@ -417,14 +417,14 @@ def unit_stock_needs(
         """,
         kit_skus,
     ) if kit_skus else {}
-    grouped: dict[tuple[str, str], dict[str, Any]] = {}
+    grouped: dict[tuple[str, str, str], dict[str, Any]] = {}
 
-    def _add(kind: str, sku: str, name: str, qty: Decimal, unit: str = "EA") -> None:
-        key = (kind, sku)
+    def _add(kind: str, sku: str, name: str, qty: Decimal, unit: str = "EA", variant: str = "") -> None:
+        key = (kind, sku, variant)
         entry = grouped.get(key)
         if entry is None:
             grouped[key] = {
-                "kind": kind, "sku": sku, "variant_key": "",
+                "kind": kind, "sku": sku, "variant_key": variant,
                 "name": name, "category": kind, "unit": unit,
                 "needed": qty,
             }
@@ -432,6 +432,16 @@ def unit_stock_needs(
             entry["needed"] += qty
 
     for item in hardware_items:
+        if item.get("resolution"):
+            for component in item.get("contents") or []:
+                purchasing = component.get("purchasing_sku")
+                if not purchasing:
+                    unmapped.append(str(component.get("sku") or ""))
+                    continue
+                variant = stock_variant_key(None, {"oriented_height_mm": component.get("cut_length_mm")}, "FITTING")
+                _add("FITTING", str(purchasing), str(component.get("name") or purchasing),
+                    _dec(component["qty"]) * _dec(item["qty"]) * multiplier, variant=variant)
+            continue
         kit_sku = str(item.get("kit_sku") or "")
         purchasing = kit_map.get(kit_sku)
         if purchasing is None:

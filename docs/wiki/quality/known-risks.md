@@ -10,6 +10,13 @@ sources:
 
 # Known risks and audit targets
 
+D04 verifies class expansion, exact sealed mass, component/length picking and
+the tenant boundary. Missing machining authority blocks station completion;
+synthetic capacity and RC data do not certify a manufacturer. See
+[hardware classes](../product/hardware-classes.md). Historical raw work-center
+codes and production chrome remain queue work for P12/P13/P16, with full-route
+baseline evidence preserved. New hardware controls have their own clean matrix.
+
 This page records recurring failure modes. It does **not** assert that every item is still broken. Re-test against the current ref.
 
 ## Editor/domain semantics

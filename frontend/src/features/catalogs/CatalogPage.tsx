@@ -7,6 +7,7 @@ import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
+import { HardwareAuthorityView } from "./HardwareAuthorityView";
 import {
   OpeningCapabilitiesEditor,
   openingAuthorityProblem,
@@ -463,7 +464,18 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                       {rows.map((row) => (
                         <tr key={row.id}>
                           <th scope="row">{itemName(resource, row, data)}</th>
-                          <td>{itemCode(row)}</td>
+                          <td>
+                            {resource === "hardware-kits" &&
+                            "class_authority" in row &&
+                            row.class_authority ? (
+                              <details>
+                                <summary>Detalles técnicos</summary>
+                                <code>{itemCode(row)}</code>
+                              </details>
+                            ) : (
+                              itemCode(row)
+                            )}
+                          </td>
                           <td>
                             {row.read_only !== false ? ct("readOnly") : ct("own")}
                             {"is_active" in row && (
@@ -710,6 +722,7 @@ function CatalogEditor({
         limits,
         openingCapabilities,
         pairedRule,
+        row && "class_authority" in row ? row.class_authority : undefined,
       );
     } catch (caught) {
       // writeFromDraft tags the failing field ("Invalid integer: sku") — name
@@ -1230,117 +1243,124 @@ function CatalogEditor({
           </fieldset>
         )}
 
-        {resource === "hardware-kits" && (
-          <fieldset className="catalog-group">
-            <legend>{ct("contents")}</legend>
-            <div className="catalog-table-scroll">
-              <table className="catalog-contents">
-                <caption className="catalog-sr-only">{ct("contents")}</caption>
-                <thead>
-                  <tr>
-                    {(["sku", "name", "qty", "unit"] as const).map((key) => (
-                      <th key={key} scope="col">
-                        {ct(`field.${key}`)}
-                      </th>
-                    ))}
-                    <th scope="col">{ct("field.category")}</th>
-                    <th scope="col">{ct("actions")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {contents.map((component, index) => (
-                    <tr key={component.key}>
+        {resource === "hardware-kits" &&
+          !(row && "class_authority" in row && row.class_authority) && (
+            <fieldset className="catalog-group">
+              <legend>{ct("contents")}</legend>
+              <div className="catalog-table-scroll">
+                <table className="catalog-contents">
+                  <caption className="catalog-sr-only">{ct("contents")}</caption>
+                  <thead>
+                    <tr>
                       {(["sku", "name", "qty", "unit"] as const).map((key) => (
-                        <td key={key}>
-                          <input
-                            aria-label={`${ct(`field.${key}`)} · ${ct("component")} ${index + 1}`}
-                            type="text"
-                            required
-                            value={component[key]}
-                            inputMode={key === "qty" ? "decimal" : undefined}
-                            data-validation={
-                              key === "qty" ? "(?=.*[1-9])[0-9]+([.,][0-9]+)?" : ".*\\S.*"
-                            }
+                        <th key={key} scope="col">
+                          {ct(`field.${key}`)}
+                        </th>
+                      ))}
+                      <th scope="col">{ct("field.category")}</th>
+                      <th scope="col">{ct("actions")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contents.map((component, index) => (
+                      <tr key={component.key}>
+                        {(["sku", "name", "qty", "unit"] as const).map((key) => (
+                          <td key={key}>
+                            <input
+                              aria-label={`${ct(`field.${key}`)} · ${ct("component")} ${index + 1}`}
+                              type="text"
+                              required
+                              value={component[key]}
+                              inputMode={key === "qty" ? "decimal" : undefined}
+                              data-validation={
+                                key === "qty" ? "(?=.*[1-9])[0-9]+([.,][0-9]+)?" : ".*\\S.*"
+                              }
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                setDirty(true);
+                                setError("");
+                                setContents((current) =>
+                                  current.map((item) =>
+                                    item.key === component.key ? { ...item, [key]: value } : item,
+                                  ),
+                                );
+                              }}
+                            />
+                          </td>
+                        ))}
+                        <td>
+                          <select
+                            aria-label={`${ct("field.category")} · ${ct("component")} ${index + 1}`}
+                            value={component.category ?? "OTHER"}
                             onChange={(event) => {
-                              const value = event.target.value;
                               setDirty(true);
-                              setError("");
                               setContents((current) =>
                                 current.map((item) =>
-                                  item.key === component.key ? { ...item, [key]: value } : item,
+                                  item.key === component.key
+                                    ? {
+                                        ...item,
+                                        category: event.target
+                                          .value as HardwareComponent["category"],
+                                      }
+                                    : item,
                                 ),
                               );
                             }}
-                          />
+                          >
+                            {HARDWARE_COMPONENT_CATEGORIES.map((category) => (
+                              <option key={category} value={category}>
+                                {ct(`componentCategory.${category}`)}
+                              </option>
+                            ))}
+                          </select>
                         </td>
-                      ))}
-                      <td>
-                        <select
-                          aria-label={`${ct("field.category")} · ${ct("component")} ${index + 1}`}
-                          value={component.category ?? "OTHER"}
-                          onChange={(event) => {
-                            setDirty(true);
-                            setContents((current) =>
-                              current.map((item) =>
-                                item.key === component.key
-                                  ? {
-                                      ...item,
-                                      category: event.target.value as HardwareComponent["category"],
-                                    }
-                                  : item,
-                              ),
-                            );
-                          }}
-                        >
-                          {HARDWARE_COMPONENT_CATEGORIES.map((category) => (
-                            <option key={category} value={category}>
-                              {ct(`componentCategory.${category}`)}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          aria-label={`${ct("removeComponent")} ${index + 1}`}
-                          onClick={() => {
-                            setDirty(true);
-                            setContents((current) =>
-                              current.filter((item) => item.key !== component.key),
-                            );
-                          }}
-                        >
-                          {ct("remove")}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {!contents.length && <p>{ct("emptyContents")}</p>}
-            <button
-              type="button"
-              onClick={() => {
-                setDirty(true);
-                setContents((current) => [
-                  ...current,
-                  {
-                    key: crypto.randomUUID(),
-                    sku: "",
-                    name: "",
-                    qty: "",
-                    unit: "",
-                    category: "OTHER",
-                  },
-                ]);
-              }}
-            >
-              {ct("addComponent")}
-            </button>
-          </fieldset>
-        )}
+                        <td>
+                          <button
+                            type="button"
+                            aria-label={`${ct("removeComponent")} ${index + 1}`}
+                            onClick={() => {
+                              setDirty(true);
+                              setContents((current) =>
+                                current.filter((item) => item.key !== component.key),
+                              );
+                            }}
+                          >
+                            {ct("remove")}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {!contents.length && <p>{ct("emptyContents")}</p>}
+              <button
+                type="button"
+                onClick={() => {
+                  setDirty(true);
+                  setContents((current) => [
+                    ...current,
+                    {
+                      key: crypto.randomUUID(),
+                      sku: "",
+                      name: "",
+                      qty: "",
+                      unit: "",
+                      category: "OTHER",
+                    },
+                  ]);
+                }}
+              >
+                {ct("addComponent")}
+              </button>
+            </fieldset>
+          )}
       </fieldset>
+
+      {resource === "hardware-kits" &&
+        row &&
+        "class_authority" in row &&
+        row.class_authority != null && <HardwareAuthorityView value={row.class_authority} />}
 
       <footer className="catalog-toolbar">
         <button

@@ -136,6 +136,8 @@ import type {
   GlassVariantOutput,
   GlassVariantRequest,
   GlobalSearchParams,
+  HardwarePreview,
+  HardwarePreviewRequestRequest,
   ImportConfirmRequest,
   ImportConfirmResponse,
   ImportCreateResponse,
@@ -249,6 +251,7 @@ import type {
   SystemResponse,
   SystemWorkspace,
   SystemWriteRequest,
+  VersionHardwarePicking,
   Wallet,
   WithdrawRequest,
   WorkCenter,
@@ -13338,6 +13341,82 @@ export const productionStepTransition = async (
   });
 };
 
+export type productionVersionHardwarePickingResponse200 = {
+  data: VersionHardwarePicking;
+  status: 200;
+};
+
+export type productionVersionHardwarePickingResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionVersionHardwarePickingResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionVersionHardwarePickingResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionVersionHardwarePickingResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionVersionHardwarePickingResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionVersionHardwarePickingResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionVersionHardwarePickingResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionVersionHardwarePickingResponseSuccess =
+  productionVersionHardwarePickingResponse200 & {
+    headers: Headers;
+  };
+export type productionVersionHardwarePickingResponseError = (
+  | productionVersionHardwarePickingResponse400
+  | productionVersionHardwarePickingResponse401
+  | productionVersionHardwarePickingResponse403
+  | productionVersionHardwarePickingResponse404
+  | productionVersionHardwarePickingResponse409
+  | productionVersionHardwarePickingResponse422
+  | productionVersionHardwarePickingResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionVersionHardwarePickingResponse =
+  productionVersionHardwarePickingResponseSuccess | productionVersionHardwarePickingResponseError;
+
+export const getProductionVersionHardwarePickingUrl = (versionId: string) => {
+  return `/api/v1/production/versions/${versionId}/hardware-picking/`;
+};
+
+export const productionVersionHardwarePicking = async (
+  versionId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionVersionHardwarePickingResponse> => {
+  return apiMutator<productionVersionHardwarePickingResponse>(
+    getProductionVersionHardwarePickingUrl(versionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export type productionReleaseResponse200 = {
   data: ProductionRelease;
   status: 200;
@@ -16652,6 +16731,87 @@ export const projectPaymentFlowConfirm = async (
       ...getHeaders(options?.headers),
     },
     body: formUrlEncoded,
+  });
+};
+
+export type hardwarePreviewResponse200 = {
+  data: HardwarePreview;
+  status: 200;
+};
+
+export type hardwarePreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type hardwarePreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type hardwarePreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type hardwarePreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type hardwarePreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type hardwarePreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type hardwarePreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type hardwarePreviewResponseSuccess = hardwarePreviewResponse200 & {
+  headers: Headers;
+};
+export type hardwarePreviewResponseError = (
+  | hardwarePreviewResponse400
+  | hardwarePreviewResponse401
+  | hardwarePreviewResponse403
+  | hardwarePreviewResponse404
+  | hardwarePreviewResponse409
+  | hardwarePreviewResponse422
+  | hardwarePreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type hardwarePreviewResponse = hardwarePreviewResponseSuccess | hardwarePreviewResponseError;
+
+export const getHardwarePreviewUrl = () => {
+  return `/api/v1/projects/hardware-preview/`;
+};
+
+export const hardwarePreview = async (
+  hardwarePreviewRequestRequest: HardwarePreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<hardwarePreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<hardwarePreviewResponse>(getHardwarePreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(hardwarePreviewRequestRequest),
   });
 };
 

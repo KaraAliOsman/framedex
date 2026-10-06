@@ -61,6 +61,7 @@ export interface KitResponse {
    */
   carriage_capacity_kg?: string | null;
   is_active: boolean;
+  class_authority?: unknown | null;
   readonly revision: string;
   read_only: boolean;
   id: string;

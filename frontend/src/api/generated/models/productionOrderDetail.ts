@@ -5,6 +5,8 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { HardwareMachiningGap } from "./hardwareMachiningGap";
+import type { HardwarePickingRow } from "./hardwarePickingRow";
 import type { ProductionNextStep } from "./productionNextStep";
 import type { ProductionOrderDetailDispatchNoteDte } from "./productionOrderDetailDispatchNoteDte";
 import type { ProductionOrderDetailDispatchNotesItem } from "./productionOrderDetailDispatchNotesItem";
@@ -38,6 +40,8 @@ export interface ProductionOrderDetail {
   steps: ProductionStep[];
   events: ProductionStepEvent[];
   making?: ProductionOrderMaking | null;
+  hardware_picking?: HardwarePickingRow[];
+  hardware_machining?: HardwareMachiningGap[];
   /** @nullable */
   delivery_address?: string | null;
   /** @nullable */

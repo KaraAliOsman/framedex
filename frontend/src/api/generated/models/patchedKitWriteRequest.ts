@@ -56,4 +56,5 @@ export interface PatchedKitWriteRequest {
    */
   carriage_capacity_kg?: string | null;
   is_active?: boolean;
+  class_authority?: unknown | null;
 }

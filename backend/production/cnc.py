@@ -51,6 +51,7 @@ from production.service import (
     _operations_fact_units,
     _ops_source_fingerprint,
     _raw_fact_units,
+    _sealed_hardware_operations,
 )
 
 
@@ -509,6 +510,7 @@ def _order_ops(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     ops = operations_from_plan(
         bars=bars, fact_units=fact_units, issues=ops_issues
     )
+    ops.extend(_sealed_hardware_operations(version_snapshot, position_id, fact_units, ops_issues))
     ops_issues.extend(
         _declared_intent_gaps(
             version_snapshot,

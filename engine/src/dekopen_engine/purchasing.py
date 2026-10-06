@@ -613,6 +613,24 @@ def project_purchase_requirements_v1(
         for hardware in sorted(position.hardware, key=lambda item: (
             item.repetition_index, item.bay_id, item.leaf_id or "", item.technical_kit_sku
         )):
+            if hardware.contents and all(component.purchasing_sku is not None for component in hardware.contents):
+                for component in hardware.contents:
+                    if component.qty != component.qty.to_integral_value() or not component.manufacturer_name or not component.source:
+                        raise PurchaseAuthorityError("El componente requiere cantidad entera y autoridad de compra.")
+                    source_id = documentary_sha256_v1({"kind": "hardware_component",
+                        "position_id": position.position_id, "repetition_index": hardware.repetition_index,
+                        "bay_id": hardware.bay_id, "leaf_id": hardware.leaf_id,
+                        "kit_sku": hardware.technical_kit_sku, "component": component.model_dump(mode="python")})
+                    assert component.purchasing_sku is not None
+                    drafts.append(_RequirementDraft(order_type=SupplierOrderType.HARDWARE,
+                        category="FITTING", authority_ids=[component.source], technical_skus=[component.sku],
+                        purchasing_sku=component.purchasing_sku, manufacturer_name=component.manufacturer_name,
+                        unit="EA", quantity=int(component.qty)*hardware.quantity,
+                        oriented_height_mm=component.cut_length_mm, description=component.name,
+                        source_trace=[source_id]))
+                    non_accessory_technical.add(component.sku)
+                    non_accessory_purchasing.add(component.purchasing_sku)
+                continue
             mapping = _one_mapping(
                 hardware_mappings, hardware.technical_kit_sku, position.system_id, "Hardware kit"
             )

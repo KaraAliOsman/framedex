@@ -146,7 +146,12 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
             ):
                 fabrication_missing.append(sash.sku)
         fabrication_missing += [
-            kit.sku for kit in params.available_hardware_kits if kit.weight_kg is None
+            kit.sku for kit in params.available_hardware_kits
+            if (kit.weight_kg is None if kit.class_authority is None else
+                any(rule.weight_kg is None and rule.weight_kg_m is None for rule in (
+                    *kit.class_authority.components,
+                    *(rule for option in kit.class_authority.options for rule in option.components),
+                    *(color.component for handle in kit.class_authority.handles for color in handle.colors))))
         ]
         if not fabrication_missing:
             try:
@@ -248,7 +253,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                 profile_skus={article["sku"] for article in catalogued},
                 reinforcement_skus=steels,
                 glass_skus={row["technical_sku"] for row in glass},
-                hardware_skus={kit.sku for kit in params.available_hardware_kits},
+                hardware_skus={kit.sku for kit in params.available_hardware_kits if kit.class_authority is None},
                 panel_skus={
                     row["sku"] for row in rows(
                         "SELECT sku FROM public.infill_articles WHERE system_id=%s"

@@ -175,7 +175,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
           .click(),
     )
   ).bom!;
-  expect(editedBom.hardware_items![0]!.kit_sku).toBe("DEMO_60-KIT-TURN");
+  expect(editedBom.hardware_items![0]!.kit_sku).toBe("DEMO_60-HW4-TURN-STANDARD");
+  expect(editedBom.hardware_items![0]).toMatchObject({
+    resolution: { class_name: "Estándar · DEMO", synthetic: true },
+  });
 
   // Inject a transport failure only; successful writes still use the real backend.
   await page.route(`**${positionApi}`, async (route) => {
@@ -210,7 +213,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     },
   });
   expect(saved.bom?.hardware_items).toHaveLength(1);
-  expect(saved.bom?.hardware_items?.[0]?.kit_sku).toBe("DEMO_60-KIT-TURN");
+  expect(saved.bom?.hardware_items?.[0]?.kit_sku).toBe("DEMO_60-HW4-TURN-STANDARD");
+  expect(saved.bom?.hardware_items?.[0]).toMatchObject({
+    resolution: { class_name: "Estándar · DEMO", synthetic: true },
+  });
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   const bom = page.locator("details.project-bom");

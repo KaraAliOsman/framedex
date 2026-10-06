@@ -230,6 +230,7 @@ describe("rectangular intent", () => {
       glass_article_sku: "GLASS-A",
       panel_article_sku: null,
       hardware_set_sku: null,
+      hardware_selection: null,
       handle_height_mm: null,
     });
   });
