@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-05
 volatility: medium
-verified_ref: 0514eaaf317a0bd9cef6deb0d75becbc404be999
+verified_ref: d8fbe5071fdb346555f7ef4df3e91160cfb5dfe0
 sources:
   - engine/src/dekopen_engine/catalog_rules.py
   - engine/tests/test_gold_cases_catalog_families.py

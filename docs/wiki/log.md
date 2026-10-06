@@ -113,3 +113,13 @@ ejecutar sus goldens. El baseline pasa y las 28 desviaciones de ±0,01 mm mueren
 por aserciones numéricas; no se omite ni relaja ningún punto histórico. La primera
 corrida de Test Suite del PR #119 falló sobre la instrumentación anterior; el
 head corregido debe pasar los cuatro checks antes del merge.
+
+## 2026-10-05 — D01 integrado y ola 0b cerrada
+
+PR [#119](https://github.com/KaraAliOsman/framedex/pull/119) mergeado por squash
+en `d8fbe5071fdb346555f7ef4df3e91160cfb5dfe0`. Los cuatro checks requeridos
+pasaron sobre `28509e69c23b871451502fc147c552475d9f3238`, corrida 37393755094:
+Lint & Typecheck, Test Suite, Frontend Build y Database Gate. El código y las
+capturas sustentan la aceptación específica de D01; el catálogo sigue sintético
+y no certifica datos de fabricante. Se actualiza ESTADO y el resumen de cinco
+líneas de la ola. D02 continúa como siguiente encargo; `main` no se modificó.

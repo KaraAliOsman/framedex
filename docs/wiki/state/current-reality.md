@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-05
 volatility: high
-verified_ref: 0514eaaf317a0bd9cef6deb0d75becbc404be999
+verified_ref: d8fbe5071fdb346555f7ef4df3e91160cfb5dfe0
 sources:
   - repository main
   - P00 foundation PR #114
@@ -38,7 +38,10 @@ discovery used by the editor. The readiness check consumes their declared cut an
 reinforcement rules, including sliding sash mass and rail authority. Local unit
 gates pass, as do 936 pgTAP, 274 integration tests and 11 Chromium end-to-end flows.
 The complete clean Database Gate also passes independent PostgreSQL 16 and all
-four populated-upgrade verifiers. The four PR CI checks must close before integration.
+four populated-upgrade verifiers. D01 is integrated through PR #119 at the
+verification ref. All four required GitHub checks passed on
+`28509e69c23b871451502fc147c552475d9f3238` in run 37393755094, including
+the expanded 28/28 formula mutation drill. `main` is unchanged.
 
 Verification details and the acceptance scope are in
 [the D01 report](../../redesign/captures/sistemas-catalogo/aceptacion.md) and
