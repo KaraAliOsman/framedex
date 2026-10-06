@@ -330,7 +330,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
-    label: "PVC practicable 60 mm · DEMO · sintético, sin certificación",
+    label: "PVC practicable 60 mm · aperturas v3 · DEMO · sintético, sin certificación",
   });
   // The catalog recipe determines thickness; the inspector selects one product.
   const glass = page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]');
@@ -530,7 +530,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
-    label: "PVC practicable 60 mm · DEMO · sintético, sin certificación",
+    label: "PVC practicable 60 mm · aperturas v3 · DEMO · sintético, sin certificación",
   });
   await page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]').click();
   await expect(page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]')).toHaveAttribute(

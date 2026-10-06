@@ -7,10 +7,16 @@ import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
+import {
+  OpeningCapabilitiesEditor,
+  openingAuthorityProblem,
+  type PairedRule,
+} from "./OpeningCapabilitiesEditor";
+import type { Capability } from "../canvas/physicalOpenings";
 import { SystemWorkspaceView } from "./SystemWorkspace";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import { SectionImportPanel } from "./SectionImportPanel";
-import { Button, DeniedState, PageHeader, Tabs, useConfirm } from "../../ui";
+import { Button, DeniedState, DimLoader, PageHeader, Tabs, useConfirm } from "../../ui";
 import type { ProcessProfileOption, SystemResponse } from "../../api/generated/models";
 import {
   HARDWARE_COMPONENT_CATEGORIES,
@@ -100,10 +106,19 @@ function systemReadinessLabel(system: Row<"systems">): string {
   return parts.join(" · ");
 }
 
+function CatalogLoading(): JSX.Element {
+  return (
+    <p className="catalog-loading">
+      <DimLoader label={ct("loading")} />
+      {ct("loading")}
+    </p>
+  );
+}
+
 export function CatalogPage(): JSX.Element {
   const { status, me, session } = useAuthSession();
   const organization = me?.active_organization;
-  if (status !== "ready") return <p role="status">{ct("loading")}</p>;
+  if (status !== "ready") return <CatalogLoading />;
   if (!organization || !["OWNER", "WORKSHOP_MANAGER", "ESTIMATOR"].includes(organization.role))
     return <DeniedState reason={ct("permission")} />;
 
@@ -125,6 +140,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   // is the system home; the tabbed records stay one click away for CRUD.
   const [detailTab, setDetailTab] = useState<"workspace" | "records">("workspace");
   const [editor, setEditor] = useState<{ resource: Resource; id?: string } | null>(null);
+  const [importExpanded, setImportExpanded] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -215,7 +231,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
     setWorkspaceKey((value) => value + 1);
   }
 
-  if (loading && data === null) return <p role="status">{ct("loading")}</p>;
+  if (loading && data === null) return <CatalogLoading />;
   if (!data) {
     return (
       <section className="catalog">
@@ -248,7 +264,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
         actions={
           canEdit ? (
             <Button
-              disabled={editor !== null}
+              disabled={editor !== null || importExpanded}
               onClick={() => {
                 setNotice("");
                 setEditor({ resource: "systems" });
@@ -276,6 +292,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       )}
 
       <CatalogImportsPanel
+        onExpandedChange={setImportExpanded}
         orgId={orgId}
         canWrite={canEdit}
         systems={data.systems
@@ -287,7 +304,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
         }}
       />
 
-      <div className="catalog-layout">
+      <div className="catalog-layout" hidden={importExpanded}>
         <aside className="catalog-master" aria-label={ct("systems")}>
           <label>
             {ct("search")}
@@ -569,6 +586,15 @@ function CatalogEditor({
   const [limits, setLimits] = useState<SystemResponse["dimensional_limits"]>(
     (resource === "systems" ? (row as SystemResponse | undefined)?.dimensional_limits : []) ?? [],
   );
+  const [openingCapabilities, setOpeningCapabilities] = useState<Capability[]>(
+    ((resource === "systems" ? (row as SystemResponse | undefined)?.opening_capabilities : []) as
+      Capability[] | null) ?? [],
+  );
+  const [pairedRule, setPairedRule] = useState<PairedRule | null>(
+    ((resource === "systems"
+      ? (row as SystemResponse | undefined)?.paired_leaf_rule
+      : null) as PairedRule | null) ?? null,
+  );
   const [error, setError] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
   const firstControl = useRef<HTMLHeadingElement>(null);
@@ -667,9 +693,24 @@ function CatalogEditor({
       document.getElementById(`catalog-${resource}-${failed.name}`)?.focus();
       return;
     }
+    if (resource === "systems") {
+      const problem = openingAuthorityProblem(openingCapabilities, pairedRule);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+    }
     let body;
     try {
-      body = writeFromDraft(resource, draft, contents, sectionDraft, limits);
+      body = writeFromDraft(
+        resource,
+        draft,
+        contents,
+        sectionDraft,
+        limits,
+        openingCapabilities,
+        pairedRule,
+      );
     } catch (caught) {
       // writeFromDraft tags the failing field ("Invalid integer: sku") — name
       // it so the reviewer doesn't hunt the whole form.
@@ -738,7 +779,7 @@ function CatalogEditor({
           : field.kind === "processProfile"
             ? (profiles ?? []).map((profile) => ({
                 value: profile.id,
-                label: `${profile.label} · ${profile.code} v${profile.version}${profile.org_id === null ? ` · ${ct("global")}` : ""}`,
+                label: `${profile.label} · v${profile.version}${profile.org_id === null ? ` · ${ct("global")}` : ""}`,
               }))
             : field.kind === "boolean"
               ? [
@@ -865,6 +906,22 @@ function CatalogEditor({
             <div className="catalog-fields">{group.fields.map(control)}</div>
           </fieldset>
         ))}
+        {resource === "systems" && (
+          <OpeningCapabilitiesEditor
+            capabilities={openingCapabilities}
+            paired={pairedRule}
+            family={draft.system_family ?? ""}
+            kits={data["hardware-kits"].filter((kit) => kit.system_id === row?.id)}
+            onChange={(value) => {
+              setOpeningCapabilities(value);
+              setDirty(true);
+            }}
+            onPair={(value) => {
+              setPairedRule(value);
+              setDirty(true);
+            }}
+          />
+        )}
         {resource === "systems" && (
           <CatalogLimitsEditor
             family={draft.system_family ?? ""}

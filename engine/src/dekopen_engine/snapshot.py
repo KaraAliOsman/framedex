@@ -41,7 +41,11 @@ def _json_value(value: object, field: str = "", *, exact_recipe: bool = False) -
         # Supplier recipes retain their declared Decimal representation. They
         # are additive metadata, not cut dimensions; rescaling their plies
         # here would drift from the immutable catalog at documentary sealing.
-        return {key: _json_value(item, key, exact_recipe=exact_recipe or key in {"composition", "glass_product"})
+        # Structured pairs can have exact half hundredths of a millimetre
+        # (e.g. 800.005 mm). Only their additive result contract preserves the
+        # full precision; historical BOM bytes and hashes retain their scale.
+        structured = bool(value.get("opening_leaves"))
+        return {key: _json_value(item, key, exact_recipe=exact_recipe or structured or key in {"composition", "glass_product"})
                 for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [_json_value(item, exact_recipe=exact_recipe) for item in value]

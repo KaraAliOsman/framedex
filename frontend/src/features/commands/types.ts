@@ -28,6 +28,8 @@ export type CommandArgs = Record<string, string>;
 
 /** Catalog options a command may offer as choices. */
 export interface CommandCatalog {
+  openingChoices?: import("../canvas/physicalOpenings").OpeningChoice[];
+  compatibleOpenings?: string[];
   glassThicknesses: string[];
   glassSkus: string[];
   glassSpecs?: import("../../api/generated/models").GlassSpecChoice[];

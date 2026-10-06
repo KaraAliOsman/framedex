@@ -20,7 +20,7 @@ from dekopen_engine.cutting import (
 )
 from dekopen_engine.documentary_canonical import documentary_sha256_v1
 from dekopen_engine.manufacturing import ManufacturingFactsV1
-from dekopen_engine.models import EngineModel, HardwareComponent
+from dekopen_engine.models import EngineModel, FittingPiece, HardwareComponent
 
 
 class PurchaseAuthorityError(ValueError):
@@ -143,6 +143,21 @@ class FittingSelectionV1(EngineModel):
     technical_sku: str
     kind: str
     quantity: int = Field(ge=1)
+
+
+def fitting_selections_v1(pieces: Sequence[FittingPiece], quantity: int) -> list[FittingSelectionV1]:
+    """Consolidate cut-group quantities without losing bay/leaf trace.
+
+    The BOM may declare screws for separate lengths of the same member role.
+    Purchasing has one counted source per (bay, leaf, SKU, kind, repetition).
+    """
+    grouped: dict[tuple[str | None, str | None, str, str], int] = {}
+    for piece in pieces:
+        key = (piece.bay_id, piece.leaf_id, piece.sku, piece.kind)
+        grouped[key] = grouped.get(key, 0) + piece.qty
+    return [FittingSelectionV1(repetition_index=repetition, bay_id=key[0],
+        leaf_id=key[1], technical_sku=key[2], kind=key[3], quantity=count)
+        for repetition in range(1, quantity + 1) for key, count in grouped.items()]
 
 
 class AccessoryLineV1(EngineModel):

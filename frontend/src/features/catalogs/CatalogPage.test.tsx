@@ -16,6 +16,7 @@ import type {
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { ConfirmProvider } from "../../ui";
 import { CatalogPage } from "./CatalogPage";
+import type { Capability } from "../canvas/physicalOpenings";
 
 const identity = vi.hoisted(() => ({
   id: "00000000-0000-4000-8000-000000000001",
@@ -448,7 +449,7 @@ describe("CatalogPage typed kit editor", () => {
       within(opening)
         .getAllByRole("option")
         .map((option) => option.getAttribute("value")),
-    ).toEqual(["", "TURN", "TILT_TURN", "SLIDING", "DOOR", "AWNING"]);
+    ).toEqual(["", "TURN", "TILT", "TILT_TURN", "SLIDING", "DOOR", "AWNING"]);
 
     change("catalog.field.name", expected.name);
     change("catalog.field.opening_type", "SLIDING");
@@ -695,5 +696,86 @@ describe("CatalogPage article section editor", () => {
     expect(
       screen.queryByRole("checkbox", { name: t("catalog.section.declare") }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("CatalogPage sourced physical opening authority", () => {
+  const cap: Capability = {
+    use: "WINDOW",
+    movement: "TURN",
+    direction: "OUTWARD",
+    leaf_role: "SINGLE",
+    fixed_in_sash: false,
+    hinge_sides: ["LEFT", "RIGHT"],
+    hardware_kit_skus: ["TEST-KIT"],
+    source: "Ficha sintética de apertura",
+    handle_rule: {
+      vertical_reference: "LEAF_BOTTOM",
+      default_height_mm: "1050.125",
+      minimum_from_top_mm: "100.00",
+      minimum_from_bottom_mm: "120.00",
+      closing_edge_offset_mm: "37.50",
+      source: "Ficha sintética de manilla",
+    },
+  };
+  function authority() {
+    return {
+      ...system(),
+      name: "Serie de aperturas de prueba",
+      system_family: "CASEMENT" as const,
+      is_global: false,
+      is_demo: false,
+      read_only: false,
+      opening_capabilities: [cap],
+      paired_leaf_rule: null,
+    };
+  }
+  async function open(readOnly = false) {
+    const row = authority();
+    vi.mocked(client.catalogSystemList).mockResolvedValue(ok({ items: [row] }));
+    await mount();
+    fireEvent.click(navTab("catalog.systems"));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `${t(readOnly ? "catalog.view" : "catalog.edit")} ${row.name}`,
+      }),
+    );
+  }
+  it("saves sourced motion and exact handle heights without manufacturing a default", async () => {
+    vi.mocked(client.catalogSystemUpdate).mockResolvedValue(ok(authority()));
+    await open();
+    fireEvent.change(screen.getByLabelText("Fuente de la capacidad"), {
+      target: { value: "Ficha revisada" },
+    });
+    fireEvent.submit(editorForm());
+    await waitFor(() => expect(client.catalogSystemUpdate).toHaveBeenCalledOnce());
+    expect(vi.mocked(client.catalogSystemUpdate).mock.calls[0]![1]?.opening_capabilities).toEqual([
+      { ...cap, source: "Ficha revisada" },
+    ]);
+  });
+  it("keeps a source-less capability local and names its missing authority", async () => {
+    await open();
+    fireEvent.change(screen.getByLabelText("Fuente de la capacidad"), { target: { value: "" } });
+    fireEvent.submit(editorForm());
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Capacidad 1: falta la fuente del fabricante",
+    );
+    expectNoWrites();
+  });
+  it("invalidates hardware and height when changing motion until a source is supplied", async () => {
+    await open();
+    fireEvent.change(screen.getByLabelText("Movimiento"), { target: { value: "TILT" } });
+    fireEvent.submit(editorForm());
+    expect(await screen.findByRole("alert")).toHaveTextContent("elige los herrajes compatibles");
+    expectNoWrites();
+    expect(screen.queryByLabelText("Altura de fuente · mm")).not.toBeInTheDocument();
+  });
+  it("exposes sources to the estimator with all authority controls disabled", async () => {
+    identity.role = "ESTIMATOR";
+    await open(true);
+    expect(screen.getByLabelText("Fuente de la capacidad")).toBeDisabled();
+    expect(screen.getByLabelText("Movimiento")).toBeDisabled();
+    expect(screen.getByLabelText("Altura de fuente · mm")).toBeDisabled();
+    expectNoWrites();
   });
 });

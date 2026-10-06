@@ -12,6 +12,9 @@ import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
+from dekopen_engine.models import HingeSide, NodeType, Opening, ParametricNode, SystemParams
+from dekopen_engine.catalog_rules import FAMILY_OPENINGS
+from dekopen_engine.openings import normalize_opening_tree, opening_label
 
 from ai_gateway import service as gateway
 from authentication.errors import contract_error
@@ -58,7 +61,7 @@ Operaciones:
 - equalize_widths: anchos iguales.
 - equalize_angles: ángulos iguales entre uniones.
 - set_coupling_angle {coupling, angle_deg}: ángulo de una unión (0 = recto).
-- set_opening {module, opening}: apertura — FIXED, TURN_LEFT, TURN_RIGHT, TILT_TURN_LEFT, TILT_TURN_RIGHT, SLIDING_2L, AWNING, DOOR_ENTRY.
+- set_opening {module, opening, opening_use, hinged_layout?}: copie una opción de catalog.opening_choices con su objeto físico y composición; nunca invente dirección, rol, manilla o herraje. Si el catálogo no declara opciones estructuradas, use solo catalog.openings.
 - set_glass {module, sku}: vidrio del catálogo.
 - set_glass_thickness {module, mm}: espesor del catálogo.
 - set_panel {module, sku|null}: panel del catálogo, null lo quita.
@@ -161,6 +164,37 @@ def _summary(product: Any) -> dict[str, Any] | None:
     }
 
 
+def _opening_choices(params: SystemParams) -> list[dict[str, Any]]:
+    choices = []
+    for cap in params.opening_capabilities:
+        if cap.leaf_role.value == "PASSIVE":
+            continue
+        for hinge in cap.hinge_sides:
+            opening = Opening(movement=cap.movement, direction=cap.direction, leaf_role=cap.leaf_role,
+                fixed_in_sash=cap.fixed_in_sash, hinge_side=hinge)
+            data: dict[str, Any] = {"opening": opening.model_dump(mode="json"),
+                "opening_use": cap.use.value, "source": cap.source}
+            if cap.leaf_role.value == "ACTIVE":
+                opposite = HingeSide.RIGHT if hinge is HingeSide.LEFT else HingeSide.LEFT
+                passive = next((other for other in params.opening_capabilities
+                    if other.use is cap.use and other.movement is cap.movement and other.direction is cap.direction
+                    and other.leaf_role.value == "PASSIVE" and opposite in other.hinge_sides), None)
+                if passive is None or params.paired_leaf_rule is None:
+                    continue
+                data["hinged_layout"] = {"leaves": [{"slot": side, "opening": {
+                    **data["opening"], "hinge_side": side, "leaf_role": "ACTIVE" if side == hinge.value else "PASSIVE"}}
+                    for side in ("LEFT", "RIGHT")]}
+            if cap.movement.value == "SLIDE":
+                data["sliding_layout"] = {"tracks": 2, "panels": [{"slot": "S1", "kind": "MOVING", "track": 0},
+                    {"slot": "S2", "kind": "MOVING", "track": 1}]}
+            node = ParametricNode.model_validate_json(json.dumps({"id": "choice", "type": "BAY",
+                **{key: value for key, value in data.items() if key != "source"}}))
+            normalize_opening_tree(node, params)
+            data["label"] = opening_label(opening, cap.use, node.hinged_layout)
+            choices.append(data)
+    return choices
+
+
 def _catalog(system_id: UUID, org_id: UUID) -> dict[str, Any]:
     """The selected system's authoritative material surface — a SKU is a
     catalog identifier, never free text, so proposed glass, panels and
@@ -177,6 +211,10 @@ def _catalog(system_id: UUID, org_id: UUID) -> dict[str, Any]:
         [system_id, org_id],
     )
     return {
+        "params": params,
+        "openings": sorted(kind.value for kind in FAMILY_OPENINGS[params.system_family])
+            if params.system_family else sorted(OPENINGS),
+        "opening_choices": _opening_choices(params),
         "glass_skus": {item["technical_sku"] for item in glass_rows},
         # A SKU carries its composition recipe — "4-16-4", never the bead
         # slot number. Absent recipes resolve downstream as monolithic.
@@ -885,7 +923,18 @@ def _validate_ops(
                 rejected.append(reject(item, "angulo_invalido"))
         elif name == "set_opening":
             ref = module_ref(item.get("module"))
-            if ref is not None and item.get("opening") in OPENINGS:
+            if ref is not None and isinstance(item.get("opening"), dict) and catalog.get("params") is not None:
+                try:
+                    node = ParametricNode.model_validate_json(json.dumps({"id": "assistant", "type": NodeType.BAY,
+                        "opening": item["opening"], "opening_use": item.get("opening_use", "WINDOW"),
+                        "hinged_layout": item.get("hinged_layout"), "sliding_layout": item.get("sliding_layout")}))
+                    normalize_opening_tree(node, catalog["params"])
+                    accepted.append({"op": name, "module": ref, "opening": node.opening.model_dump(mode="json"),
+                        "opening_use": node.opening_use.value, "hinged_layout": node.hinged_layout.model_dump(mode="json") if node.hinged_layout else None,
+                        "sliding_layout": node.sliding_layout.model_dump(mode="json") if node.sliding_layout else None})
+                except ValueError:
+                    rejected.append(reject(item, "apertura_incompatible_con_sistema"))
+            elif ref is not None and isinstance(item.get("opening"), str) and item["opening"] in OPENINGS and item["opening"] in catalog.get("openings", OPENINGS):
                 accepted.append(
                     {
                         "op": name,
@@ -989,6 +1038,8 @@ def assist(
                 }
             ),
             "catalog": {
+                "openings": catalog.get("openings", sorted(OPENINGS)),
+                "opening_choices": catalog.get("opening_choices", []),
                 "glass_skus": sorted(catalog["glass_skus"]),
                 "panel_skus": sorted(catalog["panel_skus"]),
                 "glazing_thicknesses": [

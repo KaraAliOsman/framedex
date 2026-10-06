@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from dekopen_engine.hardware import HardwareCandidateEvaluation
 from dekopen_engine.manufacturing_trace import GeometryManufacturingTraceV1
-from dekopen_engine.models import BayOpeningType, EngineResult, HardwareKitRule, RailType
+from dekopen_engine.models import BayOpeningType, EngineResult, HardwareKitRule, Opening, RailType
 from dekopen_engine.weight import ExactLeafWeight
 from dekopen_engine.glass_composition import GlassProduct
 
@@ -36,6 +36,7 @@ class LeafTechnicalFacts:
     candidates: list[HardwareCandidateEvaluation]
     selected_kit: HardwareKitRule | None
     exact_weight: ExactLeafWeight | None
+    opening: Opening | None = None
 
 
 @dataclass(frozen=True, slots=True)

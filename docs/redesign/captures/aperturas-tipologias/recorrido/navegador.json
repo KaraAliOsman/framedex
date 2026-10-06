@@ -1,0 +1,335 @@
+[
+  {
+    "name": "preview-banderola-sin-aplicar",
+    "screenshot": "preview-banderola-sin-aplicar.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "guardado-reapertura-banderola",
+    "screenshot": "guardado-reapertura-banderola.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-turn-left-inward",
+    "screenshot": "tipologia-turn-left-inward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-turn-right-inward",
+    "screenshot": "tipologia-turn-right-inward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-tilt_turn-left-inward",
+    "screenshot": "tipologia-tilt_turn-left-inward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-tilt_turn-right-inward",
+    "screenshot": "tipologia-tilt_turn-right-inward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-turn-left-outward",
+    "screenshot": "tipologia-turn-left-outward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-french-left",
+    "screenshot": "tipologia-french-left.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-door-left-inward",
+    "screenshot": "tipologia-door-left-inward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-double-door-left-inward",
+    "screenshot": "tipologia-double-door-left-inward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-door-left-outward",
+    "screenshot": "tipologia-door-left-outward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-double-door-left-outward",
+    "screenshot": "tipologia-double-door-left-outward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-turn-right-outward",
+    "screenshot": "tipologia-turn-right-outward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-french-right",
+    "screenshot": "tipologia-french-right.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-door-right-inward",
+    "screenshot": "tipologia-door-right-inward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-double-door-right-inward",
+    "screenshot": "tipologia-double-door-right-inward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-door-right-outward",
+    "screenshot": "tipologia-door-right-outward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-double-door-right-outward",
+    "screenshot": "tipologia-double-door-right-outward.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-tilt",
+    "screenshot": "tipologia-tilt.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-top-hung",
+    "screenshot": "tipologia-top-hung.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-fixed-frame",
+    "screenshot": "tipologia-fixed-frame.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-fixed-sash",
+    "screenshot": "tipologia-fixed-sash.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tipologia-door-sidelight",
+    "screenshot": "tipologia-door-sidelight.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1440-light",
+    "screenshot": "editor-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1440-light",
+    "screenshot": "tecnica-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1280-light",
+    "screenshot": "editor-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1280-light",
+    "screenshot": "tecnica-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1024-light",
+    "screenshot": "editor-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1024-light",
+    "screenshot": "tecnica-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1440-dark",
+    "screenshot": "editor-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1440-dark",
+    "screenshot": "tecnica-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1280-dark",
+    "screenshot": "editor-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1280-dark",
+    "screenshot": "tecnica-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1024-dark",
+    "screenshot": "editor-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1024-dark",
+    "screenshot": "tecnica-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "ia-mimo-propuesta-antes-de-aplicar",
+    "screenshot": "ia-mimo-propuesta-antes-de-aplicar.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "ia-mimo-aplicar-deshacer",
+    "screenshot": "ia-mimo-aplicar-deshacer.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  }
+]

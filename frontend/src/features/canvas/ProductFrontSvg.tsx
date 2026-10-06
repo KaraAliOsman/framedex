@@ -1,4 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 
 import type { ProductIssue } from "../../api/generated/models";
 import { fmtMm, parseLocaleNumber } from "../../format";
@@ -23,6 +32,14 @@ import { useViewportScale } from "./CanvasViewport";
 // keeps the renderer self-contained: surfaces outside the editor
 // (/benchmark, thumbnails, alternatives) get the same real drawing.
 import "./canvas.css";
+import { visualOpening, physicalLabel, type OpeningLeafFact } from "./physicalOpenings";
+import { OpeningSymbol } from "../../ui/OpeningSymbol";
+
+const PhysicalFactsContext = createContext<{ leaves: OpeningLeafFact[]; x: number; y: number }>({
+  leaves: [],
+  x: 0,
+  y: 0,
+});
 
 /** Front elevation of the compositional product as a real fenestration
  * drawing: frame/sash/mullion/bead/threshold members at their catalog face
@@ -565,7 +582,8 @@ function Bay({
    * declared handle height measures up from (OUTER_BOTTOM authority). */
   moduleBottom?: number;
 }): JSX.Element {
-  const opening = node.opening_type ?? "FIXED";
+  const opening = visualOpening(node);
+  const physicalFacts = useContext(PhysicalFactsContext);
   const bead = members.beadFor(node.glass_thickness_mm ?? null);
   const insulated = Number(node.glass_thickness_mm ?? "0") >= 12;
   const sashSurface = memberSurface(members.sash.material);
@@ -576,7 +594,7 @@ function Bay({
           onSelect();
         },
         role: "button" as const,
-        "aria-label": `${t("intent.bay")} · ${t(OPENING_OPTIONS.find(([value]) => value === opening)?.[1] ?? "intent.fixed")}`,
+        "aria-label": `${t("intent.bay")} · ${node.opening ? physicalLabel(node.opening, node.opening_use ?? "WINDOW") : t(OPENING_OPTIONS.find(([value]) => value === opening)?.[1] ?? "intent.fixed")}`,
         tabIndex: 0,
         onKeyDown: (event: React.KeyboardEvent) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -602,6 +620,88 @@ function Bay({
   // wide, a moving leaf covers its slot plus the meeting-stile overlap;
   // rear track draws first so the front leaf covers the interlock. Fixed
   // panels glaze their slot directly like a fixed bay.
+  if (
+    node.opening &&
+    node.opening.movement !== "SLIDE" &&
+    (node.opening.movement !== "FIXED" || node.opening.fixed_in_sash)
+  ) {
+    const leaves = physicalFacts.leaves.filter((leaf) => leaf.bay_id === node.id);
+    return (
+      <g
+        className={`module-bay module-bay--structured${selected ? " is-selected" : ""}`}
+        {...baySelectProps}
+      >
+        {leaves.length ? (
+          leaves.map((leaf) => {
+            const x = physicalFacts.x + Number(leaf.x_mm),
+              y = physicalFacts.y + Number(leaf.y_mm);
+            const width = Number(leaf.width_mm),
+              height = Number(leaf.height_mm);
+            const thickness = members.sash.faceWidthMm;
+            return (
+              <g key={leaf.leaf_id ?? "single"} data-physical-leaf={leaf.leaf_id ?? "single"}>
+                <title>
+                  {leaf.opening.leaf_role === "PASSIVE"
+                    ? "Hoja pasiva con falleba"
+                    : physicalLabel(leaf.opening, leaf.use)}
+                </title>
+                <Member
+                  x={x}
+                  y={y}
+                  w={width}
+                  h={height}
+                  surface={sashSurface}
+                  className="member-sash"
+                />
+                <rect
+                  className="member-bead"
+                  x={x + thickness}
+                  y={y + thickness}
+                  width={Math.max(width - thickness * 2, 0)}
+                  height={Math.max(height - thickness * 2, 0)}
+                />
+                <rect
+                  className="module-glass"
+                  x={x + thickness + bead}
+                  y={y + thickness + bead}
+                  width={Math.max(width - (thickness + bead) * 2, 0)}
+                  height={Math.max(height - (thickness + bead) * 2, 0)}
+                />
+                <g className="opening-glyph">
+                  <OpeningSymbol opening={leaf.opening} x={x} y={y} width={width} height={height} />
+                </g>
+                {leaf.handle && (
+                  <g
+                    data-engine-handle="true"
+                    data-handle-side={leaf.handle.side}
+                    className="handle-lever"
+                    transform={`translate(${x + Number(leaf.handle.x_mm)} ${y + Number(leaf.handle.y_mm)})`}
+                  >
+                    <title>{`Manilla · ${leaf.handle.source}`}</title>
+                    {["TOP", "BOTTOM"].includes(leaf.handle.side) ? (
+                      <path d="M-12 0h24M0 0v15" />
+                    ) : (
+                      <path d={`M0 -12v24M0 0h${leaf.handle.side === "LEFT" ? 18 : -18}`} />
+                    )}{" "}
+                  </g>
+                )}
+              </g>
+            );
+          })
+        ) : (
+          <text
+            className="leaf-role-label"
+            x={region.x + region.w / 2}
+            y={region.y + region.h / 2}
+            textAnchor="middle"
+          >
+            Sin cálculo de la hoja
+          </text>
+        )}
+        {selectRing}
+      </g>
+    );
+  }
   if (isSlidingOpening(opening)) {
     const layout = resolvedSlidingLayout(node);
     const panels = layout?.panels ?? [];
@@ -1497,6 +1597,7 @@ export function ProductFrontContent({
   onResizeSeam,
   glassNotices = {},
   onGlassNotice,
+  openingFacts = {},
 }: {
   product: ProductJson;
   members: MemberGeometry;
@@ -1542,6 +1643,7 @@ export function ProductFrontContent({
     { message: string; alternativeSku?: string; alternativeName?: string }
   >;
   onGlassNotice?(moduleId: string, bayId: string, alternativeSku?: string): void;
+  openingFacts?: Record<string, OpeningLeafFact[]>;
 }): JSX.Element {
   const { couplings } = product.assembly;
   const frameT = members.frame.faceWidthMm;
@@ -1953,39 +2055,43 @@ export function ProductFrontContent({
                     width={Math.max(w - frameT * 2, 0)}
                     height={Math.max(h - frameT * 2, 0)}
                   />
-                  <ModuleTree
-                    moduleId={module.id}
-                    selectedBayId={selectedBayId}
-                    onSelectBay={
-                      interactive && !divideTool && onSelectBay
-                        ? (bayId) => onSelectBay(module.id, bayId)
-                        : undefined
-                    }
-                    selectedDivisionId={selectedDivisionId}
-                    onSelectDivision={
-                      interactive && !divideTool && onSelectDivision
-                        ? (divisionId) => onSelectDivision(module.id, divisionId)
-                        : undefined
-                    }
-                    showSplitDims={dimLevel === "technical"}
-                    node={module.tree}
-                    region={{
-                      x: x + frameT,
-                      y: top + frameT,
-                      w: w - frameT * 2,
-                      h: h - frameT * 2,
-                    }}
-                    localOrigin={{ x, y: top }}
-                    moduleBottom={top + h}
-                    members={members}
-                    liveOffsets={liveOffsets}
-                    hitMm={hitMm}
-                    onDividerDown={
-                      interactive && onMoveDivision && !divideTool
-                        ? beginDividerDrag(module.id)
-                        : undefined
-                    }
-                  />
+                  <PhysicalFactsContext.Provider
+                    value={{ leaves: openingFacts[module.id] ?? [], x, y: top }}
+                  >
+                    <ModuleTree
+                      moduleId={module.id}
+                      selectedBayId={selectedBayId}
+                      onSelectBay={
+                        interactive && !divideTool && onSelectBay
+                          ? (bayId) => onSelectBay(module.id, bayId)
+                          : undefined
+                      }
+                      selectedDivisionId={selectedDivisionId}
+                      onSelectDivision={
+                        interactive && !divideTool && onSelectDivision
+                          ? (divisionId) => onSelectDivision(module.id, divisionId)
+                          : undefined
+                      }
+                      showSplitDims={dimLevel === "technical"}
+                      node={module.tree}
+                      region={{
+                        x: x + frameT,
+                        y: top + frameT,
+                        w: w - frameT * 2,
+                        h: h - frameT * 2,
+                      }}
+                      localOrigin={{ x, y: top }}
+                      moduleBottom={top + h}
+                      members={members}
+                      liveOffsets={liveOffsets}
+                      hitMm={hitMm}
+                      onDividerDown={
+                        interactive && onMoveDivision && !divideTool
+                          ? beginDividerDrag(module.id)
+                          : undefined
+                      }
+                    />
+                  </PhysicalFactsContext.Provider>
                 </>
               )}
               {!preview &&

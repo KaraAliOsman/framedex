@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-06
 volatility: high
-verified_ref: 407f4ffd609a2dd4536e3e3c765eb7117c69715f
+verified_ref: codex/D03-aperturas-tipologias
 sources:
   - repository main
   - P00 foundation PR #114
@@ -12,6 +12,7 @@ sources:
   - IA1 rollback harness and dated outcome evidence, 2026-10-05
   - D01 catalog authorities, interchange and browser evidence, 2026-10-05
   - D02 glass recipes, persisted quotation/orders and browser evidence, 2026-10-05
+  - D03 physical openings, browser and immutable upgrade evidence, 2026-10-06
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -20,6 +21,43 @@ sources:
 ---
 
 # Current reality
+
+## D03 physical openings verified on its work branch, 2026-10-06
+
+Physical motion is independent of composition and window/door use. Twenty-one
+variants have exact cut/hardware/leaf-weight goldens. Legacy enum transports keep
+their full calculation and price, while new authoring requires sourced catalog
+capabilities. Six separate DEMO v3 series leave old authorities and issued data
+intact. Shared synthetic SKUs retain one exact tariff and its original provenance;
+a conflicting unit/rate is rejected rather than chosen by version.
+
+The opening palette previews with the engine before click or keyboard activation.
+Real UI verification covers undo/redo, save/reopen, all 21 physical drawings and
+a MiMo outward-opening proposal. Catalog capabilities use reviewed publication,
+guarded retirement, exact CSV transport and persisted source editing. The five
+states and a denied estimator write preserve the server authority. Nested
+Decimal JSON survives both serializer passes as exact strings.
+
+The issued ten-page quotation declares DEMO on every page and interior view on
+every elevation, including the cover.
+The door+sidelight retains R05 when the catalog lacks mullion inertia; its trial
+load is explicitly fictitious, quotation incompleteness remains visible and
+production release stays blocked. The other twenty variants have complete
+manufacturing in the integration. D04, D08 and P04/P05 remain separate unfinished
+queue work, and this acceptance does not certify a supplier catalog or wind load.
+
+See [physical openings](../product/physical-openings.md),
+[D03 acceptance](../../redesign/captures/aperturas-tipologias/aceptacion.md) and
+[activation](../../operations/ACTIVACION.md). The local gates pass 581 engine,
+1,161 backend and 717 frontend tests, 986 pgTAP assertions, 287 integration
+tests, eleven Chromium flows and populated PostgreSQL 16 upgrades. Full-route
+captures have no new findings; the existing payment integration 403 and mobile
+editor/project overflow remain documented for P04/P08. PR/merge completion is
+recorded after its four CI checks pass.
+
+Structured door use preserves glass safety in preview, persisted edits and
+repricing. Six browser captures and live integration cover mandatory rules;
+partial passive hinge capabilities are filtered without losing valid choices.
 
 ## D02 glass composition verified 2026-10-06
 

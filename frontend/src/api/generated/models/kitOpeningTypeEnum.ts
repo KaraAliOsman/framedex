@@ -10,6 +10,7 @@
  * * `AWNING` - AWNING
  * * `DOOR` - DOOR
  * * `SLIDING` - SLIDING
+ * * `TILT` - TILT
  * * `TILT_TURN` - TILT_TURN
  * * `TURN` - TURN
  */
@@ -19,6 +20,7 @@ export const KitOpeningTypeEnum = {
   AWNING: "AWNING",
   DOOR: "DOOR",
   SLIDING: "SLIDING",
+  TILT: "TILT",
   TILT_TURN: "TILT_TURN",
   TURN: "TURN",
 } as const;

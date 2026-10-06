@@ -81,6 +81,13 @@ source is reviewed. See [the authority page](../product/catalog-authority.md).
 
 ## Manufacturing
 
+D03 preserves the R05 structural gate on a tall door with fixed sidelight.
+DEMO hardware and a fictional load input do not supply certified inertia or
+wind engineering. Never remove the gate to turn an incomplete fixture into a
+production order. The legacy upgrade, paired half-cent precision, handle ranges,
+catalog retirement and tenant-scoped inspector read have dedicated regressions.
+See [physical openings](../product/physical-openings.md).
+
 - released product with incomplete authority;
 - BOM and visual product diverging;
 - inventory shortage not blocking/flagging correctly;

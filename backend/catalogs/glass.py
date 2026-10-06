@@ -71,8 +71,13 @@ def product_for_mapping(mapping):
     value = mapping.get("product")
     if isinstance(value, str):
         value = json.loads(value)
-    if not value and mapping.get("legacy_spec") is not None:
-        value = recipe_payload({"glass_spec": mapping["legacy_spec"]}, synthetic=mapping.get("is_demo", False))["product"]
+    legacy_spec = mapping.get("legacy_spec")
+    if legacy_spec is None and mapping.get("status") is None:
+        # Mappings inserted after D02 have no backfilled composition row. Their
+        # historical notation must resolve identically on discovery and save.
+        legacy_spec = mapping.get("glass_spec")
+    if not value and legacy_spec is not None:
+        value = recipe_payload({"glass_spec": legacy_spec}, synthetic=mapping.get("is_demo", False))["product"]
     if value is None:
         return None
     product = GlassProduct.model_validate_json(json_text(value))
@@ -93,8 +98,6 @@ def load_products(system_id, org_id):
     # Historical rows inserted by old clients need the same deterministic
     # parse preview, still with no technical certification inferred.
     for mapping in found:
-        if mapping.get("status") is None:
-            mapping["legacy_spec"] = mapping["glass_spec"]
         mapping["resolved_product"] = product_for_mapping(mapping)
     return found
 
@@ -138,7 +141,7 @@ def validate_design_products(org_id, system_id, tree):
             UUID(value["authority_id"])
         except (ValueError, TypeError, AttributeError) as error:
             raise contract_error(400, "glass_authority_invalid", "Vuelve a seleccionar el producto del catálogo.") from error
-        found = rows("SELECT g.id AS mapping_id,g.technical_sku,c.product::text,c.legacy_spec,s.is_demo "
+        found = rows("SELECT g.id AS mapping_id,g.technical_sku,g.glass_spec,c.product::text,c.status,c.legacy_spec,s.is_demo "
             "FROM public.glass_purchase_mappings g JOIN public.profile_systems s ON s.id=g.system_id "
             "LEFT JOIN public.catalog_glass_compositions c ON c.mapping_id=g.id "
             "WHERE g.id=%s AND g.system_id=%s AND (g.org_id=%s OR g.org_id IS NULL)",
@@ -152,6 +155,13 @@ def validate_design_products(org_id, system_id, tree):
             raise contract_error(400, "glass_composition_invalid", "Revisa la composición del vidrio.") from error
         if expected != supplied:
             raise contract_error(409, "glass_authority_changed", "La composición difiere de su versión de catálogo. Vuelve a seleccionar el producto.")
+
+
+def is_door_glazing(value):
+    """Structured use is authoritative; legacy doors retain their zone."""
+    if value.get("opening_use") is not None:
+        return value["opening_use"] == "DOOR"
+    return value.get("opening_type") in ("DOOR_ENTRY", "DOOR_DOUBLE")
 
 
 def enforce_design_glass(org_id, tree, result, params):
@@ -175,7 +185,7 @@ def enforce_design_glass(org_id, tree, result, params):
         node = nodes.get(piece.bay_id)
         if not node:
             continue
-        door = node.get("opening_type") in ("DOOR_ENTRY", "DOOR_DOUBLE")
+        door = is_door_glazing(node)
         sidelight = node.get("is_sidelight", False)
         sill_mm = Decimal(node["sill_height_mm"]) if node.get("sill_height_mm") is not None else None
         if node.get("glass_product") is None:

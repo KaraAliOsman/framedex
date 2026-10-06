@@ -62,6 +62,11 @@
   border-bottom: 1px solid var(--theme-border-subtle);
   padding: var(--space-1) var(--space-2) var(--space-1) 0;
 }
+.tech-table td:not(:first-child) {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
 .assembly-side {
   display: flex;
   flex-direction: column;
@@ -150,6 +155,7 @@
   stroke: var(--theme-text-secondary);
   stroke-width: 4;
 }
+.opening-choice [data-handle],
 .opening-choice .opening-glyph polyline,
 .opening-choice .opening-glyph line,
 .opening-choice .opening-glyph path {
@@ -210,4 +216,32 @@
   fill: var(--theme-text-primary);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+
+.opening-palette {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.opening-choice--named,
+.projects-page .opening-choice--named {
+  border-radius: var(--r-2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: auto;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  text-align: left;
+  font-size: var(--text-xs);
+}
+.opening-choice--named svg {
+  width: 36px;
+  height: 36px;
+}
+.opening-availability {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--theme-text-secondary);
 }

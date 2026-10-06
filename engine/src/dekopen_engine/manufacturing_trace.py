@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from decimal import Decimal
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, model_serializer, SerializerFunctionWrapHandler
 
-from dekopen_engine.models import BayOpeningType, EngineModel, MaterialType, ProfileRole
+from dekopen_engine.models import BayOpeningType, EngineModel, MaterialType, ProfileRole, Opening, OpeningHandleFact
 
 
 class PlacementDomain(str, Enum):
@@ -61,6 +61,8 @@ class SemanticLeafTraceV1(EngineModel):
     # themselves to a handedness so a mirrored door mounts its handle on
     # the correct free stile.
     door_handedness: Literal["LEFT", "RIGHT"] | None = None
+    opening: Opening | None = None
+    opening_handle: OpeningHandleFact | None = None
     placement_domain: Literal[PlacementDomain.DIRECT, PlacementDomain.SLIDING_LEAF]
     reference_rect: TraceRectV1
     # Sliding bays only: the floored slot pitch the geometry walk assigned,
@@ -71,6 +73,14 @@ class SemanticLeafTraceV1(EngineModel):
     finished_width_mm: Decimal = Field(gt=Decimal("0"))
     finished_height_mm: Decimal = Field(gt=Decimal("0"))
     direct_rect: TraceRectV1 | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_old_trace(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        if self.opening is None:
+            result.pop("opening", None)
+            result.pop("opening_handle", None)
+        return result
 
     @model_validator(mode="after")
     def direct_placement_is_complete(self) -> SemanticLeafTraceV1:

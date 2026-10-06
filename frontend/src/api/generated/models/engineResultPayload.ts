@@ -21,4 +21,5 @@ export interface EngineResultPayload {
   fittings: FittingPiece[];
   hardware_items: HardwareItem[];
   leaf_weights: LeafWeight[];
+  opening_leaves?: unknown[];
 }

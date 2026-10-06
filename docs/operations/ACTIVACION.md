@@ -87,3 +87,25 @@ Este indice no contiene secretos. Los valores reales se cargan como variables de
 
 No se envía el pedido a terceros desde esta superficie. Descargarlo y revisarlo
 son acciones locales; cualquier envío futuro conserva el clic humano explícito.
+
+## Aperturas: capacidades, encuentros y manillas (D03)
+
+1. Obtenga del proveedor las aperturas fabricables por serie y versión, con su
+   fuente: movimiento, bisagras, dirección, uso ventana/puerta y rol de hoja.
+   Declare las capacidades en Catálogo › Ficha de serie o en la hoja Sistemas
+   de la plantilla; vincule los kits de esa misma autoridad.
+2. Para una francesa o puerta doble, registre inversor, encuentro, deducciones
+   y fuente. La pasiva necesita falleba sin manilla de accionamiento. No sustituya
+   el inversor por un montante ni publique una capacidad con herrajes retirados.
+3. Registre la regla de manilla: referencia de altura, límites, distancia al
+   borde de cierre y fuente. Revise las coordenadas y el rango que deriva el
+   motor; una altura universal de la organización no reemplaza esta autoridad.
+4. Importe, revise el diff y publique con el dueño o encargado. Verifique la
+   apertura en vista interior, guardar/reabrir, precio y documento. Confirme con
+   el fabricante toda medida decimal del encuentro sin redondearla.
+5. Complete los datos estructurales y de fabricación antes de liberar a
+   producción. Una cotización DEMO incompleta y una carga ficticia de prueba no
+   acreditan inercia ni cumplimiento de viento para una obra.
+
+Las series DEMO v3 no modifican v1/v2. Un SKU compartido conserva su tarifa exacta;
+una unidad o tarifa distinta debe tener su autoridad comercial identificable.

@@ -26,7 +26,8 @@ from dekopen_engine import (
 from dekopen_engine.contour import Contour
 from dekopen_engine.catalog_rules import CatalogRuleError
 from dekopen_engine.weight import MissingFabricationAuthority
-from dekopen_engine.models import PlanPoint
+from dekopen_engine.models import PlanPoint, Opening, OpeningUse, HingedLayout
+from dekopen_engine.openings import OpeningCapabilityError
 from dekopen_engine.glass_composition import GlassProduct, GlassProcessing
 import json
 from dekopen_engine.product import (
@@ -58,6 +59,7 @@ _NODE_FIELDS = {
     "mullion_profile_sku",
     "children",
     "opening_type",
+    "opening", "opening_use", "hinged_layout",
     "glass_thickness_mm",
     "glass_spec",
     "glass_article_sku",
@@ -104,8 +106,16 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         raise InvalidEngineRequest("Every node requires string id and type")
 
     values: dict[str, object] = {"id": raw["id"]}
+    for field, model in (("opening", Opening), ("hinged_layout", HingedLayout)):
+        if raw.get(field) is not None:
+            try:
+                values[field] = model.model_validate_json(json.dumps(raw[field], allow_nan=False))
+            except (ValueError, TypeError) as error:
+                raise InvalidEngineRequest("Revisa el movimiento, las bisagras y las hojas activa/pasiva.") from error
     try:
         values["type"] = NodeType(cast(str, raw["type"]))
+        if raw.get("opening_use") is not None:
+            values["opening_use"] = OpeningUse(cast(str, raw["opening_use"]))
         if "opening_type" in raw and raw["opening_type"] is not None:
             if not isinstance(raw["opening_type"], str):
                 raise InvalidEngineRequest("opening_type must be a string")
@@ -373,7 +383,7 @@ def calculate_from_api(
         return calculate_geometry(root, params, is_foiled=color != "WHITE", finish=color)
     except NotImplementedError as error:
         raise UnsupportedEngineContract(str(error)) from error
-    except (CatalogRuleError, MissingFabricationAuthority):
+    except (CatalogRuleError, MissingFabricationAuthority, OpeningCapabilityError):
         raise
     except ValueError as error:
         raise InvalidEngineRequest(str(error)) from error

@@ -12,7 +12,7 @@ SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.glass_safety_ru
 SELECT is(private.legacy_glass_composition(' DVH 5-12-5 ')->'layers'->1->>'width_mm','12','legacy parse preserves chamber width');
 SELECT is(private.legacy_glass_composition('vidrio especial sin ficha'),NULL::JSONB,'unparseable legacy data is UNKNOWN');
 SELECT is(private.legacy_glass_composition('3+3')->'layers'->0->'interlayers','[{}]'::JSONB,'legacy laminate never invents PVB');
-SELECT is((SELECT count(*)::INT FROM catalog_glass_compositions WHERE product->>'source' LIKE 'DEMO%' AND product->>'synthetic'='true'),10,'five new families have two explicit synthetic products');
+SELECT is((SELECT count(*)::INT FROM catalog_glass_compositions c JOIN profile_systems s ON s.id=c.system_id WHERE s.version=2 AND product->>'source' LIKE 'DEMO%' AND product->>'synthetic'='true'),10,'five v2 families retain two explicit synthetic products');
 INSERT INTO tenancy_organizations(id,name,tax_id) VALUES
  ('17600000-0000-4000-8000-000000000001','Glass A','D02-A'),
  ('17600000-0000-4000-8000-000000000002','Glass B','D02-B');

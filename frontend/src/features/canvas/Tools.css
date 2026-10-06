@@ -18,7 +18,7 @@
   align-items: center;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-1);
   color: var(--theme-text-secondary);
   display: flex;
   height: 2rem;

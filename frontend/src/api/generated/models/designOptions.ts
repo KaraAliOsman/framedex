@@ -20,6 +20,8 @@ export interface DesignOptions {
   system_family: string | null;
   is_demo: boolean;
   compatible_openings: string[];
+  opening_capabilities?: unknown[];
+  paired_leaf_rule?: unknown | null;
   dimensional_limits: SystemDimensionalLimit[];
   profiles: ProfileChoice[];
   glazing_thicknesses: string[];

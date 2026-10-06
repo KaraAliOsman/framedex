@@ -69,3 +69,21 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - Las etiquetas enlazan a la aplicación mediante `DEKOPEN_PUBLIC_APP_URL`,
   configurada en el entorno de backend. El QR identifica el infill sellado y
   conserva el acceso autenticado del taller.
+
+## D03 · aperturas y manillas (2026-10-06)
+
+- Vista interior por defecto y gramática DIN de la constitución §3.6. El tablero
+  histórico de iconos no cambia el lado de bisagras ni de manilla. La dirección
+  se elige en la apertura compatible; la vista exterior continúa en P05.
+- No se infieren capacidades ni alturas en un catálogo antiguo. El dueño o
+  encargado configura movimiento, dirección, rol, kits, fuente, encuentro con
+  inversor y regla de manilla en Catálogo › Ficha de serie o en su importación.
+  Las nuevas autoridades DEMO v3 son versiones separadas y no certificadas.
+- La altura de manilla toma centro, borde inferior o superior **de la regla
+  declarada**. El estimador la edita dentro del rango del motor en Avanzado; las
+  manillas de banderola/proyectante quedan en su borde de cierre y una pasiva no
+  lleva manilla de accionamiento. No se usa una altura universal en Ajustes:
+  corresponde al sistema/herraje, cuya fuente es configurable en Catálogo.
+- La precisión del encuentro puede producir medios centésimos exactos. El
+  motor conserva esos valores; los formatos de presentación no redondean el
+  BOM ni el documento sellado a una autoridad distinta.

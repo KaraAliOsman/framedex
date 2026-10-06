@@ -234,7 +234,7 @@ def _plan(org_id, import_row, entries, *, lock=False):
             before = service.retrieve(resource, org_id, found[0]["id"]) if found else None
             raw = {name: values.get(name) for name in KitWriteSerializer().fields if name != "system_id"}
             raw["system_id"] = systems[code]
-            if values["opening_type"] not in ("TURN", "TILT_TURN", "SLIDING", "DOOR", "AWNING"):
+            if values["opening_type"] not in ("TURN", "TILT", "TILT_TURN", "SLIDING", "DOOR", "AWNING"):
                 raw["opening_type"] = normalize_opening_type(BayOpeningType(values["opening_type"]))
             data = _validated(KitWriteSerializer, raw, key, errors)
         elif sheet == "Vidrios":

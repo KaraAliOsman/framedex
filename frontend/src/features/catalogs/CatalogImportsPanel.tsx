@@ -15,9 +15,11 @@ import type {
   CatalogTemplateSheet,
 } from "../../api/generated/models";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
-import { formatDate, formatDateTime, fmtMm, formatMoney } from "../../format";
+import { formatDate, formatDateTime, formatDecimal, fmtMm, formatMoney } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
 import { useConfirm } from "../../ui/ConfirmDialog";
+import { OpeningCapabilitiesEditor, type PairedRule } from "./OpeningCapabilitiesEditor";
+import { physicalLabel, type Capability } from "../canvas/physicalOpenings";
 
 type Evidence = { ref?: string; quote?: string; confidence?: string; proposed?: unknown };
 type ReviewRow = {
@@ -64,6 +66,19 @@ function errorText(error: unknown): string {
 }
 function display(value: unknown, column?: CatalogTemplateColumn, field?: string): string {
   if (value == null || value === "") return "Sin dato";
+  if (field === "opening_capabilities" && Array.isArray(value))
+    return (
+      (value as Capability[])
+        .map(
+          (cap) =>
+            `${cap.hinge_sides.map((hinge_side) => physicalLabel({ ...cap, hinge_side }, cap.use)).join(" / ")}${cap.leaf_role === "SINGLE" ? "" : ` · ${domainLabel(cap.leaf_role)}`} · ${cap.source}`,
+        )
+        .join("; ") || "Sin dato"
+    );
+  if (field === "paired_leaf_rule" && typeof value === "object") {
+    const rule = value as PairedRule;
+    return `Traslape ${fmtMm(rule.meeting_overlap_mm)} mm · separación ${fmtMm(rule.meeting_gap_mm)} mm · descuento del inversor ${fmtMm(rule.inversor_end_deduction_mm)} mm · ${rule.source}`;
+  }
   if (typeof value === "object")
     return Array.isArray(value)
       ? value.map((item) => (typeof item === "string" ? item : "Componente declarado")).join(" · ")
@@ -93,6 +108,7 @@ function display(value: unknown, column?: CatalogTemplateColumn, field?: string)
   if (field === "category") return domainLabel(String(value));
   if (column?.kind === "date") return formatDate(String(value));
   if (column?.key === "unit_cost") return formatMoney(String(value));
+  if ((column?.key ?? field ?? "").startsWith("weight_")) return formatDecimal(String(value), 2);
   if (["decimal", "positive", "integer", "count", "angle"].includes(column?.kind ?? ""))
     return fmtMm(String(value));
   return String(value);
@@ -114,14 +130,17 @@ export function CatalogImportsPanel({
   orgId,
   canWrite,
   onConfirmed,
+  onExpandedChange,
 }: {
   orgId: string;
   canWrite: boolean;
   systems: Array<{ id: string; name: string; code: string }>;
   onConfirmed?: () => void;
+  onExpandedChange?: (expanded: boolean) => void;
 }): JSX.Element {
   const confirm = useConfirm();
   const [expanded, setExpanded] = useState(false);
+  useEffect(() => onExpandedChange?.(expanded), [expanded, onExpandedChange]);
   const [imports, setImports] = useState<CatalogImportResponse[]>([]);
   const [sheets, setSheets] = useState<CatalogTemplateSheet[]>([]);
   const [busy, setBusy] = useState(false);
@@ -588,6 +607,7 @@ export function CatalogImportsPanel({
                   <span>Fuente del proveedor</span>
                 </div>
                 {sheet.columns.map((column) => {
+                  if (column.key === "paired_leaf_rule") return null;
                   const evidence = selected.fields[column.key] ?? {};
                   const value = selected.values[column.key];
                   const errors = diff
@@ -603,7 +623,28 @@ export function CatalogImportsPanel({
                         {column.required && <small>Requerido</small>}
                       </label>
                       <div>
-                        {column.kind === "json" ? (
+                        {column.key === "opening_capabilities" ? (
+                          <OpeningCapabilitiesEditor
+                            capabilities={Array.isArray(value) ? (value as Capability[]) : []}
+                            paired={(selected.values.paired_leaf_rule as PairedRule | null) ?? null}
+                            family={String(selected.values.system_family ?? "CASEMENT")}
+                            kits={rows
+                              .filter(
+                                (row) =>
+                                  row.sheet === "Herrajes" &&
+                                  row.values.system_code === selected.values.system_code,
+                              )
+                              .map((row) => ({
+                                id: row.key,
+                                sku: String(row.values.sku ?? ""),
+                                name: String(
+                                  row.values.name ?? "Sin dato: falta el nombre del herraje",
+                                ),
+                              }))}
+                            onChange={(next) => patch(selected.key, column.key, next)}
+                            onPair={(next) => patch(selected.key, "paired_leaf_rule", next)}
+                          />
+                        ) : column.kind === "json" ? (
                           <ComponentFields
                             id={id}
                             value={value}
@@ -646,10 +687,22 @@ export function CatalogImportsPanel({
                         ))}
                       </div>
                       <div className="catalog-source">
-                        <span>{evidence.ref || "Sin referencia"}</span>
-                        <blockquote>
-                          {evidence.quote || "La fuente no declara este campo."}
-                        </blockquote>
+                        <span>
+                          {evidence.ref?.replace(/^(.+)!([A-Z]+[0-9]+)$/u, "$1 · celda $2") ||
+                            "Sin referencia"}
+                        </span>
+                        {column.kind === "json" || /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
+                          <details>
+                            <summary>Ver texto original de la fuente</summary>
+                            <blockquote>
+                              {evidence.quote || "La fuente no declara este campo."}
+                            </blockquote>
+                          </details>
+                        ) : (
+                          <blockquote>
+                            {evidence.quote || "La fuente no declara este campo."}
+                          </blockquote>
+                        )}
                         {evidence.confidence !== "HIGH" && (
                           <strong>Sin dato verificado · revisa la fuente</strong>
                         )}
@@ -715,7 +768,14 @@ export function CatalogImportsPanel({
                 return (
                   <details key={`${change.key}-${index}`} open>
                     <summary>
-                      {change.sheet} · {inputText(row?.values.sku || row?.values.system_code)} ·{" "}
+                      {change.sheet} ·{" "}
+                      {inputText(
+                        row?.values.name ||
+                          row?.values.glass_spec ||
+                          row?.values.sku ||
+                          row?.values.system_code,
+                      )}{" "}
+                      ·{" "}
                       {
                         { create: "Crear", update: "Actualizar", none: "Sin cambios" }[
                           change.action
@@ -856,7 +916,14 @@ function DiffFields({
       <div className="catalog-diff-values">
         {Object.entries(after).map(([key, value]) => {
           if (
+            key.endsWith("_id") ||
             [
+              "id",
+              "sku",
+              "system_code",
+              "code",
+              "catalog_id",
+              "composition_origin",
               "system_id",
               "profile_article_id",
               "bead_article_id",
@@ -868,7 +935,11 @@ function DiffFields({
             return null;
           const previous =
             before && typeof before === "object" ? (before as Record<string, unknown>)[key] : null;
-          if (value && typeof value === "object")
+          if (
+            value &&
+            typeof value === "object" &&
+            !["opening_capabilities", "paired_leaf_rule"].includes(key)
+          )
             return (
               <DiffFields
                 key={key}

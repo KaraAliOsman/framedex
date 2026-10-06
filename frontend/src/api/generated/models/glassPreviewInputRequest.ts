@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { GlassPreviewInputRequestOpeningUse } from "./glassPreviewInputRequestOpeningUse";
 
 export interface GlassPreviewInputRequest {
   system_id: string;
@@ -16,6 +17,9 @@ export interface GlassPreviewInputRequest {
   height_mm?: string;
   /** @minLength 1 */
   opening_type?: string;
+  opening_use?:
+    | (typeof GlassPreviewInputRequestOpeningUse)[keyof typeof GlassPreviewInputRequestOpeningUse]
+    | null;
   is_sidelight?: boolean;
   /**
    * @nullable

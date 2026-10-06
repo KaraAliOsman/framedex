@@ -328,7 +328,7 @@ export const schemas: Record<Resource, Group[]> = {
         {
           name: "opening_type",
           kind: "select",
-          options: ["TURN", "TILT_TURN", "SLIDING", "DOOR", "AWNING"],
+          options: ["TURN", "TILT", "TILT_TURN", "SLIDING", "DOOR", "AWNING"],
         },
         rail,
         active,
@@ -557,6 +557,8 @@ export function writeFromDraft<R extends Resource>(
   contents: HardwareComponent[],
   section?: SectionDraft,
   limits?: SystemWriteRequest["dimensional_limits"],
+  openingCapabilities?: unknown[],
+  pairedRule?: unknown,
 ): Writes[R] {
   const flat: Record<string, unknown> = {};
   for (const field of groupsFor(resource, draft).flatMap((group) => group.fields)) {
@@ -600,6 +602,8 @@ export function writeFromDraft<R extends Resource>(
   if (resource === "systems") {
     values.sliding_parameters ??= null;
     if (limits !== undefined) values.dimensional_limits = limits;
+    if (openingCapabilities !== undefined) values.opening_capabilities = openingCapabilities;
+    if (pairedRule !== undefined) values.paired_leaf_rule = pairedRule;
   }
   if (resource === "hardware-kits") {
     values.contents = contents.map((item) => ({

@@ -13,6 +13,7 @@ import type { DesignOptions, GlassPreviewOutput } from "../../api/generated/mode
 import { GlassSelector } from "./GlassSelector";
 import { GlassRulesSettings } from "./GlassRulesSettings";
 import { GlassOrderPanel } from "./GlassOrderPanel";
+import { glassContext } from "./useGlassPreview";
 import type { GlassProduct } from "./glassModel";
 import { t } from "../../i18n/es-CL";
 
@@ -131,6 +132,30 @@ beforeEach(() => {
   });
 });
 afterEach(cleanup);
+
+it("sends structured door use to glass safety even when its legacy alias is absent", () => {
+  expect(
+    glassContext(
+      {
+        id: "door",
+        type: "BAY",
+        opening_use: "DOOR",
+        opening: {
+          movement: "TURN",
+          hinge_side: "LEFT",
+          direction: "OUTWARD",
+          leaf_role: "SINGLE",
+          fixed_in_sash: false,
+        },
+      },
+      "m1",
+      null,
+    ),
+  ).toMatchObject({ opening_use: "DOOR", opening_type: "FIXED" });
+  expect(
+    glassContext({ id: "old-door", type: "BAY", opening_type: "DOOR_ENTRY" }, "m1", null),
+  ).toMatchObject({ opening_use: undefined, opening_type: "DOOR_ENTRY" });
+});
 
 it("assigns recipe authority, supplier SKU and derived bead thickness together", async () => {
   const patch = selector();

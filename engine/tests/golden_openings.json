@@ -1,0 +1,5428 @@
+{
+  "DOOR-LEFT-INWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 4,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.4126",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "28.25",
+        "width_mm": "720.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-DOOR",
+        "leaf_id": null,
+        "name": "Herraje puerta · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "28.25",
+        "leaf_id": null,
+        "pvc_weight_kg": "6.96",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "44.78",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "808.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "846.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "729.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "860.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "852.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DOOR-LEFT-OUTWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 4,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.4126",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "28.25",
+        "width_mm": "720.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-OUTWARD",
+        "leaf_id": null,
+        "name": "Herraje hacia afuera · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "28.25",
+        "leaf_id": null,
+        "pvc_weight_kg": "6.96",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "44.78",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "808.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "846.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "729.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "860.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "852.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DOOR-RIGHT-INWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 4,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.4126",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "28.25",
+        "width_mm": "720.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-DOOR",
+        "leaf_id": null,
+        "name": "Herraje puerta · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "28.25",
+        "leaf_id": null,
+        "pvc_weight_kg": "6.96",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "44.78",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "LEFT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "37.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "846.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "729.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "860.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "852.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DOOR-RIGHT-OUTWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 4,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.4126",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "28.25",
+        "width_mm": "720.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-OUTWARD",
+        "leaf_id": null,
+        "name": "Herraje hacia afuera · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "28.25",
+        "leaf_id": null,
+        "pvc_weight_kg": "6.96",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "44.78",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "LEFT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "37.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "846.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "729.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "860.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "852.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DOOR-SIDELIGHT": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 7,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 9,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.4715",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "29.43",
+        "width_mm": "750.00"
+      },
+      {
+        "area_m2": "1.0917",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "lateral",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "2124.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "21.83",
+        "width_mm": "514.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-DOOR",
+        "leaf_id": null,
+        "name": "Herraje puerta · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "29.43",
+        "leaf_id": null,
+        "pvc_weight_kg": "7.03",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "46.03",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "838.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "876.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1606.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2108.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "MULLION_V",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-POSTE-V"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "759.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "lateral",
+        "leaf_id": null,
+        "length_mm": "523.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "lateral",
+        "leaf_id": null,
+        "length_mm": "2133.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "door-lateral",
+        "leaf_id": null,
+        "length_mm": "1460.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "882.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1576.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2098.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-POSTE-V",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-POSTE-V",
+        "role": "MULLION_V",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DOUBLE-DOOR-LEFT-INWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 9,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.3871",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": "LEFT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "27.74",
+        "width_mm": "707.00"
+      },
+      {
+        "area_m2": "1.3871",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": "RIGHT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "27.74",
+        "width_mm": "707.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-DOOR",
+        "leaf_id": "LEFT",
+        "name": "Herraje puerta · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Falleba pasiva DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-FALLEBA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-PASSIVE",
+        "leaf_id": "RIGHT",
+        "name": "Herraje pasivo con falleba · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "27.74",
+        "leaf_id": "LEFT",
+        "pvc_weight_kg": "6.93",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "44.24",
+        "weight_unknown_reasons": []
+      },
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.58",
+        "infill_weight_kg": "27.74",
+        "leaf_id": "RIGHT",
+        "pvc_weight_kg": "8.59",
+        "steel_weight_kg": "8.26",
+        "total_weight_kg": "47.18",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "795.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": "LEFT",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "ACTIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "833.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      },
+      {
+        "bay_id": "bay",
+        "handle": null,
+        "height_mm": "2088.00",
+        "leaf_id": "RIGHT",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "PASSIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "833.00",
+        "x_mm": "890.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "716.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "716.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2084.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INVERSOR",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-INVERSOR"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1660.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "839.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "839.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2074.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-INVERSOR",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-INVERSOR",
+        "role": "INVERSOR",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DOUBLE-DOOR-LEFT-OUTWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 9,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.3871",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": "LEFT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "27.74",
+        "width_mm": "707.00"
+      },
+      {
+        "area_m2": "1.3871",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": "RIGHT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "27.74",
+        "width_mm": "707.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-OUTWARD",
+        "leaf_id": "LEFT",
+        "name": "Herraje hacia afuera · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Falleba pasiva DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-FALLEBA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-PASSIVE",
+        "leaf_id": "RIGHT",
+        "name": "Herraje pasivo con falleba · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "27.74",
+        "leaf_id": "LEFT",
+        "pvc_weight_kg": "6.93",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "44.24",
+        "weight_unknown_reasons": []
+      },
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.58",
+        "infill_weight_kg": "27.74",
+        "leaf_id": "RIGHT",
+        "pvc_weight_kg": "8.59",
+        "steel_weight_kg": "8.26",
+        "total_weight_kg": "47.18",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "795.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": "LEFT",
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "ACTIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "833.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      },
+      {
+        "bay_id": "bay",
+        "handle": null,
+        "height_mm": "2088.00",
+        "leaf_id": "RIGHT",
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "PASSIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "833.00",
+        "x_mm": "890.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "716.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "716.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2084.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INVERSOR",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-INVERSOR"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1660.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "839.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "839.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2074.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-INVERSOR",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-INVERSOR",
+        "role": "INVERSOR",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DOUBLE-DOOR-RIGHT-INWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 9,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.3871",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": "LEFT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "27.74",
+        "width_mm": "707.00"
+      },
+      {
+        "area_m2": "1.3871",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": "RIGHT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "27.74",
+        "width_mm": "707.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Falleba pasiva DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-FALLEBA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-PASSIVE",
+        "leaf_id": "LEFT",
+        "name": "Herraje pasivo con falleba · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-DOOR",
+        "leaf_id": "RIGHT",
+        "name": "Herraje puerta · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.58",
+        "infill_weight_kg": "27.74",
+        "leaf_id": "LEFT",
+        "pvc_weight_kg": "8.59",
+        "steel_weight_kg": "8.26",
+        "total_weight_kg": "47.18",
+        "weight_unknown_reasons": []
+      },
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "27.74",
+        "leaf_id": "RIGHT",
+        "pvc_weight_kg": "6.93",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "44.24",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": null,
+        "height_mm": "2088.00",
+        "leaf_id": "LEFT",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "PASSIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "833.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      },
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "LEFT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "37.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": "RIGHT",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "ACTIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "833.00",
+        "x_mm": "890.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "716.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "716.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2084.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INVERSOR",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-INVERSOR"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1660.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "839.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "839.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2074.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-INVERSOR",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-INVERSOR",
+        "role": "INVERSOR",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DOUBLE-DOOR-RIGHT-OUTWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 9,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 18,
+        "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.3871",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": "LEFT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "27.74",
+        "width_mm": "707.00"
+      },
+      {
+        "area_m2": "1.3871",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1962.00",
+        "leaf_id": "RIGHT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "27.74",
+        "width_mm": "707.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Falleba pasiva DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-FALLEBA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-PASSIVE",
+        "leaf_id": "LEFT",
+        "name": "Herraje pasivo con falleba · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "3",
+            "sku": "DEMO_PUERTA_70-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_PUERTA_70-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_PUERTA_70-KIT-OUTWARD",
+        "leaf_id": "RIGHT",
+        "name": "Herraje hacia afuera · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.58",
+        "infill_weight_kg": "27.74",
+        "leaf_id": "LEFT",
+        "pvc_weight_kg": "8.59",
+        "steel_weight_kg": "8.26",
+        "total_weight_kg": "47.18",
+        "weight_unknown_reasons": []
+      },
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "27.74",
+        "leaf_id": "RIGHT",
+        "pvc_weight_kg": "6.93",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "44.24",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": null,
+        "height_mm": "2088.00",
+        "leaf_id": "LEFT",
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "PASSIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "833.00",
+        "x_mm": "77.00",
+        "y_mm": "62.00"
+      },
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1000.00",
+          "maximum_from_top_mm": "1988.00",
+          "maximum_height_from_bottom_mm": "1988.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "LEFT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "37.50",
+          "y_mm": "1088.00"
+        },
+        "height_mm": "2088.00",
+        "leaf_id": "RIGHT",
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "ACTIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "DOOR",
+        "width_mm": "833.00",
+        "x_mm": "890.00",
+        "y_mm": "62.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2203.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "716.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "716.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1971.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2084.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INVERSOR",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-INVERSOR"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1660.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "THRESHOLD",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-UMBRAL"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "839.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "839.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2094.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "DOOR_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_PUERTA_70-HOJA"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "2173.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2074.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-INVERSOR",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-INVERSOR",
+        "role": "INVERSOR",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "2064.00",
+        "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+        "role": "DOOR_SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "FIXED-FRAME": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.1788",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1304.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "23.58",
+        "width_mm": "904.00"
+      }
+    ],
+    "hardware_items": [],
+    "leaf_weights": [],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "913.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1313.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "FIXED-SASH": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.9009",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "18.02",
+        "width_mm": "770.00"
+      }
+    ],
+    "hardware_items": [],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "0.04",
+        "infill_weight_kg": "18.02",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.97",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "28.35",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": null,
+        "height_mm": "1296.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": true,
+          "hinge_side": "NONE",
+          "leaf_role": "SINGLE",
+          "movement": "FIXED"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "896.00",
+        "x_mm": "52.00",
+        "y_mm": "52.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "902.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "779.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "FRENCH-LEFT": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 14,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 6,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.7394",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": "LEFT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "14.79",
+        "width_mm": "632.00"
+      },
+      {
+        "area_m2": "0.7394",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": "RIGHT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "14.79",
+        "width_mm": "632.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TURN",
+        "leaf_id": "LEFT",
+        "name": "Kit PVC practicable 60 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Falleba pasiva DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-FALLEBA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-PASSIVE",
+        "leaf_id": "RIGHT",
+        "name": "Herraje pasivo con falleba · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "14.79",
+        "leaf_id": "LEFT",
+        "pvc_weight_kg": "5.60",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "27.25",
+        "weight_unknown_reasons": []
+      },
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "14.79",
+        "leaf_id": "RIGHT",
+        "pvc_weight_kg": "6.63",
+        "steel_weight_kg": "5.09",
+        "total_weight_kg": "29.07",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "648.00",
+          "maximum_from_top_mm": "1196.00",
+          "maximum_height_from_bottom_mm": "1196.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "720.50",
+          "y_mm": "648.00"
+        },
+        "height_mm": "1296.00",
+        "leaf_id": "LEFT",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "ACTIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "758.00",
+        "x_mm": "52.00",
+        "y_mm": "52.00"
+      },
+      {
+        "bay_id": "bay",
+        "handle": null,
+        "height_mm": "1296.00",
+        "leaf_id": "RIGHT",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "PASSIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "758.00",
+        "x_mm": "790.00",
+        "y_mm": "52.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1606.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "764.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "764.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "641.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "641.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1292.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INVERSOR",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-INVERSOR"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1576.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1282.00",
+        "parent_profile_sku": "DEMO_60-INVERSOR",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_60-ACERO-INVERSOR",
+        "role": "INVERSOR",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "FRENCH-RIGHT": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 14,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "LEFT",
+        "qty": 6,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "RIGHT",
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.7394",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": "LEFT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "14.79",
+        "width_mm": "632.00"
+      },
+      {
+        "area_m2": "0.7394",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": "RIGHT",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "14.79",
+        "width_mm": "632.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Falleba pasiva DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-FALLEBA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-PASSIVE",
+        "leaf_id": "LEFT",
+        "name": "Herraje pasivo con falleba · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TURN",
+        "leaf_id": "RIGHT",
+        "name": "Kit PVC practicable 60 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "14.79",
+        "leaf_id": "LEFT",
+        "pvc_weight_kg": "6.63",
+        "steel_weight_kg": "5.09",
+        "total_weight_kg": "29.07",
+        "weight_unknown_reasons": []
+      },
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "14.79",
+        "leaf_id": "RIGHT",
+        "pvc_weight_kg": "5.60",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "27.25",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": null,
+        "height_mm": "1296.00",
+        "leaf_id": "LEFT",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "PASSIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "758.00",
+        "x_mm": "52.00",
+        "y_mm": "52.00"
+      },
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "648.00",
+          "maximum_from_top_mm": "1196.00",
+          "maximum_height_from_bottom_mm": "1196.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "LEFT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "37.50",
+          "y_mm": "648.00"
+        },
+        "height_mm": "1296.00",
+        "leaf_id": "RIGHT",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "ACTIVE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "758.00",
+        "x_mm": "790.00",
+        "y_mm": "52.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1606.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "764.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "764.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "641.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "641.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1292.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INVERSOR",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-INVERSOR"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1576.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "RIGHT",
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "LEFT",
+        "length_mm": "1282.00",
+        "parent_profile_sku": "DEMO_60-INVERSOR",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_60-ACERO-INVERSOR",
+        "role": "INVERSOR",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "TILT": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.9009",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "18.02",
+        "width_mm": "770.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TILT",
+        "leaf_id": null,
+        "name": "Herraje banderola · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "18.02",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.97",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "30.85",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "1258.50",
+          "maximum_from_top_mm": "37.50",
+          "maximum_height_from_bottom_mm": "1258.50",
+          "minimum_from_top_mm": "37.50",
+          "minimum_height_from_bottom_mm": "1258.50",
+          "side": "TOP",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "448.00",
+          "y_mm": "37.50"
+        },
+        "height_mm": "1296.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "BOTTOM",
+          "leaf_role": "SINGLE",
+          "movement": "TILT"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "896.00",
+        "x_mm": "52.00",
+        "y_mm": "52.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "902.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "779.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "TILT_TURN-LEFT-INWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.9009",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "18.02",
+        "width_mm": "770.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TILT_TURN",
+        "leaf_id": null,
+        "name": "Kit PVC practicable 60 mm · oscilobatiente",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "18.02",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.97",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "30.85",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "648.00",
+          "maximum_from_top_mm": "1196.00",
+          "maximum_height_from_bottom_mm": "1196.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "858.50",
+          "y_mm": "648.00"
+        },
+        "height_mm": "1296.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "SINGLE",
+          "movement": "TILT_TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "896.00",
+        "x_mm": "52.00",
+        "y_mm": "52.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "902.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "779.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "TILT_TURN-RIGHT-INWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.9009",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "18.02",
+        "width_mm": "770.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TILT_TURN",
+        "leaf_id": null,
+        "name": "Kit PVC practicable 60 mm · oscilobatiente",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "18.02",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.97",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "30.85",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "648.00",
+          "maximum_from_top_mm": "1196.00",
+          "maximum_height_from_bottom_mm": "1196.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "LEFT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "37.50",
+          "y_mm": "648.00"
+        },
+        "height_mm": "1296.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "SINGLE",
+          "movement": "TILT_TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "896.00",
+        "x_mm": "52.00",
+        "y_mm": "52.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "902.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "779.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "TOP-HUNG": {
+    "fittings": [],
+    "glasses": [
+      {
+        "area_m2": "0.8816",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1160.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "17.63",
+        "width_mm": "760.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_ALU_PRACTICABLE-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_ALU_PRACTICABLE-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_ALU_PRACTICABLE-KIT-AWNING",
+        "leaf_id": null,
+        "name": "Kit Aluminio practicable 65 mm · proyectante",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.50",
+        "infill_weight_kg": "17.63",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.17",
+        "steel_weight_kg": "0.00",
+        "total_weight_kg": "25.30",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "37.50",
+          "maximum_from_top_mm": "1248.50",
+          "maximum_height_from_bottom_mm": "37.50",
+          "minimum_from_top_mm": "1248.50",
+          "minimum_height_from_bottom_mm": "37.50",
+          "side": "BOTTOM",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "443.00",
+          "y_mm": "1248.50"
+        },
+        "height_mm": "1286.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "TOP",
+          "leaf_role": "SINGLE",
+          "movement": "TOP_HUNG"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "886.00",
+        "x_mm": "57.00",
+        "y_mm": "57.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "996.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1396.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "882.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1282.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "769.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1169.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-JQ-10"
+      }
+    ],
+    "reinforcements": []
+  },
+  "TURN-LEFT-INWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.9009",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "18.02",
+        "width_mm": "770.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TURN",
+        "leaf_id": null,
+        "name": "Kit PVC practicable 60 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "18.02",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.97",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "30.85",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "648.00",
+          "maximum_from_top_mm": "1196.00",
+          "maximum_height_from_bottom_mm": "1196.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "858.50",
+          "y_mm": "648.00"
+        },
+        "height_mm": "1296.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "896.00",
+        "x_mm": "52.00",
+        "y_mm": "52.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "902.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "779.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "TURN-LEFT-OUTWARD": {
+    "fittings": [],
+    "glasses": [
+      {
+        "area_m2": "0.8816",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1160.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "17.63",
+        "width_mm": "760.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_ALU_PRACTICABLE-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_ALU_PRACTICABLE-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_ALU_PRACTICABLE-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_ALU_PRACTICABLE-KIT-OUTWARD",
+        "leaf_id": null,
+        "name": "Herraje hacia afuera · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.50",
+        "infill_weight_kg": "17.63",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.17",
+        "steel_weight_kg": "0.00",
+        "total_weight_kg": "25.30",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "643.00",
+          "maximum_from_top_mm": "1186.00",
+          "maximum_height_from_bottom_mm": "1186.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "RIGHT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "848.50",
+          "y_mm": "643.00"
+        },
+        "height_mm": "1286.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "LEFT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "886.00",
+        "x_mm": "57.00",
+        "y_mm": "57.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "996.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1396.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "882.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1282.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "769.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1169.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-JQ-10"
+      }
+    ],
+    "reinforcements": []
+  },
+  "TURN-RIGHT-INWARD": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.9009",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "18.02",
+        "width_mm": "770.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TURN",
+        "leaf_id": null,
+        "name": "Kit PVC practicable 60 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "18.02",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.97",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "30.85",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "648.00",
+          "maximum_from_top_mm": "1196.00",
+          "maximum_height_from_bottom_mm": "1196.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "LEFT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "37.50",
+          "y_mm": "648.00"
+        },
+        "height_mm": "1296.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "896.00",
+        "x_mm": "52.00",
+        "y_mm": "52.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1006.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "902.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "779.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "976.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "TURN-RIGHT-OUTWARD": {
+    "fittings": [],
+    "glasses": [
+      {
+        "area_m2": "0.8816",
+        "article_sku": "DEMO-GLASS",
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1160.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "17.63",
+        "width_mm": "760.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_ALU_PRACTICABLE-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_ALU_PRACTICABLE-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Cierre DEMO",
+            "qty": "1",
+            "sku": "DEMO_ALU_PRACTICABLE-CIERRE",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_ALU_PRACTICABLE-KIT-OUTWARD",
+        "leaf_id": null,
+        "name": "Herraje hacia afuera · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.50",
+        "infill_weight_kg": "17.63",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.17",
+        "steel_weight_kg": "0.00",
+        "total_weight_kg": "25.30",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "opening_leaves": [
+      {
+        "bay_id": "bay",
+        "handle": {
+          "height_from_bottom_mm": "643.00",
+          "maximum_from_top_mm": "1186.00",
+          "maximum_height_from_bottom_mm": "1186.00",
+          "minimum_from_top_mm": "100.00",
+          "minimum_height_from_bottom_mm": "100.00",
+          "side": "LEFT",
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "x_mm": "37.50",
+          "y_mm": "643.00"
+        },
+        "height_mm": "1286.00",
+        "leaf_id": null,
+        "opening": {
+          "direction": "OUTWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "RIGHT",
+          "leaf_role": "SINGLE",
+          "movement": "TURN"
+        },
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "use": "WINDOW",
+        "width_mm": "886.00",
+        "x_mm": "57.00",
+        "y_mm": "57.00"
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "996.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1396.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "882.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1282.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "769.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1169.00",
+        "material": "ALUMINIUM",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_ALU_PRACTICABLE-JQ-10"
+      }
+    ],
+    "reinforcements": []
+  }
+}

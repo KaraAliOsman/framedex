@@ -13,15 +13,24 @@ import type {
   WorkCenterRequestRequest,
 } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
-import { fmtMm } from "../../format";
+import { fmtMm, formatDecimal } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
 import { centerKindLabel, opKindLabel, stationCodeLabel } from "../production/labels";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
-import type { Resource, Row, catalogApi } from "./catalogModel";
+import { catalogVocabulary, type Resource, type Row, type catalogApi } from "./catalogModel";
 
 type Label = Parameters<typeof t>[0];
-const ct = (key: string) => t(`catalog.${key}` as Label);
+const ct = (key: string) => catalogVocabulary[key] ?? t(`catalog.${key}` as Label);
 const wst = (key: string) => t(`catalog.ws.${key}` as Label);
+
+function TechnicalCode({ value }: { value: string }) {
+  return (
+    <details className="ws-technical-code">
+      <summary>Detalles técnicos</summary>
+      <code>{value}</code>
+    </details>
+  );
+}
 
 function provenanceLabel(value: string | null | undefined): string {
   if (!value) return "—";
@@ -119,14 +128,14 @@ function ArticleCard({
         />
         <small>
           {article.section
-            ? `${ct(`sectionSource.${article.section.source}`)}${depth ? ` · ${depth} mm` : ""}`
+            ? `${ct(`sectionSource.${article.section.source}`)}${depth ? ` · ${fmtMm(depth)} mm` : ""}`
             : wst("sectionApprox")}
         </small>
       </div>
       <div className="ws-article-body">
         <header>
           <strong>{article.name}</strong>
-          <code>{article.sku}</code>
+          <TechnicalCode value={article.sku} />
         </header>
         <dl>
           <div>
@@ -147,7 +156,11 @@ function ArticleCard({
           </div>
           <div>
             <dt>{wst("weight")}</dt>
-            <dd>{article.weight_kg_m ? `${fmtMm(article.weight_kg_m)} kg/m` : wst("unknown")}</dd>
+            <dd title={article.weight_kg_m ? `${fmtMm(article.weight_kg_m)} kg/m` : undefined}>
+              {article.weight_kg_m
+                ? `${formatDecimal(article.weight_kg_m, 2)} kg/m`
+                : wst("unknown")}
+            </dd>
           </div>
           <div>
             <dt>{wst("purchaseState")}</dt>
@@ -495,7 +508,7 @@ export function SystemWorkspaceView({
   const targetName = (row: EvidenceRow): string => {
     if (row.authority_table === "profile_systems" && row.row_id === system.id) return system.name;
     const article = articles.find((a) => a.id === row.row_id);
-    if (article) return `${article.sku} · ${article.name}`;
+    if (article) return article.name;
     const bead = beads.find((b) => b.id === row.row_id);
     if (bead) return `${wst("bead")} ${bead.glass_thickness_mm} mm`;
     const kit = kits.find((k) => k.id === row.row_id);
@@ -759,10 +772,10 @@ export function SystemWorkspaceView({
                 key={kit.id}
                 type="button"
                 className="ws-kit-card"
+                title={kit.sku}
                 onClick={() => onEdit("hardware-kits", kit.id)}
               >
                 <strong>{kit.name}</strong>
-                <span>{kit.sku}</span>
                 <small>
                   {ct(`option.${kit.opening_type}`)} · {ct(`option.${kit.rail_type}`)}
                 </small>
@@ -800,9 +813,9 @@ export function SystemWorkspaceView({
                   const parent = articles.find((a) => a.id === row.parent_profile_article_id);
                   return (
                     <tr key={row.id}>
-                      <th scope="row">{parent?.name ?? row.parent_profile_article_id}</th>
+                      <th scope="row">{parent?.name ?? wst("unknown")}</th>
                       <td>
-                        <code>{row.sku}</code>
+                        <TechnicalCode value={row.sku} />
                         {row.is_default && <span className="ws-badge">{wst("default")}</span>}
                       </td>
                       <td>{row.name}</td>
@@ -845,9 +858,9 @@ export function SystemWorkspaceView({
                   const article = articles.find((a) => a.id === map.profile_article_id);
                   return (
                     <tr key={map.id}>
-                      <th scope="row">{article?.name ?? map.profile_article_id}</th>
+                      <th scope="row">{article?.name ?? wst("unknown")}</th>
                       <td>
-                        <code>{map.commercial_sku}</code>
+                        <TechnicalCode value={map.commercial_sku} />
                       </td>
                       <td>{map.manufacturer_name}</td>
                       <td>{map.supplier_name ?? wst("unknown")}</td>

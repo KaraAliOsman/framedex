@@ -194,7 +194,7 @@ def test_engine_response_includes_shot06_and_excludes_inspector() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["components"]["schemas"]["EngineCalculateResponse"]["properties"]) == {
         "calculation_hash", "profile_cuts", "reinforcements", "glasses",
-        "panels", "fittings", "hardware_items", "leaf_weights",
+        "panels", "fittings", "hardware_items", "leaf_weights", "opening_leaves",
     }
 
 

@@ -153,6 +153,7 @@ class EngineResultPayloadSerializer(serializers.Serializer):
     fittings = FittingPieceSerializer(many=True)
     hardware_items = HardwareItemSerializer(many=True)
     leaf_weights = LeafWeightSerializer(many=True)
+    opening_leaves = serializers.ListField(child=serializers.JSONField(), required=False)
 
 
 class EngineCalculateResponseSerializer(EngineResultPayloadSerializer):
