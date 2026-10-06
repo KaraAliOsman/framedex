@@ -1,0 +1,229 @@
+{
+  "records": [
+    {
+      "name": "seguridad-puerta-1440-light",
+      "errors": [],
+      "overflow": false,
+      "previews": [
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        },
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "seguridad-puerta-1440-dark",
+      "errors": [],
+      "overflow": false,
+      "previews": [
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        },
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "seguridad-puerta-1280-light",
+      "errors": [],
+      "overflow": false,
+      "previews": [
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        },
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "seguridad-puerta-1280-dark",
+      "errors": [],
+      "overflow": false,
+      "previews": [
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        },
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "seguridad-puerta-1024-light",
+      "errors": [],
+      "overflow": false,
+      "previews": [
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        },
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "seguridad-puerta-1024-dark",
+      "errors": [],
+      "overflow": false,
+      "previews": [
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        },
+        {
+          "opening_use": "DOOR",
+          "opening_type": "FIXED",
+          "width_mm": "720.00",
+          "height_mm": "1962.00",
+          "findings": [
+            {
+              "code": "DEMO-DOOR",
+              "message": "Puerta vidriada · ejemplo sintético · elige un vidrio con clase de seguridad respaldada por su proveedor.",
+              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+              "blocking": true,
+              "synthetic": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "saving": "glass_rule_required",
+  "repricing": "glass_rule_required",
+  "rule_source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico"
+}

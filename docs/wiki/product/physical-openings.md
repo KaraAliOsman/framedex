@@ -46,6 +46,12 @@ del clic. Lienzo y PDF declaran vista interior, bisagras y manilla correctas;
 continuo hacia el observador y discontinuo hacia afuera. Las ediciones y la IA
 usan la misma operación tipada, con deshacer y persistencia comprobados.
 
+El uso de puerta sigue siendo autoridad para la seguridad del vidrio cuando no
+existe alias histórico. Vista previa, guardado y precio aplican la misma zona;
+una regla obligatoria sin clase de vidrio compatible bloquea los tres caminos.
+El asistente exige la bisagra pasiva opuesta antes de ofrecer una pareja; un
+catálogo parcial no impide elegir sus aperturas independientes válidas.
+
 ## Intención y límites
 
 La constitución §3.6 prevalece sobre el vértice inverso del tablero histórico de

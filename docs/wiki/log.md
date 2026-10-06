@@ -202,3 +202,13 @@ hallazgos nuevos, aunque mantienen los problemas heredados de P01 para P04/P08.
 Los gates locales pasan 581 motor, 1 159 backend, 715 frontend, 986 pgTAP,
 285 integración, 11 Chromium y los upgrades poblados PG16. MiMo real, publicación,
 deshacer, permisos y doce capturas finales de estilos pasan; la ruta IA se restauró.
+
+## 2026-10-06 — D03 · regresiones de revisión
+
+CI detectó anotaciones faltantes del generador; mypy limpio sin caché pasa.
+La revisión del PR encontró omisión de zona puerta al retirar el alias histórico
+y una pareja del asistente sin bisagra pasiva opuesta. Ambos casos se corrigieron:
+vista previa, guardado y precio conservan seguridad; las parejas se filtran por
+capacidad completa. Gates locales: 581 motor, 1 161 backend, 717 frontend,
+986 pgTAP, 287 integración, 11 Chromium y upgrades poblados PASS. El navegador
+comprueba la puerta en seis tamaños/temas y restaura las reglas del fixture.

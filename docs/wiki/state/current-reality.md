@@ -49,11 +49,15 @@ queue work, and this acceptance does not certify a supplier catalog or wind load
 See [physical openings](../product/physical-openings.md),
 [D03 acceptance](../../redesign/captures/aperturas-tipologias/aceptacion.md) and
 [activation](../../operations/ACTIVACION.md). The local gates pass 581 engine,
-1,159 backend and 715 frontend tests, 986 pgTAP assertions, 285 integration
+1,161 backend and 717 frontend tests, 986 pgTAP assertions, 287 integration
 tests, eleven Chromium flows and populated PostgreSQL 16 upgrades. Full-route
 captures have no new findings; the existing payment integration 403 and mobile
 editor/project overflow remain documented for P04/P08. PR/merge completion is
 recorded after its four CI checks pass.
+
+Structured door use preserves glass safety in preview, persisted edits and
+repricing. Six browser captures and live integration cover mandatory rules;
+partial passive hinge capabilities are filtered without losing valid choices.
 
 ## D02 glass composition verified 2026-10-06
 

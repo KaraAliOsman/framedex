@@ -32,6 +32,11 @@ Los catálogos nuevos son DEMO y no acreditan un producto comercial.
 - Los vidrios históricos añadidos después de D02 resuelven la misma notación
   en descubrimiento y guardado. Las dos regresiones HTTP guardan/reabren la
   receta y siguen rechazando una propiedad técnica alterada con 409.
+- El uso de puerta estructurada conserva las reglas de seguridad del vidrio en
+  la vista previa, guardado y recálculo comercial. Se comprueban puertas hacia
+  adentro/afuera y el transporte histórico de la vista previa. El catálogo del
+  asistente omite una pareja si la bisagra pasiva opuesta no está declarada,
+  conservando las aperturas independientes que sí admite la serie.
 - Lienzo y documento declaran vista interior. Las líneas parten de las bisagras
   y llegan al lado de la manilla: continuo hacia el observador, discontinuo hacia
   afuera. La constitución §3.6 prevalece sobre el tablero histórico de iconos.
@@ -49,6 +54,7 @@ Los catálogos nuevos son DEMO y no acreditan un producto comercial.
 | Vacío / carga / error y reintento / sin permiso / bloqueado | PASA: cinco estados con texto y causa | `recorrido/catalogo-capacidades-*.png`, `catalogo-estados.json` |
 | Estimador → PATCH de catálogo | PASA: 403 del backend, autoridad intacta | `recorrido/catalogo-estados.json` |
 | 21 posiciones → reapertura → precio → aplicar → sellar → PDF | PASA: BOM exacto y documento emitido de diez páginas | `recorrido/flujo-21-aperturas.json`, `cotizacion-21-aperturas.pdf` |
+| Puerta estructurada → vidrio sin clase exigida → guardar/preciar | PASA: selección bloqueada con causa y 422 del servidor en ambos caminos | `recorrido/seguridad-puerta.json`, seis capturas claro/oscuro |
 
 El documento se rasterizó y revisó: Carta, Plex, marca DEMO en las diez páginas,
 vista interior y símbolos de todas las variantes. La puerta con lateral de
@@ -127,8 +133,8 @@ de P04/P05/P08/P16. Los reportes completos conservan sus hallazgos anteriores.
 ## Verificación y repetición
 
 Los cuatro gates generales pasan: lint, typecheck, test y build. El motor tiene
-581 pruebas aprobadas y dos xfail históricos; backend 1 159; frontend 715 en
-62 archivos. El gate de base de datos pasa 986 aserciones pgTAP, 285 pruebas de
+581 pruebas aprobadas y dos xfail históricos; backend 1 161; frontend 717 en
+62 archivos. El gate de base de datos pasa 986 aserciones pgTAP, 287 pruebas de
 integración, 11 recorridos Chromium y los upgrades poblados en PostgreSQL 16.
 El drill de mutaciones mata 28/28. OpenAPI/orval, guardas y mypy pasan.
 Los goldens históricos no cambian. Los nuevos congelan corte, herrajes y peso para
@@ -149,12 +155,15 @@ Con el stack local de la skill, el fixture y MiMo configurados por entorno:
 ```text
 python scripts/verify_opening_flow.py
 node --experimental-strip-types frontend/scripts/verify-d03.mjs
+node frontend/scripts/verify-d03-glass-safety.mjs
 ```
 
 El navegador copia las posiciones verificadas a su propio proyecto editable.
 Comprueba símbolos, manillas, preview, persistencia y propuesta real; falla si
 encuentra errores, desbordes o hallazgos en la superficie nueva. Ningún secreto
 se guarda en la evidencia. La configuración temporal de ruta IA local se restaura.
+La verificación de seguridad restaura las reglas originales del fixture en su
+cierre; no modifica reglas productivas ni reclasifica vidrios sintéticos.
 
 ## Decisiones, activación y límites
 
