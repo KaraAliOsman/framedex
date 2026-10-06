@@ -4,7 +4,7 @@
 | P01 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/117 | 023b8ba303b680ca50b6e10119ce4ee4514c9c38 | CI 4/4 verde; material v2, validación y evidencia antes/después aceptados. |
 | IA1 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/118 | 2c9bbebc1cca6df125a4e0eeae14b22b71478b9e | CI 4/4 verde; 26 casos aislados, línea base MiMo 3/26 y MOCK 0/26, 48 regresiones de oráculos. |
 | D01 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/119 | d8fbe5071fdb346555f7ef4df3e91160cfb5dfe0 | CI 4/4 verde; cinco series cotizables, revisión/undo, 936 pgTAP, 274 RLS, 11 E2E y 28/28 mutaciones. |
-| D02 | D1 | en curso |  |  | Composición de vidrio, seguridad con fuente, precio y pedido al vidriero. |
+| D02 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/120 | 407f4ffd609a2dd4536e3e3c765eb7117c69715f | CI 4/4 verde; recetas con autoridad, reglas con fuente, 12 OT y 24 etiquetas, 959 pgTAP, 280 RLS, 11 E2E y 28/28 mutaciones. |
 | D03 | D1 | pendiente |  |  |  |
 | D04 | D1 | pendiente |  |  |  |
 | D05 | D2 | pendiente |  |  |  |

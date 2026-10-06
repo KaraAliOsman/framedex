@@ -161,3 +161,13 @@ se repara idempotentemente; los precios/documentos ya sellados permanecen intact
 La inspección visual encontró una página de continuación del pedido sin DEMO;
 ahora utiliza la misma cabecera repetida que los documentos y una prueba comprueba
 la marca en cada página. Las correcciones y su evidencia se incluyen en D02.
+
+## 2026-10-06 — D02 integrado con aceptación y CI verificadas
+
+PR [#120](https://github.com/KaraAliOsman/framedex/pull/120) mergeado por squash
+en `407f4ffd609a2dd4536e3e3c765eb7117c69715f`. Los cuatro checks requeridos
+pasaron sobre `f53b66db4e30640a6e0440bbb2b82507aa6a3b6d`, corrida 37409956027.
+El gate incluyó la base limpia, RLS, Chromium, PostgreSQL 16 y datos poblados.
+La aceptación conserva sus límites de certificación y los hallazgos heredados;
+36 capturas verifican la nueva superficie de vidrio. Se registra el cierre en
+ESTADO; el stack propio quedó detenido. D03 es el siguiente encargo de la cola.

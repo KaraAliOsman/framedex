@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-06
 volatility: high
-verified_ref: codex/D02-vidrios-compuestos
+verified_ref: 407f4ffd609a2dd4536e3e3c765eb7117c69715f
 sources:
   - repository main
   - P00 foundation PR #114
@@ -55,6 +55,10 @@ See [D02 acceptance](../../redesign/captures/vidrios-compuestos/aceptacion.md),
 [glass authority](../product/glass-composition.md) and
 [activation](../../operations/ACTIVACION.md). D03–D07 and subsequent product
 surfaces still require their own acceptance.
+
+D02 is integrated through PR #120 at the verification ref. All four required
+GitHub checks passed on `f53b66db4e30640a6e0440bbb2b82507aa6a3b6d` in run
+37409956027: Lint & Typecheck, Test Suite, Frontend Build and Database Gate.
 
 ## D01 catalog authority verified 2026-10-05
 
