@@ -135,8 +135,20 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   await page.goto("/projects/demo/positions/g1/edit");
   const systemsResponse = await systemsResponsePromise;
   const systemsPayload = (await systemsResponse.json()) as {
-    systems: Array<{ id: string; code: string; is_demo: boolean }>;
+    systems: Array<{ id: string; code: string; is_demo: boolean; quote_ready: boolean }>;
   };
+  expect(
+    systemsPayload.systems
+      .filter((system) => system.is_demo && system.quote_ready)
+      .map((system) => system.code)
+      .sort(),
+  ).toEqual([
+    "DEMO_60",
+    "DEMO_70",
+    "DEMO_ALU_CORREDERA",
+    "DEMO_ALU_PRACTICABLE",
+    "DEMO_CORREDERA_60",
+  ]);
   const discovered = systemsPayload.systems.filter(
     (system) => system.code === "DEMO_60" && system.is_demo,
   );

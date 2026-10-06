@@ -13,6 +13,25 @@ from pricing.repository import one, rows, json_text
 
 pytestmark = pytest.mark.rls_integration
 
+
+def test_all_five_demo_families_are_available_for_real_quoting(documentary_tenant):
+    from catalogs.readiness import catalog_readiness
+
+    org, _, users, _ = documentary_tenant
+    with as_user(users["ESTIMATOR"]):
+        systems = rows(
+            "SELECT id,code FROM public.profile_systems WHERE org_id IS NULL "
+            "AND is_global AND is_demo AND version=2 AND NOT legacy_authority "
+            "ORDER BY code"
+        )
+        assert {system["code"] for system in systems} == {
+            "DEMO_60", "DEMO_70", "DEMO_CORREDERA_60",
+            "DEMO_ALU_CORREDERA", "DEMO_ALU_PRACTICABLE",
+        }
+        for system in systems:
+            readiness = catalog_readiness(system["id"], org)
+            assert readiness["quote_ready"], (system["code"], readiness["reasons"])
+
 def imported(org, actor, candidates=None):
     values = catalog_rows() if candidates is None else candidates
     row_id = uuid4()
