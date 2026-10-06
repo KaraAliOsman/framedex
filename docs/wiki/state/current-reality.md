@@ -1,9 +1,9 @@
 ---
 type: state
 status: active
-updated: 2026-10-05
+updated: 2026-10-06
 volatility: high
-verified_ref: d8fbe5071fdb346555f7ef4df3e91160cfb5dfe0
+verified_ref: codex/D02-vidrios-compuestos
 sources:
   - repository main
   - P00 foundation PR #114
@@ -11,6 +11,7 @@ sources:
   - P01 local gates and browser evidence, 2026-10-05
   - IA1 rollback harness and dated outcome evidence, 2026-10-05
   - D01 catalog authorities, interchange and browser evidence, 2026-10-05
+  - D02 glass recipes, persisted quotation/orders and browser evidence, 2026-10-05
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -19,6 +20,41 @@ sources:
 ---
 
 # Current reality
+
+## D02 glass composition verified 2026-10-06
+
+The D02 branch adds structured exterior-to-interior recipes, sourced properties
+and safety rules, exact Decimal mass/minimum-area/process pricing and immutable
+catalog identities. The upgrade adds composition metadata without rewriting saved
+BOMs, issued revisions, price history or document hashes. Unknown legacy notation
+and missing PVB data remain explicitly unknown.
+
+The selector and compositor use the same typed operation and engine as persisted
+positions. Real browser verification covers alternatives on the affected bay,
+undo/redo, publication with a reviewed diff, save/reopen and the five states.
+Thirty-six screenshots have no text/presentation findings within the new glass
+surface, no overflow and no browser errors. Settings has no findings in either
+theme; inherited editor/production findings remain assigned to P04/P12/P13.
+
+A real twelve-position project passes pricing, freeze, DOC-01, production release
+and supplier PDF/CSV downloads. Twenty-four labels and all cut dimensions match
+the frozen BOM. PDFs use bundled Plex fonts on Windows. New DEMO documents mark
+every page, including a synthetic glass recipe on a commercial system; already
+issued files remain immutable. The current template has ten sheets, including
+Glass rules; the D01 nine-sheet evidence below describes its historical version.
+
+The official NCh 135/2 rules and supplier thermal/security properties remain
+owner-provided data. Empty rules and reviewed DEMO examples are not certification.
+The clean Database Gate passes 959 pgTAP assertions, 280 integration tests and
+11 Chromium flows, PostgreSQL 16 and populated upgrades. Legacy writes remain
+subject to mandatory safety rules and structured SKUs require their complete
+recipe. The published fixture now consumes exact catalog tariffs and separates
+glass purchasing units from its m² pricing contract. Supplier PDFs repeat the
+DEMO warning on every page, using the shared documentary running header.
+See [D02 acceptance](../../redesign/captures/vidrios-compuestos/aceptacion.md),
+[glass authority](../product/glass-composition.md) and
+[activation](../../operations/ACTIVACION.md). D03–D07 and subsequent product
+surfaces still require their own acceptance.
 
 ## D01 catalog authority verified 2026-10-05
 
@@ -45,7 +81,7 @@ the expanded 28/28 formula mutation drill. `main` is unchanged.
 
 Verification details and the acceptance scope are in
 [the D01 report](../../redesign/captures/sistemas-catalogo/aceptacion.md) and
-[the durable catalog page](../product/catalog-authority.md). D02–D07 and P16 still
+[the durable catalog page](../product/catalog-authority.md). D03–D07 and P16 still
 need their own acceptance; this does not accredit unfinished queue surfaces.
 
 **Warning:** this is a volatile navigation page. Re-check the repository before relying on it for implementation decisions.

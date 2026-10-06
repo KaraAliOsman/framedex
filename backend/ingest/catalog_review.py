@@ -14,6 +14,8 @@ from rest_framework import serializers
 from authentication.errors import contract_error
 from authentication.rls import catalog_backend
 from catalogs import evidence, service
+from catalogs import glass as glass_catalog
+from dekopen_engine.glass_composition import GlassSafetyRule
 from catalogs.serializers import (
     ArticleWriteSerializer, BeadWriteSerializer, KitWriteSerializer, ProfileCutRuleSerializer,
     ProfileReinforcementRuleSerializer, SystemDimensionalLimitSerializer,
@@ -51,7 +53,7 @@ class GlassMappingSerializer(StrictSerializer):
 COLORS = service.Resource("catalog_color_skus", ColorSkuSerializer, backend_lock=True)
 GLASS = service.Resource("glass_purchase_mappings", GlassMappingSerializer, backend_lock=True)
 RESOURCES = {resource.table: resource for resource in
-             (service.SYSTEMS, service.ARTICLES, service.BEADS, service.KITS, COLORS, GLASS)}
+             (service.SYSTEMS, service.ARTICLES, service.BEADS, service.KITS, COLORS, GLASS, glass_catalog.COMPOSITIONS)}
 
 
 @dataclass
@@ -150,10 +152,18 @@ def _plan(org_id, import_row, entries, *, lock=False):
     entries.sort(key=lambda entry: order[entry["sheet"]])
     seen = set()
     list_definitions = {}
+    rule_entries = []
     for entry in entries:
         if entry["errors"]:
             continue
         key, sheet, values = entry["key"], entry["sheet"], entry["values"]
+        if sheet == "Reglas de vidrio":
+            try:
+                rule = GlassSafetyRule.model_validate_json(json_text(values))
+                rule_entries.append((key, rule.model_dump(mode="json")))
+            except ValueError:
+                errors.append(_error(key, "source", "Completa la regla con sus límites, clases admitidas y fuente. No se infieren tablas normativas."))
+            continue
         code = values["system_code"]
         identity = (sheet, code, values.get("sku"), values.get("opening_type"),
                     values.get("finish"), values.get("version"), values.get("list_code"))
@@ -296,11 +306,35 @@ def _plan(org_id, import_row, entries, *, lock=False):
             errors.append(_error(key, "version", "La versión del vidrio es inmutable. Aumenta su versión para registrar la corrección."))
             continue
         changes.append(Change(key, sheet, resource.table, row_id, data, before, action))
+        if resource is GLASS:
+            try:
+                recipe = glass_catalog.recipe_payload(values, synthetic=bool(values.get("synthetic")))
+            except ValueError:
+                errors.append(_error(key, "glass_spec", "Revisa composición, propiedades y límites con su fuente."))
+                continue
+            existing = rows("SELECT id FROM public.catalog_glass_compositions WHERE mapping_id=%s", [row_id]) if before else []
+            recipe_data = {"system_id": systems[code], "mapping_id": row_id, **recipe}
+            if existing:
+                previous = service.retrieve(glass_catalog.COMPOSITIONS, org_id, existing[0]["id"])
+                if any(service._json_value(previous.get(field)) != service._json_value(value) for field, value in recipe_data.items()):
+                    errors.append(_error(key, "version", "La composición publicada es inmutable. Aumenta la versión del vidrio para corregirla."))
+            else:
+                changes.append(Change(key, sheet, glass_catalog.COMPOSITIONS.table,
+                    str(uuid5(UUID(str(import_row["id"])), "composition:" + row_id)), recipe_data, None, "create"))
         simulated = {**(before or {}), **data, "id": row_id}
         if resource is service.SYSTEMS:
             current[("system", code)] = simulated
         elif resource is service.ARTICLES:
             current[(code, values["sku"])] = simulated
+    if rule_entries:
+        if len({rule["code"] for _, rule in rule_entries}) != len(rule_entries):
+            errors.append(_error(rule_entries[0][0], "code", "Hay reglas con el mismo código. Excluye la duplicada."))
+        previous = glass_catalog.rules_snapshot(org_id)
+        combined = {rule["code"]: rule for rule in previous["items"]}
+        combined.update({rule["code"]: rule for _, rule in rule_entries})
+        items = list(combined.values())
+        changes.append(Change(rule_entries[0][0], "Reglas de vidrio", "glass_safety_rule_sets", str(org_id),
+            {"items": items}, previous, "update" if items != previous["items"] else "none"))
     token = "sha256:" + sha256(documentary_canonical_json_v1({
         "import_id": str(import_row["id"]), "entries": entries,
         "changes": [change.__dict__ for change in changes], "errors": errors})).hexdigest()
@@ -352,7 +386,12 @@ def publish(*, org_id, actor_id, import_id, items, review_token):
                 continue
             data = {name: replacements.get(str(value), value) if isinstance(value, (str, UUID)) else value
                     for name, value in change.data.items()}
-            if change.table == "cost_list_items":
+            if change.table == "glass_safety_rule_sets":
+                updated_rules = glass_catalog.replace_safety_rules(org_id, actor_id, data["items"], '"' + change.before["revision"] + '"')
+                undo.append({"table": change.table, "id": str(org_id), "before": change.before,
+                    "after_revision": updated_rules["revision"], "action": "update"})
+                item = {"id": org_id}
+            elif change.table == "cost_list_items":
                 code = data["list_code"]
                 if code not in cost_lists:
                     cost_lists[code] = admin_write("cost-lists", org_id, {**data["list"],
@@ -387,6 +426,8 @@ def publish(*, org_id, actor_id, import_id, items, review_token):
                     undo_by_authority[identity]["after_revision"] = item["revision"]
                 entry = by_key[change.key]
                 for field, value in entry["values"].items():
+                    if resource is glass_catalog.COMPOSITIONS:
+                        continue  # Source remains inside the immutable recipe and publication diff.
                     if value is None:
                         continue
                     source = entry["fields"][field]
@@ -425,6 +466,14 @@ def undo_publication(*, org_id, actor_id, import_id):
         if isinstance(changes, str):
             changes = json.loads(changes)
         for change in reversed(changes):
+            if change["table"] == "glass_safety_rule_sets":
+                current = glass_catalog.rules_snapshot(org_id)
+                if current["revision"] != change["after_revision"]:
+                    raise contract_error(409, "catalog_undo_stale", "Las reglas de vidrio cambiaron después de publicar. Revisa su versión antes de deshacer.")
+                glass_catalog.replace_safety_rules(org_id, actor_id, change["before"]["items"], '"' + current["revision"] + '"')
+                continue
+            if change["table"] == glass_catalog.COMPOSITIONS.table:
+                continue  # The parent glass mapping is retired; its immutable recipe is retained.
             if change["table"] == "cost_lists":
                 admin_write("cost-lists", org_id, {"is_active": False}, "Deshacer importación de catálogo", row_id=change["id"])
                 continue

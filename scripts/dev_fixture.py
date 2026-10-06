@@ -19,7 +19,7 @@ Usage (stack running: `make test-db`'s supabase + Django + Vite):
 
 Env: SUPABASE_URL (default http://127.0.0.1:25321),
      SUPABASE_SERVICE_ROLE_KEY (required), DJANGO_URL (default :8000),
-     DATABASE_URL (default local supabase db — pricing writes are
+     DATABASE_URL (required — pricing writes are
      audit-gated for REST and use the privileged maintenance path).
 Idempotent: deterministic ids upserted on every run.
 """
@@ -37,9 +37,9 @@ import psycopg
 
 SUPA = os.environ.get("SUPABASE_URL", "http://127.0.0.1:25321").rstrip("/")
 DJANGO = os.environ.get("DJANGO_URL", "http://127.0.0.1:8000").rstrip("/")
-DB = os.environ.get(
-    "DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:25322/postgres"
-)
+DB = os.environ.get("DATABASE_URL")
+if not DB:
+    sys.exit("DATABASE_URL is required (supabase status -o env)")
 SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 if not SERVICE_KEY:
     sys.exit("SUPABASE_SERVICE_ROLE_KEY is required (supabase status -o env)")
@@ -356,14 +356,35 @@ def main() -> None:
         skus[(row["purchasing_sku"], row["purchase_unit"])] = "FITTING"
         skus[(row["technical_sku"], "EA")] = "FITTING"
 
+    # Purchasing units and pricing units differ for glass: a supplier can
+    # deliver each pane while the engine bills its technical SKU in m².
+    # Resolve by that explicit contract, never by sorted insertion order.
+    glass_technical_skus = {
+        row["technical_sku"] for row in query(
+            "glass_purchase_mappings?select=technical_sku&org_id=is.null"
+        )
+    }
+    costs = {
+        sku: ("M2" if sku in glass_technical_skus else unit, Decimal("100.00"))
+        for sku, unit in skus
+    }
+
     with psycopg.connect(DB, autocommit=True) as connection:
-        for (sku, unit), item_type in sorted(skus.items()):
+        for sku, unit, unit_cost in connection.execute(
+            "SELECT sku,unit,unit_cost FROM public.catalog_demo_prices"
+        ):
+            costs[sku] = (unit, unit_cost)
+        for sku, (unit, unit_cost) in sorted(costs.items()):
             connection.execute(
                 "INSERT INTO public.cost_list_items(id,org_id,cost_list_id,sku,"
                 "unit,item_type,unit_cost,description) "
-                "VALUES(%s,%s,%s,%s,%s,'FIXTURE',100.00,'DEMO FIXTURE cost') "
-                "ON CONFLICT (cost_list_id,sku) DO NOTHING",
-                (str(uuid.uuid5(NS, f"cost-{sku}-{unit}")), ORG_ID, cost_list_id, sku, unit),
+                "VALUES(%s,%s,%s,%s,%s,'FIXTURE',%s,'DEMO FIXTURE cost') "
+                "ON CONFLICT (cost_list_id,sku) DO UPDATE SET "
+                "unit=EXCLUDED.unit, unit_cost=EXCLUDED.unit_cost "
+                "WHERE cost_list_items.item_type='FIXTURE' AND "
+                "(cost_list_items.unit, cost_list_items.unit_cost) IS DISTINCT FROM "
+                "(EXCLUDED.unit, EXCLUDED.unit_cost)",
+                (str(uuid.uuid5(NS, f"cost-{sku}-{unit}")), ORG_ID, cost_list_id, sku, unit, unit_cost),
             )
 
         # Stock so the optimizer can cover a cut plan: bar SKUs keyed by their
@@ -645,7 +666,7 @@ def main() -> None:
         print(f"  {role:18} {email}  / {PASSWORD}")
     print(f"  clients: {list(client_ids)}")
     print(f"  projects: vivienda={vivienda['id']} obra={obra['id']} incompleta={incompleta['id']}")
-    print(f"  cost items: {len(skus)} SKUs covered")
+    print(f"  cost items: {len(costs)} SKUs covered")
     print("DEMO FIXTURE — datos sintéticos de referencia (DEMO_60).")
 
 

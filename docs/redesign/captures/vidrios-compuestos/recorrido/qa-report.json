@@ -1,0 +1,332 @@
+{
+  "result": "PASA",
+  "project_id": "4b42cda6-4f6d-40cf-aa6f-987cd26156a2",
+  "position_id": "004be9b2-02b8-44a6-aebc-9abd83758fb9",
+  "variant_sku": "D02-UI-1791257560976",
+  "records": [
+    {
+      "name": "reglas-aplicadas",
+      "screenshot": "reglas-aplicadas.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "aviso-en-bahia",
+      "screenshot": "aviso-en-bahia.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "guardado-y-reabierto",
+      "screenshot": "guardado-y-reabierto.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "diff-antes-de-publicar",
+      "screenshot": "diff-antes-de-publicar.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-basico-light-1440",
+      "screenshot": "selector-basico-light-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-avanzado-light-1440",
+      "screenshot": "selector-avanzado-light-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "compositor-sin-permiso-light-1440",
+      "screenshot": "compositor-sin-permiso-light-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "reglas-light-1440",
+      "screenshot": "reglas-light-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-basico-light-1280",
+      "screenshot": "selector-basico-light-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-avanzado-light-1280",
+      "screenshot": "selector-avanzado-light-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "compositor-sin-permiso-light-1280",
+      "screenshot": "compositor-sin-permiso-light-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "reglas-light-1280",
+      "screenshot": "reglas-light-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-basico-light-1024",
+      "screenshot": "selector-basico-light-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-avanzado-light-1024",
+      "screenshot": "selector-avanzado-light-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "compositor-sin-permiso-light-1024",
+      "screenshot": "compositor-sin-permiso-light-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "reglas-light-1024",
+      "screenshot": "reglas-light-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-basico-dark-1440",
+      "screenshot": "selector-basico-dark-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-avanzado-dark-1440",
+      "screenshot": "selector-avanzado-dark-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "compositor-sin-permiso-dark-1440",
+      "screenshot": "compositor-sin-permiso-dark-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "reglas-dark-1440",
+      "screenshot": "reglas-dark-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-basico-dark-1280",
+      "screenshot": "selector-basico-dark-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-avanzado-dark-1280",
+      "screenshot": "selector-avanzado-dark-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "compositor-sin-permiso-dark-1280",
+      "screenshot": "compositor-sin-permiso-dark-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "reglas-dark-1280",
+      "screenshot": "reglas-dark-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-basico-dark-1024",
+      "screenshot": "selector-basico-dark-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "selector-avanzado-dark-1024",
+      "screenshot": "selector-avanzado-dark-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "compositor-sin-permiso-dark-1024",
+      "screenshot": "compositor-sin-permiso-dark-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "reglas-dark-1024",
+      "screenshot": "reglas-dark-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "pedido-light-1440",
+      "screenshot": "pedido-light-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "pedido-light-1280",
+      "screenshot": "pedido-light-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "pedido-light-1024",
+      "screenshot": "pedido-light-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "pedido-light-390",
+      "screenshot": "pedido-light-390.png",
+      "width": 390,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "pedido-dark-1440",
+      "screenshot": "pedido-dark-1440.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "pedido-dark-1280",
+      "screenshot": "pedido-dark-1280.png",
+      "width": 1280,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "pedido-dark-1024",
+      "screenshot": "pedido-dark-1024.png",
+      "width": 1024,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "pedido-dark-390",
+      "screenshot": "pedido-dark-390.png",
+      "width": 390,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    }
+  ]
+}

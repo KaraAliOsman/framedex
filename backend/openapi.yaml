@@ -2143,6 +2143,7 @@ paths:
           - Perfiles
           - Precios de costo
           - Refuerzos
+          - Reglas de vidrio
           - Roles y reglas de corte
           - Sistemas
           - Vidrios
@@ -2527,6 +2528,7 @@ paths:
           - Perfiles
           - Precios de costo
           - Refuerzos
+          - Reglas de vidrio
           - Roles y reglas de corte
           - Sistemas
           - Vidrios
@@ -3151,6 +3153,261 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EvidenceRow'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/glass/preview/:
+    post:
+      operationId: catalog_glass_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GlassPreviewInputRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlassPreviewOutput'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/glass/rules/:
+    get:
+      operationId: catalog_glass_rules
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlassRulesOutput'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: catalog_glass_rules_replace
+      parameters:
+      - in: header
+        name: If-Match
+        schema:
+          type: string
+        description: Quoted revision from the most recently read catalog entity.
+        required: true
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GlassRulesRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlassRulesOutput'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/glass/variants/:
+    post:
+      operationId: catalog_glass_variant_publish
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GlassVariantRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlassVariantOutput'
           description: ''
         '400':
           content:
@@ -8831,6 +9088,93 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CncWorkspace'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/glass-orders/:
+    get:
+      operationId: production_glass_order
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: export_format
+        schema:
+          type: string
+          enum:
+          - CSV
+          - JSON
+          - PDF
+        description: Vista JSON o archivo del pedido. No afecta la negociación HTTP.
+      - in: query
+        name: orders
+        schema:
+          type: string
+        description: UUID de OT separados por coma; máximo 100.
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlassOrder'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
           description: ''
         '400':
           content:
@@ -19291,6 +19635,9 @@ components:
     DesignOptions:
       type: object
       properties:
+        system_id:
+          type: string
+          format: uuid
         system_family:
           type: string
           nullable: true
@@ -19378,6 +19725,7 @@ components:
       - rebate_depth_mm
       - sash_overlap_mm
       - system_family
+      - system_id
     DiffPreconditions:
       type: object
       properties:
@@ -20564,6 +20912,148 @@ components:
       - production_allowed
       - revision_code
       - snapshot_sha256
+    GlassFinding:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        source:
+          type: string
+          nullable: true
+        blocking:
+          type: boolean
+        synthetic:
+          type: boolean
+      required:
+      - blocking
+      - code
+      - message
+      - source
+      - synthetic
+    GlassLabel:
+      type: object
+      properties:
+        code:
+          type: string
+        link:
+          type: string
+        qr_svg:
+          type: string
+        order_code:
+          type: string
+        position_index:
+          type: integer
+        location:
+          type: string
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        composition:
+          type: string
+        bom_hash:
+          type: string
+      required:
+      - bom_hash
+      - code
+      - composition
+      - height_mm
+      - link
+      - location
+      - order_code
+      - position_index
+      - qr_svg
+      - width_mm
+    GlassOrder:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassOrderRow'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassLabel'
+        authority:
+          type: string
+        revisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassOrderAuthority'
+      required:
+      - authority
+      - labels
+      - revisions
+      - rows
+    GlassOrderAuthority:
+      type: object
+      properties:
+        project_code:
+          type: string
+        revision_code:
+          type: string
+        bom_hash:
+          type: string
+        order_codes:
+          type: array
+          items:
+            type: string
+      required:
+      - bom_hash
+      - order_codes
+      - project_code
+      - revision_code
+    GlassOrderRow:
+      type: object
+      properties:
+        order_code:
+          type: string
+        position_index:
+          type: integer
+        location:
+          type: string
+        piece_index:
+          type: integer
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        integer_dimensions:
+          type: boolean
+        quantity:
+          type: integer
+        composition:
+          type: string
+        article_sku:
+          type: string
+          nullable: true
+        processing:
+          nullable: true
+        instructions:
+          type: array
+          items:
+            type: string
+        label_codes:
+          type: array
+          items:
+            type: string
+      required:
+      - article_sku
+      - composition
+      - height_mm
+      - instructions
+      - integer_dimensions
+      - label_codes
+      - location
+      - order_code
+      - piece_index
+      - position_index
+      - processing
+      - quantity
+      - width_mm
     GlassPiece:
       type: object
       properties:
@@ -20609,6 +21099,16 @@ components:
           type: array
           items:
             type: string
+          nullable: true
+        composition:
+          nullable: true
+        thickness_total_mm:
+          type: string
+          nullable: true
+        billable_area_m2:
+          type: string
+          nullable: true
+        processing:
           nullable: true
       required:
       - area_m2
@@ -20664,6 +21164,146 @@ components:
       required:
       - bay_id
       - edges
+    GlassPreviewInputRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        product: {}
+        processing: {}
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        opening_type:
+          type: string
+          minLength: 1
+        is_sidelight:
+          type: boolean
+          default: false
+        sill_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        hardware_sku:
+          type: string
+          nullable: true
+          minLength: 1
+        leaf_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        previous_infill_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        technical_sku:
+          type: string
+          minLength: 1
+      required:
+      - product
+      - system_id
+    GlassPreviewOutput:
+      type: object
+      properties:
+        product: {}
+        notation:
+          type: string
+        total_thickness_mm:
+          type: string
+          nullable: true
+        net_thickness_mm:
+          type: string
+        weight_kg_m2:
+          type: string
+          nullable: true
+        section:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassSection'
+        section_error:
+          type: string
+          nullable: true
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassFinding'
+        price:
+          nullable: true
+        price_error:
+          type: string
+          nullable: true
+        alternative_skus:
+          type: array
+          items:
+            type: string
+        dimensions_known:
+          type: boolean
+      required:
+      - alternative_skus
+      - dimensions_known
+      - findings
+      - net_thickness_mm
+      - notation
+      - price
+      - price_error
+      - product
+      - section
+      - section_error
+      - total_thickness_mm
+      - weight_kg_m2
+    GlassRulesOutput:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+          maxItems: 200
+        revision:
+          type: string
+        configured:
+          type: boolean
+        examples:
+          type: array
+          items: {}
+      required:
+      - configured
+      - examples
+      - items
+      - revision
+    GlassRulesRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+          maxItems: 200
+      required:
+      - items
+    GlassSection:
+      type: object
+      properties:
+        kind:
+          type: string
+        x_mm:
+          type: string
+        width_mm:
+          type: string
+        label:
+          type: string
+      required:
+      - kind
+      - label
+      - width_mm
+      - x_mm
     GlassSpecChoice:
       type: object
       properties:
@@ -20672,9 +21312,74 @@ components:
         spec:
           type: string
           nullable: true
+        product:
+          nullable: true
+        total_thickness_mm:
+          type: string
+          nullable: true
+        net_thickness_mm:
+          type: string
+          nullable: true
+        weight_kg_m2:
+          type: string
+          nullable: true
+        compatible:
+          type: boolean
+        review_reason:
+          type: string
+        relative_price:
+          type: string
       required:
       - sku
       - spec
+    GlassVariantOutput:
+      type: object
+      properties:
+        mapping_id:
+          type: string
+          format: uuid
+        product: {}
+        spec:
+          type: string
+        technical_sku:
+          type: string
+      required:
+      - mapping_id
+      - product
+      - spec
+      - technical_sku
+    GlassVariantRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        technical_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        purchasing_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        manufacturer_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        version:
+          type: integer
+          minimum: 1
+        product: {}
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - manufacturer_name
+      - product
+      - purchasing_sku
+      - system_id
+      - technical_sku
+      - version
     GlazingBeadChoice:
       type: object
       properties:

@@ -16,10 +16,12 @@ if TYPE_CHECKING:
 JsonValue: TypeAlias = None | bool | int | str | list["JsonValue"] | dict[str, "JsonValue"]
 
 
-def _json_value(value: object, field: str = "") -> JsonValue:
+def _json_value(value: object, field: str = "", *, exact_recipe: bool = False) -> JsonValue:
     if isinstance(value, Decimal):
         if not value.is_finite():
             raise ValueError("Canonical numbers must be finite")
+        if exact_recipe:
+            return format(value, "f")
         quantum = (
             Decimal("0.01") if field.endswith("_mm") or field.endswith("_kg")
             else Decimal("0.0001") if field == "area_m2"
@@ -36,9 +38,13 @@ def _json_value(value: object, field: str = "") -> JsonValue:
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
             raise ValueError("Canonical object keys must be strings")
-        return {key: _json_value(item, key) for key, item in value.items()}
+        # Supplier recipes retain their declared Decimal representation. They
+        # are additive metadata, not cut dimensions; rescaling their plies
+        # here would drift from the immutable catalog at documentary sealing.
+        return {key: _json_value(item, key, exact_recipe=exact_recipe or key in {"composition", "glass_product"})
+                for key, item in value.items()}
     if isinstance(value, (list, tuple)):
-        return [_json_value(item) for item in value]
+        return [_json_value(item, exact_recipe=exact_recipe) for item in value]
     raise ValueError("Unsupported canonical value; technical numbers require Decimal")
 
 

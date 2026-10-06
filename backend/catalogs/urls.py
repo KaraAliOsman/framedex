@@ -1,8 +1,12 @@
 from django.urls import path
 
 from catalogs import views
+from catalogs.glass_views import GlassPreviewView, GlassRulesView, GlassVariantView
 
 urlpatterns = [
+    path("glass/preview/", GlassPreviewView.as_view(), name="catalog-glass-preview"),
+    path("glass/rules/", GlassRulesView.as_view(), name="catalog-glass-rules"),
+    path("glass/variants/", GlassVariantView.as_view(), name="catalog-glass-variants"),
     path("systems/", views.SystemCollectionView.as_view(), name="catalog-system-list"),
     path(
         "systems/<uuid:row_id>/",

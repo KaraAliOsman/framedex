@@ -870,7 +870,7 @@ def _append_leaf(
         if node.glass_thickness_mm is None or node.glass_spec is None:
             raise ValueError(f"BAY {node.id} requires glass_thickness_mm and glass_spec")
         infill_thickness = node.glass_thickness_mm
-        infill_weight = exact_glass_weight(width, height, node.glass_spec)
+        infill_weight = exact_glass_weight(width, height, node.glass_spec, node.glass_product)
         infill_reason = (
             None if infill_weight is not None
             else f"missing_glass_composition:{node.glass_spec}"
@@ -885,6 +885,7 @@ def _append_leaf(
                 width_mm=width,
                 height_mm=height,
                 glass_spec=node.glass_spec,
+                product=node.glass_product, processing=node.glass_processing,
                 article_sku=technical_sku or None,
             )
         )
@@ -899,6 +900,7 @@ def _append_leaf(
             height_mm=height,
             exact_area_m2=exact_glass_area_m2(width, height),
             bead_supported=infill_thickness in params.glazing_bead_rules,
+            glass_product=node.glass_product if infill_kind == "GLASS" else None,
         )
     )
     semantic_infill_id = f"{semantic_leaf_id}/infill"
@@ -1035,7 +1037,7 @@ def _append_frame_glazed_pane(
     if node.opening_type is BayOpeningType.FIXED:
         validate_leaf_limits(params, BayOpeningType.FIXED, bay_id=node.id,
             width_mm=rect.width_mm, height_mm=rect.height_mm,
-            weight_kg=exact_glass_weight(width, height, node.glass_spec), check_weight=True)
+            weight_kg=exact_glass_weight(width, height, node.glass_spec, node.glass_product), check_weight=True)
     accumulator.glasses.append(
         build_glass_piece(
             bay_id=node.id,
@@ -1043,6 +1045,7 @@ def _append_frame_glazed_pane(
             width_mm=width,
             height_mm=height,
             glass_spec=node.glass_spec,
+            product=node.glass_product, processing=node.glass_processing,
             article_sku=node.glass_article_sku or None,
         )
     )
@@ -1057,6 +1060,7 @@ def _append_frame_glazed_pane(
             height_mm=height,
             exact_area_m2=exact_glass_area_m2(width, height),
             bead_supported=node.glass_thickness_mm in params.glazing_bead_rules,
+            glass_product=node.glass_product,
         )
     )
     infill_rect = _Rect(

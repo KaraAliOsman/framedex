@@ -15,6 +15,7 @@ import type { ProfileChoice } from "./profileChoice";
 import type { SystemDimensionalLimit } from "./systemDimensionalLimit";
 
 export interface DesignOptions {
+  system_id: string;
   /** @nullable */
   system_family: string | null;
   is_demo: boolean;

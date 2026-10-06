@@ -14,6 +14,8 @@ from dekopen_engine.commercial import (
     finish_lines, target_project, unit_price, validate_segment,
 )
 from dekopen_engine.glass import exact_glass_area_m2
+from dekopen_engine.glass_composition import price_glass, glass_rate_requirements, glass_polygon_perimeter_m
+from engine_api.adapter import parse_parametric_node
 from engine_api.adapter import engine_result_from_api
 from engine_api.cutting_repository import CuttingRepository
 from engine_api.repository import SystemParamsRepository
@@ -35,6 +37,7 @@ PRICING_ERROR_DETAILS = {
     'cost_list_not_found': 'no existe la lista de costos indicada',
     'fx_snapshot_immutable': 'la cotización de moneda ya está cerrada',
     'glass_bay_not_found': 'no se encontró su paño de vidrio; revisa el diseño',
+    'glass_processing_cost_missing': 'falta una tarifa declarada para el vidrio, su área mínima o sus procesos; completa la lista de costos',
     'incompatible_cost_unit': 'la unidad de costo de un material no es compatible con su uso; revisa la lista de costos',
     'invalid_admin_fields': 'revisa los campos de configuración',
     'invalid_column_mapping': 'revisa el mapeo de columnas del archivo',
@@ -103,6 +106,20 @@ def design_glass_sku(tree, bay_id):
     return glass_sku(tree, bay_id)
 
 
+def design_glass_node(tree, bay_id):
+    if tree.get('version') == 'product-v2':
+        module_id, _, bay_id = bay_id.partition('|')
+        tree = next((module['tree'] for module in tree['assembly']['modules'] if module['id'] == module_id), {})
+    def visit(node):
+        if node.get('id') == bay_id:
+            return node
+        return next((found for child in node.get('children', []) if (found := visit(child)) is not None), None)
+    found = visit(tree)
+    if found is None:
+        raise PricingError('glass_bay_not_found')
+    return parse_parametric_node(found)
+
+
 def decoded(value):
     return json.loads(value, parse_float=Decimal) if isinstance(value,str) else value
 
@@ -132,6 +149,8 @@ def position_cost(repo, position, rules):
         profile_stocks = {}
         steel_stocks = {}
         tree = decoded(position['parametric_tree'])
+        from catalogs.glass import validate_design_products, enforce_design_glass
+        validate_design_products(repo.org_id, position['system_id'], tree)
         color = position['color_interior']
         result = engine_result_from_api(
             tree=tree, color=color, params=params,
@@ -140,6 +159,7 @@ def position_cost(repo, position, rules):
             coupler_articles=SystemParamsRepository().load_coupler_articles(
                 position['system_id'], repo.org_id),
         )
+        enforce_design_glass(repo.org_id, tree, result, params)
         for cut in result.profile_cuts:
             profile_stocks[cut.sku] = stock_repo.profile_stock(position['system_id'],repo.org_id,cut.sku,color)
         for steel in result.reinforcements:
@@ -184,11 +204,23 @@ def position_cost(repo, position, rules):
             if getattr(glass, "shape", None)
             else exact_glass_area_m2(glass.width_mm, glass.height_mm)
         )
-        cost = repo.cost(sku,'M2') * glass_area
+        node = design_glass_node(tree, glass.bay_id)
+        rates = {sku: repo.cost(sku, 'M2')}
+        for charge_sku, unit in glass_rate_requirements(node.glass_product, node.glass_processing):
+            rates[charge_sku] = repo.cost(charge_sku, unit)
+        try:
+            priced = price_glass(product=node.glass_product, sku=sku,
+                width_mm=glass.width_mm, height_mm=glass.height_mm, rates=rates,
+                processing=node.glass_processing, shape_area_m2=glass_area if glass.shape else None,
+                shape_perimeter_m=glass_polygon_perimeter_m(glass.shape) if glass.shape else None)
+        except ValueError as error:
+            raise PricingError('glass_processing_cost_missing') from error
+        cost = priced.total_cost
         materials.append(cost)
         composition.append({'kind':'GLASS','sku':sku,
-                            'quantity':str(glass_area.quantize(D('0.0001'))),
-                            'unit':'M2','cost':str(cost.quantize(D('0.0001')))})
+                            'quantity':str(priced.billable_area_m2.quantize(D('0.0001'))),
+                            'unit':'M2','cost':str(cost.quantize(D('0.0001'))),
+                            'glass_charges':[charge.model_dump(mode='json') for charge in priced.charges]})
     for panel in result.panels:
         panel_area = exact_glass_area_m2(panel.width_mm,panel.height_mm)
         cost = repo.cost(panel.sku,'M2') * panel_area

@@ -30,6 +30,7 @@ export type CommandArgs = Record<string, string>;
 export interface CommandCatalog {
   glassThicknesses: string[];
   glassSkus: string[];
+  glassSpecs?: import("../../api/generated/models").GlassSpecChoice[];
   couplerSkus: string[];
   panelSkus: string[];
   mullionSkus: Partial<Record<"SPLIT_V" | "SPLIT_H", string>>;

@@ -16,6 +16,7 @@ export const CatalogTemplateDownloadSheet = {
   Perfiles: "Perfiles",
   Precios_de_costo: "Precios de costo",
   Refuerzos: "Refuerzos",
+  Reglas_de_vidrio: "Reglas de vidrio",
   Roles_y_reglas_de_corte: "Roles y reglas de corte",
   Sistemas: "Sistemas",
   Vidrios: "Vidrios",

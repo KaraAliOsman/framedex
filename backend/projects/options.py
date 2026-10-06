@@ -10,6 +10,11 @@ from engine_api.repository import SystemParamsRepository
 from pricing.repository import rows
 from pricing.views import ERRORS, scope
 from projects.views import READ_ROLES, SCHEMA, response
+from catalogs.glass import load_products
+from dekopen_engine.glass_composition import glass_mass_per_m2, net_glass_thickness, total_glass_thickness, relative_glass_prices
+from pricing.repository import commercial_backend, PricingRepository
+from dekopen_engine.commercial import PricingError
+from django.utils import timezone
 
 
 class ProfileChoiceSerializer(serializers.Serializer):
@@ -89,6 +94,13 @@ class HandlePolicySerializer(serializers.Serializer):
 class GlassSpecChoiceSerializer(serializers.Serializer):
     sku = serializers.CharField()
     spec = serializers.CharField(allow_null=True)
+    product = serializers.JSONField(required=False, allow_null=True)
+    total_thickness_mm = serializers.CharField(required=False, allow_null=True)
+    net_thickness_mm = serializers.CharField(required=False, allow_null=True)
+    weight_kg_m2 = serializers.CharField(required=False, allow_null=True)
+    compatible = serializers.BooleanField(required=False)
+    review_reason = serializers.CharField(required=False, allow_blank=True)
+    relative_price = serializers.CharField(required=False)
 
 
 class PanelChoiceSerializer(serializers.Serializer):
@@ -98,6 +110,7 @@ class PanelChoiceSerializer(serializers.Serializer):
 
 
 class DesignOptionsSerializer(serializers.Serializer):
+    system_id = serializers.UUIDField()
     system_family = serializers.CharField(allow_null=True)
     is_demo = serializers.BooleanField()
     compatible_openings = serializers.ListField(child=serializers.CharField())
@@ -137,15 +150,34 @@ class DesignOptionsView(APIView):
             # Latest version wins; an org-scoped mapping outranks the global
             # recipe for the same technical SKU — same resolution the confirm
             # endpoint applies when it binds the glass authority.
-            glass_rows = rows(
-                "SELECT DISTINCT ON (technical_sku) technical_sku, glass_spec "
-                "FROM public.glass_purchase_mappings "
-                "WHERE system_id=%s AND (org_id=%s OR org_id IS NULL) "
-                "ORDER BY technical_sku, org_id NULLS LAST, version DESC",
-                [system_id, org],
-            )
+            glass_rows = load_products(system_id, org)
+            rates = {}
+            with commercial_backend():
+                currency = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [org])[0]["currency"]
+                prices = PricingRepository(org, timezone.localdate(), currency)
+                for item in glass_rows:
+                    try:
+                        rates[item["technical_sku"]] = prices.cost(item["technical_sku"], "M2")
+                    except PricingError:
+                        pass  # Unresolved cost is displayed explicitly below.
+            relative = relative_glass_prices(rates)
+            glass_choices = []
+            for item in glass_rows:
+                product = item["resolved_product"]
+                total = total_glass_thickness(product.composition) if product else None
+                net = net_glass_thickness(product.composition) if product else None
+                mass = glass_mass_per_m2(product) if product else None
+                glass_choices.append({"sku": item["technical_sku"], "spec": item["glass_spec"],
+                    "product": product.model_dump(mode="json") if product else None,
+                    "total_thickness_mm": None if total is None else str(total),
+                    "net_thickness_mm": None if net is None else str(net),
+                    "weight_kg_m2": None if mass is None else str(mass),
+                    "compatible": total is not None and total in params.glazing_bead_rules,
+                    "review_reason": item.get("review_reason") or "",
+                    "relative_price": relative.get(item["technical_sku"], "Sin dato · falta precio vigente")})
             return response(
                 {
+                    "system_id": system_id,
                     "system_family": params.system_family.value if params.system_family else None,
                     "is_demo": bool(rows("SELECT is_demo FROM public.profile_systems WHERE id=%s", [system_id])[0]["is_demo"]),
                     "compatible_openings": sorted(opening.value for opening in FAMILY_OPENINGS[params.system_family])
@@ -220,13 +252,7 @@ class DesignOptionsView(APIView):
                         }
                     ),
                     "glass_skus": [item["technical_sku"] for item in glass_rows],
-                    "glass_specs": [
-                        {
-                            "sku": item["technical_sku"],
-                            "spec": item["glass_spec"],
-                        }
-                        for item in glass_rows
-                    ],
+                    "glass_specs": glass_choices,
                     "colors": list(params.finishes),
                     "coupler_skus": sorted(couplers),
                     "coupler_profiles": [

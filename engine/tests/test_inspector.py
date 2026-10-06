@@ -62,6 +62,19 @@ def state(data: InspectorInput, config: InspectorConfig, rule: str) -> str:
     return evaluations[0].status.value
 
 
+def test_r04_structured_laminate_uses_sourced_limits_without_legacy_guessing(config: InspectorConfig) -> None:
+    from backend.catalogs.demo_glass import demo_glass_product
+    from dekopen_engine.glass_composition import GlassLimits
+    product = demo_glass_product("DEMO_60", "SAFE")
+    facts = InfillTechnicalFacts("B", None, "GLASS", D("24"), "3+3 / 13,62 / 4 templado",
+        D("800"), D("1200"), D("0.96"), True, product)
+    assert state(InspectorInput(GeometryComputation(infills=[facts]), D("12")), config, "R04") == "PASS"
+    over = replace(facts, width_mm=D("3000.01"))
+    assert state(InspectorInput(GeometryComputation(infills=[over]), D("12")), config, "R04") == "FAIL"
+    no_limits = replace(facts, glass_product=product.model_copy(update={"limits": GlassLimits()}))
+    assert state(InspectorInput(GeometryComputation(infills=[no_limits]), D("12")), config, "R04") == "MISSING_INPUT"
+
+
 @pytest.mark.parametrize("mass,expected", [("100", "PASS"), ("100.01", "FAIL"),
                                            ("100.00001", "FAIL")])
 def test_r01_exact_mass(config: InspectorConfig, mass: str, expected: str) -> None:

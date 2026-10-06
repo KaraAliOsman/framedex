@@ -4,6 +4,7 @@ import type { DesignOptions } from "../../api/generated/models";
 import { resolveMembers } from "./members";
 
 const CATALOG: DesignOptions = {
+  system_id: "3067da09-3119-5ad0-a1d5-498cd2dfd753",
   system_family: null,
   is_demo: false,
   compatible_openings: [],

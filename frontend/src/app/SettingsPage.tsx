@@ -31,6 +31,7 @@ import { formatDate } from "../features/money";
 import { t, type TranslationKey } from "../i18n/es-CL";
 import { MOD_K_HINT, MOD_KEY_HINT } from "../platform";
 import { useTheme } from "../theme/ThemeProvider";
+import { GlassRulesSettings } from "../features/glass/GlassRulesSettings";
 
 const ROLE_KEYS: Record<MembershipRoleEnum, TranslationKey> = {
   OWNER: "settings.roleOwner",
@@ -773,6 +774,14 @@ export function SettingsPage(): JSX.Element {
           </div>
         </section>
       )}
+
+      {org &&
+        (org.role === "OWNER" || org.role === "WORKSHOP_MANAGER" || org.role === "ESTIMATOR") && (
+          <GlassRulesSettings
+            orgId={org.id}
+            canWrite={org.role === "OWNER" || org.role === "WORKSHOP_MANAGER"}
+          />
+        )}
 
       {isOwner && (
         <section aria-labelledby="settings-group-plan" className="settings-group">

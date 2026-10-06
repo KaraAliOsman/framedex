@@ -368,6 +368,8 @@ def calculate_design(org_id, design):
         repository = SystemParamsRepository()
         params = repository.load_visible(design["system_id"], org_id)
         tree = design["parametric_tree"]
+        from catalogs.glass import validate_design_products, enforce_design_glass
+        validate_design_products(org_id, design["system_id"], tree)
         if isinstance(tree, dict) and tree.get("version") == "product-v2":
             model = parse_product_model(tree)
             evaluation = evaluate_assembly_from_api(
@@ -469,6 +471,7 @@ def calculate_design(org_id, design):
             "validation_error",
             "El diseño no es válido. Revisa medidas, divisiones y aperturas.",
         ) from error
+    enforce_design_glass(org_id, tree, result, params)
     return calculation_response({**design, "system_id": str(design["system_id"])}, result)
 
 
