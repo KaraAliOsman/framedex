@@ -23,7 +23,7 @@ from backend.tests.integration.test_shot10_catalog_api import (
 from ingest import catalog_review
 from documents.service import revision_snapshot
 from pricing.repository import rows, one, commercial_backend
-from pricing.service import preview, apply_operation
+from pricing.service import preview, apply_operation, position_cost
 from production.glass_orders import glass_order, glass_csv
 from production.service import release_production
 from projects.serializers import PositionWriteSerializer
@@ -32,6 +32,72 @@ from documents.service import prepare_documentary_inputs, save_documentary_input
 from pricing.repository import admin_write
 
 pytestmark = pytest.mark.rls_integration
+
+
+@pytest.mark.parametrize("direction", ["INWARD", "OUTWARD"])
+def test_structured_door_safety_covers_preview_save_and_repricing(real_rows, direction):
+    org = real_rows.organizations["A"]
+    set_role(real_rows, "ESTIMATOR")
+    client = client_for(real_rows)
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_PUERTA_70' AND version=3")["id"]
+    options = client.get(f"/api/v1/projects/design-options/{system}/")
+    assert options.status_code == 200, options.data
+    choice = next(item for item in options.data["glass_specs"] if item["sku"].endswith("-GLASS-LOWE"))
+    node = {"id": "B1", "type": "BAY", "opening_use": "DOOR",
+        "opening": {"movement": "TURN", "hinge_side": "LEFT", "direction": direction,
+            "leaf_role": "SINGLE", "fixed_in_sash": False},
+        "glass_article_sku": choice["sku"], "glass_spec": choice["spec"],
+        "glass_product": choice["product"], "glass_thickness_mm": choice["total_thickness_mm"]}
+    project = client.post("/api/v1/projects/", {"name": "D03 sourced door safety",
+        "client_name": "Synthetic fixture"}, format="json")
+    assert project.status_code == 201, project.data
+    payload = {"quantity": 1, "location_tag": "Puerta vidriada", "design": {
+        "system_id": str(system), "nominal_width_mm": "1000", "nominal_height_mm": "2200",
+        "color": "WHITE", "parametric_tree": node}}
+    path = f"/api/v1/projects/{project.data['id']}/positions/"
+    saved = client.post(path, payload, format="json")
+    assert saved.status_code == 201, saved.data
+
+    set_role(real_rows, "WORKSHOP_MANAGER")
+    rules_path = "/api/v1/catalogs/glass/rules/"
+    current = client.get(rules_path)
+    rule = {**demo_safety_rules()[0], "mandatory": True}
+    configured = client.put(rules_path, {"items": [rule]}, format="json",
+        HTTP_IF_MATCH='"' + current.data["revision"] + '"')
+    assert configured.status_code == 200, configured.data
+    piece = saved.data["bom"]["glasses"][0]
+    preview_payload = {"system_id": str(system), "product": choice["product"],
+        "width_mm": piece["width_mm"], "height_mm": piece["height_mm"],
+        "opening_use": "DOOR", "opening_type": "FIXED"}
+    report = client.post("/api/v1/catalogs/glass/preview/", preview_payload, format="json")
+    assert report.status_code == 200, report.data
+    assert any(item["blocking"] and item["code"] == rule["code"] for item in report.data["findings"])
+    legacy_preview = {**preview_payload, "opening_type": "DOOR_ENTRY"}
+    legacy_preview.pop("opening_use")
+    legacy = client.post("/api/v1/catalogs/glass/preview/", legacy_preview, format="json")
+    assert legacy.status_code == 200, legacy.data
+    assert any(item["blocking"] and item["code"] == rule["code"] for item in legacy.data["findings"])
+    control = client.post("/api/v1/catalogs/glass/preview/", {**preview_payload,
+        "opening_use": "WINDOW", "opening_type": "FIXED"}, format="json")
+    assert control.status_code == 200, control.data
+    assert not any(item["code"] == rule["code"] for item in control.data["findings"])
+
+    set_role(real_rows, "ESTIMATOR")
+    rejected = client.post(path, payload, format="json")
+    assert rejected.status_code == 422, rejected.data
+    assert rejected.data["error"]["code"] == "glass_rule_required"
+
+    class Repo:
+        org_id = org
+
+        def cost(self, *_):
+            pytest.fail("Safety must block before any price is computed.")
+
+    with authenticated_rls_context(real_rows.tokens["A"].claims):
+        position = position_row(org, saved.data["id"])
+        with pytest.raises(ContractAPIException) as error:
+            position_cost(Repo(), position, {})
+        assert error.value.contract_code == "glass_rule_required"
 
 
 @pytest.mark.parametrize("sku,net_mm", [("DEMO_60-VIDRIO-4", "4.00"),

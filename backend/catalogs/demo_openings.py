@@ -15,7 +15,7 @@ def opening_manifest() -> list[dict[str, Any]]:
     door = deepcopy(next(record for record in records if record["code"] == "DEMO_70"))
     # The door is a separate family. Reuse the explicit synthetic profile math,
     # not a permission that allows doors inside a casement series.
-    def renamed(value):
+    def renamed(value: Any) -> Any:
         if isinstance(value, str):
             return value.replace("DEMO_70", "DEMO_PUERTA_70")
         if isinstance(value, dict):
@@ -45,14 +45,16 @@ def opening_manifest() -> list[dict[str, Any]]:
     rng = Random(SEED)
     for record in records:
         code, params = record["code"], record["params"]
-        family, prefix = params["system_family"], code + "-"
+        family = params["system_family"]
+        prefix: str = code + "-"
         is_door, sliding = family == "DOOR", family == "SLIDING"
         record["version"], record["opening_seed"] = 3, SEED
         record["name"] = record["name"].replace(" · DEMO", " · aperturas v3 · DEMO")
         capabilities = []
         use = "DOOR" if is_door else "WINDOW"
-        def capability(movement, direction, role="SINGLE", *, fixed_in_sash=False,
-                       kit=None, handle=True):
+        def capability(movement: str, direction: str, role: str = "SINGLE", *,
+                       fixed_in_sash: bool = False, kit: str | None = None,
+                       handle: bool = True) -> None:
             hinges = (["NONE"] if movement in ("FIXED", "SLIDE") else ["BOTTOM"]
                 if movement == "TILT" else ["TOP"] if movement == "TOP_HUNG" else ["LEFT", "RIGHT"])
             rule = None
@@ -94,7 +96,8 @@ def opening_manifest() -> list[dict[str, Any]]:
                 params["effective_profile_articles"]["THRESHOLD"] = {
                     key: value for key, value in threshold.items() if key != "name"}
                 record["prices"].append({"sku": threshold["sku"], "unit": "BAR", "unit_cost": "12000"})
-            def kit(kind, label, *, passive=False, max_weight="150.00"):
+            def kit(kind: str, label: str, *, passive: bool = False,
+                    max_weight: str = "150.00") -> str:
                 sku = prefix + "KIT-" + kind
                 components = [{"sku": prefix + "BISAGRA", "name": "Bisagra DEMO",
                     "qty": "3" if is_door else "2", "unit": "EA", "category": "HINGE"},

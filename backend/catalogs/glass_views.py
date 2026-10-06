@@ -33,6 +33,7 @@ class GlassPreviewInputSerializer(StrictSerializer):
     width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"), required=False)
     height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"), required=False)
     opening_type = serializers.CharField(required=False)
+    opening_use = serializers.ChoiceField(choices=["WINDOW", "DOOR"], required=False, allow_null=True)
     is_sidelight = serializers.BooleanField(required=False, default=False)
     sill_height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0"), required=False, allow_null=True)
     hardware_sku = serializers.CharField(required=False, allow_null=True)
@@ -137,7 +138,7 @@ class GlassPreviewView(APIView):
                 kit = next((kit for kit in params.available_hardware_kits if kit.sku == data.get("hardware_sku")), None)
                 findings = assess_glass(product, width_mm=width, height_mm=height,
                     bead_thicknesses=tuple(params.glazing_bead_rules), rules=rules,
-                    door=data.get("opening_type") in ("DOOR_ENTRY", "DOOR_DOUBLE"), sidelight=data["is_sidelight"],
+                    door=glass.is_door_glazing(data), sidelight=data["is_sidelight"],
                     sill_mm=data.get("sill_height_mm"), leaf_weight_kg=candidate_weight,
                     hardware_limit_kg=kit.max_leaf_weight_kg if kit else None)
             total = total_glass_thickness(product.composition)
@@ -171,7 +172,7 @@ class GlassPreviewView(APIView):
                         area_m2=data["width_mm"] * data["height_mm"] / Decimal("1000000"))
                     checks = assess_glass(candidate, width_mm=data["width_mm"], height_mm=data["height_mm"],
                         bead_thicknesses=tuple(params.glazing_bead_rules), rules=rules,
-                        door=data.get("opening_type") in ("DOOR_ENTRY", "DOOR_DOUBLE"), sidelight=data["is_sidelight"],
+                        door=glass.is_door_glazing(data), sidelight=data["is_sidelight"],
                         sill_mm=data.get("sill_height_mm"), leaf_weight_kg=candidate_weight,
                         hardware_limit_kg=kit.max_leaf_weight_kg if kit else None)
                     if any(check.blocking or check.code in {code for rule in rules for code in (rule.code, rule.code + "_height_unknown")} for check in checks):

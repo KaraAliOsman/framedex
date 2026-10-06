@@ -27,6 +27,7 @@ export function glassContext(
   return {
     ...(piece ? { width_mm: piece.width_mm, height_mm: piece.height_mm } : {}),
     opening_type: node.opening_type ?? "FIXED",
+    opening_use: node.opening_use ?? undefined,
     is_sidelight: node.is_sidelight ?? false,
     sill_height_mm: node.sill_height_mm ?? null,
     hardware_sku: node.hardware_set_sku ?? null,

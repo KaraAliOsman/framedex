@@ -21194,6 +21194,11 @@ components:
         opening_type:
           type: string
           minLength: 1
+        opening_use:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/OpeningUseEnum'
+          - $ref: '#/components/schemas/NullEnum'
         is_sidelight:
           type: boolean
           default: false
@@ -22800,6 +22805,14 @@ components:
       - kind
       - plan_tier
       - product_code
+    OpeningUseEnum:
+      enum:
+      - WINDOW
+      - DOOR
+      type: string
+      description: |-
+        * `WINDOW` - WINDOW
+        * `DOOR` - DOOR
     OperationalSummary:
       type: object
       properties:

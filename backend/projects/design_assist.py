@@ -12,7 +12,7 @@ import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
-from dekopen_engine.models import NodeType, Opening, ParametricNode, SystemParams
+from dekopen_engine.models import HingeSide, NodeType, Opening, ParametricNode, SystemParams
 from dekopen_engine.catalog_rules import FAMILY_OPENINGS
 from dekopen_engine.openings import normalize_opening_tree, opening_label
 
@@ -175,9 +175,10 @@ def _opening_choices(params: SystemParams) -> list[dict[str, Any]]:
             data: dict[str, Any] = {"opening": opening.model_dump(mode="json"),
                 "opening_use": cap.use.value, "source": cap.source}
             if cap.leaf_role.value == "ACTIVE":
+                opposite = HingeSide.RIGHT if hinge is HingeSide.LEFT else HingeSide.LEFT
                 passive = next((other for other in params.opening_capabilities
                     if other.use is cap.use and other.movement is cap.movement and other.direction is cap.direction
-                    and other.leaf_role.value == "PASSIVE"), None)
+                    and other.leaf_role.value == "PASSIVE" and opposite in other.hinge_sides), None)
                 if passive is None or params.paired_leaf_rule is None:
                     continue
                 data["hinged_layout"] = {"leaves": [{"slot": side, "opening": {

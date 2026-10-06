@@ -157,6 +157,13 @@ def validate_design_products(org_id, system_id, tree):
             raise contract_error(409, "glass_authority_changed", "La composición difiere de su versión de catálogo. Vuelve a seleccionar el producto.")
 
 
+def is_door_glazing(value):
+    """Structured use is authoritative; legacy doors retain their zone."""
+    if value.get("opening_use") is not None:
+        return value["opening_use"] == "DOOR"
+    return value.get("opening_type") in ("DOOR_ENTRY", "DOOR_DOUBLE")
+
+
 def enforce_design_glass(org_id, tree, result, params):
     """Always check persisted, engine-derived dimensions and complete leaf mass."""
     nodes = {}
@@ -178,7 +185,7 @@ def enforce_design_glass(org_id, tree, result, params):
         node = nodes.get(piece.bay_id)
         if not node:
             continue
-        door = node.get("opening_type") in ("DOOR_ENTRY", "DOOR_DOUBLE")
+        door = is_door_glazing(node)
         sidelight = node.get("is_sidelight", False)
         sill_mm = Decimal(node["sill_height_mm"]) if node.get("sill_height_mm") is not None else None
         if node.get("glass_product") is None:
