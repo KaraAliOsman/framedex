@@ -321,3 +321,14 @@ Lint, typecheck, test y build también pasan; 24 comparaciones formales no tiene
 hallazgos nuevos y la auditoría de los 221 archivos cambiados no detecta valores
 privados del entorno ni tokens de evidencia. El incidente previo permanece
 visible y su ejecución se excluye de aceptación. El cierre CI/merge sigue pendiente.
+
+## 2026-10-06 — D05 · correcciones de la revisión del PR #123
+
+La revisión detecta supuestos de blanco, CLP y costo más margen en readiness y
+delta. Se verifican todas las combinaciones y cada identidad de acero; el delta
+comparte el cálculo de venta de Precios, en modo y moneda de la organización.
+Cuatro regresiones comparan el delta contra la cotización real; lista/matriz
+conservan incremento cero. Otras cubren FX ausente, margen del proyecto y carta
+sin blanco con una combinación incompleta. Tres goldens conservan la resta
+firmada de precisión extensa en el motor. Los recorridos y cinco estados pasan;
+se vuelven a ejecutar los gates completos antes del merge.

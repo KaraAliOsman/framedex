@@ -30,7 +30,11 @@ posición/hoja, refuerzo obligatorio y colores de manilla compatibles. El recarg
 usa Decimal y su regla por metro de perfil, porcentaje de costo de perfiles o
 importe por posición. Sin moneda compatible, costo o regla comercial no hay
 precio ficticio. El delta neto toma la primera combinación como referencia y
-explica su fuente; incorpora la merma y el margen vigentes.
+explica su fuente. Comparte la autoridad de precio de la cotización y usa el modo
+predeterminado y moneda de la organización, sin descuento y en contexto
+predeterminado. Matriz/lista pueden tener delta cero aunque suba el costo. Un
+margen objetivo de proyecto o una conversión ausente explica Sin dato, sin
+fabricar un incremento de precio. La resta firmada exacta se calcula en el motor.
 
 Los perfiles por combinación requieren SKU comercial y autoridad de stock/corte
 propia. El acero conserva su identidad independiente. Compras, reservas,
@@ -51,7 +55,9 @@ compra de perfiles, sin reescribir la autoridad emitida.
 Catálogo manual e importación comparten la carta tipada. La publicación requiere
 diff y revisión humana; deshacer respeta referencias de autoridad. Las nuevas
 series DEMO v5 son aditivas y no reescriben v1–v4, precios aplicados, BOM/hashes o
-revisiones emitidas. Sistemas antiguos omiten los campos opcionales nuevos en su
+revisiones emitidas. Readiness comprueba todas las combinaciones declaradas y
+sus identidades independientes de acero, aun si la carta no ofrece blanco.
+Sistemas antiguos omiten los campos opcionales nuevos en su
 transporte histórico.
 
 ## Intención y límites

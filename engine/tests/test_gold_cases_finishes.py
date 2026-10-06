@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from dekopen_engine.catalog_rules import CatalogRuleError
 from dekopen_engine.finish_models import FinishAuthority
-from dekopen_engine.finishes import finish_surcharge, prepare_finish
+from dekopen_engine.finishes import finish_surcharge, prepare_finish, finish_selling_delta
 from dekopen_engine.geometry import calculate_geometry, compute_geometry
 from dekopen_engine.snapshot import calculation_response
 from dekopen_engine.weight import MissingFabricationAuthority
@@ -29,6 +29,15 @@ def test_reviewed_finish_goldens_and_forced_steel() -> None:
     assert D(frozen["pvc-nogal-exterior"]["surcharge"]) == sum(D(cut["length_mm"])*cut["qty"] for cut in foiled["profile_cuts"])*D("0.75")
     assert D(frozen["pvc-antracita-interior"]["surcharge"]) == D(12500)
     assert D(frozen["pvc-coextruido"]["surcharge"]) == D(6500)
+
+
+@pytest.mark.parametrize("baseline,proposed,expected", [
+    ("100000.123456789123456789123456789", "106500.123456789123456789123456789", "6500"),
+    ("500000", "500000", "0"),
+    ("106500.123456789123456789123456789", "100000.123456789123456789123456789", "-6500"),
+])
+def test_gold_finish_selling_delta_keeps_signed_long_precision(baseline: str, proposed: str, expected: str) -> None:
+    assert finish_selling_delta(D(baseline), D(proposed)) == D(expected)
 
 
 def test_invalid_pair_and_finish_size_explain_cause_action_and_source() -> None:

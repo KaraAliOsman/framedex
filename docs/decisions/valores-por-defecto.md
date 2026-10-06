@@ -120,8 +120,12 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   Ficha de serie o en la plantilla/importación, con fuente y diff.
 - La primera combinación de la carta es la referencia del delta de precio.
   El catálogo permite cambiar su orden y regla por metro, porcentaje o fijo.
-  El delta usa merma/margen comercial vigente; una tarifa o moneda desconocida
-  muestra Sin dato. No hay un recargo universal oculto en Ajustes.
+  El delta sigue el modo de precio predeterminado de la organización y su moneda,
+  con el mismo cálculo que Precios: costo más margen, tarifa por m², matriz o
+  lista comercial. Es indicativo sin descuento y con contexto predeterminado.
+  El margen objetivo requiere calcular el proyecto completo y muestra Sin dato
+  por posición; una tarifa o conversión ausente también explica Sin dato.
+  La resta exacta pertenece al motor. No hay un recargo universal oculto.
 - Sin textura del fabricante se usa la muestra lineal declarada, marcada como
   aproximada; no se inventa grano ni brillo emisivo. Los límites, refuerzo y
   días adicionales son datos revisables de catálogo. Un plazo no declarado

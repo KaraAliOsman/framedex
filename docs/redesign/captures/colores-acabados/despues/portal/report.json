@@ -1,81 +1,7 @@
 {
-  "generatedAt": "2026-10-06T23:20:44.114Z",
+  "generatedAt": "2026-10-06T23:55:17.956Z",
   "baseUrl": "http://127.0.0.1:5173",
   "records": [
-    {
-      "routeId": "portal-vigente",
-      "path": "/cotizacion/fixture-vigente",
-      "reachedPath": "/cotizacion/fixture-vigente",
-      "role": "ESTIMATOR",
-      "theme": "light",
-      "viewport": "1280x800",
-      "screenshot": "portal-vigente__ESTIMATOR__light__1280x800.png",
-      "overflowX": false,
-      "consoleErrors": [],
-      "httpErrors": [],
-      "findings": [
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Visual"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Técnica"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Visual"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Técnica"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Visual"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Técnica"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Visual"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Técnica"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Visual"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Técnica"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Visual"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Técnica"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Visual"
-        },
-        {
-          "kind": "font-under-11",
-          "sample": "button.portal-view-toggle Técnica"
-        },
-        {
-          "kind": "shadow-outside-scale",
-          "sample": "li.portal-step Tu decisión"
-        }
-      ]
-    },
     {
       "routeId": "portal-vigente",
       "path": "/cotizacion/fixture-vigente",
@@ -156,8 +82,8 @@
       "reachedPath": "/cotizacion/fixture-vigente",
       "role": "ESTIMATOR",
       "theme": "light",
-      "viewport": "390x844",
-      "screenshot": "portal-vigente__ESTIMATOR__light__390x844.png",
+      "viewport": "1280x800",
+      "screenshot": "portal-vigente__ESTIMATOR__light__1280x800.png",
       "overflowX": false,
       "consoleErrors": [],
       "httpErrors": [],
@@ -303,9 +229,9 @@
       "path": "/cotizacion/fixture-vigente",
       "reachedPath": "/cotizacion/fixture-vigente",
       "role": "ESTIMATOR",
-      "theme": "dark",
+      "theme": "light",
       "viewport": "390x844",
-      "screenshot": "portal-vigente__ESTIMATOR__dark__390x844.png",
+      "screenshot": "portal-vigente__ESTIMATOR__light__390x844.png",
       "overflowX": false,
       "consoleErrors": [],
       "httpErrors": [],
@@ -380,6 +306,80 @@
       "theme": "dark",
       "viewport": "1280x800",
       "screenshot": "portal-vigente__ESTIMATOR__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Visual"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Técnica"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Visual"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Técnica"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Visual"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Técnica"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Visual"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Técnica"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Visual"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Técnica"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Visual"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Técnica"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Visual"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "button.portal-view-toggle Técnica"
+        },
+        {
+          "kind": "shadow-outside-scale",
+          "sample": "li.portal-step Tu decisión"
+        }
+      ]
+    },
+    {
+      "routeId": "portal-vigente",
+      "path": "/cotizacion/fixture-vigente",
+      "reachedPath": "/cotizacion/fixture-vigente",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "portal-vigente__ESTIMATOR__dark__390x844.png",
       "overflowX": false,
       "consoleErrors": [],
       "httpErrors": [],

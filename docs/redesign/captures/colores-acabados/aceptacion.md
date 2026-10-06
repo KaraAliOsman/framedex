@@ -22,6 +22,8 @@ las caras de esa revisión; el render utiliza los canales del catálogo.
 | Upgrade poblado → catálogos y datos históricos exactos | `scripts/check_finish_upgrade.py` |
 | Cálculo, inspección, layout y corte → una autoridad y hash exactos | Siete goldens diagnósticos, dos regresiones HTTP y tres recorridos canvas reales |
 | Portal → muestras selladas sin códigos internos de compra | `test_customer_finish_preserves_sealed_faces_without_internal_profile_bindings`, lectura pública en `verify-d05.mjs` |
+| Carta sin blanco → todas sus combinaciones requieren compra completa | `test_chart_without_white_checks_every_declared_combination` |
+| Delta → moneda y modo configurado coinciden con la cotización | Cuatro casos reales en `test_finish_pricing_modes.py`, más conversión ausente y margen de proyecto |
 
 Editor y catálogo se recorren a 1440×900, 1280×800 y 1024×768, ambos temas.
 El portal añade 390×844. Su prueba espera que la imagen realmente cambie antes
@@ -70,6 +72,16 @@ la misma carta y hash; la proyección pública conserva las muestras y excluye
 esos bindings sin modificar el snapshot. Las aserciones E2E siguen verificando
 medidas y SKU exactos del catálogo v5, incluida su holgura declarada; no se
 retiraron las comprobaciones de hash, rollback, permisos o tiempos de pintura.
+
+La revisión del PR encontró tres fallos adicionales: readiness suponía blanco,
+el delta suponía CLP y su fórmula suponía costo más margen. Readiness verifica
+todas las combinaciones y cada identidad independiente de acero. El selector
+comparte el cálculo de venta con Precios, en moneda y modo predeterminados de la
+organización. Matriz/lista conservan delta cero si la venta no cambia; tarifa o
+conversión ausente explica Sin dato. El margen objetivo exige el proyecto entero.
+La diferencia firmada pertenece al motor y conserva precisión extensa. Siete
+regresiones de integración y tres goldens monetarios cubren estos casos. Los
+recorridos de navegador, cinco estados y publicación/deshacer volvieron a pasar.
 
 Momento de firma: lienzo y 3D bicolor real, revisión y documento por caras.
 Idea que sube el techo: foliado oscuro explica refuerzo y plazo extra en el
@@ -127,15 +139,17 @@ carta física, restricciones y tarifas productivas según `ACTIVACION.md`.
 DEMO no certifica color, fabricante ni plazo. No se activa un servicio externo.
 P04/P09/P19 continúan editor/documento/3D y no se declaran terminados aquí.
 
-Validación local: lint, typecheck, test y build PASA; 623 pruebas del motor y dos
+Validación local final tras las correcciones de revisión: lint, typecheck, test
+y build PASA; 626 pruebas del motor y dos
 xfail históricos, 1 179 backend, 719 frontend y goldens exactos. Nueve pruebas
 del harness protegen el gate; 27 regresiones focalizadas cubren acabados/HTTP y
 tres recorridos canvas pasan con pintura inferior a 300 ms. PostgreSQL 16 y sus
 ocho verificadores de upgrade poblado pasan, incluido D05. El Database Gate
-completo PASA sobre el proyecto aislado: 1 031 pgTAP en 73 archivos, 304 pruebas
+inicial PASA sobre el proyecto aislado: 1 031 pgTAP en 73 archivos, 304 pruebas
 de integración, 11 recorridos E2E y los ocho upgrades poblados en PostgreSQL 16.
 La limpieza verifica ausencia de contenedores y volúmenes propios. Los cuatro
-checks de CI se registran al cerrarse el PR.
+checks de CI se registran al cerrarse el PR. La ejecución final posterior a la
+revisión está en curso y se registra por separado; la inicial no sustituye ese gate.
 
 Una publicación sintética inicial anterior al arreglo del transporte conserva
 su historial: la guarda impidió deshacer un etag obsoleto. Su serie sin artículos

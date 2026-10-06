@@ -37,9 +37,11 @@ elegir caras, igual caras, deshacer, guardar/reabrir, siete cotizaciones/OT,
 edición/importación/diff/publicación/deshacer y los cinco estados. La escritura
 humana conserva canales de precisión extensa como strings decimales exactos.
 DEMO v5 se agrega sin reescribir v1–v4 ni BOM/hashes/precios/revisiones históricos.
-Gates locales PASA: 623 motor (+2 xfail históricos), 1 179 backend, 719 frontend,
-1 031 pgTAP, 304 integración, 11 E2E y ocho upgrades poblados PG16. La aceptación
-registra el cierre de CI al completarse el PR.
+Gates locales finales lint/typecheck/test/build PASA: 626 motor (+2 xfail históricos),
+1 179 backend y 719 frontend. El gate limpio inicial verificó 1 031 pgTAP,
+304 integración, 11 E2E y ocho upgrades poblados PG16. La revisión del PR #123
+agrega precio en cuatro modos/moneda y carta sin blanco, con siete regresiones
+reales y tres goldens monetarios; el gate limpio final y CI se registran al cierre.
 
 Véanse [carta por caras](../product/color-finishes.md) y
 [aceptación D05](../../redesign/captures/colores-acabados/aceptacion.md).

@@ -13,8 +13,7 @@ from rest_framework.views import APIView
 from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from dekopen_engine.catalog_rules import CatalogRuleError
-from dekopen_engine.commercial import PricingError
-from dekopen_engine.pricing import price_from_cost_and_margin
+from dekopen_engine.commercial import PricingError, PricingMode
 from dekopen_engine.weight import MissingFabricationAuthority
 from engine_api.serializers import EngineCalculateRequestSerializer
 from engine_api.repository import SystemNotFound, UnsupportedCatalogContract
@@ -50,8 +49,9 @@ class FinishPreviewResponseSerializer(serializers.Serializer):
 
 def finish_preview(org_id, data):
     from engine_api.repository import SystemParamsRepository
-    from dekopen_engine.finishes import resolve_finish
-    from pricing.service import position_cost
+    from dekopen_engine.finishes import resolve_finish, finish_selling_delta
+    from pricing.service import position_cost, configured_unit_price, pricing_public_detail
+    from projects.service import _typology
     params = SystemParamsRepository().load_visible(data["system_id"], org_id)
     selected = resolve_finish(params, data["color"])
     baseline = resolve_finish(params, data["baseline_color"])
@@ -62,24 +62,36 @@ def finish_preview(org_id, data):
     response = {"delta_price_net": None, "currency": "CLP", "baseline_description": description(baseline),
         "description": description(selected), "source": selected.combination.surcharge.source, "reason": None}
     with commercial_backend():
+        currency = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [org_id])[0]["currency"]
+        response["currency"] = currency
         rules = rows("SELECT * FROM public.pricing_rules WHERE org_id=%s", [org_id])
         if not rules:
             return {**response, "reason": "Sin dato: completa las reglas de precio en Ajustes."}
-        repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), "CLP", None)
-        currency = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [org_id])[0]["currency"]
-        calculated_rules = {**rules[0], **{field: repo.convert(rules[0][field], currency)
-            for field in ("labor_rate_per_m2", "installation_rate_per_m2")}}
+        repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), currency, None)
         totals = []
         try:
+            mode = PricingMode(rules[0]["pricing_mode"])
+            if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
+                return {**response, "reason": "Sin dato por posición: el margen objetivo requiere calcular el proyecto completo en Precios."}
+            calculated_rules = {**rules[0], **{field: repo.convert(rules[0][field], currency)
+                for field in ("labor_rate_per_m2", "installation_rate_per_m2")}}
             for code in (data["baseline_color"], data["color"]):
-                cost, _, _, _ = position_cost(repo, {"system_id": data["system_id"],
+                position = {"system_id": data["system_id"],
                     "width_mm": data["nominal_width_mm"], "height_mm": data["nominal_height_mm"],
-                    "color_interior": code, "color_exterior": code, "parametric_tree": data["parametric_tree"]}, calculated_rules)
-                totals.append(price_from_cost_and_margin(cost, rules[0]["default_margin_pct"]))
-        except PricingError:
-            return {**response, "reason": "Sin dato: completa la lista de costos vigente y la moneda en Precios."}
-        response["delta_price_net"] = str(totals[1]-totals[0])
-        response["source"] += "; merma y margen configurados en Ajustes › Precios; precio neto indicativo por posición"
+                    "color_interior": code, "color_exterior": code, "parametric_tree": data["parametric_tree"],
+                    "typology": _typology(data["parametric_tree"])}
+                cost, area, result, _ = position_cost(repo, position, calculated_rules)
+                finish = resolve_finish(params, code)
+                position.update(color_interior=finish.interior.code, color_exterior=finish.exterior.code)
+                price = configured_unit_price(repo, mode, position, cost=cost, area=area,
+                    result=result, margin=rules[0]["default_margin_pct"], context_code="DEFAULT")
+                if price < cost:
+                    raise PricingError("negative_margin")
+                totals.append(price)
+        except PricingError as error:
+            return {**response, "reason": "Sin dato: " + pricing_public_detail(error.code)}
+        response["delta_price_net"] = str(finish_selling_delta(totals[0], totals[1]))
+        response["source"] += "; tarifa y modo predeterminado configurados en Ajustes › Precios; precio neto indicativo por posición, sin descuento, contexto predeterminado"
         return response
 
 

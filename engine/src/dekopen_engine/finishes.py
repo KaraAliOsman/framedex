@@ -1,9 +1,10 @@
 """Catalog-defined bicolor, reinforcement, size, clearance, SKU and surcharge."""
 
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from collections.abc import Sequence
 
 from dekopen_engine.catalog_rules import CatalogRuleError
+from dekopen_engine.commercial import number
 from dekopen_engine.finish_models import ResolvedFinish
 from dekopen_engine.models import EffectiveProfileArticle, EngineResult, MaterialType, ProfileRole, SystemParams
 from dekopen_engine.weight import MissingFabricationAuthority
@@ -115,6 +116,15 @@ def finish_description(result: EngineResult) -> str | None:
     if selected.interior.code == selected.exterior.code:
         return f"{selected.interior.name} en ambas caras"
     return f"{selected.exterior.name} exterior / {selected.interior.name} interior"
+
+
+def finish_selling_delta(baseline: Decimal, proposed: Decimal) -> Decimal:
+    """Signed exact difference between engine-priced units; no currency rounding."""
+    number(baseline)
+    number(proposed)
+    with localcontext() as context:
+        context.prec = 80
+        return proposed - baseline
 
 
 def finish_rgb_css(channels: Sequence[Decimal | str]) -> str:
