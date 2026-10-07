@@ -8,7 +8,7 @@
 | D03 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/121 | 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd | CI 4/4 verde; 21 aperturas, seguridad de puerta, preview/undo, 986 pgTAP, 287 RLS, 11 E2E y compatibilidad histórica exacta. |
 | D04 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/122 | dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f | CI 4/4 verde; clases y expansión exacta, F6/diff/undo, picking de 12 OT, 1008 pgTAP, 294 RLS, 11 E2E y upgrade histórico intacto. |
 | D05 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/123 | 94f9f5e773cfd227bca820460011ada77ce95baa | CI 4/4 verde; carta por caras y precio por modo/moneda, 1031 pgTAP, 311 RLS, 11 E2E y ocho upgrades PG16; incidente local documentado. |
-| D06 | D2 | pendiente |  |  |  |
+| D06 | D2 | en curso |  |  | Extras geométricos y accesorios con BOM/cortes, servicios, plantillas y sublíneas selladas. |
 | D07 | D2 | pendiente |  |  |  |
 | IA2 | D2 | pendiente |  |  |  |
 | IA3 | D2 | pendiente |  |  |  |
