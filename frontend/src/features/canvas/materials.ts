@@ -2,6 +2,8 @@
  * fenestration member is drawn — restrained, matte, engineering-drawing
  * treatments. Geometry (face widths) always comes from the catalog; only the
  * surface treatment lives here. */
+import type { FinishColor } from "../../api/generated/models";
+import { finishColorCss } from "./finishColors";
 
 export interface MemberSurface {
   /** member body fill */
@@ -49,6 +51,10 @@ const SURFACES: Record<string, MemberSurface> = {
 
 const DEFAULT_SURFACE = { ...SURFACES.PVC!, detail: "none" as const };
 
-export function memberSurface(material: string | null | undefined): MemberSurface {
-  return SURFACES[material ?? ""] ?? DEFAULT_SURFACE;
+export function memberSurface(
+  material: string | null | undefined,
+  finish?: FinishColor,
+): MemberSurface {
+  const surface = SURFACES[material ?? ""] ?? DEFAULT_SURFACE;
+  return finish ? { ...surface, fill: finishColorCss(finish), detail: "none" } : surface;
 }

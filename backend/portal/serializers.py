@@ -1,6 +1,7 @@
 """Contract serializers for the customer-approval portal."""
 
 from rest_framework import serializers
+from engine_api.finish_serializers import ResolvedFinishSerializer
 
 
 class ShareQuoteResponseSerializer(serializers.Serializer):
@@ -27,6 +28,7 @@ class CommercialHardwareSerializer(serializers.Serializer):
 
 
 class PortalPositionSerializer(serializers.Serializer):
+    resolved_finish = ResolvedFinishSerializer(required=False, allow_null=True)
     id = serializers.CharField(allow_blank=True)
     position_index = serializers.IntegerField(allow_null=True)
     quantity = serializers.IntegerField(allow_null=True)

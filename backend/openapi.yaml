@@ -15175,6 +15175,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/finish-preview/:
+    post:
+      operationId: projectFinishPreview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishPreviewRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FinishPreviewRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FinishPreviewRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishPreviewResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/flow/confirm/{link_id}/:
     post:
       operationId: project_payment_flow_confirm
@@ -19801,6 +19877,10 @@ components:
     DesignOptions:
       type: object
       properties:
+        finish_authority:
+          allOf:
+          - $ref: '#/components/schemas/FinishAuthority'
+          nullable: true
         system_id:
           type: string
           format: uuid
@@ -20536,6 +20616,10 @@ components:
     EngineCalculateResponse:
       type: object
       properties:
+        finish:
+          allOf:
+          - $ref: '#/components/schemas/ResolvedFinish'
+          nullable: true
         profile_cuts:
           type: array
           items:
@@ -20711,6 +20795,10 @@ components:
     EngineResultPayload:
       type: object
       properties:
+        finish:
+          allOf:
+          - $ref: '#/components/schemas/ResolvedFinish'
+          nullable: true
         profile_cuts:
           type: array
           items:
@@ -20981,6 +21069,203 @@ components:
       required:
       - amount
       - label
+    FinishAuthority:
+      type: object
+      properties:
+        schema_version:
+          type: integer
+        material:
+          type: string
+        colors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinishColor'
+        handle_colors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinishColor'
+        combinations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinishCombination'
+        source:
+          type: string
+      required:
+      - colors
+      - combinations
+      - material
+      - schema_version
+      - source
+    FinishColor:
+      type: object
+      properties:
+        code:
+          type: string
+        manufacturer_code:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+        linear_rgb:
+          type: array
+          items:
+            type: string
+          maxItems: 3
+          minItems: 3
+        gloss:
+          type: string
+          nullable: true
+        texture_path:
+          type: string
+          nullable: true
+        approximate:
+          type: boolean
+        source:
+          type: string
+        synthetic:
+          type: boolean
+      required:
+      - approximate
+      - code
+      - gloss
+      - kind
+      - linear_rgb
+      - manufacturer_code
+      - name
+      - source
+      - synthetic
+      - texture_path
+    FinishCombination:
+      type: object
+      properties:
+        code:
+          type: string
+        interior:
+          type: string
+        exterior:
+          type: string
+        base:
+          type: string
+          nullable: true
+        reinforcement_required:
+          type: boolean
+        reinforcement_stock_code:
+          type: string
+        glass_clearance_mm:
+          type: string
+        max_position_width_mm:
+          type: string
+          nullable: true
+        max_position_height_mm:
+          type: string
+          nullable: true
+        max_leaf_width_mm:
+          type: string
+          nullable: true
+        max_leaf_height_mm:
+          type: string
+          nullable: true
+        extra_lead_days:
+          type: integer
+          nullable: true
+        surcharge:
+          $ref: '#/components/schemas/FinishSurcharge'
+        allowed_handle_colors:
+          type: array
+          items:
+            type: string
+        source:
+          type: string
+        synthetic:
+          type: boolean
+      required:
+      - allowed_handle_colors
+      - base
+      - code
+      - exterior
+      - extra_lead_days
+      - glass_clearance_mm
+      - interior
+      - max_leaf_height_mm
+      - max_leaf_width_mm
+      - max_position_height_mm
+      - max_position_width_mm
+      - reinforcement_required
+      - reinforcement_stock_code
+      - source
+      - surcharge
+      - synthetic
+    FinishPreviewRequestRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        parametric_tree: {}
+        baseline_color:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - baseline_color
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - parametric_tree
+      - system_id
+    FinishPreviewResponse:
+      type: object
+      properties:
+        delta_price_net:
+          type: string
+          nullable: true
+        currency:
+          type: string
+        baseline_description:
+          type: string
+        description:
+          type: string
+        source:
+          type: string
+        reason:
+          type: string
+          nullable: true
+      required:
+      - baseline_description
+      - currency
+      - delta_price_net
+      - description
+      - reason
+      - source
+    FinishSurcharge:
+      type: object
+      properties:
+        kind:
+          type: string
+        amount:
+          type: string
+        currency:
+          type: string
+        source:
+          type: string
+      required:
+      - amount
+      - currency
+      - kind
+      - source
     FittingPiece:
       type: object
       description: Counted frameless fitting — patch/clamp/hinge/lock/connector/seal/support.
@@ -24185,6 +24470,8 @@ components:
           nullable: true
         paired_leaf_rule:
           nullable: true
+        finish_authority:
+          nullable: true
         name:
           type: string
           minLength: 1
@@ -24815,6 +25102,10 @@ components:
     PortalPosition:
       type: object
       properties:
+        resolved_finish:
+          allOf:
+          - $ref: '#/components/schemas/ResolvedFinish'
+          nullable: true
         id:
           type: string
         position_index:
@@ -25997,6 +26288,12 @@ components:
     ProfileCut:
       type: object
       properties:
+        commercial_sku:
+          type: string
+          nullable: true
+        stock_color:
+          type: string
+          nullable: true
         sku:
           type: string
         role:
@@ -27358,6 +27655,33 @@ components:
       - confirmed
       - expected_operation_id
       - reason
+    ResolvedFinish:
+      type: object
+      properties:
+        combination:
+          $ref: '#/components/schemas/FinishCombination'
+        interior:
+          $ref: '#/components/schemas/FinishColor'
+        exterior:
+          $ref: '#/components/schemas/FinishColor'
+        base:
+          allOf:
+          - $ref: '#/components/schemas/FinishColor'
+          nullable: true
+        profile_skus:
+          type: object
+          additionalProperties:
+            type: string
+        handle_colors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinishColor'
+      required:
+      - base
+      - combination
+      - exterior
+      - interior
+      - profile_skus
     ReviewStateEnum:
       enum:
       - REVIEWED
@@ -28502,6 +28826,10 @@ components:
           nullable: true
         paired_leaf_rule:
           nullable: true
+        finish_authority:
+          allOf:
+          - $ref: '#/components/schemas/FinishAuthority'
+          nullable: true
         name:
           type: string
           maxLength: 150
@@ -28727,6 +29055,8 @@ components:
         opening_capabilities:
           nullable: true
         paired_leaf_rule:
+          nullable: true
+        finish_authority:
           nullable: true
         name:
           type: string

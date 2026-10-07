@@ -111,7 +111,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_gla
     )
     result = SimpleNamespace(
         profile_cuts=[], reinforcements=[], glasses=[glass],
-        panels=[], hardware_items=[], fittings=[], leaf_weights=[],
+        panels=[], hardware_items=[], fittings=[], leaf_weights=[], finish=None,
     )
 
     class Cursor:
@@ -178,7 +178,7 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_
     fitting = SimpleNamespace(sku="CLAMP-SQ", qty=4)
     result = SimpleNamespace(
         profile_cuts=[], reinforcements=[], glasses=[glass],
-        panels=[], hardware_items=[], fittings=[fitting], leaf_weights=[],
+        panels=[], hardware_items=[], fittings=[fitting], leaf_weights=[], finish=None,
     )
 
     class Cursor:

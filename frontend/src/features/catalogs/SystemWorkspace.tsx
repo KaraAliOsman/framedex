@@ -564,15 +564,13 @@ export function SystemWorkspaceView({
               <dd>{provenanceLabel(system.data_provenance)}</dd>
             </div>
           </dl>
-          {canEdit && (
-            <button
-              type="button"
-              className="ui-button ui-button--small"
-              onClick={() => onEdit("systems", system.id)}
-            >
-              {ct("edit")}
-            </button>
-          )}
+          <button
+            type="button"
+            className="ui-button ui-button--small"
+            onClick={() => onEdit("systems", system.id)}
+          >
+            {canEdit ? ct("edit") : "Consultar sistema"}
+          </button>
         </div>
         <ReadinessLadder system={system} onJump={jump} />
       </header>

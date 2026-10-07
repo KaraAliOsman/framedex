@@ -17,6 +17,7 @@ from dekopen_engine.commercial import PricingError
 from django.utils import timezone
 from dekopen_engine.openings import opening_label
 from dekopen_engine.models import Opening
+from engine_api.finish_serializers import FinishAuthoritySerializer
 
 
 class ProfileChoiceSerializer(serializers.Serializer):
@@ -113,6 +114,7 @@ class PanelChoiceSerializer(serializers.Serializer):
 
 
 class DesignOptionsSerializer(serializers.Serializer):
+    finish_authority = FinishAuthoritySerializer(allow_null=True, required=False)
     system_id = serializers.UUIDField()
     system_family = serializers.CharField(allow_null=True)
     is_demo = serializers.BooleanField()
@@ -183,6 +185,7 @@ class DesignOptionsView(APIView):
             return response(
                 {
                     "system_id": system_id,
+                    "finish_authority": params.finish_authority.model_dump(mode="json") if params.finish_authority else None,
                     "system_family": params.system_family.value if params.system_family else None,
                     "is_demo": bool(rows("SELECT is_demo FROM public.profile_systems WHERE id=%s", [system_id])[0]["is_demo"]),
                     "compatible_openings": sorted(opening.value for opening in FAMILY_OPENINGS[params.system_family])

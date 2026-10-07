@@ -27,7 +27,7 @@ def decode_jsonb_columns(table: str, row: dict) -> dict:
     return row
 
 
-def copy_fixed_catalog(org, code="DEMO_60", global_scope=False):
+def copy_fixed_catalog(org, code="DEMO_60", global_scope=False, *, version=1):
     """Clone a global system into an unreferenced, unlocked copy.
 
     global_scope=False (default): the copy is org-owned — children are stamped
@@ -38,7 +38,7 @@ def copy_fixed_catalog(org, code="DEMO_60", global_scope=False):
     tenant-override precedence tests can write their own org rows on top.
     """
     scope_org = None if global_scope else org
-    source = one("SELECT * FROM public.profile_systems WHERE code=%s AND is_global AND version=1", [code])
+    source = one("SELECT * FROM public.profile_systems WHERE code=%s AND is_global AND version=%s", [code, version])
     target = uuid4()
 
     def insert(table, row):
@@ -79,6 +79,9 @@ def copy_fixed_catalog(org, code="DEMO_60", global_scope=False):
     for old, new in identities.items():
         for row in rows("SELECT * FROM public.profile_purchase_mappings WHERE profile_article_id=%s AND org_id IS NULL", [old]):
             insert("profile_purchase_mappings", {**row, "id": uuid4(), "profile_article_id": new, "org_id": scope_org})
+        for row in rows("SELECT * FROM public.catalog_color_skus WHERE profile_article_id=%s AND org_id IS NULL", [old]):
+            insert("catalog_color_skus", {**row, "id": uuid4(), "profile_article_id": new,
+                "system_id": target, "org_id": scope_org, "physical_stock_identity": uuid4()})
     for old, new in kit_ids.items():
         for row in rows("SELECT * FROM public.hardware_purchase_mappings WHERE hardware_kit_id=%s AND org_id IS NULL", [old]):
             insert("hardware_purchase_mappings", {**row, "id": uuid4(), "hardware_kit_id": new, "org_id": scope_org})

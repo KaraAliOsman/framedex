@@ -227,47 +227,58 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                 "AND (org_id IS NULL OR org_id=%s)",
                 [system_id, org_id],
             )
+            colors = ([combo.code for combo in params.finish_authority.combinations]
+                      if params.finish_authority is not None else ["WHITE"])
+            # Each independent steel finish has a representative declared
+            # combination. WHITE need not exist in a manufacturer's chart.
+            steel_colors = (list({combo.reinforcement_stock_code: combo.code
+                                 for combo in params.finish_authority.combinations}.values())
+                            if params.finish_authority is not None else colors)
             steels: set[str] = set()
             if params.material is MaterialType.PVC:
                 # A welded PVC member always needs its steel resolved —
                 # including default SKU resolution. Mechanically jointed
                 # systems do not, and neither do unwelded roles (threshold
                 # is appended, beads clip, channels seat frameless panes).
-                # Positions check FOILED at freeze when the face colors
-                # require it; the catalog baseline is WHITE.
+                # Historical charts use WHITE; typed charts declare their
+                # physical steel identity independently of the room/street faces.
                 for article in catalogued:
                     if article["role"] in ("THRESHOLD", "GLAZING_BEAD", "CHANNEL"):
                         continue
                     if not params.uses_legacy_rules and article["declared_reinforcement_sku"] is None:
                         continue
-                    stock, _ = CuttingRepository().reinforcement_stock(
-                        system_id, org_id, article["sku"],
-                        (article["reinforcement_sku"] if params.uses_legacy_rules
-                         else article["declared_reinforcement_sku"]), "WHITE")
-                    steels.add(stock.workshop_sku)
+                    for color in steel_colors:
+                        stock, _ = CuttingRepository().reinforcement_stock(
+                            system_id, org_id, article["sku"],
+                            (article["reinforcement_sku"] if params.uses_legacy_rules
+                             else article["declared_reinforcement_sku"]), color)
+                        steels.add(stock.workshop_sku)
             glass = rows("SELECT technical_sku FROM public.glass_purchase_mappings "
                          "WHERE system_id=%s AND (org_id IS NULL OR org_id=%s)", [system_id, org_id])
             if not glass:
                 raise DocumentaryError("glass_purchase_mapping_required")
-            load_purchase_authorities(system_id=system_id, org_id=org_id, color="WHITE",
-                profile_skus={article["sku"] for article in catalogued},
-                reinforcement_skus=steels,
-                glass_skus={row["technical_sku"] for row in glass},
-                hardware_skus={kit.sku for kit in params.available_hardware_kits if kit.class_authority is None},
-                panel_skus={
-                    row["sku"] for row in rows(
-                        "SELECT sku FROM public.infill_articles WHERE system_id=%s"
-                        " AND is_active AND (org_id IS NULL OR org_id=%s)",
-                        [system_id, org_id],
-                    )
-                },
-                fitting_skus={
-                    row["technical_sku"] for row in rows(
-                        "SELECT technical_sku FROM public.fitting_purchase_mappings"
-                        " WHERE system_id=%s AND (org_id IS NULL OR org_id=%s)",
-                        [system_id, org_id],
-                    )
-                })
+            for color in colors:
+                load_purchase_authorities(system_id=system_id, org_id=org_id,
+                    color=color,
+                    finish_authority=params.finish_authority,
+                    profile_skus={article["sku"] for article in catalogued},
+                    reinforcement_skus=steels,
+                    glass_skus={row["technical_sku"] for row in glass},
+                    hardware_skus={kit.sku for kit in params.available_hardware_kits if kit.class_authority is None},
+                    panel_skus={
+                        row["sku"] for row in rows(
+                            "SELECT sku FROM public.infill_articles WHERE system_id=%s"
+                            " AND is_active AND (org_id IS NULL OR org_id=%s)",
+                            [system_id, org_id],
+                        )
+                    },
+                    fitting_skus={
+                        row["technical_sku"] for row in rows(
+                            "SELECT technical_sku FROM public.fitting_purchase_mappings"
+                            " WHERE system_id=%s AND (org_id IS NULL OR org_id=%s)",
+                            [system_id, org_id],
+                        )
+                    })
         except DocumentaryError as error:
             purchase_code = str(error.code)
         except (MissingStockAuthority, AmbiguousStockAuthority, ValueError):

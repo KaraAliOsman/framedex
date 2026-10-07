@@ -52,6 +52,7 @@ export function useAssemblyCalculation(
   retainPrevious = true,
 ): {
   evaluation: EngineAssemblyCalculateResponse | null;
+  currentEvaluation: EngineAssemblyCalculateResponse | null;
   isPending: boolean;
   errorCode: string | null;
 } {
@@ -74,7 +75,8 @@ export function useAssemblyCalculation(
   });
   return {
     evaluation: query.data ?? null,
-    isPending: query.isPending,
+    currentEvaluation: query.isPlaceholderData ? null : (query.data ?? null),
+    isPending: query.isPending || query.isPlaceholderData,
     errorCode: query.isError ? assemblyErrorCode(query.error) : null,
   };
 }

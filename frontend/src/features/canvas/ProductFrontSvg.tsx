@@ -16,6 +16,9 @@ import type { IntentNode } from "./intentEditing";
 import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
 import { OPENING_OPTIONS } from "./openings";
 import { memberSurface, type MemberSurface } from "./materials";
+import { finishColorCss } from "./finishColors";
+import { bayHardwareColor } from "./finishHardware";
+import type { CSSProperties } from "react";
 import { contourOutset, contourPathD, insetContourPoints, pointsPathD } from "./contourGeometry";
 import type { MemberGeometry } from "./members";
 import {
@@ -586,7 +589,7 @@ function Bay({
   const physicalFacts = useContext(PhysicalFactsContext);
   const bead = members.beadFor(node.glass_thickness_mm ?? null);
   const insulated = Number(node.glass_thickness_mm ?? "0") >= 12;
-  const sashSurface = memberSurface(members.sash.material);
+  const sashSurface = memberSurface(members.sash.material, members.sash.faceFinish);
   const baySelectProps = onSelect
     ? {
         onClick: (event: React.MouseEvent) => {
@@ -628,7 +631,14 @@ function Bay({
     const leaves = physicalFacts.leaves.filter((leaf) => leaf.bay_id === node.id);
     return (
       <g
-        className={`module-bay module-bay--structured${selected ? " is-selected" : ""}`}
+        className={`module-bay module-bay--structured${node.opening_use === "DOOR" ? " module-bay--door" : ""}${selected ? " is-selected" : ""}`}
+        style={
+          {
+            "--finish-handle-color": bayHardwareColor(members, node)
+              ? finishColorCss(bayHardwareColor(members, node)!)
+              : undefined,
+          } as CSSProperties
+        }
         {...baySelectProps}
       >
         {leaves.length ? (
@@ -668,7 +678,20 @@ function Bay({
                   height={Math.max(height - (thickness + bead) * 2, 0)}
                 />
                 <g className="opening-glyph">
-                  <OpeningSymbol opening={leaf.opening} x={x} y={y} width={width} height={height} />
+                  <OpeningSymbol
+                    opening={
+                      members.viewFace === "exterior"
+                        ? {
+                            ...leaf.opening,
+                            direction: leaf.opening.direction === "INWARD" ? "OUTWARD" : "INWARD",
+                          }
+                        : leaf.opening
+                    }
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                  />
                 </g>
                 {leaf.handle && (
                   <g
@@ -715,6 +738,13 @@ function Bay({
     return (
       <g
         className={`module-bay module-bay--sliding${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
+        style={
+          {
+            "--finish-handle-color": bayHardwareColor(members, node)
+              ? finishColorCss(bayHardwareColor(members, node)!)
+              : undefined,
+          } as CSSProperties
+        }
         {...baySelectProps}
       >
         {/* Rail notation: two head/sill grooves behind the leaves — the
@@ -884,7 +914,14 @@ function Bay({
 
   return (
     <g
-      className={`module-bay${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
+      className={`module-bay${isDoor ? " module-bay--door" : ""}${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
+      style={
+        {
+          "--finish-handle-color": bayHardwareColor(members, node)
+            ? finishColorCss(bayHardwareColor(members, node)!)
+            : undefined,
+        } as CSSProperties
+      }
       {...baySelectProps}
     >
       {operable && (
@@ -944,7 +981,10 @@ function Bay({
           y={region.y + region.h - thresholdH}
           w={region.w}
           h={thresholdH}
-          surface={memberSurface(members.threshold?.material ?? members.frame.material)}
+          surface={memberSurface(
+            members.threshold?.material ?? members.frame.material,
+            members.threshold?.faceFinish ?? members.frame.faceFinish,
+          )}
           className="member-threshold"
         />
       )}
@@ -1154,7 +1194,10 @@ function ModuleTree({
           y={bar.y}
           w={Math.max(bar.w, 0)}
           h={Math.max(bar.h, 0)}
-          surface={memberSurface(mullion?.material ?? members.frame.material)}
+          surface={memberSurface(
+            mullion?.material ?? members.frame.material,
+            mullion?.faceFinish ?? members.frame.faceFinish,
+          )}
           className={`member-mullion${selectedDivisionId === node.id ? " is-selected" : ""}`}
         />
         {showSplitDims && (
@@ -1647,7 +1690,7 @@ export function ProductFrontContent({
 }): JSX.Element {
   const { couplings } = product.assembly;
   const frameT = members.frame.faceWidthMm;
-  const frameSurface = memberSurface(members.frame.material);
+  const frameSurface = memberSurface(members.frame.material, members.frame.faceFinish);
   // Layout derivation runs over every module — memoize so seam/division
   // drags (per-pointermove renders) don't rebuild the whole elevation.
   const { rects, columns, joints, totalW, height, lift } = useMemo(
@@ -1882,7 +1925,19 @@ export function ProductFrontContent({
       : null;
 
   return (
-    <g className="product-front-svg" data-testid="product-front" ref={frontRef}>
+    <g
+      className={`product-front-svg${members.viewFace === "exterior" ? " is-exterior" : ""}`}
+      data-testid="product-front"
+      ref={frontRef}
+      style={
+        {
+          "--finish-bead-color": members.frame.faceFinish
+            ? finishColorCss(members.frame.faceFinish)
+            : undefined,
+        } as CSSProperties
+      }
+      transform={members.viewFace === "exterior" ? `translate(${totalW} 0) scale(-1 1)` : undefined}
+    >
       {/* overall width chain — untranslated so it always clears the
           tallest silhouette point (arc crowns sit at viewBox y ≥ 0). */}
       <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
@@ -2168,6 +2223,8 @@ export function ProductFrontContent({
           const surface = memberSurface(
             members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ??
               members.frame.material,
+            members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceFinish ??
+              members.frame.faceFinish,
           );
           const pickable = interactive && !divideTool && onSelectCoupling && joint.couplingId;
           const jointRect =

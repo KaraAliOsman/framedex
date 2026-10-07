@@ -51,6 +51,8 @@ PRICING_ERROR_DETAILS = {
     'owner_approval_required': 'el descuento requiere aprobación del dueño',
     'owner_confirmation_required': 'esta operación requiere la confirmación del dueño',
     'pricing_operation_not_found': 'no se encontró la operación comercial indicada; recarga el listado',
+    'pricing_configuration_not_found': 'falta la tarifa del modo de precio para esta tipología; complétala en Precios',
+    'unsupported_currency': 'esta moneda no admite cotización; usa CLP o USD en Ajustes',
     'pricing_permission_denied': 'tu rol no permite esta operación comercial',
     'pricing_rules_not_found': 'no hay reglas de precio configuradas para tu taller; registra margen e impuesto en Ajustes → Costos y precios → Reglas comerciales antes de cotizar',
     'project_has_no_positions': 'el proyecto no tiene vanos para cotizar',
@@ -151,7 +153,8 @@ def position_cost(repo, position, rules):
         tree = decoded(position['parametric_tree'])
         from catalogs.glass import validate_design_products, enforce_design_glass
         validate_design_products(repo.org_id, position['system_id'], tree)
-        color = position['color_interior']
+        from projects.finishes import position_finish_code
+        color = position_finish_code(position)
         result = engine_result_from_api(
             tree=tree, color=color, params=params,
             nominal_width_mm=position['width_mm'],
@@ -177,7 +180,7 @@ def position_cost(repo, position, rules):
             with connection.cursor() as cursor:
                 cursor.execute('SET LOCAL ROLE pricing_backend')
     tree = decoded(position['parametric_tree'])
-    color = position['color_interior']
+    color = position_finish_code(position)
     materials = []
     composition = []
     for cut in result.profile_cuts:
@@ -187,6 +190,19 @@ def position_cost(repo, position, rules):
         composition.append({'kind':'PROFILE','sku':stock.commercial_sku,
                             'quantity':str((cut.length_mm*cut.qty/D('1000')).quantize(D('0.001'))),
                             'unit':'M','cost':str(cost.quantize(D('0.0001')))})
+    from dekopen_engine.finishes import finish_surcharge
+    if result.finish is not None:
+        surcharge_rule = result.finish.combination.surcharge
+        priced_result = result.model_copy(update={"finish": result.finish.model_copy(update={
+            "combination": result.finish.combination.model_copy(update={"surcharge": surcharge_rule.model_copy(update={
+                "amount": (repo.convert(surcharge_rule.amount, surcharge_rule.currency)
+                           if surcharge_rule.kind in {"FIXED", "PER_M"} else surcharge_rule.amount),
+                "currency": repo.currency})})})})
+        surcharge = finish_surcharge(priced_result, sum(materials, D('0')), repo.currency)
+        materials.append(surcharge)
+        composition.append({'kind':'FINISH','sku':color,'quantity':'1','unit':'EA',
+            'cost':str(surcharge.quantize(D('0.0001'))), 'source':surcharge_rule.source,
+            'rule':surcharge_rule.model_dump(mode='json')})
     for steel in result.reinforcements:
         stock = steel_stocks[(steel.parent_profile_sku,steel.reinforcement_sku)]
         cost = linear_cost(repo,stock.commercial_sku,steel.length_mm*steel.qty,stock.stock_length_mm)
@@ -266,6 +282,32 @@ def position_cost(repo, position, rules):
     return total, area, result, formation
 
 
+def configured_unit_price(repo, mode, position, *, cost, area, result, margin, context_code):
+    """One selling-price authority for project pricing and indicative finish deltas."""
+    if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
+        raise PricingError('project_mode_requires_project')
+    extra = {}
+    if mode != PricingMode.COST_PLUS_MARGIN:
+        config = repo.configuration(mode.value, context_code, position['typology'])
+        if mode == PricingMode.PRICE_PER_M2_BY_TYPOLOGY:
+            if not config['base_glass_sku'] or not result.glasses:
+                raise PricingError('missing_glass_authority')
+            selected = {design_glass_sku(decoded(position['parametric_tree']), glass.bay_id)
+                        for glass in result.glasses}
+            if len(selected) != 1:
+                raise PricingError('ambiguous_selected_glass')
+            extra = {'rate': repo.convert(config['rate_per_m2'], config['currency']),
+                     'selected_glass': repo.cost(next(iter(selected)), 'M2'),
+                     'base_glass': repo.cost(config['base_glass_sku'], 'M2')}
+        elif mode == PricingMode.FIXED_PRICE_MATRIX_DIMENSIONAL:
+            extra = {'cells': repo.matrix(config)}
+        else:
+            extra = {'catalog_price': repo.convert(config['catalog_price'], config['currency'])}
+    return unit_price(mode, cost=cost, margin=margin, area=area,
+                      width=position['width_mm'], height=position['height_mm'],
+                      foil=position['color_interior'] != 'WHITE' or position['color_exterior'] != 'WHITE', **extra)
+
+
 def preview(org_id, actor, request):
     project = one('SELECT * FROM public.projects WHERE id=%s AND org_id=%s FOR UPDATE',
                   [request['project_id'],org_id],'project_not_found')
@@ -318,26 +360,8 @@ def preview(org_id, actor, request):
                                   'bom':result.model_dump(mode='json'),**formation})
                 if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
                     continue
-                extra = {}
-                if mode != PricingMode.COST_PLUS_MARGIN:
-                    config = repo.configuration(mode.value,request['context_code'],position['typology'])
-                    if mode == PricingMode.PRICE_PER_M2_BY_TYPOLOGY:
-                        if not config['base_glass_sku'] or not result.glasses:
-                            raise PricingError('missing_glass_authority')
-                        selected = {design_glass_sku(decoded(position['parametric_tree']),glass.bay_id)
-                                    for glass in result.glasses}
-                        if len(selected) != 1:
-                            raise PricingError('ambiguous_selected_glass')
-                        extra = {'rate':repo.convert(config['rate_per_m2'],config['currency']),
-                                 'selected_glass':repo.cost(next(iter(selected)),'M2'),
-                                 'base_glass':repo.cost(config['base_glass_sku'],'M2')}
-                    elif mode == PricingMode.FIXED_PRICE_MATRIX_DIMENSIONAL:
-                        extra = {'cells':repo.matrix(config)}
-                    else:
-                        extra = {'catalog_price':repo.convert(config['catalog_price'],config['currency'])}
-                exact_price = unit_price(mode,cost=cost,margin=rules['default_margin_pct'],area=area,
-                                         width=position['width_mm'],height=position['height_mm'],
-                                         foil=position['color_interior']!='WHITE' or position['color_exterior']!='WHITE',**extra)
+                exact_price = configured_unit_price(repo, mode, position, cost=cost, area=area,
+                    result=result, margin=rules['default_margin_pct'], context_code=request['context_code'])
                 priced_lines.append(CommercialLine(index,position['quantity'],cost,exact_price,discount))
             except PricingError as error:
                 # The estimator fixing this has to know WHICH vano fails —

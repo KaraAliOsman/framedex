@@ -78,9 +78,11 @@ class CuttingRepository:
     def profile_stock(self, system_id: UUID, org_id: UUID, sku: str, color: str) -> StockRule:
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT id, commercial_length_mm, material::text
-                   FROM public.profile_articles WHERE system_id=%s AND sku=%s
-                     AND (org_id IS NULL OR org_id=%s) ORDER BY id""",
+                """SELECT a.id, a.commercial_length_mm, a.material::text,
+                          s.finish_authority IS NOT NULL
+                   FROM public.profile_articles a JOIN public.profile_systems s ON s.id=a.system_id
+                   WHERE a.system_id=%s AND a.sku=%s
+                     AND (a.org_id IS NULL OR a.org_id=%s) ORDER BY a.id""",
                 [system_id, sku, org_id],
             )
             articles = cursor.fetchall()
@@ -89,13 +91,16 @@ class CuttingRepository:
             if len(articles) != 1:
                 raise AmbiguousStockAuthority
             article = articles[0]
+            has_finish_authority = len(article) > 3 and bool(article[3])
+            table = "catalog_color_skus" if has_finish_authority else "profile_purchase_mappings"
+            color_clause = " AND finish=%s AND stock_color=finish" if has_finish_authority else ""
             cursor.execute(
-                """SELECT id, commercial_sku, manufacturer_name, supplier_name,
+                f"""SELECT id, commercial_sku, manufacturer_name, supplier_name,
                           purchase_unit, org_id
-                   FROM public.profile_purchase_mappings
+                   FROM public.{table}
                    WHERE profile_article_id=%s AND is_active
-                     AND (org_id IS NULL OR org_id=%s) ORDER BY id""",
-                [article[0], org_id],
+                     AND (org_id IS NULL OR org_id=%s){color_clause} ORDER BY id""",
+                [article[0], org_id, *([color] if has_finish_authority else [])],
             )
             rows = effective_scope(cursor.fetchall(), org_id, 5)
         if not rows:
@@ -127,8 +132,9 @@ class CuttingRepository:
     ) -> tuple[StockRule, Decimal | None]:
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT id FROM public.profile_articles WHERE system_id=%s AND sku=%s
-                     AND (org_id IS NULL OR org_id=%s) ORDER BY id""",
+                """SELECT a.id,s.finish_authority::text FROM public.profile_articles a
+                   JOIN public.profile_systems s ON s.id=a.system_id WHERE a.system_id=%s AND a.sku=%s
+                     AND (a.org_id IS NULL OR a.org_id=%s) ORDER BY a.id""",
                 [system_id, parent_sku, org_id],
             )
             parents = cursor.fetchall()
@@ -136,6 +142,13 @@ class CuttingRepository:
                 raise MissingStockAuthority
             if len(parents) != 1:
                 raise AmbiguousStockAuthority
+            if len(parents[0]) > 1 and parents[0][1] is not None:
+                from dekopen_engine.finish_models import FinishAuthority
+                authority = FinishAuthority.model_validate_json(parents[0][1])
+                selected = next((combo for combo in authority.combinations if combo.code == color), None)
+                if selected is None:
+                    raise MissingStockAuthority("La combinación de color no está declarada.")
+                color = selected.reinforcement_stock_code
             cursor.execute(
                 """SELECT id, sku, commercial_sku, manufacturer_name, supplier_name,
                           stock_length_mm, purchase_unit, ix_cm4, org_id

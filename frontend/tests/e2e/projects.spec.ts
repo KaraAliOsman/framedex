@@ -1,4 +1,4 @@
-import { expect, type Page, type TestInfo } from "@playwright/test";
+import { expect, type Page, type Request, type TestInfo } from "@playwright/test";
 
 import type {
   EngineAssemblyCalculateResponse,
@@ -17,16 +17,35 @@ async function responseTo<T>(
   status: number,
   action: () => Promise<unknown>,
 ): Promise<T> {
-  const [response] = await Promise.all([
-    page.waitForResponse(
-      (candidate) =>
-        candidate.request().method() === method && new URL(candidate.url()).pathname === path,
-      { timeout: 20_000 },
-    ),
-    action(),
-  ]);
-  expect(response.status(), `${method} ${path}`).toBe(status);
-  return (await response.json()) as T;
+  // Clone navigation can still have a GET in flight when reload starts.
+  // Capture only new requests, then read their body before action() completes.
+  const started = new Set<Request>();
+  const remember = (request: Request) => {
+    if (request.method() === method && new URL(request.url()).pathname === path) {
+      started.add(request);
+    }
+  };
+  page.on("request", remember);
+  try {
+    const [body] = await Promise.all([
+      page
+        .waitForResponse(
+          (candidate) =>
+            candidate.request().method() === method &&
+            new URL(candidate.url()).pathname === path &&
+            started.has(candidate.request()),
+          { timeout: 20_000 },
+        )
+        .then(async (response) => {
+          expect(response.status(), `${method} ${path}`).toBe(status);
+          return (await response.json()) as T;
+        }),
+      action(),
+    ]);
+    return body;
+  } finally {
+    page.off("request", remember);
+  }
 }
 
 async function screenshot(page: Page, info: TestInfo, name: string): Promise<void> {

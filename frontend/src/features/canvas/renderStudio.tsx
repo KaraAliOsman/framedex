@@ -5,6 +5,7 @@ import type { PlanGeometry } from "../../api/generated/models";
 import type { ProductJson } from "./productEditing";
 import { buildScene3D, type Scene3D, type Solid3D } from "./Product3DScene";
 import { solidToGeometry } from "./scene3dGeometry";
+import { finishGeometryMaterials, prepareFinishTextures } from "./finishMaterials3d";
 import { foilGrainTexture, runLength, solidMaterial } from "./materials3d";
 import type { MemberGeometry } from "./members";
 import { webglAvailable } from "./webglAvailable";
@@ -61,8 +62,20 @@ function tokenColor(token: string, fallback: string): string {
 
 function solidMesh(solid: Solid3D): THREE.Mesh | null {
   const material = solidMaterial(solid, "commercial");
+  if (solid.finish) {
+    const geometry =
+      solid.kind === "box" ? new THREE.BoxGeometry(...solid.size) : solidToGeometry(solid);
+    if (!geometry) return null;
+    if (solid.kind === "box") geometry.translate(...solid.center);
+    return new THREE.Mesh(geometry, finishGeometryMaterials(geometry, solid.finish));
+  }
   const mat = new THREE.MeshStandardMaterial({
-    color: tokenColor(material.colorToken, material.colorFallback),
+    color: solid.hardwareColor
+      ? new THREE.Color().setRGB(
+          ...(solid.hardwareColor.linear_rgb.map(Number) as [number, number, number]),
+          THREE.LinearSRGBColorSpace,
+        )
+      : tokenColor(material.colorToken, material.colorFallback),
     roughness: material.roughness,
     metalness: material.metalness,
     transparent: material.transparent,
@@ -206,11 +219,15 @@ export function renderStudioImage(
   root.traverse((node) => {
     if (node instanceof THREE.Mesh) {
       node.geometry.dispose();
-      const mat = node.material as THREE.MeshStandardMaterial;
+      const materials = (
+        Array.isArray(node.material) ? node.material : [node.material]
+      ) as THREE.MeshStandardMaterial[];
       // texture.dispose() isn't covered by material.dispose() — cloned
       // grain maps would leak across every render pass.
-      mat.map?.dispose();
-      mat.dispose();
+      for (const mat of materials) {
+        mat.map?.dispose();
+        mat.dispose();
+      }
     }
   });
   // LRU eviction — Map order is insertion order, so the first key is the
@@ -264,7 +281,9 @@ export function StudioImage({
       const id = window.setTimeout(cb, 0);
       return () => window.clearTimeout(id);
     };
-    const cancel = schedule(() => {
+    const cancel = schedule(async () => {
+      await prepareFinishTextures(members.finish);
+      if (!alive) return;
       const rendered = renderStudioImage(product, members, plan, memoOptions);
       if (alive) setUrl(rendered);
     });

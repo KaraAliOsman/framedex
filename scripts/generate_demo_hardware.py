@@ -115,17 +115,17 @@ COMMIT;
     (ROOT / "scripts/hardware_schema.sql").read_text(encoding="utf-8"))
 
 
-def hardware_sql() -> str:
-    records = hardware_manifest()
-    sql = generated_sql(records, version=4).removesuffix("COMMIT;\n")
+def hardware_sql(records=None, *, version=4) -> str:
+    records = hardware_manifest() if records is None else records
+    sql = generated_sql(records, version=version).removesuffix("COMMIT;\n")
     sql = sql.replace("scripts/generate_demo_catalog.py", "scripts/generate_demo_hardware.py")
     additions = []
     for record in records:
         code = record["code"]
-        system_id = uid(code, version=4)
+        system_id = uid(code, version=version)
         for kind in ("SAFE", "LOWE"):
             sku = f"{code}-GLASS-{kind}"
-            mapping_id = uid(code, sku, version=4)
+            mapping_id = uid(code, sku, version=version)
             additions.append(insert("glass_purchase_mappings", {"id": mapping_id,
                 "org_id": None, "system_id": system_id, "technical_sku": sku,
                 "purchasing_sku": sku, "manufacturer_name": "Vidriero sintético · DEMO",
@@ -133,11 +133,11 @@ def hardware_sql() -> str:
                 "glass_spec": "3+3 PVB 0,38 / 13,62 aire aluminio / 4 templado" if kind == "SAFE"
                     else "4 / 16 Ar borde cálido / 4 Low-E (c3)", "provenance": {"source": SOURCE}}))
             additions.append(insert("catalog_glass_compositions", {
-                "id": uid(code, "composition/"+sku, version=4), "org_id": None,
+                "id": uid(code, "composition/"+sku, version=version), "org_id": None,
                 "system_id": system_id, "mapping_id": mapping_id, "status": "PARSED",
                 "product": demo_glass_product(code, kind).model_dump(mode="json")}))
         for sku, unit, rate in demo_glass_rates(code):
-            additions.append(shared_demo_price({"id": uid(code, "price/"+sku, version=4),
+            additions.append(shared_demo_price({"id": uid(code, "price/"+sku, version=version),
                 "org_id": None, "system_id": system_id, "sku": sku, "unit": unit,
                 "unit_cost": rate, "seed": 20261230, "source": SOURCE, "is_demo": True, "currency": "CLP"}))
     return sql + "\n" + "\n".join(additions) + "\nCOMMIT;\n"

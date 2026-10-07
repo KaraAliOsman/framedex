@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CouplerChoice } from "./couplerChoice";
+import type { FinishAuthority } from "./finishAuthority";
 import type { GlassSpecChoice } from "./glassSpecChoice";
 import type { GlazingBeadChoice } from "./glazingBeadChoice";
 import type { HandlePolicy } from "./handlePolicy";
@@ -15,6 +16,7 @@ import type { ProfileChoice } from "./profileChoice";
 import type { SystemDimensionalLimit } from "./systemDimensionalLimit";
 
 export interface DesignOptions {
+  finish_authority?: FinishAuthority | null;
   system_id: string;
   /** @nullable */
   system_family: string | null;

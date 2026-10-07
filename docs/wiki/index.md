@@ -19,6 +19,7 @@ Content-oriented map of durable project knowledge.
 - [Glass composition](product/glass-composition.md) — structured recipes, sourced safety, exact billing and sealed supplier orders.
 - [Physical openings](product/physical-openings.md) — sourced motion, active/passive compositions, handles and immutable legacy transport.
 - [Hardware classes](product/hardware-classes.md) — exact component expansion, handles/options, sealed picking and declared machining gaps.
+- [Color finishes](product/color-finishes.md) — sourced room/street faces, exact surcharges, color-specific stock and sealed rendering.
 
 ## Current state
 

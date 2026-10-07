@@ -363,6 +363,7 @@ def load_purchase_authorities(
     *, system_id: UUID, org_id: UUID, color: str,
     profile_skus: set[str], reinforcement_skus: set[str], glass_skus: set[str],
     hardware_skus: set[str], panel_skus: set[str], fitting_skus: set[str],
+    finish_authority: object = None,
 ) -> PurchaseAuthorities:
     def _by_sku(result: list[dict[str, object]], key: str) -> dict[str, list[dict]]:
         grouped: dict[str, list[dict]] = {}
@@ -374,6 +375,8 @@ def load_purchase_authorities(
     # One query per SKU family — the per-SKU loops multiplied round-trips by
     # distinct SKUs in every DOC pack generation.
     if profile_skus:
+        mapping_table = "catalog_color_skus" if finish_authority is not None else "profile_purchase_mappings"
+        finish_clause = " AND mapping.finish=%s" if finish_authority is not None else ""
         grouped = _by_sku(
             rows(
                 "SELECT mapping.id AS binding_id,mapping.commercial_sku AS purchasing_sku,"
@@ -382,12 +385,12 @@ def load_purchase_authorities(
                 "article.system_id,article.sku AS workshop_sku,article.material::text AS material,"
                 "article.commercial_length_mm AS stock_length_mm,profile.code AS cutting_profile_code,"
                 "profile.kerf_mm,profile.head_trim_mm,profile.tail_trim_mm "
-                "FROM public.profile_purchase_mappings mapping "
+                f"FROM public.{mapping_table} mapping "
                 "JOIN public.profile_articles article ON article.id=mapping.profile_article_id "
                 "JOIN public.cutting_profiles profile ON profile.id=mapping.cutting_profile_id "
                 "WHERE article.system_id=%s AND article.sku = ANY(%s) AND mapping.is_active "
-                "AND (mapping.org_id IS NULL OR mapping.org_id=%s)",
-                [system_id, sorted(profile_skus), org_id],
+                "AND (mapping.org_id IS NULL OR mapping.org_id=%s)"+finish_clause,
+                [system_id, sorted(profile_skus), org_id, *([color] if finish_authority is not None else [])],
             ),
             "workshop_sku",
         )
@@ -424,7 +427,13 @@ def load_purchase_authorities(
                 "reinforcement_stock_binding_missing_or_ambiguous",
             )
             binding = _stock_binding(row, PhysicalSourceKind.REINFORCEMENT)
-            if binding.color != color:
+            steel_color = color
+            if finish_authority is not None:
+                combination = next((c for c in finish_authority.combinations if c.code == color), None)
+                if combination is None:
+                    raise DocumentaryError("finish_combination_invalid")
+                steel_color = combination.reinforcement_stock_code
+            if binding.color != steel_color:
                 raise DocumentaryError("physical_stock_color_mismatch")
             stocks.append(binding)
 

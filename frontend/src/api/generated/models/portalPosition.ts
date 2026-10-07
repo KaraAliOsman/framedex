@@ -6,8 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CommercialHardware } from "./commercialHardware";
+import type { ResolvedFinish } from "./resolvedFinish";
 
 export interface PortalPosition {
+  resolved_finish?: ResolvedFinish | null;
   id: string;
   /** @nullable */
   position_index: number | null;

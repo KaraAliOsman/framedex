@@ -500,13 +500,17 @@ _PAL_TECH = {
 }
 
 
-def _commercial_palette(position: dict[str, object]) -> dict[str, str | None]:
+def _commercial_palette(position: dict[str, object], face: str = "interior") -> dict[str, str | None]:
     """Profile finish → rendered face color. The position stores only a
     finish label (WHITE/FOILED + org-entered names), so map the common
     material words and stay neutral-grey on anything unrecognized — never
     invent a wood grain or anthracite that wasn't declared."""
-    color = str(position.get("color_exterior") or "").upper()
-    if color == "FOILED" or "FOIL" in color or "WOOD" in color or "MADERA" in color or "ROBLE" in color:
+    color = str(position.get("color_"+face) or "").upper()
+    resolved = position.get("resolved_finish")
+    if isinstance(resolved, dict) and isinstance(resolved.get(face), dict):
+        from dekopen_engine.finishes import finish_rgb_css
+        fill, edge = finish_rgb_css(resolved[face]["linear_rgb"]), _G_700
+    elif color == "FOILED" or "FOIL" in color or "WOOD" in color or "MADERA" in color or "ROBLE" in color:
         fill, edge = "#7B5A3B", "#4E3A24"
     elif "ANTRAC" in color or "GRIS" in color or "GREY" in color or "NEGRO" in color or "BLACK" in color:
         fill, edge = "#3B4045", "#20242A"
@@ -1406,7 +1410,8 @@ def _doc01(snapshot: dict[str, object]) -> str:
             if _value(bucket["ref_position"].get("system_name")) not in ("", "—")
         })
         finishes = sorted({
-            _finish(key[4], key[5]) for key in groups if key[4] or key[5]
+            finish_label(key[4], key[5], bucket["ref_position"].get("resolved_finish"))
+            for key, bucket in groups.items() if key[4] or key[5]
         })
         glass = sorted({bucket["specs"] for bucket in groups.values()})
         stat_cells = [
@@ -1496,11 +1501,14 @@ def _doc01(snapshot: dict[str, object]) -> str:
         spec_items.append(
             f'<li><span class="plabel">Vidrio / relleno</span> {escape(specs)}</li>'
         )
-        finish = _finish(ci, ce)
+        finish = finish_label(ci, ce, ref.get("resolved_finish"))
         if finish and finish != "—":
             spec_items.append(
                 f'<li><span class="plabel">Acabado</span> {escape(finish)}</li>'
             )
+        resolved = ref.get("resolved_finish")
+        if isinstance(resolved, dict) and any(resolved.get(face, {}).get("approximate") for face in ("interior", "exterior")):
+            spec_items.append('<li><span class="plabel">Representación</span> Color aproximado; revise la muestra del fabricante.</li>')
         schedule = ref.get("accessory_schedule")
         hardware_labels = []
         for hardware in ref.get("commercial_hardware") or []:
@@ -3094,8 +3102,11 @@ def _finish(ci: object, ce: object) -> str:
     return interior if interior == exterior else f"{interior} / {exterior}"
 
 
-def finish_label(color_interior: object, color_exterior: object) -> str:
+def finish_label(color_interior: object, color_exterior: object, resolved: object = None) -> str:
     """Public wrapper — non-document surfaces reuse the sealed finish label."""
+    if isinstance(resolved, dict) and resolved.get("interior") and resolved.get("exterior"):
+        interior, exterior = resolved["interior"]["name"], resolved["exterior"]["name"]
+        return f"{interior} en ambas caras" if interior == exterior else f"{exterior} exterior / {interior} interior"
     return _finish(color_interior, color_exterior)
 
 

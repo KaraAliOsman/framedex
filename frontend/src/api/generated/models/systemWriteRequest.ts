@@ -17,6 +17,7 @@ export interface SystemWriteRequest {
   dimensional_limits?: SystemDimensionalLimitRequest[];
   opening_capabilities?: unknown | null;
   paired_leaf_rule?: unknown | null;
+  finish_authority?: unknown | null;
   /**
    * @minLength 1
    * @maxLength 150

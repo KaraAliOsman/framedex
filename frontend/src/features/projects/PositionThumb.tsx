@@ -111,7 +111,7 @@ export function PositionThumb({
             <LazyStudioImage
               product={product}
               members={members}
-              options={{ width: 360, height: 300 }}
+              options={{ width: 360, height: 300, inside: members.viewFace !== "exterior" }}
               alt={t("projects.positionThumb")}
               className="position-thumb"
             />

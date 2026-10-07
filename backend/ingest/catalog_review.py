@@ -37,6 +37,18 @@ class ColorSkuSerializer(StrictSerializer):
     commercial_sku = serializers.CharField(max_length=150)
     physical_stock_identity = serializers.CharField(max_length=200)
     source = serializers.CharField(max_length=500)
+    manufacturer_name = serializers.CharField(required=False, allow_null=True, max_length=255)
+    supplier_name = serializers.CharField(required=False, allow_null=True, max_length=255)
+    stock_color = serializers.CharField(required=False, allow_null=True, max_length=50)
+    cutting_profile_id = serializers.UUIDField(required=False, allow_null=True)
+    binding_version = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    purchase_unit = serializers.ChoiceField(choices=["BAR"], required=False, allow_null=True)
+    is_active = serializers.BooleanField(required=False)
+
+    def validate(self, attrs):
+        if attrs.get("stock_color") is not None and attrs["stock_color"] != attrs.get("finish"):
+            raise serializers.ValidationError({"stock_color": "El stock debe declarar la misma combinación interior/exterior."})
+        return attrs
 
 
 class GlassMappingSerializer(StrictSerializer):
@@ -216,8 +228,20 @@ def _plan(org_id, import_row, entries, *, lock=False):
                              [org_id, profile["id"], values["finish"]]) if profile.get("revision") else []
                 before = service.retrieve(COLORS, org_id, found[0]["id"]) if found else None
                 resource = COLORS
-                data = _validated(ColorSkuSerializer, {"system_id": systems[code], "profile_article_id": profile["id"],
-                    **{name: values[name] for name in ("finish", "commercial_sku", "physical_stock_identity", "source")}}, key, errors)
+                color_data = {"system_id": systems[code], "profile_article_id": profile["id"],
+                    **{name: values[name] for name in ("finish", "commercial_sku", "physical_stock_identity", "source")},
+                    **{name: values[name] for name in ("manufacturer_name", "supplier_name", "stock_color", "binding_version", "purchase_unit", "is_active") if values.get(name) is not None}}
+                if values.get("cutting_profile_code"):
+                    from engine_api.cutting_repository import CuttingRepository
+                    try:
+                        color_data["cutting_profile_id"] = CuttingRepository().cutting_profile(org_id, values["cutting_profile_code"]).id
+                    except ValueError:
+                        errors.append(_error(key, "cutting_profile_code", "Declara un perfil de corte vigente de este taller."))
+                if (current.get(("system", code)) or {}).get("finish_authority"):
+                    for name in ("manufacturer_name", "stock_color", "cutting_profile_id", "binding_version", "purchase_unit"):
+                        if color_data.get(name) is None:
+                            errors.append(_error(key, name, "Completa la autoridad de stock para esta combinación de la carta."))
+                data = _validated(ColorSkuSerializer, color_data, key, errors)
         elif sheet == "Límites":
             before = current.get(("system", code))
             rule = _validated(SystemDimensionalLimitSerializer,

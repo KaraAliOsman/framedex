@@ -254,6 +254,30 @@ function change(key: TranslationKey, value: string) {
   });
 }
 
+it("restores the cached BOM on undo and never authorizes saving a pending color", async () => {
+  const options = await projectDesignOptions("system-a");
+  if (options.status !== 200) throw new Error("Expected fixture options");
+  vi.mocked(projectDesignOptions).mockResolvedValue(
+    ok({ ...options.data, colors: ["WHITE", "FOILED"] }),
+  );
+  mount();
+  await ready();
+  const pending = deferred<Awaited<ReturnType<typeof engineAssemblyCalculate>>>();
+  evaluate.mockReturnValueOnce(pending.promise);
+  change("projects.color", "FOILED");
+  await waitFor(() => expect(evaluate).toHaveBeenCalledTimes(2));
+  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
+  fireEvent.click(screen.getAllByRole("button", { name: t("projects.undo") })[0]!);
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: t("projects.save") })).toBeEnabled(),
+  );
+  save();
+  await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
+  expect(update.mock.calls[0]![1].design.color).toBe("WHITE");
+  await act(async () => pending.resolve(ok(assemblyEval("CUT-FOILED"))));
+  expect(screen.queryByText("CUT-FOILED")).not.toBeInTheDocument();
+});
+
 function save() {
   fireEvent.click(screen.getByRole("button", { name: t("projects.save") }));
 }

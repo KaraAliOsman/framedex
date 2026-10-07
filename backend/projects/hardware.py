@@ -67,6 +67,8 @@ class HardwarePreviewSerializer(serializers.Serializer):
 
 def preview_hardware(org_id, data):
     params = SystemParamsRepository().load_visible(data["system_id"], org_id)
+    from dekopen_engine.finishes import prepare_finish
+    params = prepare_finish(params, data["color"])
     original = parse_parametric_node(data["parametric_tree"])
     target = None
     def automatic(node):

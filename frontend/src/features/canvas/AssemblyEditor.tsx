@@ -1882,11 +1882,18 @@ export function AssemblyEditor({
   const openingPreview = useAssemblyCalculation(organizationId, previewInputs, false);
   const previewReady =
     openingPreviewProduct !== null && openingPreview.evaluation?.status === "VALID";
-  const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
+  const { evaluation, currentEvaluation, isPending, errorCode } = useAssemblyCalculation(
+    organizationId,
+    inputs,
+  );
   const drawingEvaluation = previewReady ? openingPreview.evaluation : evaluation;
   const issues = evaluation?.issues ?? [];
   const glassChecks = useGlassChecks(organizationId, product, options, evaluation);
-  const members = useMemo(() => resolveMembers(options), [options]);
+  const [viewFace, setViewFace] = useState<"interior" | "exterior">("interior");
+  const members = useMemo(
+    () => resolveMembers(options, inputs.color, viewFace),
+    [options, inputs.color, viewFace],
+  );
   const [tool, setTool] = useState<EditorTool>("select");
   const [treeOpen, setTreeOpen] = useState(
     () =>
@@ -1928,8 +1935,11 @@ export function AssemblyEditor({
   }, [contextMenu]);
 
   useEffect(() => {
-    onEvaluationChange(evaluation);
-  }, [evaluation, onEvaluationChange]);
+    // Only the current request can authorize a save. Undo can restore the same
+    // cached result while a previous request is pending: publish it again for
+    // that input identity instead of leaving the parent's result cleared.
+    onEvaluationChange(currentEvaluation);
+  }, [currentEvaluation, inputs, onEvaluationChange]);
 
   /** Every "…with DEKOPEN" affordance: scroll the assistant into view and
    * hand it a prompt draft — "" focuses the field untouched. */
@@ -2324,7 +2334,24 @@ export function AssemblyEditor({
           }
         }}
       >
-        <span className="assembly-view-label">Vista interior</span>
+        <div className="assembly-view-choices" role="group" aria-label="Cara visible del dibujo">
+          <button
+            type="button"
+            aria-pressed={viewFace === "interior"}
+            className="assembly-face"
+            onClick={() => setViewFace("interior")}
+          >
+            Vista interior
+          </button>
+          <button
+            type="button"
+            aria-pressed={viewFace === "exterior"}
+            className="assembly-face"
+            onClick={() => setViewFace("exterior")}
+          >
+            Vista exterior
+          </button>
+        </div>
         {openingPreviewProduct && (
           <span className="opening-preview-label" role="status">
             {openingPreview.isPending
@@ -2386,7 +2413,7 @@ export function AssemblyEditor({
                   ),
                 );
             }}
-            disabled={busy}
+            disabled={busy || viewFace === "exterior"}
             divideTool={divideToolType}
             dimLevel={detail}
             onSelectModule={pickModule}

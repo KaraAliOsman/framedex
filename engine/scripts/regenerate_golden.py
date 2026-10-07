@@ -14,12 +14,19 @@ from engine.tests.catalog_families import family_cases
 from engine.tests.glass_cases import glass_cases
 from engine.tests.opening_cases import opening_cases
 from engine.tests.hardware_cases import hardware_cases
+from engine.tests.finish_cases import finish_cases
 
 SNAPSHOT = Path(__file__).resolve().parents[1] / "tests" / "golden_example.json"
 FAMILY_SNAPSHOT = SNAPSHOT.with_name("golden_catalog_families.json")
 GLASS_SNAPSHOT = SNAPSHOT.with_name("golden_glass_products.json")
 OPENING_SNAPSHOT = SNAPSHOT.with_name("golden_openings.json")
 HARDWARE_SNAPSHOT = SNAPSHOT.with_name("golden_hardware_classes.json")
+FINISH_SNAPSHOT = SNAPSHOT.with_name("golden_finishes.json")
+
+
+def generated_finish_bytes() -> bytes:
+    return (json.dumps(finish_cases(), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)
+            + "\n").encode("utf-8")
 
 
 def generated_hardware_bytes() -> bytes:
@@ -98,12 +105,15 @@ def main() -> None:
         if not HARDWARE_SNAPSHOT.is_file() or HARDWARE_SNAPSHOT.read_bytes() != generated_hardware_bytes():
             raise SystemExit("Hardware golden byte drift: run make goldgen and review the diff")
         print("Golden byte check: PASS (read-only)")
+        if not FINISH_SNAPSHOT.is_file() or FINISH_SNAPSHOT.read_bytes() != generated_finish_bytes():
+            raise SystemExit("Finish golden byte drift: run make goldgen and review the diff")
     else:
         SNAPSHOT.write_bytes(generated_bytes())
         FAMILY_SNAPSHOT.write_bytes(generated_family_bytes())
         GLASS_SNAPSHOT.write_bytes(generated_glass_bytes())
         OPENING_SNAPSHOT.write_bytes(generated_opening_bytes())
         HARDWARE_SNAPSHOT.write_bytes(generated_hardware_bytes())
+        FINISH_SNAPSHOT.write_bytes(generated_finish_bytes())
         print(f"Generated {SNAPSHOT.relative_to(SNAPSHOT.parents[2]).as_posix()}")
 
 

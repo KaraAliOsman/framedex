@@ -560,6 +560,7 @@ export function writeFromDraft<R extends Resource>(
   openingCapabilities?: unknown[],
   pairedRule?: unknown,
   hardwareClass?: unknown,
+  finishAuthority?: SystemWriteRequest["finish_authority"],
 ): Writes[R] {
   const flat: Record<string, unknown> = {};
   for (const field of groupsFor(resource, draft).flatMap((group) => group.fields)) {
@@ -605,6 +606,7 @@ export function writeFromDraft<R extends Resource>(
     if (limits !== undefined) values.dimensional_limits = limits;
     if (openingCapabilities !== undefined) values.opening_capabilities = openingCapabilities;
     if (pairedRule !== undefined) values.paired_leaf_rule = pairedRule;
+    if (finishAuthority !== undefined) values.finish_authority = finishAuthority;
   }
   if (resource === "hardware-kits") {
     if (hardwareClass !== undefined) values.class_authority = hardwareClass;

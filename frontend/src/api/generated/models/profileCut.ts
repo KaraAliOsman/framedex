@@ -8,6 +8,10 @@
 import type { MaterialEnum } from "./materialEnum";
 
 export interface ProfileCut {
+  /** @nullable */
+  commercial_sku?: string | null;
+  /** @nullable */
+  stock_color?: string | null;
   sku: string;
   role: string;
   material: MaterialEnum;

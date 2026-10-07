@@ -1713,12 +1713,22 @@ def compute_geometry(
 ) -> GeometryComputation:
     """Calculate Core geometry, mobile-leaf weights and selected hardware."""
 
+    # Inspection, layout and strict BOM calculation all share this entry point.
+    # A diagnostic computation must use the same sourced finish rules and hash.
+    from dekopen_engine.finishes import prepare_finish, finish_result, validate_finish_size
+    if params.finish_authority is not None:
+        if finish is None:
+            raise ValueError("Elige una combinación interior/exterior de la carta de la serie.")
+        params = prepare_finish(params, finish)
+
     root = normalize_opening_tree(root, params)
     validate_family(root, params)
     if params.material not in (MaterialType.PVC, MaterialType.ALUMINIUM):
         raise NotImplementedError(f"{params.material.value} geometry is not supported")
 
     top, nominal_width_mm, nominal_height_mm = _normalize_top_node(root)
+    if finish is not None:
+        validate_finish_size(params, finish, nominal_width_mm, nominal_height_mm)
     frame_article = _article(params, ProfileRole.FRAME)
     clear_width_mm = nominal_width_mm - _TWO * frame_article.face_width_mm
     clear_height_mm = nominal_height_mm - _TWO * frame_article.face_width_mm
@@ -1801,6 +1811,8 @@ def compute_geometry(
         if accumulator.opening_leaves:
             accumulator.computation.result = accumulator.computation.result.model_copy(
                 update={"opening_leaves": accumulator.opening_leaves})
+        if finish is not None:
+            accumulator.computation.result = finish_result(accumulator.computation.result, params, finish)
     return accumulator.computation
 
 

@@ -1804,6 +1804,15 @@ def evaluate_product(
     finish: str | None = None,
 ) -> ProductEvaluation:
     """Evaluate an assembly: plan geometry, per-module geometry, couplers, BOM."""
+    from dekopen_engine.finishes import prepare_finish, finish_article, resolve_finish, finish_result, validate_finish_size
+    if params.finish_authority is not None:
+        if finish is None:
+            raise ValueError("Elige una combinación interior/exterior de la carta de la serie.")
+        width, height = elevation_envelope(product.assembly)
+        validate_finish_size(params, finish, width, height)
+        selected = resolve_finish(params, finish)
+        params = prepare_finish(params, finish)
+        coupler_articles = {sku: finish_article(article, selected) for sku, article in (coupler_articles or {}).items()}
     assembly = product.assembly
     modules = assembly.modules
     couplings = assembly.couplings
@@ -2208,6 +2217,8 @@ def evaluate_product(
     else:
         status = ProductStatus.VALID
 
+    if bom is not None and finish is not None:
+        bom = finish_result(bom, params, finish)
     return ProductEvaluation(
         status=status,
         issues=issues,

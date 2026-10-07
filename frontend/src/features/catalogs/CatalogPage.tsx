@@ -8,6 +8,7 @@ import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import { HardwareAuthorityView } from "./HardwareAuthorityView";
+import { FinishAuthorityEditor, finishAuthorityProblem } from "./FinishAuthorityEditor";
 import {
   OpeningCapabilitiesEditor,
   openingAuthorityProblem,
@@ -18,7 +19,11 @@ import { SystemWorkspaceView } from "./SystemWorkspace";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import { SectionImportPanel } from "./SectionImportPanel";
 import { Button, DeniedState, DimLoader, PageHeader, Tabs, useConfirm } from "../../ui";
-import type { ProcessProfileOption, SystemResponse } from "../../api/generated/models";
+import type {
+  FinishAuthority,
+  ProcessProfileOption,
+  SystemResponse,
+} from "../../api/generated/models";
 import {
   HARDWARE_COMPONENT_CATEGORIES,
   catalogApi,
@@ -602,6 +607,9 @@ function CatalogEditor({
     ((resource === "systems" ? (row as SystemResponse | undefined)?.opening_capabilities : []) as
       Capability[] | null) ?? [],
   );
+  const [finishAuthority, setFinishAuthority] = useState<FinishAuthority | null>(
+    (resource === "systems" ? (row as SystemResponse | undefined)?.finish_authority : null) ?? null,
+  );
   const [pairedRule, setPairedRule] = useState<PairedRule | null>(
     ((resource === "systems"
       ? (row as SystemResponse | undefined)?.paired_leaf_rule
@@ -706,7 +714,9 @@ function CatalogEditor({
       return;
     }
     if (resource === "systems") {
-      const problem = openingAuthorityProblem(openingCapabilities, pairedRule);
+      const problem =
+        openingAuthorityProblem(openingCapabilities, pairedRule) ??
+        finishAuthorityProblem(finishAuthority);
       if (problem) {
         setError(problem);
         return;
@@ -723,6 +733,7 @@ function CatalogEditor({
         openingCapabilities,
         pairedRule,
         row && "class_authority" in row ? row.class_authority : undefined,
+        finishAuthority,
       );
     } catch (caught) {
       // writeFromDraft tags the failing field ("Invalid integer: sku") — name
@@ -919,6 +930,17 @@ function CatalogEditor({
             <div className="catalog-fields">{group.fields.map(control)}</div>
           </fieldset>
         ))}
+        {resource === "systems" && (
+          <FinishAuthorityEditor
+            value={finishAuthority}
+            material={draft.material ?? "PVC"}
+            onChange={(value) => {
+              setFinishAuthority(value);
+              if (value) change("finishes", value.combinations.map((c) => c.code).join(", "));
+              setDirty(true);
+            }}
+          />
+        )}
         {resource === "systems" && (
           <OpeningCapabilitiesEditor
             capabilities={openingCapabilities}

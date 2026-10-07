@@ -36,8 +36,10 @@ from projects.views import (
 )
 from projects.options import DesignOptionsView
 from projects.hardware import HardwarePreviewView
+from projects.finishes import FinishPreviewView
 
 urlpatterns = [
+    path("projects/finish-preview/", FinishPreviewView.as_view()),
     path("projects/hardware-preview/", HardwarePreviewView.as_view()),
     path("projects/design-options/<uuid:system_id>/", DesignOptionsView.as_view()),
     path("projects/flow/confirm/<uuid:link_id>/", FlowPaymentConfirmView.as_view()),

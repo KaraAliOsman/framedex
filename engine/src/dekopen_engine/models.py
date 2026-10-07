@@ -9,6 +9,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer, model_validator
 
 from dekopen_engine.glass_composition import GlassComposition, GlassProcessing, GlassProduct, total_glass_thickness
+from dekopen_engine.finish_models import FinishAuthority, ResolvedFinish
 
 
 class EngineModel(BaseModel):
@@ -803,6 +804,14 @@ class SystemDimensionalLimit(EngineModel):
 
 
 class SystemParams(EngineModel):
+    @model_serializer(mode="wrap")
+    def preserve_historical_finish_authority(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        for key in ("finish_authority", "finish_profile_skus"):
+            if key not in self.model_fields_set:
+                result.pop(key, None)
+        return result
+
     system_code: str
     # None decodes pre-family snapshots. New catalogs must declare a family;
     # they never gain legacy mixed-family permission from a guessed value.
@@ -838,6 +847,8 @@ class SystemParams(EngineModel):
     # Finishes the series actually sells — the estimator picks only declared
     # ones; every non-WHITE finish consumes the foil clearances.
     finishes: tuple[str, ...] = ("WHITE",)
+    finish_authority: FinishAuthority | None = None
+    finish_profile_skus: dict[str, dict[str, str]] = Field(default_factory=dict)
     sliding_glazing_deduction_width_mm: Decimal | None = None
     sliding_glazing_deduction_height_mm: Decimal | None = None
     door_leaf_side_clearance_mm: Decimal
@@ -945,6 +956,16 @@ class ProfileCut(EngineModel):
     # cut requires bending authority — without one it must surface as a
     # manufacturing-incomplete piece, never a straight cut of that length.
     sagitta_mm: Decimal | None = None
+    commercial_sku: str | None = None
+    stock_color: str | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_cut(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        for key in ("commercial_sku", "stock_color"):
+            if key not in self.model_fields_set:
+                result.pop(key, None)
+        return result
 
 
 class FittingPiece(EngineModel):
@@ -997,6 +1018,7 @@ class LeafOpeningFact(EngineModel):
 
 
 class EngineResult(EngineModel):
+    finish: ResolvedFinish | None = None
     profile_cuts: list[ProfileCut]
     reinforcements: list[ReinforcementPiece]
     glasses: list[GlassPiece]
@@ -1009,6 +1031,7 @@ class EngineResult(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_historical_bom(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        if "opening_leaves" not in self.model_fields_set:
-            result.pop("opening_leaves", None)
+        for key in ("opening_leaves", "finish"):
+            if key not in self.model_fields_set:
+                result.pop(key, None)
         return result

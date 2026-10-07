@@ -8,7 +8,7 @@ import inspect
 import pytest
 
 from dekopen_engine import ParametricNode, SystemParams, calculate_geometry
-from dekopen_engine import catalog_rules, geometry, hardware, openings
+from dekopen_engine import catalog_rules, finishes, geometry, hardware, openings
 from engine.tests.test_shot06_core import core_node
 
 CORE_CONSUMERS: dict[str, Callable[..., object]] = {
@@ -38,6 +38,8 @@ CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "opening_capabilities": openings.resolve_capability,
     "paired_leaf_rule": geometry._append_paired_leaves,
     "compatible_opening_systems": openings.resolve_capability,
+    "finish_authority": finishes.resolve_finish,
+    "finish_profile_skus": finishes.resolve_finish,
 }
 METADATA = {"system_code", "depth_mm"}
 RESERVED = {"sliding_lateral_clearance_mm", "corner_bracket_loss_mm", "hook_depth_mm"}
@@ -48,7 +50,7 @@ API_BOUNDARY = {"finishes", "legacy_authority"}
 
 def test_every_system_parameter_has_an_explicit_scope() -> None:
     assert (
-        len(CORE_CONSUMERS) == 26
+        len(CORE_CONSUMERS) == 28
         and len(METADATA) == 2
         and len(RESERVED) == 3
         and len(API_BOUNDARY) == 2
