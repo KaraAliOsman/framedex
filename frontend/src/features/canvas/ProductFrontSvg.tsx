@@ -1624,6 +1624,7 @@ export function ProductFrontContent({
   issues,
   disabled,
   preview = false,
+  hideOverallWidth = false,
   divideTool = null,
   dimLevel = "design",
   onSelectModule,
@@ -1651,6 +1652,7 @@ export function ProductFrontContent({
    * affordance (roles, tab stops, handlers) so it can live inside a
    * single outer button. */
   preview?: boolean;
+  hideOverallWidth?: boolean;
   /** Armed divide tool — hovering shows where the mullion lands and
    * clicking splits the leaf bay under the cursor at the cursor offset. */
   divideTool?: "SPLIT_V" | "SPLIT_H" | null;
@@ -1940,15 +1942,19 @@ export function ProductFrontContent({
     >
       {/* overall width chain — untranslated so it always clears the
           tallest silhouette point (arc crowns sit at viewBox y ≥ 0). */}
-      <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
-      <SvgDim
-        x={totalW / 2}
-        y={-70}
-        value={totalW.toFixed(2)}
-        label={t("assembly.totalWidth")}
-        disabled={disabled}
-        onCommit={onCommitTotalWidth}
-      />
+      {hideOverallWidth === false && (
+        <>
+          <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
+          <SvgDim
+            x={totalW / 2}
+            y={-70}
+            value={totalW.toFixed(2)}
+            label={t("assembly.totalWidth")}
+            disabled={disabled}
+            onCommit={onCommitTotalWidth}
+          />
+        </>
+      )}
       {/* the drawing band lifts for arc overshoot: sill stays shared. */}
       <g transform={`translate(0 ${lift})`}>
         {/* height chain */}

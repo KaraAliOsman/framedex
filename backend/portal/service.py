@@ -284,6 +284,10 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
             "location_tag": value.get("location_tag"),
             "width_mm": str(value.get("width_mm") or ""),
             "height_mm": str(value.get("height_mm") or ""),
+            "opening_measurements": [{'module_index':index+1,
+                'width_mm':item['result']['width']['opening_mm'],'height_mm':item['result']['height']['opening_mm'],
+                'rule_name':item['rule']['name'],'synthetic':item['rule']['synthetic']}
+                for index,item in enumerate((value.get('measurements') or {}).get('measurements') or [])],
             "color_interior": value.get("color_interior"),
             "color_exterior": value.get("color_exterior"),
             # Customer rendering needs the sealed samples, not the workshop's

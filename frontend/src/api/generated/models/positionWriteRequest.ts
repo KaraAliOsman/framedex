@@ -16,4 +16,10 @@ export interface PositionWriteRequest {
    */
   quantity: number;
   design: PositionDesignRequest;
+  measurements?: unknown;
+  /**
+   * @minLength 1
+   * @maxLength 1000
+   */
+  measurement_reason?: string;
 }

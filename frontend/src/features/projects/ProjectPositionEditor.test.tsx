@@ -741,7 +741,12 @@ it.each(["http", "network"] as const)(
       update.mockResolvedValueOnce({
         status: 409,
         headers: new Headers(),
-        data: { error: { code: "stale_position", detail: "Rejected" } },
+        data: {
+          error: {
+            code: "stale_edit",
+            detail: "Otra persona guardó el vano. Recarga para comparar.",
+          },
+        },
       });
     }
     mount();
@@ -751,7 +756,11 @@ it.each(["http", "network"] as const)(
     const designBefore = useCanvasStore.getState().inputs;
 
     save();
-    await screen.findByText(t("projects.saveError"));
+    await screen.findByText(
+      failure === "http"
+        ? "Otra persona guardó el vano. Recarga para comparar."
+        : t("projects.saveError"),
+    );
 
     expect(screen.getByLabelText(t("projects.location"))).toHaveValue("Entrada editada");
     expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue("9");

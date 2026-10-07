@@ -1113,6 +1113,12 @@ def freeze_revision_a(
             tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
             is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
             color = _position_finish(position)
+            from projects.mounting import measurement_public
+            measure = measurement_public(org_id,position['id'],{
+                'system_id':str(position['system_id']), 'nominal_width_mm':str(position['width_mm']),
+                'nominal_height_mm':str(position['height_mm']), 'color':color, 'parametric_tree':tree},revision)
+            measurement_confirmed = bool(measure and measure['current'] and measure['state']=='CONFIRMED')
+            production_allowed = production_allowed and measurement_confirmed
             system_id = UUID(str(position["system_id"]))
             params = SystemParamsRepository().load_visible(system_id, org_id)
             if position_id in extra_authorities:
@@ -1451,6 +1457,7 @@ def freeze_revision_a(
                     position["legacy_handle_migration_confirmed"]
                 ),
                 "process_facts": process_facts,
+                "measurements": measure,
             })
             bom.append({
                 "position_id": position_id,
@@ -1499,6 +1506,7 @@ def freeze_revision_a(
         )
         sealed_at = datetime.now(timezone.utc)
         snapshot = {
+            "measurements_required": True,
             "is_demo": any(item.get("is_demo") for item in position_inputs),
             "schema_version": 1,
             "canonical_version": DOCUMENTARY_CANONICAL_VERSION,

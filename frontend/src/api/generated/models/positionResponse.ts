@@ -21,4 +21,5 @@ export interface PositionResponse {
   design: PositionDesign;
   bom: EngineCalculateResponse;
   updated_at: string;
+  measurements?: unknown | null;
 }

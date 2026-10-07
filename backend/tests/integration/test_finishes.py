@@ -76,6 +76,9 @@ def test_finishes_seal_price_purchase_portal_and_bicolor_production(documentary_
                 "confirmed":False,"reason":"D05 reviewed price","_actor_id":owner})
             apply_operation(org,owner,"OWNER",UUID(priced["id"]),"D05 apply",False)
         try:
+            from backend.tests.integration.mounting_fixture import confirm_fixture_measurements
+            for pos in rows('SELECT id FROM project_positions WHERE org_id=%s AND project_id=%s',[org,project['id']]):
+                confirm_fixture_measurements(org,pos['id'])
             frozen=freeze_revision_a(org_id=org,actor_id=owner,project_id=project["id"],pricing_operation_id=UUID(priced["id"]),confirmed=True,allow_incomplete_workshop=True)
         except DocumentaryError as error:
             pytest.fail(str(error.extra))

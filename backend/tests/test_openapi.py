@@ -11,6 +11,10 @@ OPENAPI = ROOT / "backend" / "openapi.yaml"
 def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
+        '/api/v1/organization/mounting/{system_id}/',
+        '/api/v1/projects/mounting-preview/',
+        '/api/v1/positions/{position_id}/measurements/confirm/',
+        '/api/v1/positions/{position_id}/measurements/rectify/',
         "/api/v1/billing/wallet/",
         "/api/v1/billing/",
         "/api/v1/billing/flow/confirm/{order_id}/",

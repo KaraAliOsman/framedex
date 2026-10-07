@@ -56,6 +56,17 @@ class PositionWriteSerializer(StrictSerializer):
     location_tag = serializers.CharField(max_length=100, allow_blank=True)
     quantity = serializers.IntegerField(min_value=1, max_value=2147483647)
     design = PositionDesignSerializer()
+    measurements = serializers.JSONField(required=False)
+    measurement_reason = serializers.CharField(max_length=1000, required=False)
+
+    def validate_measurements(self, value):
+        from pydantic import TypeAdapter
+        from dekopen_engine.mounting import OpeningSurvey
+        from pricing.repository import json_text
+        try:
+            return [item.model_dump(mode='json') for item in TypeAdapter(list[OpeningSurvey]).validate_json(json_text(value))]
+        except (ValueError,TypeError) as error:
+            raise serializers.ValidationError(str(error)) from error
 
 
 class PositionUpdateSerializer(PositionWriteSerializer):
@@ -74,6 +85,7 @@ class PositionResponseSerializer(serializers.Serializer):
     design = PositionDesignSerializer()
     bom = EngineCalculateResponseSerializer()
     updated_at = serializers.DateTimeField()
+    measurements = serializers.JSONField(allow_null=True, required=False)
 
 
 class ClientWriteSerializer(StrictSerializer):

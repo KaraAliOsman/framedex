@@ -24,6 +24,28 @@ sources:
 
 # Current reality
 
+## D07 · verificado localmente, integración pendiente (2026-10-07)
+
+La rama `codex/D07-vano-fabricacion` agrega reglas de montaje con fuente y
+autoridad versionada, derivación Decimal desde una o tres medidas de vano,
+fijación motivada y evidencia append-only ligada al diseño. Nuevas emisiones
+sellan la exigencia de confirmación; backend y SQL bloquean OT pendiente. La
+rectificación de una cotización aprobada simula venta, abre sucesora y preserva
+el PDF anterior byte a byte. El encargado confirma mediante un lock estrecho,
+sin recibir escritura general del proyecto.
+
+Las 20 pruebas PostgreSQL focalizadas pasan, incluidos actor/tenant,
+timestamp/generación, cobertura, borrado legítimo sin perder historial y rechazo
+de copia de evidencia obsoleta a un diseño distinto.
+Los cuatro gates locales pasan: 660 motor (+2 xfail), 1 184 backend y 730
+frontend. La cadena real verifica Ajustes con MFA, ensanche por lado,
+guardar/deshacer, portal 390, revisión/Δ, PDF y OT. Las 24 comparaciones formales
+no añaden hallazgos; la matriz comprueba cotas dentro de la hoja y ocho campos
+visibles en el inspector a 768 px. Se conservan los hallazgos heredados del
+editor móvil y del cromo de proyecto. Database Gate, CI y merge siguen
+pendientes. Véase [vano y montaje](../product/opening-measurements.md) y su
+[aceptación](../../redesign/captures/vano-fabricacion/aceptacion.md).
+
 ## D06 · accesorios y servicios integrados y verificados (2026-10-07)
 
 El PR [#124](https://github.com/KaraAliOsman/framedex/pull/124), squash `fb9b5881d48248f51c5f05ccdc9682aacdacc0bd`, agrega definiciones compatibles, cantidades exactas,

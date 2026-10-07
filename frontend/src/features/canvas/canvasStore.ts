@@ -3,6 +3,7 @@ import type { AnnotationRequest, InspectorDiff } from "../../api/generated/model
 import type { SpecClipboard } from "../commands/types";
 import { intentBays, walkIntent, type IntentNode } from "./intentEditing";
 import type { ProductJson } from "./productEditing";
+import type { MountingEvidence } from "../projects/mountingModel";
 
 export type DimensionAxis = "width" | "height";
 
@@ -24,6 +25,7 @@ export type CanvasDesignInputs = {
   parametricTree: IntentNode;
   /** Compositional product (product-v2). null = classic single unit. */
   product: ProductJson | null;
+  mounting?: MountingEvidence[];
 };
 
 const HISTORY_LIMIT = 100;
@@ -161,6 +163,13 @@ function reconciledSelection(inputs: CanvasDesignInputs, current: string): strin
   return intentBays(inputs.parametricTree)[0]?.id ?? "";
 }
 
+function reconciledMounting(inputs: CanvasDesignInputs): CanvasDesignInputs {
+  if (!inputs.mounting?.length || !inputs.product) return inputs;
+  const targets = new Set(inputs.product.assembly.modules.map((module) => module.id));
+  const mounting = inputs.mounting.filter((item) => targets.has(item.survey.module_id ?? ""));
+  return mounting.length === inputs.mounting.length ? inputs : { ...inputs, mounting };
+}
+
 export const useCanvasStore = create<CanvasState>((set) => ({
   annotations: [],
   previewDiff: null,
@@ -228,7 +237,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   },
   commitInputs(next) {
     set((state) => ({
-      inputs: next,
+      inputs: reconciledMounting(next),
       past: [...state.past.slice(-(HISTORY_LIMIT - 1)), state.inputs],
       future: [],
       draftDimension: null,
@@ -237,7 +246,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   },
   replaceInputs(next) {
     set(() => ({
-      inputs: next,
+      inputs: reconciledMounting(next),
       draftDimension: null,
       previewDiff: null,
     }));
@@ -297,7 +306,13 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     set({ lastMutation: { specId, args } });
   },
   setSystemId(systemId) {
-    set((state) => ({ inputs: { ...state.inputs, systemId } }));
+    set((state) => ({
+      inputs: {
+        ...state.inputs,
+        systemId,
+        mounting: state.inputs.systemId === systemId ? state.inputs.mounting : [],
+      },
+    }));
   },
   setDraftDimension(draftDimension) {
     set({ draftDimension });

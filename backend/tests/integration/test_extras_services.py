@@ -108,6 +108,8 @@ def test_extras_services_seal_ot_saw_and_policy_drift(documentary_tenant, next_a
         closed=services_response(org,project_row(org,project['id']))
         assert closed['locked'] and closed['lines'][0]['amount']=='17400' and closed['definitions']
         try:
+            from backend.tests.integration.mounting_fixture import confirm_fixture_measurements
+            confirm_fixture_measurements(org,position['id'])
             frozen=freeze_revision_a(org_id=org,actor_id=owner,project_id=project['id'],pricing_operation_id=UUID(priced['id']),confirmed=True,allow_incomplete_workshop=True)
         except DocumentaryError as error:
             pytest.fail(str(error.extra))

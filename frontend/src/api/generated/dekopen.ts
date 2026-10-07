@@ -165,6 +165,10 @@ import type {
   KitResponse,
   KitWriteRequest,
   MaterialRecheck,
+  MeasurementConfirmRequest,
+  MeasurementResponse,
+  MountingPreviewRequest,
+  MountingPreviewResponse,
   OperationalSummary,
   OpsExport,
   OrderIndexResponse,
@@ -226,6 +230,8 @@ import type {
   ProjectResponse,
   ProjectWriteRequest,
   PurchasingState,
+  RectificationRequest,
+  RectificationResponse,
   RemakeRequestRequest,
   Remnant,
   RemnantCreateRequest,
@@ -233,6 +239,8 @@ import type {
   RemnantList,
   ResetPricingRequest,
   RevisionCompareResponse,
+  RuleWriteRequest,
+  Rules,
   SearchResponse,
   SectionImportResponse,
   SendOrderRequestRequest,
@@ -8476,6 +8484,160 @@ export const organizationExtraPolicySave = async (
   });
 };
 
+export type mountingRulesResponse200 = {
+  data: Rules;
+  status: 200;
+};
+
+export type mountingRulesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mountingRulesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mountingRulesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mountingRulesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mountingRulesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mountingRulesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mountingRulesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mountingRulesResponseSuccess = mountingRulesResponse200 & {
+  headers: Headers;
+};
+export type mountingRulesResponseError = (
+  | mountingRulesResponse400
+  | mountingRulesResponse401
+  | mountingRulesResponse403
+  | mountingRulesResponse404
+  | mountingRulesResponse409
+  | mountingRulesResponse422
+  | mountingRulesResponse503
+) & {
+  headers: Headers;
+};
+
+export type mountingRulesResponse = mountingRulesResponseSuccess | mountingRulesResponseError;
+
+export const getMountingRulesUrl = (systemId: string) => {
+  return `/api/v1/organization/mounting/${systemId}/`;
+};
+
+export const mountingRules = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mountingRulesResponse> => {
+  return apiMutator<mountingRulesResponse>(getMountingRulesUrl(systemId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type mountingRuleSaveResponse200 = {
+  data: Rules;
+  status: 200;
+};
+
+export type mountingRuleSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mountingRuleSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mountingRuleSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mountingRuleSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mountingRuleSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mountingRuleSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mountingRuleSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mountingRuleSaveResponseSuccess = mountingRuleSaveResponse200 & {
+  headers: Headers;
+};
+export type mountingRuleSaveResponseError = (
+  | mountingRuleSaveResponse400
+  | mountingRuleSaveResponse401
+  | mountingRuleSaveResponse403
+  | mountingRuleSaveResponse404
+  | mountingRuleSaveResponse409
+  | mountingRuleSaveResponse422
+  | mountingRuleSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type mountingRuleSaveResponse =
+  mountingRuleSaveResponseSuccess | mountingRuleSaveResponseError;
+
+export const getMountingRuleSaveUrl = (systemId: string) => {
+  return `/api/v1/organization/mounting/${systemId}/`;
+};
+
+export const mountingRuleSave = async (
+  systemId: string,
+  ruleWriteRequest: RuleWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mountingRuleSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<mountingRuleSaveResponse>(getMountingRuleSaveUrl(systemId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(ruleWriteRequest),
+  });
+};
+
 export type portalQuoteRetrieveResponse200 = {
   data: PortalQuote;
   status: 200;
@@ -9054,6 +9216,172 @@ export const positionsDesignAssist = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(designAssistRequestRequest),
+  });
+};
+
+export type measurementConfirmResponse200 = {
+  data: MeasurementResponse;
+  status: 200;
+};
+
+export type measurementConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type measurementConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type measurementConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type measurementConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type measurementConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type measurementConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type measurementConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type measurementConfirmResponseSuccess = measurementConfirmResponse200 & {
+  headers: Headers;
+};
+export type measurementConfirmResponseError = (
+  | measurementConfirmResponse400
+  | measurementConfirmResponse401
+  | measurementConfirmResponse403
+  | measurementConfirmResponse404
+  | measurementConfirmResponse409
+  | measurementConfirmResponse422
+  | measurementConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type measurementConfirmResponse =
+  measurementConfirmResponseSuccess | measurementConfirmResponseError;
+
+export const getMeasurementConfirmUrl = (positionId: string) => {
+  return `/api/v1/positions/${positionId}/measurements/confirm/`;
+};
+
+export const measurementConfirm = async (
+  positionId: string,
+  measurementConfirmRequest: MeasurementConfirmRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<measurementConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<measurementConfirmResponse>(getMeasurementConfirmUrl(positionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(measurementConfirmRequest),
+  });
+};
+
+export type measurementRectifyResponse200 = {
+  data: RectificationResponse;
+  status: 200;
+};
+
+export type measurementRectifyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type measurementRectifyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type measurementRectifyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type measurementRectifyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type measurementRectifyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type measurementRectifyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type measurementRectifyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type measurementRectifyResponseSuccess = measurementRectifyResponse200 & {
+  headers: Headers;
+};
+export type measurementRectifyResponseError = (
+  | measurementRectifyResponse400
+  | measurementRectifyResponse401
+  | measurementRectifyResponse403
+  | measurementRectifyResponse404
+  | measurementRectifyResponse409
+  | measurementRectifyResponse422
+  | measurementRectifyResponse503
+) & {
+  headers: Headers;
+};
+
+export type measurementRectifyResponse =
+  measurementRectifyResponseSuccess | measurementRectifyResponseError;
+
+export const getMeasurementRectifyUrl = (positionId: string) => {
+  return `/api/v1/positions/${positionId}/measurements/rectify/`;
+};
+
+export const measurementRectify = async (
+  positionId: string,
+  rectificationRequest: RectificationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<measurementRectifyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<measurementRectifyResponse>(getMeasurementRectifyUrl(positionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(rectificationRequest),
   });
 };
 
@@ -17292,6 +17620,87 @@ export const hardwarePreview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(hardwarePreviewRequestRequest),
+  });
+};
+
+export type mountingPreviewResponse200 = {
+  data: MountingPreviewResponse;
+  status: 200;
+};
+
+export type mountingPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mountingPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mountingPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mountingPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mountingPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mountingPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mountingPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mountingPreviewResponseSuccess = mountingPreviewResponse200 & {
+  headers: Headers;
+};
+export type mountingPreviewResponseError = (
+  | mountingPreviewResponse400
+  | mountingPreviewResponse401
+  | mountingPreviewResponse403
+  | mountingPreviewResponse404
+  | mountingPreviewResponse409
+  | mountingPreviewResponse422
+  | mountingPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type mountingPreviewResponse = mountingPreviewResponseSuccess | mountingPreviewResponseError;
+
+export const getMountingPreviewUrl = () => {
+  return `/api/v1/projects/mounting-preview/`;
+};
+
+export const mountingPreview = async (
+  mountingPreviewRequest: MountingPreviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mountingPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<mountingPreviewResponse>(getMountingPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(mountingPreviewRequest),
   });
 };
 

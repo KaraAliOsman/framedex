@@ -409,3 +409,37 @@ El recorrido focal de catálogo frío pasa en 23,6 s, sin quitar aserciones.
 R1–R20 y 40 comparaciones sin hallazgos nuevos pasan para D06. Se verifica
 limpieza propia y se detiene el stack de app. El incidente anterior permanece
 visible; la cola continúa con D07 y no se modifican main ni Git dekopen.
+
+## 2026-10-07 — D07 · dominio y aceptación local
+
+La rama `codex/D07-vano-fabricacion` agrega reglas de montaje versionadas por
+tenant/serie, mínimos y dispersión Decimal, fijación motivada, cota doble y
+evidencia inmutable ligada al diseño. La rectificación posterior a aprobación
+abre sucesora con Δ de venta; el PDF anterior conserva sus bytes. Backend y SQL
+impiden liberar una nueva OT sin confirmación actual. La función estrecha de
+lock permite confirmar al encargado sin ampliar sus permisos de edición.
+
+Pasan 19 pruebas PostgreSQL focalizadas, incluidos borrado de borrador sin
+perder historia y rechazos de actor/proyecto/secuencia. Los cuatro gates nativos
+pasan con 660 motor (+2 xfail), 1 184 backend y 730 frontend. La cadena real
+verifica Ajustes/MFA, lados de ensanche, diff/deshacer, portal 390, REV-B, precio,
+PDF y OT. La comparación formal de 24 capturas no añade hallazgos. Se corrige
+una cota recortada que no detectó la comprobación anterior y se incorpora la
+aserción geométrica; los intentos fallidos no cuentan como aceptación. Database
+Gate, CI y merge se registran después de confirmarlos.
+
+## 2026-10-07 — D07 · validación completa antes del PR
+
+La revisión de copia a sucesora detecta evidencia obsoleta que podía volver
+a ligarse a otro diseño. Se corrige y la vigésima prueba focal verifica su
+rechazo. El muro comienza sin selección; Playwright confirma el aviso preciso,
+la ausencia de propuesta al omitirlo y el recorrido posterior completo. Los
+fallos de fixtures anteriores se corrigen declarando su autoridad sintética,
+sin bypass productivo ni reducción de aserciones.
+
+Pasan nuevamente lint, typecheck, test y build sobre la fuente final: 660 motor
+(+2 xfail), 1 184 backend y 730 frontend. Database Gate pasa 1 090 pgTAP, 357
+integraciones, 11 E2E y ocho upgrades PG16; verifica limpieza propia. La
+comparación de 24 capturas y los PDF conservan la evidencia de aceptación. Se
+retiran los informes parciales duplicados; no se conservan capturas de intentos
+fallidos como resultados aceptados. CI y squash aún pendientes en esta entrada.

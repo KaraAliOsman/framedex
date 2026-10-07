@@ -1,0 +1,159 @@
+.mounting-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.inspector-section.mounting-inspector {
+  display: block;
+}
+.mounting-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.mounting-fields label,
+.mounting-inspector > label,
+.measurement-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block: var(--space-2);
+}
+.mounting-fields .mounting-check,
+.measurement-panel .mounting-check {
+  flex-direction: row;
+  align-items: center;
+}
+.mounting-fields input,
+.mounting-fields select,
+.mounting-fields textarea,
+.mounting-inspector select,
+.measurement-panel textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.mounting-check input {
+  width: auto;
+}
+.mounting-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.mounting-chip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  padding-block: var(--space-2);
+  border-block: 1px solid var(--border);
+}
+.mounting-chip > span {
+  min-width: 0;
+}
+.mounting-warning {
+  border-inline-start: 2px solid var(--warning);
+  padding-inline-start: var(--space-2);
+}
+.mounting-proposal,
+.measurement-panel {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+}
+.measurement-panel {
+  min-width: 0;
+}
+.measurement-panel h4 {
+  margin-block: var(--space-2);
+}
+.mounting-dimensions {
+  pointer-events: none;
+  fill: var(--text-primary);
+  stroke: var(--text-muted);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.mounting-dimensions text {
+  stroke: none;
+  text-anchor: middle;
+}
+.mounting-dimensions line {
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.mounting-dimensions rect {
+  fill: none;
+  stroke-dasharray: 10 7;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+/* The double dimension needs room at laptop height, including when the
+   existing finish controls above the drawing take several rows. */
+.position-editor:has(.mounting-dimensions) {
+  height: auto;
+  max-height: none;
+}
+.position-editor:has(.mounting-dimensions) .position-body {
+  overflow: visible;
+}
+.position-editor:has(.mounting-dimensions) .assembly-editor {
+  height: max(560px, 60dvh);
+}
+.mounting-rule-sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-3);
+}
+.mounting-settings label,
+.rectification-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block: var(--space-2);
+}
+.mounting-settings .mounting-check,
+.rectification-panel .mounting-check {
+  flex-direction: row;
+  align-items: center;
+}
+.mounting-rule-row {
+  border-top: 1px solid var(--border);
+  padding-block: var(--space-2);
+}
+body
+  :is(.mounting-inspector, .mounting-settings, .measurement-panel, .rectification-panel)
+  :is(button, input, select, textarea) {
+  font: inherit;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+body
+  :is(.mounting-inspector, .mounting-settings, .measurement-panel, .rectification-panel)
+  :is(button, input:not([type="checkbox"]), select, textarea) {
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+body
+  :is(.mounting-inspector, .mounting-settings, .measurement-panel, .rectification-panel)
+  :is(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+.mounting-settings input,
+.mounting-settings select,
+.mounting-settings textarea,
+.rectification-panel input,
+.rectification-panel select,
+.rectification-panel textarea {
+  min-width: 0;
+  width: 100%;
+}
+.mounting-settings .mounting-check input,
+.rectification-panel .mounting-check input {
+  width: auto;
+}

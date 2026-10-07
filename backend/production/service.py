@@ -756,6 +756,13 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             [str(version_id), str(org_id)],
             "version_not_found",
         )
+        frozen_measurements = version['snapshot_json']
+        if isinstance(frozen_measurements,str):
+            frozen_measurements = json.loads(frozen_measurements)
+        if frozen_measurements.get('measurements_required') and any(
+            not isinstance(pos.get('measurements'),dict) or not pos['measurements'].get('current')
+            or pos['measurements'].get('state')!='CONFIRMED' for pos in frozen_measurements.get('positions',[])):
+            raise DocumentaryError('production_measurements_unconfirmed')
         if not version["production_allowed"]:
             raise DocumentaryError("version_not_releasable")
         # A sealed version stays valid only while it is the newest one —

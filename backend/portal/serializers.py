@@ -27,6 +27,14 @@ class CommercialHardwareSerializer(serializers.Serializer):
     synthetic = serializers.BooleanField()
 
 
+class PortalOpeningSerializer(serializers.Serializer):
+    module_index = serializers.IntegerField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+    rule_name = serializers.CharField()
+    synthetic = serializers.BooleanField()
+
+
 class PortalPositionSerializer(serializers.Serializer):
     resolved_finish = ResolvedFinishSerializer(required=False, allow_null=True)
     id = serializers.CharField(allow_blank=True)
@@ -36,6 +44,7 @@ class PortalPositionSerializer(serializers.Serializer):
     location_tag = serializers.CharField(allow_null=True, allow_blank=True)
     width_mm = serializers.CharField(allow_blank=True)
     height_mm = serializers.CharField(allow_blank=True)
+    opening_measurements = PortalOpeningSerializer(many=True,required=False)
     color_interior = serializers.CharField(allow_null=True, allow_blank=True)
     color_exterior = serializers.CharField(allow_null=True, allow_blank=True)
     glass_specs = serializers.ListField(child=serializers.CharField())

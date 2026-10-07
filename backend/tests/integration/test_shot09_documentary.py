@@ -235,6 +235,9 @@ def _seed_project(
                 }],
             },
         )
+    with as_user(owner):
+        from backend.tests.integration.mounting_fixture import confirm_fixture_measurements
+        confirm_fixture_measurements(org,position_id)
     return project_id, position_id, operation_id
 
 
