@@ -685,7 +685,9 @@ export function AgentBody({
                   {turn.result.reply ? (
                     <p className="ask-dock__answer">{assistantText(turn.result.reply)}</p>
                   ) : null}
-                  {turn.result.questions?.length ? (
+                  {turn.result.questions?.some(
+                    (question) => question !== turn.result?.clarify?.question,
+                  ) ? (
                     <div className="ask-dock__questions">
                       {turn.result.questions
                         .filter((question) => question !== turn.result?.clarify?.question)

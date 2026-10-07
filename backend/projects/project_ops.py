@@ -112,10 +112,11 @@ def _position_view(org_id, position, cache):
                       "price": sale_price(org_id, product, design["system_id"], design["color"])}
     view = deepcopy(cache[key])
     price = view["price"]
+    unit_net = price.get("unit_net", price.get("net"))
     view["quantity"] = position["quantity"]
-    view["price"] = {**price, "unit_net": price.get("net"),
-        "net": str(indicative_line_net(Decimal(price["net"]), position["quantity"], price["currency"]))
-        if price.get("net") is not None else None}
+    view["price"] = {**price, "unit_net": unit_net,
+        "net": str(indicative_line_net(Decimal(unit_net), position["quantity"], price["currency"]))
+        if unit_net is not None else None}
     return view
 
 

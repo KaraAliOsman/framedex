@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from authentication.errors import ContractAPIException, contract_error
 from authentication.tenancy import MembershipRepository, resolve_tenant_context
 from catalogs.glass import load_products
-from dekopen_engine.commercial import PricingError, PricingMode
+from dekopen_engine.commercial import PricingError, PricingMode, indicative_line_net
 from dekopen_engine.catalog_rules import CatalogRuleError
 from dekopen_engine.openings import OpeningCapabilityError
 from dekopen_engine.weight import MissingFabricationAuthority
@@ -136,7 +136,7 @@ def sale_price(org_id, product, system_id, color):
             extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation.get("extra_lines", [])]
             net = configured_unit_price(repo, mode, position, cost=cost, area=area, result=result,
                                        margin=rules["default_margin_pct"], context_code="DEFAULT", extras=extras)
-            return {"net": str(net), "currency": currency, "reason": None,
+            return {"net": str(indicative_line_net(net, 1, currency)), "unit_net": str(net), "currency": currency, "reason": None,
                     "source": "Motor comercial; modo y tarifa predeterminados de Ajustes; precio neto indicativo sin descuento."}
         except (PricingError, ContractAPIException) as error:
             detail = pricing_public_detail(error.code) if isinstance(error, PricingError) else error.public_detail

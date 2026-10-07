@@ -232,3 +232,10 @@ def test_shared_preview_includes_engine_leaf_and_handle_authority_for_both_drawi
     assert leaf["opening"]["hinge_side"] == "LEFT"
     assert leaf["handle"]["side"] == "RIGHT"
     assert Decimal(leaf["width_mm"]) > 0 and Decimal(leaf["height_mm"]) > 0
+    before, after = result["before"]["price"], result["price"]
+    assert before["net"] is not None and after["net"] is not None
+    # A visible CLP delta must reconcile its two visible integer amounts.
+    for price in (before, after):
+        assert Decimal(price["net"]) == Decimal(price["net"]).quantize(Decimal("1"))
+        assert Decimal(price["net"]) == Decimal(price["unit_net"]).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    assert Decimal(after["delta_net"]) + Decimal(before["net"]) == Decimal(after["net"])

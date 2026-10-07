@@ -32,6 +32,9 @@ y `preview_project_operations` leen autoridad real. La referencia debe estar
 observada y pertenecer a la organización. Los costos confidenciales se excluyen
 de las respuestas comerciales. Una venta desconocida conserva `net: null`,
 causa y acción; el cero histórico de un borrador no acredita precio aplicado.
+El motor cuantiza ambos netos a la moneda antes de restarlos, para que el Δ
+coincida con los montos visibles. En lotes conserva la tarifa unitaria exacta
+y cuantiza después de multiplicar por la cantidad, sin redondear cada unidad.
 
 El verificador acepta medidas explícitas y cifras del contexto/herramientas
 del turno. Una operación de incremento declara el delta pedido; el motor deriva
