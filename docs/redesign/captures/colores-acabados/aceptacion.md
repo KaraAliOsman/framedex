@@ -84,11 +84,13 @@ regresiones de integración y tres goldens monetarios cubren estos casos. Los
 recorridos de navegador, cinco estados y publicación/deshacer volvieron a pasar.
 
 El primer intento de CI posterior a la revisión aprobó pgTAP e integración,
-pero Chromium liberó el cuerpo de una respuesta al recargar el proyecto recién
-duplicado. El helper de E2E lee la respuesta HTTP real antes de entregarla a la
-aplicación y la reenvía sin cambiar cuerpo, cabeceras ni estado. Conserva las
-aserciones de duplicación, BOM, hashes y persistencia; no agrega retries ni
-respuestas sintéticas. El gate se vuelve a ejecutar con esta corrección.
+pero la prueba recogió una consulta anterior al recargar el proyecto recién
+duplicado y Chromium liberó su cuerpo. El helper de E2E escucha las peticiones
+nuevas y lee su respuesta en cuanto llega, antes de terminar la acción. Conserva
+las aserciones de duplicación, BOM, hashes y persistencia; no intercepta tráfico,
+no agrega retries ni respuestas sintéticas. Se descartó el reenvío intermedio
+porque podía retirar una ruta todavía activa. El gate se vuelve a ejecutar con
+la captura final.
 
 Momento de firma: lienzo y 3D bicolor real, revisión y documento por caras.
 Idea que sube el techo: foliado oscuro explica refuerzo y plazo extra en el

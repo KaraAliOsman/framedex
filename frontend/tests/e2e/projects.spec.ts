@@ -1,4 +1,4 @@
-import { expect, type Page, type Request, type Route, type TestInfo } from "@playwright/test";
+import { expect, type Page, type Request, type TestInfo } from "@playwright/test";
 
 import type {
   EngineAssemblyCalculateResponse,
@@ -17,39 +17,34 @@ async function responseTo<T>(
   status: number,
   action: () => Promise<unknown>,
 ): Promise<T> {
-  // Read the real HTTP body before delivering it to the app. Clone/reload can
-  // navigate immediately, which releases Chromium's response-body identifier.
-  // This forwards the unchanged response; status and domain assertions remain.
-  const matchesPath = (url: URL) => url.pathname === path;
-  // A previous navigation can still be fetching the same URL; match this request.
-  const bodies = new Map<Request, T>();
-  const forward = async (route: Route) => {
-    if (route.request().method() !== method) {
-      await route.continue();
-      return;
+  // Clone navigation can still have a GET in flight when reload starts.
+  // Capture only new requests, then read their body before action() completes.
+  const started = new Set<Request>();
+  const remember = (request: Request) => {
+    if (request.method() === method && new URL(request.url()).pathname === path) {
+      started.add(request);
     }
-    const response = await route.fetch();
-    const body = await response.body();
-    bodies.set(route.request(), JSON.parse(body.toString("utf-8")) as T);
-    await route.fulfill({ response, body });
   };
-  await page.route(matchesPath, forward);
+  page.on("request", remember);
   try {
-    const [response] = await Promise.all([
-      page.waitForResponse(
-        (candidate) =>
-          candidate.request().method() === method &&
-          new URL(candidate.url()).pathname === path &&
-          bodies.has(candidate.request()),
-        { timeout: 20_000 },
-      ),
+    const [body] = await Promise.all([
+      page
+        .waitForResponse(
+          (candidate) =>
+            candidate.request().method() === method &&
+            new URL(candidate.url()).pathname === path &&
+            started.has(candidate.request()),
+          { timeout: 20_000 },
+        )
+        .then(async (response) => {
+          expect(response.status(), `${method} ${path}`).toBe(status);
+          return (await response.json()) as T;
+        }),
       action(),
     ]);
-    expect(response.status(), `${method} ${path}`).toBe(status);
-    expect(bodies.has(response.request()), `${method} ${path} real response body`).toBe(true);
-    return bodies.get(response.request())!;
+    return body;
   } finally {
-    await page.unroute(matchesPath, forward);
+    page.off("request", remember);
   }
 }
 
