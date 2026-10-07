@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: 5224dbfba0f3f6c7d218639704bb013eceeb88dd
+verified_ref: 0835e3f0834e2680674458693626617a84cc19f8
 sources:
   - repository main
   - P00 foundation PR #114
@@ -25,7 +25,7 @@ sources:
 
 # Current reality
 
-## IA2 · código y aceptación local verificados (07-10-2026)
+## IA2 · integrado y verificado (07-10-2026)
 
 La rama `codex/IA2-operaciones-herramientas` usa un registro de 50 operaciones
 para UI/IA/API, herramientas del motor, aclaraciones y simulación/aplicación
@@ -55,8 +55,11 @@ preparación documental íntegra y rechaza ediciones posteriores; el adaptador
 conserva contornos/módulos sin marco; el espesor histórico se deriva de la receta
 o queda desconocido. Pasan 16 regresiones PostgreSQL y 74 de operaciones/golden.
 Los golden nuevos no cambian los anteriores. La evaluación, el navegador y los
-gates completos se repitieron sobre estas correcciones. Los checks de CI del
-commit anterior no acreditan esta revisión; su CI y squash están pendientes.
+gates completos se repitieron sobre estas correcciones. Los cuatro checks de CI pasan sobre
+`3f475b5c525dabbf3a2146c597e69a2f03a39244` (run 37644060649). El PR
+[#126](https://github.com/KaraAliOsman/framedex/pull/126) se integra por squash
+`0835e3f0834e2680674458693626617a84cc19f8` en `integracion/v1`. Las tres conversaciones
+de revisión están resueltas; `main` no se modifica.
 Véanse [aceptación](../../redesign/captures/operaciones-herramientas/aceptacion.md),
 [comparativa](../../ai/evals/2026-10-07-ia2-comparativa.md) y
 [operaciones](../../ai/OPERACIONES.md).

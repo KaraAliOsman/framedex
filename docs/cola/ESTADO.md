@@ -10,7 +10,7 @@
 | D05 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/123 | 94f9f5e773cfd227bca820460011ada77ce95baa | CI 4/4 verde; carta por caras y precio por modo/moneda, 1031 pgTAP, 311 RLS, 11 E2E y ocho upgrades PG16; incidente local documentado. |
 | D06 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/124 | fb9b5881d48248f51c5f05ccdc9682aacdacc0bd | CI 4/4 verde; extras/BOM/cortes, servicios y venta sellada; 1067 pgTAP, 337 RLS, 11 E2E y upgrades PG16; privacidad por tenant verificada. |
 | D07 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/125 | f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d | CI 4/4 verde; vano/montaje, evidencia y Δ de rectificación; 1090 pgTAP, 362 RLS, 11 E2E y ocho upgrades PG16; seis observaciones corregidas. |
-| IA2 | D2 | en curso |  |  | Registro único UI/IA/API, simulación con motor, aclaraciones y comparación contra los oráculos de IA1 con proveedor real. |
+| IA2 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/126 | 0835e3f0834e2680674458693626617a84cc19f8 | CI 4/4 verde; 50 operaciones UI/IA/API, MiMo 21/26 y E+J 19/21 (90,48 %), aplicar/recargar/deshacer; 1101 pgTAP y 380 integraciones; tres observaciones corregidas. |
 | IA3 | D2 | pendiente |  |  |  |
 | P02 | 1 | pendiente |  |  |  |
 | P25 | 1 | pendiente |  |  |  |

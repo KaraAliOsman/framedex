@@ -536,3 +536,22 @@ hallazgos nuevos. El botón Deshacer y su confirmación quedan visibles en las
 capturas del lote. Las dos rondas editoriales y R1–R20 se documentan en la
 aceptación. Los procesos propios de app están detenidos; CI/merge pendientes
 de publicar esta revisión en el PR #126.
+
+
+## 2026-10-07 — IA2 · integración aceptada
+
+El PR [#126](https://github.com/KaraAliOsman/framedex/pull/126) pasa los cuatro
+checks de CI sobre `3f475b5c525dabbf3a2146c597e69a2f03a39244` en el run
+37644060649 y se integra por squash `0835e3f0834e2680674458693626617a84cc19f8`
+en `integracion/v1`. Las tres observaciones corregidas tienen regresiones y
+conversaciones resueltas. Se conserva la corrida final completa MiMo 21/26,
+editor/proyecto 19/21 (90,48 %), fuente/estado persistente sin cambios y cinco
+fallos honestos. La evidencia completa incluye 740 motor (+2 xfail), 1 205
+backend, 806 frontend, 1 101 pgTAP, 380 integraciones, 11 E2E y ocho upgrades
+PG16, más flujos, estados y comparación visual sin hallazgos nuevos.
+
+Una incidencia pública de GitHub produjo errores internos de push y retrasó
+la actualización del head del PR. Se conservó el mismo PR y se reabrió para
+sincronizarlo con el commit publicado; solo se canceló un run duplicado del
+head anterior. No se modificaron ni omitieron checks. IA3 sigue inmediatamente
+con proveedor/Ajustes. `main` y los recursos del repositorio ajeno no se tocan.

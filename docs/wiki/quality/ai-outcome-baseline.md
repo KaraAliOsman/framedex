@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: 5224dbfba0f3f6c7d218639704bb013eceeb88dd
+verified_ref: 0835e3f0834e2680674458693626617a84cc19f8
 sources:
   - docs/cola/prompts/IA1-diagnostico-evals.md
   - backend/ai_gateway/evals/cases.yaml
@@ -54,7 +54,10 @@ sobre estas correcciones; sus casos no se mezclan con la corrida anterior.
 
 Véanse la [comparativa por caso y categoría](../../ai/evals/2026-10-07-ia2-comparativa.md)
 y la [aceptación de navegador y rúbrica](../../redesign/captures/operaciones-herramientas/aceptacion.md).
-IA3 continúa proveedor/configuración y P17 el rediseño del dock/Orb. La medición
+El PR [#126](https://github.com/KaraAliOsman/framedex/pull/126) está integrado
+por squash `0835e3f0834e2680674458693626617a84cc19f8` con sus cuatro checks
+verdes sobre la revisión corregida `3f475b5c`. IA3 continúa proveedor/configuración
+y P17 el rediseño del dock/Orb. La medición
 histórica de IA1 siguiente sigue siendo la línea base, no el resultado vigente.
 
 ## Verified implementation
