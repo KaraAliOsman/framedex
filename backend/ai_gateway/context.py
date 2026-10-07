@@ -434,8 +434,31 @@ def _payments(org_id: UUID, project_id: UUID) -> dict:
     }
 
 
+def _project_pricing(org_id: UUID, project: dict) -> dict | None:
+    with commercial_backend():
+        applied = rows(
+            "SELECT request->>'currency' AS currency FROM public.pricing_operations "
+            "WHERE org_id=%s AND project_id=%s AND state='APPLIED' "
+            "AND COALESCE(revision_code,'REV-A')=%s "
+            "AND ((SELECT pricing_reset_at FROM public.projects WHERE id=%s) IS NULL "
+            "OR approved_at > (SELECT pricing_reset_at FROM public.projects WHERE id=%s)) "
+            "ORDER BY approved_at DESC,id DESC LIMIT 1",
+            [org_id, project["id"], project["current_revision"], project["id"], project["id"]],
+        )
+    return {"currency": _cut(applied[0]["currency"])} if applied else None
+
+
+def _project_totals(project: dict, priced: dict | None) -> dict:
+    if priced is None:
+        return {"net": None, "tax": None, "gross": None,
+                "reason": "Sin dato: calcula y aplica los precios de esta revisión en Precios."}
+    return {"net": _cut(project["total_price_net"]), "tax": _cut(project["total_price_tax"]),
+            "gross": _cut(project["total_price_gross"])}
+
+
 def _project(org_id: UUID, refs: dict) -> dict:
     project = _project_row(org_id, _ref(refs, "project_id"))
+    priced = _project_pricing(org_id, project)
     positions = rows(
         "SELECT id, position_index, location_tag, typology, width_mm, height_mm, system_id, quantity "
         "FROM public.project_positions WHERE org_id=%s AND project_id=%s "
@@ -455,11 +478,8 @@ def _project(org_id: UUID, refs: dict) -> dict:
         "client": _cut(project["client_name"]),
         "status": _cut(project["status"]),
         "current_revision": _cut(project["current_revision"]),
-        "totals": {
-            "net": _cut(project["total_price_net"]),
-            "tax": _cut(project["total_price_tax"]),
-            "gross": _cut(project["total_price_gross"]),
-        },
+        "priced": priced,
+        "totals": _project_totals(project, priced),
         "payments": _payments(org_id, project["id"]),
         "positions": [
             {

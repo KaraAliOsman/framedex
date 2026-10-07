@@ -13,8 +13,8 @@ import json
 from typing import Any, cast
 
 from .geometry import compute_geometry, validate_sliding_layout
-from .catalog_rules import CatalogRuleError, validate_family
-from .models import BayOpeningType, ParametricNode, ProfileRole, SystemParams, HardwareSelection
+from .catalog_rules import CatalogRuleError, FAMILY_OPENINGS, validate_family
+from .models import BayOpeningType, OpeningMovement, ParametricNode, ProfileRole, SystemParams, HardwareSelection
 from .glass_composition import GlassProcessing
 from .openings import OpeningCapabilityError, normalize_opening_tree, node_opening, node_use, resolve_capability
 from .product import FramelessSpec
@@ -339,7 +339,7 @@ def _opening(node: dict[str, Any], value: Any, params: SystemParams, op: dict[st
                 opening_use=op.get("opening_use", "WINDOW") if isinstance(value, dict) else None,
                 hinged_layout=op.get("hinged_layout"), sliding_layout=op.get("sliding_layout"))
     parsed = ParametricNode.model_validate_json(json.dumps(node))
-    if isinstance(value, str) and not params.uses_legacy_rules:
+    if isinstance(value, str) and (not params.uses_legacy_rules or node_opening(parsed).movement is OpeningMovement.SLIDE):
         # A new operation cannot borrow an old transport alias to bypass the
         # selected series' physical authority. Reading frozen legacy trees is
         # unchanged; this check applies only to a newly requested edit.
@@ -355,6 +355,22 @@ def _opening(node: dict[str, Any], value: Any, params: SystemParams, op: dict[st
         raise OperationError("opening_incompatible", str(error)) from error
     if parsed.sliding_layout is not None:
         validate_sliding_layout(parsed.sliding_layout, params)
+
+
+def editable_legacy_openings(params: SystemParams) -> list[str]:
+    """Choices for new edits; historical reading keeps its frozen authority."""
+    candidates = FAMILY_OPENINGS[params.system_family] if params.system_family else set(BayOpeningType)
+    accepted = []
+    for kind in candidates:
+        if kind.value.startswith("SLIDING"):
+            node = ParametricNode.model_validate_json(json.dumps({"id": "choice", "type": "BAY", "opening_type": kind.value}))
+            try:
+                resolve_capability(node.model_copy(update={"opening_type": None,
+                    "opening": node_opening(node), "opening_use": node_use(node)}), params)
+            except OpeningCapabilityError:
+                continue
+        accepted.append(kind.value)
+    return sorted(accepted)
 
 
 def _new_id(product: dict[str, Any], prefix: str) -> str:

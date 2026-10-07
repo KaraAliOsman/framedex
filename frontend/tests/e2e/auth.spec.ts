@@ -541,10 +541,13 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   const dividedCalculation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
-      new URL(response.url()).pathname === "/api/v1/engine/assembly/calculate/",
+      new URL(response.url()).pathname === "/api/v1/projects/operations/simulate/",
   );
   await page.getByRole("button", { name: "Dividir en vertical", exact: true }).click();
-  expect((await dividedCalculation).status()).toBe(200);
+  const dividedResponse = await dividedCalculation;
+  expect(dividedResponse.status()).toBe(200);
+  expect((await dividedResponse.json()).valid).toBe(true);
+  await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   const compositeSave = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&

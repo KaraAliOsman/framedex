@@ -190,3 +190,20 @@ def test_project_operation_history_cannot_be_deleted_even_with_elevated_database
     with pytest.raises(DatabaseError, match="project_edit_evidence_immutable"), transaction.atomic(), connection.cursor() as cursor:
         cursor.execute("SET LOCAL ROLE NONE")
         cursor.execute("DELETE FROM public.project_edit_operations WHERE id=%s", [result["operation_id"]])
+
+
+def test_invalid_design_in_shared_simulation_returns_a_public_422(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    _, position = setup_project(org, users["OWNER"])
+    from projects.ops_registry import product_from_position
+    with as_user(users["OWNER"]):
+        from projects.service import position_row
+        product = product_from_position(position_row(org, position["id"]))
+    product["assembly"]["modules"][0]["tree"]["unexpected_field"] = "invalid"
+    result = client_for(users["ESTIMATOR"]).post("/api/v1/projects/operations/simulate/", {
+        "system_id": str(position["design"]["system_id"]), "color": position["design"]["color"],
+        "product": product, "ops": [{"op": "split_bay", "module": "single", "bay": "b1", "axis": "V", "from": "CENTER"}],
+    }, format="json", HTTP_X_ORGANIZATION_ID=str(org))
+    assert result.status_code == 422, result.content
+    assert result.json()["error"]["code"] == "design_operation_invalid"
+    assert "unexpected_field" not in result.json()["error"]["detail"]

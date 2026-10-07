@@ -231,3 +231,6 @@ class SimulateOpsView(APIView):
                 return response(simulate_ops(org, data["product"], data["ops"], data["system_id"], data["color"]))
         except OperationError as error:
             raise contract_error(422, error.code, str(error)) from error
+        except (ValueError, InvalidEngineRequest, UnsupportedEngineContract) as error:
+            raise contract_error(422, "design_operation_invalid",
+                "No se puede simular el cambio: el diseño no cumple el contrato. Revisa el marco y su catálogo.") from error

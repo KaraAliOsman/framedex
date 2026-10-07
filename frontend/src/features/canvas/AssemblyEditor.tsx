@@ -269,9 +269,11 @@ function DraftField({
   const [draft, setDraft] = useState(value);
   const [invalid, setInvalid] = useState(false);
   useEffect(() => {
-    setDraft(value);
-    setInvalid(false);
-  }, [value]);
+    if (!disabled) {
+      setDraft(value);
+      setInvalid(false);
+    }
+  }, [value, disabled]);
   return (
     <label className={`assembly-field${invalid ? " is-invalid" : ""}`}>
       {label ? <span>{label}</span> : null}
@@ -1899,6 +1901,8 @@ export function AssemblyEditor({
   const [detail, setDetail] = useState<DetailLevel>("design");
   const [planOpen, setPlanOpen] = useState(true);
   const [view3dOpen, setView3dOpen] = useState(false);
+  const [operationBusy, setOperationBusy] = useState(false);
+  const [operationMessage, setOperationMessage] = useState("");
   /** Queued prompt for the assistant — "" means focus only. Every "…with
    * DEKOPEN" affordance funnels here; the human always confirms. */
   const [assistantDraft, setAssistantDraft] = useState<{
@@ -1933,8 +1937,8 @@ export function AssemblyEditor({
     // Only the current request can authorize a save. Undo can restore the same
     // cached result while a previous request is pending: publish it again for
     // that input identity instead of leaving the parent's result cleared.
-    onEvaluationChange(currentEvaluation);
-  }, [currentEvaluation, inputs, onEvaluationChange]);
+    onEvaluationChange(operationBusy ? null : currentEvaluation);
+  }, [currentEvaluation, inputs, operationBusy, onEvaluationChange]);
 
   /** Every "…with DEKOPEN" affordance: scroll the assistant into view and
    * hand it a prompt draft — "" focuses the field untouched. */
@@ -2004,8 +2008,6 @@ export function AssemblyEditor({
     onChanged();
   }
 
-  const [operationBusy, setOperationBusy] = useState(false);
-  const [operationMessage, setOperationMessage] = useState("");
   function simulateCommand(
     ops: DesignOperationRequest[],
     spec?: CommandSpec,

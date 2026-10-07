@@ -66,6 +66,23 @@ def test_new_operation_cannot_use_a_legacy_alias_to_bypass_physical_capability(p
     assert product["assembly"]["modules"][0]["tree"]["opening_type"] == "FIXED"
 
 
+def test_historical_alias_does_not_authorize_new_sliding_edit(product: dict[str, Any], demo_60_params: SystemParams) -> None:
+    from dekopen_engine.design_operations import editable_legacy_openings
+    from engine.tests.opening_cases import opening_params
+    assert demo_60_params.uses_legacy_rules and demo_60_params.system_family is None
+    assert "FIXED" in editable_legacy_openings(demo_60_params)
+    assert not any(value.startswith("SLIDING") for value in editable_legacy_openings(demo_60_params))
+    assert "SLIDING_2L" in editable_legacy_openings(opening_params("DEMO_CORREDERA_60"))
+    with pytest.raises(OperationError) as error:
+        apply(product, [{"op": "set_opening", "module": "m1", "opening": "SLIDING_2L"}], demo_60_params)
+    assert error.value.code == "opening_incompatible"
+    # Reading a historical tree remains exact; only the new edit is refused.
+    historical = deepcopy(product)
+    historical["assembly"]["modules"][0]["tree"]["opening_type"] = "SLIDING_2L"
+    resized = apply(historical, [{"op": "resize", "module": "m1", "delta_width_mm": "100"}], demo_60_params)
+    assert resized["product"]["assembly"]["modules"][0]["tree"]["opening_type"] == "SLIDING_2L"
+
+
 def test_new_alias_edit_obeys_declared_family_even_with_legacy_authority(product: dict[str, Any], demo_60_params: SystemParams) -> None:
     from dekopen_engine.models import SystemFamily
     params = demo_60_params.model_copy(update={"system_family": SystemFamily.CASEMENT, "legacy_authority": True})
