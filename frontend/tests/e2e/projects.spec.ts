@@ -392,7 +392,17 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await screenshot(page, info, "05-project-dark");
   // Estimators can browse the catalog (and run supplier imports); structural
   // edits stay owner/manager-only.
-  await page.goto("/catalogs/systems");
+  // A cold route first resolves the real catalog authority. Wait for that
+  // request (with the same bounded API contract used above), then keep the
+  // screen and permission assertions; a transport failure must still fail.
+  const catalog = await responseTo<{ items: { id: string }[] }>(
+    page,
+    "GET",
+    "/api/v1/catalogs/systems/",
+    200,
+    () => page.goto("/catalogs/systems"),
+  );
+  expect(catalog.items.length).toBeGreaterThan(0);
   await expect(page.getByRole("heading", { name: "Catálogo técnico", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Crear serie", exact: true })).toHaveCount(0);
 });
