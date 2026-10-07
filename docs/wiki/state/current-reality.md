@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: codex/D06-accesorios-extras
+verified_ref: fb9b5881d48248f51c5f05ccdc9682aacdacc0bd
 sources:
   - repository main
   - P00 foundation PR #114
@@ -24,9 +24,9 @@ sources:
 
 # Current reality
 
-## D06 · accesorios y servicios, rama en verificación (2026-10-07)
+## D06 · accesorios y servicios integrados y verificados (2026-10-07)
 
-`codex/D06-accesorios-extras` agrega definiciones compatibles, cantidades exactas,
+El PR [#124](https://github.com/KaraAliOsman/framedex/pull/124), squash `fb9b5881d48248f51c5f05ccdc9682aacdacc0bd`, agrega definiciones compatibles, cantidades exactas,
 sugerencias con causa, extras con BOM/cortes y servicios por revisión. Base y
 sublíneas suman el neto aplicado; el ajuste monetario queda explícito. Instalación
 explícita y costo completo no se duplican. Policy, plantillas y presentación
@@ -52,8 +52,8 @@ El directorio propio usado por pg_prove se verifica byte a byte y su suite
 completa pasa 75 archivos/1 067 aserciones, incluida la privacidad de catálogo.
 La limpieza de recursos propios se verifica. CI detecta una espera de cabecera
 anterior a la respuesta fría del catálogo; el recorrido ahora valida HTTP 200
-antes de mantener sus aserciones visuales y de permisos. CI vuelve a ejecutar
-los cuatro checks; esta rama todavía no se acredita como integrada.
+antes de mantener sus aserciones visuales y de permisos. Los cuatro checks de CI PASA sobre `474eb9a3`;
+el squash se integra exclusivamente en `integracion/v1`.
 El primer gate falló dos selectores del catálogo anterior; se actualizan
 explícitamente a v6 sin retirar aserciones. El intento con puerto ocupado se
 excluye de aceptación; detener el contenedor de la app propia libera el puerto.

@@ -182,3 +182,11 @@ cuando falta su autoridad; nunca se ignoran ni se libera su fabricación. P07 y
 P09 rediseñan la cascada y el documento completos. El
 [incidente local previo](../../../operations/INCIDENTE-GATE-2026-10-06.md) permanece
 visible; no se afirma conservación de los datos de la base ajena afectada.
+
+## Integración aceptada (07-10-2026)
+
+PR [#124](https://github.com/KaraAliOsman/framedex/pull/124): los cuatro checks
+requeridos PASA sobre `474eb9a3`; squash `fb9b5881d48248f51c5f05ccdc9682aacdacc0bd` en `integracion/v1`.
+El recorrido focalizado posterior a CI pasa y conserva todas las aserciones.
+R1–R20 PASA para D06, con dos rondas documentadas en el PR. El stack de aplicación
+y el gate propios quedan detenidos; ningún recurso ajeno se detiene o modifica.

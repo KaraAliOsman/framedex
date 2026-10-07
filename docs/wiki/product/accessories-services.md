@@ -1,9 +1,9 @@
 ---
 type: concept
 status: active
-updated: 2026-10-06
+updated: 2026-10-07
 volatility: medium
-verified_ref: codex/D06-accesorios-extras
+verified_ref: fb9b5881d48248f51c5f05ccdc9682aacdacc0bd
 sources:
   - engine/src/dekopen_engine/extra_models.py
   - engine/src/dekopen_engine/extras.py

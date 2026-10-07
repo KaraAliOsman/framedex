@@ -398,3 +398,14 @@ ajeno se usa para esta comprobación. CI detecta una espera visual anterior a la
 respuesta fría del catálogo; se sincroniza la lectura HTTP real conservando
 todas las aserciones visuales y de permisos. Los cuatro checks se repiten antes
 de integrar el PR #124; las ejecuciones fallidas no cuentan como aceptación.
+
+## 2026-10-07 — D06 · integración aceptada
+
+El PR [#124](https://github.com/KaraAliOsman/framedex/pull/124) pasa los cuatro
+checks requeridos sobre `474eb9a3` y se integra por squash `fb9b5881d48248f51c5f05ccdc9682aacdacc0bd`
+en `integracion/v1`. La aceptación final incluye 650 motor (+2 xfail), 1 184
+backend, 727 frontend, 1 067 pgTAP, 337 integraciones, 11 E2E y upgrades PG16.
+El recorrido focal de catálogo frío pasa en 23,6 s, sin quitar aserciones.
+R1–R20 y 40 comparaciones sin hallazgos nuevos pasan para D06. Se verifica
+limpieza propia y se detiene el stack de app. El incidente anterior permanece
+visible; la cola continúa con D07 y no se modifican main ni Git dekopen.
