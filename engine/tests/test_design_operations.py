@@ -189,7 +189,9 @@ def test_travel_support_and_catalog_attributes_are_never_guessed(product: dict[s
 
 @pytest.mark.parametrize("recipe,expected", [("6 Float Incoloro", "6.00"), ("4-16-4", "24.00"),
                                              ("4+4", None), ("Sin composición declarada", None)])
-def test_legacy_glass_change_never_inherits_previous_package_thickness(product, demo_60_params, recipe, expected):
+def test_legacy_glass_change_never_inherits_previous_package_thickness(
+    product: dict[str, Any], demo_60_params: SystemParams, recipe: str, expected: str | None,
+) -> None:
     product["assembly"]["modules"][0]["tree"]["glass_thickness_mm"] = "12.00"
     changed = apply_operations(product, [{"op": "set_glass", "module": "m1", "sku": "NEW"}],
         params=demo_60_params, finish="WHITE", catalog={"glass_skus": {"NEW"}, "glass_specs": {"NEW": recipe}})["product"]
