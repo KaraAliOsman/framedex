@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: fb9b5881d48248f51c5f05ccdc9682aacdacc0bd
+verified_ref: f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d
 sources:
   - repository main
   - P00 foundation PR #114
@@ -24,7 +24,7 @@ sources:
 
 # Current reality
 
-## D07 · verificado localmente, integración pendiente (2026-10-07)
+## D07 · integrado y verificado (2026-10-07)
 
 La rama `codex/D07-vano-fabricacion` agrega reglas de montaje con fuente y
 autoridad versionada, derivación Decimal desde una o tres medidas de vano,
@@ -47,8 +47,11 @@ pasaron sobre `7da524d8`; las seis observaciones posteriores se corrigieron y
 se verifican otra vez antes de integrar. Los extras independientes se conservan
 al cambiar regla, la propuesta obsoleta se descarta y cada revisión se resuelve
 en su serie. El gate final de base de datos pasa 1 090 pgTAP, 362 integraciones,
-11 E2E y ocho upgrades PG16, con limpieza propia verificada. CI sobre las
-correcciones y squash siguen pendientes. Véase [vano y montaje](../product/opening-measurements.md) y su
+11 E2E y ocho upgrades PG16, con limpieza propia verificada. CI pasa sus
+cuatro checks sobre `12d24009d10b59626ba54d7f1ce9cd9324f1e440`.
+El PR [#125](https://github.com/KaraAliOsman/framedex/pull/125) se integra por
+squash `f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d` en `integracion/v1`.
+Véase [vano y montaje](../product/opening-measurements.md) y su
 [aceptación](../../redesign/captures/vano-fabricacion/aceptacion.md).
 
 ## D06 · accesorios y servicios integrados y verificados (2026-10-07)

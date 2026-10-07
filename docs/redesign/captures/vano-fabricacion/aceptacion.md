@@ -126,7 +126,9 @@ confirmación vigente, inmutabilidad, cobertura, rectificación, aislamiento y
 borrado y rechazo de copia de evidencia obsoleta a otra revisión. Database Gate
 pasa completo sobre la revisión con 1 090 pgTAP, 362 integraciones, 11 E2E y los ocho recorridos
 de upgrade en PostgreSQL 16. Se verifica la limpieza del stack aislado al
-terminar. CI se comprueba sobre la última revisión antes del merge.
+terminar. Los cuatro checks de CI pasan sobre `12d24009d10b59626ba54d7f1ce9cd9324f1e440`.
+PR [#125](https://github.com/KaraAliOsman/framedex/pull/125) integrado por squash
+`f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d` en `integracion/v1`.
 
 Los intentos fallidos de selectores, formato y runner de captura no cuentan
 como aceptación. El recorte visual detectado se corrigió y se añadió una

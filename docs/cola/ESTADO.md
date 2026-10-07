@@ -9,7 +9,7 @@
 | D04 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/122 | dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f | CI 4/4 verde; clases y expansión exacta, F6/diff/undo, picking de 12 OT, 1008 pgTAP, 294 RLS, 11 E2E y upgrade histórico intacto. |
 | D05 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/123 | 94f9f5e773cfd227bca820460011ada77ce95baa | CI 4/4 verde; carta por caras y precio por modo/moneda, 1031 pgTAP, 311 RLS, 11 E2E y ocho upgrades PG16; incidente local documentado. |
 | D06 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/124 | fb9b5881d48248f51c5f05ccdc9682aacdacc0bd | CI 4/4 verde; extras/BOM/cortes, servicios y venta sellada; 1067 pgTAP, 337 RLS, 11 E2E y upgrades PG16; privacidad por tenant verificada. |
-| D07 | D2 | en curso |  |  | Vano y reglas de montaje con fuente; fabricación exacta, rectificación y confirmación sellada antes de liberar OT. |
+| D07 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/125 | f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d | CI 4/4 verde; vano/montaje, evidencia y Δ de rectificación; 1090 pgTAP, 362 RLS, 11 E2E y ocho upgrades PG16; seis observaciones corregidas. |
 | IA2 | D2 | pendiente |  |  |  |
 | IA3 | D2 | pendiente |  |  |  |
 | P02 | 1 | pendiente |  |  |  |
@@ -47,3 +47,9 @@ P01 deja tokens, formatos exactos, primitivas y guardas; IA1 mide MiMo 3/26 y MO
 D01 separa familias y autoridades, preserva datos históricos y conecta plantilla/IA con diff, revisión, publicación y deshacer reales.
 Capturas clave: `docs/redesign/captures/sistema-diseno/`, `diagnostico-evals/` y `sistemas-catalogo/`; catálogo D01 sin hallazgos nuevos.
 Riesgos: catálogo DEMO sin certificación, escaneos sin OCR verificado y dominio D02–D07/IA2–IA3 pendientes de su propia aceptación.
+
+Frente D01–D07 integrado: familias, vidrio, aperturas, herrajes, caras, extras y montaje con autoridad versionada.
+D07 conserva mínimo/dispersión, fija fabricación con motivo y liga confirmación a todos los marcos; OT pendiente bloqueada.
+La rectificación de una aprobación abre sucesora con Δ de venta y conserva el PDF anterior byte a byte.
+Capturas clave: `docs/redesign/captures/vano-fabricacion/`; 24 comparaciones sin hallazgos nuevos y ocho regresiones visuales adicionales.
+Riesgos: datos DEMO sin certificación; IA2/IA3 y las superficies P continúan su aceptación sobre el dominio integrado.

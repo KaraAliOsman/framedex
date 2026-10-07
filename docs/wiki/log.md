@@ -473,3 +473,15 @@ la app y sus procesos también están detenidos. Los intentos fallidos de
 selectores del recorrido adicional no cuentan como aceptación; el recorrido
 completo posterior pasa conservando todas sus aserciones. CI de las
 correcciones se espera sobre el siguiente commit antes del squash.
+
+## 2026-10-07 — D07 · integración aceptada
+
+El PR [#125](https://github.com/KaraAliOsman/framedex/pull/125) pasa los cuatro
+checks de CI sobre `12d24009d10b59626ba54d7f1ce9cd9324f1e440` y se integra
+por squash `f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d` en `integracion/v1`.
+La aceptación posterior a revisión conserva 662 motor (+2 xfail), 1 186 backend,
+734 frontend, 1 090 pgTAP, 362 integraciones, 11 E2E y ocho upgrades PG16.
+Las seis observaciones se resuelven con regresiones; ninguna se descarta por
+el estado verde del bot. Las 24 comparaciones y el flujo A→B/PDF/OT pasan.
+Los procesos propios de app están detenidos. La cola continúa inmediatamente
+con IA2; main y los recursos ajenos no se modifican.
