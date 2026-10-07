@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-06
 volatility: high
-verified_ref: codex/D05-colores-acabados
+verified_ref: 94f9f5e773cfd227bca820460011ada77ce95baa
 sources:
   - repository main
   - P00 foundation PR #114
@@ -24,7 +24,7 @@ sources:
 
 # Current reality
 
-## D05 · carta por caras verificada en la rama, 2026-10-06
+## D05 · carta por caras integrada y verificada, 2026-10-06
 
 La carta tipada declara proceso, muestra lineal, base, caras compatibles,
 restricciones, fuente, recargo y plazo. El motor resuelve refuerzo, holgura,
@@ -38,10 +38,12 @@ edición/importación/diff/publicación/deshacer y los cinco estados. La escritu
 humana conserva canales de precisión extensa como strings decimales exactos.
 DEMO v5 se agrega sin reescribir v1–v4 ni BOM/hashes/precios/revisiones históricos.
 Gates locales finales lint/typecheck/test/build PASA: 626 motor (+2 xfail históricos),
-1 179 backend y 719 frontend. El gate limpio inicial verificó 1 031 pgTAP,
-304 integración, 11 E2E y ocho upgrades poblados PG16. La revisión del PR #123
-agrega precio en cuatro modos/moneda y carta sin blanco, con siete regresiones
-reales y tres goldens monetarios; el gate limpio final y CI se registran al cierre.
+1 179 backend y 719 frontend. El gate limpio final verificó 1 031 pgTAP,
+311 integración, 11 E2E y ocho upgrades poblados PG16, con limpieza propia verificada.
+La revisión del PR #123 agrega precio en cuatro modos/moneda y carta sin blanco,
+con siete regresiones reales y tres goldens monetarios. Los cuatro checks de CI
+PASA sobre `c060115570448f6b4ec0993b885c67c38e083eac`; el squash
+`94f9f5e773cfd227bca820460011ada77ce95baa` integra D05 en `integracion/v1`.
 
 Véanse [carta por caras](../product/color-finishes.md) y
 [aceptación D05](../../redesign/captures/colores-acabados/aceptacion.md).

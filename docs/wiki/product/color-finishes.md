@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-06
 volatility: medium
-verified_ref: codex/D05-colores-acabados
+verified_ref: 94f9f5e773cfd227bca820460011ada77ce95baa
 sources:
   - engine/src/dekopen_engine/finish_models.py
   - engine/src/dekopen_engine/finishes.py

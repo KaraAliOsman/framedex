@@ -332,3 +332,15 @@ conservan incremento cero. Otras cubren FX ausente, margen del proyecto y carta
 sin blanco con una combinación incompleta. Tres goldens conservan la resta
 firmada de precisión extensa en el motor. Los recorridos y cinco estados pasan;
 se vuelven a ejecutar los gates completos antes del merge.
+
+## 2026-10-06 — D05 · integración aceptada
+
+El [PR #123](https://github.com/KaraAliOsman/framedex/pull/123) aprobó los cuatro
+checks requeridos sobre `c060115570448f6b4ec0993b885c67c38e083eac` y se integró
+mediante squash `94f9f5e773cfd227bca820460011ada77ce95baa` en `integracion/v1`.
+El gate final posterior a revisión verificó 1 031 pgTAP, 311 pruebas RLS,
+11 recorridos E2E y ocho upgrades poblados PG16, con limpieza propia verificada.
+Lint/typecheck/test/build, 24 comparaciones sin hallazgos nuevos, cinco estados
+y publicación/deshacer pasan; la rúbrica R1–R20 conserva sus dos rondas.
+El incidente local permanece visible y su ejecución se excluye de aceptación.
+La cola continúa con D06; main y Git dekopen no recibieron cambios.

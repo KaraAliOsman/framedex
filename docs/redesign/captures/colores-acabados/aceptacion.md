@@ -89,8 +89,7 @@ duplicado y Chromium liberó su cuerpo. El helper de E2E escucha las peticiones
 nuevas y lee su respuesta en cuanto llega, antes de terminar la acción. Conserva
 las aserciones de duplicación, BOM, hashes y persistencia; no intercepta tráfico,
 no agrega retries ni respuestas sintéticas. Se descartó el reenvío intermedio
-porque podía retirar una ruta todavía activa. El gate se vuelve a ejecutar con
-la captura final.
+porque podía retirar una ruta todavía activa. Los tres recorridos finales del proyecto y el gate de CI pasan con esta captura.
 
 Momento de firma: lienzo y 3D bicolor real, revisión y documento por caras.
 Idea que sube el techo: foliado oscuro explica refuerzo y plazo extra en el
@@ -148,17 +147,23 @@ carta física, restricciones y tarifas productivas según `ACTIVACION.md`.
 DEMO no certifica color, fabricante ni plazo. No se activa un servicio externo.
 P04/P09/P19 continúan editor/documento/3D y no se declaran terminados aquí.
 
-Validación local final tras las correcciones de revisión: lint, typecheck, test
-y build PASA; 626 pruebas del motor y dos
-xfail históricos, 1 179 backend, 719 frontend y goldens exactos. Nueve pruebas
-del harness protegen el gate; 27 regresiones focalizadas cubren acabados/HTTP y
-tres recorridos canvas pasan con pintura inferior a 300 ms. PostgreSQL 16 y sus
-ocho verificadores de upgrade poblado pasan, incluido D05. El Database Gate
-inicial PASA sobre el proyecto aislado: 1 031 pgTAP en 73 archivos, 304 pruebas
-de integración, 11 recorridos E2E y los ocho upgrades poblados en PostgreSQL 16.
-La limpieza verifica ausencia de contenedores y volúmenes propios. Los cuatro
-checks de CI se registran al cerrarse el PR. La ejecución final posterior a la
-revisión está en curso y se registra por separado; la inicial no sustituye ese gate.
+Validación final posterior a las correcciones de revisión: lint, typecheck,
+test y build PASA; 626 pruebas del motor (+dos xfail históricos), 1 179 backend,
+719 frontend y goldens exactos. Las 28 regresiones focalizadas finales y los
+recorridos de navegador, cinco estados, publicación/deshacer y recapturas pasan.
+El Database Gate final PASA sobre el proyecto propio aislado: 1 031 pgTAP en
+73 archivos, 311 pruebas de integración, 11 recorridos E2E y los ocho upgrades
+poblados PostgreSQL 16. La limpieza verifica ausencia de contenedores y volúmenes
+propios. El gate local completo usa `beba983e`, cuya diferencia con el último
+commit se limita al helper E2E y esta aceptación. El recorrido final del proyecto
+pasa tres veces consecutivas sobre `c060115570448f6b4ec0993b885c67c38e083eac`, sin interceptar tráfico.
+La ejecución inicial y el incidente no sustituyen estas verificaciones.
+
+El [PR #123](https://github.com/KaraAliOsman/framedex/pull/123) aprueba los cuatro
+checks requeridos sobre `c060115570448f6b4ec0993b885c67c38e083eac` en
+[CI](https://github.com/KaraAliOsman/framedex/actions/runs/37551722594).
+Se integra mediante squash `94f9f5e773cfd227bca820460011ada77ce95baa` en `integracion/v1`.
+La rúbrica R1–R20 PASA y sus dos rondas quedan en el PR.
 
 Una publicación sintética inicial anterior al arreglo del transporte conserva
 su historial: la guarda impidió deshacer un etag obsoleto. Su serie sin artículos
