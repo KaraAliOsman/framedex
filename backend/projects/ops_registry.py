@@ -96,7 +96,9 @@ def product_from_position(position):
 def design_from_product(product, system_id, color):
     model = parse_product_model(product)
     width, height = elevation_envelope(model.assembly)
-    single = len(model.assembly.modules) == 1 and not model.assembly.couplings
+    single = (len(model.assembly.modules) == 1 and not model.assembly.couplings
+              and model.assembly.modules[0].contour is None
+              and model.assembly.modules[0].frameless is None)
     return {"system_id": UUID(str(system_id)), "color": color,
             "nominal_width_mm": width, "nominal_height_mm": height,
             "parametric_tree": product["assembly"]["modules"][0]["tree"] if single else product}

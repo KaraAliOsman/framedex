@@ -13,6 +13,7 @@ from rest_framework import serializers
 from rest_framework.views import APIView
 
 from authentication.errors import contract_error
+from documents.repository import documentary_backend
 from dekopen_engine.design_operations import OperationError, validate_operation
 from dekopen_engine.commercial import indicative_line_net
 from dekopen_engine.finishes import finish_selling_delta
@@ -42,8 +43,14 @@ def snapshot(org_id, project_id):
     with connection.cursor() as cursor:
         cursor.execute("SELECT id FROM public.project_positions WHERE project_id=%s AND org_id=%s ORDER BY position_index FOR UPDATE", [project_id, org_id])
     positions = service.positions(org_id, project_id)
+    with documentary_backend():
+        preparation = rows("SELECT to_jsonb(input) AS payload FROM public.position_documentary_inputs input "
+            "WHERE project_id=%s AND org_id=%s ORDER BY position_id FOR UPDATE", [project_id, org_id])
+        documentary_inputs = [json.loads(item["payload"]) if isinstance(item["payload"], str)
+                              else item["payload"] for item in preparation]
     return _plain({"project_id": str(project_id), "revision": project["current_revision"],
-                   "updated_at": project["updated_at"], "positions": positions})
+                   "updated_at": project["updated_at"], "positions": positions,
+                   "documentary_inputs": documentary_inputs})
 
 
 def _position(after, identity):
@@ -242,6 +249,25 @@ def apply_project_operations(org_id, user_id, project_id, data):
     return {"operation_id": str(identity), "state": "APPLIED", "project": service.project_public(org_id, service.project_row(org_id, project_id), detail=True)}
 
 
+def _restore_documentary_inputs(org_id, project_id, restored):
+    """Recover draft preparation cascaded by a reversible position removal."""
+    wanted = {position["id"] for position in restored["positions"]}
+    with documentary_backend():
+        existing = {str(item["position_id"]) for item in rows(
+            "SELECT position_id FROM public.position_documentary_inputs WHERE project_id=%s AND org_id=%s",
+            [project_id, org_id])}
+        for item in restored.get("documentary_inputs", []):
+            if (item["org_id"] != str(org_id) or item["project_id"] != str(project_id)
+                    or item["position_id"] not in wanted):
+                raise contract_error(409, "undo_documentary_scope_invalid", "La preparación documental no corresponde al proyecto que se restaura.")
+            if item["position_id"] not in existing:
+                # The immutable operation captured this row server-side; callers
+                # cannot provide it. RLS, policy-scope and sealing guards still run.
+                rows("INSERT INTO public.position_documentary_inputs SELECT "
+                    "(jsonb_populate_record(NULL::public.position_documentary_inputs,%s::jsonb)).* RETURNING id",
+                    [json_text(item)])
+
+
 def undo_project_operations(org_id, user_id, project_id, operation_id):
     service.editable(org_id, project_id)
     current = snapshot(org_id, project_id)
@@ -258,6 +284,7 @@ def undo_project_operations(org_id, user_id, project_id, operation_id):
     if signature(current) != signature(operation["after_state"]):
         raise contract_error(409, "undo_stale", "Hay cambios posteriores. Revisa el proyecto antes de deshacer.")
     _save(org_id, project_id, current, operation["before_state"]["positions"])
+    _restore_documentary_inputs(org_id, project_id, operation["before_state"])
     with commercial_backend():
         rows("UPDATE public.project_edit_operations SET state='UNDONE',undone_at=clock_timestamp() WHERE id=%s AND org_id=%s RETURNING id", [operation_id, org_id])
     return {"operation_id": str(operation_id), "state": "UNDONE", "project": service.project_public(org_id, service.project_row(org_id, project_id), detail=True)}

@@ -51,4 +51,8 @@ def operation_cases() -> dict[str, Any]:
     result["INDICATIVE_QUANTITY_NET"] = {"USD": str(indicative_line_net(Decimal("9007199254740992.02"), 3, "USD")),
         "CLP": str(indicative_line_net(Decimal("123.50"), 3, "CLP")),
         "ABSENT": str(indicative_line_net(Decimal("0"), 0, "CLP"))}
+    for label, recipe in {"MONOLITHIC": "6 Float Incoloro", "DVH": "4-16-4", "LAMINATED_UNKNOWN_PVB": "4+4"}.items():
+        output = apply_operations(before, [{"op": "set_glass", "module": "m1", "sku": "NEW"}],
+            params=params, finish="WHITE", catalog={"glass_skus": {"NEW"}, "glass_specs": {"NEW": recipe}})
+        result[f"LEGACY_GLASS_{label}"] = {"before": before, "recipe": recipe, "after": output["product"]}
     return result

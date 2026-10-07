@@ -600,7 +600,12 @@ def _apply(product: dict[str, Any], op: dict[str, Any], params: SystemParams, ca
                     thickness = total_glass_thickness(parsed.composition)
                     node.update(glass_product=product_value, glass_thickness_mm=mm(thickness) if thickness is not None else None)
                 else:
-                    node["glass_product"] = None
+                    from .glass_composition import parse_glass_notation, total_glass_thickness
+                    try:
+                        thickness = total_glass_thickness(parse_glass_notation(recipes.get(sku) or ""))
+                    except ValueError:
+                        thickness = None
+                    node.update(glass_product=None, glass_thickness_mm=mm(thickness) if thickness is not None else None)
             elif name == "set_panel":
                 if op["sku"] is not None and op["sku"] not in catalog.get("panel_skus", set()):
                     raise OperationError("panel_invalido", "El panel no está en el catálogo.")

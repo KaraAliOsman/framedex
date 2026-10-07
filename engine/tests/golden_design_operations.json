@@ -4765,6 +4765,144 @@
     "CLP": "371",
     "USD": "27021597764222976.06"
   },
+  "LEGACY_GLASS_DVH": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_article_sku": "NEW",
+              "glass_product": null,
+              "glass_spec": "4-16-4",
+              "glass_thickness_mm": "24.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "panel_article_sku": null,
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "recipe": "4-16-4"
+  },
+  "LEGACY_GLASS_LAMINATED_UNKNOWN_PVB": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_article_sku": "NEW",
+              "glass_product": null,
+              "glass_spec": "4+4",
+              "glass_thickness_mm": null,
+              "id": "b1",
+              "opening_type": "FIXED",
+              "panel_article_sku": null,
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "recipe": "4+4"
+  },
+  "LEGACY_GLASS_MONOLITHIC": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_article_sku": "NEW",
+              "glass_product": null,
+              "glass_spec": "6 Float Incoloro",
+              "glass_thickness_mm": "6.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "panel_article_sku": null,
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "recipe": "6 Float Incoloro"
+  },
   "RESIZE_EXACT": {
     "after": {
       "assembly": {

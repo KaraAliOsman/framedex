@@ -79,6 +79,59 @@ def test_remove_can_restore_the_original_position_and_measurement_evidence(docum
         assert restored["project"]["positions"][0]["measurements"]["current"] is True
 
 
+def test_remove_and_undo_preserve_complete_documentary_preparation(documentary_tenant):
+    from backend.tests.integration.test_shot09_documentary import _seed_project
+    from documents.repository import documentary_backend
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project_id, position_id, _ = _seed_project(org, owner, apply_pricing=False)
+    with as_user(owner):
+        before = snapshot(org, project_id)["documentary_inputs"]
+        assert len(before) == 1 and before[0]["glass_polishing"] and before[0]["workshop_annotations"]
+        assert isinstance(before[0]["accessory_schedule"], dict) and isinstance(before[0]["workshop_annotations"], list)
+        _, result = apply(org, owner, project_id, [{"op": "remove_position", "position_id": str(position_id)}])
+        assert snapshot(org, project_id)["documentary_inputs"] == []
+        undo_project_operations(org, owner, project_id, UUID(result["operation_id"]))
+        assert snapshot(org, project_id)["documentary_inputs"] == before
+        _, result = apply(org, owner, project_id, [{"op": "set_quantity", "position_id": str(position_id), "quantity": 2}])
+        with documentary_backend():
+            rows("UPDATE public.position_documentary_inputs SET legacy_handle_migration_confirmed=true "
+                 "WHERE position_id=%s AND org_id=%s RETURNING id", [position_id, org])
+        with pytest.raises(ContractAPIException) as error:
+            undo_project_operations(org, owner, project_id, UUID(result["operation_id"]))
+        assert error.value.contract_code == "undo_stale"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("contour", {"vertices": [{"x_mm": "0", "y_mm": "0"}, {"x_mm": "1500", "y_mm": "0"},
+                             {"x_mm": "1500", "y_mm": "1400"}, {"x_mm": "200", "y_mm": "1400"},
+                             {"x_mm": "0", "y_mm": "1200"}], "bulges": [None]*5}),
+    ("frameless", {"supports": [], "fittings": []}),
+])
+def test_single_module_project_edit_preserves_shape_through_apply_reload_and_undo(documentary_tenant, field, value):
+    from projects.ops_registry import design_from_product, product_from_position
+    from projects.service import position_row
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project, position = setup_project(org, owner)
+    with as_user(owner):
+        product = product_from_position(position_row(org, position["id"]))
+        product["assembly"]["modules"][0][field] = value
+        design = design_from_product(product, position["design"]["system_id"], position["design"]["color"])
+        assert design["parametric_tree"]["version"] == "product-v2"
+        current = position_row(org, position["id"])
+        save_position(org, project["id"], {"design": design, "location_tag": position["location_tag"],
+            "quantity": position["quantity"], "expected_updated_at": current["updated_at"]},
+            position_id=UUID(str(position["id"])), apply_defaults=False)
+        original = positions(org, project["id"])[0]["design"]["parametric_tree"]
+        _, result = apply(org, owner, project["id"], [{"op": "apply_to_positions", "filter": {"position_ids": [str(position["id"])]},
+            "ops": [{"op": "set_glass", "module": "single", "sku": original["assembly"]["modules"][0]["tree"]["glass_article_sku"]}]}])
+        assert result["project"]["positions"][0]["design"]["parametric_tree"]["assembly"]["modules"][0][field] == value
+        assert positions(org, project["id"])[0]["design"]["parametric_tree"]["assembly"]["modules"][0][field] == value
+        undo_project_operations(org, owner, project["id"], UUID(result["operation_id"]))
+        assert positions(org, project["id"])[0]["design"]["parametric_tree"] == original
+
+
 def test_stale_proposal_and_later_edit_refuse_apply_or_undo(documentary_tenant):
     org, _, users, _ = documentary_tenant
     owner = users["OWNER"]

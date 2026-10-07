@@ -187,6 +187,18 @@ def test_travel_support_and_catalog_attributes_are_never_guessed(product: dict[s
         apply(product, [{"op": "set_glass", "module": "m1", "composition": "Inexistente"}], demo_60_params)
 
 
+@pytest.mark.parametrize("recipe,expected", [("6 Float Incoloro", "6.00"), ("4-16-4", "24.00"),
+                                             ("4+4", None), ("Sin composición declarada", None)])
+def test_legacy_glass_change_never_inherits_previous_package_thickness(product, demo_60_params, recipe, expected):
+    product["assembly"]["modules"][0]["tree"]["glass_thickness_mm"] = "12.00"
+    changed = apply_operations(product, [{"op": "set_glass", "module": "m1", "sku": "NEW"}],
+        params=demo_60_params, finish="WHITE", catalog={"glass_skus": {"NEW"}, "glass_specs": {"NEW": recipe}})["product"]
+    bay = changed["assembly"]["modules"][0]["tree"]
+    assert bay["glass_thickness_mm"] == expected and bay["glass_spec"] == recipe
+    assert bay["glass_product"] is None
+    assert product["assembly"]["modules"][0]["tree"]["glass_thickness_mm"] == "12.00"
+
+
 def test_declared_bay_fields_and_copied_tree_preserve_manufacturing_identity(product: dict[str, Any], demo_60_params: SystemParams) -> None:
     changed = apply(product, [{"op": "set_bay_spec", "module": "m1", "bay": "b1", "patch": {
         "hardware_set_sku": None, "sill_height_mm": "500", "is_sidelight": True,
