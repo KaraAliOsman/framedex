@@ -25,6 +25,7 @@ import type { ProductJson } from "../canvas/productEditing";
 import { useDesignOpsBridge } from "./assistantContext";
 import { AiMetricsCard } from "./AiMetricsCard";
 import { ArtifactDetail, type Artifact } from "./ArtifactDetail";
+import { RejectedOperations } from "./RejectedOperations";
 import { BatchOpsStep } from "./BatchOpsStep";
 import { BotFigure } from "./BotFigure";
 import { Orb, orbStateFor } from "./Orb";
@@ -442,15 +443,7 @@ function AgentTurnView({
             ))}
           </ul>
         ) : null}
-        {turn.rejected?.length ? (
-          <ul className="aiws-warnings aiws-warnings--rejected">
-            {turn.rejected.map((item, i) => (
-              <li key={i}>
-                {item.op ?? "—"}: {item.reason}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        {turn.rejected?.length ? <RejectedOperations items={turn.rejected} /> : null}
         {actionable.length ? (
           <div className="aiws-steps aiws-steps--live">
             {actionable.map((step) => (

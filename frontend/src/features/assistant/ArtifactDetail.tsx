@@ -1,4 +1,7 @@
 import { t } from "../../i18n/es-CL";
+import { Link } from "react-router-dom";
+import type { ProductIssue } from "../../api/generated/models";
+import { issueText } from "../canvas/AssemblyEditor";
 
 /** The artifact kinds the agent produces — payloads come from the workflow
  * contracts in backend/ai_gateway/agent.py, which the backend validates
@@ -253,7 +256,70 @@ function GenericView({ payload }: { payload: Dict }): JSX.Element {
   );
 }
 
+function BlockersView({ payload }: { payload: Dict }): JSX.Element {
+  const blockers = asList(payload.blockers);
+  const projectId = typeof payload.project_id === "string" ? payload.project_id : null;
+  const positionId = typeof payload.position_id === "string" ? payload.position_id : null;
+  return (
+    <div>
+      {blockers.length ? (
+        <ul className="art-lines">
+          {blockers.map((blocker, index) => (
+            <li key={index}>
+              {typeof blocker.detail === "string"
+                ? blocker.detail
+                : issueText(
+                    {
+                      code: String(blocker.code ?? ""),
+                      target: String(blocker.target ?? "assembly"),
+                      severity: blocker.severity === "error" ? "error" : "warning",
+                      params: asDict(blocker.params),
+                    } as ProductIssue,
+                    [],
+                    [],
+                  )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>El motor no informa bloqueos para este diseño.</p>
+      )}
+      {projectId ? (
+        <Link
+          to={
+            positionId
+              ? `/projects/${projectId}/positions/${positionId}/edit`
+              : `/projects/${projectId}/pricing`
+          }
+        >
+          {positionId ? "Revisar diseño y catálogo" : "Completar preparación de emisión"}
+        </Link>
+      ) : null}
+      <details>
+        <summary>Detalles técnicos de la consulta</summary>
+        <pre>{JSON.stringify(payload, null, 2)}</pre>
+      </details>
+    </div>
+  );
+}
+
+function CatalogCandidatesView({ payload }: { payload: Dict }): JSX.Element {
+  return (
+    <div>
+      <p>Alternativas disponibles en la serie consultada:</p>
+      <ul className="art-lines">
+        {(Array.isArray(payload.skus) ? payload.skus : []).map((sku, index) => (
+          <li key={index}>{String(sku)}</li>
+        ))}
+      </ul>
+      <p>Elige una alternativa para continuar el mismo trabajo.</p>
+    </div>
+  );
+}
+
 const VIEWS: Record<string, (p: Dict) => JSX.Element> = {
+  blockers: (p) => <BlockersView payload={p} />,
+  catalog_candidates: (p) => <CatalogCandidatesView payload={p} />,
   message: (p) => <MessageView payload={p} />,
   quote_draft: (p) => <QuoteDraftView payload={p} />,
   purchase_plan: (p) => <PurchasePlanView payload={p} />,

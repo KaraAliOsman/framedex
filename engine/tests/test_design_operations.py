@@ -57,6 +57,15 @@ def test_derived_resize_is_exact_and_input_remains_untouched(product: dict[str, 
     assert product == before
 
 
+def test_new_operation_cannot_use_a_legacy_alias_to_bypass_physical_capability(product: dict[str, Any]) -> None:
+    from engine.tests.opening_cases import opening_params
+    params = opening_params("DEMO_60")
+    with pytest.raises(OperationError) as error:
+        apply(product, [{"op": "set_opening", "module": "m1", "opening": "SLIDING_2L"}], params)
+    assert error.value.code == "opening_incompatible"
+    assert product["assembly"]["modules"][0]["tree"]["opening_type"] == "FIXED"
+
+
 def test_failed_second_operation_leaves_no_partial_mutation(product: dict[str, Any], demo_60_params: SystemParams) -> None:
     before = deepcopy(product)
     with pytest.raises(OperationError, match="marco"):
@@ -130,3 +139,76 @@ def test_travel_support_and_catalog_attributes_are_never_guessed(product: dict[s
     assert glass["assembly"]["modules"][0]["tree"]["glass_article_sku"] == "FLOAT"
     with pytest.raises(OperationError):
         apply(product, [{"op": "set_glass", "module": "m1", "composition": "Inexistente"}], demo_60_params)
+
+
+def test_declared_bay_fields_and_copied_tree_preserve_manufacturing_identity(product: dict[str, Any], demo_60_params: SystemParams) -> None:
+    changed = apply(product, [{"op": "set_bay_spec", "module": "m1", "bay": "b1", "patch": {
+        "hardware_set_sku": None, "sill_height_mm": "500", "is_sidelight": True,
+        "door_handedness": None, "glass_processing": None, "hardware_selection": None}}], demo_60_params)["product"]
+    bay = changed["assembly"]["modules"][0]["tree"]
+    assert bay["id"] == "left" and bay["sill_height_mm"] == "500" and bay["is_sidelight"] is True
+    split = apply(product, [{"op": "split_bay", "bay": "b1", "axis": "H", "from": "START", "offset_mm": "400"}], demo_60_params)["product"]
+    result = apply(changed, [{"op": "set_module_tree", "module": "m1", "tree": split["assembly"]["modules"][0]["tree"]}], demo_60_params)["product"]
+    assert result["assembly"]["modules"][0]["id"] == "m1"
+    assert result["assembly"]["modules"][0]["tree"] == split["assembly"]["modules"][0]["tree"]
+    assert changed["assembly"]["modules"][0]["tree"] == bay
+
+
+def test_missing_glass_and_frameless_supports_remain_explicit(product: dict[str, Any], demo_60_params: SystemParams) -> None:
+    changed = apply(product, [{"op": "clear_glass_thickness", "module": "m1"},
+        {"op": "set_frameless", "module": "m1", "spec": {"supports": [], "fittings": []}}], demo_60_params)["product"]
+    module = changed["assembly"]["modules"][0]
+    assert module["tree"]["glass_thickness_mm"] is None
+    assert module["frameless"] == {"supports": [], "fittings": []}
+    restored = apply(changed, [{"op": "set_frameless", "module": "m1", "spec": None}], demo_60_params)["product"]
+    assert "frameless" not in restored["assembly"]["modules"][0]
+
+
+def test_extras_retain_only_declared_selections_and_opening_dimensions(product: dict[str, Any], demo_60_params: SystemParams) -> None:
+    selection = {"code": "SILL", "sides": ["BOTTOM"], "overhang_left_mm": "50", "overhang_right_mm": "100"}
+    changed = apply(product, [{"op": "set_extras", "module": "m1", "extras": [selection], "context": {
+        "opening_width_mm": "1600", "opening_height_mm": "1300"}}], demo_60_params)["product"]
+    tree = changed["assembly"]["modules"][0]["tree"]
+    assert tree["extras"] == [selection] and "quantity" not in tree["extras"][0]
+    assert tree["extra_context"] == {"opening_width_mm": "1600", "opening_height_mm": "1300"}
+    with pytest.raises(OperationError):
+        validate_operation({"op": "set_extras", "module": "m1", "extras": [{**selection, "overhang_left_mm": 1.5}]})
+
+
+def test_seam_and_swap_preserve_total_and_physical_connections(product: dict[str, Any], demo_60_params: SystemParams) -> None:
+    graph = apply(product, [{"op": "add_unit", "side": "right"}], demo_60_params)["product"]
+    ids = [module["id"] for module in graph["assembly"]["modules"]]
+    changed = apply(graph, [{"op": "resize_seam", "left": ids[0], "right": ids[1], "delta_mm": "200"},
+        {"op": "swap_modules", "module": ids[0], "other": ids[1]}], demo_60_params)["product"]
+    assert [m["width_mm"] for m in changed["assembly"]["modules"]] == ["1300.00", "1700.00"]
+    assert sum(Decimal(m["width_mm"]) for m in changed["assembly"]["modules"]) == Decimal("3000")
+    assert changed["assembly"]["couplings"][0]["modules"] == ids[::-1]
+    with pytest.raises(OperationError):
+        apply(graph, [{"op": "resize_seam", "left": ids[0], "right": ids[1], "delta_mm": "2000"}], demo_60_params)
+
+
+def test_coupler_requires_real_catalog_and_clear_is_explicit(product: dict[str, Any], demo_60_params: SystemParams) -> None:
+    graph = apply(product, [{"op": "add_unit", "side": "right"}], demo_60_params)["product"]
+    coupling = graph["assembly"]["couplings"][0]["id"]
+    with pytest.raises(OperationError):
+        apply(graph, [{"op": "set_coupler_sku", "coupling": coupling, "sku": "INVENTED"}], demo_60_params)
+    result = apply_operations(graph, [{"op": "set_coupler_sku", "coupling": coupling, "sku": "REAL"}],
+        params=demo_60_params, finish="WHITE", catalog={"coupler_skus": {"REAL"}})["product"]
+    assert result["assembly"]["couplings"][0]["coupler_profile_sku"] == "REAL"
+    cleared = apply(result, [{"op": "set_coupler_sku", "coupling": coupling, "sku": None}], demo_60_params)["product"]
+    assert cleared["assembly"]["couplings"][0]["coupler_profile_sku"] is None
+
+
+def test_contour_edits_and_decimal_resize_preserve_topology(product: dict[str, Any], demo_60_params: SystemParams) -> None:
+    module = product["assembly"]["modules"][0]
+    module["contour"] = {"vertices": [{"x_mm": "0", "y_mm": "0"}, {"x_mm": "1500", "y_mm": "0"},
+        {"x_mm": "1500", "y_mm": "1200"}, {"x_mm": "0", "y_mm": "1200"}], "bulges": ["200", None, None, None]}
+    changed = apply(product, [{"op": "set_contour_vertex", "module": "m1", "index": 1, "x_mm": "100", "y_mm": "0", "from": "END"},
+        {"op": "set_contour_bulge", "module": "m1", "index": 0, "rise_mm": "150"},
+        {"op": "set_module_width", "module": "m1", "width_mm": "3000"},
+        {"op": "set_height", "height_mm": "2400"}], demo_60_params)["product"]
+    contour = changed["assembly"]["modules"][0]["contour"]
+    assert contour["vertices"][1] == {"x_mm": "2800.00", "y_mm": "0.00"}
+    assert contour["bulges"] == ["300.00", None, None, None]
+    with pytest.raises(OperationError):
+        apply(product, [{"op": "set_contour_vertex", "module": "m1", "index": 9, "x_mm": "0", "y_mm": "0"}], demo_60_params)

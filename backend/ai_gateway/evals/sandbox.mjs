@@ -19,5 +19,5 @@ const registry = await import(
   `data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString("base64")}`
 );
 const input = JSON.parse(readFileSync(0, "utf8"));
-const product = registry.applyDesignOps(structuredClone(input.product), input.ops ?? []);
+const product = registry.applyOperationEffects(structuredClone(input.product), input.ops ?? []);
 process.stdout.write(JSON.stringify({ product, wire: registry.designAssistProduct(product) }));

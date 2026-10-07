@@ -15,6 +15,9 @@ from authentication.errors import ContractAPIException, contract_error
 from authentication.tenancy import MembershipRepository, resolve_tenant_context
 from catalogs.glass import load_products
 from dekopen_engine.commercial import PricingError, PricingMode
+from dekopen_engine.catalog_rules import CatalogRuleError
+from dekopen_engine.openings import OpeningCapabilityError
+from dekopen_engine.weight import MissingFabricationAuthority
 from dekopen_engine.design_operations import (
     BY_NAME, REGISTRY, VERSION, OperationError, apply_operations,
     as_product, validate_operation, fingerprint,
@@ -22,7 +25,7 @@ from dekopen_engine.design_operations import (
 from dekopen_engine.extra_models import ExtraLine
 from dekopen_engine.product import elevation_envelope
 from dekopen_engine.snapshot import evaluation_response
-from engine_api.adapter import evaluate_assembly_from_api, parse_product_model
+from engine_api.adapter import InvalidEngineRequest, UnsupportedEngineContract, evaluate_assembly_from_api, parse_product_model
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import PricingRepository, commercial_backend, json_text, rows
 from pricing.serializers import StrictSerializer
@@ -74,6 +77,7 @@ def catalog_for(org_id, system_id):
     catalog = design_assist._catalog(UUID(str(system_id)), org_id)
     products = load_products(system_id, org_id)
     return {**catalog, "glass_specs": catalog["glass_recipes"],
+            "coupler_skus": set(SystemParamsRepository().load_coupler_articles(UUID(str(system_id)), org_id)),
             "glass_products": {row["technical_sku"]: row["resolved_product"].model_dump(mode="json")
                                for row in products if row.get("resolved_product") is not None}}
 
@@ -136,6 +140,9 @@ def sale_price(org_id, product, system_id, color):
         except (PricingError, ContractAPIException) as error:
             detail = pricing_public_detail(error.code) if isinstance(error, PricingError) else error.public_detail
             return {"net": None, "currency": currency, "reason": detail}
+        except (InvalidEngineRequest, UnsupportedEngineContract, CatalogRuleError, OpeningCapabilityError, MissingFabricationAuthority):
+            return {"net": None, "currency": currency,
+                    "reason": "Sin dato: completa el vidrio y la autoridad de fabricación del diseño en el editor."}
 
 
 def _diff(before, after, path=""):

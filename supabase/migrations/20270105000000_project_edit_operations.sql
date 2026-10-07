@@ -31,12 +31,15 @@ CREATE POLICY project_edit_update ON public.project_edit_operations FOR UPDATE T
 CREATE FUNCTION private.guard_project_edit_evidence() RETURNS TRIGGER
 LANGUAGE plpgsql SET search_path=pg_catalog,public,private AS $$
 BEGIN
+  IF TG_OP='DELETE' THEN
+    RAISE EXCEPTION 'project_edit_evidence_immutable' USING ERRCODE='23514';
+  END IF;
   IF OLD.state<>'APPLIED' OR NEW.state<>'UNDONE' OR NEW.undone_at IS NULL OR
      (to_jsonb(OLD)-'state'-'undone_at') IS DISTINCT FROM (to_jsonb(NEW)-'state'-'undone_at') THEN
     RAISE EXCEPTION 'project_edit_evidence_immutable' USING ERRCODE='23514';
   END IF;
   RETURN NEW;
 END; $$;
-CREATE TRIGGER project_edit_evidence BEFORE UPDATE ON public.project_edit_operations
+CREATE TRIGGER project_edit_evidence BEFORE UPDATE OR DELETE ON public.project_edit_operations
   FOR EACH ROW EXECUTE FUNCTION private.guard_project_edit_evidence();
 COMMIT;

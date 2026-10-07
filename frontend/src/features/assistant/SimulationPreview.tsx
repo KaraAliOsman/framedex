@@ -86,17 +86,19 @@ export function SimulationPreview({
       active = false;
     };
   }, [key, organizationId]);
-  if (!value || !isProductModel(value.product) || !before || !isProductModel(before.product))
-    return null;
+  if (!value || !before) return null;
+  const afterProduct = isProductModel(value.product) ? value.product : null;
+  const beforeProduct = isProductModel(before.product) ? before.product : null;
+  if (!beforeProduct && !afterProduct) return null;
   const price = value.price as Price;
   const items = [
     {
       label: "Antes",
-      product: before.product,
+      product: beforeProduct,
       system: before.system_id ?? value.system_id,
       color: before.color,
     },
-    { label: "Propuesta", product: value.product, system: value.system_id, color: value.color },
+    { label: "Propuesta", product: afterProduct, system: value.system_id, color: value.color },
   ];
   return (
     <section className="operation-preview" aria-label="Comparación de la propuesta">
@@ -108,7 +110,9 @@ export function SimulationPreview({
         {items.map((item) => (
           <figure key={item.label}>
             <figcaption>{item.label}</figcaption>
-            {options[item.system] ? (
+            {!item.product ? (
+              <p>Sin posición</p>
+            ) : options[item.system] ? (
               <Drawing product={item.product} options={options[item.system]!} color={item.color} />
             ) : (
               <p role="status">
@@ -117,7 +121,7 @@ export function SimulationPreview({
                   : "Cargando dibujo…"}
               </p>
             )}
-            {item.product.assembly.modules.map((module, index) => (
+            {item.product?.assembly.modules.map((module, index) => (
               <p key={module.id} className="operation-preview__dimensions">
                 Marco {index + 1} · {fmtMm(module.width_mm)} × {fmtMm(module.height_mm)} mm
               </p>

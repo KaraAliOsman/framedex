@@ -13,9 +13,11 @@ import type {
   ProjectOpsPreviewResponse,
 } from "../../api/generated/models";
 import { fmtMm } from "../../format";
+import { SimulationPreview } from "./SimulationPreview";
 import "./operations.css";
 
 type Position = {
+  id?: string;
   position_index: number;
   location_tag?: string;
   quantity: number;
@@ -159,6 +161,19 @@ export function ProjectOpsStep({
               </strong>
               <p>Antes: {summary(change.before)}</p>
               <p>Propuesta: {summary(change.after)}</p>
+              {preview.simulations
+                .filter(
+                  (simulation) =>
+                    (simulation as { position_id?: string }).position_id ===
+                    (change.after ?? change.before)?.id,
+                )
+                .map((simulation, index) => (
+                  <SimulationPreview
+                    key={index}
+                    simulation={simulation}
+                    organizationId={organizationId}
+                  />
+                ))}
             </li>
           ))}
         </ul>

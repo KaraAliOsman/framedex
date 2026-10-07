@@ -29,6 +29,13 @@ class DesignOperationSchema(OpenApiSerializerExtension):
                 item["properties"].update(base_sig={"type": "string"}, description={"type": "string"}, result={"type": "object", "additionalProperties": True}, context_effect={"type": "object", "additionalProperties": {"type": "string"}})
         def nullable(value):
             if isinstance(value, dict):
+                for bound, limit in (("exclusiveMinimum", "minimum"), ("exclusiveMaximum", "maximum")):
+                    if bound in value and not isinstance(value[bound], bool):
+                        value = {**value, limit: value[bound], bound: True}
+                for union in ("oneOf", "anyOf"):
+                    alternatives = value.get(union)
+                    if alternatives and len(alternatives) == 2 and {"type": "null"} in alternatives:
+                        return {**nullable(next(item for item in alternatives if item != {"type": "null"})), "nullable": True}
                 if isinstance(value.get("type"), list):
                     types = value["type"]
                     value["type"] = next(kind for kind in types if kind != "null")

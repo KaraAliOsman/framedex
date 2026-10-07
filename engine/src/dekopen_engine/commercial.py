@@ -169,6 +169,19 @@ class CommercialLine:
     discount: Decimal = ZERO
 
 
+def indicative_line_net(unit_price: Decimal, quantity: int, currency: str) -> Decimal:
+    """Undiscounted indicative sale for an explicitly declared quantity.
+
+    Zero quantity denotes an absent position in a creation/removal preview.
+    Missing unit authority must be handled by the caller, never replaced by zero.
+    """
+    if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity < 0:
+        raise PricingError('invalid_positions')
+    with localcontext() as context:
+        context.prec = 80
+        return quantize_currency(number(unit_price) * quantity, currency)
+
+
 @dataclass(frozen=True)
 class CommercialResult:
     lines: tuple[tuple[int, Decimal], ...]

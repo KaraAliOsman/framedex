@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AxisEnum } from "./axisEnum";
-import type { FromEnum } from "./fromEnum";
+import type { DivisionReferenceEnum } from "./divisionReferenceEnum";
 import type { OperationSplitBayContextEffect } from "./operationSplitBayContextEffect";
 import type { OperationSplitBayOp } from "./operationSplitBayOp";
 import type { OperationSplitBayResult } from "./operationSplitBayResult";
@@ -29,7 +29,7 @@ export interface OperationSplitBay {
    * @pattern ^-?\d+(?:\.\d{1,2})?$
    */
   offset_mm?: string;
-  from: FromEnum;
+  from: DivisionReferenceEnum;
   base_sig?: string;
   description?: string;
   result?: OperationSplitBayResult;

@@ -6,12 +6,13 @@ import json
 from uuid import UUID
 
 from authentication.errors import ContractAPIException
-from dekopen_engine.design_operations import OperationError, as_product
+from dekopen_engine.design_operations import OperationError, as_product, validate_operation
 from dekopen_engine.catalog_rules import CatalogRuleError
 from dekopen_engine.weight import MissingFabricationAuthority
 from projects import ops_registry, service
 from projects.finishes import position_finish_code
 from engine_api.repository import SystemParamsRepository, SystemNotFound, UnsupportedCatalogContract
+from pricing.repository import json_text
 
 TOOLS = [
     {"name": name, "description": description, "parameters": {"type": "object", "additionalProperties": False,
@@ -37,11 +38,45 @@ BY_NAME = {item["name"]: item for item in TOOLS}
 
 
 class EngineTools:
-    def __init__(self, *, org_id, user_id, refs, product, observed_refs, goal):
+    def __init__(self, *, org_id, user_id, refs, product, observed_refs, goal, max_calls=6):
         self.org_id, self.user_id, self.refs = org_id, user_id, refs
         self.product, self.observed_refs, self.goal = product, observed_refs, goal
         self.cache = {}
         self.calls = []
+        self.numeric_evidence = set()
+        self.max_calls = max_calls
+
+    def _check_operations(self, ops, product=None):
+        from projects.design_assist import _declared_values
+        if not isinstance(ops, list):
+            raise OperationError("ops_required", "Declara las operaciones a simular.")
+        for op in ops:
+            validate_operation(op)
+        allowed = _declared_values(self.goal) | self.numeric_evidence
+        def collect(value):
+            if isinstance(value, dict):
+                for field, child in value.items():
+                    if field.endswith("_mm") or field in {"tracks", "track", "count", "quantity", "qty", "angle_deg"}:
+                        if child is not None and not isinstance(child, (dict, list, bool)):
+                            allowed.add(Decimal(str(child)))
+                    elif isinstance(child, (dict, list)):
+                        collect(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect(child)
+        collect(product)
+        def check(value):
+            if isinstance(value, dict):
+                for field, child in value.items():
+                    if (field.endswith("_mm") or field in {"mm", "count", "quantity", "qty", "angle_deg"}) and child is not None:
+                        if Decimal(str(child)) not in allowed:
+                            raise OperationError("measure_ungrounded", "La medida o cantidad no está declarada ni respaldada por el diseño.")
+                    elif isinstance(child, (dict, list)):
+                        check(child)
+            elif isinstance(value, list):
+                for child in value:
+                    check(child)
+        check(ops)
 
     def _reference(self, arguments, name):
         value = arguments.get(name) or self.refs.get(name)
@@ -87,11 +122,19 @@ class EngineTools:
         key = json.dumps({"name": name, "arguments": arguments}, sort_keys=True, default=str)
         if key in self.cache:
             return deepcopy(self.cache[key]), False
+        if len(self.calls) >= self.max_calls:
+            raise OperationError("tool_budget_exceeded", "El trabajo agotó sus consultas. Divide la petición y vuelve a intentar.")
         try:
             output = self._execute(name, arguments)
         except (OperationError, ContractAPIException, CatalogRuleError, MissingFabricationAuthority, SystemNotFound, UnsupportedCatalogContract, ValueError) as error:
             output = {"error": getattr(error, "code", None) or getattr(error, "contract_code", None) or "technical_authority_required",
                       "detail": getattr(error, "public_detail", None) or str(error)}
+        # The provider, grounding validator and stored transcript see exactly
+        # the same wire values, including UUID/date and exact Decimal strings.
+        output = json.loads(json_text(output))
+        from ai_gateway.assist import _grounding_values
+        if "error" not in output:
+            self.numeric_evidence |= _grounding_values(output, "")
         self.cache[key] = deepcopy(output)
         self.calls.append({"name": name, "arguments": arguments, "status": "error" if "error" in output else "ok"})
         return output, True
@@ -100,6 +143,7 @@ class EngineTools:
         if name == "preview_project_operations":
             from projects.project_ops import preview_project_operations
             identity = self._reference(arguments, "project_id")
+            self._check_operations(arguments.get("ops"))
             return preview_project_operations(self.org_id, self.user_id, identity, arguments.get("ops"))
         if name == "list_catalog_options":
             if arguments.get("kind") == "system":
@@ -115,7 +159,7 @@ class EngineTools:
                     "prices": [{"position_id": str(position["id"]), "index": position["position_index"],
                                 "location": position["location_tag"], "price_net": position["price_net"],
                                 "quantity": position["quantity"]} for position in project["positions"]]}
-        if name == "get_blockers" and arguments.get("project_id"):
+        if name == "get_blockers" and arguments.get("project_id") and not arguments.get("position_id"):
             from documents.service import prepare_documentary_inputs
             from documents.repository import documentary_backend
             identity = self._reference(arguments, "project_id")
@@ -126,44 +170,14 @@ class EngineTools:
         system_id, color = position["system_id"], position_finish_code(position)
         if name in {"simulate_ops", "explain_price_delta"}:
             ops = arguments.get("ops")
-            if not isinstance(ops, list):
-                raise OperationError("ops_required", "Declara las operaciones a simular.")
-            # Input numbers must be stated or already present in actual intent.
-            # Derived effects become new authority only after the engine runs.
-            from projects.design_assist import _declared_values
-            allowed = _declared_values(self.goal)
-            def collect(value):
-                if isinstance(value, dict):
-                    for field, child in value.items():
-                        if field.endswith("_mm") or field in {"tracks", "track", "count", "angle_deg"}:
-                            try:
-                                allowed.add(Decimal(str(child)))
-                            except ArithmeticError:
-                                pass
-                        elif isinstance(child, (dict, list)):
-                            collect(child)
-                elif isinstance(value, list):
-                    for child in value:
-                        collect(child)
-            collect(product)
-            def check(value):
-                if isinstance(value, dict):
-                    for field, child in value.items():
-                        if (field.endswith("_mm") or field in {"mm", "count", "angle_deg"}) and child is not None:
-                            if Decimal(str(child)) not in allowed:
-                                raise OperationError("measure_ungrounded", "La medida no está declarada ni respaldada por el diseño.")
-                        elif isinstance(child, (dict, list)):
-                            check(child)
-                elif isinstance(value, list):
-                    for child in value:
-                        check(child)
-            check(ops)
+            self._check_operations(ops, product)
             return ops_registry.simulate_ops(self.org_id, product, ops, system_id, color)
         if name == "price_position":
             return ops_registry.sale_price(self.org_id, product, system_id, color)
         engine = ops_registry.calculate_product(self.org_id, product, system_id, color)
         if name == "get_blockers":
-            return {"position_id": str(position["id"]), "blockers": engine["issues"], "status": engine["status"]}
+            return {"position_id": str(position["id"]), "project_id": str(position["project_id"]),
+                    "blockers": engine["issues"], "status": engine["status"]}
         return {"position_id": str(position["id"]), "status": engine["status"], "issues": engine["issues"],
                 "modules": [{"module_id": module.get("module_id", module.get("id")),
                              "leaf_weights": (module.get("result") or {}).get("leaf_weights", []),

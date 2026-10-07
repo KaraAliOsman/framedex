@@ -23,13 +23,14 @@ import { useCanvasStore } from "./canvasStore";
 import { assemblyCommands } from "./assemblyCommands";
 import { AlternativesPanel } from "./AlternativesPanel";
 import { AssistantPanel } from "./AssistantPanel";
-import { applyDesignOps } from "./designOps";
+import { applyOperationEffects } from "./designOps";
+import { bayOperations, slidingOperation } from "./operationIntents";
 import { designOperationsSimulate } from "../../api/generated/dekopen";
 import { ApiError } from "../../api/apiMutator";
 import type { DesignOperationRequest } from "../../api/generated/models";
 import type { CommandArgs, CommandSpec } from "../commands/types";
 import { useRegisterDesignOpsBridge } from "../assistant/assistantContext";
-import type { DesignOp } from "../commands/types";
+import type { DesignOperation } from "../../api/generated/models";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
 import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTreeView";
@@ -58,33 +59,14 @@ import {
   SLIDING_PRESETS,
 } from "./intentEditing";
 import {
-  addAdjacentUnit,
   canRemoveModuleDivision,
-  equalizeCouplingAngles,
-  equalizeModuleWidths,
   moduleGlassSku,
   moduleGlassThicknessMm,
   moduleOpening,
   modulePanelSku,
   modulePrimaryBay,
-  moveModuleDivision,
-  removeModuleDivision,
-  removeUnit,
-  resizeModuleSeam,
   contourTopCorners,
-  setAllModuleHeights,
-  setContourBulge,
-  setContourVertex,
-  setModuleBaySpec,
-  setModulePanel,
-  setCouplerSku,
-  setCouplingAngle,
-  setModuleOpening,
-  setModuleSlidingLayout,
   setModuleTree,
-  setModuleWidth,
-  setModuleFrameless,
-  splitModuleBay,
   type CouplingJson,
   type FramelessEdge,
   type FramelessFittingJson,
@@ -102,7 +84,7 @@ import {
   type OpeningLeafFact,
 } from "./physicalOpenings";
 import { GlassSelector } from "../glass/GlassSelector";
-import { glassChoicePatch, asGlassProduct } from "../glass/glassModel";
+import { asGlassProduct } from "../glass/glassModel";
 import { glassContext, useGlassChecks } from "../glass/useGlassPreview";
 import { ExtrasInspector } from "../projects/ExtrasInspector";
 import { MountingInspector } from "../projects/MountingInspector";
@@ -354,14 +336,12 @@ function statusKey(status: string | undefined): TranslationKey {
  * outlines expose a vertex count until the polygon editor lands. */
 function ContourShapeSection({
   module,
-  product,
   busy,
   commit,
 }: {
   module: ProductModuleJson;
-  product: ProductJson;
   busy: boolean;
-  commit(next: ProductJson): void;
+  commit(ops: DesignOperationRequest[]): void;
 }): JSX.Element {
   const contour = module.contour!;
   const corners = contourTopCorners(contour);
@@ -389,15 +369,15 @@ function ContourShapeSection({
             disabled={busy}
             normalize={(candidate) => normalizeRange(candidate, 0, leftBound)}
             onCommit={(value) =>
-              commit(
-                setContourVertex(
-                  product,
-                  module.id,
-                  corners.leftIndex,
-                  value,
-                  contour.vertices[corners.leftIndex]!.y_mm,
-                ),
-              )
+              commit([
+                {
+                  op: "set_contour_vertex",
+                  module: module.id,
+                  index: corners.leftIndex,
+                  x_mm: value,
+                  y_mm: contour.vertices[corners.leftIndex]!.y_mm,
+                },
+              ])
             }
           />
           <DraftField
@@ -407,15 +387,16 @@ function ContourShapeSection({
             disabled={busy}
             normalize={(candidate) => normalizeRange(candidate, 0, rightBound)}
             onCommit={(value) =>
-              commit(
-                setContourVertex(
-                  product,
-                  module.id,
-                  corners.rightIndex,
-                  (widthMm - Number(value)).toFixed(2),
-                  contour.vertices[corners.rightIndex]!.y_mm,
-                ),
-              )
+              commit([
+                {
+                  op: "set_contour_vertex",
+                  module: module.id,
+                  index: corners.rightIndex,
+                  x_mm: value,
+                  y_mm: contour.vertices[corners.rightIndex]!.y_mm,
+                  from: "END",
+                },
+              ])
             }
           />
         </>
@@ -437,7 +418,11 @@ function ContourShapeSection({
                   edgeChordMm(edgeIndex) / 2 + 0.01,
                 )
               }
-              onCommit={(value) => commit(setContourBulge(product, module.id, edgeIndex, value))}
+              onCommit={(value) =>
+                commit([
+                  { op: "set_contour_bulge", module: module.id, index: edgeIndex, rise_mm: value },
+                ])
+              }
             />
           ),
       )}
@@ -468,20 +453,18 @@ const FRAMELESS_FITTING_KINDS: FramelessFittingJson["kind"][] = [
 
 function FramelessSection({
   module,
-  product,
   couplerSkus,
   busy,
   commit,
 }: {
   module: ProductModuleJson;
-  product: ProductJson;
   couplerSkus: string[];
   busy: boolean;
-  commit(next: ProductJson): void;
+  commit(ops: DesignOperationRequest[]): void;
 }): JSX.Element {
   const spec = module.frameless;
   const update = (next: FramelessSpecJson | null) =>
-    commit(setModuleFrameless(product, module.id, next));
+    commit([{ op: "set_frameless", module: module.id, spec: next }]);
   if (!spec) {
     return (
       <details className="inspector-section">
@@ -899,7 +882,7 @@ function BayInspector({
   organizationId: string;
   color: string;
   busy: boolean;
-  commit(next: ProductJson): void;
+  commit(ops: DesignOperationRequest[]): void;
   onOpeningPreview(next: ProductJson | null): void;
   onAskAssistant?(): void;
 }): JSX.Element {
@@ -916,14 +899,11 @@ function BayInspector({
   const isTopBay = topIntent(module.tree).id === bay.id;
 
   function patchBay(patch: Partial<IntentNode>): void {
-    commit(setModuleTree(product, module.id, updateBay(module.tree, bay.id, patch)));
+    commit(bayOperations(module.id, bay.id, patch));
   }
 
   function pickOpening(next: Opening): void {
     if (next === "DOOR_ENTRY" && !isTopBay) return;
-    // Mirrors setModuleOpening's normalization at leaf scope: a sliding pick
-    // seeds the 2-leaf preset, a non-door bay never keeps a panel sku, and a
-    // door always carries declared handedness (manufacture refuses to guess).
     patchBay({
       opening_type: next,
       opening: null,
@@ -931,7 +911,7 @@ function BayInspector({
       hinged_layout: null,
       sliding_layout: next === "SLIDING" ? structuredClone(SLIDING_PRESETS.SLIDING_2L!) : null,
       panel_article_sku: next === "DOOR_ENTRY" ? (bay.panel_article_sku ?? null) : null,
-      door_handedness: next === "DOOR_ENTRY" ? (bay.door_handedness ?? "LEFT") : null,
+      door_handedness: next === "DOOR_ENTRY" ? bay.door_handedness : null,
     });
   }
 
@@ -979,19 +959,11 @@ function BayInspector({
             bay={bay}
             disabled={busy}
             onPick={(patch) =>
-              commit(
-                setModuleTree(
-                  product,
-                  module.id,
-                  updateBay(module.tree, bay.id, {
-                    ...patch,
-                    is_sidelight:
-                      patch.opening_use === "DOOR" &&
-                      patch.opening?.movement === "FIXED" &&
-                      !isTopBay,
-                  }),
-                ),
-              )
+              patchBay({
+                ...patch,
+                is_sidelight:
+                  patch.opening_use === "DOOR" && patch.opening?.movement === "FIXED" && !isTopBay,
+              })
             }
             onPreview={(patch) =>
               onOpeningPreview(
@@ -1055,7 +1027,7 @@ function BayInspector({
           instanceId={bay.id}
           layout={slidingLayout}
           busy={busy}
-          onChange={(next) => commit(setModuleSlidingLayout(product, module.id, next, bay.id))}
+          onChange={(next) => commit([slidingOperation(module.id, bay.id, next)])}
         />
       )}
       {operable && (
@@ -1067,7 +1039,7 @@ function BayInspector({
           color={color}
           busy={busy}
           onPatch={patchBay}
-          onTree={(tree) => commit(setModuleTree(product, module.id, tree))}
+          onTree={(tree) => commit([{ op: "set_module_tree", module: module.id, tree }])}
         />
       )}
       <details className="inspector-section" open>
@@ -1180,7 +1152,7 @@ function DivisionInspector({
   division: IntentNode;
   product: ProductJson;
   busy: boolean;
-  commit(next: ProductJson): void;
+  commit(ops: DesignOperationRequest[]): void;
   onSelect(id: string): void;
   onAskAssistant?(): void;
 }): JSX.Element {
@@ -1219,7 +1191,11 @@ function DivisionInspector({
           unit="mm"
           disabled={busy}
           normalize={normalizeMm}
-          onCommit={(value) => commit(moveModuleDivision(product, module.id, division.id, value))}
+          onCommit={(value) =>
+            commit([
+              { op: "move_divider", module: module.id, divider: division.id, offset_mm: value },
+            ])
+          }
         />
         <div className="inspector-field">
           <span className="inspector-field__label">{t("assembly.mullionProfile")}</span>
@@ -1251,7 +1227,7 @@ function DivisionInspector({
           disabled={busy || !removable}
           onClick={() => {
             const kept = children[0]?.id;
-            commit(removeModuleDivision(product, module.id, division.id));
+            commit([{ op: "remove_divider", module: module.id, divider: division.id }]);
             onSelect(kept ? `${module.id}/${kept}` : module.id);
           }}
         >
@@ -1501,7 +1477,7 @@ function ModuleInspector({
   mullionSkus: Partial<Record<SplitType, string>>;
   couplerSkus: string[];
   busy: boolean;
-  commit(next: ProductJson): void;
+  commit(ops: DesignOperationRequest[]): void;
   onOpeningPreview(next: ProductJson | null): void;
   onAskAssistant?(): void;
   onMountingChanged(): void;
@@ -1513,7 +1489,7 @@ function ModuleInspector({
   const ordinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
   const commitSlidingLayout = (layout: SlidingLayout) => {
     if (slidingBay) {
-      commit(setModuleSlidingLayout(product, module.id, layout, slidingBay.id));
+      commit([slidingOperation(module.id, slidingBay.id, layout)]);
     }
   };
   return (
@@ -1528,7 +1504,7 @@ function ModuleInspector({
           disabled={busy || product.assembly.modules.length <= 1}
           title={t("assembly.removeUnit")}
           aria-label={t("assembly.removeUnit")}
-          onClick={() => commit(removeUnit(product, module.id))}
+          onClick={() => commit([{ op: "remove_unit", module: module.id }])}
         >
           ×
         </button>
@@ -1561,13 +1537,7 @@ function ModuleInspector({
             bay={modulePrimaryBay(module)!}
             disabled={busy}
             onPick={(patch) =>
-              commit(
-                setModuleTree(
-                  product,
-                  module.id,
-                  updateBay(module.tree, modulePrimaryBay(module)!.id, patch),
-                ),
-              )
+              commit(bayOperations(module.id, modulePrimaryBay(module)!.id, patch))
             }
             onPreview={(patch) =>
               onOpeningPreview(
@@ -1596,7 +1566,7 @@ function ModuleInspector({
                   aria-label={t(labelKey)}
                   aria-pressed={opening === value}
                   disabled={busy}
-                  onClick={() => commit(setModuleOpening(product, module.id, value))}
+                  onClick={() => commit([{ op: "set_opening", module: module.id, opening: value }])}
                 >
                   <svg viewBox="0 0 100 100" aria-hidden="true">
                     <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
@@ -1613,14 +1583,15 @@ function ModuleInspector({
             className="ghost-button"
             disabled={busy || mullionSkus.SPLIT_V === undefined || isDoor}
             onClick={() =>
-              commit(
-                splitModuleBay(
-                  product,
-                  module.id,
-                  { type: "SPLIT_V", mullionSku: mullionSkus.SPLIT_V ?? "" },
-                  members,
-                ),
-              )
+              commit([
+                {
+                  op: "split_bay",
+                  module: module.id,
+                  bay: modulePrimaryBay(module)!.id,
+                  axis: "V",
+                  from: "CENTER",
+                },
+              ])
             }
           >
             {t("assembly.splitV")}
@@ -1630,14 +1601,15 @@ function ModuleInspector({
             className="ghost-button"
             disabled={busy || mullionSkus.SPLIT_H === undefined || isDoor}
             onClick={() =>
-              commit(
-                splitModuleBay(
-                  product,
-                  module.id,
-                  { type: "SPLIT_H", mullionSku: mullionSkus.SPLIT_H ?? "" },
-                  members,
-                ),
-              )
+              commit([
+                {
+                  op: "split_bay",
+                  module: module.id,
+                  bay: modulePrimaryBay(module)!.id,
+                  axis: "H",
+                  from: "CENTER",
+                },
+              ])
             }
           >
             {t("assembly.splitH")}
@@ -1660,7 +1632,9 @@ function ModuleInspector({
           unit="mm"
           disabled={busy}
           normalize={normalizeMm}
-          onCommit={(value) => commit(setModuleWidth(product, module.id, value))}
+          onCommit={(value) =>
+            commit([{ op: "set_module_width", module: module.id, width_mm: value }])
+          }
         />
         <DraftField
           label={t("assembly.height")}
@@ -1668,7 +1642,7 @@ function ModuleInspector({
           unit="mm"
           disabled={busy}
           normalize={normalizeMm}
-          onCommit={(value) => commit(setAllModuleHeights(product, value))}
+          onCommit={(value) => commit([{ op: "set_height", height_mm: value }])}
         />
       </details>
       {!module.frameless && (
@@ -1694,20 +1668,11 @@ function ModuleInspector({
           </div>
         </details>
       )}
-      {module.contour && (
-        <ContourShapeSection module={module} product={product} busy={busy} commit={commit} />
-      )}
-      <FramelessSection
-        module={module}
-        product={product}
-        couplerSkus={couplerSkus}
-        busy={busy}
-        commit={commit}
-      />
+      {module.contour && <ContourShapeSection module={module} busy={busy} commit={commit} />}
+      <FramelessSection module={module} couplerSkus={couplerSkus} busy={busy} commit={commit} />
       <ExtrasInspector
         options={options}
         module={module}
-        product={product}
         evaluation={evaluation}
         busy={busy}
         commit={commit}
@@ -1720,7 +1685,11 @@ function ModuleInspector({
           node={modulePrimaryBay(module)!}
           context={glassContext(modulePrimaryBay(module)!, module.id, evaluation)}
           busy={busy}
-          onPatch={(patch) => commit(setModuleBaySpec(product, module.id, patch))}
+          onPatch={(patch) =>
+            commit(
+              intentBays(module.tree).flatMap((bay) => bayOperations(module.id, bay.id, patch)),
+            )
+          }
         />
         {isDoor && (
           <label className="assembly-field">
@@ -1730,7 +1699,7 @@ function ModuleInspector({
               disabled={busy}
               value={modulePanelSku(module) ?? ""}
               onChange={(event) =>
-                commit(setModulePanel(product, module.id, event.target.value || null))
+                commit([{ op: "set_panel", module: module.id, sku: event.target.value || null }])
               }
             >
               <option value="">{t("assembly.noPanel")}</option>
@@ -1756,7 +1725,6 @@ function ModuleInspector({
 
 function CouplingInspector({
   coupling,
-  product,
   ordinal,
   couplerSkus,
   busy,
@@ -1764,11 +1732,10 @@ function CouplingInspector({
   onAskAssistant,
 }: {
   coupling: CouplingJson;
-  product: ProductJson;
   ordinal: number;
   couplerSkus: string[];
   busy: boolean;
-  commit(next: ProductJson): void;
+  commit(ops: DesignOperationRequest[]): void;
   onAskAssistant?(): void;
 }): JSX.Element {
   return (
@@ -1795,7 +1762,9 @@ function CouplingInspector({
         disabled={busy}
         normalize={normalizeAngle}
         rejectHint={t("assembly.fieldAngleRange")}
-        onCommit={(value) => commit(setCouplingAngle(product, coupling.id, value))}
+        onCommit={(value) =>
+          commit([{ op: "set_coupling_angle", coupling: coupling.id, angle_deg: value }])
+        }
       />
       <label className="assembly-field">
         <span>{t("assembly.coupler")}</span>
@@ -1804,7 +1773,9 @@ function CouplingInspector({
           disabled={busy}
           value={coupling.coupler_profile_sku ?? ""}
           onChange={(event) =>
-            commit(setCouplerSku(product, coupling.id, event.target.value || null))
+            commit([
+              { op: "set_coupler_sku", coupling: coupling.id, sku: event.target.value || null },
+            ])
           }
         >
           <option value="">{t("assembly.noCoupler")}</option>
@@ -1825,7 +1796,9 @@ function CouplingInspector({
               ? t("assembly.straightenDisabled")
               : t("assembly.straightenHint")
           }
-          onClick={() => commit(setCouplingAngle(product, coupling.id, "0"))}
+          onClick={() =>
+            commit([{ op: "set_coupling_angle", coupling: coupling.id, angle_deg: "0" }])
+          }
         >
           {t("assembly.straighten")}
         </button>
@@ -2009,9 +1982,9 @@ export function AssemblyEditor({
     [product, inputs.systemId, inputs.color],
   );
 
-  function applyRegisteredOps(ops: DesignOp[]): void {
+  function applyRegisteredOps(ops: DesignOperation[]): void {
     if (!product) return;
-    const next = applyDesignOps(product, ops);
+    const next = applyOperationEffects(product, ops);
     const attributes = ops.reduce<Record<string, string>>(
       (current, op) => ({
         ...current,
@@ -2082,7 +2055,7 @@ export function AssemblyEditor({
   useRegisterDesignOpsBridge(
     product && !disabled ? (bridgeProduct as unknown as { [key: string]: unknown }) : null,
     product && !disabled
-      ? (ops: DesignOp[]) => {
+      ? (ops: DesignOperation[]) => {
           applyRegisteredOps(ops);
         }
       : null,
@@ -2210,7 +2183,6 @@ export function AssemblyEditor({
     );
   }
 
-  const productJson = product;
   const modules = product.assembly.modules;
   const couplings = product.assembly.couplings;
   const selectedModule = modules.find((module) => module.id === selection);
@@ -2308,11 +2280,7 @@ export function AssemblyEditor({
   }
 
   function coupleUnit(side: "left" | "right"): void {
-    const next = addAdjacentUnit(productJson, side);
-    commit(next);
-    select(
-      next.assembly.modules[side === "left" ? 0 : next.assembly.modules.length - 1]?.id ?? null,
-    );
+    simulateCommand([{ op: "add_unit", side }]);
   }
 
   const splitReady = { SPLIT_V: mullionSkus.SPLIT_V, SPLIT_H: mullionSkus.SPLIT_H };
@@ -2388,7 +2356,7 @@ export function AssemblyEditor({
           title={t("assembly.equalizeModules")}
           aria-label={t("assembly.equalizeModules")}
           disabled={busy || modules.length <= 1}
-          onClick={() => commit(equalizeModuleWidths(product))}
+          onClick={() => simulateCommand([{ op: "equalize_widths" }])}
         >
           <ToolIcon name="equalize" />
         </button>
@@ -2398,7 +2366,7 @@ export function AssemblyEditor({
           title={t("assembly.equalizeAngles")}
           aria-label={t("assembly.equalizeAngles")}
           disabled={busy || couplings.length === 0}
-          onClick={() => commit(equalizeCouplingAngles(product))}
+          onClick={() => simulateCommand([{ op: "equalize_angles" }])}
         >
           <ToolIcon name="equalize" />
         </button>
@@ -2525,13 +2493,9 @@ export function AssemblyEditor({
               const choice = options?.glass_specs.find((item) => item.sku === alternativeSku);
               const module = product.assembly.modules.find((item) => item.id === moduleId);
               if (choice && module)
-                commit(
-                  setModuleTree(
-                    product,
-                    moduleId,
-                    updateBay(module.tree, bayId, glassChoicePatch(choice)),
-                  ),
-                );
+                simulateCommand([
+                  { op: "set_glass", module: moduleId, bay: bayId, sku: choice.sku },
+                ]);
             }}
             disabled={busy || viewFace === "exterior"}
             divideTool={divideToolType}
@@ -2564,7 +2528,19 @@ export function AssemblyEditor({
                 { op: "move_divider", module: moduleId, divider: divisionId, offset_mm: offsetMm },
               ])
             }
-            onResizeSeam={(index, deltaMm) => commit(resizeModuleSeam(product, index, deltaMm))}
+            onResizeSeam={(index, deltaMm) => {
+              const left = modules[index],
+                right = modules[index + 1];
+              if (left && right)
+                simulateCommand([
+                  {
+                    op: "resize_seam",
+                    left: left.id,
+                    right: right.id,
+                    delta_mm: deltaMm.toFixed(2),
+                  },
+                ]);
+            }}
           />
           {inputs.mounting?.length ? (
             <MountingDimensions product={product} evidence={inputs.mounting} />
@@ -2604,7 +2580,9 @@ export function AssemblyEditor({
                   setContextMenu(pos);
                 }}
                 onCommitAngle={(couplingId, angleDeg) =>
-                  commit(setCouplingAngle(product, couplingId, angleDeg))
+                  simulateCommand([
+                    { op: "set_coupling_angle", coupling: couplingId, angle_deg: angleDeg },
+                  ])
                 }
               />
             </svg>
@@ -2881,7 +2859,7 @@ export function AssemblyEditor({
             mullionSkus={mullionSkus}
             couplerSkus={couplerSkus}
             busy={busy}
-            commit={commit}
+            commit={simulateCommand}
             onAskAssistant={
               selectedLabel
                 ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
@@ -2902,7 +2880,7 @@ export function AssemblyEditor({
             panelSkus={panelSkus}
             panelChoices={options?.panel_choices ?? []}
             busy={busy}
-            commit={commit}
+            commit={simulateCommand}
             onAskAssistant={
               selectedLabel
                 ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
@@ -2915,7 +2893,7 @@ export function AssemblyEditor({
             division={selectedDivisionNode}
             product={product}
             busy={busy}
-            commit={commit}
+            commit={simulateCommand}
             onSelect={(id) => select(id)}
             onAskAssistant={
               selectedLabel
@@ -2926,11 +2904,10 @@ export function AssemblyEditor({
         ) : selectedCoupling ? (
           <CouplingInspector
             coupling={selectedCoupling}
-            product={product}
             ordinal={couplings.findIndex((item) => item.id === selectedCoupling.id) + 1}
             couplerSkus={couplerSkus}
             busy={busy}
-            commit={commit}
+            commit={simulateCommand}
             onAskAssistant={
               selectedLabel
                 ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))

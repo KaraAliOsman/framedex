@@ -13,6 +13,7 @@ import type { IntentNode, Opening } from "./intentEditing";
 import { baySpec, findNode, parentSplitOf, updateBay } from "./intentEditing";
 import { choicePatch, physicalNodeLabel, structuredOpeningPatch } from "./physicalOpenings";
 import { OPENING_OPTIONS } from "./openings";
+import { bayOperations } from "./operationIntents";
 import { runCommand } from "../commands/registry";
 import { unlinkCoupling, usedEdges } from "./assemblyGraph";
 import {
@@ -1065,61 +1066,95 @@ export function commandOperations(
   const module = moduleTarget(ctx, args);
   const coupling = couplingTarget(ctx, args);
   const name = spec.ai?.op;
-  let intent: Record<string, unknown> | null = null;
-  if (name === "add_unit") intent = { op: name, side: spec.id.endsWith("left") ? "left" : "right" };
-  else if (name === "set_module_count") intent = { op: name, count: Number(args.count) };
-  else if (name === "set_height") intent = { op: name, height_mm: normalizeMm(args.height ?? "") };
-  else if (name === "set_total_width")
-    intent = { op: name, width_mm: normalizeMm(args.width ?? "") };
-  else if (name === "set_module_width" && module)
-    intent = { op: name, module: module.id, width_mm: normalizeMm(args.width ?? "") };
-  else if (name === "set_opening" && module && args.opening) {
-    const patch = args.opening.startsWith("{")
-      ? structuredOpeningPatch(JSON.parse(args.opening))
-      : null;
-    intent = patch?.opening
-      ? {
-          op: name,
-          module: module.id,
-          bay: modulePrimaryBay(module)?.id,
-          opening: patch.opening,
-          opening_use: patch.opening_use,
-          hinged_layout: patch.hinged_layout,
-          sliding_layout: patch.sliding_layout,
-        }
-      : { op: name, module: module.id, opening: args.opening };
+  if (name === "add_unit") return [{ op: name, side: spec.id.endsWith("left") ? "left" : "right" }];
+  else if (name === "set_module_count") {
+    const count = normalizeCount(args.count ?? "");
+    return count ? [{ op: name, count: Number(count) }] : null;
+  } else if (name === "set_height") {
+    const height = normalizeMm(args.height ?? "");
+    return height ? [{ op: name, height_mm: height }] : null;
+  } else if (name === "set_total_width" || name === "set_module_width") {
+    const width = normalizeMm(args.width ?? "");
+    if (!width) return null;
+    return name === "set_total_width"
+      ? [{ op: name, width_mm: width }]
+      : module
+        ? [{ op: name, module: module.id, width_mm: width }]
+        : null;
+  } else if (name === "set_opening" && module && args.opening) {
+    if (args.opening.startsWith("{")) {
+      try {
+        const patch = structuredOpeningPatch(JSON.parse(args.opening));
+        const bay = modulePrimaryBay(module);
+        return patch && bay ? bayOperations(module.id, bay.id, patch) : null;
+      } catch {
+        return null;
+      }
+    }
+    if (!OPENING_OPTIONS.some(([value]) => value === args.opening)) return null;
+    return [{ op: name, module: module.id, opening: args.opening as Opening }];
   } else if (name === "set_glass" && module)
-    intent = { op: name, module: module.id, sku: args.glass };
-  else if (name === "set_glass_thickness" && module)
-    intent = { op: name, module: module.id, mm: args.thickness };
-  else if (name === "set_panel" && module)
-    intent = { op: name, module: module.id, sku: args.panel || null };
-  else if (["equalize_widths", "equalize_angles"].includes(name ?? "")) intent = { op: name };
-  else if (["duplicate_module", "add_stacked_unit", "remove_unit"].includes(name ?? "") && module)
-    intent = { op: name, module: module.id };
-  else if (["insert_module", "remove_coupling"].includes(name ?? "") && coupling)
-    intent = { op: name, coupling: coupling.id };
-  else if (name === "set_coupling_angle" && coupling)
-    intent = { op: name, coupling: coupling.id, angle_deg: normalizeAngle(args.angle ?? "") };
-  else if (name === "set_coupling_kind" && coupling)
-    intent = { op: name, coupling: coupling.id, kind: args.kind };
-  else if (spec.id === "module.clear-panel" && module)
-    intent = { op: "set_panel", module: module.id, sku: null };
-  else if (spec.id === "split.remove") {
+    return args.glass ? [{ op: name, module: module.id, sku: args.glass }] : null;
+  else if (name === "set_glass_thickness" && module) {
+    return args.thickness ? [{ op: name, module: module.id, mm: args.thickness }] : null;
+  } else if (name === "set_panel" && module)
+    return [{ op: name, module: module.id, sku: args.panel || null }];
+  else if (name === "equalize_widths" || name === "equalize_angles") return [{ op: name }];
+  else if (
+    (name === "duplicate_module" || name === "add_stacked_unit" || name === "remove_unit") &&
+    module
+  )
+    return [{ op: name, module: module.id }];
+  else if ((name === "insert_module" || name === "remove_coupling") && coupling)
+    return [{ op: name, coupling: coupling.id }];
+  else if (name === "set_coupling_angle" && coupling) {
+    const angle = normalizeAngle(args.angle ?? "");
+    return angle ? [{ op: name, coupling: coupling.id, angle_deg: angle }] : null;
+  } else if (name === "set_coupling_kind" && coupling) {
+    const kind = allowedCouplingKinds(ctx.product, coupling.id).find(
+      (value) => value === args.kind,
+    );
+    return kind ? [{ op: name, coupling: coupling.id, kind }] : null;
+  } else if (spec.id === "module.clear-panel" && module)
+    return [{ op: "set_panel", module: module.id, sku: null }];
+  else if (spec.id === "module.clear-glass-thickness" && module)
+    return [{ op: "clear_glass_thickness", module: module.id }];
+  else if (spec.id === "coupling.set-coupler" && coupling)
+    return [{ op: "set_coupler_sku", coupling: coupling.id, sku: args.coupler || null }];
+  else if ((spec.id === "module.move-left" || spec.id === "module.move-right") && module) {
+    const neighbors = moduleNeighbors(ctx.product, module.id);
+    const other = spec.id === "module.move-left" ? neighbors.left : neighbors.right;
+    return other ? [{ op: "swap_modules", module: module.id, other }] : null;
+  } else if (spec.id === "module.apply-spec" && module && ctx.specClipboard?.kind === "module")
+    return [{ op: "set_module_tree", module: module.id, tree: ctx.specClipboard.tree }];
+  else if (spec.id === "bay.apply-spec" && ctx.specClipboard?.kind === "bay") {
+    const target = bayTarget(ctx, args);
+    return target
+      ? [
+          {
+            op: "set_module_tree",
+            module: target.module.id,
+            tree: updateBay(target.module.tree, target.node.id, ctx.specClipboard.spec),
+          },
+        ]
+      : null;
+  } else if (spec.id === "split.remove") {
     const target = splitTarget(ctx, args);
     if (target)
-      intent = { op: "remove_divider", module: target.module.id, divider: target.node.id };
+      return [{ op: "remove_divider", module: target.module.id, divider: target.node.id }];
   } else if (spec.id === "bay.remove") {
     const target = bayTarget(ctx, args);
     const parent = target ? parentSplitOf(target.module.tree, target.node.id) : null;
     const sibling = parent?.children?.find((child) => child.id !== target?.node.id);
     if (target && parent && sibling)
-      intent = {
-        op: "remove_divider",
-        module: target.module.id,
-        divider: parent.id,
-        keep_bay: sibling.id,
-      };
+      return [
+        {
+          op: "remove_divider",
+          module: target.module.id,
+          divider: parent.id,
+          keep_bay: sibling.id,
+        },
+      ];
   } else if (spec.id === "product.straighten") {
     return ctx.product.assembly.couplings.map((item) => ({
       op: "set_coupling_angle",
@@ -1127,21 +1162,12 @@ export function commandOperations(
       angle_deg: "0",
     }));
   } else if (spec.id === "coupling.clear-angle" && coupling)
-    intent = { op: "set_coupling_angle", coupling: coupling.id, angle_deg: "0" };
-  return intent ? [intent as unknown as DesignOperationRequest] : null;
+    return [{ op: "set_coupling_angle", coupling: coupling.id, angle_deg: "0" }];
+  return null;
 }
 
 for (const spec of ASSEMBLY_COMMANDS) {
-  if (
-    spec.ai ||
-    [
-      "module.clear-panel",
-      "split.remove",
-      "bay.remove",
-      "product.straighten",
-      "coupling.clear-angle",
-    ].includes(spec.id)
-  ) {
+  if (spec.apply) {
     spec.operation = (ctx, args) => commandOperations(spec, ctx, args);
   }
 }

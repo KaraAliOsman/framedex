@@ -86,6 +86,7 @@ PREPARE_TOOLS = {
 }
 
 ARTIFACT_TOOLS = {
+    "blockers": "get_blockers",
     "product_draft": "create_product_draft",
     "project_draft": "create_project_draft",
     "quote_draft": "create_quote_draft",
@@ -427,6 +428,7 @@ def _queries(
     document: Any,
     seen: set[str],
     observed: frozenset[str],
+    limit: int = MAX_QUERIES,
 ) -> tuple[list[dict], frozenset[str]]:
     """Execute the model's query steps — each is just another typed
     projection under the caller's RLS. Failed lookups return their error code
@@ -438,7 +440,7 @@ def _queries(
     observations: list[dict] = []
     refs_union: frozenset[str] = frozenset()
     for item in steps if isinstance(steps, list) else []:
-        if len(observations) >= MAX_QUERIES:
+        if len(observations) >= limit:
             break
         if not isinstance(item, dict) or item.get("kind") != "query":
             continue
@@ -827,7 +829,8 @@ def _act(
     trusted_goal = goal + " " + " ".join(str(turn.get("text") or turn.get("content") or turn.get("reply") or "")
                     for turn in (history if history_trusted else []) if isinstance(turn, dict) and turn.get("role") in ("user", "agent"))
     engine_tools = EngineTools(org_id=org_id, user_id=user_id, refs=refs, product=product,
-                               observed_refs=observed_refs, goal=trusted_goal)
+                               observed_refs=observed_refs, goal=trusted_goal, max_calls=MAX_QUERIES)
+    engine_tools.numeric_evidence |= _grounding_values(context, "")
     has_tree = bool(product and isinstance(product, dict) and any(
         isinstance(module.get("tree"), dict) for module in product.get("modules", product.get("assembly", {}).get("modules", []))
     ))
@@ -835,6 +838,7 @@ def _act(
         for tool in ("list_catalog_options", "calculate_position"):
             output, _ = engine_tools.call(tool, {})
             all_observations.append({"surface": tool, "context": output})
+            contexts.append(output)
             observed_refs |= _context_refs(output)
         engine_tools.observed_refs = observed_refs
     debited = 0
@@ -914,9 +918,13 @@ def _act(
             document=document,
             seen=seen_queries,
             observed=observed_refs,
+            limit=max(0, MAX_QUERIES - (len(seen_queries) - 1) - len(engine_tools.calls)),
         )
         observed_refs = observed_refs | new_observed
         engine_tools.observed_refs = observed_refs
+        engine_tools.max_calls = MAX_QUERIES - (len(seen_queries) - 1)
+        for observation in observations:
+            engine_tools.numeric_evidence |= _grounding_values(observation.get("context"), "")
         calls = [call for call in (document.get("tool_calls") or []) if isinstance(call, dict)]
         if has_tree:
             calls.extend({"name": "simulate_ops", "arguments": {"ops": step["ops"]}}
@@ -932,6 +940,7 @@ def _act(
             if fresh:
                 observations.append({"surface": name, "context": output})
                 observed_refs |= _context_refs(output)
+                engine_tools.observed_refs = observed_refs
         all_observations.extend(observations)
         contexts.extend(
             observation["context"]
@@ -1091,7 +1100,10 @@ def _act(
         if kind == "query":
             continue  # executed above — `queries` reports them as provenance
         if kind == "project_ops":
-            simulation, _ = engine_tools.call("preview_project_operations", {"ops": item.get("ops")})
+            try:
+                simulation, _ = engine_tools.call("preview_project_operations", {"ops": item.get("ops")})
+            except OperationError as error:
+                simulation = {"valid": False, "error": error.code}
             if simulation.get("valid"):
                 steps.append({"kind": "project_ops", "tool": "preview_project_operations", "ops": simulation["ops"],
                               "simulation": simulation, "label": str(item.get("label") or "Cambios de posiciones")[:MAX_LABEL]})
@@ -1119,7 +1131,10 @@ def _act(
                 continue
             simulation = None
             if has_tree:
-                simulation, _ = engine_tools.call("simulate_ops", {"ops": item.get("ops")})
+                try:
+                    simulation, _ = engine_tools.call("simulate_ops", {"ops": item.get("ops")})
+                except OperationError as error:
+                    simulation = {"valid": False, "error": error.code}
                 if simulation.get("valid"):
                     ops, dropped = simulation["ops"], []
                 else:
@@ -1172,10 +1187,31 @@ def _act(
         ):
             dropped_ungrounded += 1
             continue
+        if artifact["kind"] == "quote_draft" and "discount_pct" in artifact["payload"]:
+            artifact = {**artifact, "payload": {**artifact["payload"], "confirmed": False}}
         validated_artifacts.append(
             {**artifact, "tool": ARTIFACT_TOOLS.get(artifact.get("kind"), "create_draft")}
         )
     validated_artifacts.extend(project_drafts)
+    # Read-only tool evidence is already verified. The model need not copy
+    # long blocker lists or catalog identifiers into a second JSON structure.
+    for observation in all_observations:
+        evidence = observation.get("context")
+        if not isinstance(evidence, dict) or "error" in evidence:
+            continue
+        if observation["surface"] == "get_blockers" and "blockers" in evidence:
+            validated_artifacts = [a for a in validated_artifacts if a["kind"] != "blockers"]
+            validated_artifacts.append({"kind": "blockers", "title": "Qué falta",
+                "payload": {"blockers": evidence["blockers"]},
+                "references": [str(value) for value in refs.values() if str(value) in context_refs_all],
+                "tool": "get_blockers"})
+        if observation["surface"] == "list_catalog_options" and not steps and re.search(r"vidrio|termopanel|dvh", goal, re.I):
+            skus = [row["sku"] for row in evidence.get("glass", [])]
+            if skus:
+                validated_artifacts.append({"kind": "catalog_candidates", "title": "Vidrios disponibles",
+                    "payload": {"skus": skus, "options": evidence.get("clarify_options", [])},
+                    "references": [evidence["system_id"]] if evidence.get("system_id") in context_refs_all else [],
+                    "tool": "list_catalog_options"})
     claims, references, dropped_claims = jobs.claims_and_references(
         document.get("claims"), context_refs_all
     )
@@ -1266,7 +1302,7 @@ def _act(
                 {
                     "surface": observation["surface"],
                     "tool": observation["surface"] if observation["surface"] in {tool["name"] for tool in ENGINE_TOOLS} else QUERY_TOOLS.get(observation["surface"], "get_context"),
-                    "status": "ok" if "context" in observation else "error",
+                    "status": "error" if "context" not in observation or "error" in observation["context"] else "ok",
                 }
                 for observation in all_observations
             ],
@@ -1346,6 +1382,10 @@ def act(
     ) or any(
         step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops")
         for step in result["steps"]
+    ) or any(
+        artifact.get("kind") == "quote_draft" and artifact.get("payload", {}).get("confirmed") is False
+        and "discount_pct" in artifact.get("payload", {})
+        for artifact in result["artifacts"]
     )
     state = (
         "WAITING_FOR_USER"

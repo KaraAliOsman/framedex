@@ -50,6 +50,29 @@ def _bedroom(position: dict) -> bool:
     return "dormitorio" in str(position.get("location_tag") or position.get("location") or "").lower()
 
 
+def semantic_opening(bay: dict) -> str | None:
+    """Equivalence is lossless: direction, role and fixed-in-sash still count."""
+    opening = bay.get("opening")
+    if not opening:
+        return bay.get("opening_type")
+    if (bay.get("opening_use", "WINDOW") != "WINDOW" or bay.get("hinged_layout")
+            or opening.get("leaf_role", "SINGLE") != "SINGLE" or opening.get("fixed_in_sash", False)):
+        return None
+    key = (opening.get("movement"), opening.get("hinge_side"), opening.get("direction"))
+    return {("FIXED", "NONE", "INWARD"): "FIXED",
+            ("TURN", "LEFT", "INWARD"): "TURN_LEFT",
+            ("TURN", "RIGHT", "INWARD"): "TURN_RIGHT",
+            ("TILT_TURN", "LEFT", "INWARD"): "TILT_TURN_LEFT",
+            ("TILT_TURN", "RIGHT", "INWARD"): "TILT_TURN_RIGHT"}.get(key)
+
+
+def _position_bays(position: dict) -> list[dict]:
+    tree = position.get("design", {}).get("parametric_tree") or {}
+    product = tree if tree.get("version") == "product-v2" else {
+        "assembly": {"modules": [{"tree": tree}]}}
+    return [node for node in nodes(product) if node.get("type") == "BAY"]
+
+
 def _narrative(result: dict) -> str:
     return " ".join([
         str(result.get("reply") or ""),
@@ -121,7 +144,7 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
     modules = after.get("assembly", {}).get("modules", [])
     all_nodes = nodes(after)
     bays = [n for n in all_nodes if n.get("type") == "BAY"]
-    openings = [b.get("opening_type") for b in bays]
+    openings = [semantic_opening(b) for b in bays]
     splits_h = [n for n in all_nodes if n.get("type") == "SPLIT_H"]
     questions = result.get("questions") or []
     catalog = truth.get("glass_recipes") or {}
@@ -171,7 +194,7 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
               "400 mm from the outer top",
               splits_h[0].get("split_offset_mm") if splits_h else None)
         check("upper_fixed", bool(splits_h) and len(splits_h[0].get("children") or []) == 2
-              and splits_h[0]["children"][0].get("opening_type") == "FIXED")
+              and semantic_opening(splits_h[0]["children"][0]) == "FIXED")
     elif expectation == "tilt_right":
         check("hinges_and_handle", openings == ["TILT_TURN_RIGHT"],
               ["TILT_TURN_RIGHT"], openings)
@@ -225,6 +248,20 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
     elif expectation == "second_floor_glass":
         target_ids = truth.get("second_floor_ids") or []
         items = [item for s in steps if s.get("kind") == "batch_ops" for item in s.get("items") or []]
+        project_steps = [s for s in steps if s.get("kind") == "project_ops"]
+        if project_steps:
+            items = [{"position_id": change["after"]["id"], "ops": [
+                op for parent in s.get("ops") or [] if parent.get("op") == "apply_to_positions"
+                for op in parent.get("ops") or []]}
+                for s in project_steps for change in (s.get("simulation") or {}).get("diff", [])
+                if change.get("kind") == "change" and change.get("after")]
+            applied = truth.get("project_positions") or []
+            by_id = {p["id"]: p for p in applied}
+            check("project_transaction_applied", truth.get("project_application_ok") is True)
+            check("applied_glass_matches", bool(target_ids) and all(
+                identity in by_id and bool(_position_bays(by_id[identity])) and all(
+                    bay.get("glass_article_sku") == truth["existing_sku"]
+                    for bay in _position_bays(by_id[identity])) for identity in target_ids))
         actual_ids = [i.get("position_id") for i in items]
         check("exact_second_floor_targets", Counter(actual_ids) == Counter(target_ids) and bool(target_ids),
               target_ids, actual_ids)
@@ -236,6 +273,10 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
         drafts = [a.get("payload", {}) for a in artifacts if a.get("kind") in
                   {"project_draft", "product_draft"}]
         proposed = [p for draft in drafts for p in draft.get("positions", [])]
+        if any(s.get("kind") == "project_ops" for s in steps):
+            check("project_transaction_applied", truth.get("project_application_ok") is True)
+            original_ids = set(truth.get("original_position_ids") or [])
+            proposed = [p for p in truth.get("project_positions") or [] if p["id"] not in original_ids]
         if expectation == "kitchen_position":
             check("context_available", truth.get("sliding_supported") is not None,
                   "sliding compatibility evaluated by the selected catalog/engine", truth.get("sliding_supported"))

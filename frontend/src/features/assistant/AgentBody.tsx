@@ -16,7 +16,7 @@ import type { AiAgentStep } from "../../api/generated/models/aiAgentStep";
 import type { AiJobDetail } from "../../api/generated/models/aiJobDetail";
 import { t } from "../../i18n/es-CL";
 import { jobErrorKey } from "../jobs/jobError";
-import type { DesignOp } from "../commands/types";
+import type { DesignOperation } from "../../api/generated/models";
 import { describeDesignOp, designAssistProduct, productFingerprint } from "../canvas/designOps";
 import type { ProductJson } from "../canvas/productEditing";
 import { stableRefs, useDesignOpsBridge } from "./assistantContext";
@@ -24,6 +24,7 @@ import { BatchOpsStep } from "./BatchOpsStep";
 import { BotFigure } from "./BotFigure";
 import { ProjectOpsStep } from "./ProjectOpsStep";
 import { SimulationPreview } from "./SimulationPreview";
+import { RejectedOperations } from "./RejectedOperations";
 import { SURFACE_LABELS } from "./surfaces";
 
 /** The durable worker can leave the job running far longer than a request
@@ -158,7 +159,7 @@ function threadFromJob(job: AiJobDetail): Turn[] {
   return turns;
 }
 
-function asDesignOps(step: AiAgentStep): DesignOp[] {
+function asDesignOps(step: AiAgentStep): DesignOperation[] {
   return (step.ops ?? []).map((item) => ({ ...item }));
 }
 
@@ -546,7 +547,7 @@ export function AgentBody({
     ).catch(() => undefined);
   }
 
-  function applyOps(turnIndex: number, stepIndex: number, ops: DesignOp[]): void {
+  function applyOps(turnIndex: number, stepIndex: number, ops: DesignOperation[]): void {
     const turn = thread[turnIndex];
     // The bridge must still close over the exact product the ops were
     // validated against — a commit in between made them stale. In-session
@@ -579,7 +580,7 @@ export function AgentBody({
     );
   }
 
-  function declineOps(turnIndex: number, stepIndex: number, ops: DesignOp[]): void {
+  function declineOps(turnIndex: number, stepIndex: number, ops: DesignOperation[]): void {
     const turn = thread[turnIndex];
     if (!turn) return;
     reportOutcome(turn.transcriptIndex, stepIndex, "declined", ops);
@@ -717,13 +718,7 @@ export function AgentBody({
                     </ul>
                   ) : null}
                   {turn.result.rejected?.length ? (
-                    <ul className="ask-dock__warnings">
-                      {turn.result.rejected.map((item, i) => (
-                        <li key={i}>
-                          {item.op ?? "—"}: {item.reason}
-                        </li>
-                      ))}
-                    </ul>
+                    <RejectedOperations items={turn.result.rejected} />
                   ) : null}
                   {turn.result.steps?.length ? (
                     <div className="ask-dock__actions">

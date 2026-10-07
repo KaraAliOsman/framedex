@@ -7,7 +7,7 @@ import json
 import pytest
 
 from ai_gateway.evals.outcomes import classify, evaluate, summarize
-from ai_gateway.evals.run import Recorder, fixture_project, load_cases
+from ai_gateway.evals.run import Recorder, design_step_ops, fixture_project, load_cases, sliding_probe
 from ai_gateway.evals.facts import frame_bar_count, priced_winner
 from ai_gateway.evals.redaction import redact_report
 
@@ -34,6 +34,52 @@ def test_owner_suite_is_complete_and_keeps_typo_and_orientation():
                                        [f"F{i:02}" for i in range(1, 4)] + ["G01", "G02"])
     assert cases[10]["request"] == "aser la bentana 20 cm mas ancha"
     assert cases[1]["expected"] == "fixed_tilt_left"
+
+
+def test_current_sliding_probe_declares_physical_motion_and_distinct_tracks():
+    probe = sliding_probe(product(), kitchen=True)
+    module = probe["assembly"]["modules"][0]
+    assert (module["width_mm"], module["height_mm"]) == ("1600.00", "1100.00")
+    assert "opening_type" not in module["tree"]
+    assert module["tree"]["opening"]["movement"] == "SLIDE"
+    assert [p["track"] for p in module["tree"]["sliding_layout"]["panels"]] == [0, 1]
+    assert product()["assembly"]["modules"][0]["tree"]["opening_type"] == "FIXED"
+
+
+def test_project_operations_never_enter_the_product_canvas_sandbox():
+    resize = {"op": "resize", "width_mm": "1800", "height_mm": "1350"}
+    assert design_step_ops({"steps": [
+        {"kind": "project_ops", "ops": [{"op": "duplicate_position"}]},
+        {"kind": "ops", "ops": [resize]},
+        {"kind": "prepare", "ops": [{"op": "prepare_emit"}]}]}) == [resize]
+
+
+def test_physical_opening_equivalence_keeps_the_owner_hinge_direction_contract():
+    before = product(opening="TILT_TURN_LEFT")
+    after = product(opening=None)
+    bay = after["assembly"]["modules"][0]["tree"]
+    bay["opening"] = {"movement": "TILT_TURN", "hinge_side": "RIGHT", "direction": "INWARD"}
+    assert verdict("E12", before, after)["passed"]
+    bay["opening"]["direction"] = "OUTWARD"
+    assert not verdict("E12", before, after)["passed"]
+    bay["opening"]["direction"] = "INWARD"
+    bay["opening"]["leaf_role"] = "PASSIVE"
+    assert not verdict("E12", before, after)["passed"]
+
+
+def test_project_glass_plan_requires_exact_targets_real_sku_and_actual_application():
+    before = product()
+    chosen = {"id": "two", "design": {"parametric_tree": {
+        "id": "bay", "type": "BAY", "glass_article_sku": "GLASS-REAL"}}}
+    result = {"steps": [{"kind": "project_ops", "ops": [{"op": "apply_to_positions",
+        "ops": [{"op": "set_glass", "sku": "GLASS-REAL"}]}],
+        "simulation": {"diff": [{"kind": "change", "after": chosen}]}}]}
+    truth = {"second_floor_ids": ["two"], "existing_sku": "GLASS-REAL", "batch_application_ok": True,
+             "project_application_ok": True, "project_positions": [chosen]}
+    assert verdict("J01", before, before, result=result, truth=truth)["passed"]
+    assert not verdict("J01", before, before, result=result, truth={**truth, "project_application_ok": False})["passed"]
+    assert not verdict("J01", before, before, result=result, truth={**truth, "second_floor_ids": ["two", "three"]})["passed"]
+    assert not verdict("J01", before, before, result=result, truth={**truth, "existing_sku": "INVENTED"})["passed"]
 
 
 def test_fixture_is_discovered_after_a_clean_stack_recreates_project_ids():

@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from datetime import datetime
+from decimal import Decimal
 import hashlib
 import json
 from uuid import UUID, uuid4
@@ -12,12 +13,13 @@ from rest_framework import serializers
 from rest_framework.views import APIView
 
 from authentication.errors import contract_error
-from dekopen_engine.design_operations import BY_NAME, OperationError, validate_operation
+from dekopen_engine.design_operations import OperationError, validate_operation
+from dekopen_engine.commercial import indicative_line_net
 from pricing.repository import commercial_backend, encode, json_text, rows
 from pricing.serializers import StrictSerializer
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
 from projects import service
-from projects.ops_registry import DesignOperationSerializer, catalog_for, design_from_product, product_from_position, simulate_ops, resolve_attributes
+from projects.ops_registry import DesignOperationSerializer, calculate_product, catalog_for, design_from_product, product_from_position, sale_price, simulate_ops
 from projects.serializers import PositionWriteSerializer, PositionUpdateSerializer
 from projects.views import SCHEMA, WRITE_ROLES, response
 
@@ -75,25 +77,68 @@ def _design_edit(org_id, position, ops):
 
 def _new_position(org_id, op, next_index):
     catalog = catalog_for(org_id, op["system_id"])
-    if op["template"] not in catalog["openings"]:
+    choice = next((item for item in catalog["opening_choices"] if item["label"] == op["template"]), None)
+    if choice is None and op["template"] not in catalog["openings"]:
         raise OperationError("opening_incompatible", "El sistema seleccionado no admite esa apertura. Elige una serie compatible del catálogo.")
-    params = catalog["params"]
-    # A catalog-backed default is explicit in the preview, never technical guesswork.
-    skus = sorted(catalog["glass_skus"])
-    finish = next(iter(params.finishes), None)
-    if not skus or finish is None:
-        raise OperationError("catalog_default_missing", "La serie no declara vidrio o acabado inicial. Completa el catálogo.")
+    if op["glass_sku"] not in catalog["glass_skus"] or op["color"] not in catalog["params"].finishes:
+        raise OperationError("catalog_selection_invalid", "Elige vidrio y acabado disponibles para esta serie.")
+    finish = op["color"]
     identity = str(uuid4())
     product = {"version": "product-v2", "assembly": {"couplings": [], "modules": [{"id": "single",
         "width_mm": op["dims"]["width_mm"], "height_mm": op["dims"]["height_mm"],
-        "tree": {"id": "bay", "type": "BAY", "opening_type": op["template"]}}]}}
-    result = simulate_ops(org_id, product, [{"op": "set_glass", "module": "single", "sku": skus[0]}], op["system_id"], finish)
+        "tree": {"id": "bay", "type": "BAY", "opening_type": "FIXED"}}]}}
+    opening = {key: value for key, value in choice.items() if key in {
+        "opening", "opening_use", "hinged_layout", "sliding_layout"}} if choice else {"opening": op["template"]}
+    result = simulate_ops(org_id, product, [{"op": "set_opening", "module": "single", **opening},
+        {"op": "set_glass", "module": "single", "sku": op["glass_sku"]}], op["system_id"], finish)
     if not result["valid"]:
         raise OperationError("simulation_invalid", "El motor rechaza la plantilla para esa serie y medidas.")
     return {"id": identity, "position_index": next_index, "location_tag": op["location"], "quantity": op.get("quantity", 1),
             "design": _plain(design_from_product(result["product"], op["system_id"], finish)),
-            "opening_type": op["template"], "width_mm": op["dims"]["width_mm"], "height_mm": op["dims"]["height_mm"],
-            "defaults": {"glass_sku": skus[0], "finish": finish, "source": "Opciones reales del catálogo, declaradas en la vista previa."}}
+            "opening_type": op["template"], "width_mm": op["dims"]["width_mm"], "height_mm": op["dims"]["height_mm"]}
+
+
+def _position_view(org_id, position, cache):
+    if position is None:
+        return None
+    design = position["design"]
+    key = signature(design)
+    if key not in cache:
+        product = _product(position)
+        engine = calculate_product(org_id, product, design["system_id"], design["color"])
+        cache[key] = {"product": product, "system_id": str(design["system_id"]),
+                      "color": design["color"], "engine": engine,
+                      "price": sale_price(org_id, product, design["system_id"], design["color"])}
+    view = deepcopy(cache[key])
+    price = view["price"]
+    view["quantity"] = position["quantity"]
+    view["price"] = {**price, "unit_net": price.get("net"),
+        "net": str(indicative_line_net(Decimal(price["net"]), position["quantity"], price["currency"]))
+        if price.get("net") is not None else None}
+    return view
+
+
+def _change_simulation(org_id, change, cache):
+    before = _position_view(org_id, change["before"], cache)
+    after = _position_view(org_id, change["after"], cache)
+    view = after or before
+    currency = view["price"]["currency"]
+    absent = {"product": None, "quantity": 0, "price": {
+        "net": str(indicative_line_net(Decimal("0"), 0, currency)), "currency": currency,
+        "source": "Sin posición en este lado de la propuesta."}}
+    left, right = before or absent, after or absent
+    price = right["price"]
+    delta = str(Decimal(price["net"]) - Decimal(left["price"]["net"])) if (
+        price.get("net") is not None and left["price"].get("net") is not None) else None
+    engine = view["engine"]
+    return {**right, "position_id": (change["after"] or change["before"])["id"],
+            "system_id": view["system_id"], "color": view["color"],
+            "before": left, "price": {**price, "delta_net": delta,
+                "reason": price.get("reason") or left["price"].get("reason")},
+            "status": engine["status"], "engine": engine,
+            "valid": engine["status"] in {"VALID", "MANUFACTURING_INCOMPLETE"}
+                and not any(issue.get("severity") == "error" for issue in engine.get("issues", [])),
+            "diff": [change]}
 
 
 def preview_project_operations(org_id, user_id, project_id, raw_ops):
@@ -103,7 +148,6 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
     ops = [validate_operation(op) for op in raw_ops]
     before = snapshot(org_id, project_id)
     after = deepcopy(before["positions"])
-    simulations = []
     for op in ops:
         name = op["op"]
         if name == "add_position":
@@ -129,14 +173,7 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
             if not wanted:
                 raise OperationError("batch_no_targets", "Ninguna posición coincide con el filtro.")
             for position in wanted:
-                design_ops = []
-                for child in op["ops"]:
-                    if BY_NAME[child["op"]]["scope"] == "position":
-                        _attribute(org_id, position, child)
-                    else:
-                        design_ops.append(child)
-                if design_ops:
-                    simulations.append({"position_id": position["id"], **_design_edit(org_id, position, design_ops)})
+                _design_edit(org_id, position, op["ops"])
         else:
             raise OperationError("operation_scope_invalid", "Usa operaciones de posición o filtros dentro del proyecto.")
         if len(after) > MAX_PROJECT_EDITS:
@@ -154,14 +191,10 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
     for position in after:
         if position["id"] not in original:
             diff.append({"kind": "add", "index": position["position_index"], "before": None, "after": position})
+    cache = {}
+    simulations = [_change_simulation(org_id, change, cache) for change in diff]
     return {"project_id": str(project_id), "before_sig": signature(before), "ops": ops, "valid": True,
             "positions": after, "diff": diff, "simulations": simulations}
-
-
-def _attribute(org_id, position, op):
-    design = position["design"]
-    resolved = resolve_attributes(org_id, design["system_id"], design["color"], op)
-    design.update(system_id=resolved["system_id"], color=resolved["color"])
 
 
 def _save(org_id, project_id, before, after):

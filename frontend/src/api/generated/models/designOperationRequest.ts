@@ -9,6 +9,7 @@ import type { OperationAddPositionRequest } from "./operationAddPositionRequest"
 import type { OperationAddStackedUnitRequest } from "./operationAddStackedUnitRequest";
 import type { OperationAddUnitRequest } from "./operationAddUnitRequest";
 import type { OperationApplyToPositionsRequest } from "./operationApplyToPositionsRequest";
+import type { OperationClearGlassThicknessRequest } from "./operationClearGlassThicknessRequest";
 import type { OperationDuplicateModuleRequest } from "./operationDuplicateModuleRequest";
 import type { OperationDuplicatePositionRequest } from "./operationDuplicatePositionRequest";
 import type { OperationEqualizeAnglesRequest } from "./operationEqualizeAnglesRequest";
@@ -26,16 +27,24 @@ import type { OperationRemoveDividerRequest } from "./operationRemoveDividerRequ
 import type { OperationRemovePositionRequest } from "./operationRemovePositionRequest";
 import type { OperationRemoveUnitRequest } from "./operationRemoveUnitRequest";
 import type { OperationResizeRequest } from "./operationResizeRequest";
+import type { OperationResizeSeamRequest } from "./operationResizeSeamRequest";
 import type { OperationSetBaySizeRequest } from "./operationSetBaySizeRequest";
+import type { OperationSetBaySpecRequest } from "./operationSetBaySpecRequest";
+import type { OperationSetContourBulgeRequest } from "./operationSetContourBulgeRequest";
+import type { OperationSetContourVertexRequest } from "./operationSetContourVertexRequest";
+import type { OperationSetCouplerSkuRequest } from "./operationSetCouplerSkuRequest";
 import type { OperationSetCouplingAngleRequest } from "./operationSetCouplingAngleRequest";
 import type { OperationSetCouplingKindRequest } from "./operationSetCouplingKindRequest";
+import type { OperationSetExtrasRequest } from "./operationSetExtrasRequest";
 import type { OperationSetFinishRequest } from "./operationSetFinishRequest";
+import type { OperationSetFramelessRequest } from "./operationSetFramelessRequest";
 import type { OperationSetGlassRequest } from "./operationSetGlassRequest";
 import type { OperationSetGlassThicknessRequest } from "./operationSetGlassThicknessRequest";
 import type { OperationSetHandleHeightRequest } from "./operationSetHandleHeightRequest";
 import type { OperationSetHeightRequest } from "./operationSetHeightRequest";
 import type { OperationSetLocationRequest } from "./operationSetLocationRequest";
 import type { OperationSetModuleCountRequest } from "./operationSetModuleCountRequest";
+import type { OperationSetModuleTreeRequest } from "./operationSetModuleTreeRequest";
 import type { OperationSetModuleWidthRequest } from "./operationSetModuleWidthRequest";
 import type { OperationSetOpeningRequest } from "./operationSetOpeningRequest";
 import type { OperationSetPanelRequest } from "./operationSetPanelRequest";
@@ -45,6 +54,7 @@ import type { OperationSetSystemRequest } from "./operationSetSystemRequest";
 import type { OperationSetTotalWidthRequest } from "./operationSetTotalWidthRequest";
 import type { OperationSetTravelRequest } from "./operationSetTravelRequest";
 import type { OperationSplitBayRequest } from "./operationSplitBayRequest";
+import type { OperationSwapModulesRequest } from "./operationSwapModulesRequest";
 
 export type DesignOperationRequest =
   | OperationSplitBayRequest
@@ -77,6 +87,16 @@ export type DesignOperationRequest =
   | OperationAddStackedUnitRequest
   | OperationInsertModuleRequest
   | OperationRemoveCouplingRequest
+  | OperationSetBaySpecRequest
+  | OperationClearGlassThicknessRequest
+  | OperationSetModuleTreeRequest
+  | OperationSetExtrasRequest
+  | OperationSetFramelessRequest
+  | OperationSetContourVertexRequest
+  | OperationSetContourBulgeRequest
+  | OperationResizeSeamRequest
+  | OperationSwapModulesRequest
+  | OperationSetCouplerSkuRequest
   | OperationSetLocationRequest
   | OperationSetQuantityRequest
   | OperationAddPositionRequest

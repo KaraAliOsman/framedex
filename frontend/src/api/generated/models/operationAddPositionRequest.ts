@@ -31,4 +31,14 @@ export interface OperationAddPositionRequest {
    * @maximum 100
    */
   quantity?: number;
+  /**
+   * @minLength 1
+   * @maxLength 160
+   */
+  glass_sku: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  color: string;
 }

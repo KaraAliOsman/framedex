@@ -37,6 +37,16 @@
  * * `add_stacked_unit` - add_stacked_unit
  * * `insert_module` - insert_module
  * * `remove_coupling` - remove_coupling
+ * * `set_bay_spec` - set_bay_spec
+ * * `clear_glass_thickness` - clear_glass_thickness
+ * * `set_module_tree` - set_module_tree
+ * * `set_extras` - set_extras
+ * * `set_frameless` - set_frameless
+ * * `set_contour_vertex` - set_contour_vertex
+ * * `set_contour_bulge` - set_contour_bulge
+ * * `resize_seam` - resize_seam
+ * * `swap_modules` - swap_modules
+ * * `set_coupler_sku` - set_coupler_sku
  * * `set_location` - set_location
  * * `set_quantity` - set_quantity
  * * `add_position` - add_position
@@ -81,6 +91,16 @@ export const NameEnum = {
   add_stacked_unit: "add_stacked_unit",
   insert_module: "insert_module",
   remove_coupling: "remove_coupling",
+  set_bay_spec: "set_bay_spec",
+  clear_glass_thickness: "clear_glass_thickness",
+  set_module_tree: "set_module_tree",
+  set_extras: "set_extras",
+  set_frameless: "set_frameless",
+  set_contour_vertex: "set_contour_vertex",
+  set_contour_bulge: "set_contour_bulge",
+  resize_seam: "resize_seam",
+  swap_modules: "swap_modules",
+  set_coupler_sku: "set_coupler_sku",
   set_location: "set_location",
   set_quantity: "set_quantity",
   add_position: "add_position",

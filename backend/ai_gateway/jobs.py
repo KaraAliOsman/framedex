@@ -78,6 +78,7 @@ OPEN_STATES = frozenset(
 # human confirms. Kinds mirror what the agent can actually produce today.
 ARTIFACT_KINDS = frozenset(
     {
+        "blockers",
         "product_draft",
         "project_draft",
         "quote_draft",

@@ -20318,6 +20318,11 @@ components:
       - quantity
       - system_id
       - width_mm
+    ContourReferenceEnum:
+      type: string
+      enum:
+      - START
+      - END
     CostLineResponse:
       type: object
       properties:
@@ -21054,6 +21059,16 @@ components:
       - $ref: '#/components/schemas/OperationAddStackedUnit'
       - $ref: '#/components/schemas/OperationInsertModule'
       - $ref: '#/components/schemas/OperationRemoveCoupling'
+      - $ref: '#/components/schemas/OperationSetBaySpec'
+      - $ref: '#/components/schemas/OperationClearGlassThickness'
+      - $ref: '#/components/schemas/OperationSetModuleTree'
+      - $ref: '#/components/schemas/OperationSetExtras'
+      - $ref: '#/components/schemas/OperationSetFrameless'
+      - $ref: '#/components/schemas/OperationSetContourVertex'
+      - $ref: '#/components/schemas/OperationSetContourBulge'
+      - $ref: '#/components/schemas/OperationResizeSeam'
+      - $ref: '#/components/schemas/OperationSwapModules'
+      - $ref: '#/components/schemas/OperationSetCouplerSku'
       - $ref: '#/components/schemas/OperationSetLocation'
       - $ref: '#/components/schemas/OperationSetQuantity'
       - $ref: '#/components/schemas/OperationAddPosition'
@@ -21097,6 +21112,16 @@ components:
           add_stacked_unit: '#/components/schemas/OperationAddStackedUnit'
           insert_module: '#/components/schemas/OperationInsertModule'
           remove_coupling: '#/components/schemas/OperationRemoveCoupling'
+          set_bay_spec: '#/components/schemas/OperationSetBaySpec'
+          clear_glass_thickness: '#/components/schemas/OperationClearGlassThickness'
+          set_module_tree: '#/components/schemas/OperationSetModuleTree'
+          set_extras: '#/components/schemas/OperationSetExtras'
+          set_frameless: '#/components/schemas/OperationSetFrameless'
+          set_contour_vertex: '#/components/schemas/OperationSetContourVertex'
+          set_contour_bulge: '#/components/schemas/OperationSetContourBulge'
+          resize_seam: '#/components/schemas/OperationResizeSeam'
+          swap_modules: '#/components/schemas/OperationSwapModules'
+          set_coupler_sku: '#/components/schemas/OperationSetCouplerSku'
           set_location: '#/components/schemas/OperationSetLocation'
           set_quantity: '#/components/schemas/OperationSetQuantity'
           add_position: '#/components/schemas/OperationAddPosition'
@@ -21139,6 +21164,16 @@ components:
       - $ref: '#/components/schemas/OperationAddStackedUnitRequest'
       - $ref: '#/components/schemas/OperationInsertModuleRequest'
       - $ref: '#/components/schemas/OperationRemoveCouplingRequest'
+      - $ref: '#/components/schemas/OperationSetBaySpecRequest'
+      - $ref: '#/components/schemas/OperationClearGlassThicknessRequest'
+      - $ref: '#/components/schemas/OperationSetModuleTreeRequest'
+      - $ref: '#/components/schemas/OperationSetExtrasRequest'
+      - $ref: '#/components/schemas/OperationSetFramelessRequest'
+      - $ref: '#/components/schemas/OperationSetContourVertexRequest'
+      - $ref: '#/components/schemas/OperationSetContourBulgeRequest'
+      - $ref: '#/components/schemas/OperationResizeSeamRequest'
+      - $ref: '#/components/schemas/OperationSwapModulesRequest'
+      - $ref: '#/components/schemas/OperationSetCouplerSkuRequest'
       - $ref: '#/components/schemas/OperationSetLocationRequest'
       - $ref: '#/components/schemas/OperationSetQuantityRequest'
       - $ref: '#/components/schemas/OperationAddPositionRequest'
@@ -21182,6 +21217,16 @@ components:
           add_stacked_unit: '#/components/schemas/OperationAddStackedUnitRequest'
           insert_module: '#/components/schemas/OperationInsertModuleRequest'
           remove_coupling: '#/components/schemas/OperationRemoveCouplingRequest'
+          set_bay_spec: '#/components/schemas/OperationSetBaySpecRequest'
+          clear_glass_thickness: '#/components/schemas/OperationClearGlassThicknessRequest'
+          set_module_tree: '#/components/schemas/OperationSetModuleTreeRequest'
+          set_extras: '#/components/schemas/OperationSetExtrasRequest'
+          set_frameless: '#/components/schemas/OperationSetFramelessRequest'
+          set_contour_vertex: '#/components/schemas/OperationSetContourVertexRequest'
+          set_contour_bulge: '#/components/schemas/OperationSetContourBulgeRequest'
+          resize_seam: '#/components/schemas/OperationResizeSeamRequest'
+          swap_modules: '#/components/schemas/OperationSwapModulesRequest'
+          set_coupler_sku: '#/components/schemas/OperationSetCouplerSkuRequest'
           set_location: '#/components/schemas/OperationSetLocationRequest'
           set_quantity: '#/components/schemas/OperationSetQuantityRequest'
           add_position: '#/components/schemas/OperationAddPositionRequest'
@@ -21428,6 +21473,12 @@ components:
             type: integer
             minimum: 1
           nullable: true
+    DivisionReferenceEnum:
+      type: string
+      enum:
+      - START
+      - END
+      - CENTER
     DocumentExtraPricesEnum:
       enum:
       - ITEMIZED
@@ -22805,12 +22856,6 @@ components:
       - production_allowed
       - revision_code
       - snapshot_sha256
-    FromEnum:
-      type: string
-      enum:
-      - START
-      - END
-      - CENTER
     GlassFinding:
       type: object
       properties:
@@ -24923,6 +24968,16 @@ components:
       - add_stacked_unit
       - insert_module
       - remove_coupling
+      - set_bay_spec
+      - clear_glass_thickness
+      - set_module_tree
+      - set_extras
+      - set_frameless
+      - set_contour_vertex
+      - set_contour_bulge
+      - resize_seam
+      - swap_modules
+      - set_coupler_sku
       - set_location
       - set_quantity
       - add_position
@@ -24965,6 +25020,16 @@ components:
         * `add_stacked_unit` - add_stacked_unit
         * `insert_module` - insert_module
         * `remove_coupling` - remove_coupling
+        * `set_bay_spec` - set_bay_spec
+        * `clear_glass_thickness` - clear_glass_thickness
+        * `set_module_tree` - set_module_tree
+        * `set_extras` - set_extras
+        * `set_frameless` - set_frameless
+        * `set_contour_vertex` - set_contour_vertex
+        * `set_contour_bulge` - set_contour_bulge
+        * `resize_seam` - resize_seam
+        * `swap_modules` - swap_modules
+        * `set_coupler_sku` - set_coupler_sku
         * `set_location` - set_location
         * `set_quantity` - set_quantity
         * `add_position` - add_position
@@ -25096,6 +25161,14 @@ components:
           type: integer
           minimum: 1
           maximum: 100
+        glass_sku:
+          type: string
+          minLength: 1
+          maxLength: 160
+        color:
+          type: string
+          minLength: 1
+          maxLength: 100
         base_sig:
           type: string
         description:
@@ -25113,6 +25186,8 @@ components:
       - template
       - dims
       - location
+      - glass_sku
+      - color
     OperationAddPositionOpEnum:
       type: string
       enum:
@@ -25154,12 +25229,22 @@ components:
           type: integer
           minimum: 1
           maximum: 100
+        glass_sku:
+          type: string
+          minLength: 1
+          maxLength: 160
+        color:
+          type: string
+          minLength: 1
+          maxLength: 100
       required:
       - op
       - system_id
       - template
       - dims
       - location
+      - glass_sku
+      - color
     OperationAddStackedUnit:
       type: object
       additionalProperties: false
@@ -25321,6 +25406,47 @@ components:
       - op
       - filter
       - ops
+    OperationClearGlassThickness:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationClearGlassThicknessOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+    OperationClearGlassThicknessOpEnum:
+      type: string
+      enum:
+      - clear_glass_thickness
+    OperationClearGlassThicknessRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationClearGlassThicknessOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - module
     OperationDuplicateModule:
       type: object
       additionalProperties: false
@@ -25649,7 +25775,7 @@ components:
           pattern: ^-?\d+(?:\.\d{1,2})?$
           description: Milímetros decimales exactos; sin separador de miles.
         from:
-          $ref: '#/components/schemas/FromEnum'
+          $ref: '#/components/schemas/DivisionReferenceEnum'
         base_sig:
           type: string
         description:
@@ -25688,7 +25814,7 @@ components:
           pattern: ^-?\d+(?:\.\d{1,2})?$
           description: Milímetros decimales exactos; sin separador de miles.
         from:
-          $ref: '#/components/schemas/FromEnum'
+          $ref: '#/components/schemas/DivisionReferenceEnum'
       required:
       - op
       - divider
@@ -26094,6 +26220,67 @@ components:
       required:
       - op
       - module
+    OperationResizeSeam:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationResizeSeamOpEnum'
+        left:
+          type: string
+          minLength: 1
+          maxLength: 160
+        right:
+          type: string
+          minLength: 1
+          maxLength: 160
+        delta_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - left
+      - right
+      - delta_mm
+    OperationResizeSeamOpEnum:
+      type: string
+      enum:
+      - resize_seam
+    OperationResizeSeamRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationResizeSeamOpEnum'
+        left:
+          type: string
+          minLength: 1
+          maxLength: 160
+        right:
+          type: string
+          minLength: 1
+          maxLength: 160
+        delta_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - left
+      - right
+      - delta_mm
     OperationSetBaySize:
       type: object
       additionalProperties: false
@@ -26159,6 +26346,386 @@ components:
       - bay
       - axis
       - size_mm
+    OperationSetBaySpec:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetBaySpecOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        patch:
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            hardware_set_sku:
+              type: string
+              minLength: 1
+              maxLength: 160
+              nullable: true
+            hardware_selection:
+              additionalProperties: false
+              properties:
+                handle_code:
+                  type: string
+                  nullable: true
+                color_code:
+                  type: string
+                  nullable: true
+                option_codes:
+                  items:
+                    type: string
+                  type: array
+              type: object
+              nullable: true
+            glass_processing:
+              additionalProperties: false
+              properties:
+                polished_edges:
+                  default: []
+                  items:
+                    enum:
+                    - TOP
+                    - BOTTOM
+                    - LEFT
+                    - RIGHT
+                    type: string
+                  type: array
+                holes:
+                  default: 0
+                  maximum: 200
+                  minimum: 0
+                  type: integer
+                bars_vertical:
+                  default: 0
+                  maximum: 50
+                  minimum: 0
+                  type: integer
+                bars_horizontal:
+                  default: 0
+                  maximum: 50
+                  minimum: 0
+                  type: integer
+              type: object
+              nullable: true
+            sill_height_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d{1,2})?$
+              description: Milímetros decimales exactos; sin separador de miles.
+              nullable: true
+            is_sidelight:
+              type: boolean
+            door_handedness:
+              type: string
+              enum:
+              - LEFT
+              - RIGHT
+              - null
+              nullable: true
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - bay
+      - patch
+    OperationSetBaySpecOpEnum:
+      type: string
+      enum:
+      - set_bay_spec
+    OperationSetBaySpecRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetBaySpecOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        patch:
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            hardware_set_sku:
+              type: string
+              minLength: 1
+              maxLength: 160
+              nullable: true
+            hardware_selection:
+              additionalProperties: false
+              properties:
+                handle_code:
+                  type: string
+                  nullable: true
+                color_code:
+                  type: string
+                  nullable: true
+                option_codes:
+                  items:
+                    type: string
+                  type: array
+              type: object
+              nullable: true
+            glass_processing:
+              additionalProperties: false
+              properties:
+                polished_edges:
+                  default: []
+                  items:
+                    enum:
+                    - TOP
+                    - BOTTOM
+                    - LEFT
+                    - RIGHT
+                    type: string
+                  type: array
+                holes:
+                  default: 0
+                  maximum: 200
+                  minimum: 0
+                  type: integer
+                bars_vertical:
+                  default: 0
+                  maximum: 50
+                  minimum: 0
+                  type: integer
+                bars_horizontal:
+                  default: 0
+                  maximum: 50
+                  minimum: 0
+                  type: integer
+              type: object
+              nullable: true
+            sill_height_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d{1,2})?$
+              description: Milímetros decimales exactos; sin separador de miles.
+              nullable: true
+            is_sidelight:
+              type: boolean
+            door_handedness:
+              type: string
+              enum:
+              - LEFT
+              - RIGHT
+              - null
+              nullable: true
+      required:
+      - op
+      - module
+      - bay
+      - patch
+    OperationSetContourBulge:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetContourBulgeOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        index:
+          type: integer
+          minimum: 0
+          maximum: 255
+        rise_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - index
+      - rise_mm
+    OperationSetContourBulgeOpEnum:
+      type: string
+      enum:
+      - set_contour_bulge
+    OperationSetContourBulgeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetContourBulgeOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        index:
+          type: integer
+          minimum: 0
+          maximum: 255
+        rise_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - module
+      - index
+      - rise_mm
+    OperationSetContourVertex:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetContourVertexOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        index:
+          type: integer
+          minimum: 0
+          maximum: 255
+        x_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        y_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        from:
+          $ref: '#/components/schemas/ContourReferenceEnum'
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - index
+      - x_mm
+      - y_mm
+    OperationSetContourVertexOpEnum:
+      type: string
+      enum:
+      - set_contour_vertex
+    OperationSetContourVertexRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetContourVertexOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        index:
+          type: integer
+          minimum: 0
+          maximum: 255
+        x_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        y_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        from:
+          $ref: '#/components/schemas/ContourReferenceEnum'
+      required:
+      - op
+      - module
+      - index
+      - x_mm
+      - y_mm
+    OperationSetCouplerSku:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetCouplerSkuOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 160
+          nullable: true
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - coupling
+      - sku
+    OperationSetCouplerSkuOpEnum:
+      type: string
+      enum:
+      - set_coupler_sku
+    OperationSetCouplerSkuRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetCouplerSkuOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 160
+          nullable: true
+      required:
+      - op
+      - coupling
+      - sku
     OperationSetCouplingAngle:
       type: object
       additionalProperties: false
@@ -26264,6 +26831,167 @@ components:
       - op
       - coupling
       - kind
+    OperationSetExtras:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetExtrasOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        extras:
+          type: array
+          maxItems: 30
+          items:
+            additionalProperties: false
+            properties:
+              code:
+                maxLength: 80
+                minLength: 1
+                pattern: ^[A-Z0-9_+.-]+$
+                type: string
+              decision:
+                default: ACCEPT
+                enum:
+                - ACCEPT
+                - DISMISS
+                type: string
+              bay_id:
+                type: string
+                nullable: true
+              leaf_id:
+                type: string
+                nullable: true
+              sides:
+                items:
+                  enum:
+                  - TOP
+                  - RIGHT
+                  - BOTTOM
+                  - LEFT
+                  type: string
+                maxItems: 4
+                type: array
+                nullable: true
+              overhang_left_mm:
+                type: string
+                pattern: ^-?\d+(?:\.\d+)?$
+              overhang_right_mm:
+                type: string
+                pattern: ^-?\d+(?:\.\d+)?$
+              zone:
+                type: string
+                nullable: true
+            required:
+            - code
+            type: object
+        context:
+          additionalProperties: false
+          properties:
+            opening_width_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d+)?$
+              nullable: true
+            opening_height_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d+)?$
+              nullable: true
+          type: object
+          nullable: true
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - extras
+    OperationSetExtrasOpEnum:
+      type: string
+      enum:
+      - set_extras
+    OperationSetExtrasRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetExtrasOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        extras:
+          type: array
+          maxItems: 30
+          items:
+            additionalProperties: false
+            properties:
+              code:
+                maxLength: 80
+                minLength: 1
+                pattern: ^[A-Z0-9_+.-]+$
+                type: string
+              decision:
+                default: ACCEPT
+                enum:
+                - ACCEPT
+                - DISMISS
+                type: string
+              bay_id:
+                type: string
+                nullable: true
+              leaf_id:
+                type: string
+                nullable: true
+              sides:
+                items:
+                  enum:
+                  - TOP
+                  - RIGHT
+                  - BOTTOM
+                  - LEFT
+                  type: string
+                maxItems: 4
+                type: array
+                nullable: true
+              overhang_left_mm:
+                type: string
+                pattern: ^-?\d+(?:\.\d+)?$
+              overhang_right_mm:
+                type: string
+                pattern: ^-?\d+(?:\.\d+)?$
+              zone:
+                type: string
+                nullable: true
+            required:
+            - code
+            type: object
+        context:
+          additionalProperties: false
+          properties:
+            opening_width_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d+)?$
+              nullable: true
+            opening_height_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d+)?$
+              nullable: true
+          type: object
+          nullable: true
+      required:
+      - op
+      - module
+      - extras
     OperationSetFinish:
       type: object
       additionalProperties: false
@@ -26315,6 +27043,215 @@ components:
       - op
       - interior
       - exterior
+    OperationSetFrameless:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetFramelessOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        spec:
+          additionalProperties: false
+          description: |-
+            Glass-only module spec (mandate §14): the pane IS the module — real
+            support/fitting concepts, never fake FRAME/SASH profiles. `tree` must
+            still be a single BAY leaf carrying the glass spec; when `contour` is
+            also set, the pane takes the contour's boundary directly (no frame
+            inset exists to offset).
+          properties:
+            supports:
+              items:
+                additionalProperties: false
+                description: One supported edge run of a frameless pane.
+                properties:
+                  kind:
+                    description: How an exposed edge is held (mandate §14).
+                    enum:
+                    - CHANNEL
+                    - CLAMPS
+                    type: string
+                  edge:
+                    enum:
+                    - left
+                    - right
+                    - top
+                    - bottom
+                    type: string
+                  article_sku:
+                    type: string
+                  qty:
+                    default: 1
+                    exclusiveMinimum: true
+                    type: integer
+                    minimum: 0
+                required:
+                - kind
+                - edge
+                - article_sku
+                type: object
+              type: array
+            fittings:
+              items:
+                additionalProperties: false
+                description: |-
+                  A declared fitting on the pane — patch fitting, clamp, hinge, lock,
+                  connector, seal or point support, with its catalog sku and count.
+                properties:
+                  kind:
+                    description: Counted fitting kinds of the glass-only domain (mandate
+                      §14).
+                    enum:
+                    - PATCH_FITTING
+                    - CLAMP
+                    - HINGE
+                    - LOCK
+                    - CONNECTOR
+                    - SEAL
+                    - SUPPORT
+                    type: string
+                  sku:
+                    type: string
+                  qty:
+                    default: 1
+                    exclusiveMinimum: true
+                    type: integer
+                    minimum: 0
+                required:
+                - kind
+                - sku
+                type: object
+              type: array
+            exposed_edges:
+              items:
+                enum:
+                - left
+                - right
+                - top
+                - bottom
+                type: string
+              type: array
+              nullable: true
+          type: object
+          nullable: true
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - spec
+    OperationSetFramelessOpEnum:
+      type: string
+      enum:
+      - set_frameless
+    OperationSetFramelessRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetFramelessOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        spec:
+          additionalProperties: false
+          description: |-
+            Glass-only module spec (mandate §14): the pane IS the module — real
+            support/fitting concepts, never fake FRAME/SASH profiles. `tree` must
+            still be a single BAY leaf carrying the glass spec; when `contour` is
+            also set, the pane takes the contour's boundary directly (no frame
+            inset exists to offset).
+          properties:
+            supports:
+              items:
+                additionalProperties: false
+                description: One supported edge run of a frameless pane.
+                properties:
+                  kind:
+                    description: How an exposed edge is held (mandate §14).
+                    enum:
+                    - CHANNEL
+                    - CLAMPS
+                    type: string
+                  edge:
+                    enum:
+                    - left
+                    - right
+                    - top
+                    - bottom
+                    type: string
+                  article_sku:
+                    type: string
+                  qty:
+                    default: 1
+                    exclusiveMinimum: true
+                    type: integer
+                    minimum: 0
+                required:
+                - kind
+                - edge
+                - article_sku
+                type: object
+              type: array
+            fittings:
+              items:
+                additionalProperties: false
+                description: |-
+                  A declared fitting on the pane — patch fitting, clamp, hinge, lock,
+                  connector, seal or point support, with its catalog sku and count.
+                properties:
+                  kind:
+                    description: Counted fitting kinds of the glass-only domain (mandate
+                      §14).
+                    enum:
+                    - PATCH_FITTING
+                    - CLAMP
+                    - HINGE
+                    - LOCK
+                    - CONNECTOR
+                    - SEAL
+                    - SUPPORT
+                    type: string
+                  sku:
+                    type: string
+                  qty:
+                    default: 1
+                    exclusiveMinimum: true
+                    type: integer
+                    minimum: 0
+                required:
+                - kind
+                - sku
+                type: object
+              type: array
+            exposed_edges:
+              items:
+                enum:
+                - left
+                - right
+                - top
+                - bottom
+                type: string
+              type: array
+              nullable: true
+          type: object
+          nullable: true
+      required:
+      - op
+      - module
+      - spec
     OperationSetGlass:
       type: object
       additionalProperties: false
@@ -26637,6 +27574,53 @@ components:
       required:
       - op
       - count
+    OperationSetModuleTree:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetModuleTreeOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        tree:
+          type: object
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - tree
+    OperationSetModuleTreeOpEnum:
+      type: string
+      enum:
+      - set_module_tree
+    OperationSetModuleTreeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetModuleTreeOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        tree:
+          type: object
+      required:
+      - op
+      - module
+      - tree
     OperationSetModuleWidth:
       type: object
       additionalProperties: false
@@ -27183,7 +28167,7 @@ components:
           pattern: ^-?\d+(?:\.\d{1,2})?$
           description: Milímetros decimales exactos; sin separador de miles.
         from:
-          $ref: '#/components/schemas/FromEnum'
+          $ref: '#/components/schemas/DivisionReferenceEnum'
         base_sig:
           type: string
         description:
@@ -27225,12 +28209,63 @@ components:
           pattern: ^-?\d+(?:\.\d{1,2})?$
           description: Milímetros decimales exactos; sin separador de miles.
         from:
-          $ref: '#/components/schemas/FromEnum'
+          $ref: '#/components/schemas/DivisionReferenceEnum'
       required:
       - op
       - bay
       - axis
       - from
+    OperationSwapModules:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSwapModulesOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        other:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - other
+    OperationSwapModulesOpEnum:
+      type: string
+      enum:
+      - swap_modules
+    OperationSwapModulesRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSwapModulesOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        other:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - module
+      - other
     OperationalSummary:
       type: object
       properties:

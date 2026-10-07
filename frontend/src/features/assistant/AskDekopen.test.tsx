@@ -9,7 +9,7 @@ import {
   routeContext,
   useRegisterDesignOpsBridge,
 } from "./assistantContext";
-import type { DesignOp } from "../commands/types";
+import type { DesignOperation } from "../../api/generated/models";
 
 vi.mock("../../api/generated/dekopen", () => ({
   aiAsk: vi.fn(),
@@ -76,14 +76,14 @@ describe("AskDekopen", () => {
     askMock.mockResolvedValue(successResponse() as never);
     renderDock("/projects/abc-1");
     fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "¿Qué ves aquí?" } });
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Â¿QuÃ© ves aquÃ­?" } });
     fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
     await waitFor(() => expect(askMock).toHaveBeenCalledTimes(1));
     const [body, options] = askMock.mock.calls[0] ?? [];
     expect(body).toMatchObject({
       surface: "project",
       refs: { project_id: "abc-1" },
-      question: "¿Qué ves aquí?",
+      question: "Â¿QuÃ© ves aquÃ­?",
     });
     expect(new Headers(options?.headers).get("X-Organization-ID")).toBe("org-1");
     expect(await screen.findByText("Tienes 3 proyectos activos.")).toBeTruthy();
@@ -116,13 +116,13 @@ describe("AskDekopen", () => {
     askMock.mockResolvedValue({
       status: 400,
       headers: new Headers(),
-      data: { error: { detail: "contexto inválido" } },
+      data: { error: { detail: "contexto invÃ¡lido" } },
     } as never);
     renderDock();
     fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "algo" } });
     fireEvent.submit(screen.getByRole("button", { name: /Enviar/i }).closest("form")!);
-    expect(await screen.findByText("contexto inválido")).toBeTruthy();
+    expect(await screen.findByText("contexto invÃ¡lido")).toBeTruthy();
   });
 });
 
@@ -177,7 +177,7 @@ function agentResponse(over: Record<string, unknown> = {}) {
   return agentJob();
 }
 
-describe("AskDekopen — Agente mode", () => {
+describe("AskDekopen â€” Agente mode", () => {
   beforeEach(() => {
     agentMock.mockReset();
     jobMock.mockReset();
@@ -188,7 +188,7 @@ describe("AskDekopen — Agente mode", () => {
     renderDock("/projects/abc-1");
     fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
     fireEvent.click(screen.getByRole("button", { name: "Agente" }));
-    fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
+    fireEvent.change(screen.getByRole("textbox", { name: /QuÃ© necesitas lograr/i }), {
       target: { value: "Revisa el estado del proyecto" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
@@ -201,7 +201,7 @@ describe("AskDekopen — Agente mode", () => {
     });
     expect(new Headers(options?.headers).get("X-Organization-ID")).toBe("org-1");
     expect(await screen.findByText("El proyecto OB-1 tiene 2 vanos.")).toBeTruthy();
-    expect(screen.getByText("Consultó proyecto")).toBeTruthy();
+    expect(screen.getByText("ConsultÃ³ proyecto")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Abrir proyecto" })).toBeTruthy();
   });
 
@@ -213,7 +213,7 @@ describe("AskDekopen — Agente mode", () => {
         couplings: [],
       },
     };
-    const applied: DesignOp[][] = [];
+    const applied: DesignOperation[][] = [];
     function Bridge() {
       useRegisterDesignOpsBridge(product, (ops) => applied.push(ops));
       return null;
@@ -241,7 +241,7 @@ describe("AskDekopen — Agente mode", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
     fireEvent.click(screen.getByRole("button", { name: "Agente" }));
-    fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
+    fireEvent.change(screen.getByRole("textbox", { name: /QuÃ© necesitas lograr/i }), {
       target: { value: "Cambia el ancho a 1400" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
@@ -293,12 +293,12 @@ describe("AskDekopen — Agente mode", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
     fireEvent.click(screen.getByRole("button", { name: "Agente" }));
-    fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
+    fireEvent.change(screen.getByRole("textbox", { name: /QuÃ© necesitas lograr/i }), {
       target: { value: "Cambia el alto" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
     const applyButton = await screen.findByRole("button", { name: /Aplicar 1 operaciones/i });
-    // A commit swapped the live product — the button must refuse.
+    // A commit swapped the live product â€” the button must refuse.
     current = productB;
     view.rerender(
       <MemoryRouter initialEntries={["/projects/p1/positions/pos-9/edit"]}>

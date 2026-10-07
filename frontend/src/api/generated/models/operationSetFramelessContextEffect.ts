@@ -6,10 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type FromEnum = (typeof FromEnum)[keyof typeof FromEnum];
-
-export const FromEnum = {
-  START: "START",
-  END: "END",
-  CENTER: "CENTER",
-} as const;
+export type OperationSetFramelessContextEffect = { [key: string]: string };

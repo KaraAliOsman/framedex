@@ -3,6 +3,7 @@
 from uuid import UUID, uuid4
 
 from django.db import DatabaseError, transaction
+from decimal import Decimal, ROUND_HALF_UP
 import pytest
 
 from authentication.errors import ContractAPIException
@@ -12,6 +13,7 @@ from pricing.repository import commercial_backend, rows
 from projects.project_ops import apply_project_operations, preview_project_operations, snapshot, signature, undo_project_operations
 from projects.serializers import PositionWriteSerializer
 from projects.service import create_project, save_position, positions, project_row
+from backend.tests.integration.test_opening_mounting import client_for
 
 pytestmark = pytest.mark.rls_integration
 
@@ -123,3 +125,68 @@ def test_failed_batch_cannot_partially_save(documentary_tenant):
                 {"op": "remove_position", "position_id": str(uuid4())}])
         assert signature(snapshot(org, project["id"])) == signature(before)
         assert project_row(org, project["id"])["status"] == "DRAFT"
+
+
+@pytest.mark.parametrize("role", ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER"])
+def test_preview_and_apply_require_real_project_writer_permission(documentary_tenant, role):
+    org, _, users, _ = documentary_tenant
+    project, position = setup_project(org, users["OWNER"])
+    client = client_for(users[role])
+    ops = [{"op": "set_quantity", "position_id": str(position["id"]), "quantity": 3}]
+    path = f"/api/v1/projects/{project['id']}/operations/"
+    preview = client.post(path + "preview/", {"ops": ops}, format="json", HTTP_X_ORGANIZATION_ID=str(org))
+    if role in {"WORKSHOP_MANAGER", "INSTALLER"}:
+        assert preview.status_code == 403, preview.content
+        result = client.post(path + "apply/", {"ops": ops, "before_sig": "0" * 64,
+            "operation_key": str(uuid4())}, format="json", HTTP_X_ORGANIZATION_ID=str(org))
+        assert result.status_code == 403, result.content
+        return
+    assert preview.status_code == 200, preview.content
+    simulation = preview.json()["simulations"][0]
+    assert simulation["before"]["quantity"] == 2 and simulation["quantity"] == 3
+    before_price, after_price = simulation["before"]["price"], simulation["price"]
+    if after_price["net"] is not None:
+        assert Decimal(after_price["net"]) == (Decimal(after_price["unit_net"]) * 3).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        assert Decimal(after_price["delta_net"]) == Decimal(after_price["net"]) - Decimal(before_price["net"])
+    else:
+        assert after_price["reason"] and after_price["delta_net"] is None
+    result = client.post(path + "apply/", {"ops": ops, "before_sig": preview.json()["before_sig"],
+        "operation_key": str(uuid4())}, format="json", HTTP_X_ORGANIZATION_ID=str(org))
+    assert result.status_code == 200, result.content
+    assert result.json()["project"]["positions"][0]["quantity"] == 3
+
+
+def test_creation_requires_explicit_catalog_selections_and_all_diffs_have_simulations(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project, position = setup_project(org, owner)
+    design = position["design"]
+    glass = design["parametric_tree"]["glass_article_sku"]
+    op = {"op": "add_position", "system_id": str(design["system_id"]), "template": "FIXED",
+          "dims": {"width_mm": "1500", "height_mm": "1400"}, "location": "Cocina",
+          "glass_sku": glass, "color": design["color"]}
+    with as_user(owner):
+        from dekopen_engine.design_operations import OperationError
+        for field in ("glass_sku", "color"):
+            with pytest.raises(OperationError):
+                preview_project_operations(org, owner, project["id"], [{key: value for key, value in op.items() if key != field}])
+        created = preview_project_operations(org, owner, project["id"], [op])
+        assert created["simulations"][0]["before"]["product"] is None
+        assert created["simulations"][0]["product"]["assembly"]["modules"]
+        removed = preview_project_operations(org, owner, project["id"], [{"op": "remove_position", "position_id": str(position["id"])}])
+        assert removed["simulations"][0]["product"] is None
+        assert removed["simulations"][0]["before"]["product"]["assembly"]["modules"]
+        copied = preview_project_operations(org, owner, project["id"], [{"op": "duplicate_position", "position_id": str(position["id"]), "count": 4, "location": "Dormitorios"}])
+        assert len(copied["simulations"]) == len(copied["diff"]) == 4
+
+
+def test_project_operation_history_cannot_be_deleted_even_with_elevated_database_role(documentary_tenant):
+    from django.db import connection
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project, position = setup_project(org, owner)
+    with as_user(owner):
+        _, result = apply(org, owner, project["id"], [{"op": "set_quantity", "position_id": str(position["id"]), "quantity": 3}])
+    with pytest.raises(DatabaseError, match="project_edit_evidence_immutable"), transaction.atomic(), connection.cursor() as cursor:
+        cursor.execute("SET LOCAL ROLE NONE")
+        cursor.execute("DELETE FROM public.project_edit_operations WHERE id=%s", [result["operation_id"]])

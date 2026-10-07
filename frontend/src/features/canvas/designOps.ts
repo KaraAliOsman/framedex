@@ -2,6 +2,7 @@ import { applyDesignOpOn } from "../commands/registry";
 import type { CommandSpec, DesignOp, DesignOpState } from "../commands/types";
 import { ASSEMBLY_COMMANDS } from "./assemblyCommands";
 import type { ProductJson } from "./productEditing";
+import type { DesignOperation } from "../../api/generated/models";
 
 export type { DesignOp };
 
@@ -33,6 +34,25 @@ export function productFingerprint(product: unknown): string {
  * opening authority and context. Every content change invalidates a plan. */
 export function designAssistProduct(product: ProductJson): ProductJson {
   return product;
+}
+
+/** Live edits consume complete engine effects. Intent-only legacy records may
+ * be read below, but cannot authorize a new editor mutation. */
+export function applyOperationEffects(
+  product: ProductJson,
+  ops: readonly DesignOperation[],
+): ProductJson {
+  return ops.reduce((current, op) => {
+    if (typeof op.base_sig !== "string" || !op.result || typeof op.result !== "object") {
+      throw new Error("operation_effect_required");
+    }
+    if (productFingerprint(current) !== op.base_sig) throw new Error("proposal_stale");
+    const next = op.result as ProductJson;
+    if (next.version !== "product-v2" || !Array.isArray(next.assembly?.modules)) {
+      throw new Error("invalid_operation_effect");
+    }
+    return next;
+  }, product);
 }
 
 /** Wire op → product: dispatched through the shared command registry — the
@@ -76,7 +96,7 @@ function harvestAdded(state: DesignOpState, before: ProductJson, next: ProductJs
 
 export function applyDesignOps(
   product: ProductJson,
-  ops: DesignOp[],
+  ops: (DesignOp | DesignOperation)[],
   specs: CommandSpec[] = ASSEMBLY_COMMANDS,
 ): ProductJson {
   // Synthetic refs resolve in apply order: after each structural op, the ids
@@ -84,7 +104,7 @@ export function applyDesignOps(
   // the real entity the sequence produced, never a guess.
   const state: DesignOpState = { addedModules: [], addedCouplings: [], origin: product };
   return ops.reduce((current, op) => {
-    const next = applyDesignOp(current, op, specs, state);
+    const next = applyDesignOp(current, { ...op }, specs, state);
     harvestAdded(state, current, next);
     return next;
   }, product);
@@ -95,21 +115,21 @@ export function applyDesignOps(
  * the sequence's earlier ops so refs minted mid-sequence ('módulo nueva 1')
  * resolve to the entity they'd produce. */
 export function describeDesignOp(
-  op: DesignOp,
+  op: DesignOp | DesignOperation,
   product: ProductJson,
-  priorOps: DesignOp[] = [],
+  priorOps: (DesignOp | DesignOperation)[] = [],
   specs: CommandSpec[] = ASSEMBLY_COMMANDS,
 ): string {
   if (typeof op.description === "string") return op.description;
   const state: DesignOpState = { addedModules: [], addedCouplings: [], origin: product };
   const evolved = priorOps.reduce((current, prior) => {
-    const next = applyDesignOp(current, prior, specs, state);
+    const next = applyDesignOp(current, { ...prior }, specs, state);
     harvestAdded(state, current, next);
     return next;
   }, product);
   for (const spec of specs) {
     if (spec.ai?.op !== op.op || !spec.describe) continue;
-    const args = spec.ai.decode(op, evolved, state);
+    const args = spec.ai.decode({ ...op }, evolved, state);
     if (args === null) continue;
     return spec.describe(args);
   }

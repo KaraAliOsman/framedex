@@ -5,7 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { FromEnum } from "./fromEnum";
+import type { DivisionReferenceEnum } from "./divisionReferenceEnum";
 import type { OperationMoveDividerRequestOp } from "./operationMoveDividerRequestOp";
 
 export interface OperationMoveDividerRequest {
@@ -25,5 +25,5 @@ export interface OperationMoveDividerRequest {
    * @pattern ^-?\d+(?:\.\d{1,2})?$
    */
   offset_mm: string;
-  from?: FromEnum;
+  from?: DivisionReferenceEnum;
 }
