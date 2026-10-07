@@ -950,6 +950,10 @@ def test_quotation_complete_projection_unpriced(monkeypatch):
     assert ctx["priced"] is None
     assert ctx["approval"] is None
     assert ctx["versions"] == []
+    assert ctx["totals"]["net"] is None
+    assert ctx["totals"]["tax"] is None
+    assert ctx["totals"]["gross"] is None
+    assert "calcula y aplica" in ctx["totals"]["reason"]
 
 
 def test_purchase_plan_projection_coverage_unverifiable(monkeypatch):

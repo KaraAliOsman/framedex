@@ -808,7 +808,9 @@ export function AgentBody({
                                           turn.product as ProductJson,
                                           ops.slice(0, i),
                                         )
-                                      : op.op}
+                                      : typeof op.description === "string"
+                                        ? op.description
+                                        : "Cambio de diseño"}
                                   </li>
                                 ))}
                               </ul>

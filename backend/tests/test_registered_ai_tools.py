@@ -90,6 +90,36 @@ def test_discount_proposal_requires_a_human_decision(monkeypatch):
     assert result["artifacts"][0]["payload"]["discount_pct"] == "0.05"
 
 
+def test_root_discount_draft_is_preserved_without_authorizing_a_write(monkeypatch):
+    project, foreign = str(uuid4()), str(uuid4())
+    _patch(monkeypatch, contexts={"project": {"surface": "project", "id": project}}, outputs=[_doc(
+        reply="Revisa el descuento antes de aplicarlo.",
+        artifact={"kind": "quote_draft", "title": "Descuento propuesto", "payload": {
+            "discount_pct": "0.05", "confirmed": True, "base_price": None},
+            "references": {"project_id": project, "foreign": foreign}})])
+    result = agent.act(org_id=uuid4(), user_id=uuid4(), surface="project", refs={"project_id": project},
+                       goal="Baja el precio un 5 %", product=None, history=[], operation_key="root-discount")
+    assert result["state"] == "WAITING_FOR_APPROVAL"
+    assert result["steps"] == []
+    draft = result["artifacts"][0]
+    assert draft["references"] == [project]
+    assert draft["payload"] == {"discount_pct": "0.05", "confirmed": False, "base_price": None}
+
+
+@pytest.mark.parametrize("title,payload", [
+    ("Precio 1777 CLP", {"discount_pct": "0.05"}),
+    ("Descuento propuesto", {"discount_pct": "0.05", "net": "1777"}),
+])
+def test_root_artifact_cannot_launder_an_invented_number(monkeypatch, title, payload):
+    project = str(uuid4())
+    _patch(monkeypatch, contexts={"project": {"surface": "project", "id": project}}, outputs=[_doc(
+        reply="Revisa el proyecto.", artifact={"kind": "quote_draft", "title": title,
+        "payload": payload, "references": {"project_id": project}})])
+    result = agent.act(org_id=uuid4(), user_id=uuid4(), surface="project", refs={"project_id": project},
+                       goal="Baja el precio un 5 %", product=None, history=[], operation_key="root-invention")
+    assert result["artifacts"] == []
+
+
 def test_restored_project_proposal_keeps_integer_counts_valid_for_apply():
     import json
     from ai_gateway.jobs import _decode

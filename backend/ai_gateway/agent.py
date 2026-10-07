@@ -1179,10 +1179,21 @@ def _act(
         for item in (document.get("steps") or [])
         if isinstance(item, dict) and item.get("kind") == "artifact"
     ]
+    # Some JSON providers return a lone draft at the root despite the step
+    # envelope. Preserve that proposal through the SAME allowlist/grounding
+    # checks; it never supplies an operation or authorizes a mutation.
+    if isinstance(document.get("artifact"), dict):
+        raw_artifacts.append(document["artifact"])
+    raw_artifacts = [
+        {**item, "references": list(item["references"].values())}
+        if isinstance(item, dict) and isinstance(item.get("references"), dict)
+        else item
+        for item in raw_artifacts
+    ]
     validated_artifacts = []
     for artifact in jobs.artifacts(raw_artifacts, context_refs_all):
         # Ungrounded payloads are dropped, not displayed (review AI-02).
-        if not _payload_grounded(
+        if not _grounded(artifact["title"], grounding) or not _payload_grounded(
             artifact.get("payload") or {}, grounding, context_refs_all
         ):
             dropped_ungrounded += 1

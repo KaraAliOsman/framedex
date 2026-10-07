@@ -655,24 +655,7 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
         "WHERE org_id=%s AND project_id=%s",
         [org_id, project["id"]],
     )
-    # Priced state = an APPLIED pricing_operations row on the current
-    # revision — pricing_operations is service-owned, so the read follows
-    # the same documented exception as job_runs: the pricing role with the
-    # explicit org filter (mirrors _pricing_authority's predicate exactly).
-    with commercial_backend():
-        priced = rows(
-            "SELECT request->>'currency' AS currency "
-            "FROM public.pricing_operations "
-            "WHERE org_id=%s AND project_id=%s AND state='APPLIED' "
-            "AND COALESCE(revision_code,'REV-A')=%s "
-            "AND ((SELECT pricing_reset_at FROM public.projects WHERE id=%s) IS NULL "
-            "OR approved_at > (SELECT pricing_reset_at FROM public.projects WHERE id=%s)) "
-            "ORDER BY approved_at DESC, id DESC LIMIT 1",
-            [
-                org_id, project["id"], project["current_revision"],
-                project["id"], project["id"],
-            ],
-        )
+    priced = _project_pricing(org_id, project)
     approval = rows(
         "SELECT a.status::text AS status, a.expires_at > now() AS live "
         "FROM public.customer_approvals a "
@@ -694,9 +677,7 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
         },
         "current_revision": _cut(project["current_revision"]),
         "positions": {"total": int(positions[0]["total"])},
-        "priced": (
-            {"currency": _cut(priced[0]["currency"])} if priced else None
-        ),
+        "priced": priced,
         "approval": (
             {
                 "status": _cut(approval[0]["status"]),
@@ -705,11 +686,7 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
             if approval
             else None
         ),
-        "totals": {
-            "net": _cut(project["total_price_net"]),
-            "tax": _cut(project["total_price_tax"]),
-            "gross": _cut(project["total_price_gross"]),
-        },
+        "totals": _project_totals(project, priced),
         "payments": _payments(org_id, project["id"]),
         "versions": [
             {
