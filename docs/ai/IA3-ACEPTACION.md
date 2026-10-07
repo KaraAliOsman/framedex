@@ -73,6 +73,15 @@ Dos intentos de Database Gate pasaron SQL/integraciones pero fallaron por el pue
 no se cuentan como aceptación. Se detuvo ese contenedor y se comprobó el bind libre
 antes del gate completo. El stack ajeno nunca se modificó.
 
+El primer CI del commit de evidencia `e5350f76` pasó 1.137 pgTAP y 395
+integraciones, pero falló al esperar el título del catálogo: el test iniciaba
+esa espera al llegar herrajes y sistemas seguía cargando. La carrera se
+reprodujo localmente. `catalog-kit.spec.ts` ahora espera las cuatro respuestas
+que necesita la pantalla, verifica HTTP 200 y conserva las aserciones,
+timeouts y ausencia de reintentos originales. El recorrido real focalizado
+pasa; no se modificaron el producto ni los checks. CI verifica otra vez el
+head corregido antes de integrar.
+
 ## Navegador y estados
 
 [Recorrido y aserciones](../redesign/captures/proveedor-real/recorrido/navegador.json)

@@ -581,3 +581,12 @@ del PR hacia integración, sin modificar main ni recursos ajenos.
 ## 2026-10-07 · IA3 · revisión del PR #127
 
 Código verificado `75bd60c70b7ad6c1943b5fd855d4672ae3a29f31`; corrida `041cb622836c745897c04e52a354d10bbf16a8b4`: 22/26, E+J 19/21, dominio/auditoría/billetera intactos; 53 intercambios y 104 eventos físicos. PDF literal/mixto con texto consolidado, prueba por capacidad conservada al editar presupuesto/tarifa, progreso hasta doce rondas y referencias exitosas por ejecución. Seis oráculos reales, 82 regresiones, 15 integraciones IA3, cuatro gates y DB 1.137/395/11; historia y fallos completos conservados.
+
+## 2026-10-07 — IA3 · sincronización de catálogo en el gate
+
+CI del commit de evidencia `e5350f76` pasa 1.137 pgTAP y 395 integraciones,
+pero la prueba del kit espera el título al llegar herrajes mientras sistemas
+continúa cargando. Se reproduce en el stack aislado. El test ahora espera
+las cuatro colecciones y verifica HTTP 200 antes de la misma aserción visible,
+con los mismos timeouts y sin reintentos. El recorrido real pasa; producto,
+oráculos de IA y checks no cambian. P16 continúa la optimización de catálogo.

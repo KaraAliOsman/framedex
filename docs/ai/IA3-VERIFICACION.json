@@ -50,6 +50,7 @@
     "The first browser attempt captured a stale query before the probe finished. The completed route and enabled button are awaited; no detector was weakened.",
     "The initial real all-text multipart PDF probe failed; the corrected complete six-oracle run is preserved separately.",
     "Inherited assistant findings remain explicit for P17.",
-    "The final success copy has its own browser budget check and screenshot on 75bd60c7."
+    "The final success copy has its own browser budget check and screenshot on 75bd60c7.",
+    "CI e5350f76 passed 1137 pgTAP and 395 integrations but the catalog-kit test raced its systems request. The same failure reproduced locally; waiting for all four HTTP-200 collections fixes synchronization without changing assertions, timeouts, retries or the product. The targeted real E2E passes."
   ]
 }

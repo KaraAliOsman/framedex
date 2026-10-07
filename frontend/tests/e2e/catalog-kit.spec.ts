@@ -30,16 +30,36 @@ async function exchange(
 }
 
 async function loadCatalog(page: Page): Promise<KitResponse[]> {
-  const response = await exchange(page, "GET", collection, 200, () =>
+  // The catalog becomes ready only after all four collections load. Kits
+  // often arrive first; checking the heading then races the systems request.
+  const paths = [
+    collection,
+    "/api/v1/catalogs/systems/",
+    "/api/v1/catalogs/articles/",
+    "/api/v1/catalogs/glazing/",
+  ];
+  const [responses] = await Promise.all([
+    Promise.all(
+      paths.map((path) =>
+        page.waitForResponse(
+          (candidate) =>
+            candidate.request().method() === "GET" && new URL(candidate.url()).pathname === path,
+        ),
+      ),
+    ),
     page.goto("/catalogs/systems"),
-  );
+  ]);
+  for (const [index, response] of responses.entries()) {
+    expect(response.status(), `GET ${paths[index]}`).toBe(200);
+    await response.finished();
+  }
   await expect(
     page.getByRole("heading", {
       name: t("catalog.title"),
       exact: true,
     }),
   ).toBeVisible();
-  return ((await response.json()) as { items: KitResponse[] }).items;
+  return ((await responses[0]!.json()) as { items: KitResponse[] }).items;
 }
 
 async function openKit(page: Page, name: string): Promise<void> {
