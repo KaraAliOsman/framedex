@@ -1,4 +1,4 @@
-import { expect, type Page, type Route, type TestInfo } from "@playwright/test";
+import { expect, type Page, type Request, type Route, type TestInfo } from "@playwright/test";
 
 import type {
   EngineAssemblyCalculateResponse,
@@ -21,7 +21,8 @@ async function responseTo<T>(
   // navigate immediately, which releases Chromium's response-body identifier.
   // This forwards the unchanged response; status and domain assertions remain.
   const matchesPath = (url: URL) => url.pathname === path;
-  const bodies = new Map<string, T>();
+  // A previous navigation can still be fetching the same URL; match this request.
+  const bodies = new Map<Request, T>();
   const forward = async (route: Route) => {
     if (route.request().method() !== method) {
       await route.continue();
@@ -29,7 +30,7 @@ async function responseTo<T>(
     }
     const response = await route.fetch();
     const body = await response.body();
-    bodies.set(route.request().url(), JSON.parse(body.toString("utf-8")) as T);
+    bodies.set(route.request(), JSON.parse(body.toString("utf-8")) as T);
     await route.fulfill({ response, body });
   };
   await page.route(matchesPath, forward);
@@ -37,14 +38,16 @@ async function responseTo<T>(
     const [response] = await Promise.all([
       page.waitForResponse(
         (candidate) =>
-          candidate.request().method() === method && new URL(candidate.url()).pathname === path,
+          candidate.request().method() === method &&
+          new URL(candidate.url()).pathname === path &&
+          bodies.has(candidate.request()),
         { timeout: 20_000 },
       ),
       action(),
     ]);
     expect(response.status(), `${method} ${path}`).toBe(status);
-    expect(bodies.has(response.url()), `${method} ${path} real response body`).toBe(true);
-    return bodies.get(response.url())!;
+    expect(bodies.has(response.request()), `${method} ${path} real response body`).toBe(true);
+    return bodies.get(response.request())!;
   } finally {
     await page.unroute(matchesPath, forward);
   }
