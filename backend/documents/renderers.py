@@ -304,6 +304,17 @@ def _dim(value: object) -> str:
         return _value(value)
 
 
+def _survey_dim(value: object) -> str:
+    """Exact surveyed mm presentation, preserving declared fractional digits."""
+    text = _dim(value)
+    match = re.fullmatch(r'(-?)(\d+)(?:\.(\d+))?',text)
+    if not match:
+        return 'Sin dato'
+    sign,integer,fraction = match.groups()
+    grouped = re.sub(r'(?<=\d)(?=(\d{3})+$)','\u2009',integer)
+    return ('−' if sign else '')+grouped+(','+fraction if fraction else '')
+
+
 class _Raw(str):
     """Marks a cell that renders its HTML verbatim inside `_table` — only for
     hardcoded markup (e.g. a drawn checkbox), never for payload content."""
@@ -1271,6 +1282,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
             _value(position.get("price_net")),
             _value(position.get("discount_pct")), tree_sig,
             position.get("position_index") if str(position.get("position_index")) in sublines else None,
+            json.dumps(position.get('measurements'),sort_keys=True,default=str) if position.get('measurements') else None,
         )
         bucket = groups.setdefault(key, {
             "indexes": [], "locations": [], "quantity": Decimal("0"),
@@ -1528,6 +1540,17 @@ def _doc01(snapshot: dict[str, object]) -> str:
                if bucket["locations"] else "")
             + "</li>"
         ]
+        measurement = ref.get('measurements')
+        if isinstance(measurement,dict):
+            for index,item in enumerate(measurement.get('measurements') or []):
+                result=item.get('result') or {}
+                width=result.get('width') or {}
+                height=result.get('height') or {}
+                rule=item.get('rule') or {}
+                spec_items.append(f'<li><span class="plabel">Vano · marco {index+1}</span> '
+                    f'<span class="dimension">{escape(_survey_dim(width.get("opening_mm")))} × '
+                    f'{escape(_survey_dim(height.get("opening_mm")))} mm</span> · {escape(str(rule.get("name") or ""))}'
+                    + (' · DEMO' if rule.get('synthetic') else '') + '</li>')
         if system_name not in ("", "—"):
             spec_items.append(
                 f'<li><span class="plabel">Sistema</span> {escape(system_name)}</li>'
@@ -1601,7 +1624,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
             f'<div class="pcard-fig">{_figure(ref, "c" + bucket["indexes"][0])}</div>'
             '<div class="pcard-body">'
             f'<h3>{escape(_product_caption(ref))}</h3>'
-            f'<p class="pcard-dims">{escape(_dim(width_mm))} × {escape(_dim(height_mm))} mm</p>'
+            f'<p class="pcard-dims">{"Producto: " if measurement else ""}{escape((_survey_dim if measurement else _dim)(width_mm))} × {escape((_survey_dim if measurement else _dim)(height_mm))} mm</p>'
             f'<p style="margin:0 0 2mm"><strong>Cantidad:</strong> '
             f'{escape(_value(bucket["quantity"]))}</p>'
             f'<ul class="pcard-specs">{"".join(spec_items)}</ul>'

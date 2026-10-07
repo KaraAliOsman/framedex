@@ -89,6 +89,9 @@ def test_twelve_hardware_positions_seal_purchase_pick_and_preserve_commercial_pr
                 "target_margin": D("0.35"), "segment": "RETAIL", "confirmed": False, "reason": "D04 reviewed price", "_actor_id": owner})
             apply_operation(org, owner, "OWNER", UUID(priced["id"]), "D04 apply", False)
         try:
+            from backend.tests.integration.mounting_fixture import confirm_fixture_measurements
+            for pos in rows('SELECT id FROM project_positions WHERE org_id=%s AND project_id=%s',[org,project['id']]):
+                confirm_fixture_measurements(org,pos['id'])
             frozen = freeze_revision_a(org_id=org, actor_id=owner, project_id=project["id"],
                 pricing_operation_id=UUID(priced["id"]), confirmed=True, allow_incomplete_workshop=True)
         except DocumentaryError as error:

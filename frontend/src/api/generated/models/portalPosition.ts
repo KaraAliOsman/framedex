@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CommercialHardware } from "./commercialHardware";
+import type { PortalOpening } from "./portalOpening";
 import type { ResolvedFinish } from "./resolvedFinish";
 
 export interface PortalPosition {
@@ -21,6 +22,7 @@ export interface PortalPosition {
   location_tag: string | null;
   width_mm: string;
   height_mm: string;
+  opening_measurements?: PortalOpening[];
   /** @nullable */
   color_interior: string | null;
   /** @nullable */

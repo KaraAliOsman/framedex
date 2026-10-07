@@ -174,6 +174,7 @@ def test_save_update_reopen_matches_engine_exactly(manual_pair):
     with as_user(users["OWNER"]):
         reopened = service.position_public(
             service.position_row(org, position_id),
+            org_id=org,
         )
         persisted = one(
             "SELECT parametric_tree::text AS tree, bom_snapshot::text AS bom "

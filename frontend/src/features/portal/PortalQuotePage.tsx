@@ -7,7 +7,7 @@ import { portalQuoteDecide, portalQuoteRetrieve } from "../../api/generated/deko
 import type { PortalPosition, PortalQuote } from "../../api/generated/models";
 import type { PositionDesign } from "../../api/generated/models";
 import { t, TranslationKey } from "../../i18n/es-CL";
-import { formatRevision } from "../../format";
+import { formatRevision, fmtMm } from "../../format";
 import { PositionThumb, THUMB_MEMBERS } from "../projects/PositionThumb";
 import {
   addDecimal,
@@ -140,6 +140,7 @@ function groupPositions(positions: PortalPosition[]): {
       position.resolved_finish,
       position.price_net,
       position.parametric_tree,
+      position.opening_measurements,
     ]);
     const group = groups.get(key);
     const location = position.location_tag?.trim();
@@ -256,11 +257,20 @@ function PositionGroupCard({
         <p className="portal-position__typology">{typologyLabel(position.typology)}</p>
         <dl className="portal-position__facts">
           <div>
-            <dt>{t("portal.dims")}</dt>
+            <dt>{position.opening_measurements?.length ? "Producto" : t("portal.dims")}</dt>
             <dd>
-              {Math.round(Number(position.width_mm))} × {Math.round(Number(position.height_mm))} mm
+              {fmtMm(position.width_mm)} × {fmtMm(position.height_mm)} mm
             </dd>
           </div>
+          {position.opening_measurements?.map((item) => (
+            <div key={item.module_index}>
+              <dt>Vano · marco {item.module_index}</dt>
+              <dd>
+                {fmtMm(item.width_mm)} × {fmtMm(item.height_mm)} mm · {item.rule_name}
+                {item.synthetic ? " · DEMO" : ""}
+              </dd>
+            </div>
+          ))}
           <div>
             <dt>{t("portal.qty")}</dt>
             <dd>{group.quantity}</dd>
@@ -489,8 +499,8 @@ export function PortalQuotePage(): JSX.Element {
               members={positionMembers(hero.position)}
             />
             <figcaption>
-              {typologyLabel(hero.position.typology)} · {Math.round(Number(hero.position.width_mm))}{" "}
-              × {Math.round(Number(hero.position.height_mm))} mm
+              {typologyLabel(hero.position.typology)} · {fmtMm(hero.position.width_mm)} ×{" "}
+              {fmtMm(hero.position.height_mm)} mm
             </figcaption>
           </figure>
         ) : null}

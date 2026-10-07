@@ -58,6 +58,7 @@ ERRORS = {
 # message here — the generic fallback reads like a crash, not a diagnosis.
 DOCUMENTARY_ERROR_DETAILS = {
     "version_not_releasable": "La versión no está lista para liberar a producción.",
+    "production_measurements_unconfirmed": "Las medidas selladas no están confirmadas. Rectifica y confirma cada marco en una nueva revisión antes de liberar a producción.",
     "version_superseded": "La versión fue reemplazada por una revisión más reciente.",
     "production_process_unresolved": (
         "No hay autoridad de proceso para esta orden: vincula un perfil de proceso al sistema."

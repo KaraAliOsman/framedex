@@ -332,12 +332,12 @@ def configured_unit_price(repo, mode, position, *, cost, area, result, margin, c
     return position_price(base_price,extras)
 
 
-def preview(org_id, actor, request):
+def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
     project = one('SELECT * FROM public.projects WHERE id=%s AND org_id=%s FOR UPDATE',
                   [request['project_id'],org_id],'project_not_found')
-    if project['status'] != 'DRAFT':
+    if not simulate and project['status'] != 'DRAFT':
         raise PricingError('commercial_revision_required')
-    if rows(
+    if not simulate and rows(
         "SELECT operation.id FROM public.pricing_operations operation "
         "JOIN public.projects project ON project.id=operation.project_id AND project.org_id=operation.org_id "
         "WHERE operation.org_id=%s AND operation.project_id=%s AND operation.state='APPLIED' "
@@ -348,6 +348,8 @@ def preview(org_id, actor, request):
         raise PricingError('commercial_revision_required')
     positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s AND org_id=%s '
                      'ORDER BY position_index FOR UPDATE',[project['id'],org_id])
+    if proposed_positions is not None:
+        positions = proposed_positions
     if not positions:
         raise PricingError('project_has_no_positions')
     rules = one('SELECT * FROM public.pricing_rules WHERE org_id=%s',[org_id],'pricing_rules_not_found')
@@ -439,6 +441,10 @@ def preview(org_id, actor, request):
         if extras_by_index[index]:
             detail.update(partition_price(net,price_weights[index],[(item,item.total_cost if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT else item.total_price)
                 for item in extras_by_index[index]],quantity=quantities[index],currency=request['currency']))
+    if simulate:
+        # Reuse every project selling rule (discounts, target margin, services,
+        # tax, FX and currency quantum), without creating a pricing operation.
+        return {**asdict(output), 'currency': request['currency'], 'line_detail': line_detail}
     audit_reason(request['reason'])
     record = one(
         'INSERT INTO public.pricing_operations(org_id,project_id,requested_by,requested_by_email,'

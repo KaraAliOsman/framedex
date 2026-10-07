@@ -53,6 +53,10 @@ import {
 
 import "./projects.css";
 import { FinishSelector } from "./FinishSelector";
+import { MeasurementPanel } from "./MeasurementPanel";
+import type { MeasurementRecord } from "./mountingModel";
+import { mountingGeometryChanged } from "./mountingModel";
+import { actionErrorDetail } from "../errors";
 
 export function ProjectPositionEditor(): JSX.Element {
   const { id = "", posId = "" } = useParams();
@@ -279,6 +283,7 @@ function designIdentity(inputs: CanvasDesignInputs): string {
     nominalHeightMm: inputs.nominalHeightMm,
     nominalWidthMm: inputs.nominalWidthMm,
     product: inputs.product,
+    mounting: inputs.mounting ?? [],
     systemId: inputs.systemId,
   });
 }
@@ -456,6 +461,15 @@ function PositionWorkspace({
               product.assembly.modules.at(0)?.tree ??
               ({ id: "m1", type: "BAY", opening_type: "FIXED" } as IntentNode),
             product,
+            mounting: (item.measurements as MeasurementRecord | null | undefined)?.measurements.map(
+              (entry) => ({
+                ...entry,
+                survey: {
+                  ...entry.survey,
+                  module_id: entry.survey.module_id ?? product.assembly.modules[0]!.id,
+                },
+              }),
+            ),
           };
           useCanvasStore.getState().loadDesign(loadedInputs);
           setCopiedFrom(copyId ? `P${item.position_index}` : null);
@@ -575,6 +589,7 @@ function PositionWorkspace({
   const colorUndeclared =
     options.data !== undefined && inputs.color !== null && !declaredColors.includes(inputs.color);
   const quantityInvalid = !/^[1-9]\d*$/.test(quantity) || Number(quantity) > 2147483647;
+  const mountingChanged = mountingGeometryChanged(inputs.product, inputs.mounting);
   // Local, cheap check: a bay with neither glass nor panel fill can never
   // evaluate — name it so the disabled Guardar isn't a silent dead end.
   const fillUnassigned = (inputs.product?.assembly.modules ?? []).some((module) =>
@@ -582,19 +597,21 @@ function PositionWorkspace({
   );
   // A disabled Guardar must name the first real blocker ("la hoja queda bajo
   // el ancho mínimo del herraje"), not a generic "revisa los parámetros".
-  const saveBlockReason = quantityInvalid
-    ? t("projects.qtyInvalid")
-    : colorUndeclared
-      ? t("projects.colorNotDeclared")
-      : fillUnassigned
-        ? t("projects.glazingMissing")
-        : assemblyUnsaveable && assemblyEval !== null && assemblyEval.issues.length > 0
-          ? issueText(
-              assemblyEval.issues[0]!,
-              inputs.product?.assembly.modules ?? [],
-              inputs.product?.assembly.couplings ?? [],
-            )
-          : null;
+  const saveBlockReason = mountingChanged
+    ? "La fabricación cambió: recalcula y aplica Vano y montaje antes de guardar."
+    : quantityInvalid
+      ? t("projects.qtyInvalid")
+      : colorUndeclared
+        ? t("projects.colorNotDeclared")
+        : fillUnassigned
+          ? t("projects.glazingMissing")
+          : assemblyUnsaveable && assemblyEval !== null && assemblyEval.issues.length > 0
+            ? issueText(
+                assemblyEval.issues[0]!,
+                inputs.product?.assembly.modules ?? [],
+                inputs.product?.assembly.couplings ?? [],
+              )
+            : null;
 
   async function save(): Promise<void> {
     if (
@@ -602,6 +619,7 @@ function PositionWorkspace({
       mutationLock.current ||
       !result ||
       assemblyUnsaveable ||
+      mountingChanged ||
       busy ||
       !options.data ||
       !declaredColors.includes(inputs.color) ||
@@ -622,6 +640,14 @@ function PositionWorkspace({
       location_tag: location,
       quantity: Number(quantity),
       design,
+      ...(inputs.mounting?.length
+        ? {
+            measurements: inputs.mounting.map((entry) => ({
+              ...entry.survey,
+              module_id: isSingleUnit(inputs.product!) ? null : entry.survey.module_id,
+            })),
+          }
+        : {}),
     };
     try {
       const response = saved
@@ -646,7 +672,11 @@ function PositionWorkspace({
       if (epoch === generation.current) {
         const uncertain = !saved && (!(error instanceof ApiError) || error.status >= 500);
         setUncertainCreate(uncertain);
-        setMessage(t(uncertain ? "projects.uncertainPosition" : "projects.saveError"));
+        setMessage(
+          uncertain
+            ? t("projects.uncertainPosition")
+            : actionErrorDetail(error, t("projects.saveError")),
+        );
       }
     } finally {
       mutationLock.current = false;
@@ -761,6 +791,7 @@ function PositionWorkspace({
             !result ||
             !options.data ||
             assemblyUnsaveable ||
+            mountingChanged ||
             quantityInvalid ||
             colorUndeclared
           }
@@ -788,6 +819,22 @@ function PositionWorkspace({
         </p>
       )}
       {message && <p role="status">{message}</p>}
+      {saved && (
+        <details className="position-measurements">
+          <summary>Estado de medidas para producción</summary>
+          <MeasurementPanel
+            position={saved}
+            orgId={orgId}
+            canConfirm
+            dirty={isDirty}
+            onSaved={() =>
+              void positionsRetrieve(saved.id, requestOptions).then((r) => {
+                if (r.status === 200) setSaved(r.data);
+              })
+            }
+          />
+        </details>
+      )}
       {copyId && loaded && copiedFrom && (
         <div className="draft-banner" role="status">
           <span>{t("projects.copyNotice").replace("{src}", copiedFrom)}</span>

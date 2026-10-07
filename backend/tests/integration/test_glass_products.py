@@ -14,6 +14,7 @@ from catalogs import glass
 from catalogs.demo_glass import demo_glass_product, demo_safety_rules
 from backend.tests.catalog_interchange_fixture import candidate
 from backend.tests.integration.test_catalog_interchange import imported
+from backend.tests.integration.mounting_fixture import confirm_fixture_measurements
 from backend.tests.integration.test_shot09_documentary import (
     documentary_tenant as documentary_tenant, as_user, _seed_project, _freeze, _tenant,
 )
@@ -167,6 +168,7 @@ def test_structured_recipe_survives_save_price_freeze_and_supplier_order(documen
         reopened = position_public(position_row(org, position["id"]))
         assert reopened["design"]["parametric_tree"]["glass_product"] == product
         assert reopened["bom"] == position["bom"]
+        confirm_fixture_measurements(org, position["id"])
         prepared = prepare_documentary_inputs(org_id=org, project_id=project["id"])["positions"][0]
         save_documentary_inputs(org_id=org, actor_id=owner, project_id=project["id"], data={
             "payment_terms": "50 % anticipo y saldo contra entrega", "quotation_valid_until": date(2026, 10, 25), "positions": [{
@@ -325,6 +327,8 @@ def test_twelve_work_orders_read_the_frozen_bom_and_qr_targets(documentary_tenan
         one("INSERT INTO public.position_documentary_inputs SELECT (jsonb_populate_record(NULL::public.position_documentary_inputs, "
             "to_jsonb(p)||jsonb_build_object('id',gen_random_uuid(),'position_id',%s::text))).* "
             "FROM public.position_documentary_inputs p WHERE position_id=%s RETURNING position_id", [position, first])
+        with as_user(owner):
+            confirm_fixture_measurements(org, position)
     with as_user(owner), commercial_backend():
         priced = preview(org, _tenant(org, "OWNER"), {"project_id": project, "pricing_mode": "COST_PLUS_MARGIN", "currency": "CLP",
             "effective_date": date(2026, 9, 10), "context_code": "DEFAULT", "discount_pct": D("0"), "target_margin": D("0.35"),

@@ -165,3 +165,26 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   que los revelen por resta. Los costos de cambios en lote quedan Sin dato con
   la causa de permiso y nunca se presentan como delta cero. IA2/IA3 continúan el
   diff de venta de esas propuestas sobre las operaciones tipadas.
+
+## D07 · vano y montaje (2026-10-07)
+
+- El tipo de muro empieza sin selección y es obligatorio para calcular. Se
+  declara el muro observado; no se presume albañilería ni otro material.
+- No existe una holgura ni tolerancia universal silenciosa. El dueño o encargado
+  declara cada tipo, deducción por lado, accesorio y fuente en Ajustes › Vano y
+  montaje para la serie. Los ceros del formulario son una declaración explícita
+  de que ese lado no aplica la deducción; las reglas no se guardan sin fuente.
+- Una o tres medidas por eje, con mínimo y dispersión exactos. Escuadra,
+  desplome y fijación se pliegan en Avanzado; la fijación exige motivo. La
+  confirmación reconoce los avisos según la tolerancia configurada.
+- Cada cambio de regla crea autoridad nueva. Las medidas guardadas conservan
+  la anterior; usar la vigente es una decisión explícita. Deshacer crea otra
+  autoridad y no reescribe el historial. Los lados de los extras son los
+  compatibles con el catálogo D06 de esa serie.
+- El Δ de rectificación es venta neta del proyecto completo, con la misma
+  política comercial que Precios. Una revisión aprobada abre una sucesora;
+  emitir con medidas pendientes permite la propuesta comercial, pero no OT.
+- Todas las nuevas emisiones requieren confirmación de medidas antes de
+  producción. La ausencia de esa marca en un snapshot histórico conserva su
+  contrato anterior. El instalador móvil se conecta en P23 al contrato de
+  rectificación, sin permiso genérico de edición del proyecto.

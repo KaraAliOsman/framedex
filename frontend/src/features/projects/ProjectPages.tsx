@@ -43,6 +43,8 @@ import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
 import { ProjectServicesPanel } from "./ProjectServicesPanel";
+import { MeasurementPanel } from "./MeasurementPanel";
+import { RectificationPanel } from "./RectificationPanel";
 import { Button, DeniedState, EmptyState, PageHeader, useConfirm } from "../../ui";
 
 const fields = [
@@ -1979,6 +1981,21 @@ function ProjectWorkspace({
                     )}
                   </div>
                   <ProjectBom result={selected.bom} />
+                  <MeasurementPanel
+                    position={selected}
+                    orgId={orgId}
+                    canConfirm
+                    closed={project.status !== "DRAFT"}
+                    onSaved={() => void query.refetch()}
+                  />
+                  {["DRAFT", "QUOTED", "APPROVED"].includes(project.status) && (
+                    <RectificationPanel
+                      position={selected}
+                      project={project}
+                      orgId={orgId}
+                      onSaved={() => void query.refetch()}
+                    />
+                  )}
                 </div>
               );
             })()}

@@ -32,6 +32,7 @@ import { t, type TranslationKey } from "../i18n/es-CL";
 import { MOD_K_HINT, MOD_KEY_HINT } from "../platform";
 import { useTheme } from "../theme/ThemeProvider";
 import { ExtraPolicyEditor } from "../features/projects/ExtraPolicyEditor";
+import { MountingRulesSettings } from "../features/projects/MountingRulesSettings";
 import { GlassRulesSettings } from "../features/glass/GlassRulesSettings";
 
 const ROLE_KEYS: Record<MembershipRoleEnum, TranslationKey> = {
@@ -777,6 +778,12 @@ export function SettingsPage(): JSX.Element {
       )}
 
       {org && <ExtraPolicyEditor key={org.id} orgId={org.id} canWrite={isOwner} />}
+      {org && ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role) && (
+        <MountingRulesSettings
+          orgId={org.id}
+          canWrite={isOwner || org.role === "WORKSHOP_MANAGER"}
+        />
+      )}
 
       {org &&
         (org.role === "OWNER" || org.role === "WORKSHOP_MANAGER" || org.role === "ESTIMATOR") && (

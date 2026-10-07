@@ -38,8 +38,13 @@ from projects.options import DesignOptionsView
 from projects.hardware import HardwarePreviewView
 from projects.finishes import FinishPreviewView
 from projects.extras import ExtraPolicyView, ProjectServicesView, ExtrasPreviewView
+from projects.mounting import MountingRulesView, MountingPreviewView, MeasurementConfirmView, RectificationView
 
 urlpatterns = [
+    path('organization/mounting/<uuid:system_id>/', MountingRulesView.as_view()),
+    path('projects/mounting-preview/', MountingPreviewView.as_view()),
+    path('positions/<uuid:position_id>/measurements/confirm/', MeasurementConfirmView.as_view()),
+    path('positions/<uuid:position_id>/measurements/rectify/', RectificationView.as_view()),
     path("organization/extras/", ExtraPolicyView.as_view()),
     path("projects/extras-preview/", ExtrasPreviewView.as_view()),
     path("projects/<uuid:project_id>/services/", ProjectServicesView.as_view()),

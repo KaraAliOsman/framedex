@@ -134,7 +134,7 @@ def unchanged(row, expected):
         )
 
 
-def position_public(row):
+def position_public(row, *, org_id=None):
     design = {
         "system_id": row["system_id"],
         "nominal_width_mm": str(row["width_mm"]),
@@ -162,7 +162,7 @@ def position_public(row):
             "stored_calculation_invalid",
             "El cálculo guardado requiere revisión antes de continuar.",
         ) from error
-    return {
+    public = {
         **{
             key: row[key]
             for key in (
@@ -183,11 +183,16 @@ def position_public(row):
         "design": design,
         "bom": {**safe, "calculation_hash": expected},
     }
+    if org_id is not None:
+        from projects.mounting import measurement_public
+        revision = project_row(org_id, row['project_id'])['current_revision']
+        public['measurements'] = measurement_public(org_id,row['id'],design,revision)
+    return public
 
 
 def positions(org_id, project_id):
     return [
-        position_public(row)
+        position_public(row, org_id=org_id)
         for row in rows(
             f"SELECT {','.join(POSITION_COLUMNS)} FROM public.project_positions "
             "WHERE org_id=%s AND project_id=%s ORDER BY position_index",
@@ -500,6 +505,12 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
     if current is None and apply_defaults:
         from projects.extras import apply_position_defaults
         design = apply_position_defaults(org_id,design)
+    if 'measurements' in data:
+        from projects.mounting import SURVEYS, derive_design
+        derived,_ = derive_design(org_id,design,SURVEYS.validate_json(json_text(data['measurements'])))
+        if (derived['nominal_width_mm'] != design['nominal_width_mm'] or derived['nominal_height_mm'] != design['nominal_height_mm']
+            or not _same_documentary_value(derived['parametric_tree'],design['parametric_tree'])):
+            raise contract_error(409,'measurement_design_drift','Aplica la fabricación calculada antes de guardar el vano.')
     with connection.cursor() as cursor:
         cursor.execute("SELECT private.reserve_catalog_authority(%s,%s)",
                        [design["system_id"], org_id])
@@ -543,7 +554,9 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
         "RETURNING id",
         [project_id, org_id],
     )
-    return position_public(position_row(org_id, position_id))
+    from projects.mounting import save_measurements
+    save_measurements(org_id,position_row(org_id,position_id),data)
+    return position_public(position_row(org_id, position_id), org_id=org_id)
 
 
 def delete_position(org_id, position_id, expected):
@@ -812,6 +825,8 @@ def start_successor(org_id, project_id, expected_current_revision=None):
         raise contract_error(403, "successor_permission_denied", "Tu rol no permite crear revisiones.")
     from projects.extras import copy_services
     copy_services(org_id,project,{**project,'current_revision':successor})
+    from projects.mounting import copy_measurements
+    copy_measurements(org_id,project_id,expected,successor)
     return {
         **project_public(org_id, project_row(org_id, project_id), detail=True),
         "successor_created": True,

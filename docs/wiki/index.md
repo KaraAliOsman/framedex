@@ -21,6 +21,7 @@ Content-oriented map of durable project knowledge.
 - [Hardware classes](product/hardware-classes.md) — exact component expansion, handles/options, sealed picking and declared machining gaps.
 - [Color finishes](product/color-finishes.md) — sourced room/street faces, exact surcharges, color-specific stock and sealed rendering.
 - [Accessories and services](product/accessories-services.md) — geometry-derived quantities, real extra BOM/cuts and revision-bound commercial sublines.
+- [Opening measurements](product/opening-measurements.md) — sourced mounting, exact fabrication, immutable surveys, revision sale and production confirmation.
 
 ## Current state
 

@@ -219,7 +219,7 @@ class PositionView(APIView):
     )
     def get(self, request, position_id):
         with scope(request, READ_ROLES) as (_, _, org):
-            return response(service.position_public(service.position_row(org, position_id)))
+            return response(service.position_public(service.position_row(org, position_id), org_id=org))
 
     @extend_schema(
         operation_id="positions_update",

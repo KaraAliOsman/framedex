@@ -88,6 +88,15 @@ source is reviewed. See [the authority page](../product/catalog-authority.md).
 
 ## Manufacturing
 
+D07 liga la confirmación al diseño y a todos sus marcos; una generación o
+timestamp anterior, un actor falsificado o una posición de otro proyecto se
+rechazan. Una rectificación después de aprobación exige sucesora, Δ de venta
+y confirmación nueva. Los snapshots históricos sin la marca de obligatoriedad
+conservan su contrato; las emisiones nuevas no liberan OT pendiente. El borrado
+de una posición en borrador conserva su historial inmutable. Las reglas DEMO
+no acreditan tolerancias ni montaje reales; deben declararse con fuente por
+serie en Ajustes. Véase [vano y montaje](../product/opening-measurements.md).
+
 D03 preserves the R05 structural gate on a tall door with fixed sidelight.
 DEMO hardware and a fictional load input do not supply certified inertia or
 wind engineering. Never remove the gate to turn an incomplete fixture into a

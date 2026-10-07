@@ -16,5 +16,11 @@ export interface PositionUpdateRequest {
    */
   quantity: number;
   design: PositionDesignRequest;
+  measurements?: unknown;
+  /**
+   * @minLength 1
+   * @maxLength 1000
+   */
+  measurement_reason?: string;
   expected_updated_at: string;
 }

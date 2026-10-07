@@ -102,6 +102,8 @@ import { GlassSelector } from "../glass/GlassSelector";
 import { glassChoicePatch, asGlassProduct } from "../glass/glassModel";
 import { glassContext, useGlassChecks } from "../glass/useGlassPreview";
 import { ExtrasInspector } from "../projects/ExtrasInspector";
+import { MountingInspector } from "../projects/MountingInspector";
+import { MountingDimensions } from "../projects/MountingDimensions";
 
 /** §16 3D view: three.js + the scene builder stay out of the editing path —
  * the bundle only loads when the user opens the panel (lazy chunk), and
@@ -1483,6 +1485,7 @@ function ModuleInspector({
   commit,
   onOpeningPreview,
   onAskAssistant,
+  onMountingChanged,
 }: {
   options?: DesignOptions;
   evaluation: EngineAssemblyCalculateResponse | null;
@@ -1498,6 +1501,7 @@ function ModuleInspector({
   commit(next: ProductJson): void;
   onOpeningPreview(next: ProductJson | null): void;
   onAskAssistant?(): void;
+  onMountingChanged(): void;
 }): JSX.Element {
   const opening = moduleOpening(module);
   const isDoor = opening === "DOOR_ENTRY" && !modulePrimaryBay(module)?.opening;
@@ -1527,6 +1531,12 @@ function ModuleInspector({
         </button>
       </header>
       <CatalogLimitNotice options={options} opening={opening} />
+      <MountingInspector
+        module={module}
+        product={product}
+        busy={busy}
+        onChanged={onMountingChanged}
+      />
       <ProvenanceStrip
         items={[
           { label: t("inspector.dimensions"), state: "DECLARED" },
@@ -1978,7 +1988,7 @@ export function AssemblyEditor({
     // Any product edit ends modal tool state — an armed divide must not
     // survive an unrelated edit and surprise the next module click.
     setTool("select");
-    commitInputs({ ...inputs, product: next });
+    commitInputs({ ...useCanvasStore.getState().inputs, product: next });
     onChanged();
   }
 
@@ -2011,7 +2021,13 @@ export function AssemblyEditor({
   // One layout pass per product commit — bounds/selection boxes derive from
   // the memo instead of recomputing the elevation four times per render.
   const front = useMemo(() => (product ? frontLayout(product) : null), [product]);
-  const frontBox = useMemo(() => (front ? frontBounds(front) : null), [front]);
+  const frontBox = useMemo(() => {
+    if (!front) return null;
+    const box = frontBounds(front);
+    return inputs.mounting?.length
+      ? { ...box, y: box.y - 180, h: box.h + 180, x: box.x - 60, w: box.w + 120 }
+      : box;
+  }, [front, inputs.mounting]);
   const selectionBox = useMemo(
     () => (front ? frontModuleBox(front, selection) : null),
     [front, selection],
@@ -2377,6 +2393,7 @@ export function AssemblyEditor({
           contentEpoch={contentEpoch}
         >
           <ProductFrontContent
+            hideOverallWidth={(inputs.mounting?.length ?? 0) > 0}
             openingFacts={Object.fromEntries(
               (drawingEvaluation?.modules ?? []).map((item) => [
                 item.module_id,
@@ -2449,6 +2466,9 @@ export function AssemblyEditor({
             }
             onResizeSeam={(index, deltaMm) => commit(resizeModuleSeam(product, index, deltaMm))}
           />
+          {inputs.mounting?.length ? (
+            <MountingDimensions product={product} evidence={inputs.mounting} />
+          ) : null}
         </CanvasViewport>
         {couplings.length > 0 && evaluation?.plan && planBox && planOpen && (
           <div className="plan-inset" role="complementary" aria-label={t("assembly.planView")}>
@@ -2748,6 +2768,7 @@ export function AssemblyEditor({
           )
         ) : selectedModule ? (
           <ModuleInspector
+            onMountingChanged={onChanged}
             onOpeningPreview={setOpeningPreviewProduct}
             options={options}
             evaluation={evaluation}
