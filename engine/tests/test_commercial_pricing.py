@@ -10,7 +10,7 @@ import pytest
 from dekopen_engine.pricing import gross_margin_pct
 from dekopen_engine.commercial import (
     CommercialLine, PricingError, PricingMode, convert_cost, direct_cost,
-    discount_state, finish_lines, matrix_price, quantize_currency,
+    discount_state, finish_lines, indicative_line_net, matrix_price, quantize_currency,
     target_project, typology_price, unit_price, validate_segment,
 )
 
@@ -291,3 +291,15 @@ def test_extras_reject_non_decimal() -> None:
     with pytest.raises(PricingError):
         finish_lines([CommercialLine(1, 1, D('80'), D('100'), D('0'))],
                      'CLP', D('0.19'), extras=[0.1])  # type: ignore[list-item]
+
+
+def test_indicative_quantity_preview_preserves_exact_money_and_absent_position() -> None:
+    assert indicative_line_net(D("9007199254740992.02"), 3, "USD") == D("27021597764222976.06")
+    assert indicative_line_net(D("123.50"), 3, "CLP") == D("371")
+    assert indicative_line_net(D("0"), 0, "CLP") == D("0")
+
+
+@pytest.mark.parametrize("quantity", [True, -1, D("1.5")])
+def test_indicative_quantity_refuses_malformed_runtime_input(quantity: int) -> None:
+    with pytest.raises(PricingError):
+        indicative_line_net(D("123.50"), quantity, "CLP")

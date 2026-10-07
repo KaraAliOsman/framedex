@@ -9,7 +9,7 @@ import {
 } from "react";
 import { matchPath, useLocation } from "react-router-dom";
 
-import type { DesignOp } from "../commands/types";
+import type { DesignOperation } from "../../api/generated/models";
 
 /** The contextual assistant's (surface, refs) — derived from the route by
  * default; a page can override it (e.g. ProductionPage while a work order is
@@ -31,7 +31,7 @@ const AssistantSurface = createContext<{
  * re-render every surface consumer. */
 export interface DesignOpsBridge {
   product: { [key: string]: unknown };
-  apply: (ops: DesignOp[]) => void;
+  apply: (ops: DesignOperation[]) => void;
 }
 
 const DesignOpsBridge = createContext<{
@@ -156,7 +156,7 @@ export function useDesignOpsBridge(): DesignOpsBridge | null {
  * CURRENT product). Pass nulls to unregister. */
 export function useRegisterDesignOpsBridge(
   product: { [key: string]: unknown } | null,
-  apply: ((ops: DesignOp[]) => void) | null,
+  apply: ((ops: DesignOperation[]) => void) | null,
 ): void {
   const ctx = useContext(DesignOpsBridge);
   const setBridge = ctx?.setBridge;
@@ -164,7 +164,7 @@ export function useRegisterDesignOpsBridge(
   // so a new identity never re-registers the bridge in a loop.
   const applyRef = useRef(apply);
   applyRef.current = apply;
-  const stableApply = useRef<((ops: DesignOp[]) => void) | null>(null);
+  const stableApply = useRef<((ops: DesignOperation[]) => void) | null>(null);
   if (!stableApply.current && apply) {
     stableApply.current = (ops) => applyRef.current?.(ops);
   }

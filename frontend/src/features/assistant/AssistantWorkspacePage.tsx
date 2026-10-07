@@ -25,11 +25,13 @@ import type { ProductJson } from "../canvas/productEditing";
 import { useDesignOpsBridge } from "./assistantContext";
 import { AiMetricsCard } from "./AiMetricsCard";
 import { ArtifactDetail, type Artifact } from "./ArtifactDetail";
+import { RejectedOperations } from "./RejectedOperations";
 import { BatchOpsStep } from "./BatchOpsStep";
+import { ProjectOpsStep } from "./ProjectOpsStep";
 import { BotFigure } from "./BotFigure";
 import { Orb, orbStateFor } from "./Orb";
 import { STATE_LABELS } from "./states";
-import { SURFACE_LABELS } from "./surfaces";
+import { assistantText, SURFACE_LABELS } from "./surfaces";
 import { jobErrorKey } from "../jobs/jobError";
 import { t } from "../../i18n/es-CL";
 
@@ -311,7 +313,11 @@ function StepView({
         <ul className="aiws-step__ops">
           {ops.map((op, i) => (
             <li key={i}>
-              {product ? describeDesignOp(op, product as ProductJson, ops.slice(0, i)) : op.op}
+              {product
+                ? describeDesignOp(op, product as ProductJson, ops.slice(0, i))
+                : typeof op.description === "string"
+                  ? op.description
+                  : "Cambio de diseño"}
             </li>
           ))}
         </ul>
@@ -331,17 +337,20 @@ function StepView({
     );
   }
 
-  if (step.kind === "batch_ops") {
+  if (step.kind === "batch_ops" || step.kind === "project_ops") {
     const projectId = typeof job.refs?.project_id === "string" ? job.refs.project_id : null;
     if (!projectId) return null;
+    const Proposal = step.kind === "batch_ops" ? BatchOpsStep : ProjectOpsStep;
     return (
-      <BatchOpsStep
+      <Proposal
         key={`batch-${stepIndex}`}
         // The transcript step narrows to batch_ops above — AiAgentStep wants
         // `kind` non-optional, which narrowing alone doesn't tighten.
         step={step as AiAgentStep}
         organizationId={organizationId}
         projectId={projectId}
+        operationKey={`ai:${job.id}:${turnIndex}:${stepIndex}`}
+        declined={decided?.action === "declined"}
         settled={Boolean(decided)}
         onSettled={(action, ops) =>
           onOutcome({
@@ -413,7 +422,7 @@ function AgentTurnView({
   // and the deep-link carries the apply to where the product lives.
   const product: { [key: string]: unknown } | null = null;
   const actionable = (turn.steps ?? []).filter((step) =>
-    ["ops", "batch_ops", "prepare", "navigate"].includes(step.kind ?? ""),
+    ["ops", "batch_ops", "project_ops", "prepare", "navigate"].includes(step.kind ?? ""),
   );
   const workCount = (turn.queries?.length ?? 0) + (turn.claims?.length ?? 0);
   return (
@@ -427,7 +436,7 @@ function AgentTurnView({
             ))}
           </ol>
         ) : null}
-        <p className="aiws-reply">{turn.reply}</p>
+        <p className="aiws-reply">{assistantText(turn.reply)}</p>
         {turn.questions?.length ? (
           <div className="aiws-questions">
             {turn.questions.map((question, i) => (
@@ -442,15 +451,7 @@ function AgentTurnView({
             ))}
           </ul>
         ) : null}
-        {turn.rejected?.length ? (
-          <ul className="aiws-warnings aiws-warnings--rejected">
-            {turn.rejected.map((item, i) => (
-              <li key={i}>
-                {item.op ?? "—"}: {item.reason}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        {turn.rejected?.length ? <RejectedOperations items={turn.rejected} /> : null}
         {actionable.length ? (
           <div className="aiws-steps aiws-steps--live">
             {actionable.map((step) => (

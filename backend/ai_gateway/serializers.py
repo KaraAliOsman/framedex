@@ -2,6 +2,8 @@ import json
 
 from rest_framework import serializers
 
+from projects.operation_serializers import DesignOperationSerializer
+
 MAX_INPUT_BYTES = 65_536
 
 
@@ -125,9 +127,20 @@ class AiAgentStepSerializer(serializers.Serializer):
     label = serializers.CharField()
     path = serializers.CharField(required=False)
     action = serializers.CharField(required=False)
-    ops = serializers.ListField(child=serializers.DictField(), required=False)
+    ops = DesignOperationSerializer(many=True, required=False)
     # §08-WC batch edits: validated ops grouped per position.
     items = serializers.ListField(child=serializers.DictField(), required=False)
+    simulation = serializers.JSONField(required=False)
+
+
+class ClarifyOptionSerializer(serializers.Serializer):
+    label = serializers.CharField()
+    value = serializers.CharField()
+
+
+class ClarifySerializer(serializers.Serializer):
+    question = serializers.CharField()
+    options = ClarifyOptionSerializer(many=True)
 
 
 class AiAgentQuerySerializer(serializers.Serializer):
@@ -181,6 +194,8 @@ class AiAgentResultSerializer(serializers.Serializer):
     claims = serializers.ListField(child=serializers.DictField())
     references = serializers.ListField(child=serializers.CharField())
     questions = serializers.ListField(child=serializers.CharField())
+    clarify = ClarifySerializer(required=False, allow_null=True)
+    metrics = serializers.JSONField(required=False)
     artifacts = serializers.ListField(child=serializers.DictField())
     steps = AiAgentStepSerializer(many=True)
     queries = AiAgentQuerySerializer(many=True)
@@ -244,6 +259,7 @@ class AiJobOutcomeResponseSerializer(serializers.Serializer):
 
 
 class AiMetricsSerializer(serializers.Serializer):
+    work = serializers.ListField(child=serializers.DictField(), required=False)
     window_days = serializers.IntegerField()
     jobs = serializers.DictField()
     commands = serializers.DictField()

@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework.views import APIView
 
 from catalogs.serializers import ProfileSectionSerializer, SystemDimensionalLimitSerializer
-from dekopen_engine.catalog_rules import FAMILY_OPENINGS
+from dekopen_engine.design_operations import editable_legacy_openings
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import rows
 from pricing.views import ERRORS, scope
@@ -192,8 +192,7 @@ class DesignOptionsView(APIView):
                     "finish_authority": params.finish_authority.model_dump(mode="json") if params.finish_authority else None,
                     "system_family": params.system_family.value if params.system_family else None,
                     "is_demo": bool(rows("SELECT is_demo FROM public.profile_systems WHERE id=%s", [system_id])[0]["is_demo"]),
-                    "compatible_openings": sorted(opening.value for opening in FAMILY_OPENINGS[params.system_family])
-                        if params.system_family else [],
+                    "compatible_openings": editable_legacy_openings(params),
                     "opening_capabilities": [{**cap.model_dump(mode="json"), "choices": [
                         {"opening": (opening := Opening(movement=cap.movement, hinge_side=hinge,
                             direction=cap.direction, leaf_role=cap.leaf_role, fixed_in_sash=cap.fixed_in_sash)).model_dump(mode="json"),

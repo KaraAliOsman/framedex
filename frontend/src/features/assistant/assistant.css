@@ -393,8 +393,8 @@
   text-align: left;
   border: 1px solid transparent;
   background: none;
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: var(--r-1);
+  padding: var(--space-2) var(--space-3);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -421,12 +421,12 @@
 }
 .aiws-state {
   display: inline-block;
-  font-size: 10px;
+  font-size: var(--type-label);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--r-1);
   background: var(--theme-surface-raised, #f2f5f4);
   color: var(--theme-text-secondary, #4b5f5c);
 }

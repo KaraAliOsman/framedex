@@ -4,6 +4,8 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
+from projects.operation_serializers import DesignOperationSerializer
+
 from engine_api.serializers import (
     EngineCalculateRequestSerializer,
     EngineCalculateResponseSerializer,
@@ -499,9 +501,11 @@ class DesignAssistResponseSerializer(serializers.Serializer):
     audit_id = serializers.CharField()
     model = serializers.CharField()
     credits_debited = serializers.IntegerField()
-    ops = serializers.ListField(child=serializers.DictField())
+    ops = DesignOperationSerializer(many=True)
     rejected = serializers.ListField(child=serializers.DictField())
     notes = serializers.CharField(allow_null=True)
+    simulation = serializers.JSONField(required=False, allow_null=True)
+    clarify = serializers.JSONField(required=False, allow_null=True)
 
 
 class OrgBrandingSerializer(serializers.Serializer):

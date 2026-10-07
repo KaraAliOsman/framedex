@@ -170,6 +170,7 @@ import type {
   MountingPreviewRequest,
   MountingPreviewResponse,
   OperationalSummary,
+  OperationsRegistry,
   OpsExport,
   OrderIndexResponse,
   OrderReceiptRequestRequest,
@@ -227,6 +228,12 @@ import type {
   ProjectInvoice,
   ProjectInvoiceAccess,
   ProjectListResponse,
+  ProjectOperationsStateParams,
+  ProjectOpsApplyRequest,
+  ProjectOpsPreviewRequest,
+  ProjectOpsPreviewResponse,
+  ProjectOpsResult,
+  ProjectOpsState,
   ProjectResponse,
   ProjectWriteRequest,
   PurchasingState,
@@ -257,6 +264,8 @@ import type {
   SiiEnvio,
   SiiEnvioAccess,
   SiiEnvioSendRequest,
+  SimulateOpsRequest,
+  Simulation,
   StepTransition,
   StepTransitionRequestRequest,
   SuccessorRequestRequest,
@@ -16029,6 +16038,339 @@ export const projectInvoiceDteEnvioSend = async (
   );
 };
 
+export type projectOperationsUndoResponse200 = {
+  data: ProjectOpsResult;
+  status: 200;
+};
+
+export type projectOperationsUndoResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsUndoResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsUndoResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsUndoResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsUndoResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsUndoResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsUndoResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsUndoResponseSuccess = projectOperationsUndoResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsUndoResponseError = (
+  | projectOperationsUndoResponse400
+  | projectOperationsUndoResponse401
+  | projectOperationsUndoResponse403
+  | projectOperationsUndoResponse404
+  | projectOperationsUndoResponse409
+  | projectOperationsUndoResponse422
+  | projectOperationsUndoResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsUndoResponse =
+  projectOperationsUndoResponseSuccess | projectOperationsUndoResponseError;
+
+export const getProjectOperationsUndoUrl = (projectId: string, operationId: string) => {
+  return `/api/v1/projects/${projectId}/operations/${operationId}/undo/`;
+};
+
+export const projectOperationsUndo = async (
+  projectId: string,
+  operationId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsUndoResponse> => {
+  return apiMutator<projectOperationsUndoResponse>(
+    getProjectOperationsUndoUrl(projectId, operationId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export type projectOperationsApplyResponse200 = {
+  data: ProjectOpsResult;
+  status: 200;
+};
+
+export type projectOperationsApplyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsApplyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsApplyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsApplyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsApplyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsApplyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsApplyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsApplyResponseSuccess = projectOperationsApplyResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsApplyResponseError = (
+  | projectOperationsApplyResponse400
+  | projectOperationsApplyResponse401
+  | projectOperationsApplyResponse403
+  | projectOperationsApplyResponse404
+  | projectOperationsApplyResponse409
+  | projectOperationsApplyResponse422
+  | projectOperationsApplyResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsApplyResponse =
+  projectOperationsApplyResponseSuccess | projectOperationsApplyResponseError;
+
+export const getProjectOperationsApplyUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/operations/apply/`;
+};
+
+export const projectOperationsApply = async (
+  projectId: string,
+  projectOpsApplyRequest: ProjectOpsApplyRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsApplyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectOperationsApplyResponse>(getProjectOperationsApplyUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(projectOpsApplyRequest),
+  });
+};
+
+export type projectOperationsPreviewResponse200 = {
+  data: ProjectOpsPreviewResponse;
+  status: 200;
+};
+
+export type projectOperationsPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsPreviewResponseSuccess = projectOperationsPreviewResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsPreviewResponseError = (
+  | projectOperationsPreviewResponse400
+  | projectOperationsPreviewResponse401
+  | projectOperationsPreviewResponse403
+  | projectOperationsPreviewResponse404
+  | projectOperationsPreviewResponse409
+  | projectOperationsPreviewResponse422
+  | projectOperationsPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsPreviewResponse =
+  projectOperationsPreviewResponseSuccess | projectOperationsPreviewResponseError;
+
+export const getProjectOperationsPreviewUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/operations/preview/`;
+};
+
+export const projectOperationsPreview = async (
+  projectId: string,
+  projectOpsPreviewRequest: ProjectOpsPreviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectOperationsPreviewResponse>(getProjectOperationsPreviewUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(projectOpsPreviewRequest),
+  });
+};
+
+export type projectOperationsStateResponse200 = {
+  data: ProjectOpsState;
+  status: 200;
+};
+
+export type projectOperationsStateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsStateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsStateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsStateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsStateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsStateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsStateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsStateResponseSuccess = projectOperationsStateResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsStateResponseError = (
+  | projectOperationsStateResponse400
+  | projectOperationsStateResponse401
+  | projectOperationsStateResponse403
+  | projectOperationsStateResponse404
+  | projectOperationsStateResponse409
+  | projectOperationsStateResponse422
+  | projectOperationsStateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsStateResponse =
+  projectOperationsStateResponseSuccess | projectOperationsStateResponseError;
+
+export const getProjectOperationsStateUrl = (
+  projectId: string,
+  params: ProjectOperationsStateParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/projects/${projectId}/operations/state/?${stringifiedParams}`
+    : `/api/v1/projects/${projectId}/operations/state/`;
+};
+
+export const projectOperationsState = async (
+  projectId: string,
+  params: ProjectOperationsStateParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsStateResponse> => {
+  return apiMutator<projectOperationsStateResponse>(
+    getProjectOperationsStateUrl(projectId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export type projectPaymentLinksListResponse200 = {
   data: PaymentLinksResponse;
   status: 200;
@@ -17701,6 +18043,159 @@ export const mountingPreview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(mountingPreviewRequest),
+  });
+};
+
+export type designOperationsRegistryResponse200 = {
+  data: OperationsRegistry;
+  status: 200;
+};
+
+export type designOperationsRegistryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type designOperationsRegistryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type designOperationsRegistryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type designOperationsRegistryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type designOperationsRegistryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type designOperationsRegistryResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type designOperationsRegistryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type designOperationsRegistryResponseSuccess = designOperationsRegistryResponse200 & {
+  headers: Headers;
+};
+export type designOperationsRegistryResponseError = (
+  | designOperationsRegistryResponse400
+  | designOperationsRegistryResponse401
+  | designOperationsRegistryResponse403
+  | designOperationsRegistryResponse404
+  | designOperationsRegistryResponse409
+  | designOperationsRegistryResponse422
+  | designOperationsRegistryResponse503
+) & {
+  headers: Headers;
+};
+
+export type designOperationsRegistryResponse =
+  designOperationsRegistryResponseSuccess | designOperationsRegistryResponseError;
+
+export const getDesignOperationsRegistryUrl = () => {
+  return `/api/v1/projects/operations/registry/`;
+};
+
+export const designOperationsRegistry = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<designOperationsRegistryResponse> => {
+  return apiMutator<designOperationsRegistryResponse>(getDesignOperationsRegistryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type designOperationsSimulateResponse200 = {
+  data: Simulation;
+  status: 200;
+};
+
+export type designOperationsSimulateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type designOperationsSimulateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type designOperationsSimulateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type designOperationsSimulateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type designOperationsSimulateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type designOperationsSimulateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type designOperationsSimulateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type designOperationsSimulateResponseSuccess = designOperationsSimulateResponse200 & {
+  headers: Headers;
+};
+export type designOperationsSimulateResponseError = (
+  | designOperationsSimulateResponse400
+  | designOperationsSimulateResponse401
+  | designOperationsSimulateResponse403
+  | designOperationsSimulateResponse404
+  | designOperationsSimulateResponse409
+  | designOperationsSimulateResponse422
+  | designOperationsSimulateResponse503
+) & {
+  headers: Headers;
+};
+
+export type designOperationsSimulateResponse =
+  designOperationsSimulateResponseSuccess | designOperationsSimulateResponseError;
+
+export const getDesignOperationsSimulateUrl = () => {
+  return `/api/v1/projects/operations/simulate/`;
+};
+
+export const designOperationsSimulate = async (
+  simulateOpsRequest: SimulateOpsRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<designOperationsSimulateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<designOperationsSimulateResponse>(getDesignOperationsSimulateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(simulateOpsRequest),
   });
 };
 

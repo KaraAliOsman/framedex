@@ -963,7 +963,7 @@ function Bay({
           />
           {/* The sheen only belongs on inert glass — under an operable leaf
            * it crosses the opening glyph and reads as a scribble. */}
-          {pane.w > 30 && pane.h > 30 && !node.opening_type && (
+          {pane.w > 30 && pane.h > 30 && node.opening_type == null && node.opening == null && (
             <line
               className="glass-sheen"
               x1={pane.x + pane.w * 0.18}

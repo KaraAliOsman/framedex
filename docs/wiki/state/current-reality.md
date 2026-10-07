@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d
+verified_ref: 5224dbfba0f3f6c7d218639704bb013eceeb88dd
 sources:
   - repository main
   - P00 foundation PR #114
@@ -15,6 +15,7 @@ sources:
   - D03 physical openings, browser and immutable upgrade evidence, 2026-10-06
   - D04 hardware classes PR #122, CI four required checks, 2026-10-06
   - D05 sourced face/stock/surcharge authority and browser evidence, 2026-10-06
+  - IA2 shared operations, complete MiMo evaluation and local/browser gates, 2026-10-07
   - integracion/v1 merge a096f85b2e56e21eda024c1ec92a456ed9d30b03
   - open PR metadata observed 2026-09-27/28
   - AGENTS.md
@@ -23,6 +24,42 @@ sources:
 ---
 
 # Current reality
+
+## IA2 · código y aceptación local verificados (07-10-2026)
+
+La rama `codex/IA2-operaciones-herramientas` usa un registro de 50 operaciones
+para UI/IA/API, herramientas del motor, aclaraciones y simulación/aplicación
+atómica deshacible. Reabrir un trabajo consulta su estado durable. La geometría
+y los precios visibles provienen del motor; moneda ausente no se convierte en
+cero y el lote conserva la tarifa exacta hasta multiplicar su cantidad.
+
+MiMo real pasa 21/26 en una corrida completa sobre `5224dbfb`; editor/proyecto
+19/21 (90,48 %) cumple la meta ≥85 %. J01 pasa y no hay fallos del proveedor.
+J04/J08 no tienen
+autoridad aplicada/emitida; los tres casos de planta conservan fallos o límites
+reales de contexto/rol. Cero acciones consecuentes y ningún número inventado
+en los dos fallos de resultado. La fuente y el estado persistente quedan iguales.
+
+Los gates locales pasan 740 motor (+2 xfail), 1 205 backend y 806 frontend;
+Database Gate pasa 1 101 pgTAP, 380 integraciones, 11 E2E y ocho upgrades PG16,
+con limpieza propia verificada. E02/E04/E08/J02, el lote J03 recargado/deshecho
+y el chip de catálogo con Enter pasan. La matriz de 27 capturas no tiene
+hallazgos de la propuesta ni errores/desbordes. Los cinco estados tienen diez
+capturas; sus fallos HTTP se interceptan y los permisos reales se verifican
+en integración. Las 24 comparaciones formales no añaden hallazgos ni desbordes.
+
+El editor móvil y cromo históricos siguen documentados para P04/P17/P21;
+IA3 continúa proveedor y Ajustes. El catálogo usado es DEMO sin certificación.
+Las tres observaciones del PR #126 están corregidas: deshacer restaura la
+preparación documental íntegra y rechaza ediciones posteriores; el adaptador
+conserva contornos/módulos sin marco; el espesor histórico se deriva de la receta
+o queda desconocido. Pasan 16 regresiones PostgreSQL y 74 de operaciones/golden.
+Los golden nuevos no cambian los anteriores. La evaluación, el navegador y los
+gates completos se repitieron sobre estas correcciones. Los checks de CI del
+commit anterior no acreditan esta revisión; su CI y squash están pendientes.
+Véanse [aceptación](../../redesign/captures/operaciones-herramientas/aceptacion.md),
+[comparativa](../../ai/evals/2026-10-07-ia2-comparativa.md) y
+[operaciones](../../ai/OPERACIONES.md).
 
 ## D07 · integrado y verificado (2026-10-07)
 

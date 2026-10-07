@@ -192,12 +192,16 @@ class HttpProvider:
             headers["Idempotency-Key"] = operation_key
         path, body = self._wire_request(route, capability, input_payload, provider_options)
         started = time.monotonic()
+        timeout = min(self.timeout, float(provider_options.get("timeout_s", self.timeout)))
+        if timeout <= 0:
+            raise ProviderError("ai_provider_error")
         with client.stream(
             "POST",
             f"https://{url_host}{port_suffix}{path}",
             headers=headers,
             extensions={"sni_hostname": self._host},
             json=body,
+            timeout=timeout,
         ) as response:
             response.raise_for_status()
             content = bytearray()
@@ -208,7 +212,7 @@ class HttpProvider:
             # buffered responses (mock transports) yield everything at once.
             stream = response.iter_bytes(65536) if response.is_stream_consumed else response.iter_raw()
             for chunk in stream:
-                if time.monotonic() - started > self.timeout:
+                if time.monotonic() - started > timeout:
                     raise ProviderError("ai_provider_error")
                 content += chunk
                 if len(content) > MAX_BODY_BYTES:

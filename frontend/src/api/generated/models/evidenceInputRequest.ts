@@ -7,7 +7,7 @@
  */
 import type { AuthorityTableEnum } from "./authorityTableEnum";
 import type { EvidenceInputRequestUnit } from "./evidenceInputRequestUnit";
-import type { ScopeEnum } from "./scopeEnum";
+import type { EvidenceInputScopeEnum } from "./evidenceInputScopeEnum";
 
 /**
  * Member-side declaration of a parameter's source. Review stamps are
@@ -27,7 +27,7 @@ export interface EvidenceInputRequest {
    */
   value_text?: string | null;
   unit?: (typeof EvidenceInputRequestUnit)[keyof typeof EvidenceInputRequestUnit] | null;
-  scope?: ScopeEnum;
+  scope?: EvidenceInputScopeEnum;
   /**
    * @maxLength 300
    * @nullable

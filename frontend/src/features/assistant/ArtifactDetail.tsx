@@ -1,4 +1,9 @@
 import { t } from "../../i18n/es-CL";
+import { Link } from "react-router-dom";
+import type { ProductIssue } from "../../api/generated/models";
+import { issueText } from "../canvas/AssemblyEditor";
+import { domainLabel } from "../../i18n/domainLabels";
+import { Dims, Money, Qty } from "../../ui/DomainValues";
 
 /** The artifact kinds the agent produces — payloads come from the workflow
  * contracts in backend/ai_gateway/agent.py, which the backend validates
@@ -27,13 +32,8 @@ function text(value: unknown, fallback = "—"): string {
   return value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
-function money(value: unknown): string | null {
-  const n = Number(value);
-  return Number.isFinite(n)
-    ? n.toLocaleString("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 })
-    : value != null
-      ? String(value)
-      : null;
+function decimal(value: unknown): string | number | null {
+  return typeof value === "string" || typeof value === "number" ? value : null;
 }
 
 function StatePill({ state }: { state: string }): JSX.Element {
@@ -41,7 +41,8 @@ function StatePill({ state }: { state: string }): JSX.Element {
     state === "ready" ? "ok" : state === "missing" || state === "blocked" ? "bad" : "warn";
   return (
     <span className="art-pill" data-tone={tone}>
-      {text(state)}
+      {{ ready: "Listo", missing: "Falta información", blocked: "Bloqueado" }[state] ??
+        domainLabel(state)}
     </span>
   );
 }
@@ -87,7 +88,10 @@ function QuoteDraftView({ payload }: { payload: Dict }): JSX.Element {
           {(["net", "tax", "gross"] as const).map((key) =>
             totals[key] !== undefined ? (
               <span key={key}>
-                {t(`aiws.art.${key}` as never)} <strong>{money(totals[key])}</strong>
+                {t(`aiws.art.${key}` as never)}{" "}
+                <strong>
+                  <Money value={decimal(totals[key])} cause="No hay un precio aplicado." />
+                </strong>
               </span>
             ) : null,
           )}
@@ -165,21 +169,32 @@ function ProjectDraftView({ payload }: { payload: Dict }): JSX.Element {
     <div>
       {positions.length ? (
         <ul className="art-lines">
-          {positions.map((pos, i) => (
-            <li key={i}>
-              <span className="art-line-head">
-                <strong>{text(pos.label ?? pos.key)}</strong>
-                <StatePill state={text(pos.state)} />
-              </span>
-              <small>
-                {text(pos.width_mm)}×{text(pos.height_mm)}
-                {pos.quantity ? ` ×${text(pos.quantity)}` : ""}
-                {pos.opening_type ? ` · ${text(pos.opening_type)}` : ""}
-                {pos.system_code ? ` · ${text(pos.system_code)}` : ""}
-              </small>
-              {pos.question ? <small className="art-note">{text(pos.question)}</small> : null}
-            </li>
-          ))}
+          {positions.map((pos, i) => {
+            const design = asDict(pos.design);
+            const width = decimal(design.nominal_width_mm ?? pos.width_mm);
+            const height = decimal(design.nominal_height_mm ?? pos.height_mm);
+            return (
+              <li key={i}>
+                <span className="art-line-head">
+                  <strong>
+                    {pos.label || pos.key
+                      ? text(pos.label ?? pos.key)
+                      : `Posición ${text(pos.position_index, String(i + 1))}`}
+                  </strong>
+                  {typeof pos.state === "string" ? <StatePill state={text(pos.state)} /> : null}
+                </span>
+                {pos.location_tag ? <span>{text(pos.location_tag)}</span> : null}
+                <small>
+                  <Dims w={width} h={height} cause="Faltan las medidas del diseño." />
+                  {" · "}
+                  <Qty value={decimal(pos.quantity)} cause="Falta declarar la cantidad." />
+                  {pos.opening_type ? ` · ${domainLabel(text(pos.opening_type))}` : ""}
+                  {pos.system_code ? ` · ${text(pos.system_code)}` : ""}
+                </small>
+                {pos.question ? <small className="art-note">{text(pos.question)}</small> : null}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
       {unresolved.length ? (
@@ -253,7 +268,70 @@ function GenericView({ payload }: { payload: Dict }): JSX.Element {
   );
 }
 
+function BlockersView({ payload }: { payload: Dict }): JSX.Element {
+  const blockers = asList(payload.blockers);
+  const projectId = typeof payload.project_id === "string" ? payload.project_id : null;
+  const positionId = typeof payload.position_id === "string" ? payload.position_id : null;
+  return (
+    <div>
+      {blockers.length ? (
+        <ul className="art-lines">
+          {blockers.map((blocker, index) => (
+            <li key={index}>
+              {typeof blocker.detail === "string"
+                ? blocker.detail
+                : issueText(
+                    {
+                      code: String(blocker.code ?? ""),
+                      target: String(blocker.target ?? "assembly"),
+                      severity: blocker.severity === "error" ? "error" : "warning",
+                      params: asDict(blocker.params),
+                    } as ProductIssue,
+                    [],
+                    [],
+                  )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>El motor no informa bloqueos para este diseño.</p>
+      )}
+      {projectId ? (
+        <Link
+          to={
+            positionId
+              ? `/projects/${projectId}/positions/${positionId}/edit`
+              : `/projects/${projectId}/pricing`
+          }
+        >
+          {positionId ? "Revisar diseño y catálogo" : "Completar preparación de emisión"}
+        </Link>
+      ) : null}
+      <details>
+        <summary>Detalles técnicos de la consulta</summary>
+        <pre>{JSON.stringify(payload, null, 2)}</pre>
+      </details>
+    </div>
+  );
+}
+
+function CatalogCandidatesView({ payload }: { payload: Dict }): JSX.Element {
+  return (
+    <div>
+      <p>Alternativas disponibles en la serie consultada:</p>
+      <ul className="art-lines">
+        {(Array.isArray(payload.skus) ? payload.skus : []).map((sku, index) => (
+          <li key={index}>{String(sku)}</li>
+        ))}
+      </ul>
+      <p>Elige una alternativa para continuar el mismo trabajo.</p>
+    </div>
+  );
+}
+
 const VIEWS: Record<string, (p: Dict) => JSX.Element> = {
+  blockers: (p) => <BlockersView payload={p} />,
+  catalog_candidates: (p) => <CatalogCandidatesView payload={p} />,
   message: (p) => <MessageView payload={p} />,
   quote_draft: (p) => <QuoteDraftView payload={p} />,
   purchase_plan: (p) => <PurchasePlanView payload={p} />,

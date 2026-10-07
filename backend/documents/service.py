@@ -1995,12 +1995,30 @@ def prepare_documentary_inputs(
             }
         )
     values = project_inputs[0] if project_inputs else {}
+    missing = []
+    if not values.get("payment_terms"):
+        missing.append({"code": "payment_terms_missing", "detail": "Declara las condiciones de pago en Preparar emisión."})
+    if values.get("quotation_valid_until") is None:
+        missing.append({"code": "quotation_valid_until_missing", "detail": "Declara la vigencia de la cotización en Preparar emisión."})
+    from projects.service import _priced
+    if not _priced(org_id, project_id, project["current_revision"]):
+        missing.append({"code": "pricing_not_applied", "detail": "Calcula y aplica los precios vigentes del proyecto."})
+    for position in prepared:
+        identity = str(position["position_id"])
+        existing = position_inputs.get(identity)
+        if existing is None or existing.get("calculation_hash") != position["calculation_hash"]:
+            missing.append({"code": "documentary_inputs_unconfirmed", "position_id": identity,
+                            "detail": "Guarda la preparación documental del diseño vigente."})
+        if not position["documentary_ready"]:
+            missing.append({"code": "position_documentary_incomplete", "position_id": identity,
+                            "detail": "Completa la autoridad documental indicada por el inspector."})
     return {
         "project_id": project["id"],
         "revision_code": project["current_revision"],
         "payment_terms": values.get("payment_terms", ""),
         "quotation_valid_until": values.get("quotation_valid_until"),
         "positions": prepared,
+        "missing": missing,
     }
 
 

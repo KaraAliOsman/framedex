@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { positionExtrasPreview } from "../../api/generated/dekopen";
-import type { DesignOptions, EngineAssemblyCalculateResponse } from "../../api/generated/models";
+import type {
+  DesignOptions,
+  DesignOperationRequest,
+  EngineAssemblyCalculateResponse,
+} from "../../api/generated/models";
 import { ApiError } from "../../api/apiMutator";
 import { actionErrorDetail } from "../errors";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { fmtMm, formatMoney } from "../../format";
 import { decimalInputValue, parseDecimalInput } from "../../decimal";
 import { useCanvasStore } from "../canvas/canvasStore";
-import { setModuleTree, type ProductJson, type ProductModuleJson } from "../canvas/productEditing";
+import type { ProductModuleJson } from "../canvas/productEditing";
 import {
   definitions,
   extraLines,
@@ -78,17 +82,15 @@ function Measure({
 export function ExtrasInspector({
   options,
   module,
-  product,
   evaluation,
   busy,
   commit,
 }: {
   options?: DesignOptions;
   module: ProductModuleJson;
-  product: ProductJson;
   evaluation: EngineAssemblyCalculateResponse | null;
   busy: boolean;
-  commit(product: ProductJson): void;
+  commit(ops: DesignOperationRequest[]): void;
 }): JSX.Element {
   const org = useAuthSession().me?.active_organization;
   const inputs = useCanvasStore((state) => state.inputs);
@@ -123,7 +125,7 @@ export function ExtrasInspector({
       !selections.some((selection) => selection.code === item.code),
   );
   function replace(next: ExtraSelection[]) {
-    commit(setModuleTree(product, module.id, { ...module.tree, extras: next }));
+    commit([{ op: "set_extras", module: module.id, extras: next }]);
   }
   function add(selection: ExtraSelection) {
     replace([...selections.filter((item) => item.code !== selection.code), selection]);
@@ -379,15 +381,17 @@ export function ExtrasInspector({
               value={module.tree.extra_context?.opening_width_mm ?? ""}
               disabled={busy}
               onValue={(value) =>
-                commit(
-                  setModuleTree(product, module.id, {
-                    ...module.tree,
-                    extra_context: {
+                commit([
+                  {
+                    op: "set_extras",
+                    module: module.id,
+                    extras: selections,
+                    context: {
                       ...module.tree.extra_context,
-                      opening_width_mm: value || undefined,
+                      opening_width_mm: value || null,
                     },
-                  }),
-                )
+                  },
+                ])
               }
             />
             <Measure
@@ -396,15 +400,17 @@ export function ExtrasInspector({
               value={module.tree.extra_context?.opening_height_mm ?? ""}
               disabled={busy}
               onValue={(value) =>
-                commit(
-                  setModuleTree(product, module.id, {
-                    ...module.tree,
-                    extra_context: {
+                commit([
+                  {
+                    op: "set_extras",
+                    module: module.id,
+                    extras: selections,
+                    context: {
                       ...module.tree.extra_context,
-                      opening_height_mm: value || undefined,
+                      opening_height_mm: value || null,
                     },
-                  }),
-                )
+                  },
+                ])
               }
             />
           </details>

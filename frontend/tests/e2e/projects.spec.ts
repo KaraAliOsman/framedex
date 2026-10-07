@@ -156,15 +156,23 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page).toHaveURL(new RegExp(`${editPath}$`));
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
-  // Invalid intent cannot expose a previous result as the current calculation.
+  // The shared registry refuses invalid edits atomically. The field returns
+  // to the accepted design and a cause explains that the edit was not applied.
   await page.getByRole("textbox", { name: "Ancho mm" }).fill("10.00");
-  await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByRole("textbox", { name: "Ancho mm" }).press("Enter"),
+  const refused = await responseTo<{ error: { code: string } }>(
+    page,
+    "POST",
+    "/api/v1/projects/operations/simulate/",
+    422,
+    () => page.getByRole("textbox", { name: "Ancho mm" }).press("Enter"),
   );
-  await expect(page.getByTestId("assembly-status")).toHaveText(/inválida|incompleta/);
-  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("10.00");
-  await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeDisabled();
-  await expect(page.locator("details.project-bom")).toHaveCount(0);
+  expect(refused.error.code).toBe("dimension_invalid");
+  await expect(page.getByRole("alert")).toContainText("Revisa el ancho y alto del marco.");
+  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1000.00");
+  expect(
+    (await manual.readRows("project_positions", `id=eq.${initial.id}&select=width_mm::text`))[0]
+      ?.width_mm,
+  ).toBe("1000.00");
 
   // Exercise a real update, not only an unsaved creation preview.
   await page.getByRole("textbox", { name: "Ancho mm" }).fill("1100.25");

@@ -216,6 +216,66 @@ def _engine_copy(client: Any, product: dict, design: dict) -> dict:
         return {"http_status": None, "error_code": "invalid_proposed_product"}
 
 
+def sliding_probe(product: dict, *, kitchen: bool = False) -> dict:
+    """New authoring is judged on physical capabilities, not legacy transport."""
+    proposed = deepcopy(product)
+    module = proposed["assembly"]["modules"][0]
+    if kitchen:
+        module.update(width_mm="1600.00", height_mm="1100.00")
+    tree = module["tree"]
+    tree.pop("opening_type", None)
+    tree["opening"] = {"movement": "SLIDE", "hinge_side": "NONE", "direction": "INWARD",
+                       "leaf_role": "SINGLE", "fixed_in_sash": False}
+    tree["opening_use"] = "WINDOW"
+    tree["sliding_layout"] = {"tracks": 2, "panels": [
+        {"slot": "1", "kind": "MOVING", "track": 0},
+        {"slot": "2", "kind": "MOVING", "track": 1}]}
+    return proposed
+
+
+def physical_sliding_supported(product: dict, params: Any) -> bool:
+    from dekopen_engine.models import ParametricNode
+    from dekopen_engine.openings import OpeningCapabilityError, normalize_opening_tree
+    try:
+        normalize_opening_tree(ParametricNode.model_validate_json(canonical(product["assembly"]["modules"][0]["tree"])), params)
+    except OpeningCapabilityError:
+        return False
+    return True
+
+
+def design_step_ops(result: dict) -> list[dict]:
+    return [op for step in result.get("steps") or [] if step.get("kind") == "ops"
+            for op in step.get("ops") or []]
+
+
+def _intent(op: dict) -> dict:
+    return {key: ([_intent(child) for child in value] if key == "ops" else value)
+            for key, value in op.items() if key not in {"base_sig", "result", "description", "context_effect"}}
+
+
+def _sandbox_project(client: Any, project: dict, result: dict) -> dict | None:
+    """Exercise the normal human-click apply API in the rollback sandbox."""
+    current = None
+    for step in result.get("steps") or []:
+        if step.get("kind") == "project_ops":
+            ops = [_intent(op) for op in step.get("ops") or []]
+        elif step.get("kind") == "batch_ops":
+            ops = [{"op": "apply_to_positions", "filter": {"position_ids": [item["position_id"]]},
+                    "ops": [_intent(op) for op in item["ops"]]} for item in step.get("items") or []]
+        else:
+            continue
+        path = f"projects/{project['id']}/operations/"
+        status, preview = _request(client, "post", path + "preview/", {"ops": ops})
+        if status != 200 or not preview.get("valid"):
+            raise RuntimeError("project_sandbox_preview_failed")
+        status, applied = _request(client, "post", path + "apply/", {
+            "ops": ops, "before_sig": preview["before_sig"], "operation_key": f"eval:apply:{uuid4().hex}"})
+        if status != 200 or applied.get("state") != "APPLIED":
+            raise RuntimeError("project_sandbox_application_failed")
+        current = applied["project"]
+    return current
+
+
 def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
                   product: dict, case: dict) -> dict:
     from authentication.rls import authenticated_rls_context
@@ -264,15 +324,11 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
         if status == 200:
             truth["revision_differences"] = comparison.get("positions")
     if case["expected"] in {"kitchen_position", "incompatible_sliding"}:
-        kitchen = deepcopy(product)
-        module = kitchen["assembly"]["modules"][0]
-        if case["expected"] == "kitchen_position":
-            module.update(width_mm="1600.00", height_mm="1100.00")
-        module["tree"]["opening_type"] = "SLIDING_2L"
+        kitchen = sliding_probe(product, kitchen=case["expected"] == "kitchen_position")
         compatibility = _engine_copy(client, kitchen, position["design"])
         truth["sliding_compatibility_engine"] = compatibility
         truth["sliding_supported"] = (engine_accepted(compatibility)
-                                      if compatibility.get("http_status") == 200 else None)
+            if physical_sliding_supported(kitchen, params) else False)
     production = _claims_context(claims, "production", {})
     truth["blocked_orders"] = [o for o in production.get("work_orders", []) if o.get("status") == "BLOCKED"]
     # Manager-only inventory coverage must not be inferred through estimator RLS.
@@ -378,7 +434,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
                     error_code = (accepted.get("error") or {}).get("code", "request_failed")
             current = _snapshot()
             changed = [name for name, value in baseline.items() if current.get(name) != value]
-            ops = [op for step in result.get("steps") or [] for op in step.get("ops") or []]
+            ops = design_step_ops(result)
             try:
                 after, _ = apply_copy(before, ops)
                 output["sandbox_engine_after"] = _engine_copy(client, after, position["design"])
@@ -400,10 +456,16 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
                         batch_ok = batch_ok and engine_accepted(engine)
                         batch_results.append({"position_id": item["position_id"], "product": applied,
                                               "engine": engine})
+                applied_project = _sandbox_project(client, project, result)
+                if applied_project:
+                    truth["project_application_ok"] = True
+                    truth["project_positions"] = applied_project["positions"]
+                    truth["original_position_ids"] = [p["id"] for p in project["positions"]]
+                    output["sandbox_project"] = applied_project
                 truth["batch_application_ok"] = batch_ok
                 output["sandbox_batch_results"] = batch_results
-            except (RuntimeError, StopIteration):
-                error_code = error_code or "canvas_registry_application_failed"
+            except (RuntimeError, StopIteration) as error:
+                error_code = error_code or str(error) or "sandbox_position_reference_missing"
                 truth["batch_application_ok"] = False
             verdict = evaluate(case, before=before, after=after, result=result,
                                truth=truth, changed_tables=changed,

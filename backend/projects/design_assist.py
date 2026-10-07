@@ -13,7 +13,8 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
 from dekopen_engine.models import HingeSide, NodeType, Opening, ParametricNode, SystemParams
-from dekopen_engine.catalog_rules import FAMILY_OPENINGS
+from dekopen_engine.models import BayOpeningType
+from dekopen_engine.design_operations import editable_legacy_openings
 from dekopen_engine.openings import normalize_opening_tree, opening_label
 
 from ai_gateway import service as gateway
@@ -23,16 +24,7 @@ from pricing.repository import rows
 
 CAPABILITY = "design_assist"
 
-OPENINGS = {
-    "FIXED",
-    "TURN_LEFT",
-    "TURN_RIGHT",
-    "TILT_TURN_LEFT",
-    "TILT_TURN_RIGHT",
-    "SLIDING_2L",
-    "AWNING",
-    "DOOR_ENTRY",
-}
+OPENINGS = {opening.value for opening in BayOpeningType}
 
 MAX_MODULE_COUNT = 12
 MAX_OPS = 50
@@ -113,6 +105,8 @@ def _summary(product: Any) -> dict[str, Any] | None:
     rather than a bare index into a list."""
     if not isinstance(product, dict):
         return None
+    if product.get("version") == "product-v2":
+        product = product.get("assembly", {})
     modules_raw = product.get("modules")
     if not isinstance(modules_raw, list) or not 1 <= len(modules_raw) <= MAX_MODULE_COUNT:
         return None
@@ -132,6 +126,7 @@ def _summary(product: Any) -> dict[str, Any] | None:
                 "index": index,
                 "width_mm": module.get("width_mm") if isinstance(module, dict) else None,
                 "height_mm": module.get("height_mm") if isinstance(module, dict) else None,
+                **({"tree": module["tree"]} if isinstance(module, dict) and isinstance(module.get("tree"), dict) else {}),
                 "shape": (
                     "CONTOUR"
                     if isinstance(module, dict) and isinstance(module.get("contour"), dict)
@@ -212,8 +207,7 @@ def _catalog(system_id: UUID, org_id: UUID) -> dict[str, Any]:
     )
     return {
         "params": params,
-        "openings": sorted(kind.value for kind in FAMILY_OPENINGS[params.system_family])
-            if params.system_family else sorted(OPENINGS),
+        "openings": editable_legacy_openings(params),
         "opening_choices": _opening_choices(params),
         "glass_skus": {item["technical_sku"] for item in glass_rows},
         # A SKU carries its composition recipe — "4-16-4", never the bead
@@ -989,6 +983,19 @@ def assist(
     operation_key: str,
     system_id: UUID,
 ) -> dict[str, Any]:
+    if isinstance(product, dict) and product.get("version") == "product-v2":
+        # The editor's inline assistant and the durable dock use one planner,
+        # one operation registry and one engine simulation.
+        from ai_gateway.agent import _act
+        result = _act(org_id=org_id, user_id=user_id, surface="position",
+                      refs={"position_id": str(position["id"]), "project_id": str(position["project_id"])},
+                      goal=prompt, product=product, history=[], operation_key=operation_key)
+        proposals = [step for step in result["steps"] if step["kind"] == "ops"]
+        return {"audit_id": result["audit_id"], "model": result["model"],
+                "credits_debited": result["credits_debited"],
+                "ops": proposals[0]["ops"] if proposals else [], "rejected": result["rejected"],
+                "notes": result["reply"], "simulation": proposals[0].get("simulation") if proposals else None,
+                "clarify": result["clarify"]}
     summary = _summary(product)
     if summary is None:
         raise contract_error(

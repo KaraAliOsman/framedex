@@ -1,6 +1,7 @@
 """Contextual Ask: typed projections, server-owned context, answer contract."""
 
 import json
+from contextlib import nullcontext
 from datetime import datetime
 from decimal import Decimal
 from uuid import uuid4
@@ -37,6 +38,7 @@ def _envelope(output: str):
 
 def _patch(monkeypatch, *, rows_impl=None, output=None):
     calls = []
+    monkeypatch.setattr(context, "commercial_backend", nullcontext)
     monkeypatch.setattr(
         context,
         "rows",
@@ -49,6 +51,14 @@ def _patch(monkeypatch, *, rows_impl=None, output=None):
         lambda **kwargs: calls.append(kwargs) or _envelope(output or _good_output()),
     )
     return calls
+
+
+def test_unpriced_project_totals_are_absent_even_with_historical_zero_or_stale_amounts():
+    stored = {"total_price_net": "99.00", "total_price_tax": "0.00", "total_price_gross": "0.00"}
+    missing = context._project_totals(stored, None)
+    assert missing["net"] is missing["tax"] is missing["gross"] is None
+    assert "Sin dato" in missing["reason"] and "Precios" in missing["reason"]
+    assert context._project_totals(stored, {"currency": "CLP"})["net"] == "99.00"
 
 
 def _good_output() -> str:
@@ -131,6 +141,8 @@ def test_ask_missing_ref_rejected_before_provider(monkeypatch):
     def fake_rows(sql, params=None):
         if "tenancy_organizations" in sql:
             return [_org_row()]
+        if "FROM public.pricing_operations" in sql:
+            return []
         if "FROM public.projects" in sql:
             return []
         return []
@@ -239,6 +251,8 @@ def test_ask_project_surface_builds_projected_context(monkeypatch):
                     "id": position_id,
                     "position_index": 1,
                     "location_tag": "Fachada",
+                    "system_id": uuid4(),
+                    "quantity": 1,
                     "typology": "VENTANA",
                     "width_mm": "1200.00",
                     "height_mm": "1400.00",
@@ -440,6 +454,8 @@ def test_ask_navigation_actions_grounded_to_context_ids(monkeypatch):
     def fake_rows(sql, params=None):
         if "tenancy_organizations" in sql:
             return [_org_row()]
+        if "FROM public.pricing_operations" in sql:
+            return []
         if "FROM public.projects" in sql:
             return [
                 {
@@ -934,6 +950,10 @@ def test_quotation_complete_projection_unpriced(monkeypatch):
     assert ctx["priced"] is None
     assert ctx["approval"] is None
     assert ctx["versions"] == []
+    assert ctx["totals"]["net"] is None
+    assert ctx["totals"]["tax"] is None
+    assert ctx["totals"]["gross"] is None
+    assert "calcula y aplica" in ctx["totals"]["reason"]
 
 
 def test_purchase_plan_projection_coverage_unverifiable(monkeypatch):

@@ -47,6 +47,10 @@
 @media (max-width: 600px) {
   .app-topbar__actions {
     gap: var(--space-1);
+    flex: 1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
   }
 }
 .rail-item {

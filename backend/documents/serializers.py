@@ -234,6 +234,7 @@ class DocumentaryPreparationPositionSerializer(PositionDocumentaryInputSerialize
 
 
 class DocumentaryPreparationResponseSerializer(serializers.Serializer):
+    missing = serializers.ListField(child=serializers.JSONField(), required=False)
     project_id = serializers.UUIDField()
     revision_code = serializers.RegexField(r"^REV-[A-Z]+$")
     payment_terms = serializers.CharField(allow_blank=True)

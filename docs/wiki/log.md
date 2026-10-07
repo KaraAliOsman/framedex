@@ -485,3 +485,54 @@ Las seis observaciones se resuelven con regresiones; ninguna se descarta por
 el estado verde del bot. Las 24 comparaciones y el flujo A→B/PDF/OT pasan.
 Los procesos propios de app están detenidos. La cola continúa inmediatamente
 con IA2; main y los recursos ajenos no se modifican.
+
+## 2026-10-07 — IA2 · registro, herramientas y aceptación completa
+
+El código verificado `1711ebea2829a192b5e07ceb9a91bd1492e906d7` comparte 50
+operaciones entre UI/IA/API. El motor devuelve efectos, hojas/manillas y venta
+indicativa; proyectos aplican y deshacen en una transacción con estado durable,
+firmas e idempotencia. La aclaración usa catálogo real y continúa el mismo trabajo.
+Se conserva moneda desconocida; el Δ concuerda con la resta visible y los lotes
+cuantizan después de multiplicar la tarifa exacta. El progreso del worker restaura
+su contexto de rol sin grants nuevos.
+
+La corrida MiMo completa mide 20/26, editor/proyecto 18/21 (85,71 %). J01 conserva
+un error del proveedor; J04/J08 carecen de precios/revisiones y planta conserva sus límites,
+sin números de barras inventados ni acciones consecuentes. Fuente y estado
+persistente sin cambios. La comparación IA1→IA2 por caso/categoría no selecciona
+mejores casos de distintas corridas. Los cuatro gates locales, 1 101 pgTAP,
+377 integraciones, 11 E2E y ocho upgrades PG16 pasan. Las 27 capturas de recorrido,
+diez estados y 24 comparaciones formales documentan dos rondas editoriales y
+R1–R20, sin hallazgos nuevos. CI/merge quedan pendientes del PR hacia integración.
+
+Evidencia: [aceptación](../redesign/captures/operaciones-herramientas/aceptacion.md),
+[comparativa](../ai/evals/2026-10-07-ia2-comparativa.md) y
+[síntesis vigente](quality/ai-outcome-baseline.md). IA3 sigue proveedor/Ajustes;
+P04/P17/P21 siguen cromo/editor heredados. Los datos DEMO no certifican fabricación.
+
+
+## 2026-10-07 — IA2 · revisión corregida y verificación final
+
+La revisión del PR #126 detectó pérdida de preparación documental al eliminar,
+de contornos/módulos sin marco al convertir el modelo y de autoridad de espesor
+al cambiar vidrio histórico. Las tres causas están corregidas sobre
+`5224dbfba0f3f6c7d218639704bb013eceeb88dd`. Deshacer restaura la fila completa
+bajo RLS y guardas de sellado, y una edición posterior invalida la firma.
+Pasan 16 regresiones PostgreSQL y 74 de operaciones/golden. `make goldgen`
+añade tres casos de vidrio y conserva idénticos todos los casos anteriores.
+
+La nueva corrida completa con MiMo mide 21/26, editor/proyecto 19/21 (90,48 %).
+J01 pasa, sin errores terminales del proveedor. No se seleccionan mejores casos
+de otras corridas; la medición anterior 20/26 y su error J01 siguen siendo hechos
+históricos. J04/J08 conservan ausencia de precios/revisiones, F03 falta de rol y
+F01/F02 resultado incorrecto, sin inventar cantidades técnicas. La fuente y el
+estado persistente permanecen iguales; no se ejecutan acciones consecuentes.
+
+Los gates finales pasan 740 motor (+2 xfail), 1 205 backend y 806 frontend,
+1 101 pgTAP, 380 integraciones, 11 E2E y ocho upgrades poblados PG16. El stack
+del gate se limpia. Se repiten los flujos E02/E04/E08/J02/J03 y chips con Enter,
+27 capturas de recorrido, diez de estados y 24 comparaciones formales sin
+hallazgos nuevos. El botón Deshacer y su confirmación quedan visibles en las
+capturas del lote. Las dos rondas editoriales y R1–R20 se documentan en la
+aceptación. Los procesos propios de app están detenidos; CI/merge pendientes
+de publicar esta revisión en el PR #126.

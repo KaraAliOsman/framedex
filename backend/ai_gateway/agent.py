@@ -13,6 +13,9 @@ from __future__ import annotations
 
 import json
 import re
+import os
+from pathlib import Path
+import time
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -32,13 +35,14 @@ from ai_gateway.context import (
     _BUILDERS,
     _ContextError,
     _cut,
-    _jsonb,
     build_context,
     guarded,
     rows,
 )
 from authentication.errors import contract_error
-from projects import design_assist, service as projects_service
+from projects import design_assist, service as projects_service, ops_registry
+from ai_gateway.engine_tools import EngineTools, TOOLS as ENGINE_TOOLS
+from dekopen_engine.design_operations import REGISTRY as OPERATIONS, OperationError
 
 CAPABILITY = "agent"
 
@@ -77,9 +81,12 @@ PREPARE_TOOLS = {
     "upload_document": "upload_document",
     "review_catalog": "create_catalog_candidates",
     "upload_certificate": "upload_certificate",
+    "prepare_purchase": "prepare_purchase",
+    "prepare_payment_link": "prepare_payment_link",
 }
 
 ARTIFACT_TOOLS = {
+    "blockers": "get_blockers",
     "product_draft": "create_product_draft",
     "project_draft": "create_project_draft",
     "quote_draft": "create_quote_draft",
@@ -94,9 +101,21 @@ ARTIFACT_TOOLS = {
 
 MAX_GOAL = 2000
 MAX_REPLY = 4000
-MAX_STEPS = 8
-MAX_QUERIES = 3
-MAX_ROUNDS = 3  # invokes: goal → up to two observe-and-replan turns
+def _limit(name, default, maximum):
+    raw = os.environ.get(f"AI_AGENT_{name}", str(default))
+    try:
+        value = int(raw)
+    except ValueError as error:
+        raise ValueError(f"AI_AGENT_{name}: configuración inválida") from error
+    if not 1 <= value <= maximum:
+        raise ValueError(f"AI_AGENT_{name}: fuera de rango")
+    return value
+
+
+MAX_STEPS = _limit("MAX_STEPS", 20, 50)
+MAX_QUERIES = _limit("MAX_QUERIES", 6, 12)
+MAX_ROUNDS = _limit("MAX_ROUNDS", 6, 12)
+TOTAL_TIMEOUT_S = _limit("TOTAL_TIMEOUT_S", 180, 600)
 # A reply that fails numeric grounding gets one corrective provider round
 # before the job fails — conversational enumerations are fixable, invented
 # figures are not.
@@ -143,48 +162,11 @@ PREPARE_ROUTES: dict[str, tuple[str, tuple[str, ...]]] = {
     "optimize_work_order": ("/production", ()),
     "review_catalog": ("/catalogs/systems", ()),
     "upload_certificate": ("/settings/general", ()),
+    "prepare_purchase": ("/purchasing", ()),
+    "prepare_payment_link": ("/projects/{project_id}", ("project_id",)),
 }
 
-AGENT_SYSTEM = """Eres DEKOPEN Agente — el agente completo de una aplicación profesional de ventanas y puertas (español chileno).
-
-Recibes un JSON con:
-- "goal": lo que el usuario quiere lograr.
-- "surface": la superficie donde está trabajando.
-- "context": proyección tipada de los datos REALES de su organización — tu única fuente de verdad.
-- "observations": resultados de las consultas que pediste en turnos anteriores de esta misma meta.
-- "history": la conversación previa.
-- "actions": los tipos de paso permitidos.
-- "product": (solo en surface="position") el diseño en edición: modules[] y couplings[] con sus ids y medidas reales — son los refs válidos para "ops".
-
-Respondes SOLO un JSON:
-{
-  "reply": "qué encontraste / qué hiciste / qué falta — breve y concreto en español",
-  "steps": [pasos],
-  "warnings": ["alertas reales que el contexto evidencia"],
-  "plan": [{"label": "qué harás — solo cuando la meta pida trabajo de varios pasos"}],
-  "questions": ["pregunta concreta al usuario — solo cuando falte un dato que solo la persona tiene"],
-  "claims": [{"text": "afirmación verificable", "evidence": ["ids que el contexto u observaciones mostraron"]}]
-}
-
-"plan", "questions" y "claims" son opcionales pero el trabajo debe verse: si la meta pide varias acciones, emite "plan"; si falta un dato crítico que solo la persona tiene, pregunta en "questions" en vez de adivinar; toda afirmación con números o estados importantes va en "claims" con su evidencia (un claim sin evidencia citable se descarta).
-
-Tipos de paso:
-- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief|purchase_plan|production_plan|quotation_complete|project_from_documents|catalog_compiler|customer_comms","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
-- {"kind":"navigate","path":"/ruta","label":"..."} — navegación dentro de la app. Todo UUID en el path debe venir del contexto o de una observación.
-- {"kind":"ops","ops":[...],"label":"..."} — SOLO cuando el usuario está en una posición de diseño (surface="position" y el pedido trae "product"). Cada op usa EXACTAMENTE los campos del contrato — nunca "refs", "value" ni otros nombres:
-  set_module_count {count} | add_unit {side:"left"|"right"} | remove_unit {module} | duplicate_module {module} | add_stacked_unit {module} | insert_module {coupling} | remove_coupling {coupling} | set_coupling_kind {coupling, kind:"INLINE|STACKED|TEE|CORNER"} | set_module_width {module, width_mm} | set_total_width {width_mm} | set_height {height_mm} | equalize_widths {} | equalize_angles {} | set_coupling_angle {coupling, angle_deg} | set_opening {module, opening:"FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY"} | set_glass {module, sku} | set_glass_thickness {module, mm} | set_panel {module, sku|null}
-  "module"/"coupling" toman el "ref" (id) de product.modules[]/product.couplings[]; para una unidad creada por add_unit en la misma secuencia usa "added_m1"... ("added_c1"... para uniones nuevas). Las medidas solo pueden citar números de la meta.
-- {"kind":"prepare","action":"emit_revision|release_work_order|optimize_work_order|register_payment|upload_document|review_catalog|upload_certificate","path":"/ruta","label":"..."} — prepara una acción consecuente; la persona la confirma en la superficie real. Nunca la ejecutes tú. El "path" DEBE seguir la plantilla de actions.prepare_routes[action] rellenando {id} con el UUID real de la entidad (uno que el contexto o las observaciones ya mostraron).
-- {"kind":"batch_ops","targets":{...},"ops":[...],"label":"..."} — SOLO en surface="project" con context.editable=true: propone el MISMO set de ops sobre muchas posiciones del proyecto a la vez ("todas las fijas a abatible", "copia el vidrio", "ancho total 1500"). targets: {"typology":"ALL"|tipología exacta del listado de posiciones, "position_ids":[uuid,...] (opcional — solo ids que context.positions u observaciones mostraron)}. ops: mismo contrato que "ops", pero solo ops de ajuste (set_opening, set_glass, set_glass_thickness, set_panel, set_module_width, set_total_width, set_height, equalize_widths, equalize_angles, set_coupling_kind, set_coupling_angle) — nunca agregar/quitar módulos ni uniones. "module" acepta el ref real de esa posición o "*" para TODOS los módulos de cada posición; "coupling" igual. Consulta surface="position" antes para conocer los refs reales; si no tienes refs y la op es por-módulo usa "*". Medidas solo citan números de la meta.
-- {"kind":"artifact","artifact":{"kind":"quote_draft|message|purchase_plan|production_plan|project_draft|catalog_review|comparison|document_preview","title":"...","payload":{...},"references":["ids del contexto"]}} — produce un borrador inspeccionable y reutilizable (no muta nada). Úsalo cuando la meta pida un documento, plan, comparación o resumen que la persona reutilizará fuera del chat — un artefacto perdido en la conversación no sirve. payload solo lleva datos del contexto/observaciones/meta; references lleva los ids que respaldan el contenido.
-
-Reglas duras:
-- Solo citas números (medidas, precios, cantidades, SKUs, ids) que estén literalmente en el contexto, las observaciones o la meta del usuario. Nada inventado.
-- Nunca inventes fechas, plazos, estados, montos ni datos de contacto — si el contexto no los muestra, dilo y señala qué falta.
-- "query" es cómo miras: si la meta requiere datos que no ves, consulta antes de responder. Si tras dos rondas sigues sin el dato, dilo claramente.
-- Los pasos se ejecutan en orden: tus "query" ya vienen resueltas; los "navigate"/"ops"/"prepare" la persona los confirma. Máximo 8 pasos en total.
-- Meta ambigua → reply explicando lo que falta y cero pasos de mutación. Jamás adivines medidas, ids ni estados.
-- Sin texto fuera del JSON."""
+AGENT_SYSTEM = Path(__file__).with_name("prompts").joinpath("agent-v2.md").read_text(encoding="utf-8")
 
 
 # §08-WH — workflow surfaces ride the same agent runtime but answer with a
@@ -446,6 +428,7 @@ def _queries(
     document: Any,
     seen: set[str],
     observed: frozenset[str],
+    limit: int = MAX_QUERIES,
 ) -> tuple[list[dict], frozenset[str]]:
     """Execute the model's query steps — each is just another typed
     projection under the caller's RLS. Failed lookups return their error code
@@ -457,7 +440,7 @@ def _queries(
     observations: list[dict] = []
     refs_union: frozenset[str] = frozenset()
     for item in steps if isinstance(steps, list) else []:
-        if len(observations) >= MAX_QUERIES:
+        if len(observations) >= limit:
             break
         if not isinstance(item, dict) or item.get("kind") != "query":
             continue
@@ -685,7 +668,7 @@ def _batch_positions(
     wanted = typology.strip().upper() if isinstance(typology, str) else None
     positions = rows(
         "SELECT p.id, p.position_index, p.location_tag, p.typology, "
-        "p.width_mm, p.height_mm, p.system_id, p.parametric_tree "
+        "p.width_mm, p.height_mm, p.system_id, p.parametric_tree, p.color_interior, p.color_exterior, p.bom_snapshot "
         "FROM public.project_positions p "
         "WHERE p.org_id=%s AND p.project_id=%s " + where + " ORDER BY p.position_index",
         params,
@@ -758,7 +741,7 @@ def _batch_ops_step(
     items: list[dict] = []
     for position in positions[:MAX_BATCH_ITEMS]:
         at = f"position_{position['position_index']}"
-        product = _jsonb(position.get("parametric_tree"))
+        product = ops_registry.product_from_position(position)
         summary = design_assist._summary(product)
         if summary is None:
             # Classic (non-assembly) positions can't be batch-edited — the
@@ -781,7 +764,12 @@ def _batch_ops_step(
         if werror is not None:
             rejected.append({"op": "batch_ops", "reason": f"{at}:{werror}"})
             continue
-        accepted, dropped = design_assist._validate_ops(expanded, summary, catalog, declared)
+        if catalog.get("params") is not None:
+            from projects.finishes import position_finish_code
+            simulation = ops_registry.simulate_ops(org_id, product, expanded, position["system_id"], position_finish_code(position))
+            accepted, dropped = (simulation["ops"], []) if simulation["valid"] else ([], [{"op": "batch_ops", "reason": "simulation_invalid"}])
+        else:
+            accepted, dropped = design_assist._validate_ops(expanded, summary, catalog, declared)
         for entry in dropped:
             rejected.append({**entry, "reason": f"{at}:{entry['reason']}"})
         if accepted:
@@ -837,11 +825,30 @@ def _act(
     observed_refs = _context_refs(context)
     observations: list[dict] = []
     all_observations: list[dict] = []
+    started = time.monotonic()
+    trusted_goal = goal + " " + " ".join(str(turn.get("text") or turn.get("content") or turn.get("reply") or "")
+                    for turn in (history if history_trusted else []) if isinstance(turn, dict) and turn.get("role") in ("user", "agent"))
+    engine_tools = EngineTools(org_id=org_id, user_id=user_id, refs=refs, product=product,
+                               observed_refs=observed_refs, goal=trusted_goal, max_calls=MAX_QUERIES)
+    engine_tools.numeric_evidence |= _grounding_values(context, "")
+    has_tree = bool(product and isinstance(product, dict) and any(
+        isinstance(module.get("tree"), dict) for module in product.get("modules", product.get("assembly", {}).get("modules", []))
+    ))
+    if surface == "position" and has_tree:
+        for tool in ("list_catalog_options", "calculate_position"):
+            output, _ = engine_tools.call(tool, {})
+            all_observations.append({"surface": tool, "context": output})
+            contexts.append(output)
+            observed_refs |= _context_refs(output)
+        engine_tools.observed_refs = observed_refs
     debited = 0
     audit_id = ""
     model = ""
     document: Any = {}
     for round_index in range(MAX_ROUNDS):
+        remaining = TOTAL_TIMEOUT_S - (time.monotonic() - started)
+        if remaining <= 0:
+            raise contract_error(503, "ai_agent_timeout", "El trabajo llegó a su tiempo máximo. Reintenta con una petición más acotada.")
         # Cooperative cancel, checked between provider rounds: a cancel that
         # landed mid-run (direct CANCELED write or signal row) stops the
         # loop before the next round burns another provider call.
@@ -860,12 +867,13 @@ def _act(
             provider_options={
                 "system": WORKFLOW_SYSTEM.get(surface, AGENT_SYSTEM),
                 "json_output": True,
+                "timeout_s": remaining,
             },
             input_payload={
                 "goal": goal,
                 "surface": surface,
                 "context": context,
-                "observations": observations,
+                "observations": all_observations,
                 "history": history,
                 "actions": {
                     "query_surfaces": sorted(REQUIRED_REFS),
@@ -876,6 +884,9 @@ def _act(
                     "ops_available": surface == "position" and product is not None,
                 },
                 "product": product,
+                "operations": OPERATIONS,
+                "tools": ENGINE_TOOLS,
+                "limits": {"steps": MAX_STEPS, "queries": MAX_QUERIES, "rounds": MAX_ROUNDS},
                 "product_fields": (
                     "product.modules[].id|width_mm|height_mm|contour|frameless "
                     "y product.couplings[].id|angle_deg|kind|modules|edges"
@@ -907,8 +918,29 @@ def _act(
             document=document,
             seen=seen_queries,
             observed=observed_refs,
+            limit=max(0, MAX_QUERIES - (len(seen_queries) - 1) - len(engine_tools.calls)),
         )
         observed_refs = observed_refs | new_observed
+        engine_tools.observed_refs = observed_refs
+        engine_tools.max_calls = MAX_QUERIES - (len(seen_queries) - 1)
+        for observation in observations:
+            engine_tools.numeric_evidence |= _grounding_values(observation.get("context"), "")
+        calls = [call for call in (document.get("tool_calls") or []) if isinstance(call, dict)]
+        if has_tree:
+            calls.extend({"name": "simulate_ops", "arguments": {"ops": step["ops"]}}
+                         for step in document.get("steps", []) if isinstance(step, dict) and step.get("kind") == "ops" and isinstance(step.get("ops"), list))
+        calls.extend({"name": "preview_project_operations", "arguments": {"ops": step["ops"]}}
+                     for step in document.get("steps", []) if isinstance(step, dict) and step.get("kind") == "project_ops" and isinstance(step.get("ops"), list))
+        for call in calls[:MAX_QUERIES]:
+            name, arguments = call.get("name"), call.get("arguments", {})
+            try:
+                output, fresh = engine_tools.call(name, arguments)
+            except OperationError as error:
+                output, fresh = {"error": error.code, "detail": str(error)}, True
+            if fresh:
+                observations.append({"surface": name, "context": output})
+                observed_refs |= _context_refs(output)
+                engine_tools.observed_refs = observed_refs
         all_observations.extend(observations)
         contexts.extend(
             observation["context"]
@@ -943,10 +975,15 @@ def _act(
     grounding = _grounding_values(
         {"context": context, "observations": all_observations}, declared_text
     )
+    # Word quantities are declared intent too ("tres paños", "cuatro copias").
+    grounding |= design_assist._declared_values(declared_text)
     regrounded = False
     for reground in range(MAX_REGROUNDS):
         if _grounded(reply, grounding):
             break
+        remaining = TOTAL_TIMEOUT_S - (time.monotonic() - started)
+        if remaining <= 0:
+            raise contract_error(503, "ai_agent_timeout", "El trabajo llegó a su tiempo máximo. Reintenta con una petición más acotada.")
         # One corrective round: the model is told exactly which numbers
         # aren't citable so it can rephrase instead of the whole job failing
         # on a conversational enumeration. Channels it omits keep the prior
@@ -960,6 +997,7 @@ def _act(
             provider_options={
                 "system": WORKFLOW_SYSTEM.get(surface, AGENT_SYSTEM),
                 "json_output": True,
+                "timeout_s": remaining,
             },
             input_payload={
                 "goal": goal,
@@ -1052,6 +1090,7 @@ def _act(
 
     steps: list[dict] = []
     rejected: list[dict] = []
+    project_drafts = []
     for item in document.get("steps") or []:
         if len(steps) >= MAX_STEPS:
             break
@@ -1060,6 +1099,21 @@ def _act(
         kind = item.get("kind")
         if kind == "query":
             continue  # executed above — `queries` reports them as provenance
+        if kind == "project_ops":
+            try:
+                simulation, _ = engine_tools.call("preview_project_operations", {"ops": item.get("ops")})
+            except OperationError as error:
+                simulation = {"valid": False, "error": error.code}
+            if simulation.get("valid"):
+                steps.append({"kind": "project_ops", "tool": "preview_project_operations", "ops": simulation["ops"],
+                              "simulation": simulation, "label": str(item.get("label") or "Cambios de posiciones")[:MAX_LABEL]})
+                added = [change["after"] for change in simulation["diff"] if change["kind"] == "add"]
+                if added:
+                    project_drafts.append({"kind": "project_draft", "title": "Posiciones propuestas", "payload": {"positions": added},
+                                           "references": [str(refs.get("project_id"))], "tool": "preview_project_operations"})
+            else:
+                rejected.append({"op": "project_ops", "reason": simulation.get("error", "simulation_invalid")})
+            continue
         if kind == "ops":
             if summary is None or catalog is None:
                 # The surface can't validate ops (no live product, no bound
@@ -1075,9 +1129,18 @@ def _act(
                     }
                 )
                 continue
-            ops, dropped = design_assist._validate_ops(
-                item.get("ops"), summary, catalog, declared
-            )
+            simulation = None
+            if has_tree:
+                try:
+                    simulation, _ = engine_tools.call("simulate_ops", {"ops": item.get("ops")})
+                except OperationError as error:
+                    simulation = {"valid": False, "error": error.code}
+                if simulation.get("valid"):
+                    ops, dropped = simulation["ops"], []
+                else:
+                    ops, dropped = [], [{"op": "ops", "reason": simulation.get("error") or "simulation_invalid"}]
+            else:
+                ops, dropped = design_assist._validate_ops(item.get("ops"), summary, catalog, declared)
             rejected.extend(dropped)
             if ops:
                 steps.append(
@@ -1085,6 +1148,7 @@ def _act(
                         "kind": "ops",
                         "tool": "preview_commands",
                         "ops": ops,
+                        **({"simulation": simulation} if simulation is not None else {}),
                         "label": str(item.get("label") or "").strip()[:MAX_LABEL]
                         or "Cambios de diseño",
                     }
@@ -1115,17 +1179,50 @@ def _act(
         for item in (document.get("steps") or [])
         if isinstance(item, dict) and item.get("kind") == "artifact"
     ]
+    # Some JSON providers return a lone draft at the root despite the step
+    # envelope. Preserve that proposal through the SAME allowlist/grounding
+    # checks; it never supplies an operation or authorizes a mutation.
+    if isinstance(document.get("artifact"), dict):
+        raw_artifacts.append(document["artifact"])
+    raw_artifacts = [
+        {**item, "references": list(item["references"].values())}
+        if isinstance(item, dict) and isinstance(item.get("references"), dict)
+        else item
+        for item in raw_artifacts
+    ]
     validated_artifacts = []
     for artifact in jobs.artifacts(raw_artifacts, context_refs_all):
         # Ungrounded payloads are dropped, not displayed (review AI-02).
-        if not _payload_grounded(
+        if not _grounded(artifact["title"], grounding) or not _payload_grounded(
             artifact.get("payload") or {}, grounding, context_refs_all
         ):
             dropped_ungrounded += 1
             continue
+        if artifact["kind"] == "quote_draft" and "discount_pct" in artifact["payload"]:
+            artifact = {**artifact, "payload": {**artifact["payload"], "confirmed": False}}
         validated_artifacts.append(
             {**artifact, "tool": ARTIFACT_TOOLS.get(artifact.get("kind"), "create_draft")}
         )
+    validated_artifacts.extend(project_drafts)
+    # Read-only tool evidence is already verified. The model need not copy
+    # long blocker lists or catalog identifiers into a second JSON structure.
+    for observation in all_observations:
+        evidence = observation.get("context")
+        if not isinstance(evidence, dict) or "error" in evidence:
+            continue
+        if observation["surface"] == "get_blockers" and "blockers" in evidence:
+            validated_artifacts = [a for a in validated_artifacts if a["kind"] != "blockers"]
+            validated_artifacts.append({"kind": "blockers", "title": "Qué falta",
+                "payload": {"blockers": evidence["blockers"]},
+                "references": [str(value) for value in refs.values() if str(value) in context_refs_all],
+                "tool": "get_blockers"})
+        if observation["surface"] == "list_catalog_options" and not steps and re.search(r"vidrio|termopanel|dvh", goal, re.I):
+            skus = [row["sku"] for row in evidence.get("glass", [])]
+            if skus:
+                validated_artifacts.append({"kind": "catalog_candidates", "title": "Vidrios disponibles",
+                    "payload": {"skus": skus, "options": evidence.get("clarify_options", [])},
+                    "references": [evidence["system_id"]] if evidence.get("system_id") in context_refs_all else [],
+                    "tool": "list_catalog_options"})
     claims, references, dropped_claims = jobs.claims_and_references(
         document.get("claims"), context_refs_all
     )
@@ -1167,6 +1264,24 @@ def _act(
             dropped_ungrounded += 1
             continue
         questions.append(text)
+    clarification = None
+    raw_clarify = document.get("clarify")
+    if isinstance(raw_clarify, dict) and isinstance(raw_clarify.get("question"), str):
+        question = raw_clarify["question"].strip()[:400]
+        if question and _grounded(question, grounding):
+            options = []
+            catalog_options = [option for observation in all_observations
+                               for option in observation.get("context", {}).get("clarify_options", [])
+                               if isinstance(option, dict)]
+            for option in (raw_clarify.get("options") or [])[:12]:
+                if not isinstance(option, dict):
+                    continue
+                label, value = option.get("label"), option.get("value")
+                if isinstance(label, str) and isinstance(value, str) and {"label": label, "value": value} in catalog_options and _grounded(label, grounding) and _grounded(value, grounding):
+                    options.append({"label": label[:120], "value": value[:400]})
+            clarification = {"question": question, "options": options}
+            if question not in questions:
+                questions.append(question)
     if dropped_ungrounded:
         warnings.append(
             f"{dropped_ungrounded} dato(s) del modelo sin evidencia en contexto descartado(s)"
@@ -1181,6 +1296,9 @@ def _act(
         "claims": claims,
         "references": references,
         "questions": questions,
+        "clarify": clarification,
+        "metrics": {"rounds": round_index + 1, "tool_calls": len(engine_tools.calls),
+                    "elapsed_ms": round((time.monotonic() - started) * 1000), "limits": {"steps": MAX_STEPS, "queries": MAX_QUERIES, "rounds": MAX_ROUNDS, "timeout_s": TOTAL_TIMEOUT_S}},
         "artifacts": validated_artifacts,
         "steps": steps,
         "queries": [
@@ -1194,8 +1312,8 @@ def _act(
             *[
                 {
                     "surface": observation["surface"],
-                    "tool": QUERY_TOOLS.get(observation["surface"], "get_context"),
-                    "status": "ok" if "context" in observation else "error",
+                    "tool": observation["surface"] if observation["surface"] in {tool["name"] for tool in ENGINE_TOOLS} else QUERY_TOOLS.get(observation["surface"], "get_context"),
+                    "status": "error" if "context" not in observation or "error" in observation["context"] else "ok",
                 }
                 for observation in all_observations
             ],
@@ -1268,17 +1386,21 @@ def act(
         if isinstance(o, dict)
     }
     pending_approvals = any(
-        step.get("kind") in ("prepare", "ops", "batch_ops")
+        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops")
         and (turn_index, step_index) not in resolved
         for turn_index, turn_row in enumerate(transcript)
         for step_index, step in enumerate(turn_row.get("steps") or [])
     ) or any(
-        step.get("kind") in ("prepare", "ops", "batch_ops")
+        step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops")
         for step in result["steps"]
+    ) or any(
+        artifact.get("kind") == "quote_draft" and artifact.get("payload", {}).get("confirmed") is False
+        and "discount_pct" in artifact.get("payload", {})
+        for artifact in result["artifacts"]
     )
     state = (
         "WAITING_FOR_USER"
-        if result["questions"]
+        if result["questions"] or result["clarify"] or (result["rejected"] and not result["steps"])
         else "WAITING_FOR_APPROVAL" if pending_approvals else "SUCCEEDED"
     )
     transcript.append(
@@ -1290,6 +1412,8 @@ def act(
             "claims": result["claims"],
             "references": result["references"],
             "questions": result["questions"],
+            "clarify": result["clarify"],
+            "metrics": result["metrics"],
             "artifacts": result["artifacts"],
             "steps": result["steps"],
             "warnings": result["warnings"],

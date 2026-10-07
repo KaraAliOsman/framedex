@@ -17,6 +17,7 @@ from engine.tests.hardware_cases import hardware_cases
 from engine.tests.finish_cases import finish_cases
 from engine.tests.extra_cases import extra_cases
 from engine.tests.mounting_cases import mounting_cases
+from engine.tests.operation_cases import operation_cases
 
 SNAPSHOT = Path(__file__).resolve().parents[1] / "tests" / "golden_example.json"
 FAMILY_SNAPSHOT = SNAPSHOT.with_name("golden_catalog_families.json")
@@ -26,6 +27,11 @@ HARDWARE_SNAPSHOT = SNAPSHOT.with_name("golden_hardware_classes.json")
 FINISH_SNAPSHOT = SNAPSHOT.with_name("golden_finishes.json")
 EXTRA_SNAPSHOT = SNAPSHOT.with_name("golden_extras.json")
 MOUNTING_SNAPSHOT = SNAPSHOT.with_name("golden_mounting.json")
+OPERATION_SNAPSHOT = SNAPSHOT.with_name("golden_design_operations.json")
+
+
+def generated_operation_bytes() -> bytes:
+    return (json.dumps(operation_cases(), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
 
 def generated_mounting_bytes() -> bytes:
@@ -123,6 +129,8 @@ def main() -> None:
             raise SystemExit("Accessory golden byte drift: run make goldgen and review the diff")
         if not MOUNTING_SNAPSHOT.is_file() or MOUNTING_SNAPSHOT.read_bytes() != generated_mounting_bytes():
             raise SystemExit("Mounting golden byte drift: run make goldgen and review the diff")
+        if not OPERATION_SNAPSHOT.is_file() or OPERATION_SNAPSHOT.read_bytes() != generated_operation_bytes():
+            raise SystemExit("Editing golden byte drift: run make goldgen and review the diff")
     else:
         SNAPSHOT.write_bytes(generated_bytes())
         FAMILY_SNAPSHOT.write_bytes(generated_family_bytes())
@@ -132,6 +140,7 @@ def main() -> None:
         FINISH_SNAPSHOT.write_bytes(generated_finish_bytes())
         EXTRA_SNAPSHOT.write_bytes(generated_extra_bytes())
         MOUNTING_SNAPSHOT.write_bytes(generated_mounting_bytes())
+        OPERATION_SNAPSHOT.write_bytes(generated_operation_bytes())
         print(f"Generated {SNAPSHOT.relative_to(SNAPSHOT.parents[2]).as_posix()}")
 
 

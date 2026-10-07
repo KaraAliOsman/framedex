@@ -1,0 +1,64 @@
+.operation-preview {
+  border-top: 1px solid var(--border-default);
+  padding-block: var(--space-2);
+  font-size: var(--type-body);
+}
+.operation-preview__view {
+  color: var(--text-small-muted);
+}
+.operation-preview__drawings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.operation-preview figure {
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border-default);
+  min-width: 0;
+  background: var(--surface-sheet);
+}
+.operation-preview figcaption {
+  font-weight: 600;
+}
+.operation-preview .product-front-svg {
+  width: 100%;
+  height: 140px;
+  background: var(--canvas-sheet);
+}
+.operation-preview__dimensions,
+.operation-preview__prices dd {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.operation-preview__prices {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-2);
+}
+.operation-preview__prices dd {
+  margin: 0;
+}
+.operation-preview pre {
+  max-height: 160px;
+  overflow: auto;
+}
+.operation-project__changes {
+  padding-left: var(--space-4);
+}
+.operation-project__changes > li > p {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.operation-project .ask-dock__action {
+  border-radius: var(--r-1);
+}
+.ask-dock__questions[aria-label="Aclaración del trabajo"] .ask-dock__chip {
+  border-radius: var(--r-1);
+}
+.operation-project button:focus-visible,
+.operation-preview summary:focus-visible,
+.ask-dock__questions[aria-label="Aclaración del trabajo"] button:focus-visible {
+  outline: var(--space-2px) solid var(--border-focus);
+  outline-offset: var(--space-2px);
+}

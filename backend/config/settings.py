@@ -129,6 +129,8 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
+        "DivisionReferenceEnum": ["START", "END", "CENTER"],
+        "ContourReferenceEnum": ["START", "END"],
         "CatalogProfileRoleEnum": ["FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "GLAZING_BEAD", "COUPLER", "ADDITIONAL", "THRESHOLD", "CHANNEL", "SLIDING_SASH", "INTERLOCK", "RAIL", "DOOR_SASH", "FRAME_EXTENSION", "SILL", "COVER_TRIM", "PLINTH"],
         "RoleEnum": ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER"],
         "MembershipRoleEnum": [
