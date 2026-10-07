@@ -116,7 +116,9 @@ export function AiWorkList({
               {STATES[work.job_state ?? work.status] ?? "Sin dato"}
             </span>
             {work.test_mode && <span className="status-chip">Modo de prueba</span>}
-            <time dateTime={work.created_at}>{formatDateTime(work.created_at)}</time>
+            <time className="ai-number" dateTime={work.created_at}>
+              {formatDateTime(work.created_at)}
+            </time>
             {work.ai_job_id && work.user_id === me?.user.id && (
               <Link
                 className="ui-button ui-button--small ui-button--ghost"

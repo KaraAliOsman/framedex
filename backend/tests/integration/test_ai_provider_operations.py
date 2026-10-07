@@ -235,6 +235,35 @@ def test_saved_configuration_does_not_inherit_previous_success(committed_commerc
     assert after["routes"][0]["checked_at"] is None
 
 
+def test_monthly_budget_counts_old_debits_without_duplicating_new_exchanges(committed_commercial_rows, monkeypatch):
+    org, _, users = committed_commercial_rows
+    monkeypatch.setattr(service, "provider_for", lambda _: SimpleNamespace(invoke=lambda **_: dict(RESULT)))
+    with monkeypatch.context() as old_transport:
+        old_transport.setattr(usage, "begin", lambda **_: None)
+        with as_user(users["ESTIMATOR"]):
+            old = service.invoke(org_id=org, user_id=users["ESTIMATOR"], capability="agent",
+                operation_key=str(uuid4()), input_payload={"goal": "legacy audited exchange"})
+    summary = usage.summary(org)
+    assert summary["capacity_credits"] == old["credits_debited"]
+    assert summary["tokens_prompt"] is None and summary["estimated_cost_usd"] is None
+    assert summary["users"][0]["capacity_credits"] == old["credits_debited"]
+    # Old transports did not create ai_settings either.
+    rows("INSERT INTO public.ai_settings(org_id,monthly_budget_credits) VALUES(%s,%s) ON CONFLICT DO NOTHING RETURNING org_id", [org, old["credits_debited"]])
+    with pytest.raises(ContractAPIException) as failure:
+        start(org, users["ESTIMATOR"])
+    assert failure.value.contract_code == "ai_budget_exceeded"
+    rows("UPDATE public.ai_settings SET monthly_budget_credits=NULL WHERE org_id=%s RETURNING org_id", [org])
+    key = str(uuid4())
+    with as_user(users["ESTIMATOR"]):
+        new = service.invoke(org_id=org, user_id=users["ESTIMATOR"], capability="agent",
+            operation_key=key, input_payload={"goal": "new audited exchange"})
+        assert service.invoke(org_id=org, user_id=users["ESTIMATOR"], capability="agent",
+            operation_key=key, input_payload={"goal": "new audited exchange"})["audit_id"] == new["audit_id"]
+    summary = usage.summary(org)
+    assert summary["calls"] == 2
+    assert summary["capacity_credits"] == summary["credits_debited"] == old["credits_debited"] + new["credits_debited"]
+
+
 def test_progress_commits_before_domain_rollback_and_lost_lease_aborts(committed_commercial_rows, monkeypatch):
     org, _, _ = committed_commercial_rows
     job = rows("INSERT INTO public.job_runs(org_id,type,state,locked_by,locked_at,payload,attempt) VALUES(%s,'ai.agent.run','RUNNING','worker-test',now(),'{}',1) RETURNING *", [org])[0]

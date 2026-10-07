@@ -56,7 +56,9 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
   const [budget, setBudget] = useState("");
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState<"save" | "probe" | null>(null);
-  const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
+  const [notice, setNotice] = useState<{ text: string; error?: boolean; credits?: number } | null>(
+    null,
+  );
   const query = useQuery({
     queryKey: ["ai", "settings", orgId],
     queryFn: async ({ signal }) => {
@@ -171,7 +173,8 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setNotice({
-        text: `${response.data.test_mode ? "Modo de prueba: " : "Conexión verificada: "}la propuesta superó el caso mínimo de medidas y la validación del motor. Consumió ${formatDecimal(response.data.credits_debited, 0)} créditos.`,
+        text: `${response.data.test_mode ? "Modo de prueba: " : "Conexión verificada: "}la propuesta superó el caso mínimo de medidas y la validación del motor.`,
+        credits: response.data.credits_debited,
       });
     } catch (error) {
       setNotice({
@@ -289,7 +292,10 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                   {route.checked_at && (
                     <p className="settings-hint">
                       Última respuesta:{" "}
-                      <time dateTime={route.checked_at}>{formatDateTime(route.checked_at)}</time>.
+                      <time className="ai-number" dateTime={route.checked_at}>
+                        {formatDateTime(route.checked_at)}
+                      </time>
+                      .
                     </p>
                   )}
                   <details className="ai-advanced">
@@ -298,6 +304,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                       <label>
                         Tiempo máximo (s)
                         <input
+                          className="ai-number"
                           type="number"
                           min={1}
                           max={180}
@@ -367,7 +374,9 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
             <section className="ai-month" aria-labelledby="ai-month-title">
               <h3 id="ai-month-title">Consumo del mes</h3>
               <p className="settings-hint">
-                Desde {formatDateTime(query.data.usage.month_start)} · horario de Chile.
+                Desde{" "}
+                <span className="ai-number">{formatDateTime(query.data.usage.month_start)}</span> ·
+                horario de Chile.
               </p>
               {query.data.usage.calls === 0 ? (
                 <p>
@@ -379,7 +388,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                     <dt>Tokens de entrada</dt>
                     <dd className="ai-number">
                       {query.data.usage.tokens_prompt === null ? (
-                        <UnknownValue cause="El proveedor no informó todos los tokens" />
+                        <UnknownValue cause="El registro no contiene todos los tokens del mes" />
                       ) : (
                         formatDecimal(query.data.usage.tokens_prompt, 0)
                       )}
@@ -389,7 +398,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                     <dt>Tokens de salida</dt>
                     <dd className="ai-number">
                       {query.data.usage.tokens_completion === null ? (
-                        <UnknownValue cause="El proveedor no informó todos los tokens" />
+                        <UnknownValue cause="El registro no contiene todos los tokens del mes" />
                       ) : (
                         formatDecimal(query.data.usage.tokens_completion, 0)
                       )}
@@ -417,8 +426,8 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
               )}
               <p className="settings-hint">
                 El presupuesto cuenta las solicitudes en curso y las respuestas del proveedor,
-                aunque una propuesta falle después. La billetera cobra solo las operaciones
-                auditadas que se confirmaron.
+                aunque una propuesta falle después. La billetera cobra los intercambios aceptados
+                que quedaron auditados.
               </p>
               <details className="ai-advanced">
                 <summary>¿De dónde sale? · Consumo mensual</summary>
@@ -428,11 +437,17 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                   al iniciar cada llamada. Los créditos cobrados provienen de la auditoría inmutable
                   de la billetera.
                 </p>
+                <p>
+                  Los débitos anteriores a este registro cuentan en el presupuesto, sin duplicar las
+                  llamadas nuevas. Si su medición no está completa, los tokens y el costo del mes
+                  quedan sin dato.
+                </p>
                 <Link to="/jobs?capability=all_ai">Revisar las llamadas del mes</Link>
               </details>
               <label className="ai-budget">
                 Presupuesto mensual (créditos de solicitudes)
                 <input
+                  className="ai-number"
                   inputMode="numeric"
                   value={budget}
                   onChange={(event) => {
@@ -497,6 +512,15 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                 className={notice.error ? "form-error" : "settings-hint"}
               >
                 {notice.text}
+                {notice.credits !== undefined && (
+                  <>
+                    {" "}
+                    Consumió <span className="ai-number">
+                      {formatDecimal(notice.credits, 0)}
+                    </span>{" "}
+                    créditos.
+                  </>
+                )}
               </p>
             )}
           </ValidatedForm>

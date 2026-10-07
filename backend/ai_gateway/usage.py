@@ -25,6 +25,7 @@ from pricing.repository import rows
 logger = logging.getLogger(__name__)
 _job: ContextVar[tuple | None] = ContextVar("ai_provider_job", default=None)
 CAPABILITIES = ("design_assist", "agent", "context_assist", "catalog_import")
+LEGACY_USAGE = " AND a.points_debited > 0 AND NOT EXISTS (SELECT 1 FROM public.ai_provider_usage u WHERE u.org_id=a.org_id AND u.operation_key=a.operation_key)"
 
 
 @contextmanager
@@ -94,6 +95,7 @@ def begin(*, org_id, user_id, route, operation_key, input_hash):
                 if old["status"] != "FAILED" or old["tokens_prompt"] is not None:
                     raise contract_error(409, "ai_operation_in_progress", "Esta solicitud ya consultó al proveedor o sigue en curso. Revisa Trabajos antes de iniciar otra.")
             consumed = rows("SELECT coalesce(sum(credits_reserved),0) AS consumed FROM public.ai_provider_usage WHERE org_id=%s AND created_at >= %s AND (status IN ('RUNNING','SUCCEEDED') OR tokens_prompt IS NOT NULL OR error_code IN ('ai_provider_error','ai_provider_timeout','ai_provider_output_too_large'))", [str(org_id), month_start()])[0]["consumed"]
+            consumed += rows("SELECT coalesce(sum(a.points_debited),0) AS consumed FROM public.ai_audit_logs a WHERE a.org_id=%s AND a.created_at >= %s" + LEGACY_USAGE, [str(org_id), month_start()])[0]["consumed"]
             budget = settings["monthly_budget_credits"]
             if budget is not None and int(consumed) + int(route["credits_cost"]) > budget:
                 rows("UPDATE public.ai_settings SET budget_notice_at=now() WHERE org_id=%s RETURNING org_id", [str(org_id)])
@@ -153,24 +155,27 @@ def summary(org_id, user_id=None):
         if user_id:
             parameters.append(str(user_id))
         records = rows("SELECT user_id,status,test_mode,credits_reserved,tokens_prompt,tokens_completion,estimated_cost_usd,error_code FROM public.ai_provider_usage WHERE org_id=%s AND created_at >= %s" + user_clause, parameters)
+        legacy = rows("SELECT a.user_id,a.points_debited FROM public.ai_audit_logs a WHERE a.org_id=%s AND a.created_at >= %s" + user_clause.replace("user_id", "a.user_id") + LEGACY_USAGE, parameters)
         settings = rows("SELECT * FROM public.ai_settings WHERE org_id=%s", [str(org_id)])
         debited = rows("SELECT coalesce(sum(points_debited),0) AS debited FROM public.ai_audit_logs WHERE org_id=%s AND created_at >= %s" + user_clause, parameters)[0]["debited"]
-    def totals(items):
-        complete = all(item["tokens_prompt"] is not None for item in items if item["status"] in ("RUNNING", "SUCCEEDED") or item["error_code"] in ('ai_provider_error','ai_provider_timeout','ai_provider_output_too_large'))
+    def totals(items, previous):
+        # Pre-upgrade paid audits are authoritative credits, but have no
+        # physical usage completeness marker or sealed monetary tariff.
+        complete = not previous and all(item["tokens_prompt"] is not None for item in items if item["status"] in ("RUNNING", "SUCCEEDED") or item["error_code"] in ('ai_provider_error','ai_provider_timeout','ai_provider_output_too_large'))
         charged = [item for item in items if item["tokens_prompt"] is not None]
         known_cost = all(item["estimated_cost_usd"] is not None for item in charged) and complete
-        return {"calls": len(items), "tokens_prompt": sum(item["tokens_prompt"] for item in charged) if complete else None,
+        return {"calls": len(items) + len(previous), "tokens_prompt": sum(item["tokens_prompt"] for item in charged) if complete else None,
                 "tokens_completion": sum(item["tokens_completion"] for item in charged) if complete else None,
-                "capacity_credits": sum(item["credits_reserved"] for item in items if item["status"] in ("RUNNING", "SUCCEEDED") or item["tokens_prompt"] is not None or item["error_code"] in ('ai_provider_error','ai_provider_timeout','ai_provider_output_too_large')),
+                "capacity_credits": sum(item["credits_reserved"] for item in items if item["status"] in ("RUNNING", "SUCCEEDED") or item["tokens_prompt"] is not None or item["error_code"] in ('ai_provider_error','ai_provider_timeout','ai_provider_output_too_large')) + sum(item["points_debited"] for item in previous),
                 "estimated_cost_usd": str(sum((item["estimated_cost_usd"] for item in charged), Decimal(0))) if known_cost and charged else None}
-    total = totals(records)
+    total = totals(records, legacy)
     budget = settings[0]["monthly_budget_credits"] if settings else None
     names = user_names(org_id)
     return {**total, "credits_debited": int(debited), "monthly_budget_credits": budget,
             "budget_blocked": budget is not None and total["capacity_credits"] >= budget,
             "budget_notice_at": str(settings[0]["budget_notice_at"]) if settings and settings[0]["budget_notice_at"] else None,
             "month_start": month_start().isoformat(),
-            "users": [{"user_id": user, "user_label": names.get(user), **totals([item for item in records if str(item["user_id"]) == user])} for user in sorted({str(item["user_id"]) for item in records})]}
+            "users": [{"user_id": user, "user_label": names.get(user), **totals([item for item in records if str(item["user_id"]) == user], [item for item in legacy if str(item["user_id"]) == user])} for user in sorted({str(item["user_id"]) for item in records + legacy})]}
 
 
 def user_names(org_id):

@@ -1,6 +1,10 @@
 .ai-settings {
   scroll-margin-top: var(--space-4);
 }
+.ai-settings a:not(.ui-button),
+.ai-work-list a:not(.ui-button) {
+  color: var(--interactive);
+}
 .ai-routes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

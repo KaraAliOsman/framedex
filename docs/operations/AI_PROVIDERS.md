@@ -67,6 +67,9 @@ adicional; cero: bloquea llamadas. La reserva se serializa por organización
 e incluye solicitudes en curso y respuestas pagadas, incluso si el dominio
 revierte después. Un timeout o fallo ambiguo conserva una reserva prudente.
 El bloqueo avisa al dueño; las funciones manuales siguen disponibles.
+Los débitos de IA anteriores a la migración también cuentan, desde su auditoría
+inmutable y sin duplicar intercambios nuevos. Si esa historia no tiene medición
+física completa, los tokens y el costo mensual quedan «Sin dato».
 
 `ai_provider_usage` conserva metadatos físicos sin contenido por una conexión
 independiente del rollback. Cada fallo tiene su propio intento. Intercambios
