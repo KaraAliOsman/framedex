@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: 0835e3f0834e2680674458693626617a84cc19f8
+verified_ref: 383a013e8dacc8651165c3b321dfd92a96bb2f6a
 sources:
   - docs/cola/prompts/IA1-diagnostico-evals.md
   - backend/ai_gateway/evals/cases.yaml
@@ -15,6 +15,19 @@ sources:
 ---
 
 # AI acceptance by outcome
+
+## IA3 · medición vigente (07-10-2026)
+
+La corrida final completa MiMo sobre `dd98ba5634f1f7ab0ccb653206e4bf06ea39742d` pasa 22/26:
+editor 13/13, proyecto 6/8, planta 1/3
+y general 2/2. Editor/proyecto 19/21. Conserva dominio,
+auditoría y billetera sin cambios; el delta físico explícito es 56 llamadas
+y 109 eventos. Véanse [aceptación](../../ai/IA3-ACEPTACION.md) y
+[comparativa completa](../../ai/evals/2026-10-07-ia3-comparativa-final.md).
+
+La corrida previa IA3 19/26 y la histórica IA2 21/26 permanecen completas,
+sin seleccionar resultados de otras ejecuciones. La fuente ejecutada es estable
+y los fallos del fixture/oráculo se conservan. Véase [proveedor](../product/ai-provider.md).
 
 ## IA2 · medición vigente (07-10-2026)
 

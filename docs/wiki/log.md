@@ -555,3 +555,25 @@ la actualización del head del PR. Se conservó el mismo PR y se reabrió para
 sincronizarlo con el commit publicado; solo se canceló un run duplicado del
 head anterior. No se modificaron ni omitieron checks. IA3 sigue inmediatamente
 con proveedor/Ajustes. `main` y los recursos del repositorio ajeno no se tocan.
+
+
+## 2026-10-07 — IA3 · proveedor real y aceptación final local
+
+La corrida final completa MiMo sobre `dd98ba5634f1f7ab0ccb653206e4bf06ea39742d` pasa 22/26:
+editor 13/13, proyecto 6/8, planta 1/3
+y general 2/2. Editor/proyecto 19/21. Conserva dominio,
+auditoría y billetera sin cambios; el delta físico explícito es 56 llamadas
+y 109 eventos. Véanse [aceptación](../ai/IA3-ACEPTACION.md) y
+[comparativa completa](../ai/evals/2026-10-07-ia3-comparativa-final.md).
+
+La referencia de código final es `383a013e8dacc8651165c3b321dfd92a96bb2f6a`. Pasan herramientas/visión/PDF
+renderizado reales, 28 regresiones de transporte/PDF, 17 integraciones de IA3/billetera,
+los cuatro gates (744 motor +2 xfail, 1.233 backend, 817 frontend) y Database Gate
+(1.136 pgTAP, 391 integraciones, 11 E2E y ocho upgrades PG16). El gate DB conserva
+ref a15abd2c; los cambios posteriores solo afectan plazo y presentación.
+Las 32 comparaciones formales no agregan hallazgos ni errores/desbordes.
+La propuesta ausente no conserva un enlace muerto, y una respuesta del proveedor
+no se presenta como operación aplicada. El último recorrido corto solo captura
+CONSULTING_PROJECT; las otras fases mantienen prueba de visibilidad independiente.
+Dos rondas y R1–R20 se documentan con alcance explícito. CI/merge siguen pendientes
+del PR hacia integración, sin modificar main ni recursos ajenos.

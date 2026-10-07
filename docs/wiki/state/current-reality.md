@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: 0835e3f0834e2680674458693626617a84cc19f8
+verified_ref: 383a013e8dacc8651165c3b321dfd92a96bb2f6a
 sources:
   - repository main
   - P00 foundation PR #114
@@ -24,6 +24,25 @@ sources:
 ---
 
 # Current reality
+
+## IA3 · código y aceptación verificados (07-10-2026)
+
+La corrida final completa MiMo sobre `dd98ba5634f1f7ab0ccb653206e4bf06ea39742d` pasa 22/26:
+editor 13/13, proyecto 6/8, planta 1/3
+y general 2/2. Editor/proyecto 19/21. Conserva dominio,
+auditoría y billetera sin cambios; el delta físico explícito es 56 llamadas
+y 109 eventos. Véanse [aceptación](../../ai/IA3-ACEPTACION.md) y
+[comparativa completa](../../ai/evals/2026-10-07-ia3-comparativa-final.md).
+
+Las rutas tenant, credenciales exclusivamente en servidor, herramientas nativas,
+reservas de presupuesto/historia, costo Decimal, fases y trazas están verificadas
+en el código `383a013e8dacc8651165c3b321dfd92a96bb2f6a`. Ajustes OWNER/MFA y Trabajos por actor recorren
+los cinco estados. 32 comparaciones formales no añaden hallazgos; el baseline
+histórico del asistente permanece para P17. Cuatro gates locales pasan 744
+motor (+2 xfail), 1.233 backend y 817 frontend; Database Gate pasa 1.136
+pgTAP, 391 integraciones, 11 E2E y ocho upgrades PG16 con limpieza verificada.
+El PR y el squash hacia integración se registran al terminar CI; no están acreditados aún.
+Véase [proveedor y autoridad](../product/ai-provider.md).
 
 ## IA2 · integrado y verificado (07-10-2026)
 

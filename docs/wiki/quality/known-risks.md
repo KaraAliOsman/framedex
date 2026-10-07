@@ -57,8 +57,11 @@ This page records recurring failure modes. It does **not** assert that every ite
 D01 adds family guards, exact cut/refinement rules, reviewed import tokens and
 append-only publication/retraction history. Its upgrade gate checks old DEMO
 products without changing issued authority. Remaining boundaries: scanned images
-need a verified multimodal route; catalog data stays synthetic until a supplier
-source is reviewed. See [the authority page](../product/catalog-authority.md).
+were pending a verified multimodal route at D01. IA3 later verified real MiMo
+vision and bounded scanned-PDF rendering, while literal-evidence and human-review
+gates remain. Catalog data stays synthetic until a supplier source is reviewed.
+See [the authority page](../product/catalog-authority.md) and
+[provider evidence](../product/ai-provider.md).
 
 ## Pricing/quotation
 
