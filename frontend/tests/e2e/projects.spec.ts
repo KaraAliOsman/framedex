@@ -1,4 +1,4 @@
-import { expect, type Page, type TestInfo } from "@playwright/test";
+import { expect, type Page, type Route, type TestInfo } from "@playwright/test";
 
 import type {
   EngineAssemblyCalculateResponse,
@@ -17,16 +17,37 @@ async function responseTo<T>(
   status: number,
   action: () => Promise<unknown>,
 ): Promise<T> {
-  const [response] = await Promise.all([
-    page.waitForResponse(
-      (candidate) =>
-        candidate.request().method() === method && new URL(candidate.url()).pathname === path,
-      { timeout: 20_000 },
-    ),
-    action(),
-  ]);
-  expect(response.status(), `${method} ${path}`).toBe(status);
-  return (await response.json()) as T;
+  // Read the real HTTP body before delivering it to the app. Clone/reload can
+  // navigate immediately, which releases Chromium's response-body identifier.
+  // This forwards the unchanged response; status and domain assertions remain.
+  const matchesPath = (url: URL) => url.pathname === path;
+  const bodies = new Map<string, T>();
+  const forward = async (route: Route) => {
+    if (route.request().method() !== method) {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch();
+    const body = await response.body();
+    bodies.set(route.request().url(), JSON.parse(body.toString("utf-8")) as T);
+    await route.fulfill({ response, body });
+  };
+  await page.route(matchesPath, forward);
+  try {
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (candidate) =>
+          candidate.request().method() === method && new URL(candidate.url()).pathname === path,
+        { timeout: 20_000 },
+      ),
+      action(),
+    ]);
+    expect(response.status(), `${method} ${path}`).toBe(status);
+    expect(bodies.has(response.url()), `${method} ${path} real response body`).toBe(true);
+    return bodies.get(response.url())!;
+  } finally {
+    await page.unroute(matchesPath, forward);
+  }
 }
 
 async function screenshot(page: Page, info: TestInfo, name: string): Promise<void> {
