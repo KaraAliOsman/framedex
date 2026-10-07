@@ -7,6 +7,7 @@ import { DimLoader } from "../../ui/Signature";
 import { ProductFrontSvg } from "../canvas/ProductFrontSvg";
 import { resolveMembers } from "../canvas/members";
 import { isProductModel, type ProductJson } from "../canvas/productEditing";
+import type { OpeningLeafFact } from "../canvas/physicalOpenings";
 import { formatMoney } from "../money";
 import "./operations.css";
 
@@ -18,19 +19,30 @@ type Price = {
   delta_net?: string | null;
   source?: string;
 };
+type DrawingCalculation = {
+  modules?: { module_id: string; result?: { opening_leaves?: OpeningLeafFact[] } }[];
+};
 
 function Drawing({
   product,
   options,
   color,
+  engine,
 }: {
   product: ProductJson;
   options: DesignOptions;
   color?: string;
+  engine?: DrawingCalculation | null;
 }): JSX.Element {
   return (
     <ProductFrontSvg
       product={product}
+      openingFacts={Object.fromEntries(
+        (engine?.modules ?? []).map((module) => [
+          module.module_id,
+          module.result?.opening_leaves ?? [],
+        ]),
+      )}
       members={resolveMembers(options, color)}
       selectedId={null}
       issues={[]}
@@ -59,7 +71,14 @@ export function SimulationPreview({
   const [options, setOptions] = useState<Record<string, DesignOptions>>({});
   const [error, setError] = useState(false);
   const before = value?.before as
-    { product?: ProductJson; system_id?: string; color?: string; price?: Price } | undefined;
+    | {
+        product?: ProductJson;
+        system_id?: string;
+        color?: string;
+        price?: Price;
+        engine?: DrawingCalculation | null;
+      }
+    | undefined;
   const systemIds = [
     ...new Set([value?.system_id, before?.system_id].filter((id): id is string => !!id)),
   ];
@@ -99,8 +118,15 @@ export function SimulationPreview({
       product: beforeProduct,
       system: before.system_id ?? value.system_id,
       color: before.color,
+      engine: before.engine,
     },
-    { label: "Propuesta", product: afterProduct, system: value.system_id, color: value.color },
+    {
+      label: "Propuesta",
+      product: afterProduct,
+      system: value.system_id,
+      color: value.color,
+      engine: value.engine as DrawingCalculation,
+    },
   ];
   return (
     <section className="operation-preview" aria-label="Comparación de la propuesta">
@@ -115,7 +141,12 @@ export function SimulationPreview({
             {!item.product ? (
               <p>Sin posición</p>
             ) : options[item.system] ? (
-              <Drawing product={item.product} options={options[item.system]!} color={item.color} />
+              <Drawing
+                product={item.product}
+                options={options[item.system]!}
+                color={item.color}
+                engine={item.engine}
+              />
             ) : (
               <p>
                 {!error ? <DimLoader label="Cargando dibujo" /> : null}

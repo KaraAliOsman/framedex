@@ -1,6 +1,7 @@
 /** One glossary for API enums. Unknown additions must fail the exhaustiveness gate. */
 export const domainLabels: Readonly<Record<string, string>> = {
   V: "Vertical",
+  PROPOSED: "Propuesto",
   UNDONE: "Deshecho",
   H: "Horizontal",
   END: "Desde el final",

@@ -25,7 +25,7 @@ import { BotFigure } from "./BotFigure";
 import { ProjectOpsStep } from "./ProjectOpsStep";
 import { SimulationPreview } from "./SimulationPreview";
 import { RejectedOperations } from "./RejectedOperations";
-import { SURFACE_LABELS } from "./surfaces";
+import { assistantText, SURFACE_LABELS } from "./surfaces";
 
 /** The durable worker can leave the job running far longer than a request
  * timeout — the dock polls the job record and renders the stored result
@@ -683,7 +683,7 @@ export function AgentBody({
                     </ul>
                   ) : null}
                   {turn.result.reply ? (
-                    <p className="ask-dock__answer">{turn.result.reply}</p>
+                    <p className="ask-dock__answer">{assistantText(turn.result.reply)}</p>
                   ) : null}
                   {turn.result.questions?.length ? (
                     <div className="ask-dock__questions">

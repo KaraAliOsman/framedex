@@ -181,13 +181,17 @@ def simulate_ops(org_id, product, ops, system_id, color):
     else:
         output = apply_operations(before, ops, params=catalog["params"], catalog=catalog, finish=color)
     engine = calculate_product(org_id, output["product"], system_id, color, catalog)
+    try:
+        previous_engine = calculate_product(org_id, before, previous_system, previous_color)
+    except (ValueError, InvalidEngineRequest, UnsupportedEngineContract, CatalogRuleError, OpeningCapabilityError, MissingFabricationAuthority):
+        previous_engine = None
     issues = engine.get("issues", [])
     valid = engine.get("status") in {"VALID", "MANUFACTURING_INCOMPLETE"} and not any(issue.get("severity") == "error" for issue in issues)
     previous = sale_price(org_id, before, previous_system, previous_color)
     price = sale_price(org_id, output["product"], system_id, color) if valid else {"net": None, "currency": previous["currency"], "reason": "Corrige la geometría antes de preciar."}
     delta = str(finish_selling_delta(Decimal(previous["net"]), Decimal(price["net"]))) if price.get("net") is not None and previous.get("net") is not None else None
     return {**output, "system_id": str(system_id), "color": color, "valid": valid, "status": engine["status"], "issues": issues, "engine": engine,
-            "before": {"product": before, "system_id": str(previous_system), "color": previous_color, "price": previous}, "price": {**price, "delta_net": delta},
+            "before": {"product": before, "system_id": str(previous_system), "color": previous_color, "price": previous, "engine": previous_engine}, "price": {**price, "delta_net": delta},
             "diff": _diff(before, output["product"]) + _diff(
                 {"system_id": str(previous_system), "color": previous_color},
                 {"system_id": str(system_id), "color": color}, "attributes")}

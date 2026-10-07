@@ -31,7 +31,7 @@ import { ProjectOpsStep } from "./ProjectOpsStep";
 import { BotFigure } from "./BotFigure";
 import { Orb, orbStateFor } from "./Orb";
 import { STATE_LABELS } from "./states";
-import { SURFACE_LABELS } from "./surfaces";
+import { assistantText, SURFACE_LABELS } from "./surfaces";
 import { jobErrorKey } from "../jobs/jobError";
 import { t } from "../../i18n/es-CL";
 
@@ -422,7 +422,7 @@ function AgentTurnView({
   // and the deep-link carries the apply to where the product lives.
   const product: { [key: string]: unknown } | null = null;
   const actionable = (turn.steps ?? []).filter((step) =>
-    ["ops", "batch_ops", "prepare", "navigate"].includes(step.kind ?? ""),
+    ["ops", "batch_ops", "project_ops", "prepare", "navigate"].includes(step.kind ?? ""),
   );
   const workCount = (turn.queries?.length ?? 0) + (turn.claims?.length ?? 0);
   return (
@@ -436,7 +436,7 @@ function AgentTurnView({
             ))}
           </ol>
         ) : null}
-        <p className="aiws-reply">{turn.reply}</p>
+        <p className="aiws-reply">{assistantText(turn.reply)}</p>
         {turn.questions?.length ? (
           <div className="aiws-questions">
             {turn.questions.map((question, i) => (

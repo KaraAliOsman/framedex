@@ -1,3 +1,14 @@
+import { domainLabels } from "../../i18n/domainLabels";
+
+/** Keep the provider's wording and grounded numbers; translate known API
+ * enums when a response quotes them. Hyphenated catalog SKUs stay intact. */
+export function assistantText(value: string | undefined): string {
+  return (value ?? "").replace(
+    /(?<![\w-])[A-Z]+(?:_[A-Z0-9]+)+(?![\w-])/g,
+    (word) => domainLabels[word] ?? word,
+  );
+}
+
 /** One surface dictionary — dock, workspace, and the route map all read from
  * here so a new surface name never drifts into three spellings. The values
  * are the Spanish domain words the UI shows next to state chips and headers. */

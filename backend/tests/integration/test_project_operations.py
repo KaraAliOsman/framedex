@@ -212,3 +212,23 @@ def test_invalid_design_in_shared_simulation_returns_a_public_422(documentary_te
     assert result.status_code == 422, result.content
     assert result.json()["error"]["code"] == "design_operation_invalid"
     assert "unexpected_field" not in result.json()["error"]["detail"]
+
+
+def test_shared_preview_includes_engine_leaf_and_handle_authority_for_both_drawings(documentary_tenant):
+    from projects.ops_registry import product_from_position, simulate_ops
+    from projects.service import position_row
+    org, _, users, _ = documentary_tenant
+    _, position = setup_project(org, users["OWNER"])
+    with as_user(users["OWNER"]):
+        product = product_from_position(position_row(org, position["id"]))
+        result = simulate_ops(org, product, [
+            {"op": "set_module_width", "module": "single", "width_mm": "1000"},
+            {"op": "set_opening", "module": "single", "opening": "TURN_LEFT"},
+        ], position["design"]["system_id"], position["design"]["color"])
+    assert result["valid"]
+    assert result["before"]["engine"]["status"] == "VALID"
+    assert result["before"]["engine"]["modules"][0]["result"].get("opening_leaves", []) == []
+    leaf = result["engine"]["modules"][0]["result"]["opening_leaves"][0]
+    assert leaf["opening"]["hinge_side"] == "LEFT"
+    assert leaf["handle"]["side"] == "RIGHT"
+    assert Decimal(leaf["width_mm"]) > 0 and Decimal(leaf["height_mm"]) > 0
