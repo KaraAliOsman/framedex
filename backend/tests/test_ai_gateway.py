@@ -294,6 +294,8 @@ def test_invoke_response_never_echoes_payload_secrets(monkeypatch):
         "tokens_completion",
         "latency_ms",
         "credits_debited",
+        "test_mode",
+        "usage_id",
     }
 
 
@@ -758,7 +760,7 @@ def test_http_provider_connect_failure_all_addresses_is_provider_error(monkeypat
         HttpProvider(provider="DOWN").invoke(
             route=_route(), capability="nlp_command", input_payload={}, client=client
         )
-    assert failure.value.code == "ai_provider_error"
+    assert failure.value.code == "ai_provider_timeout"
 
 
 def test_http_provider_ipv6_host_header_is_bracketed(monkeypatch):
@@ -854,6 +856,7 @@ def test_provider_usage_outside_int4_is_a_provider_error():
     from ai_gateway.providers import HttpProvider, ProviderError
 
     provider = HttpProvider.__new__(HttpProvider)
+    provider.timeout = 60
     provider._request = lambda **_kwargs: (
         b'{"output":"ok","usage":{"prompt_tokens":2147483648,"completion_tokens":1}}'
     )
@@ -873,6 +876,7 @@ def test_http_provider_signs_resolved_document_path_at_wire_time(monkeypatch):
     from ai_gateway.providers import HttpProvider
 
     provider = HttpProvider.__new__(HttpProvider)
+    provider.timeout = 60
     sent = []
     provider._request = lambda **kwargs: sent.append(kwargs) or b'{"output":"ok","usage":{}}'
 
@@ -901,6 +905,7 @@ def test_storage_signing_failure_is_a_provider_error(monkeypatch):
     from documents.repository import DocumentaryError
 
     provider = HttpProvider.__new__(HttpProvider)
+    provider.timeout = 60
 
     class _Storage:
         def signed_url(self, path):
@@ -1556,7 +1561,8 @@ def test_openai_provider_image_payload_is_true_multimodal(monkeypatch):
     assert content[0]["image_url"]["url"] == "https://signed.example/doc"
     assert "document_url" not in json.loads(content[1]["text"])
 
-    # Non-image kinds keep the whole payload as text (PDF URL stays).
+    # PDF pages travel through bounded rasterization; signed URLs are never
+    # presented to the model as if it could fetch a local source itself.
     _, body = provider._wire_request(
         route=route,
         capability="vision_ocr",
@@ -1568,7 +1574,8 @@ def test_openai_provider_image_payload_is_true_multimodal(monkeypatch):
         provider_options={},
     )
     user = json.loads(body["messages"][1]["content"])
-    assert user["document_url"] == "https://signed.example/doc"
+    assert "document_url" not in user
+    assert user["file_name"] == "tabla.pdf"
 
 
 def test_catalog_system_drilldown_projection(monkeypatch):

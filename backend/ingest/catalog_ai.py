@@ -77,7 +77,7 @@ def compile_catalog(*, org_id, actor_id, import_id, kind, file_name, tagged):
     source_lines = [{"text": text, "ref": ref} for text, ref in tagged]
     if sum(len(line["text"]) for line in source_lines) > 100_000:
         raise ValueError("El documento supera el límite de texto. Divídelo para conservar todas las fuentes.")
-    result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_compile",
+    result = invoke(org_id=org_id, user_id=actor_id, capability="catalog_import",
         operation_key=f"catalog:{import_id}:typed-v1", input_payload={
             "file_name": file_name, "kind": kind, "source": {"kind": "catalog_import", "id": str(import_id)},
             "schema": public_schema(), "source_lines": source_lines,

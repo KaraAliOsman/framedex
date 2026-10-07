@@ -11,6 +11,8 @@ import os
 import socket
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
+from django.db import connection
 from uuid import UUID, uuid4
 
 from jobs import registry, repository
@@ -72,11 +74,23 @@ def _execute(job: dict[str, object], *, worker_id: str) -> None:
     repository.renew_lock(job_id=job_id, worker_id=worker_id)
 
     def report(progress: float) -> None:
-        repository.report_progress(
-            job_id=job_id,
-            worker_id=worker_id,
-            progress=max(0.0, min(progress, 99.0)),
-        )
+        phase = registry.CURRENT_PHASE.get()
+        def write():
+            options = {"phase": phase} if phase else {}
+            repository.report_progress(job_id=job_id, worker_id=worker_id,
+                                       progress=max(0.0, min(progress, 99.0)), **options)
+        if connection.vendor == "postgresql" and connection.in_atomic_block:
+            # A nested atomic cannot commit progress. Use a thread-local
+            # connection and await the lease-guarded commit before continuing.
+            def committed():
+                try:
+                    write()
+                finally:
+                    connection.close()
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                pool.submit(committed).result()
+        else:
+            write()
 
     context = registry.JobContext(
         job_id=job_id if isinstance(job_id, UUID) else UUID(str(job_id)),

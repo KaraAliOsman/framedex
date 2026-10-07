@@ -42,6 +42,8 @@ from ai_gateway.context import (
 from authentication.errors import contract_error
 from projects import design_assist, service as projects_service, ops_registry
 from ai_gateway.engine_tools import EngineTools, TOOLS as ENGINE_TOOLS
+from ai_gateway.contracts import AGENT_SCHEMA
+from ai_gateway import usage
 from dekopen_engine.design_operations import REGISTRY as OPERATIONS, OperationError
 
 CAPABILITY = "agent"
@@ -812,11 +814,13 @@ def _act(
     job_id: UUID | None = None,
     progress: Any = None,
 ) -> dict:
-    def _report(value: float) -> None:
+    def _report(value: float, phase: str = "CONSULTING_PROJECT") -> None:
         # Progress lands on the job_runs row — the only channel a reader can
         # see while this transaction holds the ai_jobs row uncommitted.
         if callable(progress):
-            progress(value)
+            from jobs.registry import progress_phase
+            with progress_phase(phase):
+                progress(value)
 
     _report(15)
     context = build_context(org_id, surface, refs)
@@ -835,6 +839,7 @@ def _act(
         isinstance(module.get("tree"), dict) for module in product.get("modules", product.get("assembly", {}).get("modules", []))
     ))
     if surface == "position" and has_tree:
+        _report(18, "CALCULATING_ENGINE")
         for tool in ("list_catalog_options", "calculate_position"):
             output, _ = engine_tools.call(tool, {})
             all_observations.append({"surface": tool, "context": output})
@@ -845,6 +850,8 @@ def _act(
     audit_id = ""
     model = ""
     document: Any = {}
+    tool_messages: list[dict] = []
+    test_mode = False
     for round_index in range(MAX_ROUNDS):
         remaining = TOTAL_TIMEOUT_S - (time.monotonic() - started)
         if remaining <= 0:
@@ -868,6 +875,10 @@ def _act(
                 "system": WORKFLOW_SYSTEM.get(surface, AGENT_SYSTEM),
                 "json_output": True,
                 "timeout_s": remaining,
+                "tools": ENGINE_TOOLS,
+                "tool_choice": "none" if round_index == MAX_ROUNDS - 1 else "auto",
+                "tool_messages": list(tool_messages),
+                "response_schema": AGENT_SCHEMA,
             },
             input_payload={
                 "goal": goal,
@@ -898,6 +909,12 @@ def _act(
         debited += int(envelope["credits_debited"])
         audit_id = envelope["audit_id"]
         model = envelope["model"]
+        test_mode = test_mode or envelope.get("test_mode", False)
+        usage_id = envelope.get("usage_id")
+        if round_index == 0:
+            usage.note(org_id, usage_id, QUERY_TOOLS.get(surface, "get_context"))
+            for call in engine_tools.calls:
+                usage.note(org_id, usage_id, call["name"], "ERROR" if call["status"] == "error" else "OK")
         try:
             document = json.loads(envelope["output"])
         except (json.JSONDecodeError, TypeError):
@@ -912,7 +929,7 @@ def _act(
                 "ai_agent_bad_output",
                 "El agente devolvió una respuesta inválida.",
             )
-        _report(30 + round_index * 20)
+        _report(30 + round_index * 10, "CALCULATING_ENGINE")
         observations, new_observed = _queries(
             org_id=org_id,
             document=document,
@@ -924,8 +941,13 @@ def _act(
         engine_tools.observed_refs = observed_refs
         engine_tools.max_calls = MAX_QUERIES - (len(seen_queries) - 1)
         for observation in observations:
+            usage.note(org_id, usage_id, QUERY_TOOLS.get(observation["surface"], "get_context"), "OK" if "context" in observation else "ERROR")
             engine_tools.numeric_evidence |= _grounding_values(observation.get("context"), "")
         calls = [call for call in (document.get("tool_calls") or []) if isinstance(call, dict)]
+        native_calls = [call for call in calls if isinstance(call.get("id"), str)]
+        if native_calls:
+            tool_messages.append({"role": "assistant", "content": None, "tool_calls": [
+                {"id": call["id"], "type": "function", "function": {"name": call["name"], "arguments": json.dumps(call.get("arguments", {}), ensure_ascii=False)}} for call in native_calls]})
         if has_tree:
             calls.extend({"name": "simulate_ops", "arguments": {"ops": step["ops"]}}
                          for step in document.get("steps", []) if isinstance(step, dict) and step.get("kind") == "ops" and isinstance(step.get("ops"), list))
@@ -937,7 +959,11 @@ def _act(
                 output, fresh = engine_tools.call(name, arguments)
             except OperationError as error:
                 output, fresh = {"error": error.code, "detail": str(error)}, True
-            if fresh:
+            if name in {tool["name"] for tool in ENGINE_TOOLS}:
+                usage.note(org_id, usage_id, name, "ERROR" if "error" in output else "OK" if fresh else "CACHED")
+            if call.get("id"):
+                tool_messages.append({"role": "tool", "tool_call_id": call["id"], "content": json.dumps(output, ensure_ascii=False)})
+            if fresh or call.get("id"):
                 observations.append({"surface": name, "context": output})
                 observed_refs |= _context_refs(output)
                 engine_tools.observed_refs = observed_refs
@@ -961,7 +987,7 @@ def _act(
             "ai_agent_bad_output",
             "El agente devolvió una respuesta inválida.",
         )
-    _report(80)
+    _report(80, "PREPARING_PROPOSAL")
     # Multi-turn grounding: numbers in earlier turns of this job stay
     # citable — but only when the history was rebuilt server-side from the
     # stored transcript (resume). A first-run history is arbitrary client
@@ -998,6 +1024,7 @@ def _act(
                 "system": WORKFLOW_SYSTEM.get(surface, AGENT_SYSTEM),
                 "json_output": True,
                 "timeout_s": remaining,
+                "response_schema": AGENT_SCHEMA,
             },
             input_payload={
                 "goal": goal,
@@ -1291,6 +1318,7 @@ def _act(
         "audit_id": audit_id,
         "model": model,
         "credits_debited": debited,
+        "test_mode": test_mode,
         "reply": reply,
         "plan": plan,
         "claims": claims,

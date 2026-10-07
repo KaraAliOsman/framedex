@@ -21,6 +21,7 @@ from ai_gateway.providers import ProviderError, provider_for
 from billing import wallet
 from documents.repository import DocumentaryError, documentary_backend, rows
 from documents.storage import readable_storage_key
+from ai_gateway import usage
 
 RETENTION_DAYS = 90
 MAX_OUTPUT_CHARS = 256_000
@@ -90,12 +91,23 @@ def _source_document_path(org_id: UUID, source: object) -> str | None:
     return path
 
 
-def _route(capability: str) -> dict | None:
+def _route(capability: str, org_id: UUID | None = None) -> dict | None:
     found = rows(
         "SELECT * FROM public.ai_routes WHERE capability=%s AND enabled",
         [capability],
     )
-    return found[0] if found else None
+    if not found:
+        return None
+    route = dict(found[0])
+    configured_capability = {"catalog_compile": "catalog_import", "vision_ocr": "catalog_import",
+                             "design_alternatives": "design_assist"}.get(capability, capability)
+    if org_id is not None:
+        override = rows("SELECT * FROM public.ai_capability_routes WHERE org_id=%s AND capability=%s", [str(org_id), configured_capability])
+        if override:
+            route.update({key: value for key, value in override[0].items() if key not in {"org_id", "capability", "revision"}})
+            route["tenant_model"] = True
+            route["tenant_revision"] = override[0]["revision"]
+    return route
 
 
 def _input_hash(input_payload: dict) -> str:
@@ -115,6 +127,8 @@ def _response(*, audit: dict, capability: str, route: dict, result: dict) -> dic
         "tokens_completion": int(result["tokens_completion"]),
         "latency_ms": int(result["latency_ms"]),
         "credits_debited": int(route["credits_cost"]),
+        "test_mode": route["provider"] == "MOCK",
+        "usage_id": result.get("usage_id"),
     }
 
 
@@ -258,7 +272,7 @@ def invoke(
                 "ai_entitlement_required",
                 "Tu plan conserva todas las funciones manuales.",
             )
-        route = _route(capability)
+        route = _route(capability, org_id)
         if route is None:
             raise contract_error(
                 404,
@@ -281,17 +295,20 @@ def invoke(
     # The provider call runs OUTSIDE the wallet lock — holding the org row
     # FOR UPDATE across a network call would serialize every tenant request
     # behind provider latency (and a hung provider behind its full timeout).
-    result = provider_for(route).invoke(
-        route=route,
-        capability=capability,
-        input_payload=input_payload,
-        provider_options=provider_options,
-        document_path=document_path,
-        # The wire key is org-namespaced: a real provider dedupes on the
-        # header globally, so the raw org-scoped key alone would collide
-        # across tenants sharing a capability-level key prefix.
-        operation_key=f"{org_id}:{operation_key}",
-    )
+    reservation = usage.begin(org_id=org_id, user_id=user_id, route=route,
+                              operation_key=operation_key, input_hash=input_hash)
+    try:
+        result = provider_for(route).invoke(
+            route=route, capability=capability, input_payload=input_payload,
+            provider_options=provider_options, document_path=document_path,
+            # Provider-level deduplication must include the tenant.
+            operation_key=f"{org_id}:{operation_key}",
+        )
+    except ProviderError as error:
+        usage.finish(reservation, result=getattr(error, "usage", None), error_code=error.code)
+        raise
+    usage.finish(reservation, result=result)
+    result["usage_id"] = str(reservation["id"]) if reservation else None
     if len(str(result["output"])) > MAX_OUTPUT_CHARS:
         raise ProviderError("ai_provider_output_too_large")
     with wallet.financial_transaction(org_id):
@@ -323,6 +340,8 @@ def invoke(
                 "tokens_completion": int(result["tokens_completion"]),
                 "latency_ms": int(result["latency_ms"]),
                 "credits_debited": credits,
+                "test_mode": route["provider"] == "MOCK",
+                "usage_id": result.get("usage_id"),
             },
         )
         if audit is None:

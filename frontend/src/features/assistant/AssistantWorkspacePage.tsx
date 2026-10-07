@@ -1,4 +1,5 @@
 import { ValidatedForm } from "../../ui/FormValidation";
+import { AI_PHASES } from "./providerLabels";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -156,6 +157,7 @@ function relativeTime(iso: string | undefined): string {
 /** The worker reports numeric checkpoints on the job_runs row; the band
  * reads as a phase label so a live run shows what it is doing. */
 function livePhase(live: AiJobLive | null | undefined): string {
+  if (typeof live?.phase === "string" && AI_PHASES[live.phase]) return AI_PHASES[live.phase]!;
   const progress = live && typeof live.progress === "number" ? (live.progress as number) : 0;
   if (progress < 15) return t("aiws.live.queued");
   if (progress < 40) return t("aiws.live.context");

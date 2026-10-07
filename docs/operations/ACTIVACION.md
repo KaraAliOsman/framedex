@@ -181,3 +181,27 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 6. Las series DEMO v6 y sus precios sintéticos no certifican producción ni
    reemplazan fichas reales. No requieren una credencial externa adicional:
    requieren datos de proveedor y tarifas de instalación revisados por la empresa.
+
+## Proveedor de IA, presupuesto y costo (IA3)
+
+1. Configure `AI_GATEWAY_MIMO_API_KEY`, `AI_GATEWAY_MIMO_BASE_URL` y
+   `AI_GATEWAY_MIMO_MODEL` solo en el servidor y el worker, con los nombres y
+   modelo de [AI_PROVIDERS.md](AI_PROVIDERS.md). Reinicie ambos procesos. La
+   credencial local ya permite aceptación real; nunca la copie al frontend.
+2. En producción declare `AI_GATEWAY_MOCK_ENABLED=0`. Para un entorno de prueba,
+   habilite el flag y elija explícitamente una ruta de prueba en Ajustes. El
+   flag por sí solo no cambia MiMo ni depende de DEBUG.
+3. El dueño con MFA revisa las cuatro capacidades en Ajustes › Inteligencia
+   artificial y ejecuta «Probar conexión». El caso mínimo valida medidas y
+   motor en una copia, sin cambiar proyectos. Sin credencial, siga la causa
+   del panel y configúrela en el servidor; ninguna clave se muestra en la app.
+4. Declare ambas tarifas de su contrato en USD por millón de tokens, si quiere
+   costo monetario. No use tarifas sintéticas de tests. Dejar ambas vacías
+   conserva «Sin dato» y no altera llamadas anteriores.
+5. Configure el presupuesto mensual en créditos de solicitudes y compruebe el
+   bloqueo suave y el aviso. Revise Trabajos con filtro de capacidad/estado y
+   abra «¿De dónde sale?» para ver herramientas ejecutadas y tiempo.
+6. Para catálogos escaneados confirme la lectura contra el fabricante antes
+   de publicar. El transporte renderiza las páginas sin texto y acepta visión;
+   esa lectura no certifica una autoridad técnica. Puede elegir un modelo de
+   visión distinto para catálogo en los mismos ajustes.

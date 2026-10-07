@@ -362,7 +362,7 @@ def live_runs(*, org_id: UUID, job_ids: list) -> dict:
     with job_service.job_backend():
         found = rows(
             "SELECT payload->>'ai_job_id' AS ai_job_id, state, progress,"
-            " updated_at FROM public.job_runs"
+            " updated_at, phase FROM public.job_runs"
             " WHERE org_id = %s AND type = 'ai.agent.run'"
             " AND payload->>'ai_job_id' = ANY(%s::text[])"
             " ORDER BY created_at DESC",
@@ -377,6 +377,7 @@ def live_runs(*, org_id: UUID, job_ids: list) -> dict:
             "state": run["state"],
             "progress": float(run["progress"] or 0),
             "updated_at": str(run["updated_at"]),
+            "phase": run.get("phase"),
         }
     return latest
 

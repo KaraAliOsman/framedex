@@ -4,6 +4,7 @@ from copy import deepcopy
 from decimal import Decimal
 import json
 from uuid import UUID
+from jsonschema import validate as validate_json, ValidationError
 
 from authentication.errors import ContractAPIException
 from dekopen_engine.design_operations import OperationError, as_product, validate_operation
@@ -119,6 +120,10 @@ class EngineTools:
         allowed = set(BY_NAME[name]["parameters"]["properties"])
         if set(arguments) - allowed:
             raise OperationError("tool_arguments_invalid", "Revisa los parámetros de la herramienta.")
+        try:
+            validate_json(arguments, BY_NAME[name]["parameters"])
+        except ValidationError:
+            raise OperationError("tool_arguments_invalid", "Revisa los parámetros de la herramienta.") from None
         key = json.dumps({"name": name, "arguments": arguments}, sort_keys=True, default=str)
         if key in self.cache:
             return deepcopy(self.cache[key]), False

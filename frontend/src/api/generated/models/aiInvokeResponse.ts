@@ -15,4 +15,7 @@ export interface AiInvokeResponse {
   tokens_completion: number;
   latency_ms: number;
   credits_debited: number;
+  test_mode?: boolean;
+  /** @nullable */
+  usage_id?: string | null;
 }

@@ -245,6 +245,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/ai/connection-test/:
+    post:
+      operationId: ai_connection_test
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiConnectionTestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AiConnectionTestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiConnectionTestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiConnectionResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/ai/invoke/:
     post:
       operationId: ai_invoke
@@ -776,6 +852,291 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AiMetrics'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/mode/:
+    get:
+      operationId: ai_mode_get
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiMode'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/settings/:
+    get:
+      operationId: ai_settings_get
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiSettings'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: ai_settings_save
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiSettingsSaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AiSettingsSaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiSettingsSaveRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiSettings'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/usage/:
+    get:
+      operationId: ai_usage_list
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: capability
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: query
+        name: state
+        schema:
+          type: string
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AiUsageWork'
           description: ''
         '400':
           content:
@@ -18061,10 +18422,9 @@ components:
       - surface
     AiAgentResult:
       type: object
-      description: |-
-        The payload act() stores on the job's `result` column — the envelope
-        fields (audit/job ids, state, transcript) live on the job row itself.
       properties:
+        test_mode:
+          type: boolean
         model:
           type: string
         credits_debited:
@@ -18232,6 +18592,40 @@ components:
       - answer
       - created_at
       - question
+    AiConnectionResult:
+      type: object
+      properties:
+        passed:
+          type: boolean
+        case_id:
+          type: string
+        test_mode:
+          type: boolean
+        tokens_prompt:
+          type: integer
+        tokens_completion:
+          type: integer
+        credits_debited:
+          type: integer
+        latency_ms:
+          type: integer
+      required:
+      - case_id
+      - credits_debited
+      - latency_ms
+      - passed
+      - test_mode
+      - tokens_completion
+      - tokens_prompt
+    AiConnectionTestRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 120
+      required:
+      - operation_key
     AiInvokeRequestRequest:
       type: object
       properties:
@@ -18272,6 +18666,12 @@ components:
           type: integer
         credits_debited:
           type: integer
+        test_mode:
+          type: boolean
+        usage_id:
+          type: string
+          format: uuid
+          nullable: true
       required:
       - audit_id
       - capability
@@ -18506,6 +18906,320 @@ components:
       - jobs
       - time_saved
       - window_days
+    AiMode:
+      type: object
+      properties:
+        test_mode:
+          type: boolean
+      required:
+      - test_mode
+    AiMonthlyUsage:
+      type: object
+      properties:
+        calls:
+          type: integer
+        tokens_prompt:
+          type: integer
+          nullable: true
+        tokens_completion:
+          type: integer
+          nullable: true
+        capacity_credits:
+          type: integer
+        estimated_cost_usd:
+          type: string
+          nullable: true
+        credits_debited:
+          type: integer
+        monthly_budget_credits:
+          type: integer
+          nullable: true
+        budget_blocked:
+          type: boolean
+        budget_notice_at:
+          type: string
+          nullable: true
+        month_start:
+          type: string
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiUserUsage'
+      required:
+      - budget_blocked
+      - budget_notice_at
+      - calls
+      - capacity_credits
+      - credits_debited
+      - estimated_cost_usd
+      - month_start
+      - monthly_budget_credits
+      - tokens_completion
+      - tokens_prompt
+      - users
+    AiRouteSettingsRequest:
+      type: object
+      properties:
+        capability:
+          $ref: '#/components/schemas/CapabilityEnum'
+        provider:
+          $ref: '#/components/schemas/ProviderEnum'
+        provider_model:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z0-9._/:+\-]{1,120}$
+        timeout_s:
+          type: integer
+          maximum: 180
+          minimum: 1
+        retries:
+          type: integer
+          maximum: 2
+          minimum: 0
+        tools_mode:
+          $ref: '#/components/schemas/ToolsModeEnum'
+        input_usd_per_million:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,8})?$
+          nullable: true
+        output_usd_per_million:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,8})?$
+          nullable: true
+      required:
+      - capability
+      - input_usd_per_million
+      - output_usd_per_million
+      - provider
+      - provider_model
+      - retries
+      - timeout_s
+      - tools_mode
+    AiRouteStatus:
+      type: object
+      properties:
+        capability:
+          $ref: '#/components/schemas/CapabilityEnum'
+        provider:
+          $ref: '#/components/schemas/ProviderEnum'
+        provider_model:
+          type: string
+          pattern: ^[A-Za-z0-9._/:+\-]{1,120}$
+        timeout_s:
+          type: integer
+          maximum: 180
+          minimum: 1
+        retries:
+          type: integer
+          maximum: 2
+          minimum: 0
+        tools_mode:
+          $ref: '#/components/schemas/ToolsModeEnum'
+        input_usd_per_million:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,8})?$
+          nullable: true
+        output_usd_per_million:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,8})?$
+          nullable: true
+        credits_cost:
+          type: integer
+        credential_configured:
+          type: boolean
+        test_mode:
+          type: boolean
+        state:
+          $ref: '#/components/schemas/AiRouteStatusStateEnum'
+        last_cause:
+          type: string
+          nullable: true
+        checked_at:
+          type: string
+          nullable: true
+      required:
+      - capability
+      - checked_at
+      - credential_configured
+      - credits_cost
+      - input_usd_per_million
+      - last_cause
+      - output_usd_per_million
+      - provider
+      - provider_model
+      - retries
+      - state
+      - test_mode
+      - timeout_s
+      - tools_mode
+    AiRouteStatusStateEnum:
+      enum:
+      - UNTESTED
+      - CONNECTED
+      - ERROR
+      - MISSING_CREDENTIAL
+      type: string
+      description: |-
+        * `UNTESTED` - UNTESTED
+        * `CONNECTED` - CONNECTED
+        * `ERROR` - ERROR
+        * `MISSING_CREDENTIAL` - MISSING_CREDENTIAL
+    AiSettings:
+      type: object
+      properties:
+        revision:
+          type: integer
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiRouteStatus'
+        mock_available:
+          type: boolean
+        usage:
+          $ref: '#/components/schemas/AiMonthlyUsage'
+      required:
+      - mock_available
+      - revision
+      - routes
+      - usage
+    AiSettingsSaveRequest:
+      type: object
+      properties:
+        expected_revision:
+          type: integer
+          minimum: 1
+        monthly_budget_credits:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiRouteSettingsRequest'
+      required:
+      - expected_revision
+      - monthly_budget_credits
+      - routes
+    AiUsageWork:
+      type: object
+      properties:
+        calls:
+          type: integer
+        tokens_prompt:
+          type: integer
+          nullable: true
+        tokens_completion:
+          type: integer
+          nullable: true
+        capacity_credits:
+          type: integer
+        estimated_cost_usd:
+          type: string
+          nullable: true
+        id:
+          type: string
+          format: uuid
+        job_id:
+          type: string
+          format: uuid
+          nullable: true
+        ai_job_id:
+          type: string
+          format: uuid
+          nullable: true
+        capability:
+          type: string
+        user_id:
+          type: string
+          format: uuid
+        user_label:
+          type: string
+          nullable: true
+        status:
+          type: string
+        job_state:
+          type: string
+          nullable: true
+        test_mode:
+          type: boolean
+        latency_ms:
+          type: integer
+          nullable: true
+        retries:
+          type: integer
+        fallback:
+          type: boolean
+        tools:
+          type: array
+          items:
+            type: string
+        trace:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+        last_cause:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+      required:
+      - ai_job_id
+      - calls
+      - capability
+      - capacity_credits
+      - created_at
+      - estimated_cost_usd
+      - fallback
+      - id
+      - job_id
+      - job_state
+      - last_cause
+      - latency_ms
+      - retries
+      - status
+      - test_mode
+      - tokens_completion
+      - tokens_prompt
+      - tools
+      - trace
+      - user_id
+      - user_label
+    AiUserUsage:
+      type: object
+      properties:
+        calls:
+          type: integer
+        tokens_prompt:
+          type: integer
+          nullable: true
+        tokens_completion:
+          type: integer
+          nullable: true
+        capacity_credits:
+          type: integer
+        estimated_cost_usd:
+          type: string
+          nullable: true
+        user_id:
+          type: string
+          format: uuid
+        user_label:
+          type: string
+          nullable: true
+      required:
+      - calls
+      - capacity_credits
+      - estimated_cost_usd
+      - tokens_completion
+      - tokens_prompt
+      - user_id
     AllocationRequestRequest:
       type: object
       properties:
@@ -19220,6 +19934,18 @@ components:
       - plan
       - subscription
       - trial_ends_at
+    CapabilityEnum:
+      enum:
+      - design_assist
+      - agent
+      - context_assist
+      - catalog_import
+      type: string
+      description: |-
+        * `design_assist` - design_assist
+        * `agent` - agent
+        * `context_assist` - context_assist
+        * `catalog_import` - catalog_import
     CatalogChange:
       type: object
       properties:
@@ -32162,6 +32888,22 @@ components:
       required:
       - client_name
       - name
+    ProviderEnum:
+      enum:
+      - MIMO
+      - OPENAI
+      - OPENROUTER
+      - DEEPSEEK
+      - QWEN
+      - MOCK
+      type: string
+      description: |-
+        * `MIMO` - MIMO
+        * `OPENAI` - OPENAI
+        * `OPENROUTER` - OPENROUTER
+        * `DEEPSEEK` - DEEPSEEK
+        * `QWEN` - QWEN
+        * `MOCK` - MOCK
     PurchaseLine:
       type: object
       properties:
@@ -34451,6 +35193,16 @@ components:
         * `AM` - AM
         * `PM` - PM
         * `JORNADA` - JORNADA
+    ToolsModeEnum:
+      enum:
+      - AUTO
+      - NATIVE
+      - JSON
+      type: string
+      description: |-
+        * `AUTO` - AUTO
+        * `NATIVE` - NATIVE
+        * `JSON` - JSON
     UnitEnum:
       enum:
       - kit

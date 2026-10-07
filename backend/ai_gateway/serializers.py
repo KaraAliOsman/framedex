@@ -33,6 +33,8 @@ class AiInvokeResponseSerializer(serializers.Serializer):
     tokens_completion = serializers.IntegerField()
     latency_ms = serializers.IntegerField()
     credits_debited = serializers.IntegerField()
+    test_mode = serializers.BooleanField(required=False)
+    usage_id = serializers.UUIDField(required=False, allow_null=True)
 
 
 class AiAskRequestSerializer(serializers.Serializer):
@@ -184,6 +186,7 @@ class AiAgentRunSerializer(serializers.Serializer):
 
 
 class AiAgentResultSerializer(serializers.Serializer):
+    test_mode = serializers.BooleanField(required=False)
     """The payload act() stores on the job's `result` column — the envelope
     fields (audit/job ids, state, transcript) live on the job row itself."""
 

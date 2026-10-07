@@ -10,6 +10,8 @@ import { jobErrorKey } from "../features/jobs/jobError";
 import { formatDateTime } from "../format";
 import { EmptyState, PageHeader } from "../ui";
 import { t, tDynamic, type TranslationKey } from "../i18n/es-CL";
+import { AiWorkList } from "../features/assistant/AiWorkList";
+import { AI_CAPABILITIES } from "../features/assistant/providerLabels";
 
 const STATE_KEYS: Record<string, TranslationKey> = {
   QUEUED: "jobs.state.QUEUED",
@@ -55,11 +57,12 @@ export function JobsPage(): JSX.Element {
   const [notice, setNotice] = useState("");
   const client = useQueryClient();
   const stateFilter = params.get("state") ?? "";
+  const capabilityFilter = params.get("capability") ?? "";
   const [pages, setPages] = useState(1);
 
   const query = useQuery<JobRun[]>({
     queryKey: ["jobs", "list", org?.id, stateFilter, pages],
-    enabled: org !== undefined,
+    enabled: org !== undefined && !capabilityFilter,
     // A running job is a living row — poll fast while anything can still
     // move; idle keeps a slow beat so jobs started elsewhere still appear.
     refetchInterval: (result) =>
@@ -117,26 +120,53 @@ export function JobsPage(): JSX.Element {
     <section className="dashboard jobs-page" aria-labelledby="page-title">
       <PageHeader
         actions={
-          <label className="ui-field jobs-filter">
-            <span className="ui-field__label">{t("jobs.filter.state")}</span>
-            <select
-              className="ui-field__input"
-              value={stateFilter}
-              onChange={(event) => {
-                const next = new URLSearchParams(params);
-                if (event.target.value === "") next.delete("state");
-                else next.set("state", event.target.value);
-                setParams(next, { replace: true });
-              }}
-            >
-              <option value="">{t("jobs.filter.all")}</option>
-              {Object.keys(STATE_KEYS).map((state) => (
-                <option key={state} value={state}>
-                  {t(STATE_KEYS[state] ?? "jobs.state.QUEUED")}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="ai-work-filters">
+            <label className="ui-field jobs-filter">
+              <span className="ui-field__label">Capacidad</span>
+              <select
+                className="ui-field__input"
+                value={capabilityFilter}
+                onChange={(event) => {
+                  const next = new URLSearchParams(params);
+                  if (event.target.value) next.set("capability", event.target.value);
+                  else next.delete("capability");
+                  setPages(1);
+                  setParams(next, { replace: true });
+                }}
+              >
+                <option value="">Todos los trabajos</option>
+                <option value="all_ai">Todas las llamadas de IA</option>
+                {["design_assist", "agent", "context_assist", "catalog_import"].map(
+                  (capability) => (
+                    <option key={capability} value={capability}>
+                      {AI_CAPABILITIES[capability]}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+            <label className="ui-field jobs-filter">
+              <span className="ui-field__label">{t("jobs.filter.state")}</span>
+              <select
+                className="ui-field__input"
+                value={stateFilter}
+                onChange={(event) => {
+                  const next = new URLSearchParams(params);
+                  if (event.target.value === "") next.delete("state");
+                  else next.set("state", event.target.value);
+                  setParams(next, { replace: true });
+                  setPages(1);
+                }}
+              >
+                <option value="">{t("jobs.filter.all")}</option>
+                {Object.keys(STATE_KEYS).map((state) => (
+                  <option key={state} value={state}>
+                    {t(STATE_KEYS[state] ?? "jobs.state.QUEUED")}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         }
         context={t("jobs.subtitle")}
         headingId="page-title"
@@ -144,7 +174,9 @@ export function JobsPage(): JSX.Element {
       />
 
       {notice !== "" && <p role="status">{notice}</p>}
-      {query.isPending ? (
+      {capabilityFilter ? (
+        <AiWorkList capability={capabilityFilter} state={stateFilter} />
+      ) : query.isPending ? (
         <p role="status">{t("dashboard.attentionLoading")}</p>
       ) : query.isError ? (
         <p role="alert">{t("jobs.error")}</p>
@@ -181,18 +213,13 @@ export function JobsPage(): JSX.Element {
                   <time dateTime={job.created_at}>{formatDateTime(job.created_at)}</time>
                 </div>
                 {job.state === "FAILED" && failure !== null && failureKey !== null && (
-                  <p className="job-row-error">
-                    {t(failureKey)}
-                    {/* A snake_case domain code is a useful diagnostic tail;
-                        exception text (IntegrityError:, tracebacks) is not —
-                        it never reaches the user. */}
-                    {/^[a-z0-9_]+$/.test(failure.detail) && failure.detail !== failureKey && (
-                      <>
-                        {" "}
-                        <code className="job-row-code">{failure.detail}</code>
-                      </>
-                    )}
-                  </p>
+                  <p className="job-row-error">{t(failureKey)}</p>
+                )}
+                {job.state === "FAILED" && failure && /^[a-z0-9_]+$/.test(failure.detail) && (
+                  <details className="ui-tech">
+                    <summary>Detalles técnicos</summary>
+                    <code>{failure.detail}</code>
+                  </details>
                 )}
                 {TERMINAL_RETRYABLE.has(job.state) && (
                   <button
@@ -212,7 +239,7 @@ export function JobsPage(): JSX.Element {
           })}
         </ul>
       )}
-      {!query.isPending && !query.isError && hasMore && (
+      {!capabilityFilter && !query.isPending && !query.isError && hasMore && (
         <button
           type="button"
           className="ui-button"

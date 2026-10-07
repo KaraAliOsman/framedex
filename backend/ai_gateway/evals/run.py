@@ -36,6 +36,7 @@ from ai_gateway.evals.redaction import redact_report
 ROOT = Path(__file__).resolve().parents[3]
 NAMESPACE = uuid5(NAMESPACE_URL, "https://dekopen.local/dev-fixture")
 ORG_ID = uuid5(NAMESPACE, "org")
+PHYSICAL_USAGE_TABLES = frozenset({"ai_provider_usage", "ai_usage_events"})
 AI_TABLES = frozenset({
     "ai_jobs", "ai_job_cancel_signals", "ai_audit_logs", "job_runs", "job_events",
     "credit_ledger", "credit_lots", "credit_lot_movements", "credit_grants",
@@ -148,6 +149,10 @@ def _snapshot_rows(cursor: Any, *, include_ai: bool) -> dict[str, str]:
     )
     tables = [r[0] for r in cursor.fetchall()]
     for table in tables:
+        # Paid exchanges cannot be rolled back. Report their delta separately;
+        # domain, wallet and sealed audit snapshots retain their original gate.
+        if table in PHYSICAL_USAGE_TABLES:
+            continue
         if table in AI_TABLES and not include_ai:
             continue
         quoted = connection.ops.quote_name(table)
@@ -160,6 +165,15 @@ def _snapshot_rows(cursor: Any, *, include_ai: bool) -> dict[str, str]:
         cursor.execute("SELECT row_to_json(t) FROM public.ai_routes t WHERE capability='agent'")
         snapshots["agent_route"] = hashlib.sha256(canonical(cursor.fetchall()).encode()).hexdigest()
     return snapshots
+
+
+def _physical_usage_counts():
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT count(*) FROM public.ai_provider_usage WHERE org_id=%s", [ORG_ID])
+        exchanges = cursor.fetchone()[0]
+        cursor.execute("SELECT count(*) FROM public.ai_usage_events WHERE org_id=%s", [ORG_ID])
+        return {"exchanges": exchanges, "events": cursor.fetchone()[0]}
 
 
 def _request(client: Any, method: str, path: str, data: dict | None = None) -> tuple[int, dict]:
@@ -377,6 +391,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
             with connection.cursor() as cursor:
                 cursor.execute("UPDATE public.ai_routes SET provider=%s, provider_model=%s "
                                "WHERE capability='agent'", [provider, model])
+                cursor.execute("UPDATE public.ai_capability_routes SET provider=%s,provider_model=%s WHERE org_id=%s AND capability='agent'", [provider, model, ORG_ID])
             status, project = _request(client, "get", f"projects/{project_id}/")
             if status != 200 or len(project.get("positions") or []) != 12:
                 raise RuntimeError("local_fixture_requires_twelve_positions")
@@ -564,7 +579,12 @@ def main() -> int:
         cases = [c for c in cases if c["id"] == args.case]
         if not cases:
             parser.error("Unknown case id")
+    # Initialize a missing budget row before taking the source-state baseline.
+    # Existing OWNER budgets and routes are never replaced by the harness.
+    with connection.cursor() as cursor:
+        cursor.execute("INSERT INTO public.ai_settings(org_id) VALUES(%s) ON CONFLICT DO NOTHING", [ORG_ID])
     snapshot = _snapshot(include_ai=True)
+    physical_before = _physical_usage_counts()
     results = []
     for case in cases:
         result = run_case(case, client=client, claims=verified.claims, provider=provider, model=model,
@@ -573,6 +593,7 @@ def main() -> int:
         print(f"{case['id']}: {'PASA' if result['passed'] else result['failure']} "
               f"({result['round_count']} rounds, {result['latency_ms']} ms)", flush=True)
     unchanged = snapshot == _snapshot(include_ai=True)
+    physical_after = _physical_usage_counts()
     source_unchanged = subprocess.run(
         ["git", "diff", "--quiet", verified_ref, "--", *source_paths],
         cwd=ROOT, capture_output=True, check=False,
@@ -586,6 +607,7 @@ def main() -> int:
         "transport": {"submit": "POST /api/v1/ai/agent/", "read": "GET /api/v1/ai/jobs/{id}/",
                       "worker": "ai_gateway.handlers.ai_agent_run", "transaction": "always rolled back"},
         "persistent_state_unchanged": unchanged, "summary": summarize(results), "cases": results,
+        "physical_provider_usage_delta": {key: physical_after[key] - value for key, value in physical_before.items()},
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(redact_report(report), ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
