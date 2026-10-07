@@ -4,7 +4,7 @@
   font-size: var(--type-body);
 }
 .operation-preview__view {
-  color: var(--text-muted);
+  color: var(--text-small-muted);
 }
 .operation-preview__drawings {
   display: grid;
@@ -16,6 +16,7 @@
   padding: var(--space-2);
   border: 1px solid var(--border-default);
   min-width: 0;
+  background: var(--surface-sheet);
 }
 .operation-preview figcaption {
   font-weight: 600;
@@ -44,4 +45,11 @@
 }
 .operation-project__changes {
   padding-left: var(--space-4);
+}
+.operation-project__changes > li > p {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.operation-project .ask-dock__action {
+  border-radius: var(--r-1);
 }

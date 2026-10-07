@@ -27,6 +27,7 @@ import { AiMetricsCard } from "./AiMetricsCard";
 import { ArtifactDetail, type Artifact } from "./ArtifactDetail";
 import { RejectedOperations } from "./RejectedOperations";
 import { BatchOpsStep } from "./BatchOpsStep";
+import { ProjectOpsStep } from "./ProjectOpsStep";
 import { BotFigure } from "./BotFigure";
 import { Orb, orbStateFor } from "./Orb";
 import { STATE_LABELS } from "./states";
@@ -312,7 +313,11 @@ function StepView({
         <ul className="aiws-step__ops">
           {ops.map((op, i) => (
             <li key={i}>
-              {product ? describeDesignOp(op, product as ProductJson, ops.slice(0, i)) : op.op}
+              {product
+                ? describeDesignOp(op, product as ProductJson, ops.slice(0, i))
+                : typeof op.description === "string"
+                  ? op.description
+                  : "Cambio de diseño"}
             </li>
           ))}
         </ul>
@@ -332,17 +337,20 @@ function StepView({
     );
   }
 
-  if (step.kind === "batch_ops") {
+  if (step.kind === "batch_ops" || step.kind === "project_ops") {
     const projectId = typeof job.refs?.project_id === "string" ? job.refs.project_id : null;
     if (!projectId) return null;
+    const Proposal = step.kind === "batch_ops" ? BatchOpsStep : ProjectOpsStep;
     return (
-      <BatchOpsStep
+      <Proposal
         key={`batch-${stepIndex}`}
         // The transcript step narrows to batch_ops above — AiAgentStep wants
         // `kind` non-optional, which narrowing alone doesn't tighten.
         step={step as AiAgentStep}
         organizationId={organizationId}
         projectId={projectId}
+        operationKey={`ai:${job.id}:${turnIndex}:${stepIndex}`}
+        declined={decided?.action === "declined"}
         settled={Boolean(decided)}
         onSettled={(action, ops) =>
           onOutcome({

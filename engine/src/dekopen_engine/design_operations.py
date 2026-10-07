@@ -14,7 +14,7 @@ from typing import Any, cast
 
 from .geometry import compute_geometry, validate_sliding_layout
 from .catalog_rules import CatalogRuleError, FAMILY_OPENINGS, validate_family
-from .models import BayOpeningType, OpeningMovement, ParametricNode, ProfileRole, SystemParams, HardwareSelection
+from .models import BayOpeningType, OpeningMovement, LeafRole, ParametricNode, ProfileRole, SystemParams, HardwareSelection
 from .glass_composition import GlassProcessing
 from .openings import OpeningCapabilityError, normalize_opening_tree, node_opening, node_use, resolve_capability
 from .product import FramelessSpec
@@ -339,6 +339,16 @@ def _opening(node: dict[str, Any], value: Any, params: SystemParams, op: dict[st
                 opening_use=op.get("opening_use", "WINDOW") if isinstance(value, dict) else None,
                 hinged_layout=op.get("hinged_layout"), sliding_layout=op.get("sliding_layout"))
     parsed = ParametricNode.model_validate_json(json.dumps(node))
+    physical = node_opening(parsed)
+    if (isinstance(value, str) and params.opening_capabilities
+            and physical.movement is not OpeningMovement.SLIDE
+            and physical.leaf_role is LeafRole.SINGLE):
+        # This is new authoring, not a migration of a saved tree. Resolve
+        # aliases through the declared physical capability so its permitted
+        # hardware classes also govern the saved design, exactly like the UI.
+        use = node_use(parsed)
+        node.update(opening_type=None, opening=physical.model_dump(mode="json"), opening_use=use.value)
+        parsed = ParametricNode.model_validate_json(json.dumps(node))
     if isinstance(value, str) and (not params.uses_legacy_rules or node_opening(parsed).movement is OpeningMovement.SLIDE):
         # A new operation cannot borrow an old transport alias to bypass the
         # selected series' physical authority. Reading frozen legacy trees is

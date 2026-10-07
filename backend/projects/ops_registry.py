@@ -23,6 +23,7 @@ from dekopen_engine.design_operations import (
     as_product, validate_operation, fingerprint,
 )
 from dekopen_engine.extra_models import ExtraLine
+from dekopen_engine.finishes import finish_selling_delta
 from dekopen_engine.product import elevation_envelope
 from dekopen_engine.snapshot import evaluation_response
 from engine_api.adapter import InvalidEngineRequest, UnsupportedEngineContract, evaluate_assembly_from_api, parse_product_model
@@ -184,7 +185,7 @@ def simulate_ops(org_id, product, ops, system_id, color):
     valid = engine.get("status") in {"VALID", "MANUFACTURING_INCOMPLETE"} and not any(issue.get("severity") == "error" for issue in issues)
     previous = sale_price(org_id, before, previous_system, previous_color)
     price = sale_price(org_id, output["product"], system_id, color) if valid else {"net": None, "currency": previous["currency"], "reason": "Corrige la geometría antes de preciar."}
-    delta = str(Decimal(price["net"]) - Decimal(previous["net"])) if price.get("net") is not None and previous.get("net") is not None else None
+    delta = str(finish_selling_delta(Decimal(previous["net"]), Decimal(price["net"]))) if price.get("net") is not None and previous.get("net") is not None else None
     return {**output, "system_id": str(system_id), "color": color, "valid": valid, "status": engine["status"], "issues": issues, "engine": engine,
             "before": {"product": before, "system_id": str(previous_system), "color": previous_color, "price": previous}, "price": {**price, "delta_net": delta},
             "diff": _diff(before, output["product"]) + _diff(

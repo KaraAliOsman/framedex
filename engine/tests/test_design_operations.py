@@ -66,6 +66,25 @@ def test_new_operation_cannot_use_a_legacy_alias_to_bypass_physical_capability(p
     assert product["assembly"]["modules"][0]["tree"]["opening_type"] == "FIXED"
 
 
+def test_new_hinged_alias_resolves_the_same_physical_authority_as_the_ui() -> None:
+    import json
+    from dekopen_engine.geometry import calculate_geometry
+    from dekopen_engine.models import ParametricNode
+    from engine.tests.hardware_cases import hardware_case_inputs
+    _, params, source, _ = hardware_case_inputs()[0]
+    product = {"version": "product-v2", "assembly": {"couplings": [], "modules": [{
+        "id": "m1", "width_mm": str(source.width_mm), "height_mm": str(source.height_mm),
+        "tree": source.model_dump(mode="json")} ]}}
+    changed = apply(product, [{"op": "set_opening", "module": "m1", "opening": "TILT_TURN_LEFT"}], params)
+    tree = changed["product"]["assembly"]["modules"][0]["tree"]
+    assert tree["opening_type"] is None
+    assert source.opening is not None
+    assert tree["opening"] == source.opening.model_dump(mode="json")
+    actual = calculate_geometry(ParametricNode.model_validate_json(json.dumps(tree)), params)
+    expected = calculate_geometry(source, params)
+    assert actual == expected
+
+
 def test_historical_alias_does_not_authorize_new_sliding_edit(product: dict[str, Any], demo_60_params: SystemParams) -> None:
     from dekopen_engine.design_operations import editable_legacy_openings
     from engine.tests.opening_cases import opening_params

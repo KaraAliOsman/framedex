@@ -10,7 +10,7 @@ from authentication.errors import ContractAPIException
 from backend.tests.integration.test_extras_services import fixture
 from backend.tests.integration.test_shot09_documentary import documentary_tenant as documentary_tenant, as_user
 from pricing.repository import commercial_backend, rows
-from projects.project_ops import apply_project_operations, preview_project_operations, snapshot, signature, undo_project_operations
+from projects.project_ops import apply_project_operations, preview_project_operations, project_operation_state, snapshot, signature, undo_project_operations
 from projects.serializers import PositionWriteSerializer
 from projects.service import create_project, save_position, positions, project_row
 from backend.tests.integration.test_opening_mounting import client_for
@@ -47,10 +47,12 @@ def test_preview_is_read_only_apply_idempotent_and_undo_restores_identity(docume
         assert signature(snapshot(org, pid)) == signature(before)
         assert len(preview["diff"]) == 4
         key = str(uuid4())
+        assert project_operation_state(org, pid, key) == {"operation_id": None, "state": "PROPOSED"}
         request = {"ops": ops, "before_sig": preview["before_sig"], "operation_key": key}
         result = apply_project_operations(org, owner, pid, request)
         repeated = apply_project_operations(org, owner, pid, request)
         assert result["operation_id"] == repeated["operation_id"]
+        assert project_operation_state(org, pid, key) == {"operation_id": result["operation_id"], "state": "APPLIED"}
         copies = result["project"]["positions"][1:]
         assert len(copies) == 4
         assert all(p["quantity"] == 2 and p["location_tag"] == "Dormitorios" and p["design"] == position["design"] for p in copies)
@@ -58,6 +60,7 @@ def test_preview_is_read_only_apply_idempotent_and_undo_restores_identity(docume
         assert len(restored["project"]["positions"]) == 1
         assert restored["project"]["positions"][0]["id"] == position["id"]
         assert undo_project_operations(org, owner, pid, UUID(result["operation_id"]))["state"] == "UNDONE"
+        assert project_operation_state(org, pid, key) == {"operation_id": result["operation_id"], "state": "UNDONE"}
 
 
 def test_remove_can_restore_the_original_position_and_measurement_evidence(documentary_tenant):
@@ -134,6 +137,8 @@ def test_preview_and_apply_require_real_project_writer_permission(documentary_te
     client = client_for(users[role])
     ops = [{"op": "set_quantity", "position_id": str(position["id"]), "quantity": 3}]
     path = f"/api/v1/projects/{project['id']}/operations/"
+    state = client.get(path + "state/", {"operation_key": str(uuid4())}, HTTP_X_ORGANIZATION_ID=str(org))
+    assert state.status_code == (403 if role in {"WORKSHOP_MANAGER", "INSTALLER"} else 200), state.content
     preview = client.post(path + "preview/", {"ops": ops}, format="json", HTTP_X_ORGANIZATION_ID=str(org))
     if role in {"WORKSHOP_MANAGER", "INSTALLER"}:
         assert preview.status_code == 403, preview.content

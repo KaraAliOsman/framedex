@@ -36,13 +36,14 @@ from projects.views import (
 )
 from projects.options import DesignOptionsView
 from projects.ops_registry import OperationsRegistryView, SimulateOpsView
-from projects.project_ops import ProjectOpsPreviewView, ProjectOpsApplyView, ProjectOpsUndoView
+from projects.project_ops import ProjectOpsPreviewView, ProjectOpsApplyView, ProjectOpsUndoView, ProjectOpsStateView
 from projects.hardware import HardwarePreviewView
 from projects.finishes import FinishPreviewView
 from projects.extras import ExtraPolicyView, ProjectServicesView, ExtrasPreviewView
 from projects.mounting import MountingRulesView, MountingPreviewView, MeasurementConfirmView, RectificationView
 
 urlpatterns = [
+    path("projects/<uuid:project_id>/operations/state/", ProjectOpsStateView.as_view()),
     path("projects/<uuid:project_id>/operations/preview/", ProjectOpsPreviewView.as_view()),
     path("projects/<uuid:project_id>/operations/apply/", ProjectOpsApplyView.as_view()),
     path("projects/<uuid:project_id>/operations/<uuid:operation_id>/undo/", ProjectOpsUndoView.as_view()),

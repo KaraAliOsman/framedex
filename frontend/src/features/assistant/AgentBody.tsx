@@ -672,11 +672,11 @@ export function AgentBody({
                           {query.status === "ok"
                             ? t("agent.queried").replace(
                                 "{surface}",
-                                SURFACE_LABELS[query.surface ?? ""] ?? query.surface ?? "",
+                                SURFACE_LABELS[query.surface ?? ""] ?? "datos del trabajo",
                               )
                             : t("agent.queryFailed").replace(
                                 "{surface}",
-                                SURFACE_LABELS[query.surface ?? ""] ?? query.surface ?? "",
+                                SURFACE_LABELS[query.surface ?? ""] ?? "datos del trabajo",
                               )}
                         </li>
                       ))}
@@ -748,7 +748,7 @@ export function AgentBody({
                             </button>
                           );
                         }
-                        if (step.kind === "batch_ops" && refs.project_id) {
+                        if (step.kind === "batch_ops" && refs.project_id && job) {
                           const applied = turn.appliedOps.has(stepIndex);
                           return (
                             <BatchOpsStep
@@ -757,6 +757,19 @@ export function AgentBody({
                               organizationId={organizationId}
                               projectId={refs.project_id}
                               settled={applied}
+                              operationKey={`ai:${job.id}:${turn.transcriptIndex}:${stepIndex}`}
+                              declined={(job.outcomes ?? []).some((value) => {
+                                const outcome = value as {
+                                  turn_index?: number;
+                                  step_index?: number;
+                                  action?: string;
+                                };
+                                return (
+                                  outcome.turn_index === turn.transcriptIndex &&
+                                  outcome.step_index === stepIndex &&
+                                  outcome.action === "declined"
+                                );
+                              })}
                               onSettled={(action, ops) => {
                                 reportOutcome(turn.transcriptIndex, stepIndex, action, ops);
                                 setThread((prev) =>
@@ -773,13 +786,26 @@ export function AgentBody({
                             />
                           );
                         }
-                        if (step.kind === "project_ops" && refs.project_id) {
+                        if (step.kind === "project_ops" && refs.project_id && job) {
                           return (
                             <ProjectOpsStep
                               key={stepIndex}
                               step={step}
                               organizationId={organizationId}
                               projectId={refs.project_id}
+                              operationKey={`ai:${job.id}:${turn.transcriptIndex}:${stepIndex}`}
+                              declined={(job.outcomes ?? []).some((value) => {
+                                const outcome = value as {
+                                  turn_index?: number;
+                                  step_index?: number;
+                                  action?: string;
+                                };
+                                return (
+                                  outcome.turn_index === turn.transcriptIndex &&
+                                  outcome.step_index === stepIndex &&
+                                  outcome.action === "declined"
+                                );
+                              })}
                               onSettled={(action, ops) =>
                                 reportOutcome(turn.transcriptIndex, stepIndex, action, ops)
                               }

@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "../../api/apiMutator";
 import {
   projectOperationsApply,
   projectOperationsPreview,
+  projectOperationsState,
   projectOperationsUndo,
 } from "../../api/generated/dekopen";
 import type {
@@ -13,6 +14,7 @@ import type {
   ProjectOpsPreviewResponse,
 } from "../../api/generated/models";
 import { fmtMm } from "../../format";
+import { DimLoader } from "../../ui/Signature";
 import { SimulationPreview } from "./SimulationPreview";
 import "./operations.css";
 
@@ -44,11 +46,15 @@ export function ProjectOpsStep({
   step,
   organizationId,
   projectId,
+  operationKey,
+  declined = false,
   onSettled,
 }: {
   step: AiAgentStep;
   organizationId: string;
   projectId: string;
+  operationKey: string;
+  declined?: boolean;
   onSettled(action: "applied" | "declined" | "apply_failed", ops: { op?: string }[]): void;
 }): JSX.Element {
   const queryClient = useQueryClient();
@@ -57,33 +63,53 @@ export function ProjectOpsStep({
   const [message, setMessage] = useState("");
   const [operationId, setOperationId] = useState<string | null>(null);
   const [state, setState] = useState<"proposed" | "applied" | "undone" | "declined">("proposed");
-  const operationKey = useRef(crypto.randomUUID());
+  const [attempt, setAttempt] = useState(0);
   const ops = (step.ops ?? []).map((op) =>
     operationIntent(op as unknown as Record<string, unknown>),
   );
   const key = JSON.stringify(ops);
   useEffect(() => {
     let active = true;
-    const initial = step.simulation as ProjectOpsPreviewResponse | undefined;
-    if (initial?.valid && initial.project_id === projectId && initial.before_sig) {
-      setPreview(initial);
-      setBusy(false);
-      return () => {
-        active = false;
-      };
-    }
     setBusy(true);
     setMessage("");
-    void projectOperationsPreview(
-      projectId,
-      { ops: JSON.parse(key) as DesignOperationRequest[] },
-      { headers: { "X-Organization-ID": organizationId } },
-    )
-      .then((response) => {
-        if (!active) return;
-        if (response.status !== 200) throw new ApiError(response.status, response.data);
-        setPreview(response.data);
-      })
+    setPreview(null);
+    void (async () => {
+      const headers = { headers: { "X-Organization-ID": organizationId } };
+      const saved = await projectOperationsState(
+        projectId,
+        { operation_key: operationKey },
+        headers,
+      );
+      if (saved.status !== 200) throw new ApiError(saved.status, saved.data);
+      if (!active) return;
+      setOperationId(saved.data.operation_id);
+      setState(
+        saved.data.state === "APPLIED"
+          ? "applied"
+          : saved.data.state === "UNDONE"
+            ? "undone"
+            : declined
+              ? "declined"
+              : "proposed",
+      );
+      const initial = step.simulation as ProjectOpsPreviewResponse | undefined;
+      if (
+        initial?.valid &&
+        initial.project_id === projectId &&
+        initial.before_sig &&
+        (attempt === 0 || saved.data.state !== "PROPOSED")
+      ) {
+        setPreview(initial);
+        return;
+      }
+      const response = await projectOperationsPreview(
+        projectId,
+        { ops: JSON.parse(key) as DesignOperationRequest[] },
+        headers,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (active) setPreview(response.data);
+    })()
       .catch((error: unknown) => {
         if (active) setMessage(detail(error));
       })
@@ -93,9 +119,12 @@ export function ProjectOpsStep({
     return () => {
       active = false;
     };
-  }, [projectId, organizationId, key, step.simulation]);
+  }, [projectId, organizationId, key, step.simulation, operationKey, declined, attempt]);
 
   function detail(error: unknown): string {
+    if (error instanceof ApiError && error.status === 403) {
+      return "No tienes permiso para cambiar este proyecto. Solo el dueño o un estimador puede hacerlo; pídele que revise la propuesta.";
+    }
     if (error instanceof ApiError && error.payload && typeof error.payload === "object") {
       const value = (error.payload as { error?: { detail?: string } }).error?.detail;
       if (value) return value;
@@ -110,7 +139,7 @@ export function ProjectOpsStep({
     try {
       const response = await projectOperationsApply(
         projectId,
-        { ops, before_sig: preview.before_sig, operation_key: operationKey.current },
+        { ops, before_sig: preview.before_sig, operation_key: operationKey },
         { headers: { "X-Organization-ID": organizationId } },
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
@@ -148,9 +177,24 @@ export function ProjectOpsStep({
     <section className="ask-dock__ops operation-project" aria-label="Propuesta para el proyecto">
       <p>{step.label}</p>
       {busy ? (
-        <p role="status">{state === "proposed" ? "Simulando cambios…" : "Guardando cambios…"}</p>
+        <p>
+          <DimLoader label={state === "proposed" ? "Simulando cambios" : "Guardando cambios"} />{" "}
+          {state === "proposed" ? "Simulando cambios…" : "Guardando cambios…"}
+        </p>
       ) : null}
-      {message ? <p role="alert">{message}</p> : null}
+      {message ? (
+        <div>
+          <p role="alert">{message}</p>
+          <button
+            type="button"
+            className="ask-dock__action ask-dock__action--ghost"
+            disabled={busy}
+            onClick={() => setAttempt((value) => value + 1)}
+          >
+            Reintentar simulación
+          </button>
+        </div>
+      ) : null}
       {preview ? (
         <ul className="operation-project__changes">
           {(preview.diff as Change[]).map((change, index) => (
@@ -177,6 +221,14 @@ export function ProjectOpsStep({
             </li>
           ))}
         </ul>
+      ) : null}
+      {preview && !preview.diff.length ? (
+        <p>La propuesta coincide con el proyecto. No hay cambios que aplicar.</p>
+      ) : null}
+      {preview && !preview.valid ? (
+        <p role="alert">
+          El proyecto bloquea esta propuesta. Revisa las posiciones y vuelve a simular.
+        </p>
       ) : null}
       {state === "proposed" ? (
         <div className="ask-dock__ops-actions">

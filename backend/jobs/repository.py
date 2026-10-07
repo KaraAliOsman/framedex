@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 import json
 from uuid import UUID
 
-from django.db import connection, DatabaseError
+from django.db import connection, DatabaseError, transaction
 from psycopg import sql
 
 from pricing.repository import json_text, rows
@@ -305,7 +305,12 @@ def report_progress(*, job_id: UUID, worker_id: str, progress: float) -> None:
     """Record progress and renew the lease in one write; raises LockLostError
     when the lease is gone so the handler aborts instead of finishing a job
     that now belongs to another worker."""
-    with connection.cursor() as cursor:
+    # Domain projections can leave the handler in an authenticated RLS
+    # scope. This worker-only lease write must use the connection owner,
+    # then restore the exact calling role and claims without widening grants.
+    from jobs.service import job_owner
+
+    with transaction.atomic(), job_owner(), connection.cursor() as cursor:
         cursor.execute(
             """
             UPDATE public.job_runs

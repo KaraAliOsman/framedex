@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { projectDesignOptions } from "../../api/generated/dekopen";
 import type { DesignOptions, Simulation } from "../../api/generated/models";
 import { fmtMm } from "../../format";
+import { DimLoader } from "../../ui/Signature";
 import { ProductFrontSvg } from "../canvas/ProductFrontSvg";
 import { resolveMembers } from "../canvas/members";
 import { isProductModel, type ProductJson } from "../canvas/productEditing";
@@ -15,6 +16,7 @@ type Price = {
   currency?: string;
   reason?: string | null;
   delta_net?: string | null;
+  source?: string;
 };
 
 function Drawing({
@@ -108,14 +110,15 @@ export function SimulationPreview({
       </p>
       <div className="operation-preview__drawings">
         {items.map((item) => (
-          <figure key={item.label}>
+          <figure key={item.label} className="sheet-miter">
             <figcaption>{item.label}</figcaption>
             {!item.product ? (
               <p>Sin posición</p>
             ) : options[item.system] ? (
               <Drawing product={item.product} options={options[item.system]!} color={item.color} />
             ) : (
-              <p role="status">
+              <p>
+                {!error ? <DimLoader label="Cargando dibujo" /> : null}
                 {error
                   ? "No pudimos cargar el catálogo para dibujar. Vuelve a abrir la propuesta."
                   : "Cargando dibujo…"}
@@ -154,6 +157,29 @@ export function SimulationPreview({
       {!value.valid ? (
         <p role="alert">El motor bloquea la propuesta. Corrige el diseño antes de aplicar.</p>
       ) : null}
+      <details>
+        <summary>¿De dónde sale?</summary>
+        <p>
+          Medidas y diseño: operaciones verificadas por el motor sobre los datos declarados del
+          marco.
+        </p>
+        <p>
+          Venta anterior:{" "}
+          {before.price?.source ??
+            before.price?.reason ??
+            "Sin dato: la simulación no adjuntó autoridad comercial anterior."}
+        </p>
+        <p>
+          Venta propuesta:{" "}
+          {price.source ??
+            price.reason ??
+            "Sin dato: la simulación no adjuntó autoridad comercial propuesta."}
+        </p>
+        <p>
+          Diferencia: resta exacta de ambas ventas en el motor, disponible solo cuando ambas tienen
+          autoridad.
+        </p>
+      </details>
       <details>
         <summary>Detalles técnicos de los cambios</summary>
         <pre>{JSON.stringify(value.diff, null, 2)}</pre>

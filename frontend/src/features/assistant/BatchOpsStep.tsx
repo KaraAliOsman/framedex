@@ -6,12 +6,16 @@ export function BatchOpsStep({
   step,
   organizationId,
   projectId,
+  operationKey,
+  declined,
   settled,
   onSettled,
 }: {
   step: AiAgentStep;
   organizationId: string;
   projectId: string;
+  operationKey: string;
+  declined?: boolean;
   settled: boolean;
   onSettled(action: "applied" | "declined" | "apply_failed", ops: { op?: string }[]): void;
 }): JSX.Element {
@@ -32,6 +36,8 @@ export function BatchOpsStep({
       step={{ kind: "project_ops", label: step.label, ops }}
       organizationId={organizationId}
       projectId={projectId}
+      operationKey={operationKey}
+      declined={declined}
       onSettled={(action, intents) => {
         if (!settled || action === "apply_failed") onSettled(action, intents);
       }}

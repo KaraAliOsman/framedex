@@ -15,6 +15,7 @@ from rest_framework.views import APIView
 from authentication.errors import contract_error
 from dekopen_engine.design_operations import OperationError, validate_operation
 from dekopen_engine.commercial import indicative_line_net
+from dekopen_engine.finishes import finish_selling_delta
 from pricing.repository import commercial_backend, encode, json_text, rows
 from pricing.serializers import StrictSerializer
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
@@ -128,7 +129,7 @@ def _change_simulation(org_id, change, cache):
         "source": "Sin posición en este lado de la propuesta."}}
     left, right = before or absent, after or absent
     price = right["price"]
-    delta = str(Decimal(price["net"]) - Decimal(left["price"]["net"])) if (
+    delta = str(finish_selling_delta(Decimal(left["price"]["net"]), Decimal(price["net"]))) if (
         price.get("net") is not None and left["price"].get("net") is not None) else None
     engine = view["engine"]
     return {**right, "position_id": (change["after"] or change["before"])["id"],
@@ -261,6 +262,14 @@ def undo_project_operations(org_id, user_id, project_id, operation_id):
     return {"operation_id": str(operation_id), "state": "UNDONE", "project": service.project_public(org_id, service.project_row(org_id, project_id), detail=True)}
 
 
+def project_operation_state(org_id, project_id, operation_key):
+    service.project_row(org_id, project_id)
+    with commercial_backend():
+        found = rows("SELECT id,state FROM public.project_edit_operations WHERE org_id=%s AND project_id=%s AND operation_key=%s", [org_id, project_id, operation_key])
+    return {"operation_id": str(found[0]["id"]) if found else None,
+            "state": found[0]["state"] if found else "PROPOSED"}
+
+
 class ProjectOpsPreviewSerializer(StrictSerializer):
     ops = DesignOperationSerializer(many=True, max_length=50)
 
@@ -284,6 +293,25 @@ class ProjectOpsResultSerializer(serializers.Serializer):
     operation_id = serializers.UUIDField()
     state = serializers.ChoiceField(choices=["APPLIED", "UNDONE"])
     project = serializers.JSONField()
+
+
+class ProjectOpsStateQuerySerializer(StrictSerializer):
+    operation_key = serializers.CharField(min_length=8, max_length=120)
+
+
+class ProjectOpsStateSerializer(serializers.Serializer):
+    operation_id = serializers.UUIDField(allow_null=True)
+    state = serializers.ChoiceField(choices=["PROPOSED", "APPLIED", "UNDONE"])
+
+
+class ProjectOpsStateView(APIView):
+    @extend_schema(operation_id="project_operations_state",
+                   responses={200: ProjectOpsStateSerializer, **ERRORS},
+                   **{**SCHEMA, "parameters": [*SCHEMA["parameters"], ProjectOpsStateQuerySerializer]})
+    def get(self, request, project_id):
+        data = validate(ProjectOpsStateQuerySerializer, request.query_params)
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(project_operation_state(org, project_id, data["operation_key"]))
 
 
 class ProjectOpsPreviewView(APIView):

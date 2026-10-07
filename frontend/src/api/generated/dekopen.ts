@@ -228,10 +228,12 @@ import type {
   ProjectInvoice,
   ProjectInvoiceAccess,
   ProjectListResponse,
+  ProjectOperationsStateParams,
   ProjectOpsApplyRequest,
   ProjectOpsPreviewRequest,
   ProjectOpsPreviewResponse,
   ProjectOpsResult,
+  ProjectOpsState,
   ProjectResponse,
   ProjectWriteRequest,
   PurchasingState,
@@ -16276,6 +16278,97 @@ export const projectOperationsPreview = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(projectOpsPreviewRequest),
   });
+};
+
+export type projectOperationsStateResponse200 = {
+  data: ProjectOpsState;
+  status: 200;
+};
+
+export type projectOperationsStateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsStateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsStateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsStateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsStateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsStateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsStateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsStateResponseSuccess = projectOperationsStateResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsStateResponseError = (
+  | projectOperationsStateResponse400
+  | projectOperationsStateResponse401
+  | projectOperationsStateResponse403
+  | projectOperationsStateResponse404
+  | projectOperationsStateResponse409
+  | projectOperationsStateResponse422
+  | projectOperationsStateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsStateResponse =
+  projectOperationsStateResponseSuccess | projectOperationsStateResponseError;
+
+export const getProjectOperationsStateUrl = (
+  projectId: string,
+  params: ProjectOperationsStateParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/projects/${projectId}/operations/state/?${stringifiedParams}`
+    : `/api/v1/projects/${projectId}/operations/state/`;
+};
+
+export const projectOperationsState = async (
+  projectId: string,
+  params: ProjectOperationsStateParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsStateResponse> => {
+  return apiMutator<projectOperationsStateResponse>(
+    getProjectOperationsStateUrl(projectId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type projectPaymentLinksListResponse200 = {
