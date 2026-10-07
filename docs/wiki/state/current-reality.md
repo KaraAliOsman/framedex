@@ -39,9 +39,12 @@ Los PDF finales se rasterizaron e inspeccionaron; servicios mantiene título y
 tabla juntos. Se corrigió la entrega binaria del logo y el fixture ahora conserva
 un PNG real con SHA verificable. La regresión HTTP y presentación documental pasan.
 
-El cierre local/CI/merge de D06 está pendiente y no se acredita como integrado.
-El primer gate aprobó 1 060 pgTAP y 330 integraciones, pero falló dos selectores
-del catálogo anterior; se actualizan explícitamente a v6 sin retirar aserciones.
+El gate local final sobre `eadf648b` pasa lint/typecheck/test/build, 1 060 pgTAP,
+330 integraciones, 11 E2E y ocho upgrades poblados PG16, con limpieza propia
+verificada. El cierre CI/merge sigue pendiente y no se acredita como integrado.
+El primer gate falló dos selectores del catálogo anterior; se actualizan
+explícitamente a v6 sin retirar aserciones. El intento con puerto ocupado se
+excluye de aceptación; detener el contenedor de la app propia libera el puerto.
 Véanse [accesorios y servicios](../product/accessories-services.md) y
 [aceptación D06](../../redesign/captures/accesorios-extras/aceptacion.md).
 El incidente de aislamiento previo permanece visible en la sección D05.

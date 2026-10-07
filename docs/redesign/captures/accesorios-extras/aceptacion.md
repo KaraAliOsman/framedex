@@ -102,10 +102,15 @@ en contratos históricos. Las tablas nuevas llevan organización y RLS;
 historial, revisión y precio aplicado permanecen inmutables. Policy y precio
 comparten un lock de organización y rechazan cambios concurrentes.
 
-El gate final y los cuatro checks de CI se registran al integrar el PR. El primer
-gate D06 aprobó 1 060 pgTAP y 330 integraciones, pero falló dos selectores E2E
-anclados a v5. Se actualizan a v6 conservando las aserciones de geometría, BOM,
-hash, persistencia y tiempo. No se cuenta ese intento como aceptación completa.
+El gate final aislado sobre `eadf648b` pasa lint, typecheck, test y build:
+647 pruebas del motor (+2 xfail históricos), 1 184 del backend y 725 del frontend.
+Database Gate pasa 1 060 pgTAP, 330 integraciones, 11 recorridos E2E y ocho
+upgrades poblados PG16; comprueba además la limpieza de sus recursos propios.
+Las pinturas verificadas van de 88,5 a 174,2 ms, bajo el límite de 300 ms.
+Los cuatro checks de CI se registran al integrar el PR. El primer gate falló
+dos selectores E2E anclados a v5; se actualizan a v6 conservando las aserciones
+de geometría, BOM, hash, persistencia y tiempo. Ese intento y el intento con
+puerto ocupado no cuentan como aceptación completa.
 
 No hecho / riesgos: los precios DEMO son sintéticos y no certifican fabricación.
 Se requieren las fichas y tarifas reales descritas en

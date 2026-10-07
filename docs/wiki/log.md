@@ -362,3 +362,14 @@ El gate inicial pasa 1 060 pgTAP y 330 integraciones, pero falla dos selectores
 anclados a v5: se actualizan a v6 conservando las aserciones. El cierre CI/merge
 queda pendiente de su comprobación final. Véase la aceptación D06; el incidente
 local previo conserva su informe y ninguna de sus ejecuciones afectadas se acepta.
+
+## 2026-10-06 — D06 · gate aislado completo
+
+El gate final sobre `eadf648b` aprueba lint/typecheck/test/build, 647 pruebas del
+motor (+2 xfail históricos), 1 184 del backend y 725 del frontend. Database Gate
+pasa 1 060 pgTAP, 330 integraciones, 11 E2E y ocho upgrades poblados PG16. La
+pintura del lienzo permanece bajo 300 ms y la limpieza de recursos propios se
+verifica. Los borradores y deshacer se aíslan por organización/proyecto/revisión.
+El conflicto del puerto 8000 se resuelve deteniendo temporalmente el contenedor
+de la app propia; no se cambian los puertos ni los checks del producto. La
+evidencia anterior fallida no cuenta como aceptación. CI y merge siguen pendientes.
