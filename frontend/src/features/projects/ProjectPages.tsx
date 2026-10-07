@@ -1786,7 +1786,12 @@ function ProjectWorkspace({
                   <summary>{t("projects.compareTitle")}</summary>
                   <RevisionComparePanel project={project} />
                 </details>
-                <ProjectServicesPanel projectId={project.id} orgId={orgId} canWrite={canWrite} />
+                <ProjectServicesPanel
+                  key={`${orgId}:${project.id}:${project.current_revision}`}
+                  projectId={project.id}
+                  orgId={orgId}
+                  canWrite={canWrite}
+                />
                 <ProjectActivitySection project={project} orgId={orgId} />
               </>
             </div>

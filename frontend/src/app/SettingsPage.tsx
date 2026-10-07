@@ -776,7 +776,7 @@ export function SettingsPage(): JSX.Element {
         </section>
       )}
 
-      {org && <ExtraPolicyEditor orgId={org.id} canWrite={isOwner} />}
+      {org && <ExtraPolicyEditor key={org.id} orgId={org.id} canWrite={isOwner} />}
 
       {org &&
         (org.role === "OWNER" || org.role === "WORKSHOP_MANAGER" || org.role === "ESTIMATOR") && (
