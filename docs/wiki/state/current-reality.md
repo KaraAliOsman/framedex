@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: 75bd60c70b7ad6c1943b5fd855d4672ae3a29f31
+verified_ref: 64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa
 sources:
   - repository main
   - P00 foundation PR #114
@@ -25,7 +25,7 @@ sources:
 
 # Current reality
 
-## IA3 · código y aceptación tras revisión (07-10-2026)
+## IA3 · integrado y verificado tras revisión (07-10-2026)
 
 La corrida completa MiMo tras la revisión del PR sobre `041cb622836c745897c04e52a354d10bbf16a8b4` pasa 22/26:
 editor 13/13, proyecto 6/8, planta 1/3 y general 2/2; editor/proyecto 19/21.
@@ -46,7 +46,10 @@ Progreso monótono hasta doce rondas; caché/error no amplían referencias.
 32 comparaciones sin hallazgos nuevos, con baseline del asistente preservado.
 El recorrido real prueba E03 y conserva su fecha al guardar el presupuesto.
 Solo CONSULTING_PROJECT quedó capturado; las otras fases tienen prueba automática.
-CI/merge del PR #127 se completan antes de marcar IA3 integrada en ESTADO.md.
+El PR [#127](https://github.com/KaraAliOsman/framedex/pull/127) pasa los cuatro
+checks sobre `55ce6ca3cda1b37dea80517dffa27ae6e1307f11` (run 37675782002) y se integra por squash
+`64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa` en `integracion/v1`. Las cuatro conversaciones de revisión
+están resueltas. La ola D2 queda cerrada; P02 continúa la cola.
 
 ## IA2 · integrado y verificado (07-10-2026)
 

@@ -11,7 +11,7 @@
 | D06 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/124 | fb9b5881d48248f51c5f05ccdc9682aacdacc0bd | CI 4/4 verde; extras/BOM/cortes, servicios y venta sellada; 1067 pgTAP, 337 RLS, 11 E2E y upgrades PG16; privacidad por tenant verificada. |
 | D07 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/125 | f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d | CI 4/4 verde; vano/montaje, evidencia y Δ de rectificación; 1090 pgTAP, 362 RLS, 11 E2E y ocho upgrades PG16; seis observaciones corregidas. |
 | IA2 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/126 | 0835e3f0834e2680674458693626617a84cc19f8 | CI 4/4 verde; 50 operaciones UI/IA/API, MiMo 21/26 y E+J 19/21 (90,48 %), aplicar/recargar/deshacer; 1101 pgTAP y 380 integraciones; tres observaciones corregidas. |
-| IA3 | D2 | en curso |  |  | Proveedor MiMo real, herramientas nativas, rutas por capacidad, presupuesto, Ajustes y observabilidad; sondeo confirma herramientas/visión y rechazo del PDF directo. |
+| IA3 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/127 | 64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa | CI 4/4 verde; MiMo 22/26 y E+J 19/21; 6 transportes, presupuesto/rutas/trazas; 1137 pgTAP, 395 integraciones y 11 E2E; cuatro observaciones corregidas. |
 | P02 | 1 | pendiente |  |  |  |
 | P25 | 1 | pendiente |  |  |  |
 | P04 | 1 | pendiente |  |  |  |
@@ -53,3 +53,9 @@ D07 conserva mínimo/dispersión, fija fabricación con motivo y liga confirmaci
 La rectificación de una aprobación abre sucesora con Δ de venta y conserva el PDF anterior byte a byte.
 Capturas clave: `docs/redesign/captures/vano-fabricacion/`; 24 comparaciones sin hallazgos nuevos y ocho regresiones visuales adicionales.
 Riesgos: datos DEMO sin certificación; IA2/IA3 y las superficies P continúan su aceptación sobre el dominio integrado.
+
+Ola D2 cerrada: D05, D06, D07, IA2 e IA3 integrados con sus cuatro checks verdes.
+Caras, extras y montaje conservan autoridad sellada; IA comparte 50 operaciones con el motor y admite proveedor real por capacidad.
+IA3 mide MiMo 22/26 y editor/proyecto 19/21; herramientas, visión y PDF literal/mixto/escaneado pasan sus oráculos reales.
+Capturas clave: `colores-acabados/`, `accesorios-extras/`, `vano-fabricacion/`, `operaciones-herramientas/` y `proveedor-real/`; sin hallazgos nuevos en el alcance de cada encargo.
+Riesgos: catálogo DEMO sin certificación, cuatro fallos de negocio de IA conservados y tarifa Sin dato hasta declararla; las superficies P continúan su aceptación.

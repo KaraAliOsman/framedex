@@ -590,3 +590,16 @@ continúa cargando. Se reproduce en el stack aislado. El test ahora espera
 las cuatro colecciones y verifica HTTP 200 antes de la misma aserción visible,
 con los mismos timeouts y sin reintentos. El recorrido real pasa; producto,
 oráculos de IA y checks no cambian. P16 continúa la optimización de catálogo.
+
+
+## 2026-10-07 — IA3 · integración aceptada y cierre de D2
+
+El PR [#127](https://github.com/KaraAliOsman/framedex/pull/127) pasa los cuatro checks
+sobre `55ce6ca3cda1b37dea80517dffa27ae6e1307f11` (run 37675782002) y se integra por squash
+`64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa` en `integracion/v1`. Las cuatro observaciones tienen regresiones
+y conversaciones resueltas. Se conservan la corrida completa MiMo 22/26, E+J 19/21,
+los seis oráculos reales de transporte, 82 regresiones y 15 integraciones IA3,
+1.137 pgTAP, 395 integraciones, 11 E2E y ocho upgrades PG16. Las 32 comparaciones
+no agregan hallazgos; los cuatro fallos de negocio y la historia del PDF se conservan.
+La ola D2 queda registrada en cinco líneas y continúa P02. `main` y recursos
+ajenos no se modifican.
