@@ -3,8 +3,8 @@
 Routes (capability → provider/model/cost) are operational config in ai_routes;
 tenants only ever see the white-label public_name. Real providers are wired via
 environment: AI_GATEWAY_{PROVIDER}_API_KEY and AI_GATEWAY_{PROVIDER}_BASE_URL.
-MOCK is the deterministic default used by seeded routes and tests — it never
-performs network I/O."""
+MiMo is the initial real route. MOCK requires an explicit flag and route;
+it never performs network I/O."""
 
 from __future__ import annotations
 
@@ -308,7 +308,13 @@ class HttpProvider:
         operation_key: str | None,
     ) -> bytes:
         last_error: httpx.HTTPError | None = None
+        deadline = provider_options.get("_deadline")
+        if deadline is None:
+            deadline = time.monotonic() + float(provider_options.get("timeout_s", self.timeout))
         for connect_ip in self._connect_ips:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ProviderError("ai_provider_timeout")
             try:
                 return self._send(
                     client,
@@ -316,7 +322,7 @@ class HttpProvider:
                     route=route,
                     capability=capability,
                     input_payload=input_payload,
-                    provider_options=provider_options,
+                    provider_options={**provider_options, "timeout_s": remaining},
                     host_header=host_header,
                     port_suffix=port_suffix,
                     operation_key=operation_key,
@@ -395,6 +401,7 @@ class HttpProvider:
                         raise ProviderError("ai_source_page_limit")
                     wire_input["_document_images"] = scanned_pdf_images(raw)
             deadline = started + options["timeout_s"]
+            options["_deadline"] = deadline
             retries = min(2, max(0, int(route.get("retries", 2))))
             retry_count = 0
             fallback = False

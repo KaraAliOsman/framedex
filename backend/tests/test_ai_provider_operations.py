@@ -121,6 +121,32 @@ def test_whole_deadline_cannot_restart_on_retry(monkeypatch):
     assert failure.value.code == "ai_provider_timeout"
 
 
+@pytest.mark.parametrize("first_elapsed", [0.8, 1.05])
+def test_pinned_addresses_share_one_deadline(monkeypatch, first_elapsed):
+    subject, now, seen = provider(monkeypatch), [0.0], []
+    subject._connect_ips = ["93.184.216.34", "93.184.216.35"]
+    monkeypatch.setattr(providers.time, "monotonic", lambda: now[0])
+
+    def handler(request):
+        seen.append(request)
+        if len(seen) == 1:
+            now[0] += first_elapsed
+            raise httpx.ConnectTimeout("synthetic connect timeout", request=request)
+        return httpx.Response(200, json=reply())
+
+    if first_elapsed < 1:
+        assert invoke(subject, handler, timeout_s=1)["retries"] == 0
+        assert len(seen) == 2
+        assert seen[1].extensions["timeout"]["connect"] == pytest.approx(0.2)
+        assert seen[1].extensions["timeout"]["read"] == pytest.approx(0.2)
+        assert seen[0].headers["Idempotency-Key"] == seen[1].headers["Idempotency-Key"]
+    else:
+        with pytest.raises(providers.ProviderError) as failure:
+            invoke(subject, handler, timeout_s=1)
+        assert failure.value.code == "ai_provider_timeout"
+        assert len(seen) == 1
+
+
 @pytest.mark.parametrize("debug", ["1", "true", "0", "false"])
 def test_debug_cannot_enable_test_provider(monkeypatch, debug):
     monkeypatch.setenv("DEBUG", debug)
