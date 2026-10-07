@@ -218,7 +218,35 @@ def test_probe_cannot_connect_a_configuration_changed_during_the_call(committed_
     assert route["checked_at"] is None
 
 
-def test_saved_configuration_does_not_inherit_previous_success(committed_commercial_rows, monkeypatch):
+@pytest.mark.parametrize("tariff", [False, True])
+def test_probe_survives_unrelated_budget_or_tariff_edit(committed_commercial_rows, monkeypatch, tariff):
+    org, _, users = committed_commercial_rows
+    from engine_api.repository import SystemParamsRepository
+    import projects.ops_registry as operations
+    import dekopen_engine.design_operations as engine_ops
+    monkeypatch.setenv("AI_GATEWAY_MIMO_API_KEY", "synthetic-private-key")
+    monkeypatch.setenv("AI_GATEWAY_MIMO_BASE_URL", "https://provider.example/v1")
+    monkeypatch.setattr(SystemParamsRepository, "list_visible", lambda *_: [SimpleNamespace(id=uuid4())])
+    monkeypatch.setattr(operations, "catalog_for", lambda *_: {"params": SimpleNamespace(finishes={"WHITE": {}})})
+    monkeypatch.setattr(operations, "calculate_product", lambda *_: {"status": "MANUFACTURING_INCOMPLETE", "issues": []})
+    monkeypatch.setattr(engine_ops, "apply_operations", lambda *_args, **_kwargs: {"product": {"assembly": {"modules": [{"width_mm": "1800", "height_mm": "1350"}]}}})
+    def invoke(**_):
+        def change():
+            before = configuration.get(org)
+            fields = ("capability", "provider", "provider_model", "timeout_s", "retries", "tools_mode", "input_usd_per_million", "output_usd_per_million")
+            submitted = [{key: route[key] for key in fields} for route in before["routes"]]
+            if tariff:
+                submitted[0].update(input_usd_per_million="1.25", output_usd_per_million="3.5")
+            configuration.save(org, users["OWNER"], {"expected_revision": before["revision"], "monthly_budget_credits": 200, "routes": submitted})
+        usage.independent(change)
+        return {**RESULT, "credits_debited": 5, "test_mode": False, "usage_id": None,
+                "output": '{"ops":[{"op":"set_height","height_mm":"1350"}],"notes":""}'}
+    monkeypatch.setattr(service, "invoke", invoke)
+    assert configuration.probe(org, users["OWNER"], {"operation_key": str(uuid4())})["passed"]
+    assert configuration.get(org)["routes"][0]["state"] == "CONNECTED"
+
+
+def test_budget_only_save_preserves_previous_connection(committed_commercial_rows, monkeypatch):
     org, _, users = committed_commercial_rows
     monkeypatch.setenv("AI_GATEWAY_MIMO_API_KEY", "synthetic-private-key")
     monkeypatch.setenv("AI_GATEWAY_MIMO_BASE_URL", "https://provider.example/v1")
@@ -230,9 +258,69 @@ def test_saved_configuration_does_not_inherit_previous_success(committed_commerc
     assert before["routes"][0]["state"] == "CONNECTED"
     fields = ("capability", "provider", "provider_model", "timeout_s", "retries", "tools_mode", "input_usd_per_million", "output_usd_per_million")
     after = configuration.save(org, users["OWNER"], {"expected_revision": before["revision"],
-        "monthly_budget_credits": None, "routes": [{key: route[key] for key in fields} for route in before["routes"]]})
-    assert after["routes"][0]["state"] == "UNTESTED"
-    assert after["routes"][0]["checked_at"] is None
+        "monthly_budget_credits": 100, "routes": [{key: route[key] for key in fields} for route in before["routes"]]})
+    assert after["routes"][0]["state"] == "CONNECTED"
+    assert after["routes"][0]["checked_at"] == before["routes"][0]["checked_at"]
+    assert rows("SELECT * FROM public.ai_capability_routes WHERE org_id=%s", [org]) == []
+    signature = configuration.route_signature(service._route("design_assist", org))
+    submitted = [{key: route[key] for key in fields} for route in after["routes"]]
+    previous_model = submitted[0]["provider_model"]
+    submitted[0]["provider_model"] = "different-model"
+    changed = configuration.save(org, users["OWNER"], {"expected_revision": after["revision"], "monthly_budget_credits": 100, "routes": submitted})
+    assert changed["routes"][0]["state"] == "UNTESTED"
+    submitted[0]["provider_model"] = previous_model
+    reverted = configuration.save(org, users["OWNER"], {"expected_revision": changed["revision"], "monthly_budget_credits": 100, "routes": submitted})
+    assert reverted["routes"][0]["state"] == "UNTESTED" and reverted["routes"][0]["checked_at"] is None
+    assert configuration.route_signature(service._route("design_assist", org)) != signature
+
+
+def test_tariff_budget_and_single_route_changes_preserve_other_probes(committed_commercial_rows, monkeypatch):
+    org, _, users = committed_commercial_rows
+    monkeypatch.setenv("AI_GATEWAY_MIMO_API_KEY", "synthetic-private-key")
+    monkeypatch.setenv("AI_GATEWAY_MIMO_BASE_URL", "https://provider.example/v1")
+    for capability in usage.CAPABILITIES:
+        rows("INSERT INTO public.ai_capability_routes(org_id,capability,provider,provider_model,connection_state,checked_at) VALUES(%s,%s,'MIMO','tested-model','CONNECTED',now()) RETURNING capability", [org, capability])
+    before = configuration.get(org)
+    fields = ("capability", "provider", "provider_model", "timeout_s", "retries", "tools_mode", "input_usd_per_million", "output_usd_per_million")
+    submitted = [{key: route[key] for key in fields} for route in before["routes"]]
+    route_before = rows("SELECT * FROM public.ai_capability_routes WHERE org_id=%s ORDER BY capability", [org])
+    signature = configuration.route_signature(service._route("design_assist", org))
+    submitted[0].update(input_usd_per_million="1.25", output_usd_per_million="3.5")
+    after = configuration.save(org, users["OWNER"], {"expected_revision": before["revision"], "monthly_budget_credits": 200, "routes": submitted})
+    assert [route["state"] for route in after["routes"]] == ["CONNECTED"] * 4
+    assert [route["checked_at"] for route in after["routes"]] == [route["checked_at"] for route in before["routes"]]
+    assert configuration.route_signature(service._route("design_assist", org)) == signature
+    submitted[1]["timeout_s"] = 75
+    changed = configuration.save(org, users["OWNER"], {"expected_revision": after["revision"], "monthly_budget_credits": 300, "routes": submitted})
+    assert [route["state"] for route in changed["routes"]] == ["CONNECTED", "UNTESTED", "CONNECTED", "CONNECTED"]
+    route_after = rows("SELECT * FROM public.ai_capability_routes WHERE org_id=%s ORDER BY capability", [org])
+    for previous, current in zip(route_before, route_after, strict=True):
+        assert current["revision"] == previous["revision"] + int(current["capability"] == "agent")
+        if current["capability"] != "agent":
+            assert current["connection_updated_at"] == previous["connection_updated_at"]
+
+
+def test_cache_is_per_execution_and_foreign_ids_still_require_tenant_access(committed_commercial_rows):
+    from ai_gateway.engine_tools import EngineTools
+    from projects import service as projects_service
+    org, other, users = committed_commercial_rows
+    own = projects_service.create_project(org, users["OWNER"], {"name": "Own project"})["id"]
+    foreign = projects_service.create_project(other, users["OWNER"], {"name": "Private project"})["id"]
+    def tools(tenant, refs):
+        return EngineTools(org_id=tenant, user_id=users["ESTIMATOR"], refs={}, product=None, observed_refs=set(refs), goal="")
+    with as_user(users["ESTIMATOR"]):
+        first = tools(org, [str(own), str(foreign)])
+        output, fresh = first.call("price_project", {"project_id": str(own)})
+        assert fresh and output["project_id"] == str(own)
+        output["project_id"] = str(foreign)
+        cached, fresh = first.call("price_project", {"project_id": str(own)})
+        assert not fresh and cached["project_id"] == str(own)
+        denied, _ = first.call("price_project", {"project_id": str(foreign)})
+        assert "error" in denied and str(foreign) not in str(denied)
+        second = tools(org, [])
+        assert second.cache == {}
+        unobserved, _ = second.call("price_project", {"project_id": str(own)})
+        assert unobserved["error"] == "unobserved_ref"
 
 
 def test_monthly_budget_counts_old_debits_without_duplicating_new_exchanges(committed_commercial_rows, monkeypatch):

@@ -34,8 +34,8 @@ def effective_model(route):
 
 
 def route_signature(route):
-    return (route["provider"], effective_model(route), route.get("tenant_revision"),
-            route.get("updated_at"), route.get("timeout_s", 60), route.get("retries", 2),
+    return (route["provider"], effective_model(route),
+            route.get("connection_updated_at") or route.get("updated_at"), route.get("timeout_s", 60), route.get("retries", 2),
             route.get("tools_mode", "AUTO"))
 
 
@@ -52,7 +52,7 @@ def get(org_id):
             model = effective_model(route)
             configured = _mock_enabled() if provider == "MOCK" else bool(os.environ.get(f"AI_GATEWAY_{provider}_API_KEY") and os.environ.get(f"AI_GATEWAY_{provider}_BASE_URL"))
             state = "UNTESTED"
-            configured_after = stored[0]["updated_at"] if stored and route.get("tenant_model") else route.get("updated_at")
+            configured_after = route.get("connection_updated_at") or route.get("updated_at")
             latest = rows("SELECT status,error_code,completed_at FROM public.ai_provider_usage WHERE org_id=%s AND capability=%s AND provider=%s AND provider_model=%s AND status <> 'RUNNING' AND (%s::timestamptz IS NULL OR created_at >= %s) ORDER BY completed_at DESC LIMIT 1", [str(org_id), capability, provider, model, configured_after, configured_after])
             last = latest[0] if latest else None
             if last:
@@ -77,6 +77,7 @@ def get(org_id):
 
 
 def save(org_id, user_id, data):
+    from ai_gateway.service import _route
     with financial_transaction(org_id):
         rows("INSERT INTO public.ai_settings(org_id) VALUES(%s) ON CONFLICT DO NOTHING RETURNING org_id", [str(org_id)])
         updated = rows("UPDATE public.ai_settings SET monthly_budget_credits=%s, revision=revision+1,updated_at=now(),updated_by=%s,budget_notice_at=NULL WHERE org_id=%s AND revision=%s RETURNING revision", [data["monthly_budget_credits"], str(user_id), str(org_id), data["expected_revision"]])
@@ -85,8 +86,18 @@ def save(org_id, user_id, data):
         for route in data["routes"]:
             if route["provider"] == "MOCK" and not _mock_enabled():
                 raise contract_error(409, "ai_provider_mock_disabled", cause("ai_provider_mock_disabled"))
-            rows("INSERT INTO public.ai_capability_routes(org_id,capability,provider,provider_model,timeout_s,retries,tools_mode,input_usd_per_million,output_usd_per_million) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(org_id,capability) DO UPDATE SET provider=excluded.provider,provider_model=excluded.provider_model,timeout_s=excluded.timeout_s,retries=excluded.retries,tools_mode=excluded.tools_mode,input_usd_per_million=excluded.input_usd_per_million,output_usd_per_million=excluded.output_usd_per_million,revision=ai_capability_routes.revision+1,connection_state='UNTESTED',connection_code=NULL,checked_at=NULL RETURNING capability",
-                 [str(org_id), route["capability"], route["provider"], route["provider_model"], route["timeout_s"], route["retries"], route["tools_mode"], route["input_usd_per_million"], route["output_usd_per_million"]])
+            current = _route(route["capability"], org_id)
+            transport_changed = any(route[key] != (effective_model(current) if key == "provider_model" else current.get(key, default))
+                                    for key, default in (("provider", None), ("provider_model", None), ("timeout_s", 60), ("retries", 2), ("tools_mode", "AUTO")))
+            rates = ("input_usd_per_million", "output_usd_per_million")
+            tariff_changed = any((Decimal(str(route[key])) if route[key] is not None else None) != current.get(key) for key in rates)
+            if not transport_changed and not tariff_changed:
+                continue
+            # Tariffs affect future sealed costs, not the tested connection.
+            # A transport timestamp isolates each capability from budget edits
+            # and invalidates an in-flight probe even after changing A→B→A.
+            rows("INSERT INTO public.ai_capability_routes(org_id,capability,provider,provider_model,timeout_s,retries,tools_mode,input_usd_per_million,output_usd_per_million,connection_updated_at) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,CASE WHEN %s THEN now() ELSE %s::timestamptz END) ON CONFLICT(org_id,capability) DO UPDATE SET provider=excluded.provider,provider_model=excluded.provider_model,timeout_s=excluded.timeout_s,retries=excluded.retries,tools_mode=excluded.tools_mode,input_usd_per_million=excluded.input_usd_per_million,output_usd_per_million=excluded.output_usd_per_million,revision=ai_capability_routes.revision+CASE WHEN %s THEN 1 ELSE 0 END,connection_updated_at=CASE WHEN %s THEN now() ELSE ai_capability_routes.connection_updated_at END,connection_state=CASE WHEN %s THEN 'UNTESTED' ELSE ai_capability_routes.connection_state END,connection_code=CASE WHEN %s THEN NULL ELSE ai_capability_routes.connection_code END,checked_at=CASE WHEN %s THEN NULL ELSE ai_capability_routes.checked_at END RETURNING capability",
+                 [str(org_id), route["capability"], route["provider"], route["provider_model"], route["timeout_s"], route["retries"], route["tools_mode"], route["input_usd_per_million"], route["output_usd_per_million"], transport_changed, current.get("connection_updated_at") or current.get("updated_at"), *([transport_changed] * 5)])
     return get(org_id)
 
 
@@ -145,8 +156,8 @@ def probe(org_id, user_id, data):
             if route_signature(route) != route_signature(tested_route):
                 return False
             if not route.get("tenant_model"):
-                inserted = rows("INSERT INTO public.ai_capability_routes(org_id,capability,provider,provider_model) VALUES(%s,'design_assist',%s,%s) ON CONFLICT DO NOTHING RETURNING capability",
-                                [str(org_id), tested_route["provider"], effective_model(tested_route)])
+                inserted = rows("INSERT INTO public.ai_capability_routes(org_id,capability,provider,provider_model,connection_updated_at) VALUES(%s,'design_assist',%s,%s,%s) ON CONFLICT DO NOTHING RETURNING capability",
+                                [str(org_id), tested_route["provider"], effective_model(tested_route), tested_route.get("updated_at")])
                 if not inserted:
                     return False
             rows("UPDATE public.ai_capability_routes SET connection_state=%s,connection_code=%s,checked_at=now() WHERE org_id=%s AND capability='design_assist' RETURNING capability",

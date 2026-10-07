@@ -10,6 +10,7 @@ SELECT ok(has_table_privilege('billing_backend','public.' || name,'INSERT'),name
 SELECT col_type_is('public','ai_provider_usage','estimated_cost_usd','numeric(30,14)','smallest accepted tariff preserves its Decimal cost');
 SELECT col_type_is('public','ai_capability_routes','input_usd_per_million','numeric(18,8)','tariff is Decimal');
 SELECT has_column('public','job_runs','phase','live worker phase uses the existing polling channel');
+SELECT col_type_is('public','ai_capability_routes','connection_updated_at','timestamp with time zone','connection verification has a capability-scoped timestamp');
 SELECT ok(NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name IN ('ai_provider_usage','ai_usage_events') AND column_name IN ('prompt','output','headers','api_key','goal','url')),'physical ledger has no content or credentials');
 SELECT ok(NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name IN ('ai_capability_routes','ai_provider_usage') AND data_type IN ('real','double precision')),'monetary metadata never uses float');
 SELECT ok(NOT has_table_privilege('billing_backend','public.ai_usage_events','UPDATE') AND NOT has_table_privilege('billing_backend','public.ai_usage_events','DELETE'),'tool events are append-only to their writer');

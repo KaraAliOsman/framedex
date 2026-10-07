@@ -824,7 +824,6 @@ def _act(
 
     _report(15)
     context = build_context(org_id, surface, refs)
-    contexts = [context]
     seen_queries = {_query_key(surface, refs)}
     observed_refs = _context_refs(context)
     observations: list[dict] = []
@@ -843,8 +842,8 @@ def _act(
         for tool in ("list_catalog_options", "calculate_position"):
             output, _ = engine_tools.call(tool, {})
             all_observations.append({"surface": tool, "context": output})
-            contexts.append(output)
-            observed_refs |= _context_refs(output)
+            if "error" not in output:
+                observed_refs |= _context_refs(output)
         engine_tools.observed_refs = observed_refs
     debited = 0
     audit_id = ""
@@ -861,7 +860,8 @@ def _act(
         # loop before the next round burns another provider call.
         if job_id is not None and jobs.cancel_requested(job_id=job_id):
             raise JobCanceledError()
-        _report(20 + round_index * 20)
+        round_progress = 20 + (round_index * 55) // MAX_ROUNDS
+        _report(round_progress)
         envelope = gateway.invoke(
             org_id=org_id,
             user_id=user_id,
@@ -929,7 +929,7 @@ def _act(
                 "ai_agent_bad_output",
                 "El agente devolvió una respuesta inválida.",
             )
-        _report(30 + round_index * 10, "CALCULATING_ENGINE")
+        _report(round_progress + max(1, 27 // MAX_ROUNDS), "CALCULATING_ENGINE")
         observations, new_observed = _queries(
             org_id=org_id,
             document=document,
@@ -965,14 +965,10 @@ def _act(
                 tool_messages.append({"role": "tool", "tool_call_id": call["id"], "content": json.dumps(output, ensure_ascii=False)})
             if fresh or call.get("id"):
                 observations.append({"surface": name, "context": output})
-                observed_refs |= _context_refs(output)
-                engine_tools.observed_refs = observed_refs
+                if fresh and "error" not in output:
+                    observed_refs |= _context_refs(output)
+                    engine_tools.observed_refs = observed_refs
         all_observations.extend(observations)
-        contexts.extend(
-            observation["context"]
-            for observation in observations
-            if isinstance(observation.get("context"), dict)
-        )
         # Any observation — success or error — informs the next round; an
         # entity that doesn't exist for this caller is a finding the model
         # should report, not a reason to stop mid-thought.
@@ -1092,7 +1088,9 @@ def _act(
             "los números comprobables se conservaron."
         )
 
-    context_refs = frozenset().union(*(_context_refs(c) for c in contexts))
+    # Only successful, fresh server projections introduce references. Cached
+    # tool messages still inform the model without granting new provenance.
+    context_refs = observed_refs
 
     # Ops steps ride the design-assist contract: they only exist when the
     # caller is on a position surface with a live product, and they validate

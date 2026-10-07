@@ -226,3 +226,10 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - El PDF escaneado usa render a imagen cuando no tiene texto literal; conserva
   el límite de veinte páginas y la revisión de D01. El modo de prueba necesita
   flag y ruta explícitos y siempre se rotula. DEBUG no lo activa.
+- En un PDF mixto, las páginas literales llegan como texto y las escaneadas
+  como imagen, en orden y con referencia de página. El texto tiene un límite
+  total de 100 000 caracteres; excederlo exige reducir el archivo, sin truncarlo.
+- Presupuesto y tarifas no invalidan una conexión probada. Solo cambiar
+  proveedor, modelo, tiempo, reintentos o modo de herramientas exige otra prueba
+  de esa capacidad; las demás conservan su evidencia. Una nueva tarifa solo
+  afecta intercambios futuros y no reescribe costos sellados.

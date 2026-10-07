@@ -395,11 +395,11 @@ class HttpProvider:
                     except (DocumentaryError, httpx.HTTPError):
                         pass
                 elif input_payload.get("kind") == "PDF":
-                    from ai_gateway.multimodal import scanned_pdf_images
+                    from ai_gateway.multimodal import pdf_page_parts
                     raw = SupabaseDocumentStorage().download_bounded(document_path, 20 * 1024 * 1024)
                     if raw is None:
                         raise ProviderError("ai_source_page_limit")
-                    wire_input["_document_images"] = scanned_pdf_images(raw)
+                    wire_input["_document_pages"] = pdf_page_parts(raw)
             deadline = started + options["timeout_s"]
             options["_deadline"] = deadline
             retries = min(2, max(0, int(route.get("retries", 2))))
@@ -591,12 +591,15 @@ class OpenAICompatibleProvider(HttpProvider):
         image = input_payload.get("_document_image")
         image_url = input_payload.get("document_url")
         user_content: Any
-        images = input_payload.get("_document_images")
-        if isinstance(images, list) and images:
+        pages = input_payload.get("_document_pages")
+        if isinstance(pages, list) and pages:
             user_content = []
-            for item in images:
-                user_content.extend([{"type": "text", "text": item["ref"]},
-                    {"type": "image_url", "image_url": {"url": f"data:{item['mime']};base64,{item['data']}"}}])
+            for item in pages:
+                user_content.append({"type": "text", "text": item["ref"]})
+                if "text" in item:
+                    user_content.append({"type": "text", "text": item["text"]})
+                else:
+                    user_content.append({"type": "image_url", "image_url": {"url": f"data:{item['mime']};base64,{item['data']}"}})
             user_content.append({"type": "text", "text": text_json})
         elif (
             isinstance(image, dict)
