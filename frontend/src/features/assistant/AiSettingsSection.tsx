@@ -148,7 +148,7 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
       client.setQueryData<AiSettings>(["ai", "settings", orgId], response.data);
       await client.invalidateQueries({ queryKey: ["ai", "mode", orgId] });
       setNotice({
-        text: "Ajustes de IA guardados. Prueba la conexión para verificar el modelo de diseño.",
+        text: "Ajustes de IA guardados.",
       });
     } catch (error) {
       setNotice({
