@@ -79,6 +79,12 @@ def test_vision_transport_receives_text_layer_pdf_and_mixed_pages(monkeypatch, p
             input_payload={"kind": "PDF", "source": {"kind": "document_import", "id": "synthetic-source"}},
             document_path="tenant/private.pdf", operation_key="pdf-fallback", client=client)
     parts = bodies[0]["messages"][-1]["content"]
-    assert any(part.get("text") == "Technical table A: 7135" for part in parts)
-    assert len([part for part in parts if part["type"] == "image_url"]) == len(pages) - 1
+    if len(pages) == 1:
+        assert isinstance(parts, str)
+        sent = json.loads(parts)
+    else:
+        assert [part["type"] for part in parts] == ["image_url", "text"]
+        sent = json.loads(parts[-1]["text"])
+        assert sent["document_pages"][1] == {"ref": "página 2", "image_number": 1}
+    assert sent["document_pages"][0] == {"ref": "página 1", "text": "Technical table A: 7135"}
     assert "storage.example" not in json.dumps(bodies) and "synthetic-source" in json.dumps(bodies)

@@ -593,14 +593,18 @@ class OpenAICompatibleProvider(HttpProvider):
         user_content: Any
         pages = input_payload.get("_document_pages")
         if isinstance(pages, list) and pages:
-            user_content = []
+            image_parts, page_manifest = [], []
             for item in pages:
-                user_content.append({"type": "text", "text": item["ref"]})
                 if "text" in item:
-                    user_content.append({"type": "text", "text": item["text"]})
+                    page_manifest.append({"ref": item["ref"], "text": item["text"]})
                 else:
-                    user_content.append({"type": "image_url", "image_url": {"url": f"data:{item['mime']};base64,{item['data']}"}})
-            user_content.append({"type": "text", "text": text_json})
+                    image_parts.append({"type": "image_url", "image_url": {"url": f"data:{item['mime']};base64,{item['data']}"}})
+                    page_manifest.append({"ref": item["ref"], "image_number": len(image_parts)})
+            # Some compatible gateways lose leading text-only parts. One
+            # coherent text carries every literal page and image reference.
+            # Page order remains explicit even in a mixed text/scanned PDF.
+            document_text = json.dumps({**text_payload, "document_pages": page_manifest}, ensure_ascii=False, default=str)
+            user_content = [*image_parts, {"type": "text", "text": document_text}] if image_parts else document_text
         elif (
             isinstance(image, dict)
             and isinstance(image.get("data"), str)
