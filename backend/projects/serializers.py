@@ -52,6 +52,24 @@ class PositionDesignSerializer(EngineCalculateRequestSerializer, StrictSerialize
     color = serializers.CharField(max_length=50)
 
 
+def validate_measurement_input(value, design):
+    # Reject oversized lists before constructing every survey. A position can
+    # have at most one survey per actual frame, without an arbitrary module cap.
+    tree = design.get('parametric_tree', {}) if isinstance(design, dict) else {}
+    assembly = tree.get('assembly', {}) if isinstance(tree, dict) and tree.get('version') == 'product-v2' else {}
+    modules = assembly.get('modules', []) if isinstance(assembly, dict) else []
+    count = len(modules) if isinstance(tree, dict) and tree.get('version') == 'product-v2' and isinstance(modules, list) else 1
+    if not isinstance(value, list) or not value or len(value) > count:
+        raise serializers.ValidationError('Declara una medición como máximo por marco del diseño.')
+    from pydantic import TypeAdapter
+    from dekopen_engine.mounting import OpeningSurvey
+    from pricing.repository import json_text
+    try:
+        return [item.model_dump(mode='json') for item in TypeAdapter(list[OpeningSurvey]).validate_json(json_text(value))]
+    except (ValueError, TypeError) as error:
+        raise serializers.ValidationError(str(error)) from error
+
+
 class PositionWriteSerializer(StrictSerializer):
     location_tag = serializers.CharField(max_length=100, allow_blank=True)
     quantity = serializers.IntegerField(min_value=1, max_value=2147483647)
@@ -60,13 +78,7 @@ class PositionWriteSerializer(StrictSerializer):
     measurement_reason = serializers.CharField(max_length=1000, required=False)
 
     def validate_measurements(self, value):
-        from pydantic import TypeAdapter
-        from dekopen_engine.mounting import OpeningSurvey
-        from pricing.repository import json_text
-        try:
-            return [item.model_dump(mode='json') for item in TypeAdapter(list[OpeningSurvey]).validate_json(json_text(value))]
-        except (ValueError,TypeError) as error:
-            raise serializers.ValidationError(str(error)) from error
+        return validate_measurement_input(value, self.initial_data.get('design'))
 
 
 class PositionUpdateSerializer(PositionWriteSerializer):

@@ -26,6 +26,11 @@ producto; el taller conserva exclusivamente fabricación y su BOM sellado.
 | Tenant ajeno, actor falsificado, proyecto ajeno o secuencia incorrecta | PASA: pruebas PostgreSQL `test_opening_mounting.py` y pgTAP 182 |
 | Portal a 390 px | PASA: `recorrido/portal-vano-producto-390.png`; proyección comercial sin actor ni motivos privados |
 | Vacío, carga, error/reintento, sin permiso y revisión cerrada | PASA: `recorrido/estado-*.png` y `navegador-matriz.json` |
+| Cambiar montaje con ensanche → montaje sin ensanche | PASA: retira solo la pieza exigida; conserva ensanche independiente derecho o mosquitero, BOM y guardado/reapertura |
+| Editar mientras llega una propuesta | PASA: respuesta diferida descartada, sin borrar el accesorio nuevo; `recorrido/navegador-revision.json` y regresiones del inspector |
+| Otra serie con igual código/revisión de regla | PASA: la rectificación resuelve la autoridad de la serie propuesta y proyecta solo venta |
+| Revisión anterior de otro marco | PASA: sigue ligada a su revisión inmutable mientras se mide el segundo marco |
+| Lista de 10 000 mediciones | PASA: se rechaza por cantidad de marcos antes de construir los modelos individuales |
 
 Los PDF de A y B y el de taller se emitieron, rasterizaron e inspeccionaron.
 La presentación nueva conserva espacio fino, coma decimal y precisión exacta;
@@ -96,14 +101,32 @@ misma evidencia que gobierna la revisión y el permiso de producción.
 
 ## Validación técnica y límites
 
-El gate nativo aislado pasa lint, typecheck, test y build: 660 pruebas del motor
-(+2 xfail históricos), 1 184 del backend y 730 del frontend. Los goldens pasan
-la comprobación de bytes. Las 20 pruebas PostgreSQL focalizadas verifican roles,
+La revisión del PR #125 identificó seis problemas potenciales, reproducidos o
+aislados antes del merge. Los accesorios independientes se guardan separados
+de las piezas exigidas por montaje; una regla nueva conserva la selección
+independiente y combina sus lados compatibles sin acumular piezas anteriores.
+Los accesorios exigidos muestran su causa y se modifican desde Vano y montaje.
+La propuesta captura la identidad del diseño y descarta respuestas o aplicaciones
+obsoletas; cambiar la regla durante la espera también invalida la petición.
+Cada revisión de regla se resuelve por organización, serie, código y revisión;
+no se sustituye silenciosamente una regla de otro sistema. La simulación usa
+el contexto comercial habitual y devuelve exclusivamente venta. La cantidad
+de mediciones se comprueba contra los marcos reales antes del parseo.
+
+El recorrido adicional verifica persistencia, BOM y respuesta tardía en el
+navegador, con seis capturas en 1440, 1280 y 1024, claro y oscuro. Las pruebas
+del motor verifican conservación de lados independientes y rechazo de destinos
+contradictorios. El golden añade solo el campo de atribución opcional nulo;
+las medidas y deducciones congeladas no cambian.
+
+El gate nativo aislado pasa lint, typecheck, test y build: 662 pruebas del motor
+(+2 xfail históricos), 1 186 del backend y 734 del frontend. Los goldens pasan
+la comprobación de bytes. Las 25 pruebas PostgreSQL focalizadas verifican roles,
 confirmación vigente, inmutabilidad, cobertura, rectificación, aislamiento y
 borrado y rechazo de copia de evidencia obsoleta a otra revisión. Database Gate
-pasa completo con 1 090 pgTAP, 357 integraciones, 11 E2E y los ocho recorridos
+pasa completo sobre la revisión con 1 090 pgTAP, 362 integraciones, 11 E2E y los ocho recorridos
 de upgrade en PostgreSQL 16. Se verifica la limpieza del stack aislado al
-terminar. CI se registra después de confirmar sus cuatro checks.
+terminar. CI se comprueba sobre la última revisión antes del merge.
 
 Los intentos fallidos de selectores, formato y runner de captura no cuentan
 como aceptación. El recorte visual detectado se corrigió y se añadió una

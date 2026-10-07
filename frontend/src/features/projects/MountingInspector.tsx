@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { mountingPreview, mountingRules } from "../../api/generated/dekopen";
@@ -8,7 +8,7 @@ import { parseDecimalInput } from "../../decimal";
 import { fmtMm } from "../../format";
 import { LoadingState } from "../../ui/States";
 import { actionErrorDetail } from "../errors";
-import { useCanvasStore } from "../canvas/canvasStore";
+import { useCanvasStore, type CanvasDesignInputs } from "../canvas/canvasStore";
 import type { ProductJson, ProductModuleJson } from "../canvas/productEditing";
 import { AxisBreakdown, MountingChip } from "./MeasurementPanel";
 import { walls, type MountingEvidence, type OpeningSurvey, type RuleRecord } from "./mountingModel";
@@ -207,23 +207,45 @@ export function MountingInspector({
   const [proposal, setProposal] = useState<{
     product: ProductJson;
     evidence: MountingEvidence[];
+    source: CanvasDesignInputs;
   } | null>(null);
+  const generation = useRef(0);
+  const previewSource = useRef<CanvasDesignInputs | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
+    generation.current += 1;
+    previewSource.current = null;
     setDraft(null);
     setProposal(null);
+    setPending(false);
     setError("");
   }, [module.id, inputs.systemId, evidence]);
+  useEffect(() => {
+    if (previewSource.current && previewSource.current !== inputs) {
+      generation.current += 1;
+      previewSource.current = null;
+      setProposal(null);
+      setPending(false);
+      setError("El diseño cambió. Calcula la fabricación otra vez antes de aplicar.");
+    }
+  }, [inputs]);
   const survey = draft ?? evidence?.survey;
   const rules = query.data ?? [];
   const edit = (next: OpeningSurvey) => {
+    generation.current += 1;
+    previewSource.current = null;
+    setPending(false);
     setDraft(next);
     setProposal(null);
     setError("");
   };
   async function calculate() {
     if (!survey || !org || !inputs.systemId) return;
+    const source = useCanvasStore.getState().inputs;
+    const epoch = ++generation.current;
+    previewSource.current = source;
+    setProposal(null);
     setPending(true);
     setError("");
     try {
@@ -246,18 +268,22 @@ export function MountingInspector({
         { headers: { "X-Organization-ID": org.id } },
       );
       if (r.status !== 200) throw new ApiError(r.status, r.data);
+      if (epoch !== generation.current || useCanvasStore.getState().inputs !== source) return;
       setProposal({
         product: r.data.design.parametric_tree as ProductJson,
         evidence: r.data.measurements as MountingEvidence[],
+        source,
       });
     } catch (cause) {
+      if (epoch !== generation.current) return;
+      previewSource.current = null;
       setError(
         cause instanceof SurveyInputError
           ? cause.message
           : actionErrorDetail(cause, "Revisa las medidas y la regla de montaje."),
       );
     } finally {
-      setPending(false);
+      if (epoch === generation.current) setPending(false);
     }
   }
   return (
@@ -364,6 +390,12 @@ export function MountingInspector({
                 disabled={busy}
                 onClick={() => {
                   const state = useCanvasStore.getState();
+                  if (state.inputs !== proposal.source) {
+                    setProposal(null);
+                    setError("El diseño cambió. Calcula la fabricación otra vez antes de aplicar.");
+                    return;
+                  }
+                  previewSource.current = null;
                   useCanvasStore.getState().commitInputs({
                     ...state.inputs,
                     product: proposal.product,

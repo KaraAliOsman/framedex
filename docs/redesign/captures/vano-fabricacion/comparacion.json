@@ -39,7 +39,7 @@
       "posicion-edicion",
       "ESTIMATOR",
       "light",
-      "1280x800"
+      "1440x900"
     ],
     "baseline_ref": "2b1d3bde",
     "before": 2,
@@ -56,7 +56,7 @@
       "posicion-edicion",
       "ESTIMATOR",
       "light",
-      "1440x900"
+      "1280x800"
     ],
     "baseline_ref": "2b1d3bde",
     "before": 2,
@@ -90,23 +90,6 @@
       "posicion-edicion",
       "ESTIMATOR",
       "dark",
-      "1440x900"
-    ],
-    "baseline_ref": "2b1d3bde",
-    "before": 2,
-    "after": 2,
-    "new": [],
-    "overflow_before": false,
-    "overflow_after": false,
-    "http_after": [],
-    "console_after": []
-  },
-  {
-    "surface": "editor",
-    "route": [
-      "posicion-edicion",
-      "ESTIMATOR",
-      "dark",
       "1024x768"
     ],
     "baseline_ref": "2b1d3bde",
@@ -124,6 +107,23 @@
       "posicion-edicion",
       "ESTIMATOR",
       "dark",
+      "1440x900"
+    ],
+    "baseline_ref": "2b1d3bde",
+    "before": 2,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
       "1280x800"
     ],
     "baseline_ref": "2b1d3bde",
@@ -209,41 +209,7 @@
       "proyecto-detalle",
       "ESTIMATOR",
       "dark",
-      "1280x800"
-    ],
-    "baseline_ref": "2b1d3bde",
-    "before": 13,
-    "after": 13,
-    "new": [],
-    "overflow_before": false,
-    "overflow_after": false,
-    "http_after": [],
-    "console_after": []
-  },
-  {
-    "surface": "proyecto",
-    "route": [
-      "proyecto-detalle",
-      "ESTIMATOR",
-      "dark",
       "1440x900"
-    ],
-    "baseline_ref": "2b1d3bde",
-    "before": 13,
-    "after": 13,
-    "new": [],
-    "overflow_before": false,
-    "overflow_after": false,
-    "http_after": [],
-    "console_after": []
-  },
-  {
-    "surface": "proyecto",
-    "route": [
-      "proyecto-detalle",
-      "ESTIMATOR",
-      "dark",
-      "1024x768"
     ],
     "baseline_ref": "2b1d3bde",
     "before": 13,
@@ -272,16 +238,33 @@
     "console_after": []
   },
   {
-    "surface": "ajustes",
+    "surface": "proyecto",
     "route": [
-      "ajustes",
-      "OWNER",
-      "light",
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "baseline_ref": "2b1d3bde",
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
       "1024x768"
     ],
     "baseline_ref": "2b1d3bde",
-    "before": 0,
-    "after": 0,
+    "before": 13,
+    "after": 13,
     "new": [],
     "overflow_before": false,
     "overflow_after": false,
@@ -328,6 +311,23 @@
       "ajustes",
       "OWNER",
       "light",
+      "1024x768"
+    ],
+    "baseline_ref": "2b1d3bde",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "light",
       "1440x900"
     ],
     "baseline_ref": "2b1d3bde",
@@ -362,23 +362,6 @@
       "ajustes",
       "OWNER",
       "dark",
-      "1280x800"
-    ],
-    "baseline_ref": "2b1d3bde",
-    "before": 0,
-    "after": 0,
-    "new": [],
-    "overflow_before": false,
-    "overflow_after": false,
-    "http_after": [],
-    "console_after": []
-  },
-  {
-    "surface": "ajustes",
-    "route": [
-      "ajustes",
-      "OWNER",
-      "dark",
       "1440x900"
     ],
     "baseline_ref": "2b1d3bde",
@@ -397,6 +380,23 @@
       "OWNER",
       "dark",
       "1024x768"
+    ],
+    "baseline_ref": "2b1d3bde",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "dark",
+      "1280x800"
     ],
     "baseline_ref": "2b1d3bde",
     "before": 0,

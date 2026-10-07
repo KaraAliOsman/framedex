@@ -4,7 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from dekopen_engine.mounting import MountingRule, OpeningSurvey, derive_fabrication
+from dekopen_engine.mounting import MountingRule, OpeningSurvey, derive_fabrication, merge_mounting_extras
+from dekopen_engine.extra_models import ExtraSelection
+from engine.tests.extra_cases import extra_context
 from engine.tests.mounting_cases import mounting_cases
 
 
@@ -35,3 +37,27 @@ def test_no_fabrication_when_allowances_consume_opening() -> None:
     with pytest.raises(ValueError, match="no positiva"):
         derive_fabrication(OpeningSurvey.model_validate({**case["survey"], "widths_mm": ["40"]}),
                            MountingRule.model_validate(case["rule"]))
+
+
+def extension_rule() -> MountingRule:
+    case = mounting_cases()["IN_OPENING"]
+    return MountingRule.model_validate({**case["rule"],
+        "left": {**case["rule"]["left"], "extension_mm": "20"},
+        "extras": [{"code": "FRAME_EXTENSION", "sides": ["LEFT"]}]})
+
+
+def test_mounting_parts_are_removed_without_erasing_independent_sides() -> None:
+    params, _ = extra_context()
+    independent = [ExtraSelection(code="FRAME_EXTENSION", sides=["RIGHT"])]
+    mounted = merge_mounting_extras(independent, extension_rule(), params.extra_authority)
+    assert mounted[0].sides == ["RIGHT", "LEFT"]
+    plain = MountingRule.model_validate(mounting_cases()["IN_OPENING"]["rule"])
+    assert merge_mounting_extras(independent, plain, params.extra_authority) == independent
+    assert independent[0].sides == ["RIGHT"]
+
+
+def test_conflicting_independent_target_requires_explicit_correction() -> None:
+    params, _ = extra_context()
+    independent = [ExtraSelection(code="FRAME_EXTENSION", sides=["RIGHT"], bay_id="part")]
+    with pytest.raises(ValueError, match="contradice el montaje"):
+        merge_mounting_extras(independent, extension_rule(), params.extra_authority)

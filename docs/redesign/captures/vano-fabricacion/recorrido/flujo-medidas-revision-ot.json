@@ -1,6 +1,6 @@
 {
-  "versionA": "bcf1c0e0-3fd2-464a-8698-148a0fb4c064",
-  "versionB": "af97eef4-dfbf-404b-a464-3ef9239d18ee",
+  "versionA": "12d6a301-b0db-46f3-aac6-b58b592bec17",
+  "versionB": "b4142bea-cbcd-4c8a-b805-82a42bf6aacd",
   "unchangedPdf": true,
   "revision": "REV-B",
   "price_change": {
@@ -12,8 +12,8 @@
   },
   "confirmedRelease": [
     {
-      "id": "0c8c104d-c2f9-43d0-b9c5-1bcd73c39546",
-      "code": "OT-P-000220-REV-B-01"
+      "id": "6358e737-a277-4474-af2e-09493d06fbd1",
+      "code": "OT-P-000300-REV-B-01"
     }
   ],
   "pendingGate": "production_measurements_unconfirmed",

@@ -506,10 +506,8 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
         from projects.extras import apply_position_defaults
         design = apply_position_defaults(org_id,design)
     if 'measurements' in data:
-        from projects.mounting import SURVEYS, derive_design, measurement_record
-        record = measurement_record(org_id,position_id,project_row(org_id,project_id)['current_revision']) if position_id else None
-        derived,_ = derive_design(org_id,design,SURVEYS.validate_json(json_text(data['measurements'])),
-            stored_evidence=record['measurements'] if record and current['system_id']==design['system_id'] else None)
+        from projects.mounting import SURVEYS, derive_design
+        derived,_ = derive_design(org_id,design,SURVEYS.validate_json(json_text(data['measurements'])))
         if (derived['nominal_width_mm'] != design['nominal_width_mm'] or derived['nominal_height_mm'] != design['nominal_height_mm']
             or not _same_documentary_value(derived['parametric_tree'],design['parametric_tree'])):
             raise contract_error(409,'measurement_design_drift','Aplica la fabricación calculada antes de guardar el vano.')

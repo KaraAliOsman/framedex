@@ -34,16 +34,21 @@ rectificación de una cotización aprobada simula venta, abre sucesora y preserv
 el PDF anterior byte a byte. El encargado confirma mediante un lock estrecho,
 sin recibir escritura general del proyecto.
 
-Las 20 pruebas PostgreSQL focalizadas pasan, incluidos actor/tenant,
+Las 25 pruebas PostgreSQL focalizadas pasan, incluidos actor/tenant,
 timestamp/generación, cobertura, borrado legítimo sin perder historial y rechazo
 de copia de evidencia obsoleta a un diseño distinto.
-Los cuatro gates locales pasan: 660 motor (+2 xfail), 1 184 backend y 730
+Los cuatro gates locales de la revisión pasan: 662 motor (+2 xfail), 1 186 backend y 734
 frontend. La cadena real verifica Ajustes con MFA, ensanche por lado,
 guardar/deshacer, portal 390, revisión/Δ, PDF y OT. Las 24 comparaciones formales
 no añaden hallazgos; la matriz comprueba cotas dentro de la hoja y ocho campos
 visibles en el inspector a 768 px. Se conservan los hallazgos heredados del
-editor móvil y del cromo de proyecto. Database Gate, CI y merge siguen
-pendientes. Véase [vano y montaje](../product/opening-measurements.md) y su
+editor móvil y del cromo de proyecto. Database Gate y los cuatro checks de CI
+pasaron sobre `7da524d8`; las seis observaciones posteriores se corrigieron y
+se verifican otra vez antes de integrar. Los extras independientes se conservan
+al cambiar regla, la propuesta obsoleta se descarta y cada revisión se resuelve
+en su serie. El gate final de base de datos pasa 1 090 pgTAP, 362 integraciones,
+11 E2E y ocho upgrades PG16, con limpieza propia verificada. CI sobre las
+correcciones y squash siguen pendientes. Véase [vano y montaje](../product/opening-measurements.md) y su
 [aceptación](../../redesign/captures/vano-fabricacion/aceptacion.md).
 
 ## D06 · accesorios y servicios integrados y verificados (2026-10-07)

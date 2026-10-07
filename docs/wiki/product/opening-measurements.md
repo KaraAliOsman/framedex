@@ -19,6 +19,14 @@ La regla pertenece a organización y serie. Declara tipo, fuente, condición
 sintética, tolerancia y holgura/premarco/ensanche/traslape de cada lado.
 Guardar crea una revisión de autoridad; no cambia reglas de medidas anteriores.
 Los ensanches exigen un accesorio físico compatible en los lados deducidos.
+Cada regla se resuelve por tenant, serie, código y revisión inmutable, incluso
+si una autoridad posterior ya fue publicada. Medir otro marco no obliga a
+actualizar reglas anteriores; un cambio de serie requiere su propia autoridad.
+La selección independiente de accesorios permanece separada de las piezas
+exigidas por montaje. Cambiar regla retira solo las exigencias anteriores y
+conserva los lados o accesorios independientes; destinos contradictorios
+requieren corrección explícita. La propuesta del inspector se invalida ante
+cambios de diseño o de regla durante la espera.
 
 El motor toma una o tres medidas positivas por eje y conserva mínimo y
 dispersión con Decimal a 0,01 mm. Fabricación suma al mínimo los traslapes y

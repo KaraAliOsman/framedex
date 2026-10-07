@@ -193,24 +193,32 @@ export function ExtrasInspector({
             {selections.map((selection, index) => {
               const definition = choices.find((item) => item.code === selection.code);
               const selectedLines = lines.filter((item) => item.code === selection.code);
+              const requiredByMounting =
+                inputs.mounting
+                  ?.find((item) => item.survey.module_id === module.id)
+                  ?.rule.extras.some((item) => item.code === selection.code) ?? false;
+              const selectionLocked = busy || requiredByMounting;
               return (
                 <li key={`${selection.code}-${index}`}>
                   <header>
                     <strong>{definition?.name ?? "Extra sin autoridad"}</strong>
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={selectionLocked}
                       onClick={() => replace(selections.filter((_, at) => at !== index))}
                     >
                       Quitar
                     </button>
                   </header>
+                  {requiredByMounting && (
+                    <p>Exigido por montaje. Para cambiarlo, revisa Vano y montaje.</p>
+                  )}
                   {selection.decision === "DISMISS" ? (
                     <p>
                       Descartado.{" "}
                       <button
                         type="button"
-                        disabled={busy}
+                        disabled={selectionLocked}
                         onClick={() => patch(index, { decision: "ACCEPT" })}
                       >
                         Aceptar
@@ -223,13 +231,13 @@ export function ExtrasInspector({
                           <Measure
                             label="Vuelo izquierdo · mm"
                             value={selection.overhang_left_mm ?? "0"}
-                            disabled={busy}
+                            disabled={selectionLocked}
                             onValue={(value) => patch(index, { overhang_left_mm: value })}
                           />
                           <Measure
                             label="Vuelo derecho · mm"
                             value={selection.overhang_right_mm ?? "0"}
-                            disabled={busy}
+                            disabled={selectionLocked}
                             onValue={(value) => patch(index, { overhang_right_mm: value })}
                           />
                         </div>
@@ -241,7 +249,7 @@ export function ExtrasInspector({
                             <label key={side}>
                               <input
                                 type="checkbox"
-                                disabled={busy}
+                                disabled={selectionLocked}
                                 checked={(
                                   selection.sides ??
                                   definition.default_sides ??
@@ -269,7 +277,7 @@ export function ExtrasInspector({
                         <label>
                           Aplicar a
                           <select
-                            disabled={busy}
+                            disabled={selectionLocked}
                             value={
                               selection.bay_id
                                 ? `${selection.bay_id}|${selection.leaf_id ?? ""}`

@@ -87,6 +87,7 @@ class OpeningSurvey(MountingModel):
     plumb_mm: Decimal | None = Field(default=None, ge=0)
     origin: Literal["CUSTOMER", "SITE"]
     override: FabricationOverride | None = None
+    independent_extras: list[ExtraSelection] | None = Field(default=None, max_length=30)
 
     @model_validator(mode="after")
     def sample_contract(self) -> OpeningSurvey:
@@ -94,6 +95,29 @@ class OpeningSurvey(MountingModel):
             if len(samples) not in (1, 3) or any(item <= 0 for item in samples):
                 raise ValueError("Ingresa una o tres medidas positivas por eje.")
         return self
+
+
+def merge_mounting_extras(independent: list[ExtraSelection], rule: MountingRule,
+                         authority: ExtraAuthority | None) -> list[ExtraSelection]:
+    """Keep independent intent separate from the current rule's physical parts."""
+    validate_mounting_extras(rule, authority)
+    if len({item.code for item in independent}) != len(independent):
+        raise ValueError("No repitas accesorios independientes del montaje.")
+    definitions = {item.code: item for item in authority.definitions} if authority else {}
+    merged = {item.code: item for item in independent}
+    for required in rule.extras:
+        selected = merged.get(required.code)
+        if selected is not None and selected.decision == "ACCEPT":
+            other_fields = set(ExtraSelection.model_fields) - {"sides", "decision"}
+            if any(getattr(selected, key) != getattr(required, key) for key in other_fields):
+                raise ValueError("Un accesorio independiente contradice el montaje. Revisa su selección antes de aplicar.")
+            definition = definitions[required.code]
+            if definition.basis == "SIDES":
+                sides = set(selected.sides if selected.sides is not None else definition.default_sides)
+                sides.update(required.sides if required.sides is not None else definition.default_sides)
+                required = required.model_copy(update={"sides": [side for side in ("TOP", "RIGHT", "BOTTOM", "LEFT") if side in sides]})
+        merged[required.code] = required
+    return list(merged.values())
 
 
 class AxisDerivation(MountingModel):

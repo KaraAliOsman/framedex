@@ -49,6 +49,7 @@ export type OpeningSurvey = {
   plumb_mm: string | null;
   origin: "CUSTOMER" | "SITE";
   override: { width_mm: string; height_mm: string; reason: string } | null;
+  independent_extras?: ExtraSelection[] | null;
 };
 export type AxisDerivation = {
   opening_mm: string;
@@ -66,6 +67,29 @@ export type MountingEvidence = {
   rule: MountingRule;
   result: { width: AxisDerivation; height: AxisDerivation; warnings: string[] };
 };
+
+export function reconcileIndependentExtras(
+  evidence: MountingEvidence,
+  before: ExtraSelection[],
+  next: ExtraSelection[],
+): MountingEvidence {
+  const previous = new Map(before.map((item) => [item.code, item]));
+  const current = new Map(next.map((item) => [item.code, item]));
+  const independent = new Map(
+    (evidence.survey.independent_extras ?? before).map((item) => [item.code, item]),
+  );
+  let changed = false;
+  for (const code of new Set([...previous.keys(), ...current.keys()])) {
+    if (JSON.stringify(previous.get(code)) === JSON.stringify(current.get(code))) continue;
+    changed = true;
+    const selected = current.get(code);
+    if (selected) independent.set(code, selected);
+    else independent.delete(code);
+  }
+  return changed
+    ? { ...evidence, survey: { ...evidence.survey, independent_extras: [...independent.values()] } }
+    : evidence;
+}
 export type MeasurementRecord = {
   generation: number;
   state: "CUSTOMER" | "SITE" | "CONFIRMED";

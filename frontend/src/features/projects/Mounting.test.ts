@@ -65,3 +65,41 @@ it("requires a new series mounting authority after changing the system", () => {
   store.setSystemId("series-b");
   expect(useCanvasStore.getState().inputs.mounting).toEqual([]);
 });
+
+it("records independent accessory edits with the same undo transaction as the product", () => {
+  const product = wrapTreeAsProduct(
+    {
+      id: "g1",
+      type: "BAY",
+      opening_type: "FIXED",
+      extras: [{ code: "FRAME_EXTENSION", sides: ["LEFT"] }],
+    },
+    "1500",
+    "1200",
+  );
+  const attributed = { ...evidence, survey: { ...evidence.survey, independent_extras: [] } };
+  const store = useCanvasStore.getState();
+  store.loadDesign({ ...store.inputs, product, mounting: [attributed] });
+  store.commitInputs({
+    ...useCanvasStore.getState().inputs,
+    product: {
+      ...product,
+      assembly: {
+        ...product.assembly,
+        modules: product.assembly.modules.map((module) => ({
+          ...module,
+          tree: { ...module.tree, extras: [...module.tree.extras!, { code: "SCREEN_FIXED" }] },
+        })),
+      },
+    },
+  });
+  expect(useCanvasStore.getState().inputs.mounting?.[0]?.survey.independent_extras).toEqual([
+    { code: "SCREEN_FIXED" },
+  ]);
+  store.undo();
+  expect(useCanvasStore.getState().inputs.mounting?.[0]?.survey.independent_extras).toEqual([]);
+  store.redo();
+  expect(useCanvasStore.getState().inputs.mounting?.[0]?.survey.independent_extras).toEqual([
+    { code: "SCREEN_FIXED" },
+  ]);
+});

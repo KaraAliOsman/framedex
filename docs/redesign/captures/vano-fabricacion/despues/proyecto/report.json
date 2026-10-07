@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-07T05:44:47.176Z",
+  "generatedAt": "2026-10-07T07:34:02.533Z",
   "baseUrl": "http://127.0.0.1:5173",
   "records": [
     {
       "routeId": "proyecto-detalle",
-      "path": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "reachedPath": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
+      "path": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "reachedPath": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
       "role": "ESTIMATOR",
       "theme": "light",
       "viewport": "1440x900",
@@ -70,8 +70,8 @@
     },
     {
       "routeId": "proyecto-detalle",
-      "path": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "reachedPath": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
+      "path": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "reachedPath": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
       "role": "ESTIMATOR",
       "theme": "light",
       "viewport": "390x844",
@@ -136,8 +136,8 @@
     },
     {
       "routeId": "proyecto-detalle",
-      "path": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "reachedPath": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
+      "path": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "reachedPath": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
       "role": "ESTIMATOR",
       "theme": "light",
       "viewport": "1280x800",
@@ -202,8 +202,8 @@
     },
     {
       "routeId": "proyecto-detalle",
-      "path": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "reachedPath": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
+      "path": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "reachedPath": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
       "role": "ESTIMATOR",
       "theme": "light",
       "viewport": "1024x768",
@@ -268,74 +268,8 @@
     },
     {
       "routeId": "proyecto-detalle",
-      "path": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "reachedPath": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "role": "ESTIMATOR",
-      "theme": "dark",
-      "viewport": "1280x800",
-      "screenshot": "proyecto-detalle__ESTIMATOR__dark__1280x800.png",
-      "overflowX": false,
-      "consoleErrors": [],
-      "httpErrors": [],
-      "findings": [
-        {
-          "kind": "radius-over-4",
-          "sample": "li.commercial-step "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "span.commercial-step__marker "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "li.commercial-step "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "span.commercial-step__marker "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "li.commercial-step "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "span.commercial-step__marker "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "li.commercial-step "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "span.commercial-step__marker "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "li.commercial-step "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "span.commercial-step__marker "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "li.commercial-step "
-        },
-        {
-          "kind": "radius-over-4",
-          "sample": "span.commercial-step__marker "
-        },
-        {
-          "kind": "shadow-outside-scale",
-          "sample": "div.position-row "
-        }
-      ]
-    },
-    {
-      "routeId": "proyecto-detalle",
-      "path": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "reachedPath": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
+      "path": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "reachedPath": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
       "role": "ESTIMATOR",
       "theme": "dark",
       "viewport": "1440x900",
@@ -400,12 +334,12 @@
     },
     {
       "routeId": "proyecto-detalle",
-      "path": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "reachedPath": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
+      "path": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "reachedPath": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
       "role": "ESTIMATOR",
       "theme": "dark",
-      "viewport": "1024x768",
-      "screenshot": "proyecto-detalle__ESTIMATOR__dark__1024x768.png",
+      "viewport": "390x844",
+      "screenshot": "proyecto-detalle__ESTIMATOR__dark__390x844.png",
       "overflowX": false,
       "consoleErrors": [],
       "httpErrors": [],
@@ -466,12 +400,78 @@
     },
     {
       "routeId": "proyecto-detalle",
-      "path": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
-      "reachedPath": "/projects/d49ebe4c-e373-4847-82e2-35ef34b55bdc",
+      "path": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "reachedPath": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
       "role": "ESTIMATOR",
       "theme": "dark",
-      "viewport": "390x844",
-      "screenshot": "proyecto-detalle__ESTIMATOR__dark__390x844.png",
+      "viewport": "1280x800",
+      "screenshot": "proyecto-detalle__ESTIMATOR__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "li.commercial-step "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "span.commercial-step__marker "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "li.commercial-step "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "span.commercial-step__marker "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "li.commercial-step "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "span.commercial-step__marker "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "li.commercial-step "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "span.commercial-step__marker "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "li.commercial-step "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "span.commercial-step__marker "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "li.commercial-step "
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "span.commercial-step__marker "
+        },
+        {
+          "kind": "shadow-outside-scale",
+          "sample": "div.position-row "
+        }
+      ]
+    },
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "reachedPath": "/projects/3b489532-5246-42d6-a983-3f25b0ec7baf",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "proyecto-detalle__ESTIMATOR__dark__1024x768.png",
       "overflowX": false,
       "consoleErrors": [],
       "httpErrors": [],

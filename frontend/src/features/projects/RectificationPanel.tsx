@@ -147,6 +147,7 @@ export function RectificationPanel({
                           plumb_mm: survey?.plumb_mm ?? null,
                           origin: "SITE",
                           override: survey?.override ?? null,
+                          independent_extras: survey?.independent_extras ?? null,
                         },
                       ]);
                     }}

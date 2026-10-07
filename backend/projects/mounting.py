@@ -15,13 +15,14 @@ from authentication.errors import contract_error
 from dekopen_engine.commercial import PricingError
 from dekopen_engine.documentary_canonical import documentary_canonical_json_v1
 from dekopen_engine.finishes import finish_selling_delta
-from dekopen_engine.mounting import MountingRule, OpeningSurvey, derive_fabrication, resize_contour, validate_mounting_extras
+from dekopen_engine.mounting import MountingRule, OpeningSurvey, derive_fabrication, resize_contour, validate_mounting_extras, merge_mounting_extras
+from dekopen_engine.extra_models import ExtraSelection
 from engine_api.adapter import elevation_envelope, parse_product_model
-from pricing.repository import json_text, one, rows
+from pricing.repository import commercial_backend, json_text, one, rows
 from pricing.serializers import StrictSerializer, PriceRequestSerializer
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
 from projects.extras import extra_backend
-from projects.serializers import PositionDesignSerializer
+from projects.serializers import PositionDesignSerializer, validate_measurement_input
 from projects.views import SCHEMA, response
 
 SURVEYS = TypeAdapter(list[OpeningSurvey])
@@ -42,7 +43,7 @@ def public_rules(org_id, system_id):
             for item in rules_for(org_id,system_id)]
 
 
-def derive_design(org_id, design, surveys, *, stored_evidence=None):
+def derive_design(org_id, design, surveys):
     """The preview and save boundary run the same exact derivation."""
     design = deepcopy(design)
     tree = design['parametric_tree']
@@ -52,22 +53,19 @@ def derive_design(org_id, design, surveys, *, stored_evidence=None):
     targets = {module['id'] for module in modules}
     if not surveys or len({item.module_id for item in surveys}) != len(surveys) or any(item.module_id not in targets for item in surveys):
         raise contract_error(422,'survey_target_invalid','Cada medición debe corresponder a un marco distinto del diseño.')
-    latest = {item['code']:item for item in rules_for(org_id,design['system_id'])}
     from engine_api.repository import SystemParamsRepository
     with extra_backend():
         params = SystemParamsRepository().load_visible(design['system_id'],org_id)
     evidence = []
     for survey in surveys:
-        original = next((item for item in stored_evidence or [] if item['survey']['module_id']==survey.module_id
-                         and item['survey']['rule_code']==survey.rule_code
-                         and item['survey']['rule_revision']==survey.rule_revision),None)
-        found = latest.get(survey.rule_code)
-        if original:
-            rule = MountingRule.model_validate(original['rule'])
-        elif found and found['revision']==survey.rule_revision:
-            rule = MountingRule.model_validate_json(found['rule'])
-        else:
-            raise contract_error(409,'mounting_rule_stale','La regla cambió o no está declarada. Recarga Vano y montaje.')
+        # Immutable revisions are resolved by tenant AND series, including a
+        # pinned older revision. Never substitute another series' stored rule.
+        with extra_backend():
+            found = rows('SELECT rule::text FROM public.mounting_rules WHERE org_id=%s AND system_id=%s AND code=%s AND revision=%s',
+                         [org_id,design['system_id'],survey.rule_code,survey.rule_revision])
+        if not found:
+            raise contract_error(409,'mounting_rule_stale','La regla no está declarada para esta serie. Recarga Vano y montaje.')
+        rule = MountingRule.model_validate_json(found[0]['rule'])
         try:
             validate_mounting_extras(rule,params.extra_authority)
             result = derive_fabrication(survey,rule)
@@ -80,10 +78,16 @@ def derive_design(org_id, design, surveys, *, stored_evidence=None):
                                               Decimal(str(module['height_mm'])),width,height)
         module['width_mm'],module['height_mm'] = str(width),str(height)
         intent = module['tree']
-        required = {item.code:item.model_dump(mode='json') for item in rule.extras}
-        existing = {item['code']:item for item in intent.get('extras',[])}
-        if existing or required:
-            intent['extras'] = list((existing | required).values())
+        independent = survey.independent_extras
+        if independent is None:
+            independent = TypeAdapter(list[ExtraSelection]).validate_json(json_text(intent.get('extras',[])))
+        survey = survey.model_copy(update={'independent_extras':independent})
+        try:
+            merged = merge_mounting_extras(independent,rule,params.extra_authority)
+        except ValueError as error:
+            raise contract_error(422,'mounting_extra_conflict',str(error)) from error
+        if 'extras' in intent or merged:
+            intent['extras'] = [item.model_dump(mode='json') for item in merged]
         evidence.append({'survey':survey.model_dump(mode='json'), 'rule':rule.model_dump(mode='json'),
                          'result':result.model_dump(mode='json')})
     if assembly:
@@ -128,7 +132,7 @@ def save_measurements(org_id, position, data):
     revision = project_row(org_id,position['project_id'])['current_revision']
     surveys = SURVEYS.validate_json(json_text(data['measurements']))
     current = measurement_record(org_id,position['id'],revision)
-    _,evidence = derive_design(org_id,data['design'],surveys,stored_evidence=current['measurements'] if current else None)
+    _,evidence = derive_design(org_id,data['design'],surveys)
     from projects.service import position_public
     if current and current['binding']==binding(position_public(position)['design']) and current['measurements']==evidence:
         return
@@ -155,10 +159,7 @@ def copy_measurements(org_id,project_id,before_revision,after_revision):
 
 class SurveyListField(serializers.JSONField):
     def to_internal_value(self, data):
-        try:
-            return [item.model_dump(mode='json') for item in SURVEYS.validate_json(json_text(data))]
-        except (TypeError,ValueError) as error:
-            raise serializers.ValidationError(str(error)) from error
+        return validate_measurement_input(data, self.parent.initial_data.get('design'))
 
 
 class RuleWriteSerializer(StrictSerializer):
@@ -298,9 +299,7 @@ def rectify(org,actor,position_id,data):
     surveys = SURVEYS.validate_json(json_text(data['measurements']))
     if any(item.origin!='SITE' for item in surveys):
         raise contract_error(422,'site_survey_required','La rectificación requiere medidas tomadas en obra.')
-    record = measurement_record(org,position_id,project['current_revision'])
-    design,evidence = derive_design(org,data['design'],surveys,
-        stored_evidence=record['measurements'] if record else None)
+    design,evidence = derive_design(org,data['design'],surveys)
     from projects.service import calculate_design
     bom = calculate_design(org,design)
     latest = _latest_version(org,project['id'])
@@ -313,7 +312,7 @@ def rectify(org,actor,position_id,data):
                 'typology':_typology(design['parametric_tree']), 'bom_snapshot':bom,
                 'color_interior':bom['finish']['interior']['code'] if bom.get('finish') else design['color'],
                 'color_exterior':bom['finish']['exterior']['code'] if bom.get('finish') else design['color']}
-    with extra_backend():
+    with commercial_backend():
         all_positions = rows('SELECT * FROM public.project_positions WHERE org_id=%s AND project_id=%s ORDER BY position_index',
                              [org,project['id']])
         if sealed and latest:

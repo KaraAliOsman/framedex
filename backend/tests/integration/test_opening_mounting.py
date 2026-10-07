@@ -43,11 +43,11 @@ def confirm_body(position):
             'confirmed':True,'acknowledge_warnings':True,'reason':'Técnico verificó la obra; ensayo DEMO'}
 
 
-def seed_rule(org,system,rule):
+def seed_rule(org,system,rule,revision=1):
     with extra_backend():
         one('INSERT INTO mounting_rules(org_id,system_id,code,revision,rule,actor_id,reason) '
-            "VALUES(%s,%s,%s,1,%s::jsonb,(current_setting('request.jwt.claims',true)::jsonb->>'sub')::uuid,%s) RETURNING code",
-            [org,system,rule['code'],json_text(rule),'Ensayo de montaje explícito'])
+            "VALUES(%s,%s,%s,%s,%s::jsonb,(current_setting('request.jwt.claims',true)::jsonb->>'sub')::uuid,%s) RETURNING code",
+            [org,system,rule['code'],revision,json_text(rule),'Ensayo de montaje explícito'])
 
 
 def mounting_position(org,owner):
@@ -302,3 +302,107 @@ def test_revision_copy_cannot_rebind_stale_survey_to_changed_fabrication(documen
     refused=client_for(users['ESTIMATOR']).post(f"/api/v1/positions/{position['id']}/measurements/confirm/",
         confirm_body(position),format='json',HTTP_X_ORGANIZATION_ID=str(org))
     assert refused.status_code==409,refused.content
+
+
+@pytest.mark.parametrize('independent', [[], [{'code':'FRAME_EXTENSION','sides':['RIGHT']}], [{'code':'SCREEN_FIXED'}]])
+def test_mounting_change_removes_only_injected_parts_and_preserves_independent_selection(documentary_tenant,independent):
+    from engine.tests.mounting_cases import mounting_cases
+    from projects.service import calculate_design
+    from dekopen_engine.extra_models import ExtraSelection
+    org,_,users,_=documentary_tenant
+    owner=users['OWNER']
+    design=fixture(org,owner)
+    case=mounting_cases()['IN_OPENING']
+    extension={**case['rule'],'code':'EXTENSION','left':{**case['rule']['left'],'extension_mm':'20'},
+               'extras':[{'code':'FRAME_EXTENSION','sides':['LEFT'],'decision':'ACCEPT'}]}
+    design['parametric_tree']['extras']=independent
+    with as_user(owner):
+        seed_rule(org,design['system_id'],extension)
+        seed_rule(org,design['system_id'],case['rule'])
+        initial=SURVEYS.validate_json(json_text([{**case['survey'],'rule_code':'EXTENSION'}]))
+        mounted,evidence=derive_design(org,design,initial)
+        injected=next(item for item in mounted['parametric_tree']['extras'] if item['code']=='FRAME_EXTENSION')
+        assert 'LEFT' in injected['sides']
+        project=create_project(org,owner,{'name':'Cambio de montaje · DEMO','client_name':'Ensayo'})
+        saved=PositionWriteSerializer(data={'location_tag':'Fachada','quantity':1,
+            'design':{**mounted,'nominal_width_mm':str(mounted['nominal_width_mm']),'nominal_height_mm':str(mounted['nominal_height_mm'])},
+            'measurements':[item['survey'] for item in evidence]})
+        saved.is_valid(raise_exception=True)
+        position=save_position(org,project['id'],saved.validated_data)
+        stored=position['measurements']['measurements'][0]['survey']
+        changed=SURVEYS.validate_json(json_text([{**stored,'rule_code':'IN_OPENING'}]))
+        plain,new_evidence=derive_design(org,position['design'],changed)
+        expected=[ExtraSelection.model_validate(item).model_dump(mode='json') for item in independent]
+        assert plain['parametric_tree']['extras']==expected
+        bom=calculate_design(org,plain)
+        assert {item['code'] for item in bom.get('extras',[])}=={item['code'] for item in independent}
+        update=PositionWriteSerializer(data={'location_tag':'Fachada','quantity':1,
+            'design':{**plain,'nominal_width_mm':str(plain['nominal_width_mm']),'nominal_height_mm':str(plain['nominal_height_mm'])},
+            'measurements':[item['survey'] for item in new_evidence]})
+        update.is_valid(raise_exception=True)
+        reopened=save_position(org,project['id'],{**update.validated_data,'expected_updated_at':position['updated_at']},position_id=position['id'])
+        assert reopened['measurements']['current'] is True
+        assert reopened['design']['parametric_tree']['extras']==expected
+
+
+def test_preview_keeps_pinned_rule_on_one_frame_while_measuring_another(documentary_tenant):
+    from engine.tests.mounting_cases import mounting_cases
+    org,_,users,_=documentary_tenant
+    design=fixture(org,users['OWNER'])
+    case=mounting_cases()['IN_OPENING']
+    newer={**case['rule'],'left':{**case['rule']['left'],'clearance_mm':'20'},
+           'right':{**case['rule']['right'],'clearance_mm':'20'}}
+    with as_user(users['OWNER']):
+        seed_rule(org,design['system_id'],case['rule'])
+        seed_rule(org,design['system_id'],newer,revision=2)
+    tree={'version':'product-v2','assembly':{'modules':[
+        {'id':'m1','width_mm':'1500','height_mm':'1200','tree':design['parametric_tree']},
+        {'id':'m2','width_mm':'1500','height_mm':'1200','tree':{**design['parametric_tree'],'id':'otro'}}],
+        'couplings':[{'id':'c1','angle_deg':'0','coupler_profile_sku':None}]}}
+    result=client_for(users['ESTIMATOR']).post('/api/v1/projects/mounting-preview/',
+        {'design':{**design,'parametric_tree':tree},'measurements':[
+            {**case['survey'],'module_id':'m1'},
+            {**case['survey'],'module_id':'m2','rule_revision':2}]},format='json',HTTP_X_ORGANIZATION_ID=str(org))
+    assert result.status_code==200,result.content
+    evidence=result.json()['measurements']
+    assert evidence[0]['result']['width']['fabrication_mm']=='1500'
+    assert evidence[1]['result']['width']['fabrication_mm']=='1480'
+    assert evidence[0]['rule']==case['rule'] and evidence[1]['rule']==newer
+
+
+def test_rectification_on_another_series_uses_its_authority_and_returns_only_selling(documentary_tenant):
+    org,_,users,_=documentary_tenant
+    project,position,_,evidence=mounting_position(org,users['OWNER'])
+    original=evidence[0]['rule']
+    revised={**original,'left':{**original['left'],'clearance_mm':'20'},
+             'right':{**original['right'],'clearance_mm':'20'}}
+    with as_user(users['OWNER']):
+        from catalogs.glass import load_products
+        other_system=one("SELECT id FROM profile_systems WHERE code='DEMO_60' AND version=5")['id']
+        seed_rule(org,other_system,revised)
+        glass=next(item for item in load_products(other_system,org) if item['technical_sku'].endswith('-GLASS-SAFE'))
+        other_tree={**position['design']['parametric_tree'],'glass_article_sku':glass['technical_sku'],
+                    'glass_product':glass['resolved_product'].model_dump(mode='json')}
+    response=client_for(users['ESTIMATOR']).post(f"/api/v1/positions/{position['id']}/measurements/rectify/",
+        {'design':{**position['design'],'system_id':str(other_system),'parametric_tree':other_tree},
+         'measurements':[item['survey'] for item in evidence],
+         'expected_updated_at':position['updated_at'],'expected_current_revision':'REV-A',
+         'reason':'Cambio explícito a otra serie durante la medición','confirmed':False},
+        format='json',HTTP_X_ORGANIZATION_ID=str(org))
+    assert response.status_code==200,response.content
+    result=response.json()
+    assert result['measurements'][0]['rule']==revised
+    assert D(result['design']['nominal_width_mm'])==D('1480')
+    assert set(result['price_change'])=={'before_net','after_net','delta_net','currency','reason'}
+    def no_costs(value):
+        if isinstance(value,dict):
+            assert not {'cost_rate','total_cost','unit_cost','cost_net'}.intersection(value)
+            for child in value.values():
+                no_costs(child)
+        elif isinstance(value,list):
+            for child in value:
+                no_costs(child)
+    no_costs(result)
+    with as_user(users['OWNER']):
+        assert project_row(org,project['id'])['current_revision']=='REV-A'
+        assert str(position_row(org,position['id'])['system_id'])==str(position['design']['system_id'])

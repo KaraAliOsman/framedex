@@ -443,3 +443,33 @@ integraciones, 11 E2E y ocho upgrades PG16; verifica limpieza propia. La
 comparación de 24 capturas y los PDF conservan la evidencia de aceptación. Se
 retiran los informes parciales duplicados; no se conservan capturas de intentos
 fallidos como resultados aceptados. CI y squash aún pendientes en esta entrada.
+
+## 2026-10-07 — D07 · seis correcciones de revisión
+
+El PR #125 pasó los cuatro checks sobre `7da524d8`; su revisión detectó
+seis problemas potenciales. Se atribuyen los accesorios independientes aparte
+de las exigencias del montaje, se invalidan propuestas tardías por identidad
+de diseño/regla y se resuelven reglas por tenant/serie/revisión inmutable.
+La simulación usa el contexto comercial de Precios y proyecta solo venta.
+La lista de mediciones se limita por marcos antes de construir sus modelos.
+
+Pasan 25 pruebas PostgreSQL de montaje, dos de límite de entrada y tres
+de concurrencia del inspector. La suite completa local de la revisión pasa
+662 motor (+2 xfail), 1 186 backend y 734 frontend, lint/tipos/build y API
+reproducible. El golden solo añade la atribución nula, sin cambiar cifras.
+Playwright comprueba ensanche retirado, mosquitero independiente, BOM y
+reapertura; la propuesta diferida no borra la edición. La cadena A→B, el PDF
+anterior idéntico, el gate de OT y la matriz de estados vuelven a pasar.
+Las 24 comparaciones formales no añaden hallazgos. Se repite Database Gate y
+CI sobre la revisión final antes de integrar; un check de review verde no
+se considera ausencia de defectos.
+
+## 2026-10-07 — D07 · gate completo posterior a revisión
+
+Database Gate pasa sobre la revisión final: 76 fuentes verificadas byte a byte,
+1 090 pgTAP, 362 integraciones, 11 E2E y ocho upgrades poblados PostgreSQL 16.
+El runner comprueba limpieza de containers/volúmenes de su identidad propia;
+la app y sus procesos también están detenidos. Los intentos fallidos de
+selectores del recorrido adicional no cuentan como aceptación; el recorrido
+completo posterior pasa conservando todas sus aserciones. CI de las
+correcciones se espera sobre el siguiente commit antes del squash.
