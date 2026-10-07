@@ -22,9 +22,14 @@ import "./providerOperations.css";
 const STATES: Record<string, string> = {
   RUNNING: "En curso",
   QUEUED: "En cola",
-  SUCCEEDED: "Completado",
+  SUCCEEDED: "Propuesta preparada",
   FAILED: "Falló",
   CANCELED: "Cancelado",
+};
+const PROVIDER_STATES: Record<string, string> = {
+  RUNNING: "Consultando proveedor",
+  SUCCEEDED: "Respuesta recibida",
+  FAILED: "Falló la llamada",
 };
 
 export function AiWorkList({
@@ -113,13 +118,14 @@ export function AiWorkList({
               className="status-chip"
               data-status={(work.job_state ?? work.status).toLowerCase()}
             >
-              {STATES[work.job_state ?? work.status] ?? "Sin dato"}
+              {(work.job_state ? STATES[work.job_state] : PROVIDER_STATES[work.status]) ??
+                "Sin dato"}
             </span>
             {work.test_mode && <span className="status-chip">Modo de prueba</span>}
             <time className="ai-number" dateTime={work.created_at}>
               {formatDateTime(work.created_at)}
             </time>
-            {work.ai_job_id && work.user_id === me?.user.id && (
+            {work.job_state && work.ai_job_id && work.user_id === me?.user.id && (
               <Link
                 className="ui-button ui-button--small ui-button--ghost"
                 to={`/assistant?job=${work.ai_job_id}`}
@@ -169,10 +175,15 @@ export function AiWorkList({
             </div>
           </dl>
           {work.last_cause && <p className="ai-requires-person">{work.last_cause}</p>}
+          {work.ai_job_id && !work.job_state && (
+            <p className="settings-hint">
+              La propuesta ya no está disponible. Se conserva el costo y la traza de la llamada.
+            </p>
+          )}
           <details className="ai-advanced">
             <summary>¿De dónde sale? · Traza del trabajo</summary>
             <p>
-              Registro del proveedor: {STATES[work.status] ?? "Sin dato"}.{" "}
+              Registro del proveedor: {PROVIDER_STATES[work.status] ?? "Sin dato"}.{" "}
               {work.fallback
                 ? "El modelo respondió mediante JSON validado después de rechazar herramientas nativas."
                 : "La respuesta conserva la validación del servidor."}

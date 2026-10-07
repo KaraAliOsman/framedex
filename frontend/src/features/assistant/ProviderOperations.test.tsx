@@ -154,7 +154,7 @@ it("loads all work pages while preserving capability and state filters", async (
   const work = {
     id: "work",
     job_id: null,
-    ai_job_id: null,
+    ai_job_id: "rolled-back-proposal",
     capability: "agent",
     user_id: "actor-fixture",
     user_label: "Persona de prueba",
@@ -182,12 +182,28 @@ it("loads all work pages while preserving capability and state filters", async (
     } as never)
     .mockResolvedValueOnce({
       status: 200,
-      data: [{ ...work, id: "last", user_label: "Última persona" }],
+      data: [
+        {
+          ...work,
+          id: "last",
+          user_label: "Última persona",
+          ai_job_id: "available-proposal",
+          job_state: "SUCCEEDED",
+        },
+      ],
       headers: new Headers(),
     } as never);
   mount(<AiWorkList capability="agent" state="SUCCEEDED" />);
+  await screen.findAllByText("Respuesta recibida");
+  expect(screen.queryByRole("link", { name: "Ver propuesta" })).toBeNull();
+  expect(screen.getAllByText(/La propuesta ya no está disponible/)).toHaveLength(100);
   fireEvent.click(await screen.findByRole("button", { name: "Cargar más llamadas" }));
   await screen.findByText("Última persona");
+  expect(screen.getByRole("link", { name: "Ver propuesta" })).toHaveAttribute(
+    "href",
+    "/assistant?job=available-proposal",
+  );
+  expect(screen.getByText("Propuesta preparada")).toBeVisible();
   expect(vi.mocked(aiUsageList).mock.calls[1]![0]).toEqual({
     capability: "agent",
     state: "SUCCEEDED",
