@@ -4,6 +4,7 @@ import { ApiError } from "../../api/apiMutator";
 import { aiMetrics } from "../../api/generated/dekopen";
 import type { AiMetrics } from "../../api/generated/models/aiMetrics";
 import { t } from "../../i18n/es-CL";
+import { SURFACE_LABELS } from "./surfaces";
 
 function pct(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -68,7 +69,7 @@ export function AiMetricsCard({
   const topSurfaces = Object.entries(jobs.by_surface ?? {})
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4)
-    .map(([surface, count]) => `${surface} ${count}`)
+    .map(([surface, count]) => `${SURFACE_LABELS[surface] ?? "otra superficie"} ${count}`)
     .join(" · ");
   return (
     <section className="aiws-metrics" aria-label={t("aiws.metrics.title")}>
