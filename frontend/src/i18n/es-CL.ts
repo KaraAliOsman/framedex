@@ -1321,6 +1321,8 @@ export const messages = {
     "El almacenamiento de documentos falló. Reintenta; si persiste, revisa la configuración.",
   "jobs.fail.stale": "El contenido cambió desde que se encoló el trabajo. Vuelve a encolarlo.",
   "jobs.fail.provider": "El proveedor externo no respondió. Reintenta en unos minutos.",
+  "jobs.fail.aiBudget":
+    "La IA alcanzó el presupuesto mensual. El dueño puede ajustarlo en Ajustes › Inteligencia artificial; las funciones manuales siguen disponibles.",
   "jobs.fail.providerQuota":
     "El proveedor de IA llegó a su límite de uso. Avisa a un administrador para revisar la cuenta.",
   "jobs.fail.providerConfig":

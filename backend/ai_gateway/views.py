@@ -51,6 +51,9 @@ _MEMBER_CAPABILITIES = frozenset({"nlp_command", "discount_suggest"})
 def _provider_message(code: str) -> str:
     """Honest failure language per diagnosis — a spent quota and an
     unreachable provider are not the same problem and shouldn't read alike."""
+    from ai_gateway.configuration import CAUSES, cause
+    if code in CAUSES:
+        return cause(code)
     return {
         "ai_provider_quota": "El proveedor de IA llegó a su límite de uso. Avisa a un administrador para revisar la cuenta.",
         "ai_provider_auth": "La credencial del proveedor de IA fue rechazada. Avisa a un administrador para revisar la configuración.",

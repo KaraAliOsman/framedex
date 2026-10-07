@@ -13,11 +13,8 @@ import type { AiAgentResultPlanItem } from "./aiAgentResultPlanItem";
 import type { AiAgentStep } from "./aiAgentStep";
 import type { Clarify } from "./clarify";
 
-/**
- * The payload act() stores on the job's `result` column — the envelope
- * fields (audit/job ids, state, transcript) live on the job row itself.
- */
 export interface AiAgentResult {
+  test_mode?: boolean;
   model: string;
   credits_debited: number;
   reply: string;

@@ -17,3 +17,5 @@ gunicorn==26.2.0
 redis==8.1.0
 structlog==26.1.0
 lxml==6.0.2
+jsonschema==4.26.0
+pypdfium2==5.10.1

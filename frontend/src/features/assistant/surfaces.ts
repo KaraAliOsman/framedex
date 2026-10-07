@@ -3,10 +3,21 @@ import { domainLabels } from "../../i18n/domainLabels";
 /** Keep the provider's wording and grounded numbers; translate known API
  * enums when a response quotes them. Hyphenated catalog SKUs stay intact. */
 export function assistantText(value: string | undefined): string {
-  return (value ?? "").replace(
-    /(?<![\w-])[A-Z]+(?:_[A-Z0-9]+)+(?![\w-])/g,
-    (word) => domainLabels[word] ?? word,
-  );
+  // Restored history keeps its original audit. Localize only presentation,
+  // preserving literal URLs, routes, code spans and catalog identifiers.
+  return (value ?? "")
+    .split(/(https?:\/\/[^\s<>()]+|\/[^\s<>()]+|`[^`]*`)/g)
+    .map((part, index) =>
+      index % 2
+        ? part
+        : part
+            .replace(/(?<![\w/.-])dashboard(?![\w/.-])/gi, "panel de inicio")
+            .replace(
+              /(?<![\w-])[A-Z]+(?:_[A-Z0-9]+)+(?![\w-])/g,
+              (word) => domainLabels[word] ?? word,
+            ),
+    )
+    .join("");
 }
 
 /** One surface dictionary — dock, workspace, and the route map all read from

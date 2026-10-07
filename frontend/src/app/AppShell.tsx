@@ -1,4 +1,5 @@
 import { type PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
+import { AiModeBadge } from "../features/assistant/AiModeBadge";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { t, type TranslationKey } from "../i18n/es-CL";
@@ -330,6 +331,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
               <ShellCrumbs leaf={leaf} />
               <div className="app-topbar__actions">
                 <ProjectSwitcher />
+                <AiModeBadge />
                 <button
                   type="button"
                   className="topbar-search"

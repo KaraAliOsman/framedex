@@ -1,4 +1,5 @@
 from django.urls import path
+from ai_gateway.operations_views import AiSettingsView, AiConnectionView, AiUsageView, AiModeView
 
 from ai_gateway.views import (
     AiAgentView,
@@ -13,6 +14,10 @@ from ai_gateway.views import (
 )
 
 urlpatterns = [
+    path("mode/", AiModeView.as_view(), name="ai-test-mode"),
+    path("settings/", AiSettingsView.as_view(), name="ai-settings"),
+    path("connection-test/", AiConnectionView.as_view(), name="ai-connection-test"),
+    path("usage/", AiUsageView.as_view(), name="ai-provider-usage"),
     path("invoke/", AiInvokeView.as_view(), name="ai-invoke"),
     path("ask/", AiAskView.as_view(), name="ai-ask"),
     path("agent/", AiAgentView.as_view(), name="ai-agent"),

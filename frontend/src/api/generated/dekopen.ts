@@ -14,6 +14,8 @@ import type {
   AiAskResponse,
   AiAskThreadParams,
   AiAskTurn,
+  AiConnectionResult,
+  AiConnectionTestRequest,
   AiInvokeRequestRequest,
   AiInvokeResponse,
   AiJob,
@@ -24,6 +26,11 @@ import type {
   AiJobOutcomeResponse,
   AiMetrics,
   AiMetricsParams,
+  AiMode,
+  AiSettings,
+  AiSettingsSaveRequest,
+  AiUsageListParams,
+  AiUsageWork,
   AllocationRequestRequest,
   AllocationResponse,
   ApplyRequest,
@@ -545,6 +552,88 @@ export const aiAsk = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(aiAskRequestRequest),
+  });
+};
+
+export type aiConnectionTestResponse200 = {
+  data: AiConnectionResult;
+  status: 200;
+};
+
+export type aiConnectionTestResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiConnectionTestResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiConnectionTestResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiConnectionTestResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiConnectionTestResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiConnectionTestResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiConnectionTestResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiConnectionTestResponseSuccess = aiConnectionTestResponse200 & {
+  headers: Headers;
+};
+export type aiConnectionTestResponseError = (
+  | aiConnectionTestResponse400
+  | aiConnectionTestResponse401
+  | aiConnectionTestResponse403
+  | aiConnectionTestResponse404
+  | aiConnectionTestResponse409
+  | aiConnectionTestResponse422
+  | aiConnectionTestResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiConnectionTestResponse =
+  aiConnectionTestResponseSuccess | aiConnectionTestResponseError;
+
+export const getAiConnectionTestUrl = () => {
+  return `/api/v1/ai/connection-test/`;
+};
+
+export const aiConnectionTest = async (
+  aiConnectionTestRequest: AiConnectionTestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiConnectionTestResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiConnectionTestResponse>(getAiConnectionTestUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiConnectionTestRequest),
   });
 };
 
@@ -1199,6 +1288,310 @@ export const aiMetrics = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<aiMetricsResponse> => {
   return apiMutator<aiMetricsResponse>(getAiMetricsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiModeGetResponse200 = {
+  data: AiMode;
+  status: 200;
+};
+
+export type aiModeGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiModeGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiModeGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiModeGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiModeGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiModeGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiModeGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiModeGetResponseSuccess = aiModeGetResponse200 & {
+  headers: Headers;
+};
+export type aiModeGetResponseError = (
+  | aiModeGetResponse400
+  | aiModeGetResponse401
+  | aiModeGetResponse403
+  | aiModeGetResponse404
+  | aiModeGetResponse409
+  | aiModeGetResponse422
+  | aiModeGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiModeGetResponse = aiModeGetResponseSuccess | aiModeGetResponseError;
+
+export const getAiModeGetUrl = () => {
+  return `/api/v1/ai/mode/`;
+};
+
+export const aiModeGet = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiModeGetResponse> => {
+  return apiMutator<aiModeGetResponse>(getAiModeGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiSettingsGetResponse200 = {
+  data: AiSettings;
+  status: 200;
+};
+
+export type aiSettingsGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiSettingsGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiSettingsGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiSettingsGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiSettingsGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiSettingsGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiSettingsGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiSettingsGetResponseSuccess = aiSettingsGetResponse200 & {
+  headers: Headers;
+};
+export type aiSettingsGetResponseError = (
+  | aiSettingsGetResponse400
+  | aiSettingsGetResponse401
+  | aiSettingsGetResponse403
+  | aiSettingsGetResponse404
+  | aiSettingsGetResponse409
+  | aiSettingsGetResponse422
+  | aiSettingsGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiSettingsGetResponse = aiSettingsGetResponseSuccess | aiSettingsGetResponseError;
+
+export const getAiSettingsGetUrl = () => {
+  return `/api/v1/ai/settings/`;
+};
+
+export const aiSettingsGet = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiSettingsGetResponse> => {
+  return apiMutator<aiSettingsGetResponse>(getAiSettingsGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiSettingsSaveResponse200 = {
+  data: AiSettings;
+  status: 200;
+};
+
+export type aiSettingsSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiSettingsSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiSettingsSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiSettingsSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiSettingsSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiSettingsSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiSettingsSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiSettingsSaveResponseSuccess = aiSettingsSaveResponse200 & {
+  headers: Headers;
+};
+export type aiSettingsSaveResponseError = (
+  | aiSettingsSaveResponse400
+  | aiSettingsSaveResponse401
+  | aiSettingsSaveResponse403
+  | aiSettingsSaveResponse404
+  | aiSettingsSaveResponse409
+  | aiSettingsSaveResponse422
+  | aiSettingsSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiSettingsSaveResponse = aiSettingsSaveResponseSuccess | aiSettingsSaveResponseError;
+
+export const getAiSettingsSaveUrl = () => {
+  return `/api/v1/ai/settings/`;
+};
+
+export const aiSettingsSave = async (
+  aiSettingsSaveRequest: AiSettingsSaveRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiSettingsSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiSettingsSaveResponse>(getAiSettingsSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiSettingsSaveRequest),
+  });
+};
+
+export type aiUsageListResponse200 = {
+  data: AiUsageWork[];
+  status: 200;
+};
+
+export type aiUsageListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiUsageListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiUsageListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiUsageListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiUsageListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiUsageListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiUsageListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiUsageListResponseSuccess = aiUsageListResponse200 & {
+  headers: Headers;
+};
+export type aiUsageListResponseError = (
+  | aiUsageListResponse400
+  | aiUsageListResponse401
+  | aiUsageListResponse403
+  | aiUsageListResponse404
+  | aiUsageListResponse409
+  | aiUsageListResponse422
+  | aiUsageListResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiUsageListResponse = aiUsageListResponseSuccess | aiUsageListResponseError;
+
+export const getAiUsageListUrl = (params?: AiUsageListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/usage/?${stringifiedParams}`
+    : `/api/v1/ai/usage/`;
+};
+
+export const aiUsageList = async (
+  params?: AiUsageListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiUsageListResponse> => {
+  return apiMutator<aiUsageListResponse>(getAiUsageListUrl(params), {
     ...options,
     method: "GET",
   });

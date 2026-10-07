@@ -1,0 +1,562 @@
+[
+  {
+    "routeId": "asistente",
+    "path": "/assistant",
+    "reachedPath": "/assistant",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "asistente__ESTIMATOR__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "section.aiws-metrics Qué hizo el asistente"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. últimos 30 días"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Trabajos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Completados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Cambios propuestos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aplicados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Descartados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Artefactos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aprobaciones"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Duración media"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Créditos usados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Tiempo estimado ahorrado"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "select. Contexto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "textarea. ¿Qué necesitas lograr?"
+      }
+    ]
+  },
+  {
+    "routeId": "asistente",
+    "path": "/assistant",
+    "reachedPath": "/assistant",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "asistente__ESTIMATOR__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "section.aiws-metrics Qué hizo el asistente"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. últimos 30 días"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Trabajos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Completados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Cambios propuestos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aplicados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Descartados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Artefactos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aprobaciones"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Duración media"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Créditos usados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Tiempo estimado ahorrado"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "select. Contexto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "textarea. ¿Qué necesitas lograr?"
+      }
+    ]
+  },
+  {
+    "routeId": "asistente",
+    "path": "/assistant",
+    "reachedPath": "/assistant",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "asistente__ESTIMATOR__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "section.aiws-metrics Qué hizo el asistente"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. últimos 30 días"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Trabajos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Completados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Cambios propuestos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aplicados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Descartados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Artefactos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aprobaciones"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Duración media"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Créditos usados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Tiempo estimado ahorrado"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "select. Contexto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "textarea. ¿Qué necesitas lograr?"
+      }
+    ]
+  },
+  {
+    "routeId": "asistente",
+    "path": "/assistant",
+    "reachedPath": "/assistant",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "asistente__ESTIMATOR__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "section.aiws-metrics Qué hizo el asistente"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. últimos 30 días"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Trabajos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Completados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Cambios propuestos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aplicados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Descartados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Artefactos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aprobaciones"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Duración media"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Créditos usados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Tiempo estimado ahorrado"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "select. Contexto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "textarea. ¿Qué necesitas lograr?"
+      }
+    ]
+  },
+  {
+    "routeId": "asistente",
+    "path": "/assistant",
+    "reachedPath": "/assistant",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "asistente__ESTIMATOR__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "section.aiws-metrics Qué hizo el asistente"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. últimos 30 días"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Trabajos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Completados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Cambios propuestos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aplicados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Descartados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Artefactos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aprobaciones"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Duración media"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Créditos usados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Tiempo estimado ahorrado"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "select. Contexto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "textarea. ¿Qué necesitas lograr?"
+      }
+    ]
+  },
+  {
+    "routeId": "asistente",
+    "path": "/assistant",
+    "reachedPath": "/assistant",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "asistente__ESTIMATOR__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "section.aiws-metrics Qué hizo el asistente"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. últimos 30 días"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Trabajos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Completados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Cambios propuestos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aplicados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Descartados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Artefactos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aprobaciones"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Duración media"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Créditos usados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Tiempo estimado ahorrado"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "select. Contexto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "textarea. ¿Qué necesitas lograr?"
+      }
+    ]
+  },
+  {
+    "routeId": "asistente",
+    "path": "/assistant",
+    "reachedPath": "/assistant",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "asistente__ESTIMATOR__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "section.aiws-metrics Qué hizo el asistente"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. últimos 30 días"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Trabajos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Completados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Cambios propuestos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aplicados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Descartados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Artefactos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aprobaciones"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Duración media"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Créditos usados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Tiempo estimado ahorrado"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "select. Contexto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "textarea. ¿Qué necesitas lograr?"
+      }
+    ]
+  },
+  {
+    "routeId": "asistente",
+    "path": "/assistant",
+    "reachedPath": "/assistant",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "asistente__ESTIMATOR__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "section.aiws-metrics Qué hizo el asistente"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. últimos 30 días"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Trabajos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Completados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Cambios propuestos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aplicados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Descartados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Artefactos"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Aprobaciones"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Duración media"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Créditos usados"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Tiempo estimado ahorrado"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "select. Contexto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "textarea. ¿Qué necesitas lograr?"
+      }
+    ]
+  }
+]

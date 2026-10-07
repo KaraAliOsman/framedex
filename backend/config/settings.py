@@ -183,6 +183,11 @@ LOGGING = {
         },
     },
     "loggers": {
+        "ai_gateway.usage": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "django.request": {
             "handlers": ["console"],
             "level": "ERROR",

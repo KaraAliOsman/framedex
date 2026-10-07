@@ -3,8 +3,8 @@
 Routes (capability → provider/model/cost) are operational config in ai_routes;
 tenants only ever see the white-label public_name. Real providers are wired via
 environment: AI_GATEWAY_{PROVIDER}_API_KEY and AI_GATEWAY_{PROVIDER}_BASE_URL.
-MOCK is the deterministic default used by seeded routes and tests — it never
-performs network I/O."""
+MiMo is the initial real route. MOCK requires an explicit flag and route;
+it never performs network I/O."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+from jsonschema import validate as validate_json, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,33 @@ def _image_mime(object_key: str) -> str:
 _BASE_PATH_RE = re.compile(r"/(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*")
 
 
+def _token_count(usage, key):
+    value = usage.get(key, 0)
+    if type(value) is int:
+        return value
+    if isinstance(value, str) and value.isdecimal():
+        return int(value)
+    raise TypeError("invalid provider token count")
+
+
+def _reported_model(value, fallback):
+    return value if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9._/:+\-]{1,120}", value) else fallback
+
+
+def _measured_usage(content):
+    try:
+        body = json.loads(content)
+        usage = body.get("usage", {})
+        if not isinstance(usage, dict) or not {"prompt_tokens", "completion_tokens"} <= set(usage):
+            return None
+        prompt, completion = _token_count(usage, "prompt_tokens"), _token_count(usage, "completion_tokens")
+        if 0 <= prompt <= 2147483647 and 0 <= completion <= 2147483647:
+            return {"tokens_prompt": prompt, "tokens_completion": completion, "usage_known": True}
+    except (ValueError, AttributeError, TypeError):
+        pass
+    return None
+
+
 def _timeout_seconds(provider: str) -> float:
     """AI_GATEWAY_{P}_TIMEOUT_S — whole-request bound in seconds. Defaults to
     60; a malformed or out-of-range value refuses the provider outright so a
@@ -64,19 +92,15 @@ def _timeout_seconds(provider: str) -> float:
 
 
 def _mock_enabled() -> bool:
-    """Whether the deterministic MOCK provider may serve this deployment.
-    Explicit AI_GATEWAY_MOCK_ENABLED wins either way; otherwise it serves
-    only development (DEBUG) and the test suite (pytest sets
-    PYTEST_CURRENT_TEST) — a production stack can never answer silently
-    with fabricated content."""
+    """Only an explicit server flag permits a test provider, including tests.
+    Neither DEBUG nor a test-runner marker can enable it in production.
+    """
     explicit = os.environ.get("AI_GATEWAY_MOCK_ENABLED", "").lower()
     if explicit in {"1", "true", "yes"}:
         return True
     if explicit in {"0", "false", "no"}:
         return False
-    return os.environ.get("DEBUG", "").lower() in {"1", "true", "yes"} or bool(
-        os.environ.get("PYTEST_CURRENT_TEST")
-    )
+    return False
 
 
 def _resolve_provider_hosts(hostname: str) -> list[str] | None:
@@ -192,7 +216,7 @@ class HttpProvider:
             headers["Idempotency-Key"] = operation_key
         path, body = self._wire_request(route, capability, input_payload, provider_options)
         started = time.monotonic()
-        timeout = min(self.timeout, float(provider_options.get("timeout_s", self.timeout)))
+        timeout = float(provider_options.get("timeout_s", self.timeout))
         if timeout <= 0:
             raise ProviderError("ai_provider_error")
         with client.stream(
@@ -203,7 +227,6 @@ class HttpProvider:
             json=body,
             timeout=timeout,
         ) as response:
-            response.raise_for_status()
             content = bytearray()
             # iter_raw yields on every socket arrival — iter_bytes would
             # buffer to chunk size, letting a drip feed stall the deadline
@@ -213,10 +236,23 @@ class HttpProvider:
             stream = response.iter_bytes(65536) if response.is_stream_consumed else response.iter_raw()
             for chunk in stream:
                 if time.monotonic() - started > timeout:
-                    raise ProviderError("ai_provider_error")
+                    raise ProviderError("ai_provider_timeout")
                 content += chunk
                 if len(content) > MAX_BODY_BYTES:
                     raise ProviderError("ai_provider_output_too_large")
+            if response.status_code in (400, 422) and provider_options.get("tools"):
+                try:
+                    error = json.loads(content).get("error", {})
+                    unsupported = isinstance(error, dict) and (
+                        error.get("code") in {"unsupported_tools", "tools_not_supported"}
+                        or (error.get("code") == "unsupported_parameter"
+                            and error.get("param") in {"tools", "tool_choice"})
+                    )
+                except (ValueError, AttributeError):
+                    unsupported = False
+                if unsupported:
+                    raise ProviderError("ai_tools_unsupported")
+            response.raise_for_status()
         return bytes(content)
 
     def _request(
@@ -272,7 +308,13 @@ class HttpProvider:
         operation_key: str | None,
     ) -> bytes:
         last_error: httpx.HTTPError | None = None
+        deadline = provider_options.get("_deadline")
+        if deadline is None:
+            deadline = time.monotonic() + float(provider_options.get("timeout_s", self.timeout))
         for connect_ip in self._connect_ips:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ProviderError("ai_provider_timeout")
             try:
                 return self._send(
                     client,
@@ -280,14 +322,16 @@ class HttpProvider:
                     route=route,
                     capability=capability,
                     input_payload=input_payload,
-                    provider_options=provider_options,
+                    provider_options={**provider_options, "timeout_s": remaining},
                     host_header=host_header,
                     port_suffix=port_suffix,
                     operation_key=operation_key,
                 )
             except (httpx.ConnectError, httpx.ConnectTimeout) as error:
                 last_error = error
-        raise ProviderError("ai_provider_error") from last_error
+        if last_error is not None:
+            raise last_error
+        raise ProviderError("ai_provider_error")
 
     def invoke(
         self,
@@ -301,13 +345,21 @@ class HttpProvider:
         document_path: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
-        options = provider_options or {}
+        options = dict(provider_options or {})
+        route_timeout = float(route.get("timeout_s", self.timeout))
+        options["timeout_s"] = min(route_timeout, float(options.get("timeout_s", route_timeout)))
+        if os.environ.get(f"AI_GATEWAY_{getattr(self, 'provider', '')}_TIMEOUT_S"):
+            options["timeout_s"] = min(options["timeout_s"], self.timeout)
+        if route.get("tools_mode") == "JSON":
+            options.pop("tools", None)
+            options.pop("tool_messages", None)
         # The model must fit the provenance column BEFORE the paid call runs —
         # an env override longer than VARCHAR(120) would otherwise fail the
         # sealed audit after inference already happened.
         requested_model = self._requested_model(route)
         if not (0 < len(requested_model) <= 120):
             raise ProviderError("ai_provider_error")
+        measured = None
         try:
             # Ephemeral fetch URLs are resolved at wire time, never carried in
             # input_payload: the audited input hash must stay identical across
@@ -342,14 +394,49 @@ class HttpProvider:
                             }
                     except (DocumentaryError, httpx.HTTPError):
                         pass
-            content = self._request(
-                route=route,
-                capability=capability,
-                input_payload=wire_input,
-                provider_options=options,
-                client=client,
-                operation_key=operation_key,
-            )
+                elif input_payload.get("kind") == "PDF":
+                    from ai_gateway.multimodal import pdf_page_parts
+                    raw = SupabaseDocumentStorage().download_bounded(document_path, 20 * 1024 * 1024)
+                    if raw is None:
+                        raise ProviderError("ai_source_page_limit")
+                    wire_input["_document_pages"] = pdf_page_parts(raw)
+            deadline = started + options["timeout_s"]
+            options["_deadline"] = deadline
+            retries = min(2, max(0, int(route.get("retries", 2))))
+            retry_count = 0
+            fallback = False
+            while True:
+                options["timeout_s"] = deadline - time.monotonic()
+                if options["timeout_s"] <= 0:
+                    raise ProviderError("ai_provider_timeout")
+                try:
+                    content = self._request(
+                        route=route, capability=capability, input_payload=wire_input,
+                        provider_options=options, client=client, operation_key=operation_key,
+                    )
+                    break
+                except ProviderError as error:
+                    if error.code == "ai_tools_unsupported" and options.get("tools") and route.get("tools_mode", "AUTO") == "AUTO":
+                        options.pop("tools", None)
+                        options.pop("tool_messages", None)
+                        fallback = True
+                        continue
+                    raise
+                except httpx.HTTPError as error:
+                    transient = isinstance(error, (httpx.TransportError,)) or (
+                        isinstance(error, httpx.HTTPStatusError)
+                        and error.response.status_code in {408, 429, 500, 502, 503, 504}
+                    )
+                    if not transient or retry_count >= retries:
+                        raise
+                    delay = 0.25 * (2 ** retry_count)
+                    if time.monotonic() + delay >= deadline:
+                        raise ProviderError("ai_provider_timeout") from None
+                    time.sleep(delay)
+                    retry_count += 1
+            measured = _measured_usage(content)
+            if measured:
+                measured.update({"model": requested_model, "latency_ms": int((time.monotonic() - started) * 1000), "retries": retry_count, "fallback": fallback})
             parsed = self._parse_response(content)
             tokens_prompt = int(parsed["tokens_prompt"])
             tokens_completion = int(parsed["tokens_completion"])
@@ -360,6 +447,11 @@ class HttpProvider:
                 0 <= tokens_prompt <= 2_147_483_647 and 0 <= tokens_completion <= 2_147_483_647
             ):
                 raise TypeError("provider token usage is outside the audit range")
+            measured = {"tokens_prompt": tokens_prompt, "tokens_completion": tokens_completion,
+                        "usage_known": parsed.get("usage_known", True), "model": _reported_model(parsed.get("model"), requested_model),
+                        "latency_ms": int((time.monotonic() - started) * 1000), "retries": retry_count, "fallback": fallback}
+            if options.get("response_schema") and not parsed.get("native_tools"):
+                validate_json(json.loads(parsed["output"]), options["response_schema"])
         except ProviderError:
             raise
         except httpx.HTTPStatusError as error:
@@ -381,22 +473,27 @@ class HttpProvider:
             if 400 <= status < 500:
                 raise ProviderError("ai_provider_rejected") from error
             raise ProviderError("ai_provider_error") from error
-        except (httpx.HTTPError, TypeError, ValueError) as error:
-            raise ProviderError("ai_provider_error") from error
+        except httpx.TimeoutException as error:
+            raise ProviderError("ai_provider_timeout") from error
+        except (httpx.HTTPError, TypeError, ValueError, KeyError, ValidationError) as error:
+            failure = ProviderError("ai_provider_error")
+            failure.usage = measured
+            raise failure from error
         response_model = parsed.get("model")
         return {
             "output": parsed["output"],
             "tokens_prompt": tokens_prompt,
             "tokens_completion": tokens_completion,
             "latency_ms": int((time.monotonic() - started) * 1000),
+            "retries": retry_count,
+            "fallback": fallback,
+            "usage_known": parsed.get("usage_known", True),
             # The model the request actually ran on — the response's own model
             # field wins when it is a sane string that fits the provenance
             # column; an overlong or absent value falls back to what we sent.
             # Sealed into audit provenance, which must never re-attribute.
             "model": (
-                response_model
-                if isinstance(response_model, str) and 0 < len(response_model) <= 120
-                else requested_model
+                _reported_model(response_model, requested_model)
             ),
         }
 
@@ -416,6 +513,9 @@ class HttpProvider:
             "model": route["provider_model"],
             "capability": capability,
             "input": input_payload,
+            "tools": provider_options.get("tools", []),
+            "tool_choice": provider_options.get("tool_choice", "auto"),
+            "response_schema": provider_options.get("response_schema"),
         }
 
     def _parse_response(self, content: bytes) -> dict[str, Any]:
@@ -431,8 +531,9 @@ class HttpProvider:
             raise TypeError("provider output is not a string")
         return {
             "output": output,
-            "tokens_prompt": int(usage.get("prompt_tokens") or 0),
-            "tokens_completion": int(usage.get("completion_tokens") or 0),
+            "tokens_prompt": _token_count(usage, "prompt_tokens"),
+            "tokens_completion": _token_count(usage, "completion_tokens"),
+            "usage_known": "prompt_tokens" in usage and "completion_tokens" in usage,
             "model": body["model"] if isinstance(body.get("model"), str) else None,
         }
 
@@ -490,7 +591,21 @@ class OpenAICompatibleProvider(HttpProvider):
         image = input_payload.get("_document_image")
         image_url = input_payload.get("document_url")
         user_content: Any
-        if (
+        pages = input_payload.get("_document_pages")
+        if isinstance(pages, list) and pages:
+            image_parts, page_manifest = [], []
+            for item in pages:
+                if "text" in item:
+                    page_manifest.append({"ref": item["ref"], "text": item["text"]})
+                else:
+                    image_parts.append({"type": "image_url", "image_url": {"url": f"data:{item['mime']};base64,{item['data']}"}})
+                    page_manifest.append({"ref": item["ref"], "image_number": len(image_parts)})
+            # Some compatible gateways lose leading text-only parts. One
+            # coherent text carries every literal page and image reference.
+            # Page order remains explicit even in a mixed text/scanned PDF.
+            document_text = json.dumps({**text_payload, "document_pages": page_manifest}, ensure_ascii=False, default=str)
+            user_content = [*image_parts, {"type": "text", "text": document_text}] if image_parts else document_text
+        elif (
             isinstance(image, dict)
             and isinstance(image.get("data"), str)
             and isinstance(image.get("mime"), str)
@@ -513,7 +628,7 @@ class OpenAICompatibleProvider(HttpProvider):
             clean_payload = {
                 key: value
                 for key, value in input_payload.items()
-                if not key.startswith("_")
+                if not key.startswith("_") and key != "document_url"
             }
             user_content = json.dumps(clean_payload, ensure_ascii=False, default=str)
         body: dict[str, Any] = {
@@ -523,18 +638,26 @@ class OpenAICompatibleProvider(HttpProvider):
                     "role": "system",
                     "content": str(provider_options.get("system") or _DEFAULT_SYSTEM),
                 },
+                *provider_options.get("tool_messages", []),
                 {"role": "user", "content": user_content},
             ],
             "temperature": 0,
         }
         if provider_options.get("json_output"):
             body["response_format"] = {"type": "json_object"}
+        if provider_options.get("tools"):
+            body["tools"] = [{"type": "function", "function": tool} for tool in provider_options["tools"]]
+            body["tool_choice"] = provider_options.get("tool_choice", "auto")
+        if provider_options.get("response_schema"):
+            # The schema also travels as trusted instructions for compatible
+            # gateways that only support json_object. Always validate locally.
+            body["messages"][0]["content"] += "\nContrato JSON estricto: " + json.dumps(provider_options["response_schema"])
         return path, body
 
     def _requested_model(self, route: dict) -> str:
         # AI_GATEWAY_{P}_MODEL is an operational override — the audit must
         # seal this effective model, not the route's, or provenance lies.
-        if self._model:
+        if self._model and not route.get("tenant_model"):
             pinned = str(route["provider_model"])
             if self._model != pinned:
                 logger.warning(
@@ -562,6 +685,34 @@ class OpenAICompatibleProvider(HttpProvider):
             raise TypeError("provider returned no choices")
         message = choices[0].get("message") if isinstance(choices[0], dict) else None
         output = message.get("content") if isinstance(message, dict) else None
+        calls = message.get("tool_calls") if isinstance(message, dict) else None
+        if calls:
+            if not isinstance(calls, list) or len(calls) > 6:
+                raise TypeError("invalid native tool calls")
+            normalized = []
+            identifiers = set()
+            for call in calls:
+                function = call.get("function") if isinstance(call, dict) else None
+                if not isinstance(function, dict) or call.get("type") != "function":
+                    raise TypeError("invalid native function")
+                identity = call.get("id")
+                if not isinstance(identity, str) or not 0 < len(identity) <= 120 or identity in identifiers:
+                    raise TypeError("invalid native call identity")
+                identifiers.add(identity)
+                arguments = json.loads(function["arguments"])
+                if not isinstance(arguments, dict) or not isinstance(function.get("name"), str):
+                    raise TypeError("invalid native arguments")
+                normalized.append({"id": identity, "name": function["name"], "arguments": arguments})
+            try:
+                document = json.loads(output) if isinstance(output, str) and output.strip() else {"reply": "", "steps": [], "warnings": []}
+            except ValueError:
+                # Native calls may accompany free-form intermediate text.
+                # It is never a grounded answer; settle with validated JSON.
+                document = {"reply": "", "steps": [], "warnings": []}
+            if not isinstance(document, dict):
+                raise TypeError("invalid native document")
+            document["tool_calls"] = normalized
+            output = json.dumps(document, ensure_ascii=False)
         if not isinstance(output, str):
             raise TypeError("provider output is not a string")
         usage = body.get("usage") or {}
@@ -569,8 +720,10 @@ class OpenAICompatibleProvider(HttpProvider):
             raise TypeError("provider usage is not an object")
         return {
             "output": output,
-            "tokens_prompt": int(usage.get("prompt_tokens") or 0),
-            "tokens_completion": int(usage.get("completion_tokens") or 0),
+            "native_tools": bool(calls),
+            "tokens_prompt": _token_count(usage, "prompt_tokens"),
+            "tokens_completion": _token_count(usage, "completion_tokens"),
+            "usage_known": "prompt_tokens" in usage and "completion_tokens" in usage,
             "model": body["model"] if isinstance(body.get("model"), str) else None,
         }
 

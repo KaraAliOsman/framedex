@@ -1,4 +1,5 @@
 import { ValidatedForm } from "../../ui/FormValidation";
+import { AI_PHASES } from "./providerLabels";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -934,9 +935,11 @@ export function AgentBody({
         {live && job ? (
           <p className="ask-dock__busy">
             {liveProgress !== null ? `${liveProgress}% · ` : ""}
-            {STATE_LABEL[job.state]
-              ? t(STATE_LABEL[job.state] as Parameters<typeof t>[0])
-              : t("agent.thinking")}
+            {typeof job.live?.phase === "string" && AI_PHASES[job.live.phase]
+              ? AI_PHASES[job.live.phase]
+              : STATE_LABEL[job.state]
+                ? t(STATE_LABEL[job.state] as Parameters<typeof t>[0])
+                : t("agent.thinking")}
             {" · "}
             <button type="button" className="ask-dock__meta-link" onClick={() => void cancelJob()}>
               {t("aiws.cancel")}

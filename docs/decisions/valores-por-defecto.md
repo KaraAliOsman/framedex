@@ -205,3 +205,31 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   El precio aplicado sigue siendo autoridad para emisión. Sin esa autoridad,
   el borrador de descuento conserva la intención y `base_price: null`; no
   produce una cifra comercial ni ejecuta aprobación.
+
+## IA3 · proveedor, presupuesto y fuentes (2026-10-07)
+
+- Las diez capacidades parten en MiMo Pro. El dueño con MFA puede cambiar las
+  cuatro rutas de diseño, agente, contexto y catálogo en Ajustes, incluyendo
+  modelo, tiempo (60 s), hasta dos reintentos y modo automático de herramientas.
+  Un override guardado prevalece sobre el modelo inicial del entorno.
+- Sin tarifa declarada, costo «Sin dato». Las dos tarifas en USD por millón de
+  tokens vienen del contrato del proveedor y quedan selladas por intercambio.
+  La cifra usa Decimal en el motor; no se adoptan precios públicos aproximados.
+- Presupuesto inicialmente sin límite mensual adicional, sujeto a la billetera.
+  El dueño puede declarar un tope entero de créditos de solicitudes; cero
+  bloquea llamadas. Mes de America/Santiago. Las reservas concurrentes cuentan
+  antes de pagar al proveedor y el dueño recibe un aviso al exceder el tope.
+- El registro físico y el débito se muestran separados: una respuesta pagada
+  puede existir aunque su propuesta revierta. Reutilizar esa misma clave no
+  dispara otro pago. Los intentos fallidos y herramientas ejecutadas conservan
+  historial inmutable; cada miembro solo consulta sus llamadas.
+- El PDF escaneado usa render a imagen cuando no tiene texto literal; conserva
+  el límite de veinte páginas y la revisión de D01. El modo de prueba necesita
+  flag y ruta explícitos y siempre se rotula. DEBUG no lo activa.
+- En un PDF mixto, las páginas literales llegan como texto y las escaneadas
+  como imagen, en orden y con referencia de página. El texto tiene un límite
+  total de 100 000 caracteres; excederlo exige reducir el archivo, sin truncarlo.
+- Presupuesto y tarifas no invalidan una conexión probada. Solo cambiar
+  proveedor, modelo, tiempo, reintentos o modo de herramientas exige otra prueba
+  de esa capacidad; las demás conservan su evidencia. Una nueva tarifa solo
+  afecta intercambios futuros y no reescribe costos sellados.

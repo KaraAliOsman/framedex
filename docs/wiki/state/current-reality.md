@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: 0835e3f0834e2680674458693626617a84cc19f8
+verified_ref: 75bd60c70b7ad6c1943b5fd855d4672ae3a29f31
 sources:
   - repository main
   - P00 foundation PR #114
@@ -24,6 +24,29 @@ sources:
 ---
 
 # Current reality
+
+## IA3 · código y aceptación tras revisión (07-10-2026)
+
+La corrida completa MiMo tras la revisión del PR sobre `041cb622836c745897c04e52a354d10bbf16a8b4` pasa 22/26:
+editor 13/13, proyecto 6/8, planta 1/3 y general 2/2; editor/proyecto 19/21.
+Dominio, auditoría y billetera sin cambios; delta físico: 53 llamadas y 104 eventos.
+J04/J08/F03 carecen de contexto suficiente; F02 no supera su oráculo de negocio.
+Las corridas completas anteriores se conservan sin seleccionar los mejores casos.
+Véanse [aceptación](../../ai/IA3-ACEPTACION.md) y
+[comparativa completa](../../ai/evals/2026-10-07-ia3-comparativa-review.md).
+
+Código final verificado: `75bd60c70b7ad6c1943b5fd855d4672ae3a29f31`. Seis oráculos reales de transporte,
+82 regresiones focalizadas, 15 integraciones IA3 y cuatro gates locales:
+744 motor (+2 xfail), 1.241 backend, 817 frontend. Database Gate: 1.137 pgTAP,
+395 integraciones, 11 E2E y ocho upgrades PG16. El gate DB ejecutó 041cb622;
+después solo cambió PDF y un mensaje, sin SQL/permisos.
+Guardar presupuesto/tarifas conserva pruebas idénticas. Cambiar una ruta
+invalida solo su evidencia; volver A→B→A no recupera pruebas antiguas.
+Progreso monótono hasta doce rondas; caché/error no amplían referencias.
+32 comparaciones sin hallazgos nuevos, con baseline del asistente preservado.
+El recorrido real prueba E03 y conserva su fecha al guardar el presupuesto.
+Solo CONSULTING_PROJECT quedó capturado; las otras fases tienen prueba automática.
+CI/merge del PR #127 se completan antes de marcar IA3 integrada en ESTADO.md.
 
 ## IA2 · integrado y verificado (07-10-2026)
 

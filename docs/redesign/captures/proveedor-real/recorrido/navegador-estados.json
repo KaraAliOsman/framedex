@@ -1,0 +1,70 @@
+[
+  {
+    "name": "ajustes-carga-light-1440",
+    "screenshot": "ajustes-carga-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-sin-permiso-light-1440",
+    "screenshot": "ajustes-sin-permiso-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-error-red-light-1440",
+    "screenshot": "ajustes-error-red-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "recuperacion-red-light",
+    "passed": true
+  },
+  {
+    "name": "ajustes-carga-dark-1024",
+    "screenshot": "ajustes-carga-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-sin-permiso-dark-1024",
+    "screenshot": "ajustes-sin-permiso-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-error-red-dark-1024",
+    "screenshot": "ajustes-error-red-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "recuperacion-red-dark",
+    "passed": true
+  }
+]

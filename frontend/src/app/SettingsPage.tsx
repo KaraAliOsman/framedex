@@ -34,6 +34,7 @@ import { useTheme } from "../theme/ThemeProvider";
 import { ExtraPolicyEditor } from "../features/projects/ExtraPolicyEditor";
 import { MountingRulesSettings } from "../features/projects/MountingRulesSettings";
 import { GlassRulesSettings } from "../features/glass/GlassRulesSettings";
+import { AiSettingsSection } from "../features/assistant/AiSettingsSection";
 
 const ROLE_KEYS: Record<MembershipRoleEnum, TranslationKey> = {
   OWNER: "settings.roleOwner",
@@ -777,6 +778,7 @@ export function SettingsPage(): JSX.Element {
         </section>
       )}
 
+      {isOwner && org && <AiSettingsSection key={`ai-${org.id}`} orgId={org.id} />}
       {org && <ExtraPolicyEditor key={org.id} orgId={org.id} canWrite={isOwner} />}
       {org && ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role) && (
         <MountingRulesSettings

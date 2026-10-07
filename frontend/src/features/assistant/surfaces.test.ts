@@ -13,3 +13,13 @@ it("translates API opening names while preserving catalog identifiers and ground
     "KIT-TURN_LEFT / UNKNOWN_OPERATION",
   );
 });
+
+it("localizes restored prose without altering numbers, evidence URLs, routes or code", () => {
+  expect(
+    assistantText(
+      "Veo 98 proyectos en el **dashboard**; $1.435.471. /dashboard?scope=TURN_LEFT https://dashboard.example/TURN_LEFT `dashboard` dashboard-G60",
+    ),
+  ).toBe(
+    "Veo 98 proyectos en el **panel de inicio**; $1.435.471. /dashboard?scope=TURN_LEFT https://dashboard.example/TURN_LEFT `dashboard` dashboard-G60",
+  );
+});

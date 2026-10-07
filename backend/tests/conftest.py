@@ -7,9 +7,13 @@ the same attribute afterwards and wins.
 """
 
 import pytest
-
 from projects import org_branding
 
+
+@pytest.fixture(autouse=True)
+def _explicit_ai_test_provider(monkeypatch):
+    """Test mode is an explicit capability; DEBUG/pytest never grants it."""
+    monkeypatch.setenv("AI_GATEWAY_MOCK_ENABLED", "1")
 
 @pytest.fixture
 def legacy_glass_read_model(monkeypatch):

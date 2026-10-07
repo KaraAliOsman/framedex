@@ -131,3 +131,31 @@ def test_restored_project_proposal_keeps_integer_counts_valid_for_apply():
     assert validate_operation(restored) == op
     assert decoded["result"]["exact"] == Decimal("1.2345")
 
+
+@pytest.mark.parametrize("rounds", [1, 6, 12])
+def test_progress_never_retreats_during_long_native_tool_runs(monkeypatch, rounds):
+    from jobs.registry import CURRENT_PHASE
+    monkeypatch.setattr(agent, "MAX_ROUNDS", rounds)
+    outputs = [_doc(reply="", tool_calls=[{"id": f"call_{index}", "name": "calculate_position", "arguments": {}}]) for index in range(rounds - 1)] + [_doc()]
+    _patch(monkeypatch, outputs=outputs)
+    checkpoints = []
+    agent.act(org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+              goal="Revisa el proyecto", product=None, history=[], operation_key="long-native",
+              progress=lambda value: checkpoints.append((value, CURRENT_PHASE.get())))
+    values = [value for value, _ in checkpoints]
+    assert values == sorted(values)
+    assert next(value for value, phase in checkpoints if phase == "PREPARING_PROPOSAL") == 80
+    assert all(value < 80 for value, phase in checkpoints if phase != "PREPARING_PROPOSAL" and value < 90)
+
+
+@pytest.mark.parametrize("fresh,error", [(False, False), (True, True)])
+def test_cached_or_failed_tool_output_cannot_promote_foreign_references(monkeypatch, fresh, error):
+    foreign = str(uuid4())
+    _patch(monkeypatch, outputs=[_doc(reply="", tool_calls=[{"id": "call_fixture", "name": "calculate_position", "arguments": {}}]),
+        _doc(steps=[{"kind": "navigate", "path": f"/projects/{foreign}", "label": "Abrir proyecto"}])])
+    output = {"project_id": foreign, **({"error": "not_found"} if error else {})}
+    monkeypatch.setattr(EngineTools, "call", lambda *_: (output, fresh))
+    result = agent.act(org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+                       goal="Revisa el proyecto", product=None, history=[], operation_key="cached-reference")
+    assert result["steps"] == []
+
