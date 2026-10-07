@@ -53,3 +53,12 @@
 .operation-project .ask-dock__action {
   border-radius: var(--r-1);
 }
+.ask-dock__questions[aria-label="Aclaración del trabajo"] .ask-dock__chip {
+  border-radius: var(--r-1);
+}
+.operation-project button:focus-visible,
+.operation-preview summary:focus-visible,
+.ask-dock__questions[aria-label="Aclaración del trabajo"] button:focus-visible {
+  outline: var(--space-2px) solid var(--border-focus);
+  outline-offset: var(--space-2px);
+}

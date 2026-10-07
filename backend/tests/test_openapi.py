@@ -14,6 +14,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/projects/operations/registry/",
         "/api/v1/projects/operations/simulate/",
         "/api/v1/projects/{project_id}/operations/preview/",
+        "/api/v1/projects/{project_id}/operations/state/",
         "/api/v1/projects/{project_id}/operations/apply/",
         "/api/v1/projects/{project_id}/operations/{operation_id}/undo/",
         '/api/v1/organization/mounting/{system_id}/',

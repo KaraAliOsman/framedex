@@ -687,9 +687,11 @@ export function AgentBody({
                   ) : null}
                   {turn.result.questions?.length ? (
                     <div className="ask-dock__questions">
-                      {turn.result.questions.map((question, i) => (
-                        <p key={i}>{question}</p>
-                      ))}
+                      {turn.result.questions
+                        .filter((question) => question !== turn.result?.clarify?.question)
+                        .map((question, i) => (
+                          <p key={i}>{question}</p>
+                        ))}
                     </div>
                   ) : null}
                   {turn.result.clarify ? (
