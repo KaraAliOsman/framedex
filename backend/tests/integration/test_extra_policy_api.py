@@ -155,6 +155,43 @@ def test_extra_preview_motor_quantity_suggestions_and_no_cost_leak(real_rows):
     assert any(item['selection']['code']=='SILL' and item['cause'] for item in response.data['suggestions'])
 
 
+@pytest.mark.parametrize('role', ['ESTIMATOR', 'WORKSHOP_MANAGER'])
+def test_catalog_accessory_rates_are_projected_and_raw_access_is_denied(real_rows, role):
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.demo_extras import extra_manifest
+    from pricing.repository import rows
+
+    authority = deepcopy(next(item['params']['extra_authority'] for item in extra_manifest() if item['code'] == 'DEMO_60'))
+    # Include nested zone rates so a shallow deletion cannot pass the boundary.
+    authority['definitions'] = [installation(scope='POSITION').model_copy(update={
+        'basis': 'ZONE', 'unit': 'EA', 'zones': {'Valdivia': ExtraRate(cost_rate=Decimal('15000'), selling_rate=Decimal('22500'))}
+    }).model_dump(mode='json')]
+    system = copy_fixed_catalog(real_rows.organizations['A'])
+    rows('UPDATE profile_systems SET extra_authority=%s::jsonb WHERE id=%s RETURNING id', [json_text(authority), system])
+    set_role(real_rows, role)
+    client = client_for(real_rows)
+    paths = [('/api/v1/catalogs/systems/', lambda value: next(item for item in value['items'] if item['id'] == str(system))),
+             (f'/api/v1/catalogs/systems/{system}/', lambda value: value),
+             (f'/api/v1/catalogs/systems/{system}/workspace/', lambda value: value['system'])]
+    for path, extract in paths:
+        response = client.get(path)
+        assert response.status_code == 200, response.data
+        published = extract(response.data)['extra_authority']
+        assert published['definitions'][0]['zones']['Valdivia']['selling_rate'] == '22500'
+        if role == 'ESTIMATOR':
+            assert 'cost_rate' not in json_text(published)
+        else:
+            assert published == authority
+    with pytest.raises(DatabaseError), transaction.atomic(), authenticated_rls_context(real_rows.tokens['A'].claims), connection.cursor() as cursor:
+        cursor.execute('SELECT extra_authority FROM profile_systems WHERE id=%s', [system])
+    with authenticated_rls_context(real_rows.tokens['A'].claims), connection.cursor() as cursor:
+        cursor.execute('SELECT public.catalog_extra_authority(%s)::text', [system])
+        assert 'cost_rate' not in cursor.fetchone()[0]
+    with authenticated_rls_context(real_rows.tokens['B'].claims), connection.cursor() as cursor:
+        cursor.execute('SELECT public.catalog_extra_authority(%s)', [system])
+        assert cursor.fetchone()[0] is None
+
+
 def test_assembly_extra_preview_keeps_suggestions_and_compatibility_per_module(real_rows):
     from backend.tests.integration.catalog_fixture import copy_fixed_catalog
     from catalogs.demo_extras import extra_manifest

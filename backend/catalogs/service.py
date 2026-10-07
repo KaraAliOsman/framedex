@@ -36,7 +36,8 @@ class Resource:
     def projection(self):
         columns = ("id", "org_id", *self.fields, *self.extra_columns)
         return ", ".join(
-            f"{name}::text AS {name}" if name in _JSONB_FIELDS else name for name in columns
+            "public.catalog_extra_authority(id, %s)::text AS extra_authority" if name == "extra_authority"
+            else f"{name}::text AS {name}" if name in _JSONB_FIELDS else name for name in columns
         )
 
 
@@ -70,12 +71,12 @@ def _not_found():
     return contract_error(404, "catalog_not_found", "catalogs.errors.not_found")
 
 
-def _fetch(resource, where, params, *, lock=False):
+def _fetch(resource, where, params, *, lock=False, org_id=None):
     suffix = " FOR UPDATE" if lock else " ORDER BY id"
     with connection.cursor() as cursor:
         cursor.execute(
             f"SELECT {resource.projection} FROM public.{resource.table} WHERE {where}{suffix}",
-            params,
+            [org_id, *params] if "extra_authority" in resource.fields else params,
         )
         names = [column[0] for column in cursor.description]
         result = [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
@@ -170,7 +171,7 @@ def list_rows(resource, org_id, system_id=None):
     if system_id is not None:
         where += " AND system_id = %s"
         params.append(system_id)
-    values = _fetch(resource, where, params)
+    values = _fetch(resource, where, params, org_id=org_id)
     if resource is SYSTEMS:
         from catalogs.readiness import catalog_readiness
         for value in values:
@@ -187,6 +188,7 @@ def retrieve(resource, org_id, row_id, *, lock=False):
             f"id = %s AND {_visibility(resource)}",
             [row_id, org_id],
             lock=lock,
+            org_id=org_id,
         )
     if not records:
         raise _not_found()

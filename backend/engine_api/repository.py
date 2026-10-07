@@ -10,6 +10,7 @@ from typing import cast
 from uuid import UUID
 
 from django.db import connection
+from authentication.rls import catalog_backend
 
 from dekopen_engine import (
     EffectiveProfileArticle,
@@ -157,7 +158,10 @@ class SystemParamsRepository:
         )
 
     def load_visible(self, system_id: UUID, active_org_id: UUID) -> SystemParams:
-        with connection.cursor() as cursor:
+        # The pure engine needs exact purchase authority to compute costs.
+        # This role remains bound to the verified caller's tenant RLS claims;
+        # serializers project selling evidence at the HTTP boundary.
+        with catalog_backend(), connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT code, depth_mm, material::text, sash_overlap_mm,

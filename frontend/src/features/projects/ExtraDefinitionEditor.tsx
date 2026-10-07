@@ -33,10 +33,12 @@ export function ExtraDefinitionEditor({
   value,
   onChange,
   servicesOnly = false,
+  costsVisible = true,
 }: {
   value: ExtraDefinition;
   onChange(value: ExtraDefinition): void;
   servicesOnly?: boolean;
+  costsVisible?: boolean;
 }): JSX.Element {
   const patch = (changes: Partial<ExtraDefinition>) => onChange({ ...value, ...changes });
   const text = (
@@ -128,12 +130,13 @@ export function ExtraDefinitionEditor({
       </label>
       {value.basis !== "ZONE" && (
         <>
-          {text(
-            "Costo unitario de suministro completo",
-            value.cost_rate,
-            (cost_rate) => patch({ cost_rate }),
-            true,
-          )}
+          {costsVisible &&
+            text(
+              "Costo unitario de suministro completo",
+              value.cost_rate,
+              (cost_rate) => patch({ cost_rate }),
+              true,
+            )}
           {text(
             "Tarifa de venta por unidad",
             value.selling_rate,
@@ -277,12 +280,13 @@ export function ExtraDefinitionEditor({
                 entries[index] = [name, rate];
                 patch({ zones: Object.fromEntries(entries) });
               })}
-              {text(
-                "Costo de la zona",
-                rate.cost_rate,
-                (v) => patch({ zones: { ...value.zones, [zone]: { ...rate, cost_rate: v } } }),
-                true,
-              )}
+              {costsVisible &&
+                text(
+                  "Costo de la zona",
+                  rate.cost_rate,
+                  (v) => patch({ zones: { ...value.zones, [zone]: { ...rate, cost_rate: v } } }),
+                  true,
+                )}
               {text(
                 "Venta de la zona",
                 rate.selling_rate,
@@ -443,13 +447,20 @@ export function ExtraImport<T extends { schema_version: 1 }>({
 export function ExtraAuthorityEditor({
   value,
   onChange,
+  costsVisible = true,
 }: {
   value: ExtraAuthority | null;
   onChange(value: ExtraAuthority | null): void;
+  costsVisible?: boolean;
 }): JSX.Element {
   return (
     <fieldset className="catalog-group">
       <legend>Accesorios y extras con autoridad</legend>
+      {!costsVisible && (
+        <p>
+          Los costos de compra son confidenciales. El dueño o jefe de taller puede consultarlos.
+        </p>
+      )}
       <p>
         Los perfiles usan cortes, refuerzo y stock del rol declarado. La tarifa debe cubrir su
         suministro completo en los acabados compatibles; documenta sus condiciones.
@@ -481,6 +492,7 @@ export function ExtraAuthorityEditor({
               </summary>
               <ExtraDefinitionEditor
                 value={item}
+                costsVisible={costsVisible}
                 onChange={(next) =>
                   onChange({
                     ...value,

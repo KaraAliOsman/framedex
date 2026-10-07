@@ -7,6 +7,8 @@ import type { ServicesResponse } from "../../api/generated/models";
 import { ProjectServicesPanel } from "./ProjectServicesPanel";
 import { ExtraPriceLines } from "./ExtraPriceLines";
 import { extraTariff } from "./extraModel";
+import { ExtraAuthorityEditor } from "./ExtraDefinitionEditor";
+import type { ExtraAuthority } from "./extraModel";
 
 vi.mock("../../api/generated/dekopen", () => ({
   projectExtraServices: vi.fn(),
@@ -55,6 +57,18 @@ beforeEach(() => {
   vi.mocked(projectExtraServices).mockResolvedValue(response(initial));
 });
 afterEach(cleanup);
+
+it("keeps selling rates readable and explains the confidential catalog costs", () => {
+  const authority = {
+    schema_version: 1,
+    source: "Fuente revisada",
+    definitions: [freight],
+  } as ExtraAuthority;
+  render(<ExtraAuthorityEditor value={authority} onChange={vi.fn()} costsVisible={false} />);
+  expect(screen.getByText(/Los costos de compra son confidenciales/)).toBeInTheDocument();
+  expect(screen.queryByLabelText("Costo de la zona")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Venta de la zona")).toHaveValue("12000");
+});
 
 it("saves the zone as intent and uses the returned timestamp to undo a saved selection", async () => {
   vi.mocked(projectExtraServicesSave)

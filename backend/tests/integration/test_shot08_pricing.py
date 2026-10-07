@@ -611,7 +611,9 @@ def test_pricing_http_valid_preview_remains_successful(committed_commercial_rows
                       'project_code','project_name','client_name','pricing_mode','segment',
                       'positions_breakdown','authorities','rules','requested_by_email',
                       'reason','requested_by','approved_by','approved_at','created_at',
-                      'extras','extras_net','services','document_extra_prices'}
+                      'extras','extras_net','services','document_extra_prices',
+                      'costs_visible','costs_reason'}
+    assert body['costs_visible'] is True and body['costs_reason'] is None
     assert body['services']==[] and body['document_extra_prices']=='ITEMIZED'
     assert body['approved_by'] is None and body['approved_at'] is None
     assert body['state']=='PREVIEW'

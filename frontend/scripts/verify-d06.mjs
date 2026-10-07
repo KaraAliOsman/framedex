@@ -618,6 +618,50 @@ async function verifyPrivacy(state) {
   }
   console.log("PASA D06 · precios de venta por rol y autoridad de costos conservada");
 }
+async function verifyCatalogPrivacy(state) {
+  const systemId = state.position.design.system_id;
+  for (const role of ["estimator", "manager"]) {
+    const system = await request(role, `/catalogs/systems/${systemId}/`);
+    const workspace = await request(role, `/catalogs/systems/${systemId}/workspace/`);
+    const full = role === "manager";
+    for (const authority of [system.extra_authority, workspace.system.extra_authority]) {
+      expect(JSON.stringify(authority).includes('"cost_rate"')).toBe(full);
+      expect(authority.definitions.find((item) => item.code === "SILL").selling_rate).toBeDefined();
+    }
+    for (const size of [
+      { width: 1440, height: 900 },
+      { width: 1280, height: 800 },
+      { width: 1024, height: 768 },
+    ]) {
+      for (const theme of ["light", "dark"]) {
+        const p = await pageFor(role, theme, size);
+        await p.goto(base + "/catalogs/systems", { waitUntil: "networkidle" });
+        await p.locator(".catalog-system").filter({ hasText: system.name }).first().click();
+        await p.getByRole("tab", { name: "Ficha de serie", exact: true }).click();
+        await p.getByRole("button", { name: `Consultar ${system.name}`, exact: true }).click();
+        const authority = p.getByRole("group", { name: "Accesorios y extras con autoridad" });
+        const sill = authority
+          .locator(".extra-authority-row")
+          .filter({ hasText: "Vierteaguas" })
+          .first();
+        await sill.locator(":scope > summary").click();
+        await expect(sill.getByLabel("Tarifa de venta por unidad")).not.toHaveValue("");
+        await expect(sill.getByLabel("Costo unitario de suministro completo")).toHaveCount(
+          full ? 1 : 0,
+        );
+        if (!full) await expect(authority).toContainText("Los costos de compra son confidenciales");
+        await sill.scrollIntoViewIfNeeded();
+        await capture(
+          p,
+          `catalogo-privacidad-${role}-${size.width}-${theme}`,
+          ".extra-authority-row",
+        );
+        await p.context().close();
+      }
+    }
+  }
+  console.log("PASA D06 · catálogo público sin costos y autoridad privada por organización");
+}
 async function verifyPdfPolicies(state) {
   const original = await request("owner", "/organization/extras/");
   const cases = [];
@@ -822,6 +866,8 @@ try {
       JSON.stringify({ ...state, project, position: project.positions[0] }),
     );
     console.log("PASA D06 · borrador propio para matriz final del editor");
+  } else if (process.argv.includes("--catalog-privacy")) {
+    await verifyCatalogPrivacy(state);
   } else if (process.argv.includes("--privacy")) {
     await verifyPrivacy(state);
   } else if (process.argv.includes("--pdf-policies")) {

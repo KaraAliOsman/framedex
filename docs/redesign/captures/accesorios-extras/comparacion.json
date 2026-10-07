@@ -784,7 +784,7 @@
       "catalogo",
       "WORKSHOP_MANAGER",
       "light",
-      "1440x900"
+      "1024x768"
     ],
     "baseline_ref": "b0873d1a",
     "before": 10,
@@ -803,7 +803,7 @@
       "catalogo",
       "WORKSHOP_MANAGER",
       "light",
-      "1024x768"
+      "1440x900"
     ],
     "baseline_ref": "b0873d1a",
     "before": 10,
@@ -860,7 +860,7 @@
       "catalogo",
       "WORKSHOP_MANAGER",
       "dark",
-      "1024x768"
+      "1280x800"
     ],
     "baseline_ref": "b0873d1a",
     "before": 10,
@@ -879,7 +879,7 @@
       "catalogo",
       "WORKSHOP_MANAGER",
       "dark",
-      "1280x800"
+      "1024x768"
     ],
     "baseline_ref": "b0873d1a",
     "before": 10,

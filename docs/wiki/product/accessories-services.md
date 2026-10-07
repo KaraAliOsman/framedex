@@ -58,6 +58,13 @@ omite costos para el estimador y muestra esa causa; no convierte su ausencia en
 un delta cero. El dueño conserva lectura exacta. Ninguna proyección modifica el
 snapshot sellado, el cálculo del motor ni las reglas RLS de compra.
 
+La columna `profile_systems.extra_authority` queda reservada al backend. Una
+función con propietario sin bypass de RLS proyecta definiciones y zonas sin
+tarifas de costo para miembros; solo el gestor autorizado de la organización
+solicitada recibe la autoridad completa. La API del catálogo conserva ese
+contexto por organización. El motor lee la autoridad bajo un rol de backend
+que mantiene las mismas claims y RLS; la ficha pública explica la restricción.
+
 ## Intención del dueño y producto
 
 El estimador debe cobrar lo que de verdad se instala. Sugerir vierteaguas o

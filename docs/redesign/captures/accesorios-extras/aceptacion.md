@@ -118,15 +118,33 @@ en contratos históricos. Las tablas nuevas llevan organización y RLS;
 historial, revisión y precio aplicado permanecen inmutables. Policy y precio
 comparten un lock de organización y rechazan cambios concurrentes.
 
-El gate final aislado sobre `eadf648b` pasa lint, typecheck, test y build:
+El gate anterior aislado sobre `eadf648b` pasa lint, typecheck, test y build:
 647 pruebas del motor (+2 xfail históricos), 1 184 del backend y 725 del frontend.
 Database Gate pasa 1 060 pgTAP, 330 integraciones, 11 recorridos E2E y ocho
 upgrades poblados PG16; comprueba además la limpieza de sus recursos propios.
 Las pinturas verificadas van de 88,5 a 174,2 ms, bajo el límite de 300 ms.
-Los cuatro checks de CI se registran al integrar el PR. El primer gate falló
+La fuente posterior de privacidad se valida de nuevo antes de integrar; este
+resultado anterior no la certifica. Los cuatro checks de CI se registran al
+integrar el PR. El primer gate falló
 dos selectores E2E anclados a v5; se actualizan a v6 conservando las aserciones
 de geometría, BOM, hash, persistencia y tiempo. Ese intento y el intento con
 puerto ocupado no cuentan como aceptación completa.
+
+La revisión adicional de permisos (07-10-2026) restringe la columna privada de
+accesorios y publica una proyección por organización de sus definiciones y
+zonas. 107 pruebas focalizadas PostgreSQL pasan, incluidos catálogo, precio,
+MFA, rechazo de lectura directa y aislamiento de tenant. Seis pruebas de UI
+incluyen venta por zona y causa de confidencialidad sin controles de costo.
+El gate10 detectó una aserción de esquema que todavía omitía los campos
+documentados `costs_visible` y `costs_reason`; se actualiza el contrato esperado
+y se comprueban sus valores para el dueño. Se conserva cada aserción anterior.
+La validación completa de esta fuente está pendiente del gate11 y CI.
+El recorrido adicional `navegador-catalog-privacy.json` pasa 12 casos de catálogo
+para estimador y encargado, tres anchos y ambos temas. La inspección visual
+confirma venta visible y costo restringido; no hay errores, desbordes ni
+hallazgos nuevos de accesorios. La matriz formal de catálogo se regenera y las
+40 comparaciones globales conservan cero hallazgos nuevos. Las 20 imágenes de
+esta lectura y matriz se comprimen conservando exactamente sus píxeles.
 
 No hecho / riesgos: los precios DEMO son sintéticos y no certifican fabricación.
 Se requieren las fichas y tarifas reales descritas en

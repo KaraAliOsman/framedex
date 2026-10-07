@@ -373,3 +373,15 @@ verifica. Los borradores y deshacer se aíslan por organización/proyecto/revisi
 El conflicto del puerto 8000 se resuelve deteniendo temporalmente el contenedor
 de la app propia; no se cambian los puertos ni los checks del producto. La
 evidencia anterior fallida no cuenta como aceptación. CI y merge siguen pendientes.
+
+## 2026-10-07 — D06 · revisión de ensamblajes y permisos comerciales
+
+Las sugerencias conservan módulo y la compatibilidad se evalúa localmente.
+WINDOW mantiene un marco completo, incluidas divisiones, según autoridad;
+LEAF y ensamblajes mantienen sus cantidades propias. Los endpoints de precio
+proyectan venta por rol sin cambiar snapshots internos. La nueva columna de
+tarifas de accesorios se restringe también en la base de datos; su función
+pública mantiene RLS y elimina costos de definiciones y zonas salvo permiso
+de gestión en la organización solicitada. Pasan 107 pruebas PostgreSQL
+focalizadas y seis de UI. La fuente posterior requiere gate completo y CI;
+los intentos fallidos se conservan en el informe de aceptación.

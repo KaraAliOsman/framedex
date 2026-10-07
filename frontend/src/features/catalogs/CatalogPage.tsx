@@ -941,6 +941,7 @@ function CatalogEditor({
         {resource === "systems" && (
           <ExtraAuthorityEditor
             value={extraAuthority}
+            costsVisible={!locked}
             onChange={(value) => {
               setExtraAuthority(value);
               setDirty(true);
