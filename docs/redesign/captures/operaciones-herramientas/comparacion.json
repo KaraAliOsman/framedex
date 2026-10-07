@@ -1,0 +1,386 @@
+[
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "before": 1,
+    "after": 1,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": true,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "before": 1,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "before": 2,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "before": 2,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "before": 1,
+    "after": 1,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": true,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "before": 2,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "before": 2,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "before": 1,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "before": 13,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "asistente",
+    "route": [
+      "asistente",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "before": 14,
+    "after": 14,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "asistente",
+    "route": [
+      "asistente",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "before": 14,
+    "after": 14,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "asistente",
+    "route": [
+      "asistente",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "before": 14,
+    "after": 14,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "asistente",
+    "route": [
+      "asistente",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "before": 14,
+    "after": 14,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "asistente",
+    "route": [
+      "asistente",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "before": 14,
+    "after": 14,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "asistente",
+    "route": [
+      "asistente",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "before": 14,
+    "after": 14,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "asistente",
+    "route": [
+      "asistente",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "before": 14,
+    "after": 14,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  },
+  {
+    "surface": "asistente",
+    "route": [
+      "asistente",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "before": 14,
+    "after": 14,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_after": [],
+    "console_after": []
+  }
+]

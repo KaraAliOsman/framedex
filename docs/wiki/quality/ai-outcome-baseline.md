@@ -1,18 +1,53 @@
 ---
 type: state
 status: active
-updated: 2026-10-05
+updated: 2026-10-07
 volatility: high
-verified_ref: 2c9bbebc1cca6df125a4e0eeae14b22b71478b9e
+verified_ref: 1711ebea2829a192b5e07ceb9a91bd1492e906d7
 sources:
   - docs/cola/prompts/IA1-diagnostico-evals.md
   - backend/ai_gateway/evals/cases.yaml
   - backend/ai_gateway/evals/run.py
   - docs/ai/evals/README.md
   - docs/redesign/captures/diagnostico-evals/aceptacion.md
+  - docs/ai/evals/2026-10-07-ia2-mimo.json
+  - docs/ai/evals/2026-10-07-ia2-comparativa.md
 ---
 
 # AI acceptance by outcome
+
+## IA2 · medición vigente (07-10-2026)
+
+La corrida completa con MiMo real sobre `1711ebea` mide **20/26**:
+editor 13/13, proyecto 5/8, planta 0/3 y general 2/2. La meta de IA2 se
+cumple con **18/21 (85,71 %)** en editor/proyecto. Los informes confirman
+fuentes ejecutadas y estado persistente sin cambios; ninguna acción
+consecuente se ejecuta. No se mezclan mejores casos de corridas anteriores.
+
+J01 conserva un error del proveedor como fallo. J04 carece de precios
+aplicados y J08 de revisiones emitidas A/B. F03 exige cobertura de compras
+inaccesible al estimador. F01 anuncia una consulta de listado truncado sin
+entregar el artefacto exacto; F02 no puede observar la OT solicitada fuera
+del listado y pide confirmar la revisión. Ambos se puntúan como incorrectos,
+aunque no inventan una cantidad de barras ni ejecutan una escritura.
+
+Las operaciones nuevas se juzgan con aplicación real de la transacción de
+proyecto dentro del rollback, además del motor y sus oráculos exactos. La
+equivalencia de aperturas físicas conserva sentido, bisagras y papel de hoja;
+un alias histórico no autoriza editar una corredera en una serie practicable.
+UI/IA/API comparten el registro de 50 operaciones y consumen efectos del motor.
+La vista previa dibuja hojas/manillas de esa autoridad, también para el antes.
+
+La aclaración de manilla exige antepecho y continúa el mismo trabajo; sus
+opciones de vidrio provienen del catálogo real. Las regresiones rechazan cifras
+inventadas, referencias no observadas, evidencia de errores/historia del cliente
+y propuestas obsoletas. Aplicar/recargar/deshacer conserva estado e identidades.
+El rol del worker se restaura tras publicar progreso, sin otorgar permisos nuevos.
+
+Véanse la [comparativa por caso y categoría](../../ai/evals/2026-10-07-ia2-comparativa.md)
+y la [aceptación de navegador y rúbrica](../../redesign/captures/operaciones-herramientas/aceptacion.md).
+IA3 continúa proveedor/configuración y P17 el rediseño del dock/Orb. La medición
+histórica de IA1 siguiente sigue siendo la línea base, no el resultado vigente.
 
 ## Verified implementation
 

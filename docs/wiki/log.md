@@ -485,3 +485,27 @@ Las seis observaciones se resuelven con regresiones; ninguna se descarta por
 el estado verde del bot. Las 24 comparaciones y el flujo A→B/PDF/OT pasan.
 Los procesos propios de app están detenidos. La cola continúa inmediatamente
 con IA2; main y los recursos ajenos no se modifican.
+
+## 2026-10-07 — IA2 · registro, herramientas y aceptación completa
+
+El código verificado `1711ebea2829a192b5e07ceb9a91bd1492e906d7` comparte 50
+operaciones entre UI/IA/API. El motor devuelve efectos, hojas/manillas y venta
+indicativa; proyectos aplican y deshacen en una transacción con estado durable,
+firmas e idempotencia. La aclaración usa catálogo real y continúa el mismo trabajo.
+Se conserva moneda desconocida; el Δ concuerda con la resta visible y los lotes
+cuantizan después de multiplicar la tarifa exacta. El progreso del worker restaura
+su contexto de rol sin grants nuevos.
+
+La corrida MiMo completa mide 20/26, editor/proyecto 18/21 (85,71 %). J01 conserva
+un error del proveedor; J04/J08 carecen de precios/revisiones y planta conserva sus límites,
+sin números de barras inventados ni acciones consecuentes. Fuente y estado
+persistente sin cambios. La comparación IA1→IA2 por caso/categoría no selecciona
+mejores casos de distintas corridas. Los cuatro gates locales, 1 101 pgTAP,
+377 integraciones, 11 E2E y ocho upgrades PG16 pasan. Las 27 capturas de recorrido,
+diez estados y 24 comparaciones formales documentan dos rondas editoriales y
+R1–R20, sin hallazgos nuevos. CI/merge quedan pendientes del PR hacia integración.
+
+Evidencia: [aceptación](../redesign/captures/operaciones-herramientas/aceptacion.md),
+[comparativa](../ai/evals/2026-10-07-ia2-comparativa.md) y
+[síntesis vigente](quality/ai-outcome-baseline.md). IA3 sigue proveedor/Ajustes;
+P04/P17/P21 siguen cromo/editor heredados. Los datos DEMO no certifican fabricación.
