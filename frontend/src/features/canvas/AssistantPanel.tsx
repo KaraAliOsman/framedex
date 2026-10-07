@@ -18,15 +18,15 @@ type Preview = {
   notes: string | null;
   model: string;
   credits: number;
-  /** The product instance the ops were validated against â€” any later commit
+  /** The product instance the ops were validated against — any later commit
    * produces a new identity and makes the index-based ops stale. */
   snapshot: ProductJson;
-  /** The catalog the ops were validated against â€” a system switch without a
+  /** The catalog the ops were validated against — a system switch without a
    * product commit keeps the same snapshot, so identity alone can't catch it. */
   systemId: string | null;
 };
 
-/** NL design assistant: prompt â†’ gateway-validated op preview â†’ one commit.
+/** NL design assistant: prompt → gateway-validated op preview → one commit.
  * Every apply is a single undoable product mutation; rejected ops are listed
  * so a bad proposal can never silently pass for a real edit. */
 export function AssistantPanel({
@@ -48,7 +48,7 @@ export function AssistantPanel({
   disabled: boolean;
   /** A queued prompt from an external affordance ("Fix with DEKOPEN",
    * context menus): "" focuses the field, text replaces the draft.
-   * `submit` sends it straight to the provider â€” the human still confirms
+   * `submit` sends it straight to the provider — the human still confirms
    * the returned ops, so no product mutation ever applies on its own. */
   draft: { text: string; submit?: boolean } | null;
   onDraftHandled(): void;
@@ -61,12 +61,12 @@ export function AssistantPanel({
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const pendingClarification = useRef<{ request: string; question: string } | null>(null);
-  /** Request generation token â€” a handled draft (or product change) must
+  /** Request generation token — a handled draft (or product change) must
    * invalidate any in-flight generate so its response can't restore ops
    * under a different prompt. */
   const requestSeq = useRef(0);
 
-  /** A product commit or system switch invalidates anything in flight â€”
+  /** A product commit or system switch invalidates anything in flight —
    * responses are only valid under the exact (product, system) pair they
    * were validated against. Runs BEFORE the draft effect so a panel that
    * mounts with a submitting draft doesn't cancel its own request. */
@@ -90,7 +90,7 @@ export function AssistantPanel({
     onDraftHandled();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- generate is defined below; draft is the trigger
   }, [draft, onDraftHandled]);
-  /** One operation key per (prompt, product, system) â€” a retry after a lost
+  /** One operation key per (prompt, product, system) — a retry after a lost
    * response replays the committed call instead of debiting twice. */
   const operationKey = useRef<{
     key: string;
@@ -104,7 +104,7 @@ export function AssistantPanel({
     const entered = (rawPrompt ?? prompt).trim();
     const pending = pendingClarification.current;
     const trimmed = pending
-      ? `${pending.request}\nAclaraciÃ³n: ${pending.question}\nRespuesta: ${entered}`
+      ? `${pending.request}\nAclaración: ${pending.question}\nRespuesta: ${entered}`
       : entered;
     if (!positionId || !systemId || !trimmed) return;
     setBusy(true);
@@ -133,8 +133,8 @@ export function AssistantPanel({
           prompt: trimmed,
           operation_key: operationKey.current.key,
           system_id: systemId,
-          // The wire carries stable domain ids â€” the same ones commands and
-          // selection already use â€” so ops address modules/couplings by ref,
+          // The wire carries stable domain ids — the same ones commands and
+          // selection already use — so ops address modules/couplings by ref,
           // never by position; endpoints expose the assembly graph itself.
           product: {
             ...designAssistProduct(product),
@@ -144,7 +144,7 @@ export function AssistantPanel({
         { headers: { "X-Organization-ID": organizationId } },
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      // A newer draft (or request) superseded this call â€” its ops must never
+      // A newer draft (or request) superseded this call — its ops must never
       // surface under a different prompt.
       if (seq !== requestSeq.current) return;
       const data = response.data as DesignAssistResponse;
@@ -181,7 +181,7 @@ export function AssistantPanel({
           : t("assistant.error"),
       );
     } finally {
-      // Only the newest request clears busy â€” a superseded response must not
+      // Only the newest request clears busy — a superseded response must not
       // unlock the panel while a newer generate is still in flight.
       if (seq === requestSeq.current) setBusy(false);
     }
@@ -222,7 +222,7 @@ export function AssistantPanel({
             <div className="assistant-panel__preview">
               {preview.notes && <p className="assistant-panel__notes">{preview.notes}</p>}
               {preview.clarify ? (
-                <div aria-label="AclaraciÃ³n del trabajo">
+                <div aria-label="Aclaración del trabajo">
                   <p>{preview.clarify.question}</p>
                   <div className="ask-dock__chips">
                     {preview.clarify.options.map((option) => (
@@ -274,7 +274,7 @@ export function AssistantPanel({
                 </div>
               )}
               <p className="assistant-panel__meta">
-                {preview.model} Â· {preview.credits} {t("assistant.credits")}
+                {preview.model} · {preview.credits} {t("assistant.credits")}
               </p>
             </div>
           )}

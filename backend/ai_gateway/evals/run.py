@@ -237,7 +237,7 @@ def physical_sliding_supported(product: dict, params: Any) -> bool:
     from dekopen_engine.models import ParametricNode
     from dekopen_engine.openings import OpeningCapabilityError, normalize_opening_tree
     try:
-        normalize_opening_tree(ParametricNode.model_validate(product["assembly"]["modules"][0]["tree"]), params)
+        normalize_opening_tree(ParametricNode.model_validate_json(canonical(product["assembly"]["modules"][0]["tree"])), params)
     except OpeningCapabilityError:
         return False
     return True
@@ -464,8 +464,8 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
                     output["sandbox_project"] = applied_project
                 truth["batch_application_ok"] = batch_ok
                 output["sandbox_batch_results"] = batch_results
-            except (RuntimeError, StopIteration):
-                error_code = error_code or "canvas_registry_application_failed"
+            except (RuntimeError, StopIteration) as error:
+                error_code = error_code or str(error) or "sandbox_position_reference_missing"
                 truth["batch_application_ok"] = False
             verdict = evaluate(case, before=before, after=after, result=result,
                                truth=truth, changed_tables=changed,

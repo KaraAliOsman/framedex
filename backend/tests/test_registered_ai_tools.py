@@ -89,3 +89,15 @@ def test_discount_proposal_requires_a_human_decision(monkeypatch):
     assert result["state"] == "WAITING_FOR_APPROVAL", result
     assert result["artifacts"][0]["payload"]["discount_pct"] == "0.05"
 
+
+def test_restored_project_proposal_keeps_integer_counts_valid_for_apply():
+    import json
+    from ai_gateway.jobs import _decode
+    from dekopen_engine.design_operations import validate_operation
+    op = {"op": "duplicate_position", "position_id": str(uuid4()), "count": 4, "location": "Dormitorios"}
+    decoded = _decode({"result": json.dumps({"steps": [{"kind": "project_ops", "ops": [op]}], "exact": 1.2345})})
+    restored = decoded["result"]["steps"][0]["ops"][0]
+    assert type(restored["count"]) is int
+    assert validate_operation(restored) == op
+    assert decoded["result"]["exact"] == Decimal("1.2345")
+

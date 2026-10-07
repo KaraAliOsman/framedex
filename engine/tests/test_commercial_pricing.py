@@ -83,14 +83,14 @@ def test_mode_one_materials_fx_and_no_early_rounding() -> None:
 
 
 def test_mode_one_is_margin_on_sale_not_markup() -> None:
-    """The label Â«Margen sobre ventaÂ» is contractual: cost Ã· (1âˆ’margin).
-    Cost 100 at 25 % sells at â‰ˆ133.33 â€” a 25 % MARKUP would sell at 125.
+    """The label «Margen sobre venta» is contractual: cost ÷ (1−margin).
+    Cost 100 at 25 % sells at ≈133.33 — a 25 % MARKUP would sell at 125.
     The two semantics must never be conflated in labels or math."""
     price = unit_price(PricingMode.COST_PLUS_MARGIN, cost=D('100'),
                        margin=D('0.25'), area=D('1'), width=D('1000'), height=D('1000'))
     assert price.quantize(D('0.01')) == D('133.33')
     assert price != D('100') * D('1.25')
-    # Gross-margin read-back is the same convention: (netâˆ’cost)/net.
+    # Gross-margin read-back is the same convention: (net−cost)/net.
     assert gross_margin_pct(D('100'), price) == D('0.25')
 
 
@@ -262,7 +262,7 @@ def test_missing_fx_and_missing_tariff_are_typed() -> None:
 
 
 def test_extras_raise_net_and_tax_but_never_discount() -> None:
-    # InstalaciÃ³n / traslado are project-level charges: they add to the net
+    # Instalación / traslado are project-level charges: they add to the net
     # after every position discount and bear the same tax rate.
     lines = [CommercialLine(1, 1, D('80'), D('100'), D('0.1'))]
     base = finish_lines(lines, 'CLP', D('0.19'))

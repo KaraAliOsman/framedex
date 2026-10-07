@@ -801,7 +801,10 @@ def _decode(record: dict[str, object]) -> dict[str, object]:
     ):
         value = out.get(name)
         if isinstance(value, str):
-            out[name] = json.loads(value, parse_float=Decimal, parse_int=Decimal)
+            # Counts and indexes are JSON integers in the operation contract.
+            # Decimal integers render as floats in DRF and become invalid when
+            # a restored proposal is sent back to the strict apply endpoint.
+            out[name] = json.loads(value, parse_float=Decimal)
     for name in ("id", "org_id", "user_id"):
         if out.get(name) is not None:
             out[name] = str(out[name])

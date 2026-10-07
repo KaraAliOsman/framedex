@@ -424,3 +424,11 @@ def test_summary_keeps_missing_categories_zero_and_denominators():
     assert report["by_view"]["editor"] == {"passed": 1, "total": 2}
     assert report["failure_counts"]["grounding_rechazo"] == 1
     assert report["failure_counts"]["proveedor_error"] == 0
+
+
+def test_sliding_probe_uses_the_strict_json_decimal_contract():
+    from ai_gateway.evals.run import physical_sliding_supported, sliding_probe
+    from engine.tests.opening_cases import opening_params
+    proposed = sliding_probe(product(), kitchen=True)
+    assert physical_sliding_supported(proposed, opening_params("DEMO_CORREDERA_60"))
+    assert not physical_sliding_supported(proposed, opening_params("DEMO_60"))

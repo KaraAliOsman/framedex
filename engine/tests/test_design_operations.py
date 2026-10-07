@@ -66,6 +66,16 @@ def test_new_operation_cannot_use_a_legacy_alias_to_bypass_physical_capability(p
     assert product["assembly"]["modules"][0]["tree"]["opening_type"] == "FIXED"
 
 
+def test_new_alias_edit_obeys_declared_family_even_with_legacy_authority(product: dict[str, Any], demo_60_params: SystemParams) -> None:
+    from dekopen_engine.models import SystemFamily
+    params = demo_60_params.model_copy(update={"system_family": SystemFamily.CASEMENT, "legacy_authority": True})
+    assert params.uses_legacy_rules
+    with pytest.raises(OperationError) as error:
+        apply(product, [{"op": "set_opening", "module": "m1", "opening": "SLIDING_2L"}], params)
+    assert error.value.code == "opening_incompatible"
+    assert product["assembly"]["modules"][0]["tree"]["opening_type"] == "FIXED"
+
+
 def test_failed_second_operation_leaves_no_partial_mutation(product: dict[str, Any], demo_60_params: SystemParams) -> None:
     before = deepcopy(product)
     with pytest.raises(OperationError, match="marco"):
