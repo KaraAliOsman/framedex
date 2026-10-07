@@ -64,6 +64,8 @@ tarifas de costo para miembros; solo el gestor autorizado de la organización
 solicitada recibe la autoridad completa. La API del catálogo conserva ese
 contexto por organización. El motor lee la autoridad bajo un rol de backend
 que mantiene las mismas claims y RLS; la ficha pública explica la restricción.
+Las atestaciones que citan esa autoridad conservan sus valores e historial,
+con la misma restricción por organización aplicada a su lectura en RLS.
 
 ## Intención del dueño y producto
 

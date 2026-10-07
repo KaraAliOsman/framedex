@@ -1,7 +1,7 @@
 ---
 type: state
 status: active
-updated: 2026-10-06
+updated: 2026-10-07
 volatility: high
 verified_ref: codex/D06-accesorios-extras
 sources:
@@ -24,7 +24,7 @@ sources:
 
 # Current reality
 
-## D06 · accesorios y servicios, rama en verificación (2026-10-06)
+## D06 · accesorios y servicios, rama en verificación (2026-10-07)
 
 `codex/D06-accesorios-extras` agrega definiciones compatibles, cantidades exactas,
 sugerencias con causa, extras con BOM/cortes y servicios por revisión. Base y
@@ -39,9 +39,14 @@ Los PDF finales se rasterizaron e inspeccionaron; servicios mantiene título y
 tabla juntos. Se corrigió la entrega binaria del logo y el fixture ahora conserva
 un PNG real con SHA verificable. La regresión HTTP y presentación documental pasan.
 
-El gate local final sobre `eadf648b` pasa lint/typecheck/test/build, 1 060 pgTAP,
-330 integraciones, 11 E2E y ocho upgrades poblados PG16, con limpieza propia
-verificada. El cierre CI/merge sigue pendiente y no se acredita como integrado.
+El gate anterior sobre `eadf648b` pasó las suites completas. La revisión posterior
+conserva sugerencias/compatibilidad por módulo, proyecta costos por rol y limita
+la columna privada de accesorios y sus atestaciones en RLS. Pasan 24 lecturas
+adicionales de navegador y se conserva la comparación formal sin hallazgos
+nuevos. Gate11 aprueba lint/tipos/build y 650 motor, 1 184 backend y 727 frontend;
+detecta una lectura de columnas privadas en el control de existencia de
+atestaciones, que ahora lee solo identidad/organización. Gate12 y CI están
+pendientes; esta rama todavía no se acredita como integrada.
 El primer gate falló dos selectores del catálogo anterior; se actualizan
 explícitamente a v6 sin retirar aserciones. El intento con puerto ocupado se
 excluye de aceptación; detener el contenedor de la app propia libera el puerto.

@@ -138,13 +138,25 @@ incluyen venta por zona y causa de confidencialidad sin controles de costo.
 El gate10 detectó una aserción de esquema que todavía omitía los campos
 documentados `costs_visible` y `costs_reason`; se actualiza el contrato esperado
 y se comprueban sus valores para el dueño. Se conserva cada aserción anterior.
-La validación completa de esta fuente está pendiente del gate11 y CI.
+La validación completa de esta fuente está pendiente del gate12 y CI.
 El recorrido adicional `navegador-catalog-privacy.json` pasa 12 casos de catálogo
 para estimador y encargado, tres anchos y ambos temas. La inspección visual
 confirma venta visible y costo restringido; no hay errores, desbordes ni
 hallazgos nuevos de accesorios. La matriz formal de catálogo se regenera y las
 40 comparaciones globales conservan cero hallazgos nuevos. Las 20 imágenes de
 esta lectura y matriz se comprimen conservando exactamente sus píxeles.
+
+El gate11 pasó lint, tipos, 650 motor (+2 xfail históricos), 1 184 backend y
+727 frontend; detectó cinco regresiones en publicación. Su causa fue una
+lectura de todas las columnas para comprobar existencia de una autoridad.
+La comprobación ahora lee solo identidad y organización. Las atestaciones de
+`extra_authority` también quedan restringidas por RLS a quienes gestionan
+esa organización, manteniendo exactamente su contenido e historial.
+Las regresiones de roles incluyen la lectura HTTP y SQL de esas atestaciones.
+El chequeo diferido de compatibilidad D03 también leía la fila completa. Ahora
+lee únicamente estado, aperturas y organización: se mantienen sin cambios
+todas sus condiciones de herrajes, hojas pasivas e inversor. No se amplían
+permisos para volver a permitir la lectura privada.
 
 No hecho / riesgos: los precios DEMO son sintéticos y no certifican fabricación.
 Se requieren las fichas y tarifas reales descritas en

@@ -168,6 +168,12 @@ def test_catalog_accessory_rates_are_projected_and_raw_access_is_denied(real_row
     }).model_dump(mode='json')]
     system = copy_fixed_catalog(real_rows.organizations['A'])
     rows('UPDATE profile_systems SET extra_authority=%s::jsonb WHERE id=%s RETURNING id', [json_text(authority), system])
+    from catalogs import evidence
+    set_role(real_rows, 'WORKSHOP_MANAGER')
+    with authenticated_rls_context(real_rows.tokens['A'].claims):
+        attestation = evidence.declare_evidence(org_id=real_rows.organizations['A'], actor_id=real_rows.tokens['A'].user_id, values={
+            'authority_table': 'profile_systems', 'row_id': system, 'field_name': 'extra_authority',
+            'value_text': 'Costo declarado: 15000', 'source_document': 'Tarifas verificadas de ensayo'})
     set_role(real_rows, role)
     client = client_for(real_rows)
     paths = [('/api/v1/catalogs/systems/', lambda value: next(item for item in value['items'] if item['id'] == str(system))),
@@ -182,11 +188,16 @@ def test_catalog_accessory_rates_are_projected_and_raw_access_is_denied(real_row
             assert 'cost_rate' not in json_text(published)
         else:
             assert published == authority
+    response = client.get(f'/api/v1/catalogs/evidence/?system_id={system}')
+    assert response.status_code == 200, response.data
+    assert any(item['id'] == attestation['id'] for item in response.data['items']) == (role == 'WORKSHOP_MANAGER')
     with pytest.raises(DatabaseError), transaction.atomic(), authenticated_rls_context(real_rows.tokens['A'].claims), connection.cursor() as cursor:
         cursor.execute('SELECT extra_authority FROM profile_systems WHERE id=%s', [system])
     with authenticated_rls_context(real_rows.tokens['A'].claims), connection.cursor() as cursor:
         cursor.execute('SELECT public.catalog_extra_authority(%s)::text', [system])
         assert 'cost_rate' not in cursor.fetchone()[0]
+        cursor.execute('SELECT value_text FROM catalog_parameter_evidence WHERE id=%s', [attestation['id']])
+        assert bool(cursor.fetchall()) == (role == 'WORKSHOP_MANAGER')
     with authenticated_rls_context(real_rows.tokens['B'].claims), connection.cursor() as cursor:
         cursor.execute('SELECT public.catalog_extra_authority(%s)', [system])
         assert cursor.fetchone()[0] is None
