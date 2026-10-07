@@ -188,3 +188,20 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   producción. La ausencia de esa marca en un snapshot histórico conserva su
   contrato anterior. El instalador móvil se conecta en P23 al contrato de
   rectificación, sin permiso genérico de edición del proyecto.
+
+## IA2 · operaciones y aclaraciones (2026-10-07)
+
+- Una propuesta usa el registro único del motor y siempre se simula antes de
+  aplicar. La aplicación de proyecto exige dueño o estimador; reabrir el
+  trabajo consulta su estado durable sin repetir la operación. Una propuesta
+  obsoleta vuelve a simularse y conserva su clave de idempotencia.
+- Los topes iniciales son 20 pasos, 6 consultas, 6 rondas y 180 segundos,
+  configurables mediante `AI_AGENT_*` del backend/worker, con límites explícitos
+  documentados en `docs/ai/OPERACIONES.md`. IA3 continúa los ajustes del proveedor.
+- Los chips ofrecen únicamente alternativas respaldadas por el catálogo.
+  La altura de antepecho se pregunta como dato de obra; no se generan opciones
+  numéricas sin una fuente. Elegir el SKU que ya existe no fabrica un cambio.
+- La venta de la simulación es indicativa con las reglas comerciales vigentes.
+  El precio aplicado sigue siendo autoridad para emisión. Sin esa autoridad,
+  el borrador de descuento conserva la intención y `base_price: null`; no
+  produce una cifra comercial ni ejecuta aprobación.
