@@ -97,6 +97,83 @@
     ]
   },
   "implemented_transport_verification": {
+    "created_at": "2026-10-07T19:04:21.193005+00:00",
+    "execution_ref": "d660f72054c0777b542a6bb1ef5b65c2477b6310",
+    "source_modified": false,
+    "model": "primalabs-ai/MiMo-V2.6-Pro",
+    "fixture_kind": "synthetic transport oracle; no manufacturing authority",
+    "image_sha256": "6bc833a7b876b5ead915ca0fecefddfa17d0aff238646193b293d7cf4ecad5f5",
+    "pdf_sha256": "a9d67bead63d393863cf22883d610f6ca71c23dc7809450c749a47e5296f0309",
+    "probes": [
+      {
+        "capability": "native_tools",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 808,
+        "tokens_completion": 153,
+        "latency_ms": 2127,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "paired_tools_final",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 96,
+        "tokens_completion": 43,
+        "latency_ms": 1180,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "vision_image",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 145,
+        "tokens_completion": 21,
+        "latency_ms": 1136,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "scanned_pdf_rendered",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 364,
+        "tokens_completion": 84,
+        "latency_ms": 1389,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "literal_pdf_text",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 144,
+        "tokens_completion": 28,
+        "latency_ms": 1023,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "mixed_pdf_pages",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 382,
+        "tokens_completion": 214,
+        "latency_ms": 2515,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      }
+    ]
+  },
+  "before_review_transport_verification": {
     "created_at": "2026-10-07T18:06:27.510535+00:00",
     "execution_ref": "dd98ba5634f1f7ab0ccb653206e4bf06ea39742d",
     "source_modified": false,
@@ -150,5 +227,72 @@
         "model": "primalabs-ai/MiMo-V2.6-Pro"
       }
     ]
+  },
+  "pdf_multi_text_probe_before_fix": {
+    "created_at": "2026-10-07T18:55:26.542993+00:00",
+    "execution_ref": "041cb622836c745897c04e52a354d10bbf16a8b4",
+    "source_modified": false,
+    "model": "primalabs-ai/MiMo-V2.6-Pro",
+    "fixture_kind": "synthetic transport oracle; no manufacturing authority",
+    "image_sha256": "6bc833a7b876b5ead915ca0fecefddfa17d0aff238646193b293d7cf4ecad5f5",
+    "pdf_sha256": "a9d67bead63d393863cf22883d610f6ca71c23dc7809450c749a47e5296f0309",
+    "probes": [
+      {
+        "capability": "native_tools",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 808,
+        "tokens_completion": 40,
+        "latency_ms": 1033,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "paired_tools_final",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 96,
+        "tokens_completion": 51,
+        "latency_ms": 973,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "vision_image",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 126,
+        "tokens_completion": 30,
+        "latency_ms": 897,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "scanned_pdf_rendered",
+        "accepted": true,
+        "oracle_passed": true,
+        "tokens_prompt": 329,
+        "tokens_completion": 173,
+        "latency_ms": 1559,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      },
+      {
+        "capability": "literal_pdf_text",
+        "accepted": true,
+        "oracle_passed": false,
+        "tokens_prompt": 111,
+        "tokens_completion": 556,
+        "latency_ms": 5166,
+        "retries": 0,
+        "fallback": false,
+        "model": "primalabs-ai/MiMo-V2.6-Pro"
+      }
+    ],
+    "finding": "Literal page was transmitted in separate text parts; provider returned 1713 rather than 7135. Corrected transport consolidates all text and page references."
   }
 }

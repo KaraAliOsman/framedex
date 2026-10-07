@@ -58,7 +58,9 @@ D01 adds family guards, exact cut/refinement rules, reviewed import tokens and
 append-only publication/retraction history. Its upgrade gate checks old DEMO
 products without changing issued authority. Remaining boundaries: scanned images
 were pending a verified multimodal route at D01. IA3 later verified real MiMo
-vision and bounded scanned-PDF rendering, while literal-evidence and human-review
+vision and bounded literal/mixed/scanned PDF transport. Its first all-text
+multipart probe lost content at the compatible gateway; the corrected wire uses
+one consolidated text. Literal-evidence and human-review
 gates remain. Catalog data stays synthetic until a supplier source is reviewed.
 See [the authority page](../product/catalog-authority.md) and
 [provider evidence](../product/ai-provider.md).

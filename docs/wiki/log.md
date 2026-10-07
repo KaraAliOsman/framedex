@@ -577,3 +577,7 @@ no se presenta como operación aplicada. El último recorrido corto solo captura
 CONSULTING_PROJECT; las otras fases mantienen prueba de visibilidad independiente.
 Dos rondas y R1–R20 se documentan con alcance explícito. CI/merge siguen pendientes
 del PR hacia integración, sin modificar main ni recursos ajenos.
+
+## 2026-10-07 · IA3 · revisión del PR #127
+
+Código verificado `75bd60c70b7ad6c1943b5fd855d4672ae3a29f31`; corrida `041cb622836c745897c04e52a354d10bbf16a8b4`: 22/26, E+J 19/21, dominio/auditoría/billetera intactos; 53 intercambios y 104 eventos físicos. PDF literal/mixto con texto consolidado, prueba por capacidad conservada al editar presupuesto/tarifa, progreso hasta doce rondas y referencias exitosas por ejecución. Seis oráculos reales, 82 regresiones, 15 integraciones IA3, cuatro gates y DB 1.137/395/11; historia y fallos completos conservados.

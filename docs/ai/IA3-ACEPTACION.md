@@ -1,15 +1,15 @@
 # IA3 · aceptación del proveedor real
 
-Referencia de código: `383a013e8dacc8651165c3b321dfd92a96bb2f6a`. Transporte final y evaluación completa: `dd98ba5634f1f7ab0ccb653206e4bf06ea39742d`.
-El cambio posterior solo aclara los estados de respuesta/propuesta y oculta enlaces a trabajos que ya no existen, con regresión de presentación.
-Fecha de verificación: 07-10-2026. Integración y CI se registran después en `docs/cola/ESTADO.md`.
+Referencia de código: `75bd60c70b7ad6c1943b5fd855d4672ae3a29f31`. Evaluación completa y gate DB: `041cb622836c745897c04e52a354d10bbf16a8b4`.
+Transporte PDF final: `d660f72054c0777b542a6bb1ef5b65c2477b6310`. Después de la evaluación solo se consolidó el contenido PDF y se retiró la instrucción de repetir la prueba al guardar; el agente no cambió.
+Fecha de verificación: 07-10-2026. CI/merge se registran después en ESTADO.md.
 
 ## Resultado funcional
 
 El dueño con MFA configura cuatro capacidades, proveedor/modelo, tiempo, reintentos,
 herramientas, tarifa y presupuesto. Ve credencial disponible, resultado y causa legible,
-prueba E03 sobre una copia con el motor y abre costo/traza por trabajo. Guardar una ruta
-invalida su prueba anterior; una respuesta tardía no declara conectada otra configuración.
+prueba E03 sobre una copia con el motor y abre costo/traza por trabajo. Cambiar el transporte de una ruta
+invalida solo su prueba anterior; presupuesto, tarifas y rutas idénticas la conservan; una respuesta tardía no declara conectada otra configuración.
 Los demás miembros solo consultan sus propias llamadas. La clave permanece en servidor.
 
 MiMo usa herramientas nativas del registro IA2 y resultados emparejados. Solo un rechazo
@@ -26,44 +26,47 @@ El polling de trabajos publica fases reales con commit independiente y guarda de
 ## Capacidades y evaluación real
 
 [Metadatos de los sondeos](IA3-CAPACIDADES.json): herramientas nativas sí, imagen sí,
-PDF directo HTTP 400. El transporte implementado pasa cuatro oráculos: herramientas,
-resultado emparejado/final, imagen y PDF escaneado renderizado. Todos usan MiMo real,
+PDF directo HTTP 400. El transporte implementado pasa seis oráculos: herramientas,
+resultado emparejado/final, imagen, PDF escaneado, PDF literal y PDF mixto.
+El primer sondeo literal con varios bloques de texto falló y se conserva como
+historia; la representación corregida reúne texto y referencias en un solo bloque. Todos usan MiMo real,
 sin fallback y con fuente ejecutada sin cambios. D01 mantiene extracción literal,
 límites de páginas/píxeles/tamaño y revisión humana; visión no acredita autoridad HIGH.
 
-[Corrida final completa](evals/2026-10-07-ia3-mimo-final.json) y
-[comparativa por caso](evals/2026-10-07-ia3-comparativa-final.md): **22/26**;
+[Corrida final completa](evals/2026-10-07-ia3-mimo-review.json) y
+[comparativa por caso](evals/2026-10-07-ia3-comparativa-review.md): **22/26**;
 editor **13/13**, proyecto **6/8**,
 planta **1/3**, general **2/2**.
 Editor/proyecto: **19/21**. Dominio, auditoría y billetera sin cambios;
-delta físico explícito: 56 intercambios y 109 eventos.
+delta físico explícito: 53 intercambios y 104 eventos.
 No se mezclaron casos de corridas ni se modificaron oráculos/límites.
 
-IA2 histórica permanece 21/26; IA3 previa sobre `a15abd2c` permanece 19/26.
-La corrida final se repitió tras corregir el plazo compartido por las direcciones
-del proveedor y la etiqueta de superficie de métricas. Todos los fallos finales
-figuran por caso y oráculo en la comparativa. En la previa J02 agotó consultas,
-J04/J08 carecieron de precios/revisiones, F01/F02 no entregaron el artefacto exacto,
-F03 careció de cobertura de compras autorizada y G01 terminó rechazado por grounding.
-Un transporte correcto no equivale a una tarea de negocio resuelta. El fixture es
-DEMO y no autoriza fabricación.
+IA2 histórica permanece 21/26; las corridas completas IA3 anteriores 19/26 y
+22/26 se conservan. La nueva corrida se ejecutó tras corregir referencias y
+progreso configurable, sin alterar oráculos ni límites. J04/J08/F03 carecen de
+contexto suficiente; F02 no entrega el resultado de negocio exacto. La
+representación PDF posterior tiene seis oráculos propios y no modifica las
+llamadas del agente. Un transporte correcto no equivale a una tarea de negocio
+resuelta. El fixture es DEMO y no autoriza fabricación.
 
 ## Verificación automática
 
 `make lint`, `make typecheck`, `make test` y `make build`: **PASA** sobre el código final.
-Motor 744 (+2 xfail), backend 1.233, frontend 817. Transporte/PDF: 28 pruebas focalizadas.
-`make test-db`: **PASA**, 78 archivos byte a byte, 1.136 pgTAP, 391 integraciones,
-11 E2E y ocho upgrades poblados PostgreSQL 16, con limpieza propia verificada.
-Este gate de DB ejecutó `a15abd2c`; después cambiaron etiquetas/enlaces de UI y el
-plazo del transporte, sin cambios SQL/permisos. CI vuelve a verificar el head del PR.
+Motor 744 (+2 xfail), backend 1.241, frontend 817. Ochenta y dos pruebas
+focalizadas incluyen PDF literal/mixto, reintentos, progreso hasta doce rondas
+y procedencia. `make test-db`: **PASA**, 78 archivos byte a byte,
+1.137 pgTAP, 395 integraciones, 11 E2E y ocho upgrades poblados PostgreSQL 16.
+Este gate ejecutó `041cb622`; después solo cambió PDF y un mensaje,
+sin cambios SQL/permisos. CI verifica el head del PR.
 [Metadatos y hashes de logs](IA3-VERIFICACION.json).
 
-Las pruebas focalizadas cubren reintento/plazo/fallback, multimodal, presupuesto y su
-historia/dedupe, permisos/MFA/RLS, idempotencia, rollback y carrera de configuración.
-Diecisiete integraciones adicionales (IA3 y billetera) pasan. El golden nuevo verifica
-costo Decimal hasta catorce decimales; todos los golden anteriores conservan sus bytes.
-OpenAPI y orval regenerados. El escaneo de textos publicables contra los secretos
-locales pasa sin revelar sus valores ni incluir `.env`.
+Quince integraciones IA3 verifican presupuesto, tarifas, invalidez de cambios
+reales, carrera de prueba, caché por ejecución, permisos/MFA/RLS, idempotencia,
+rollback y progreso visible desde otra conexión. La caché original ya era
+local a cada ejecución y las consultas siguen verificando tenant; además
+se impide promover referencias desde respuestas cacheadas o fallidas.
+El golden de costo Decimal y todos los golden anteriores conservan sus bytes.
+OpenAPI/orval reproducibles. El escaneo contra secretos pasa sin mostrar valores.
 
 Dos intentos de Database Gate pasaron SQL/integraciones pero fallaron por el puerto
 8000 publicado por el contenedor propio, aunque Django estaba detenido. Esos intentos
@@ -81,6 +84,7 @@ y [carga, permiso y recuperación](../redesign/captures/proveedor-real/recorrido
 | Error real | PASA · modelo MiMo inválido, rechazo real sanitizado; restauración posterior. |
 | Bloqueado | PASA · presupuesto cero impide la llamada, explica quién lo cambia; restaurado. |
 | Conexión | PASA · E03 real, propuesta/motor exactos; estado verde y sin mutar proyectos. |
+| Presupuesto editado | PASA · conserva Conectado y la misma fecha de prueba, sin otra llamada pagada. |
 | Costo/traza | PASA · historial consultable, herramientas del motor, costo Sin dato sin tarifa. |
 | Vacío | PASA · filtro sin llamadas, causa y acción de recuperación. |
 | Carga | PASA · respuesta demorada solo para observar esqueleto/cota, en claro 1440 y oscuro 1024. |
@@ -103,6 +107,7 @@ Capturas clave:
 [conexión](../redesign/captures/proveedor-real/recorrido/conexion-verificada-light-1440.png),
 [sin credencial](../redesign/captures/proveedor-real/recorrido/sin-credencial-light-1440.png),
 [presupuesto](../redesign/captures/proveedor-real/recorrido/presupuesto-bloqueado-light-1440.png),
+[edición conserva conexión](../redesign/captures/proveedor-real/recorrido/presupuesto-conserva-conexion-light-1440.png),
 [traza](../redesign/captures/proveedor-real/recorrido/agente-costo-traza-light-1440.png),
 [sin permiso](../redesign/captures/proveedor-real/recorrido/ajustes-sin-permiso-dark-1024.png).
 PNG optimizados sin pérdidas e inspeccionados visualmente.
@@ -119,6 +124,11 @@ de medición; (2) fechas, créditos y tarifas en Mono, enlace teal y copy de bil
 que distingue intercambio auditado de aplicar; (3) presentación histórica/localización
 de superficies sin alterar auditoría, URL, SKU ni cifras. Se eliminó «dashboard» de
 prosa y de métricas nuevas; no se borraron conversaciones para limpiar las capturas.
+
+La revisión añadió regresiones para PDF literal/mixto, verificación por
+capacidad, progreso monótono y referencias obtenidas solo de consultas exitosas.
+Se retiró la instrucción de repetir una prueba al guardar; se espera el estado
+final de la ruta antes de capturar, sin relajar contraste ni detectores.
 
 ## Rúbrica R1–R20
 
@@ -159,7 +169,7 @@ desconocida hasta configurarla. No se adopta un precio público como autoridad.
 IA se verificó real; Flow/SII/correo/despliegue siguen sus adaptadores y encargos de la cola.
 
 No hecho/riesgos: no se garantiza 26/26 ni respuesta determinista de MiMo; se conservan
-todos los fallos exactos de ambas corridas. El escaneo visual no convierte una fuente en autoridad
+todos los fallos exactos de las corridas completas. El escaneo visual no convierte una fuente en autoridad
 certificada. Una llamada de desenlace ambiguo retiene reserva prudente. La tarifa
 monetaria no se inventa y el historial incompleto conserva Sin dato. P17 continúa el
 rediseño completo del dock/Orb y sus hallazgos históricos.

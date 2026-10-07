@@ -50,7 +50,10 @@ flag explícitamente con un fixture.
 - Imágenes: partes multimodales. MiMo rechazó el PDF directo en el sondeo de
   IA3. D01 extrae el texto literal; las páginas sin texto se renderizan con
   `pypdfium2`: máximo 20 páginas, 8 millones de píxeles por página y 12 MiB de
-  imágenes. Una URL escrita como texto nunca se presenta como archivo leído.
+  imágenes y 100 000 caracteres literales en total. El fallback con texto
+  conserva las páginas literales; el mixto conserva su orden mediante referencias.
+  Se reúne todo el texto PDF en un bloque porque el gateway compatible perdía
+  contenido con varios bloques text. Una URL escrita como texto nunca se presenta como archivo leído.
 - La lectura visual sigue siendo una propuesta. Sin evidencia literal no
   alcanza confianza alta ni publica autoridad técnica: conserva revisión y
   diff de D01. La ruta de catálogo permite otro modelo de visión.
@@ -89,6 +92,9 @@ estimado del proveedor son magnitudes distintas.
 «Probar conexión» ejecuta E03 reducido de IA1: operaciones sobre una copia,
 oráculo exacto de 1 800 × 1 350 mm y evaluación del motor. No cambia proyectos.
 Conserva un fallo del oráculo aunque HTTP responda bien y admite otra prueba.
+Editar presupuesto o tarifas conserva la verificación. Cambiar proveedor,
+modelo, tiempo, reintentos o herramientas invalida solo esa capacidad; una prueba
+en curso no puede certificar una configuración distinta.
 
 `/jobs` filtra capacidad y estado, muestra costo y herramientas ejecutadas.
 El dueño ve la organización; cada miembro ve sus llamadas. El polling existente

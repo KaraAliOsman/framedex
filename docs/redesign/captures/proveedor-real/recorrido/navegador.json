@@ -40,6 +40,10 @@
     "presentation": []
   },
   {
+    "name": "presupuesto-conserva-conexion",
+    "passed": true
+  },
+  {
     "name": "trabajo-costo-traza-light-1440",
     "screenshot": "trabajo-costo-traza-light-1440.png",
     "width": 1440,
@@ -153,5 +157,15 @@
   {
     "name": "recuperacion-red-dark",
     "passed": true
+  },
+  {
+    "name": "presupuesto-conserva-conexion-light-1440",
+    "screenshot": "presupuesto-conserva-conexion-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
   }
 ]
