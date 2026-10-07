@@ -21,6 +21,7 @@ import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useShellLeaf } from "../../app/shellLeaf";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
+import { domainLabel } from "../../i18n/domainLabels";
 import { DeniedState } from "../../ui";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { useProject } from "./useProject";
@@ -855,7 +856,7 @@ function PositionWorkspace({
               <option value="">{t("projects.chooseSystem")}</option>
               {systemId &&
                 systems.data &&
-                !systems.data.some((system) => system.id === systemId) && (
+                !systems.data.some((system) => system.id === systemId && system.quote_ready) && (
                   <option value={systemId}>
                     Catálogo histórico del producto{options.data?.is_demo ? " · DEMO" : ""}
                   </option>
@@ -1026,7 +1027,9 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
               {(result.fittings ?? []).map((item, index) => (
                 <tr key={index}>
                   <td>{item.sku}</td>
-                  <td>{tOptional(`assembly.fittingKind.${item.kind}`) ?? item.kind}</td>
+                  <td>
+                    {tOptional(`assembly.fittingKind.${item.kind}`) ?? domainLabel(item.kind)}
+                  </td>
                   <td>{item.qty}</td>
                 </tr>
               ))}

@@ -156,3 +156,28 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 6. Emita una revisión nueva y verifique compras, reservas y optimización por
    combinación. Conserve las revisiones anteriores y su carta sellada. Las
    series DEMO v5 son autoridades adicionales, sin certificación.
+
+## Accesorios, servicios y plantillas (D06)
+
+1. Obtenga la ficha y tarifa del fabricante para vierteaguas, ensanche,
+   tapajuntas, mosquiteros y accesorios. Declare la compatibilidad por apertura,
+   regla por vano/hoja/lado, vuelos y fuente en Catálogo › Ficha de serie o en
+   `extra_authority` de la plantilla. Palillaje y cruces usan la receta D02.
+2. Para perfiles, complete artículo por rol, corte, masa y refuerzo cuando
+   corresponda, más SKU comercial por acabado. Para accesorios unitarios,
+   declare su artículo y unidad de compra. Compruebe un vano y una hoja reales
+   contra la ficha; una medida derivada no acredita fabricación sin autoridad.
+3. El dueño con MFA declara servicios y tarifas completas en Ajustes › Extras y
+   servicios: instalación por perímetro/área/cantidad, sellado, retiro, andamio y
+   flete fijo/por zona. Registre costo, venta, moneda y fuente. Declare conversión
+   vigente si la cotización usa otra moneda; no adopte cero por falta de tarifa.
+4. Configure las plantillas para posiciones nuevas y elija sublíneas con precio
+   o precio agrupado. Revise el diff y guarde con motivo. Verifique una posición
+   nueva y una de otra serie; lo incompatible debe explicar su causa.
+5. Cotice un proyecto con cantidades mayores que uno, revise base/sublíneas y
+   ajustes, servicios y fuente. Aplique con clic humano y emita una revisión.
+   Compruebe ambos PDF y que ensanches/vierteaguas llegan al BOM, compra y plan
+   de corte de la OT. Cambios posteriores requieren una revisión nueva.
+6. Las series DEMO v6 y sus precios sintéticos no certifican producción ni
+   reemplazan fichas reales. No requieren una credencial externa adicional:
+   requieren datos de proveedor y tarifas de instalación revisados por la empresa.

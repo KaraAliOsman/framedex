@@ -12,6 +12,7 @@ import { actionErrorDetail } from "../errors";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { DeniedState, PageHeader, Tabs } from "../../ui";
 import { PositionThumb } from "../projects/PositionThumb";
+import { ExtraPriceLines } from "../projects/ExtraPriceLines";
 import { t } from "../../i18n/es-CL";
 import { useCanvasStore } from "../canvas/canvasStore";
 import "./pricing.css";
@@ -34,6 +35,8 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
   HARDWARE: "pricing.hardware",
   PANEL: "pricing.panel",
   ACCESSORY: "pricing.accessory",
+  EXTRA: "pricing.accessory",
+  FITTING: "pricing.hardware",
   BAR: "pricing.bar",
   M: "pricing.metre",
   M2: "pricing.squareMetre",
@@ -1082,14 +1085,15 @@ function CostComposition({
 
 /** Whole-percent-free margin: (net − cost) / net, both Decimal strings —
  * computed in cents so the display never carries a float artifact. */
-function moneyCents(value: string): bigint | null {
+function moneyCents(value: string | null | undefined): bigint | null {
+  if (value == null) return null;
   const match = value.trim().match(/^(-?)(\d*)(?:\.(\d*))?$/);
   if (match === null || (match[2] === "" && (match[3] ?? "") === "")) return null;
   const units = match[2] === "" ? "0" : match[2];
   const fraction = `${match[3] ?? ""}00`.slice(0, 2);
   return BigInt(`${match[1]}${units}${fraction}`);
 }
-function marginText(net: string, cost: string, currency: string): string {
+function marginText(net: string, cost: string | null, currency: string): string {
   const netCents = moneyCents(net);
   const costCents = moneyCents(cost);
   if (netCents === null || costCents === null || netCents <= 0n) return "—";
@@ -1145,12 +1149,12 @@ function OperationDecision({
   onReject: () => void;
   onWithdraw?: () => void;
 }): JSX.Element {
+  const costsVisible = owner && operation.costs_visible !== false && operation.total_cost != null;
   const costs = new Map(
     (operation.cost_lines ?? []).map((line) => [line.position_index, line.line_cost]),
   );
-  // The preview's technical snapshot prices each position line-by-line:
-  // kind/SKU/quantity/cost plus the waste and labour rates the authority
-  // supplied. Estimators fold it open under each net line.
+  // Buying composition is available only to the owner. Estimators read the
+  // selling sublines supplied by the same frozen pricing authority.
   const breakdowns = new Map(
     (operation.positions_breakdown ?? []).map((entry) => [entry.position_index, entry]),
   );
@@ -1192,6 +1196,7 @@ function OperationDecision({
   // Per-position delta: the live price_net of the bound revision vs the
   // proposed line_net — same position index, same currency, never a guess.
   const canLineDelta = isBoundProject && sameCurrency;
+  const columnCount = 6 + (costsVisible ? 2 : 0) + (canLineDelta ? 1 : 0);
   // Category rollup: every cost component across all positions aggregated by
   // kind — the 'why' behind the total, in exact cents (no float artifacts).
   const kindTotals = new Map<string, bigint>();
@@ -1292,19 +1297,23 @@ function OperationDecision({
       ) : null}
 
       <div className="operation-totals">
-        <div className="operation-total">
-          <dt>{t("pricing.totalCost")}</dt>
-          <dd>{formatMoney(operation.total_cost, operation.currency)}</dd>
-        </div>
-        <div className="operation-total">
-          <dt>{t("pricing.marginNet")}</dt>
-          <dd>
-            {marginText(operation.project_net, operation.total_cost, operation.currency)}
-            {marginBelow && (
-              <span className="operation-warning">{t("pricing.marginBelowObjective")}</span>
-            )}
-          </dd>
-        </div>
+        {costsVisible && (
+          <div className="operation-total">
+            <dt>{t("pricing.totalCost")}</dt>
+            <dd>{formatMoney(operation.total_cost!, operation.currency)}</dd>
+          </div>
+        )}
+        {costsVisible && (
+          <div className="operation-total">
+            <dt>{t("pricing.marginNet")}</dt>
+            <dd>
+              {marginText(operation.project_net, operation.total_cost, operation.currency)}
+              {marginBelow && (
+                <span className="operation-warning">{t("pricing.marginBelowObjective")}</span>
+              )}
+            </dd>
+          </div>
+        )}
         {listNet !== null && (
           <div className="operation-total">
             <dt>{t("pricing.listPrice")}</dt>
@@ -1340,6 +1349,12 @@ function OperationDecision({
         )}
       </div>
 
+      {!costsVisible && (
+        <p className="operation-decision__audit">
+          {operation.costs_reason ??
+            "Los costos de compra son confidenciales. El dueño o jefe de taller puede consultarlos."}
+        </p>
+      )}
       <div className="operation-lines__wrap">
         <table className="operation-lines">
           <caption>{t("pricing.perPosition")}</caption>
@@ -1350,9 +1365,9 @@ function OperationDecision({
               <th scope="col">{t("pricing.quantity")}</th>
               <th scope="col">{t("pricing.unitPrice")}</th>
               <th scope="col">{t("pricing.lineDiscount")}</th>
-              <th scope="col">{t("pricing.lineCost")}</th>
+              {costsVisible && <th scope="col">{t("pricing.lineCost")}</th>}
               <th scope="col">{t("pricing.net")}</th>
-              <th scope="col">{t("pricing.marginNet")}</th>
+              {costsVisible && <th scope="col">{t("pricing.marginNet")}</th>}
               {canLineDelta && <th scope="col">{t("pricing.lineDelta")}</th>}
             </tr>
           </thead>
@@ -1382,9 +1397,11 @@ function OperationDecision({
                         ? `−${pctDisplay(lineDiscount)} %`
                         : "—"}
                     </td>
-                    <td className="operation-lines__money">
-                      {formatMoney(costs.get(line.position_index) ?? "0", operation.currency)}
-                    </td>
+                    {costsVisible && (
+                      <td className="operation-lines__money">
+                        {formatMoney(costs.get(line.position_index) ?? "0", operation.currency)}
+                      </td>
+                    )}
                     <td className="operation-lines__money">
                       {discount > 0 && position?.quantity ? (
                         <>
@@ -1403,13 +1420,15 @@ function OperationDecision({
                         formatMoney(line.line_net, operation.currency)
                       )}
                     </td>
-                    <td className="operation-lines__money">
-                      {marginText(
-                        line.line_net,
-                        costs.get(line.position_index) ?? "0",
-                        operation.currency,
-                      )}
-                    </td>
+                    {costsVisible && (
+                      <td className="operation-lines__money">
+                        {marginText(
+                          line.line_net,
+                          costs.get(line.position_index) ?? "0",
+                          operation.currency,
+                        )}
+                      </td>
+                    )}
                     {canLineDelta && (
                       <td className="operation-lines__delta operation-lines__money">
                         {position?.price_net != null
@@ -1428,9 +1447,20 @@ function OperationDecision({
                       </td>
                     )}
                   </tr>
-                  {breakdown && (
+                  {line.sublines && (
+                    <tr>
+                      <td colSpan={columnCount}>
+                        <ExtraPriceLines
+                          lines={line.sublines}
+                          currency={operation.currency}
+                          title={`Extras de la posición ${line.position_index}`}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                  {costsVisible && breakdown && (
                     <tr className="operation-lines__detail">
-                      <td colSpan={canLineDelta ? 9 : 8}>
+                      <td colSpan={columnCount}>
                         <details>
                           <summary>{t("pricing.costComposition")}</summary>
                           <CostComposition
@@ -1451,7 +1481,7 @@ function OperationDecision({
         </table>
       </div>
 
-      {kindRows.length > 0 && (
+      {costsVisible && kindRows.length > 0 && (
         <details className="operation-authorities">
           <summary>{t("pricing.costByKind")}</summary>
           <table className="cost-composition__table">
@@ -1483,7 +1513,7 @@ function OperationDecision({
           ` · ${t("pricing.auditDecided")} ${formatDateTime(operation.approved_at)}`}
       </p>
 
-      {(operation.authorities ?? []).length > 0 && (
+      {costsVisible && (operation.authorities ?? []).length > 0 && (
         <details className="operation-authorities">
           <summary>{t("pricing.authorities")}</summary>
           <ul>
@@ -1494,6 +1524,11 @@ function OperationDecision({
         </details>
       )}
 
+      <ExtraPriceLines
+        lines={operation.services}
+        currency={operation.currency}
+        title="Servicios del proyecto"
+      />
       <div className="operation-decision__actions">
         {["PREVIEW", "PENDING"].includes(operation.state) &&
           (owner || operation.state !== "PENDING") && (
@@ -1544,9 +1579,6 @@ function CommercialOperations({
   const [confirmed, setConfirmed] = useState(false);
   const [projectId, setProjectId] = useState(boundProjectId ?? "");
   const [selectedMode, setSelectedMode] = useState("COST_PLUS_MARGIN");
-  // Project-level charges (instalación, traslado) — priced extras that ride
-  // the pricing request into the sealed revision. Amounts are net.
-  const [extras, setExtras] = useState<{ label: string; kind: string; amount: string }[]>([]);
   const [history, setHistory] = useState<Operation[]>([]);
   const [boundProject, setBoundProject] = useState<ProjectResponse | undefined>();
   // Bumped after a successful apply — the project's live totals changed, so
@@ -1804,16 +1836,8 @@ function CommercialOperations({
             if (data[key] !== undefined && data[key] !== "")
               data[key] = String(Number(data[key]) / 100);
           }
-          const extraLines = extras
-            .filter((item) => item.label.trim() !== "" && item.amount !== "")
-            .map((item) => ({
-              label: item.label.trim(),
-              kind: item.kind,
-              amount: item.amount,
-            }));
           void runCurrent(
-            () =>
-              request<Operation>("preview/", "POST", { ...data, extras: extraLines, confirmed }),
+            () => request<Operation>("preview/", "POST", { ...data, confirmed }),
             publishOperation,
             "pricing.calculateError",
           );
@@ -1942,70 +1966,16 @@ function CommercialOperations({
           </select>
         </label>
         <p className="field-hint">{t("pricing.segmentHint")}</p>
-        <fieldset className="pricing-extras">
-          <legend>{t("pricing.extras")}</legend>
-          <p className="field-hint">{t("pricing.extrasHint")}</p>
-          {extras.map((item, index) => (
-            <div className="pricing-extras__row" key={index}>
-              <select
-                aria-label={t("pricing.extras")}
-                value={item.kind}
-                onChange={(event) =>
-                  setExtras(
-                    extras.map((entry, i) =>
-                      i === index ? { ...entry, kind: event.target.value } : entry,
-                    ),
-                  )
-                }
-              >
-                <option value="INSTALLATION">{t("pricing.extraKindInstallation")}</option>
-                <option value="FREIGHT">{t("pricing.extraKindFreight")}</option>
-                <option value="OTHER">{t("pricing.extraKindOther")}</option>
-              </select>
-              <input
-                aria-label={t("pricing.extraLabel")}
-                placeholder={t("pricing.extraLabel")}
-                maxLength={120}
-                value={item.label}
-                onChange={(event) =>
-                  setExtras(
-                    extras.map((entry, i) =>
-                      i === index ? { ...entry, label: event.target.value } : entry,
-                    ),
-                  )
-                }
-              />
-              <input
-                aria-label={t("pricing.extraAmount")}
-                placeholder={t("pricing.extraAmount")}
-                type="number"
-                min="0"
-                step="1"
-                value={item.amount}
-                onChange={(event) =>
-                  setExtras(
-                    extras.map((entry, i) =>
-                      i === index ? { ...entry, amount: event.target.value } : entry,
-                    ),
-                  )
-                }
-              />
-              <button type="button" onClick={() => setExtras(extras.filter((_, i) => i !== index))}>
-                {t("pricing.extraRemove")}
-              </button>
-            </div>
-          ))}
-          {extras.length < 10 && (
-            <button
-              type="button"
-              onClick={() =>
-                setExtras([...extras, { label: "", kind: "INSTALLATION", amount: "" }])
-              }
-            >
-              {t("pricing.extraAdd")}
-            </button>
-          )}
-        </fieldset>
+        <p className="field-hint">
+          Los accesorios se calculan en el editor. Revisa instalación, retiro y flete en{" "}
+          <Link
+            className="pricing-services-link"
+            to={boundProjectId ? `/projects/${boundProjectId}` : "/projects"}
+          >
+            Servicios del proyecto
+          </Link>{" "}
+          antes de cotizar.
+        </p>
         <label>
           {t("pricing.reason")}
           <input

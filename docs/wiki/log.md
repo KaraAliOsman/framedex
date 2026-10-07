@@ -344,3 +344,57 @@ Lint/typecheck/test/build, 24 comparaciones sin hallazgos nuevos, cinco estados
 y publicación/deshacer pasan; la rúbrica R1–R20 conserva sus dos rondas.
 El incidente local permanece visible y su ejecución se excluye de aceptación.
 La cola continúa con D06; main y Git dekopen no recibieron cambios.
+
+## 2026-10-06 — D06 · dominio y recorridos verificados antes de CI
+
+La rama `codex/D06-accesorios-extras` conecta catálogo/plantillas, sugerencias con
+causa, cantidades Decimal, BOM/cortes EXTRA, servicios por revisión y reparto
+comercial exacto. El recorrido real cotiza, aplica, emite dos políticas PDF,
+libera OT y verifica ensanche cortable. Los cinco estados, MFA real y
+importación/diff/publicación/deshacer pasan. Las 40 comparaciones de captura no
+registran hallazgos nuevos ni errores HTTP/consola; la limitación móvil anterior
+del editor permanece documentada para P04/P05.
+
+La inspección corrige tabla PDF, contraste, vocabulario de herrajes y consulta de
+pagos reservada al dueño. El fixture guarda un logo real con SHA y su API responde
+con bytes PNG; una regresión HTTP cubre el fallo heredado del renderer JSON.
+El gate inicial pasa 1 060 pgTAP y 330 integraciones, pero falla dos selectores
+anclados a v5: se actualizan a v6 conservando las aserciones. El cierre CI/merge
+queda pendiente de su comprobación final. Véase la aceptación D06; el incidente
+local previo conserva su informe y ninguna de sus ejecuciones afectadas se acepta.
+
+## 2026-10-06 — D06 · gate aislado completo
+
+El gate final sobre `eadf648b` aprueba lint/typecheck/test/build, 647 pruebas del
+motor (+2 xfail históricos), 1 184 del backend y 725 del frontend. Database Gate
+pasa 1 060 pgTAP, 330 integraciones, 11 E2E y ocho upgrades poblados PG16. La
+pintura del lienzo permanece bajo 300 ms y la limpieza de recursos propios se
+verifica. Los borradores y deshacer se aíslan por organización/proyecto/revisión.
+El conflicto del puerto 8000 se resuelve deteniendo temporalmente el contenedor
+de la app propia; no se cambian los puertos ni los checks del producto. La
+evidencia anterior fallida no cuenta como aceptación. CI y merge siguen pendientes.
+
+## 2026-10-07 — D06 · revisión de ensamblajes y permisos comerciales
+
+Las sugerencias conservan módulo y la compatibilidad se evalúa localmente.
+WINDOW mantiene un marco completo, incluidas divisiones, según autoridad;
+LEAF y ensamblajes mantienen sus cantidades propias. Los endpoints de precio
+proyectan venta por rol sin cambiar snapshots internos. La nueva columna de
+tarifas de accesorios se restringe también en la base de datos; su función
+pública mantiene RLS y elimina costos de definiciones y zonas salvo permiso
+de gestión en la organización solicitada. Pasan 107 pruebas PostgreSQL
+focalizadas y seis de UI. La fuente posterior requiere gate completo y CI;
+los intentos fallidos se conservan en el informe de aceptación.
+
+## 2026-10-07 — D06 · gate final de privacidad y fuente pgTAP
+
+El gate12 sobre `3d1b98754640e982a971afa1ec9433845bf02709` aprueba
+lint/typecheck/test/build: 650 motor (+2 xfail), 1 184 backend y 727 frontend.
+Database Gate pasa 337 integraciones, 11 recorridos E2E y upgrades poblados PG16,
+con limpieza de recursos propios. El bind propio de pg_prove conservaba una
+fuente anterior; se verifican byte a byte los 75 SQL y la suite completa pasa
+1 067 aserciones, incluida la nueva privacidad de accesorios. Ningún recurso
+ajeno se usa para esta comprobación. CI detecta una espera visual anterior a la
+respuesta fría del catálogo; se sincroniza la lectura HTTP real conservando
+todas las aserciones visuales y de permisos. Los cuatro checks se repiten antes
+de integrar el PR #124; las ejecuciones fallidas no cuentan como aceptación.

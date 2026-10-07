@@ -111,7 +111,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_gla
     )
     result = SimpleNamespace(
         profile_cuts=[], reinforcements=[], glasses=[glass],
-        panels=[], hardware_items=[], fittings=[], leaf_weights=[], finish=None,
+        panels=[], hardware_items=[], fittings=[], leaf_weights=[], finish=None, extras=[],
     )
 
     class Cursor:
@@ -144,7 +144,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_gla
         "color_interior": "WHITE", "color_exterior": "WHITE",
     }
     params_repo = SimpleNamespace(
-        load_visible=lambda *a, **k: None,
+        load_visible=lambda *a, **k: SimpleNamespace(extra_authority=None),
         load_coupler_articles=lambda *a, **k: {},
     )
     monkeypatch.setattr(service, "connection", Conn())
@@ -175,10 +175,10 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_
         area_m2=Decimal("1.00"), weight_kg=Decimal("2.50"),
         thickness_net_mm=Decimal("4.00"),
     )
-    fitting = SimpleNamespace(sku="CLAMP-SQ", qty=4)
+    fitting = SimpleNamespace(sku="CLAMP-SQ", qty=4, extra_code=None)
     result = SimpleNamespace(
         profile_cuts=[], reinforcements=[], glasses=[glass],
-        panels=[], hardware_items=[], fittings=[fitting], leaf_weights=[], finish=None,
+        panels=[], hardware_items=[], fittings=[fitting], leaf_weights=[], finish=None, extras=[],
     )
 
     class Cursor:
@@ -214,7 +214,7 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_
         "color_interior": "WHITE", "color_exterior": "WHITE",
     }
     params_repo = SimpleNamespace(
-        load_visible=lambda *a, **k: None,
+        load_visible=lambda *a, **k: SimpleNamespace(extra_authority=None),
         load_coupler_articles=lambda *a, **k: {},
     )
     monkeypatch.setattr(service, "connection", Conn())

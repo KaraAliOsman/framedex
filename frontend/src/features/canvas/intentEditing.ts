@@ -79,6 +79,8 @@ export type Opening = (typeof OPENINGS)[number];
 export type SplitType = "SPLIT_V" | "SPLIT_H";
 
 export type IntentNode = {
+  extras?: import("../projects/extraModel").ExtraSelection[];
+  extra_context?: { opening_width_mm?: string | null; opening_height_mm?: string | null };
   id: string;
   type: "ROOT" | SplitType | "BAY";
   width_mm?: string | null;

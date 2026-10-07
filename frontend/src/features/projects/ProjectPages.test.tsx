@@ -17,6 +17,7 @@ import {
   projectsList,
   projectsRetrieve,
   projectsUpdate,
+  projectExtraServices,
 } from "../../api/generated/dekopen";
 import type {
   PositionResponse,
@@ -66,6 +67,7 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     projectQuoteLinksList: vi.fn(),
     documentaryListArtifacts: vi.fn(),
     documentsCompareVersions: vi.fn(),
+    projectExtraServices: vi.fn(),
   };
 });
 
@@ -222,6 +224,17 @@ beforeEach(() => {
   vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(projectsList).mockResolvedValue(response(200, { items: [] }));
   vi.mocked(projectsRetrieve).mockResolvedValue(response(200, makeProject()));
+  vi.mocked(projectExtraServices).mockResolvedValue(
+    response(200, {
+      definitions: [],
+      selections: [],
+      lines: [],
+      currency: "CLP",
+      locked: false,
+      reason: null,
+      updated_at: "2026-09-18T12:01:02.123456Z",
+    }),
+  );
   vi.mocked(projectPaymentsList).mockResolvedValue(
     response(200, {
       payments: [],

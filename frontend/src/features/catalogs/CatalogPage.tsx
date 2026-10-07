@@ -8,6 +8,8 @@ import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import { HardwareAuthorityView } from "./HardwareAuthorityView";
+import { ExtraAuthorityEditor } from "../projects/ExtraDefinitionEditor";
+import type { ExtraAuthority } from "../projects/extraModel";
 import { FinishAuthorityEditor, finishAuthorityProblem } from "./FinishAuthorityEditor";
 import {
   OpeningCapabilitiesEditor,
@@ -607,6 +609,11 @@ function CatalogEditor({
     ((resource === "systems" ? (row as SystemResponse | undefined)?.opening_capabilities : []) as
       Capability[] | null) ?? [],
   );
+  const [extraAuthority, setExtraAuthority] = useState<ExtraAuthority | null>(
+    (resource === "systems"
+      ? ((row as SystemResponse | undefined)?.extra_authority as ExtraAuthority)
+      : null) ?? null,
+  );
   const [finishAuthority, setFinishAuthority] = useState<FinishAuthority | null>(
     (resource === "systems" ? (row as SystemResponse | undefined)?.finish_authority : null) ?? null,
   );
@@ -734,6 +741,7 @@ function CatalogEditor({
         pairedRule,
         row && "class_authority" in row ? row.class_authority : undefined,
         finishAuthority,
+        extraAuthority,
       );
     } catch (caught) {
       // writeFromDraft tags the failing field ("Invalid integer: sku") — name
@@ -930,6 +938,16 @@ function CatalogEditor({
             <div className="catalog-fields">{group.fields.map(control)}</div>
           </fieldset>
         ))}
+        {resource === "systems" && (
+          <ExtraAuthorityEditor
+            value={extraAuthority}
+            costsVisible={!locked}
+            onChange={(value) => {
+              setExtraAuthority(value);
+              setDirty(true);
+            }}
+          />
+        )}
         {resource === "systems" && (
           <FinishAuthorityEditor
             value={finishAuthority}

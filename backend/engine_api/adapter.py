@@ -30,6 +30,8 @@ from dekopen_engine.weight import MissingFabricationAuthority
 from dekopen_engine.models import PlanPoint, Opening, OpeningUse, HingedLayout, HardwareSelection
 from dekopen_engine.openings import OpeningCapabilityError
 from dekopen_engine.glass_composition import GlassProduct, GlassProcessing
+from dekopen_engine.extra_models import ExtraSelection, ExtraContext
+from pydantic import TypeAdapter
 import json
 from dekopen_engine.product import (
     ConnectionKind,
@@ -52,6 +54,7 @@ class UnsupportedEngineContract(ValueError):
 
 
 _NODE_FIELDS = {
+    "extras", "extra_context",
     "id",
     "type",
     "width_mm",
@@ -108,6 +111,16 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         raise InvalidEngineRequest("Every node requires string id and type")
 
     values: dict[str, object] = {"id": raw["id"]}
+    if "extras" in raw:
+        try:
+            values["extras"] = TypeAdapter(list[ExtraSelection]).validate_json(json.dumps(raw["extras"], allow_nan=False))
+        except (ValueError, TypeError) as error:
+            raise InvalidEngineRequest("Revisa los extras, sus lados, vuelos y hojas compatibles.") from error
+    if raw.get("extra_context") is not None:
+        try:
+            values["extra_context"] = ExtraContext.model_validate_json(json.dumps(raw["extra_context"], allow_nan=False))
+        except (ValueError, TypeError) as error:
+            raise InvalidEngineRequest("Revisa las medidas declaradas del vano de obra.") from error
     for field, model in (("opening", Opening), ("hinged_layout", HingedLayout), ("hardware_selection", HardwareSelection)):
         if raw.get(field) is not None:
             try:

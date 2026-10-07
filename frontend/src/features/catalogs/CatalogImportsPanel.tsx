@@ -19,6 +19,8 @@ import { formatDate, formatDateTime, formatDecimal, fmtMm, formatMoney } from ".
 import { domainLabel } from "../../i18n/domainLabels";
 import { useConfirm } from "../../ui/ConfirmDialog";
 import { OpeningCapabilitiesEditor, type PairedRule } from "./OpeningCapabilitiesEditor";
+import { ExtraAuthorityEditor } from "../projects/ExtraDefinitionEditor";
+import type { ExtraAuthority } from "../projects/extraModel";
 import { FinishAuthorityEditor } from "./FinishAuthorityEditor";
 import type { FinishAuthority } from "../../api/generated/models";
 import { physicalLabel, type Capability } from "../canvas/physicalOpenings";
@@ -641,7 +643,12 @@ export function CatalogImportsPanel({
                         {column.required && <small>Requerido</small>}
                       </label>
                       <div>
-                        {column.key === "finish_authority" ? (
+                        {column.key === "extra_authority" ? (
+                          <ExtraAuthorityEditor
+                            value={(value as ExtraAuthority | null) ?? null}
+                            onChange={(next) => patch(selected.key, column.key, next)}
+                          />
+                        ) : column.key === "finish_authority" ? (
                           <FinishAuthorityEditor
                             value={(value as FinishAuthority | null) ?? null}
                             material={String(selected.values.material ?? "PVC")}
@@ -984,6 +991,31 @@ function DiffFields({
                       </fieldset>
                     ) : (
                       <p>Sin carta por caras.</p>
+                    )}
+                  </details>
+                ))}
+              </section>
+            );
+          if (key === "extra_authority")
+            return (
+              <section key={key} aria-label="Comparación de accesorios y extras">
+                {(
+                  [
+                    ["Antes de publicar", previous],
+                    ["Extras a publicar", value],
+                  ] as const
+                ).map(([label, authority]) => (
+                  <details key={label} open={label === "Extras a publicar"}>
+                    <summary>{label}</summary>
+                    {authority ? (
+                      <fieldset disabled>
+                        <ExtraAuthorityEditor
+                          value={authority as ExtraAuthority}
+                          onChange={() => {}}
+                        />
+                      </fieldset>
+                    ) : (
+                      <p>Sin autoridad de accesorios.</p>
                     )}
                   </details>
                 ))}

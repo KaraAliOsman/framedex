@@ -1,0 +1,146 @@
+[
+  {
+    "routeId": "precios-proyecto",
+    "path": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "reachedPath": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "precios-proyecto__ESTIMATOR__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "interactive-without-effect",
+        "sample": "button. Calcular y revisar"
+      }
+    ]
+  },
+  {
+    "routeId": "precios-proyecto",
+    "path": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "reachedPath": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "precios-proyecto__ESTIMATOR__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "interactive-without-effect",
+        "sample": "button. Calcular y revisar"
+      }
+    ]
+  },
+  {
+    "routeId": "precios-proyecto",
+    "path": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "reachedPath": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "precios-proyecto__ESTIMATOR__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "interactive-without-effect",
+        "sample": "button. Calcular y revisar"
+      }
+    ]
+  },
+  {
+    "routeId": "precios-proyecto",
+    "path": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "reachedPath": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "precios-proyecto__ESTIMATOR__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "interactive-without-effect",
+        "sample": "button. Calcular y revisar"
+      }
+    ]
+  },
+  {
+    "routeId": "precios-proyecto",
+    "path": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "reachedPath": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "precios-proyecto__ESTIMATOR__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "interactive-without-effect",
+        "sample": "button. Calcular y revisar"
+      }
+    ]
+  },
+  {
+    "routeId": "precios-proyecto",
+    "path": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "reachedPath": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "precios-proyecto__ESTIMATOR__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "interactive-without-effect",
+        "sample": "button. Calcular y revisar"
+      }
+    ]
+  },
+  {
+    "routeId": "precios-proyecto",
+    "path": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "reachedPath": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "precios-proyecto__ESTIMATOR__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "interactive-without-effect",
+        "sample": "button. Calcular y revisar"
+      }
+    ]
+  },
+  {
+    "routeId": "precios-proyecto",
+    "path": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "reachedPath": "/projects/736be3a2-34d1-4939-9477-0edbd3a4ae28/pricing",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "precios-proyecto__ESTIMATOR__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "interactive-without-effect",
+        "sample": "button. Calcular y revisar"
+      }
+    ]
+  }
+]

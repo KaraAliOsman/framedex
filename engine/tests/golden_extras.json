@@ -1,0 +1,578 @@
+{
+  "exact-partition": {
+    "base_net": "130032",
+    "sublines": [
+      {
+        "code": "SILL",
+        "height_mm": "1400",
+        "name": "Vierteaguas",
+        "net": "15214",
+        "quantity": "3.12",
+        "rounding": "0.88",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "M",
+        "unit_price": "4876",
+        "width_mm": "1500"
+      },
+      {
+        "code": "FRAME_EXTENSION",
+        "height_mm": "1400",
+        "name": "Ensanche",
+        "net": "21845",
+        "quantity": "5.60",
+        "rounding": "-0.60",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "M",
+        "unit_price": "3901",
+        "width_mm": "1500"
+      },
+      {
+        "code": "SCREEN_FIXED",
+        "height_mm": "1400",
+        "name": "Mosquitero fijo a medida",
+        "net": "42910",
+        "quantity": "2",
+        "rounding": "0",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "EA",
+        "unit_price": "21455",
+        "width_mm": "1500"
+      }
+    ]
+  },
+  "extra-members": [
+    {
+      "angle_left": "90.0",
+      "angle_right": "90.0",
+      "assembly": "EXTRA",
+      "axis": "HORIZONTAL",
+      "bay_id": null,
+      "cut_length_mm": "1560.00",
+      "direct_segment": {
+        "end": {
+          "x_mm": "1530",
+          "y_mm": "1400"
+        },
+        "start": {
+          "x_mm": "-30",
+          "y_mm": "1400"
+        }
+      },
+      "leaf_id": null,
+      "leaf_slot": null,
+      "material": "PVC",
+      "parent_infill_id": null,
+      "parent_leaf_id": null,
+      "physical_member_slot": "BOTTOM",
+      "placement_domain": "DIRECT",
+      "reinforcement_length_mm": null,
+      "reinforcement_required": false,
+      "reinforcement_sku": null,
+      "role": "SILL",
+      "sagitta_mm": null,
+      "semantic_member_id": "extra/SILL/BOTTOM",
+      "topology_path": "extra/SILL",
+      "workshop_sku": "DEMO_60-EXTRA-SILL"
+    },
+    {
+      "angle_left": "90.0",
+      "angle_right": "90.0",
+      "assembly": "EXTRA",
+      "axis": "VERTICAL",
+      "bay_id": null,
+      "cut_length_mm": "1400.00",
+      "direct_segment": {
+        "end": {
+          "x_mm": "0",
+          "y_mm": "1400"
+        },
+        "start": {
+          "x_mm": "0",
+          "y_mm": "0"
+        }
+      },
+      "leaf_id": null,
+      "leaf_slot": null,
+      "material": "PVC",
+      "parent_infill_id": null,
+      "parent_leaf_id": null,
+      "physical_member_slot": "LEFT",
+      "placement_domain": "DIRECT",
+      "reinforcement_length_mm": null,
+      "reinforcement_required": false,
+      "reinforcement_sku": null,
+      "role": "FRAME_EXTENSION",
+      "sagitta_mm": null,
+      "semantic_member_id": "extra/FRAME_EXTENSION/LEFT",
+      "topology_path": "extra/FRAME_EXTENSION",
+      "workshop_sku": "DEMO_60-EXTRA-FRAME_EXTENSION"
+    },
+    {
+      "angle_left": "90.0",
+      "angle_right": "90.0",
+      "assembly": "EXTRA",
+      "axis": "VERTICAL",
+      "bay_id": null,
+      "cut_length_mm": "1400.00",
+      "direct_segment": {
+        "end": {
+          "x_mm": "1500",
+          "y_mm": "1400"
+        },
+        "start": {
+          "x_mm": "1500",
+          "y_mm": "0"
+        }
+      },
+      "leaf_id": null,
+      "leaf_slot": null,
+      "material": "PVC",
+      "parent_infill_id": null,
+      "parent_leaf_id": null,
+      "physical_member_slot": "RIGHT",
+      "placement_domain": "DIRECT",
+      "reinforcement_length_mm": null,
+      "reinforcement_required": false,
+      "reinforcement_sku": null,
+      "role": "FRAME_EXTENSION",
+      "sagitta_mm": null,
+      "semantic_member_id": "extra/FRAME_EXTENSION/RIGHT",
+      "topology_path": "extra/FRAME_EXTENSION",
+      "workshop_sku": "DEMO_60-EXTRA-FRAME_EXTENSION"
+    }
+  ],
+  "geometric-bom": {
+    "extra_suggestions": [],
+    "extras": [
+      {
+        "bay_id": null,
+        "code": "SILL",
+        "height_mm": "1400",
+        "installation": false,
+        "kind": "PROFILE",
+        "leaf_id": null,
+        "name": "Vierteaguas",
+        "quantity": "1.56",
+        "scope": "POSITION",
+        "sku": "DEMO_60-EXTRA-SILL",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "M",
+        "width_mm": "1500",
+        "zone": null
+      },
+      {
+        "bay_id": null,
+        "code": "FRAME_EXTENSION",
+        "height_mm": "1400",
+        "installation": false,
+        "kind": "PROFILE",
+        "leaf_id": null,
+        "name": "Ensanche",
+        "quantity": "2.80",
+        "scope": "POSITION",
+        "sku": "DEMO_60-EXTRA-FRAME_EXTENSION",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "M",
+        "width_mm": "1500",
+        "zone": null
+      },
+      {
+        "bay_id": null,
+        "code": "SCREEN_FIXED",
+        "height_mm": "1400",
+        "installation": false,
+        "kind": "SCREEN",
+        "leaf_id": null,
+        "name": "Mosquitero fijo a medida",
+        "quantity": "1",
+        "scope": "POSITION",
+        "sku": "DEMO_60-EXTRA-SCREEN_FIXED",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "EA",
+        "width_mm": "1500",
+        "zone": null
+      }
+    ],
+    "finish": {
+      "base": {
+        "approximate": true,
+        "code": "WHITE",
+        "gloss": "0.30",
+        "kind": "MASS",
+        "linear_rgb": [
+          "0.78",
+          "0.79",
+          "0.76"
+        ],
+        "manufacturer_code": "DEMO-WHITE",
+        "name": "Blanco",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "synthetic": true,
+        "texture_path": null
+      },
+      "combination": {
+        "allowed_handle_colors": [
+          "WHITE",
+          "BLACK"
+        ],
+        "base": "WHITE",
+        "code": "WHITE",
+        "exterior": "WHITE",
+        "extra_lead_days": 0,
+        "glass_clearance_mm": "5",
+        "interior": "WHITE",
+        "max_leaf_height_mm": null,
+        "max_leaf_width_mm": null,
+        "max_position_height_mm": null,
+        "max_position_width_mm": null,
+        "reinforcement_required": false,
+        "reinforcement_stock_code": "WHITE",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "surcharge": {
+          "amount": "0",
+          "currency": "CLP",
+          "kind": "NONE",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+        },
+        "synthetic": true
+      },
+      "exterior": {
+        "approximate": true,
+        "code": "WHITE",
+        "gloss": "0.30",
+        "kind": "MASS",
+        "linear_rgb": [
+          "0.78",
+          "0.79",
+          "0.76"
+        ],
+        "manufacturer_code": "DEMO-WHITE",
+        "name": "Blanco",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "synthetic": true,
+        "texture_path": null
+      },
+      "handle_colors": [
+        {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "RAL",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-MANILLA-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        {
+          "approximate": true,
+          "code": "BLACK",
+          "gloss": "0.30",
+          "kind": "RAL",
+          "linear_rgb": [
+            "0.012",
+            "0.014",
+            "0.015"
+          ],
+          "manufacturer_code": "DEMO-MANILLA-BLACK",
+          "name": "Negro",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        }
+      ],
+      "interior": {
+        "approximate": true,
+        "code": "WHITE",
+        "gloss": "0.30",
+        "kind": "MASS",
+        "linear_rgb": [
+          "0.78",
+          "0.79",
+          "0.76"
+        ],
+        "manufacturer_code": "DEMO-WHITE",
+        "name": "Blanco",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "synthetic": true,
+        "texture_path": null
+      },
+      "profile_skus": {
+        "DEMO_60-EXTRA-FRAME_EXTENSION": "COMPRA-V6-DEMO_60-EXTRA-FRAME_EXTENSION-WHITE",
+        "DEMO_60-EXTRA-SILL": "COMPRA-V6-DEMO_60-EXTRA-SILL-WHITE",
+        "DEMO_60-JQ-10": "COMPRA-V5-DEMO_60-JQ-10-WHITE",
+        "DEMO_60-MARCO": "COMPRA-V5-DEMO_60-MARCO-WHITE"
+      }
+    },
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "extra_code": "SCREEN_FIXED",
+        "kind": "SCREEN",
+        "leaf_id": null,
+        "qty": 1,
+        "sku": "DEMO_60-EXTRA-SCREEN_FIXED"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.8200",
+        "article_sku": "DEMO_60-GLASS",
+        "bay_id": "vano",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4",
+        "height_mm": "1300.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "36.40",
+        "width_mm": "1400.00"
+      }
+    ],
+    "hardware_items": [],
+    "leaf_weights": [],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-WHITE",
+        "leaf_id": null,
+        "length_mm": "1506.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO",
+        "stock_color": "WHITE"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-WHITE",
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO",
+        "stock_color": "WHITE"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "vano",
+        "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-WHITE",
+        "leaf_id": null,
+        "length_mm": "1409.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10",
+        "stock_color": "WHITE"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "vano",
+        "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-WHITE",
+        "leaf_id": null,
+        "length_mm": "1309.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10",
+        "stock_color": "WHITE"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-FRAME_EXTENSION-WHITE",
+        "extra_code": "FRAME_EXTENSION",
+        "leaf_id": null,
+        "length_mm": "1400.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME_EXTENSION",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-FRAME_EXTENSION",
+        "stock_color": "WHITE"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-FRAME_EXTENSION-WHITE",
+        "extra_code": "FRAME_EXTENSION",
+        "leaf_id": null,
+        "length_mm": "1400.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME_EXTENSION",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-FRAME_EXTENSION",
+        "stock_color": "WHITE"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-SILL-WHITE",
+        "extra_code": "SILL",
+        "leaf_id": null,
+        "length_mm": "1560.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "SILL",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-SILL",
+        "stock_color": "WHITE"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1476.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "project-perimeter": [
+    {
+      "bay_id": null,
+      "code": "INSTALL",
+      "cost_rate": "1000",
+      "currency": "CLP",
+      "height_mm": null,
+      "installation": true,
+      "kind": "SERVICE",
+      "leaf_id": null,
+      "name": "Instalación estándar",
+      "quantity": "11.6",
+      "scope": "PROJECT",
+      "selling_rate": "1500",
+      "sku": null,
+      "source": "Tarifa de ensayo declarada",
+      "synthetic": true,
+      "total_cost": "11600.0",
+      "total_price": "17400.0",
+      "unit": "M",
+      "width_mm": null,
+      "zone": null
+    }
+  ],
+  "sublines": [
+    {
+      "bay_id": null,
+      "code": "SILL",
+      "cost_rate": "5000",
+      "currency": "CLP",
+      "height_mm": "1400",
+      "installation": false,
+      "kind": "PROFILE",
+      "leaf_id": null,
+      "name": "Vierteaguas",
+      "quantity": "1.56",
+      "scope": "POSITION",
+      "selling_rate": "7500.00",
+      "sku": null,
+      "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+      "synthetic": true,
+      "total_cost": "7800.00",
+      "total_price": "11700.0000",
+      "unit": "M",
+      "width_mm": "1500",
+      "zone": null
+    },
+    {
+      "bay_id": null,
+      "code": "FRAME_EXTENSION",
+      "cost_rate": "4000",
+      "currency": "CLP",
+      "height_mm": "1400",
+      "installation": false,
+      "kind": "PROFILE",
+      "leaf_id": null,
+      "name": "Ensanche",
+      "quantity": "2.80",
+      "scope": "POSITION",
+      "selling_rate": "6000.00",
+      "sku": null,
+      "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+      "synthetic": true,
+      "total_cost": "11200.00",
+      "total_price": "16800.0000",
+      "unit": "M",
+      "width_mm": "1500",
+      "zone": null
+    },
+    {
+      "bay_id": null,
+      "code": "SCREEN_FIXED",
+      "cost_rate": "22000",
+      "currency": "CLP",
+      "height_mm": "1400",
+      "installation": false,
+      "kind": "SCREEN",
+      "leaf_id": null,
+      "name": "Mosquitero fijo a medida",
+      "quantity": "1",
+      "scope": "POSITION",
+      "selling_rate": "33000.00",
+      "sku": "DEMO_60-EXTRA-SCREEN_FIXED",
+      "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+      "synthetic": true,
+      "total_cost": "22000",
+      "total_price": "33000.00",
+      "unit": "EA",
+      "width_mm": "1500",
+      "zone": null
+    }
+  ]
+}

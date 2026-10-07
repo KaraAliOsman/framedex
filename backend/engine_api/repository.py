@@ -10,6 +10,7 @@ from typing import cast
 from uuid import UUID
 
 from django.db import connection
+from authentication.rls import catalog_backend
 
 from dekopen_engine import (
     EffectiveProfileArticle,
@@ -33,6 +34,7 @@ from dekopen_engine.manufacturing import HandleRequirementPolicyV1, handle_polic
 from dekopen_engine.models import OpeningCapability, PairedLeafRule, HardwareClassAuthority
 from dekopen_engine.hardware_classes import parse_hardware_class
 from dekopen_engine.finish_models import FinishAuthority
+from dekopen_engine.extra_models import ExtraAuthority
 
 
 class SystemNotFound(LookupError):
@@ -156,7 +158,10 @@ class SystemParamsRepository:
         )
 
     def load_visible(self, system_id: UUID, active_org_id: UUID) -> SystemParams:
-        with connection.cursor() as cursor:
+        # The pure engine needs exact purchase authority to compute costs.
+        # This role remains bound to the verified caller's tenant RLS claims;
+        # serializers project selling evidence at the HTTP boundary.
+        with catalog_backend(), connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT code, depth_mm, material::text, sash_overlap_mm,
@@ -170,7 +175,7 @@ class SystemParamsRepository:
                        rail_count, rebate_depth_mm, end_milling_overlap_mm,
                        finishes::text, system_family, sliding_parameters::text,
                        dimensional_limits::text, legacy_authority,
-                       opening_capabilities::text,paired_leaf_rule::text,finish_authority::text
+                       opening_capabilities::text,paired_leaf_rule::text,finish_authority::text,extra_authority::text
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -189,6 +194,7 @@ class SystemParamsRepository:
         frame = articles.get(ProfileRole.FRAME)
         if frame is None:
             raise UnsupportedCatalogContract("FRAME effective article is required")
+        extra_authority = self._load_extras(system[29], active_org_id) if len(system) > 29 else None
 
         return SystemParams(
             system_code=str(system[0]),
@@ -229,9 +235,20 @@ class SystemParamsRepository:
             **({"finish_authority": FinishAuthority.model_validate_json(system[28]),
                 "finish_profile_skus": self._load_finish_skus(system_id, active_org_id)}
                if len(system) > 28 and system[28] is not None else {}),
+            **({"extra_authority": extra_authority} if extra_authority is not None else {}),
             available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
         )
+
+    def _load_extras(self, value: object, org_id: UUID) -> ExtraAuthority | None:
+        from projects.extras import load_policy
+        authority = ExtraAuthority.model_validate_json(str(value)) if value is not None else None
+        policy = load_policy(org_id)
+        services = [item for item in policy.services if item.scope == "POSITION"]
+        if not services:
+            return authority
+        return ExtraAuthority(schema_version=1, definitions=[*(authority.definitions if authority else []), *services],
+            source="; ".join([*( [authority.source] if authority else []), "Servicios declarados por la organización"]))
 
     def load_opening_systems(self, active_org_id: UUID) -> tuple[tuple[str, tuple[OpeningCapability, ...]], ...]:
         with connection.cursor() as cursor:

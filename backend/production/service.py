@@ -614,6 +614,7 @@ def _work_order_payload(
         "color": color,
         "materials": {
             **({"finish": engine["finish"]} if engine.get("finish") else {}),
+            **({"extras": engine["extras"]} if engine.get("extras") else {}),
             **{
             key: engine.get(key) or []
             for key in (

@@ -102,7 +102,7 @@ def _authority_row_visible(org_id: UUID, table: str, row_id: UUID) -> dict:
                              "catalogs.errors.evidence_target")
     visibility = "org_id IS NULL OR org_id = %s"
     found = rows(
-        f"SELECT * FROM public.{table} WHERE id = %s AND ({visibility})",
+        f"SELECT id,org_id FROM public.{table} WHERE id = %s AND ({visibility})",
         [str(row_id), str(org_id)],
     )
     if not found:

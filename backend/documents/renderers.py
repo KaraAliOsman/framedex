@@ -6,7 +6,7 @@ import base64
 import hashlib
 import json
 import re
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, localcontext, ROUND_HALF_UP
 from html import escape
 from pathlib import Path
 
@@ -198,6 +198,16 @@ svg:not(.miter) { max-width: 100%; height: auto; display: block; } svg text { fo
 .pcard-dims { font: 500 10pt 'IBM Plex Mono', monospace; color: #075F5A; margin: 0 0 2.5mm; }
 .pcard-specs { margin: 0; padding: 0; list-style: none; font-size: 8pt; color: #465158; line-height: 1.7; }
 .pcard-specs li { margin: 0; }
+.pcard-with-extras { border:0.75pt solid #CDD5D6; margin:0 0 5mm; break-inside:avoid; }
+.pcard-with-extras .pcard { border:0; margin:0; }
+.pcard-extras { padding:0 5mm 4mm; border-top:0.5pt solid #CDD5D6; }
+.extra-lines { width:100%; margin-top:3mm; font-size:9pt; border-collapse:collapse; break-inside:avoid; }
+.extra-lines th { text-align:left; font-size:8.5pt; color:#465158; }
+.extra-lines td { padding:1.5mm 1mm; border-top:0.5pt solid #CDD5D6; }
+.extra-lines small { font-size:8.5pt; }
+.extra-lines .numeric { text-align:right; font-family:'IBM Plex Mono',monospace; }
+.extra-lines caption { text-align:left; font-weight:600; margin-bottom:1mm; }
+.document-services { break-inside:avoid; }
 .pcard-specs .plabel { color: #727D82; font-size: 6.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; }
 .pcard-price { flex: 0 0 40mm; padding: 4mm 5mm; text-align: right; background: #F5F7F6; }
 .pcard-price .plabel { display: block; font-size: 6.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; color: #727D82; margin: 2mm 0 0.5mm; }
@@ -436,10 +446,12 @@ _SVG_INSET = Decimal("0.06")
 def _money(amount: object, currency: object) -> str:
     value = _num(amount)
     code = _value(currency)
-    if code == "CLP":
-        grouped = f"{value:,.0f}".replace(",", ".")
-        return f"$\u00a0{grouped}"
-    return f"{code}\u00a0{value:,.2f}"
+    with localcontext() as context:
+        context.rounding = ROUND_HALF_UP
+        if code == "CLP":
+            grouped = f"{value:,.0f}".replace(",", ".")
+            return f"$\u00a0{grouped}"
+        return f"{code}\u00a0{value:,.2f}"
 
 
 def _cldate(raw: object) -> str:
@@ -1193,9 +1205,34 @@ def _pricing_extras(snapshot: dict[str, object]) -> list[dict[str, object]]:
     pricing = snapshot.get("pricing")
     request = pricing.get("request") if isinstance(pricing, dict) else None
     items = request.get("extras") if isinstance(request, dict) else None
-    if not isinstance(items, list):
-        return []
-    return [item for item in items if isinstance(item, dict)]
+    legacy = [item for item in items if isinstance(item, dict)] if isinstance(items,list) else []
+    result = pricing.get("result") if isinstance(pricing,dict) else None
+    services = result.get("services") if isinstance(result,dict) else None
+    return legacy+[{**item,"label":item["name"]} for item in services or [] if isinstance(item,dict)]
+
+
+def _extra_table(rows: list[dict[str, object]], currency: object, *, prices: bool, base: object = None,
+                 caption: str = "Extras incluidos") -> str:
+    if not rows:
+        return ""
+    headings = '<th>Extra</th><th class="numeric">Cantidad</th>' + ('<th class="numeric">Precio unitario</th><th class="numeric">Neto</th>' if prices else '')
+    body = ''
+    if prices and base is not None:
+        body += '<tr><td>Base de la posición</td><td></td><td></td><td class="numeric">'+escape(_money(base,currency))+'</td></tr>'
+    for item in rows:
+        unit = {"EA":"un.","M":"m","M2":"m²"}.get(str(item.get("unit")),"Sin dato")
+        qty = _dim(item.get("quantity")).replace('.',',')
+        name = _value(item.get("name"))+(" · DEMO" if item.get("synthetic") else '')
+        body += '<tr><td>'+escape(name)+'</td><td class="numeric">'+escape(qty+' '+unit)+'</td>'
+        if prices:
+            rate = _num(item.get('unit_price',item.get('selling_rate')))
+            tariff = f"{rate:,.0f}" if currency == 'CLP' else f"{rate:,.2f}".rstrip('0').rstrip('.')
+            tariff = tariff.replace(',','_').replace('.',',').replace('_','.')
+            body += '<td class="numeric">'+escape(('$' if currency == 'CLP' else 'US$ ')+tariff)+'</td><td class="numeric">'+escape(_money(item.get("net",item.get("amount")),currency))+'</td>'
+        body += '</tr>'
+        if prices and item.get('rounding') is not None and _num(item['rounding']) != 0:
+            body += '<tr><td colspan="4"><small>Ajuste de redondeo incluido en el neto: '+escape(_dim(item['rounding']).replace('.',','))+' '+escape(_value(currency))+'</small></td></tr>'
+    return '<table class="extra-lines"><caption>'+escape(caption)+'</caption><thead><tr>'+headings+'</tr></thead><tbody>'+body+'</tbody></table>'
 
 
 def _doc01(snapshot: dict[str, object]) -> str:
@@ -1212,6 +1249,10 @@ def _doc01(snapshot: dict[str, object]) -> str:
     org_raw = snapshot.get("organization")
     organization = org_raw if isinstance(org_raw, dict) else None
     org = organization if organization is not None else {}
+    pricing = snapshot.get("pricing") or {}
+    priced_result = pricing.get("result") or {}
+    extra_prices = priced_result.get("document_extra_prices","ITEMIZED") == "ITEMIZED"
+    sublines = {str(item["position_index"]):item for item in priced_result.get("line_detail",[]) if item.get("sublines")}
 
     # Identical openings collapse into one group; the sealed tree signature
     # keeps mirrored/handedness pairs apart so the rendered figure never
@@ -1229,6 +1270,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
             _value(position.get("color_exterior")),
             _value(position.get("price_net")),
             _value(position.get("discount_pct")), tree_sig,
+            position.get("position_index") if str(position.get("position_index")) in sublines else None,
         )
         bucket = groups.setdefault(key, {
             "indexes": [], "locations": [], "quantity": Decimal("0"),
@@ -1552,8 +1594,10 @@ def _doc01(snapshot: dict[str, object]) -> str:
                 f'<strong class="line">{escape(_money(bucket["price_net"], currency))}</strong>'
                 "</div>"
             )
+        extra_html = _extra_table(sublines.get(str(ref.get("position_index")),{}).get("sublines",[]),currency,
+            prices=extra_prices,base=sublines.get(str(ref.get("position_index")),{}).get("base_net"))
         body += (
-            '<figure class="pcard">'
+            ('<section class="pcard-with-extras">' if extra_html else '') + '<figure class="pcard">'
             f'<div class="pcard-fig">{_figure(ref, "c" + bucket["indexes"][0])}</div>'
             '<div class="pcard-body">'
             f'<h3>{escape(_product_caption(ref))}</h3>'
@@ -1562,7 +1606,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
             f'{escape(_value(bucket["quantity"]))}</p>'
             f'<ul class="pcard-specs">{"".join(spec_items)}</ul>'
             "</div>"
-            f"{price_block}</figure>"
+            + price_block + '</figure>' + ('<div class="pcard-extras">'+extra_html+'</div></section>' if extra_html else '')
         )
     body += "</div>"
 
@@ -1593,7 +1637,10 @@ def _doc01(snapshot: dict[str, object]) -> str:
         )
     if discount_note:
         invest_note.append(f"<p>{escape(discount_note)}</p>")
-    extras = _pricing_extras(snapshot)
+    extras = [item for item in _pricing_extras(snapshot) if item.get('scope') != 'PROJECT']
+    service_rows = priced_result.get("services") or []
+    if service_rows:
+        body += '<section class="document-services">'+_extra_table(service_rows,currency,prices=extra_prices,caption="Servicios del proyecto")+'</section>'
     if extras:
         # Extras live inside the sealed net — state them as an included
         # component line, never as an additive row above the totals.

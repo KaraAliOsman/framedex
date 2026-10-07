@@ -8,6 +8,9 @@
 import type { DesignBatchPreviewItemResponse } from "./designBatchPreviewItemResponse";
 
 export interface DesignBatchPreviewResponse {
+  costs_visible: boolean;
+  /** @nullable */
+  costs_reason: string | null;
   currency: string;
   items: DesignBatchPreviewItemResponse[];
 }

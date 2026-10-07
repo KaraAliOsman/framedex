@@ -73,6 +73,7 @@ SCHEMAS: dict[str, tuple[Column, ...]] = {
         c("opening_capabilities", "Capacidades de apertura con fuente", "json"),
         c("paired_leaf_rule", "Regla de encuentro con inversor", "json"),
         c("finish_authority", "Carta de colores por caras con fuente", "json"),
+        c("extra_authority", "Accesorios y extras con tarifas y fuente", "json"),
         c("version", "Versión", "integer", True), c("is_active", "Activo", "boolean", True),
         c("sliding.pulley_height_mm", "Altura rodamiento (mm)", "decimal"),
         c("sliding.central_overlap_mm", "Traslape central (mm)", "decimal"),

@@ -12,6 +12,7 @@ import type { SystemFamilyEnum } from "./systemFamilyEnum";
 import type { SystemWriteRequestRailType } from "./systemWriteRequestRailType";
 
 export interface SystemWriteRequest {
+  extra_authority?: unknown | null;
   system_family: SystemFamilyEnum;
   sliding_parameters?: SlidingSystemParametersRequest | null;
   dimensional_limits?: SystemDimensionalLimitRequest[];

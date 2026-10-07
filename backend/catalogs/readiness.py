@@ -133,7 +133,9 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                 if article.cut_rule is None or (
                     params.material is MaterialType.PVC
                     and role not in (ProfileRole.GLAZING_BEAD, ProfileRole.RAIL,
-                                     ProfileRole.THRESHOLD, ProfileRole.CHANNEL)
+                                     ProfileRole.THRESHOLD, ProfileRole.CHANNEL,
+                                     ProfileRole.SILL, ProfileRole.FRAME_EXTENSION,
+                                     ProfileRole.COVER_TRIM, ProfileRole.ADDITIONAL)
                     and article.reinforcement_rule is None
                 )
             ]

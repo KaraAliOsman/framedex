@@ -101,6 +101,7 @@ import {
 import { GlassSelector } from "../glass/GlassSelector";
 import { glassChoicePatch, asGlassProduct } from "../glass/glassModel";
 import { glassContext, useGlassChecks } from "../glass/useGlassPreview";
+import { ExtrasInspector } from "../projects/ExtrasInspector";
 
 /** §16 3D view: three.js + the scene builder stay out of the editing path —
  * the bundle only loads when the user opens the panel (lazy chunk), and
@@ -1687,6 +1688,14 @@ function ModuleInspector({
         module={module}
         product={product}
         couplerSkus={couplerSkus}
+        busy={busy}
+        commit={commit}
+      />
+      <ExtrasInspector
+        options={options}
+        module={module}
+        product={product}
+        evaluation={evaluation}
         busy={busy}
         commit={commit}
       />

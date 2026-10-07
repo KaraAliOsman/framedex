@@ -26,10 +26,13 @@ Idempotent: deterministic ids upserted on every run.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import struct
 import sys
 import uuid
+import zlib
 from decimal import Decimal
 
 import httpx
@@ -76,6 +79,43 @@ def rest(path: str, rows: list[dict]) -> list[dict]:
     if response.status_code >= 300:
         sys.exit(f"POST {path} -> {response.status_code}: {response.text[:400]}")
     return response.json() if response.text else []
+
+
+def fixture_brand_logo(org_id: str) -> dict[str, str]:
+    """Store a real, synthetic window mark; never claim a nonexistent logo/hash."""
+    size = 64
+    scanlines = bytearray()
+    for y in range(size):
+        scanlines.append(0)
+        for x in range(size):
+            frame = (8 <= x < 56 and 8 <= y < 56 and
+                     (x < 12 or x >= 52 or y < 12 or y >= 52 or 30 <= x < 34))
+            scanlines.extend((7, 95, 90, 255) if frame else (255, 255, 255, 255))
+
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (struct.pack("!I", len(payload)) + kind + payload +
+                struct.pack("!I", zlib.crc32(kind + payload)))
+
+    content = (b"\x89PNG\r\n\x1a\n" +
+               chunk(b"IHDR", struct.pack("!IIBBBBB", size, size, 8, 6, 0, 0, 0)) +
+               chunk(b"IDAT", zlib.compress(bytes(scanlines))) + chunk(b"IEND", b""))
+    digest = hashlib.sha256(content).hexdigest()
+    key = f"org_{org_id}/branding/fixture_{digest[:12]}.png"
+    bucket = os.environ.get("SUPABASE_STORAGE_BUCKET_DOCS", "documents")
+    headers = {"apikey": SERVICE_KEY, "Authorization": f"Bearer {SERVICE_KEY}"}
+    url = f"{SUPA}/storage/v1/object/{bucket}/{key}"
+    existing = httpx.get(url, headers=headers, timeout=15)
+    if existing.status_code == 404 or (
+        existing.status_code == 400 and existing.json().get("error") == "not_found"
+    ):
+        uploaded = httpx.post(
+            url, headers={**headers, "Content-Type": "image/png"}, content=content, timeout=15
+        )
+        if uploaded.status_code >= 300:
+            sys.exit(f"Fixture logo upload failed: HTTP {uploaded.status_code}")
+    elif existing.status_code != 200 or existing.content != content:
+        sys.exit("Fixture logo storage does not match its content-addressed key")
+    return {"brand_logo_key": key, "brand_logo_sha256": digest}
 
 
 def sql(statement: str, params: tuple | None = None) -> None:
@@ -260,8 +300,7 @@ def main() -> None:
                 "brand_address": "Paicavi 1250, Concepcion",
                 "brand_phone": "+56 41 255 0198",
                 "brand_email": "contacto@ventanasdelsur.example",
-                "brand_logo_key": "fixture/ventanas-del-sur.svg",
-                "brand_logo_sha256": "0" * 64,
+                **fixture_brand_logo(ORG_ID),
                 "country": "CL",
                 "currency": "CLP",
                 "subscription_active": True,
@@ -275,8 +314,7 @@ def main() -> None:
                 "brand_address": "Los Carrera 840, Talcahuano",
                 "brand_phone": "+56 41 233 4411",
                 "brand_email": "operaciones@cristalesbiobio.example",
-                "brand_logo_key": "fixture/cristales-bio-bio.svg",
-                "brand_logo_sha256": "1" * 64,
+                **fixture_brand_logo(ORG_B_ID),
                 "country": "CL",
                 "currency": "CLP",
                 "subscription_active": True,
@@ -412,6 +450,12 @@ def main() -> None:
                 "ON CONFLICT (org_id,sku,variant_key) DO NOTHING",
                 (item_id, ORG_ID, sku, f"Fixture {sku}"[:200], variant),
             )
+            # Earlier UI flows can create the same natural stock identity
+            # with another UUID. Use the persisted tenant row after conflict.
+            item_id = str(connection.execute(
+                "SELECT id FROM public.inventory_items WHERE org_id=%s AND sku=%s AND variant_key=%s",
+                (ORG_ID, sku, variant),
+            ).fetchone()[0])
             existing = connection.execute(
                 "SELECT 1 FROM public.inventory_movements WHERE org_id=%s "
                 "AND item_id=%s AND movement_type='RECEIPT' LIMIT 1",

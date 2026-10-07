@@ -22,6 +22,7 @@ class EngineCalculateRequestSerializer(serializers.Serializer):
 
 
 class ProfileCutSerializer(serializers.Serializer):
+    extra_code = serializers.CharField(required=False,allow_null=True)
     commercial_sku = serializers.CharField(required=False, allow_null=True)
     stock_color = serializers.CharField(required=False, allow_null=True)
     sku = serializers.CharField()
@@ -39,6 +40,7 @@ class ProfileCutSerializer(serializers.Serializer):
 
 
 class ReinforcementSerializer(serializers.Serializer):
+    extra_code = serializers.CharField(required=False,allow_null=True)
     parent_profile_sku = serializers.CharField()
     reinforcement_sku = serializers.CharField(allow_null=True)
     role = serializers.CharField()
@@ -129,6 +131,7 @@ class FittingPieceSerializer(serializers.Serializer):
     """Counted frameless fitting — patch/clamp/hinge/lock/connector/seal/support."""
 
     kind = serializers.CharField()
+    extra_code = serializers.CharField(required=False, allow_null=True)
     sku = serializers.CharField()
     qty = serializers.IntegerField()
     bay_id = serializers.CharField(allow_null=True)
@@ -159,6 +162,8 @@ class LeafWeightSerializer(serializers.Serializer):
 
 
 class EngineResultPayloadSerializer(serializers.Serializer):
+    extras = serializers.ListField(child=serializers.JSONField(),required=False)
+    extra_suggestions = serializers.ListField(child=serializers.JSONField(),required=False)
     finish = ResolvedFinishSerializer(required=False, allow_null=True)
     profile_cuts = ProfileCutSerializer(many=True)
     reinforcements = ReinforcementSerializer(many=True)

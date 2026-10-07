@@ -7382,6 +7382,145 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/organization/extras/:
+    get:
+      operationId: organizationExtraPolicy
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: organizationExtraPolicySave
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PolicyWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PolicyWriteRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/portal/quotes/{token}/:
     get:
       operationId: portal_quote_retrieve
@@ -15023,6 +15162,157 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/services/:
+    get:
+      operationId: projectExtraServices
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicesResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: projectExtraServicesSave
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicesWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ServicesWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ServicesWriteRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicesResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/successor/:
     post:
       operationId: projects_start_successor
@@ -15132,6 +15422,82 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DesignOptions'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/extras-preview/:
+    post:
+      operationId: positionExtrasPreview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtrasPreviewRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExtrasPreviewRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExtrasPreviewRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtrasPreviewResponse'
           description: ''
         '400':
           content:
@@ -19865,6 +20231,11 @@ components:
     DesignBatchPreviewResponse:
       type: object
       properties:
+        costs_visible:
+          type: boolean
+        costs_reason:
+          type: string
+          nullable: true
         currency:
           type: string
         items:
@@ -19872,11 +20243,16 @@ components:
           items:
             $ref: '#/components/schemas/DesignBatchPreviewItemResponse'
       required:
+      - costs_reason
+      - costs_visible
       - currency
       - items
     DesignOptions:
       type: object
       properties:
+        extra_definitions:
+          type: array
+          items: {}
         finish_authority:
           allOf:
           - $ref: '#/components/schemas/FinishAuthority'
@@ -20107,6 +20483,14 @@ components:
             type: integer
             minimum: 1
           nullable: true
+    DocumentExtraPricesEnum:
+      enum:
+      - ITEMIZED
+      - GROUPED
+      type: string
+      description: |-
+        * `ITEMIZED` - ITEMIZED
+        * `GROUPED` - GROUPED
     DocumentTypeEnum:
       enum:
       - DOC-01
@@ -20616,6 +21000,12 @@ components:
     EngineCalculateResponse:
       type: object
       properties:
+        extras:
+          type: array
+          items: {}
+        extra_suggestions:
+          type: array
+          items: {}
         finish:
           allOf:
           - $ref: '#/components/schemas/ResolvedFinish'
@@ -20795,6 +21185,12 @@ components:
     EngineResultPayload:
       type: object
       properties:
+        extras:
+          type: array
+          items: {}
+        extra_suggestions:
+          type: array
+          items: {}
         finish:
           allOf:
           - $ref: '#/components/schemas/ResolvedFinish'
@@ -21069,6 +21465,78 @@ components:
       required:
       - amount
       - label
+    ExtrasPreviewRequestRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        parametric_tree: {}
+        target_module_id:
+          type: string
+          minLength: 1
+          maxLength: 150
+      required:
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - parametric_tree
+      - system_id
+    ExtrasPreviewResponse:
+      type: object
+      properties:
+        available_codes:
+          type: array
+          items:
+            type: string
+        available_by_module:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        target_module_id:
+          type: string
+          nullable: true
+        leaf_targets:
+          type: array
+          items: {}
+        extras:
+          type: array
+          items: {}
+        suggestions:
+          type: array
+          items: {}
+        currency:
+          type: string
+        total_price:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+      required:
+      - available_by_module
+      - available_codes
+      - currency
+      - extras
+      - leaf_targets
+      - reason
+      - suggestions
+      - target_module_id
+      - total_price
     FinishAuthority:
       type: object
       properties:
@@ -21272,6 +21740,9 @@ components:
       properties:
         kind:
           type: string
+        extra_code:
+          type: string
+          nullable: true
         sku:
           type: string
         qty:
@@ -23269,6 +23740,11 @@ components:
     LineResponse:
       type: object
       properties:
+        base_net:
+          type: string
+        sublines:
+          type: array
+          items: {}
         position_index:
           type: integer
         line_net:
@@ -24456,6 +24932,8 @@ components:
     PatchedSystemWriteRequest:
       type: object
       properties:
+        extra_authority:
+          nullable: true
         system_family:
           $ref: '#/components/schemas/SystemFamilyEnum'
         sliding_parameters:
@@ -25022,6 +25500,30 @@ components:
       required:
       - x_mm
       - y_mm
+    PolicyResponse:
+      type: object
+      properties:
+        policy: {}
+        revision:
+          type: integer
+      required:
+      - policy
+      - revision
+    PolicyWriteRequest:
+      type: object
+      properties:
+        policy: {}
+        expected_revision:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - expected_revision
+      - policy
+      - reason
     PolishingEdges:
       type: object
       properties:
@@ -25542,6 +26044,16 @@ components:
     PriceResponse:
       type: object
       properties:
+        costs_visible:
+          type: boolean
+        costs_reason:
+          type: string
+          nullable: true
+        services:
+          type: array
+          items: {}
+        document_extra_prices:
+          $ref: '#/components/schemas/DocumentExtraPricesEnum'
         id:
           type: string
           format: uuid
@@ -25594,6 +26106,7 @@ components:
           additionalProperties: {}
         total_cost:
           type: string
+          nullable: true
         project_net:
           type: string
         project_tax:
@@ -25621,6 +26134,8 @@ components:
       - authorities
       - client_name
       - cost_lines
+      - costs_reason
+      - costs_visible
       - created_at
       - currency
       - discount_pct
@@ -26288,6 +26803,9 @@ components:
     ProfileCut:
       type: object
       properties:
+        extra_code:
+          type: string
+          nullable: true
         commercial_sku:
           type: string
           nullable: true
@@ -27333,6 +27851,9 @@ components:
     Reinforcement:
       type: object
       properties:
+        extra_code:
+          type: string
+          nullable: true
         parent_profile_sku:
           type: string
         reinforcement_sku:
@@ -28061,6 +28582,49 @@ components:
           maxLength: 200
       required:
       - confirmed
+    ServicesResponse:
+      type: object
+      properties:
+        definitions:
+          type: array
+          items: {}
+        selections:
+          type: array
+          items: {}
+        lines:
+          type: array
+          items: {}
+        updated_at:
+          type: string
+          format: date-time
+        currency:
+          type: string
+        locked:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
+      required:
+      - currency
+      - definitions
+      - lines
+      - locked
+      - reason
+      - selections
+      - updated_at
+    ServicesWriteRequest:
+      type: object
+      properties:
+        selections:
+          type: array
+          items: {}
+          maxItems: 30
+        expected_updated_at:
+          type: string
+          format: date-time
+      required:
+      - expected_updated_at
+      - selections
     ShareQuoteResponse:
       type: object
       properties:
@@ -28809,6 +29373,8 @@ components:
           type: boolean
           readOnly: true
           default: false
+        extra_authority:
+          nullable: true
         system_family:
           nullable: true
           oneOf:
@@ -29042,6 +29608,8 @@ components:
     SystemWriteRequest:
       type: object
       properties:
+        extra_authority:
+          nullable: true
         system_family:
           $ref: '#/components/schemas/SystemFamilyEnum'
         sliding_parameters:

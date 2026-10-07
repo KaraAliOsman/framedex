@@ -211,6 +211,43 @@ function result(id: string, state = "PREVIEW") {
     created_at: "2026-09-25T00:00:00Z",
   };
 }
+
+it("renders an estimator's selling services with confidential costs withheld", async () => {
+  identity.role = "ESTIMATOR";
+  const operation = {
+    ...result("A"),
+    costs_visible: false,
+    costs_reason: "Los costos de compra son confidenciales.",
+    total_cost: null,
+    positions_breakdown: [],
+    authorities: [],
+    rules: {},
+    services: [
+      {
+        code: "INSTALL",
+        kind: "SERVICE",
+        name: "Instalación estándar",
+        quantity: "11.6",
+        unit: "M",
+        unit_price: "1500",
+        amount: "17400",
+        rounding: "0",
+        source: "Tarifa de ensayo",
+        synthetic: true,
+      },
+    ],
+  };
+  vi.mocked(apiMutator).mockResolvedValueOnce({ data: [operation] });
+  render(page(<CommercialPricingPage />));
+  fireEvent.click(screen.getByRole("button", { name: t("pricing.reload") }));
+  fireEvent.click(await screen.findByRole("button", { name: t("pricing.review") }));
+  expect(screen.getByText("Los costos de compra son confidenciales.")).toBeInTheDocument();
+  expect(screen.getByText(/Instalación estándar/)).toBeInTheDocument();
+  expect(screen.queryByText(t("pricing.totalCost"))).not.toBeInTheDocument();
+  expect(screen.queryByText(t("pricing.marginNet"))).not.toBeInTheDocument();
+  expect(screen.queryByText(t("pricing.lineCost"))).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: t("pricing.apply") })).toBeInTheDocument();
+});
 function previewButton() {
   return screen.getByRole("button", { name: t("pricing.preview") });
 }

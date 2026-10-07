@@ -40,6 +40,7 @@ CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "compatible_opening_systems": openings.resolve_capability,
     "finish_authority": finishes.resolve_finish,
     "finish_profile_skus": finishes.resolve_finish,
+    "extra_authority": geometry.compute_geometry,
 }
 METADATA = {"system_code", "depth_mm"}
 RESERVED = {"sliding_lateral_clearance_mm", "corner_bracket_loss_mm", "hook_depth_mm"}
@@ -50,7 +51,7 @@ API_BOUNDARY = {"finishes", "legacy_authority"}
 
 def test_every_system_parameter_has_an_explicit_scope() -> None:
     assert (
-        len(CORE_CONSUMERS) == 28
+        len(CORE_CONSUMERS) == 29
         and len(METADATA) == 2
         and len(RESERVED) == 3
         and len(API_BOUNDARY) == 2

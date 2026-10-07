@@ -72,11 +72,10 @@ export function ProjectPaymentLinksPanel({
   const links = linksQuery.data ?? [];
   const setLinks = (updater: (previous: PaymentLink[]) => PaymentLink[]) =>
     queryClient.setQueryData(linksKey, updater(linksQuery.data ?? []));
-  // Integration status is write-scoped — readers (e.g. taller) only need the
-  // links list; fetching it would 403 for them.
+  // Provider configuration is owner-scoped, independently of ledger access.
   const integrationQuery = useQuery({
     queryKey: ["projects", "payment-integration", orgId],
-    enabled: canWrite,
+    enabled: isOwner,
     queryFn: async ({ signal }) => {
       const response = await projectPaymentIntegrationStatus({
         signal,
