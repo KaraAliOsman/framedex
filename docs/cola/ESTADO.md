@@ -11,7 +11,7 @@
 | D06 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/124 | fb9b5881d48248f51c5f05ccdc9682aacdacc0bd | CI 4/4 verde; extras/BOM/cortes, servicios y venta sellada; 1067 pgTAP, 337 RLS, 11 E2E y upgrades PG16; privacidad por tenant verificada. |
 | D07 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/125 | f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d | CI 4/4 verde; vano/montaje, evidencia y Δ de rectificación; 1090 pgTAP, 362 RLS, 11 E2E y ocho upgrades PG16; seis observaciones corregidas. |
 | IA2 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/126 | 0835e3f0834e2680674458693626617a84cc19f8 | CI 4/4 verde; 50 operaciones UI/IA/API, MiMo 21/26 y E+J 19/21 (90,48 %), aplicar/recargar/deshacer; 1101 pgTAP y 380 integraciones; tres observaciones corregidas. |
-| IA3 | D2 | pendiente |  |  |  |
+| IA3 | D2 | en curso |  |  | Proveedor MiMo real, herramientas nativas, rutas por capacidad, presupuesto, Ajustes y observabilidad; sondeo confirma herramientas/visión y rechazo del PDF directo. |
 | P02 | 1 | pendiente |  |  |  |
 | P25 | 1 | pendiente |  |  |  |
 | P04 | 1 | pendiente |  |  |  |
