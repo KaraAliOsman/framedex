@@ -43,10 +43,17 @@ El gate anterior sobre `eadf648b` pasó las suites completas. La revisión poste
 conserva sugerencias/compatibilidad por módulo, proyecta costos por rol y limita
 la columna privada de accesorios y sus atestaciones en RLS. Pasan 24 lecturas
 adicionales de navegador y se conserva la comparación formal sin hallazgos
-nuevos. Gate11 aprueba lint/tipos/build y 650 motor, 1 184 backend y 727 frontend;
-detecta una lectura de columnas privadas en el control de existencia de
-atestaciones, que ahora lee solo identidad/organización. Gate12 y CI están
-pendientes; esta rama todavía no se acredita como integrada.
+nuevos. La revisión corrige lecturas de columnas privadas en existencia de
+atestaciones y compatibilidad, usando solo sus campos técnicos necesarios.
+El gate12 final sobre `3d1b98754640e982a971afa1ec9433845bf02709` pasa
+lint/tipos/build y 650 motor (+2 xfail), 1 184 backend y 727 frontend;
+Database Gate pasa 337 integraciones, 11 E2E y los upgrades poblados PG16.
+El directorio propio usado por pg_prove se verifica byte a byte y su suite
+completa pasa 75 archivos/1 067 aserciones, incluida la privacidad de catálogo.
+La limpieza de recursos propios se verifica. CI detecta una espera de cabecera
+anterior a la respuesta fría del catálogo; el recorrido ahora valida HTTP 200
+antes de mantener sus aserciones visuales y de permisos. CI vuelve a ejecutar
+los cuatro checks; esta rama todavía no se acredita como integrada.
 El primer gate falló dos selectores del catálogo anterior; se actualizan
 explícitamente a v6 sin retirar aserciones. El intento con puerto ocupado se
 excluye de aceptación; detener el contenedor de la app propia libera el puerto.

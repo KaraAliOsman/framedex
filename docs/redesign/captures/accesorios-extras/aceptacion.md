@@ -138,7 +138,23 @@ incluyen venta por zona y causa de confidencialidad sin controles de costo.
 El gate10 detectó una aserción de esquema que todavía omitía los campos
 documentados `costs_visible` y `costs_reason`; se actualiza el contrato esperado
 y se comprueban sus valores para el dueño. Se conserva cada aserción anterior.
-La validación completa de esta fuente está pendiente del gate12 y CI.
+El gate12 final sobre `3d1b98754640e982a971afa1ec9433845bf02709` aprueba
+lint, typecheck, test y build: 650 pruebas del motor (+2 xfail históricos),
+1 184 del backend y 727 del frontend. Database Gate pasa 337 integraciones,
+11 recorridos E2E y los upgrades poblados PG16, con limpieza propia verificada.
+El montaje de pg_prove conservaba una fuente anterior; se sincronizan y verifican
+byte a byte los 75 archivos SQL del directorio propio y se ejecuta la suite
+completa: 1 067 aserciones PASA, incluida `181_accessory_cost_visibility`.
+Ese resultado complementa el gate12 y certifica la nueva restricción en RLS.
+
+CI sobre esa fuente pasó lint/typecheck, test y build; el recorrido de proyecto
+agotó la espera de la cabecera mientras llegaba la respuesta fría del catálogo.
+La prueba ahora espera y valida esa respuesta HTTP con el mismo contrato acotado
+que el resto del flujo, antes de exigir la cabecera y ausencia de edición para
+el estimador. No se eliminan aserciones ni se cambian los límites del lienzo.
+El recorrido focalizado propio pasa completo en 23,6 s, incluida la lectura HTTP
+y los permisos del catálogo. Los cuatro checks se vuelven a ejecutar antes de integrar; el cierre con PR y
+SHA queda registrado en `docs/cola/ESTADO.md` y la wiki.
 El recorrido adicional `navegador-catalog-privacy.json` pasa 12 casos de catálogo
 para estimador y encargado, tres anchos y ambos temas. La inspección visual
 confirma venta visible y costo restringido; no hay errores, desbordes ni

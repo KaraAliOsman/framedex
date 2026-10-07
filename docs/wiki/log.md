@@ -385,3 +385,16 @@ pública mantiene RLS y elimina costos de definiciones y zonas salvo permiso
 de gestión en la organización solicitada. Pasan 107 pruebas PostgreSQL
 focalizadas y seis de UI. La fuente posterior requiere gate completo y CI;
 los intentos fallidos se conservan en el informe de aceptación.
+
+## 2026-10-07 — D06 · gate final de privacidad y fuente pgTAP
+
+El gate12 sobre `3d1b98754640e982a971afa1ec9433845bf02709` aprueba
+lint/typecheck/test/build: 650 motor (+2 xfail), 1 184 backend y 727 frontend.
+Database Gate pasa 337 integraciones, 11 recorridos E2E y upgrades poblados PG16,
+con limpieza de recursos propios. El bind propio de pg_prove conservaba una
+fuente anterior; se verifican byte a byte los 75 SQL y la suite completa pasa
+1 067 aserciones, incluida la nueva privacidad de accesorios. Ningún recurso
+ajeno se usa para esta comprobación. CI detecta una espera visual anterior a la
+respuesta fría del catálogo; se sincroniza la lectura HTTP real conservando
+todas las aserciones visuales y de permisos. Los cuatro checks se repiten antes
+de integrar el PR #124; las ejecuciones fallidas no cuentan como aceptación.
