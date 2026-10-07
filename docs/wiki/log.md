@@ -509,3 +509,30 @@ Evidencia: [aceptación](../redesign/captures/operaciones-herramientas/aceptacio
 [comparativa](../ai/evals/2026-10-07-ia2-comparativa.md) y
 [síntesis vigente](quality/ai-outcome-baseline.md). IA3 sigue proveedor/Ajustes;
 P04/P17/P21 siguen cromo/editor heredados. Los datos DEMO no certifican fabricación.
+
+
+## 2026-10-07 — IA2 · revisión corregida y verificación final
+
+La revisión del PR #126 detectó pérdida de preparación documental al eliminar,
+de contornos/módulos sin marco al convertir el modelo y de autoridad de espesor
+al cambiar vidrio histórico. Las tres causas están corregidas sobre
+`5224dbfba0f3f6c7d218639704bb013eceeb88dd`. Deshacer restaura la fila completa
+bajo RLS y guardas de sellado, y una edición posterior invalida la firma.
+Pasan 16 regresiones PostgreSQL y 74 de operaciones/golden. `make goldgen`
+añade tres casos de vidrio y conserva idénticos todos los casos anteriores.
+
+La nueva corrida completa con MiMo mide 21/26, editor/proyecto 19/21 (90,48 %).
+J01 pasa, sin errores terminales del proveedor. No se seleccionan mejores casos
+de otras corridas; la medición anterior 20/26 y su error J01 siguen siendo hechos
+históricos. J04/J08 conservan ausencia de precios/revisiones, F03 falta de rol y
+F01/F02 resultado incorrecto, sin inventar cantidades técnicas. La fuente y el
+estado persistente permanecen iguales; no se ejecutan acciones consecuentes.
+
+Los gates finales pasan 740 motor (+2 xfail), 1 205 backend y 806 frontend,
+1 101 pgTAP, 380 integraciones, 11 E2E y ocho upgrades poblados PG16. El stack
+del gate se limpia. Se repiten los flujos E02/E04/E08/J02/J03 y chips con Enter,
+27 capturas de recorrido, diez de estados y 24 comparaciones formales sin
+hallazgos nuevos. El botón Deshacer y su confirmación quedan visibles en las
+capturas del lote. Las dos rondas editoriales y R1–R20 se documentan en la
+aceptación. Los procesos propios de app están detenidos; CI/merge pendientes
+de publicar esta revisión en el PR #126.

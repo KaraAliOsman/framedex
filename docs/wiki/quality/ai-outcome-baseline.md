@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: 1711ebea2829a192b5e07ceb9a91bd1492e906d7
+verified_ref: 5224dbfba0f3f6c7d218639704bb013eceeb88dd
 sources:
   - docs/cola/prompts/IA1-diagnostico-evals.md
   - backend/ai_gateway/evals/cases.yaml
@@ -18,13 +18,14 @@ sources:
 
 ## IA2 · medición vigente (07-10-2026)
 
-La corrida completa con MiMo real sobre `1711ebea` mide **20/26**:
-editor 13/13, proyecto 5/8, planta 0/3 y general 2/2. La meta de IA2 se
-cumple con **18/21 (85,71 %)** en editor/proyecto. Los informes confirman
+La corrida completa con MiMo real sobre `5224dbfb` mide **21/26**:
+editor 13/13, proyecto 6/8, planta 0/3 y general 2/2. La meta de IA2 se
+cumple con **19/21 (90,48 %)** en editor/proyecto. Los informes confirman
 fuentes ejecutadas y estado persistente sin cambios; ninguna acción
 consecuente se ejecuta. No se mezclan mejores casos de corridas anteriores.
 
-J01 conserva un error del proveedor como fallo. J04 carece de precios
+La corrida final no registra errores del proveedor y J01 pasa; el error de
+la corrida anterior se conserva en el log histórico. J04 carece de precios
 aplicados y J08 de revisiones emitidas A/B. F03 exige cobertura de compras
 inaccesible al estimador. F01 anuncia una consulta de listado truncado sin
 entregar el artefacto exacto; F02 no puede observar la OT solicitada fuera
@@ -43,6 +44,13 @@ opciones de vidrio provienen del catálogo real. Las regresiones rechazan cifras
 inventadas, referencias no observadas, evidencia de errores/historia del cliente
 y propuestas obsoletas. Aplicar/recargar/deshacer conserva estado e identidades.
 El rol del worker se restaura tras publicar progreso, sin otorgar permisos nuevos.
+
+La revisión posterior conserva además la preparación documental completa al
+eliminar/deshacer, mantiene contornos y módulos sin marco como `product-v2` y
+deriva el espesor del vidrio histórico de su receta en el motor o lo deja
+desconocido. Las regresiones verifican RLS, IDs/metadatos restaurados y
+obsolescencia tras una edición documental. La evaluación completa se repitió
+sobre estas correcciones; sus casos no se mezclan con la corrida anterior.
 
 Véanse la [comparativa por caso y categoría](../../ai/evals/2026-10-07-ia2-comparativa.md)
 y la [aceptación de navegador y rúbrica](../../redesign/captures/operaciones-herramientas/aceptacion.md).

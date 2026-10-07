@@ -1,8 +1,8 @@
 # IA2 · aceptación de operaciones compartidas
 
-Código verificado: `1711ebea2829a192b5e07ceb9a91bd1492e906d7`. Fecha: 07-10-2026.
+Código verificado: `5224dbfba0f3f6c7d218639704bb013eceeb88dd`. Fecha: 07-10-2026.
 Proveedor real: `primalabs-ai/MiMo-V2.6-Pro`. La corrida completa obtiene
-20/26; editor y proyecto 18/21 (85,71 %).
+21/26; editor y proyecto 19/21 (90,48 %).
 Véase la [comparativa por caso y categoría](../../../ai/evals/2026-10-07-ia2-comparativa.md)
 y el [JSON completo](../../../ai/evals/2026-10-07-ia2-mimo.json).
 
@@ -116,17 +116,31 @@ de operaciones congelan el marco, divisiones, aperturas y cotas exactas.
 
 Sobre el código indicado: `make lint`, `make typecheck`, `make test` y `make build`
 PASA. API/OpenAPI/orval reproducibles y guardas vigentes.
-736 pruebas motor (+2 xfail), 1 205 backend y 806 frontend.
-`make test-db`: 77 archivos/1 101 pgTAP, 377 integraciones, 11 E2E y ocho
+740 pruebas motor (+2 xfail), 1 205 backend y 806 frontend.
+`make test-db`: 77 archivos/1 101 pgTAP, 380 integraciones, 11 E2E y ocho
 upgrades poblados PG16, con limpieza del stack propio verificada.
 Las regresiones de grounding, paridad, operaciones, obsolescencia, rol/tenant,
 transacción/undo y progreso del worker forman parte de esas suites.
 
+La revisión del PR identificó tres pérdidas de información y se corrigieron
+antes del merge. El snapshot conserva y bloquea la preparación documental;
+deshacer una eliminación restaura su fila completa, IDs, políticas, JSON,
+hash y metadatos bajo RLS y guardas de sellado. Una preparación posterior
+invalida el deshacer. El adaptador conserva `product-v2` en contornos y módulos
+sin marco; las integraciones prueban aplicar, reabrir y deshacer ambas formas.
+Al seleccionar un vidrio histórico se deriva el espesor de su receta en el
+motor o queda desconocido, sin heredar el anterior. Las 16 integraciones
+focalizadas y 74 pruebas de operaciones/golden pasan. `make goldgen` agrega
+tres casos de vidrio y mantiene todos los casos anteriores idénticos.
+La evaluación y el recorrido se repiten completos sobre el código corregido.
+
 Los hallazgos heredados de cromo/editor y el rediseño del dock/Orb pertenecen a
 P04/P17/P21. IA3 continúa ruteo, proveedor, reintentos y configuración en Ajustes.
 El catálogo y los precios usados son DEMO sintéticos, sin certificación.
-J04/J08 carecen de autoridad aplicada/emitida y F03 exige otro rol. Los casos
-fallidos de proveedor y planta se mantienen en la comparativa, sin aprobarlos
-por terminar el trabajo ni por una respuesta verbal.
+J04/J08 carecen de autoridad aplicada/emitida y F03 exige otro rol. F01/F02
+conservan resultados incorrectos sin cifras técnicas inventadas. La corrida final
+no registra fallos del proveedor; el error J01 de la corrida anterior permanece
+como hecho histórico en el log. Los cinco fallos finales se mantienen en la
+comparativa, sin aprobarlos por terminar el trabajo ni por una respuesta verbal.
 No se agregan integraciones externas ni acciones consecuentes automáticas.
 Los cuatro checks de CI deben estar verdes antes del squash a integracion/v1.

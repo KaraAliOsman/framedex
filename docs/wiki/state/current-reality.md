@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-07
 volatility: high
-verified_ref: 1711ebea2829a192b5e07ceb9a91bd1492e906d7
+verified_ref: 5224dbfba0f3f6c7d218639704bb013eceeb88dd
 sources:
   - repository main
   - P00 foundation PR #114
@@ -33,14 +33,15 @@ atómica deshacible. Reabrir un trabajo consulta su estado durable. La geometrí
 y los precios visibles provienen del motor; moneda ausente no se convierte en
 cero y el lote conserva la tarifa exacta hasta multiplicar su cantidad.
 
-MiMo real pasa 20/26 en una corrida completa sobre `1711ebea`; editor/proyecto
-18/21 (85,71 %) cumple la meta ≥85 %. J01 falla en el proveedor; J04/J08 no tienen
+MiMo real pasa 21/26 en una corrida completa sobre `5224dbfb`; editor/proyecto
+19/21 (90,48 %) cumple la meta ≥85 %. J01 pasa y no hay fallos del proveedor.
+J04/J08 no tienen
 autoridad aplicada/emitida; los tres casos de planta conservan fallos o límites
 reales de contexto/rol. Cero acciones consecuentes y ningún número inventado
 en los dos fallos de resultado. La fuente y el estado persistente quedan iguales.
 
-Los gates locales pasan 736 motor (+2 xfail), 1 205 backend y 806 frontend;
-Database Gate pasa 1 101 pgTAP, 377 integraciones, 11 E2E y ocho upgrades PG16,
+Los gates locales pasan 740 motor (+2 xfail), 1 205 backend y 806 frontend;
+Database Gate pasa 1 101 pgTAP, 380 integraciones, 11 E2E y ocho upgrades PG16,
 con limpieza propia verificada. E02/E04/E08/J02, el lote J03 recargado/deshecho
 y el chip de catálogo con Enter pasan. La matriz de 27 capturas no tiene
 hallazgos de la propuesta ni errores/desbordes. Los cinco estados tienen diez
@@ -49,7 +50,13 @@ en integración. Las 24 comparaciones formales no añaden hallazgos ni desbordes
 
 El editor móvil y cromo históricos siguen documentados para P04/P17/P21;
 IA3 continúa proveedor y Ajustes. El catálogo usado es DEMO sin certificación.
-CI y squash a integración se registran después de abrir el PR.
+Las tres observaciones del PR #126 están corregidas: deshacer restaura la
+preparación documental íntegra y rechaza ediciones posteriores; el adaptador
+conserva contornos/módulos sin marco; el espesor histórico se deriva de la receta
+o queda desconocido. Pasan 16 regresiones PostgreSQL y 74 de operaciones/golden.
+Los golden nuevos no cambian los anteriores. La evaluación, el navegador y los
+gates completos se repitieron sobre estas correcciones. Los checks de CI del
+commit anterior no acreditan esta revisión; su CI y squash están pendientes.
 Véanse [aceptación](../../redesign/captures/operaciones-herramientas/aceptacion.md),
 [comparativa](../../ai/evals/2026-10-07-ia2-comparativa.md) y
 [operaciones](../../ai/OPERACIONES.md).
