@@ -827,21 +827,23 @@ export function AgentBody({
                                 turn.productSig !== productFingerprint(bridge.product));
                           return (
                             <div key={stepIndex} className="ask-dock__ops">
-                              <ul>
-                                {ops.map((op, i) => (
-                                  <li key={i}>
-                                    {turn.product
-                                      ? describeDesignOp(
-                                          op,
-                                          turn.product as ProductJson,
-                                          ops.slice(0, i),
-                                        )
-                                      : typeof op.description === "string"
-                                        ? op.description
-                                        : "Cambio de diseño"}
-                                  </li>
-                                ))}
-                              </ul>
+                              {!step.simulation ? (
+                                <ul>
+                                  {ops.map((op, i) => (
+                                    <li key={i}>
+                                      {turn.product
+                                        ? describeDesignOp(
+                                            op,
+                                            turn.product as ProductJson,
+                                            ops.slice(0, i),
+                                          )
+                                        : typeof op.description === "string"
+                                          ? op.description
+                                          : "Cambio de diseño"}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : null}
                               <SimulationPreview
                                 simulation={step.simulation}
                                 organizationId={organizationId}
