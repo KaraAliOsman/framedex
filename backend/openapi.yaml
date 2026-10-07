@@ -14583,6 +14583,234 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/operations/{operation_id}/undo/:
+    post:
+      operationId: project_operations_undo
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: operation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectOpsResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/operations/apply/:
+    post:
+      operationId: project_operations_apply
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectOpsApplyRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectOpsResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/operations/preview/:
+    post:
+      operationId: project_operations_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectOpsPreviewRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectOpsPreviewResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/payment-links/:
     get:
       operationId: project_payment_links_list
@@ -16093,6 +16321,140 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MountingPreviewResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/operations/registry/:
+    get:
+      operationId: design_operations_registry
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationsRegistry'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/operations/simulate/:
+    post:
+      operationId: design_operations_simulate
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateOpsRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Simulation'
           description: ''
         '400':
           content:
@@ -17650,6 +18012,11 @@ components:
           type: array
           items:
             type: string
+        clarify:
+          allOf:
+          - $ref: '#/components/schemas/Clarify'
+          nullable: true
+        metrics: {}
         artifacts:
           type: array
           items:
@@ -17700,13 +18067,13 @@ components:
         ops:
           type: array
           items:
-            type: object
-            additionalProperties: {}
+            $ref: '#/components/schemas/DesignOperation'
         items:
           type: array
           items:
             type: object
             additionalProperties: {}
+        simulation: {}
       required:
       - kind
       - label
@@ -18030,6 +18397,11 @@ components:
     AiMetrics:
       type: object
       properties:
+        work:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
         window_days:
           type: integer
         jobs:
@@ -18566,6 +18938,11 @@ components:
         * `profile_articles` - profile_articles
         * `profile_systems` - profile_systems
         * `reinforcement_cut_policies` - reinforcement_cut_policies
+    AxisEnum:
+      type: string
+      enum:
+      - V
+      - H
     AxisOffsets:
       type: object
       properties:
@@ -19327,6 +19704,28 @@ components:
       - operation_key
       - redirect_url
       - state
+    Clarify:
+      type: object
+      properties:
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClarifyOption'
+      required:
+      - options
+      - question
+    ClarifyOption:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+      required:
+      - label
+      - value
     ClientListResponse:
       type: object
       properties:
@@ -20522,8 +20921,7 @@ components:
         ops:
           type: array
           items:
-            type: object
-            additionalProperties: {}
+            $ref: '#/components/schemas/DesignOperation'
         rejected:
           type: array
           items:
@@ -20531,6 +20929,10 @@ components:
             additionalProperties: {}
         notes:
           type: string
+          nullable: true
+        simulation:
+          nullable: true
+        clarify:
           nullable: true
       required:
       - audit_id
@@ -20620,6 +21022,176 @@ components:
       - costs_visible
       - currency
       - items
+    DesignOperation:
+      oneOf:
+      - $ref: '#/components/schemas/OperationSplitBay'
+      - $ref: '#/components/schemas/OperationMoveDivider'
+      - $ref: '#/components/schemas/OperationRemoveDivider'
+      - $ref: '#/components/schemas/OperationSetBaySize'
+      - $ref: '#/components/schemas/OperationEqualizeBays'
+      - $ref: '#/components/schemas/OperationSetOpening'
+      - $ref: '#/components/schemas/OperationFlipHanding'
+      - $ref: '#/components/schemas/OperationSetHandleHeight'
+      - $ref: '#/components/schemas/OperationSetSlidingLayout'
+      - $ref: '#/components/schemas/OperationSetTravel'
+      - $ref: '#/components/schemas/OperationSetGlass'
+      - $ref: '#/components/schemas/OperationSetGlassThickness'
+      - $ref: '#/components/schemas/OperationSetPanel'
+      - $ref: '#/components/schemas/OperationSetFinish'
+      - $ref: '#/components/schemas/OperationSetSystem'
+      - $ref: '#/components/schemas/OperationSetModuleWidth'
+      - $ref: '#/components/schemas/OperationResize'
+      - $ref: '#/components/schemas/OperationSetTotalWidth'
+      - $ref: '#/components/schemas/OperationSetHeight'
+      - $ref: '#/components/schemas/OperationEqualizeWidths'
+      - $ref: '#/components/schemas/OperationEqualizeAngles'
+      - $ref: '#/components/schemas/OperationSetCouplingAngle'
+      - $ref: '#/components/schemas/OperationSetCouplingKind'
+      - $ref: '#/components/schemas/OperationSetModuleCount'
+      - $ref: '#/components/schemas/OperationAddUnit'
+      - $ref: '#/components/schemas/OperationRemoveUnit'
+      - $ref: '#/components/schemas/OperationDuplicateModule'
+      - $ref: '#/components/schemas/OperationAddStackedUnit'
+      - $ref: '#/components/schemas/OperationInsertModule'
+      - $ref: '#/components/schemas/OperationRemoveCoupling'
+      - $ref: '#/components/schemas/OperationSetLocation'
+      - $ref: '#/components/schemas/OperationSetQuantity'
+      - $ref: '#/components/schemas/OperationAddPosition'
+      - $ref: '#/components/schemas/OperationDuplicatePosition'
+      - $ref: '#/components/schemas/OperationRemovePosition'
+      - $ref: '#/components/schemas/OperationApplyToPositions'
+      - $ref: '#/components/schemas/OperationPrepareEmit'
+      - $ref: '#/components/schemas/OperationPrepareRelease'
+      - $ref: '#/components/schemas/OperationPreparePurchase'
+      - $ref: '#/components/schemas/OperationPreparePaymentLink'
+      discriminator:
+        propertyName: op
+        mapping:
+          split_bay: '#/components/schemas/OperationSplitBay'
+          move_divider: '#/components/schemas/OperationMoveDivider'
+          remove_divider: '#/components/schemas/OperationRemoveDivider'
+          set_bay_size: '#/components/schemas/OperationSetBaySize'
+          equalize_bays: '#/components/schemas/OperationEqualizeBays'
+          set_opening: '#/components/schemas/OperationSetOpening'
+          flip_handing: '#/components/schemas/OperationFlipHanding'
+          set_handle_height: '#/components/schemas/OperationSetHandleHeight'
+          set_sliding_layout: '#/components/schemas/OperationSetSlidingLayout'
+          set_travel: '#/components/schemas/OperationSetTravel'
+          set_glass: '#/components/schemas/OperationSetGlass'
+          set_glass_thickness: '#/components/schemas/OperationSetGlassThickness'
+          set_panel: '#/components/schemas/OperationSetPanel'
+          set_finish: '#/components/schemas/OperationSetFinish'
+          set_system: '#/components/schemas/OperationSetSystem'
+          set_module_width: '#/components/schemas/OperationSetModuleWidth'
+          resize: '#/components/schemas/OperationResize'
+          set_total_width: '#/components/schemas/OperationSetTotalWidth'
+          set_height: '#/components/schemas/OperationSetHeight'
+          equalize_widths: '#/components/schemas/OperationEqualizeWidths'
+          equalize_angles: '#/components/schemas/OperationEqualizeAngles'
+          set_coupling_angle: '#/components/schemas/OperationSetCouplingAngle'
+          set_coupling_kind: '#/components/schemas/OperationSetCouplingKind'
+          set_module_count: '#/components/schemas/OperationSetModuleCount'
+          add_unit: '#/components/schemas/OperationAddUnit'
+          remove_unit: '#/components/schemas/OperationRemoveUnit'
+          duplicate_module: '#/components/schemas/OperationDuplicateModule'
+          add_stacked_unit: '#/components/schemas/OperationAddStackedUnit'
+          insert_module: '#/components/schemas/OperationInsertModule'
+          remove_coupling: '#/components/schemas/OperationRemoveCoupling'
+          set_location: '#/components/schemas/OperationSetLocation'
+          set_quantity: '#/components/schemas/OperationSetQuantity'
+          add_position: '#/components/schemas/OperationAddPosition'
+          duplicate_position: '#/components/schemas/OperationDuplicatePosition'
+          remove_position: '#/components/schemas/OperationRemovePosition'
+          apply_to_positions: '#/components/schemas/OperationApplyToPositions'
+          prepare_emit: '#/components/schemas/OperationPrepareEmit'
+          prepare_release: '#/components/schemas/OperationPrepareRelease'
+          prepare_purchase: '#/components/schemas/OperationPreparePurchase'
+          prepare_payment_link: '#/components/schemas/OperationPreparePaymentLink'
+    DesignOperationRequest:
+      oneOf:
+      - $ref: '#/components/schemas/OperationSplitBayRequest'
+      - $ref: '#/components/schemas/OperationMoveDividerRequest'
+      - $ref: '#/components/schemas/OperationRemoveDividerRequest'
+      - $ref: '#/components/schemas/OperationSetBaySizeRequest'
+      - $ref: '#/components/schemas/OperationEqualizeBaysRequest'
+      - $ref: '#/components/schemas/OperationSetOpeningRequest'
+      - $ref: '#/components/schemas/OperationFlipHandingRequest'
+      - $ref: '#/components/schemas/OperationSetHandleHeightRequest'
+      - $ref: '#/components/schemas/OperationSetSlidingLayoutRequest'
+      - $ref: '#/components/schemas/OperationSetTravelRequest'
+      - $ref: '#/components/schemas/OperationSetGlassRequest'
+      - $ref: '#/components/schemas/OperationSetGlassThicknessRequest'
+      - $ref: '#/components/schemas/OperationSetPanelRequest'
+      - $ref: '#/components/schemas/OperationSetFinishRequest'
+      - $ref: '#/components/schemas/OperationSetSystemRequest'
+      - $ref: '#/components/schemas/OperationSetModuleWidthRequest'
+      - $ref: '#/components/schemas/OperationResizeRequest'
+      - $ref: '#/components/schemas/OperationSetTotalWidthRequest'
+      - $ref: '#/components/schemas/OperationSetHeightRequest'
+      - $ref: '#/components/schemas/OperationEqualizeWidthsRequest'
+      - $ref: '#/components/schemas/OperationEqualizeAnglesRequest'
+      - $ref: '#/components/schemas/OperationSetCouplingAngleRequest'
+      - $ref: '#/components/schemas/OperationSetCouplingKindRequest'
+      - $ref: '#/components/schemas/OperationSetModuleCountRequest'
+      - $ref: '#/components/schemas/OperationAddUnitRequest'
+      - $ref: '#/components/schemas/OperationRemoveUnitRequest'
+      - $ref: '#/components/schemas/OperationDuplicateModuleRequest'
+      - $ref: '#/components/schemas/OperationAddStackedUnitRequest'
+      - $ref: '#/components/schemas/OperationInsertModuleRequest'
+      - $ref: '#/components/schemas/OperationRemoveCouplingRequest'
+      - $ref: '#/components/schemas/OperationSetLocationRequest'
+      - $ref: '#/components/schemas/OperationSetQuantityRequest'
+      - $ref: '#/components/schemas/OperationAddPositionRequest'
+      - $ref: '#/components/schemas/OperationDuplicatePositionRequest'
+      - $ref: '#/components/schemas/OperationRemovePositionRequest'
+      - $ref: '#/components/schemas/OperationApplyToPositionsRequest'
+      - $ref: '#/components/schemas/OperationPrepareEmitRequest'
+      - $ref: '#/components/schemas/OperationPrepareReleaseRequest'
+      - $ref: '#/components/schemas/OperationPreparePurchaseRequest'
+      - $ref: '#/components/schemas/OperationPreparePaymentLinkRequest'
+      discriminator:
+        propertyName: op
+        mapping:
+          split_bay: '#/components/schemas/OperationSplitBayRequest'
+          move_divider: '#/components/schemas/OperationMoveDividerRequest'
+          remove_divider: '#/components/schemas/OperationRemoveDividerRequest'
+          set_bay_size: '#/components/schemas/OperationSetBaySizeRequest'
+          equalize_bays: '#/components/schemas/OperationEqualizeBaysRequest'
+          set_opening: '#/components/schemas/OperationSetOpeningRequest'
+          flip_handing: '#/components/schemas/OperationFlipHandingRequest'
+          set_handle_height: '#/components/schemas/OperationSetHandleHeightRequest'
+          set_sliding_layout: '#/components/schemas/OperationSetSlidingLayoutRequest'
+          set_travel: '#/components/schemas/OperationSetTravelRequest'
+          set_glass: '#/components/schemas/OperationSetGlassRequest'
+          set_glass_thickness: '#/components/schemas/OperationSetGlassThicknessRequest'
+          set_panel: '#/components/schemas/OperationSetPanelRequest'
+          set_finish: '#/components/schemas/OperationSetFinishRequest'
+          set_system: '#/components/schemas/OperationSetSystemRequest'
+          set_module_width: '#/components/schemas/OperationSetModuleWidthRequest'
+          resize: '#/components/schemas/OperationResizeRequest'
+          set_total_width: '#/components/schemas/OperationSetTotalWidthRequest'
+          set_height: '#/components/schemas/OperationSetHeightRequest'
+          equalize_widths: '#/components/schemas/OperationEqualizeWidthsRequest'
+          equalize_angles: '#/components/schemas/OperationEqualizeAnglesRequest'
+          set_coupling_angle: '#/components/schemas/OperationSetCouplingAngleRequest'
+          set_coupling_kind: '#/components/schemas/OperationSetCouplingKindRequest'
+          set_module_count: '#/components/schemas/OperationSetModuleCountRequest'
+          add_unit: '#/components/schemas/OperationAddUnitRequest'
+          remove_unit: '#/components/schemas/OperationRemoveUnitRequest'
+          duplicate_module: '#/components/schemas/OperationDuplicateModuleRequest'
+          add_stacked_unit: '#/components/schemas/OperationAddStackedUnitRequest'
+          insert_module: '#/components/schemas/OperationInsertModuleRequest'
+          remove_coupling: '#/components/schemas/OperationRemoveCouplingRequest'
+          set_location: '#/components/schemas/OperationSetLocationRequest'
+          set_quantity: '#/components/schemas/OperationSetQuantityRequest'
+          add_position: '#/components/schemas/OperationAddPositionRequest'
+          duplicate_position: '#/components/schemas/OperationDuplicatePositionRequest'
+          remove_position: '#/components/schemas/OperationRemovePositionRequest'
+          apply_to_positions: '#/components/schemas/OperationApplyToPositionsRequest'
+          prepare_emit: '#/components/schemas/OperationPrepareEmitRequest'
+          prepare_release: '#/components/schemas/OperationPrepareReleaseRequest'
+          prepare_purchase: '#/components/schemas/OperationPreparePurchaseRequest'
+          prepare_payment_link: '#/components/schemas/OperationPreparePaymentLinkRequest'
     DesignOptions:
       type: object
       properties:
@@ -21031,6 +21603,9 @@ components:
     DocumentaryPreparationResponse:
       type: object
       properties:
+        missing:
+          type: array
+          items: {}
         project_id:
           type: string
           format: uuid
@@ -21673,7 +22248,7 @@ components:
           - $ref: '#/components/schemas/NullEnum'
         scope:
           allOf:
-          - $ref: '#/components/schemas/ScopeEnum'
+          - $ref: '#/components/schemas/EvidenceInputScopeEnum'
           default: SYSTEM
         applicability:
           type: string
@@ -21697,6 +22272,18 @@ components:
       - field_name
       - row_id
       - source_document
+    EvidenceInputScopeEnum:
+      enum:
+      - SYSTEM
+      - SERIES
+      - GLOBAL
+      - ORG
+      type: string
+      description: |-
+        * `SYSTEM` - SYSTEM
+        * `SERIES` - SERIES
+        * `GLOBAL` - GLOBAL
+        * `ORG` - ORG
     EvidenceInputUnitEnum:
       enum:
       - mm
@@ -22218,6 +22805,12 @@ components:
       - production_allowed
       - revision_code
       - snapshot_sha256
+    FromEnum:
+      type: string
+      enum:
+      - START
+      - END
+      - CENTER
     GlassFinding:
       type: object
       properties:
@@ -24298,6 +24891,90 @@ components:
       required:
       - design
       - measurements
+    NameEnum:
+      enum:
+      - split_bay
+      - move_divider
+      - remove_divider
+      - set_bay_size
+      - equalize_bays
+      - set_opening
+      - flip_handing
+      - set_handle_height
+      - set_sliding_layout
+      - set_travel
+      - set_glass
+      - set_glass_thickness
+      - set_panel
+      - set_finish
+      - set_system
+      - set_module_width
+      - resize
+      - set_total_width
+      - set_height
+      - equalize_widths
+      - equalize_angles
+      - set_coupling_angle
+      - set_coupling_kind
+      - set_module_count
+      - add_unit
+      - remove_unit
+      - duplicate_module
+      - add_stacked_unit
+      - insert_module
+      - remove_coupling
+      - set_location
+      - set_quantity
+      - add_position
+      - duplicate_position
+      - remove_position
+      - apply_to_positions
+      - prepare_emit
+      - prepare_release
+      - prepare_purchase
+      - prepare_payment_link
+      type: string
+      description: |-
+        * `split_bay` - split_bay
+        * `move_divider` - move_divider
+        * `remove_divider` - remove_divider
+        * `set_bay_size` - set_bay_size
+        * `equalize_bays` - equalize_bays
+        * `set_opening` - set_opening
+        * `flip_handing` - flip_handing
+        * `set_handle_height` - set_handle_height
+        * `set_sliding_layout` - set_sliding_layout
+        * `set_travel` - set_travel
+        * `set_glass` - set_glass
+        * `set_glass_thickness` - set_glass_thickness
+        * `set_panel` - set_panel
+        * `set_finish` - set_finish
+        * `set_system` - set_system
+        * `set_module_width` - set_module_width
+        * `resize` - resize
+        * `set_total_width` - set_total_width
+        * `set_height` - set_height
+        * `equalize_widths` - equalize_widths
+        * `equalize_angles` - equalize_angles
+        * `set_coupling_angle` - set_coupling_angle
+        * `set_coupling_kind` - set_coupling_kind
+        * `set_module_count` - set_module_count
+        * `add_unit` - add_unit
+        * `remove_unit` - remove_unit
+        * `duplicate_module` - duplicate_module
+        * `add_stacked_unit` - add_stacked_unit
+        * `insert_module` - insert_module
+        * `remove_coupling` - remove_coupling
+        * `set_location` - set_location
+        * `set_quantity` - set_quantity
+        * `add_position` - add_position
+        * `duplicate_position` - duplicate_position
+        * `remove_position` - remove_position
+        * `apply_to_positions` - apply_to_positions
+        * `prepare_emit` - prepare_emit
+        * `prepare_release` - prepare_release
+        * `prepare_purchase` - prepare_purchase
+        * `prepare_payment_link` - prepare_payment_link
     NodeLayout:
       type: object
       properties:
@@ -24382,6 +25059,2178 @@ components:
       description: |-
         * `WINDOW` - WINDOW
         * `DOOR` - DOOR
+    OperationAddPosition:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationAddPositionOpEnum'
+        system_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        template:
+          type: string
+          minLength: 1
+          maxLength: 100
+        dims:
+          type: object
+          additionalProperties: false
+          properties:
+            width_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d{1,2})?$
+              description: Milímetros decimales exactos; sin separador de miles.
+            height_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d{1,2})?$
+              description: Milímetros decimales exactos; sin separador de miles.
+          required:
+          - width_mm
+          - height_mm
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - system_id
+      - template
+      - dims
+      - location
+    OperationAddPositionOpEnum:
+      type: string
+      enum:
+      - add_position
+    OperationAddPositionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationAddPositionOpEnum'
+        system_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        template:
+          type: string
+          minLength: 1
+          maxLength: 100
+        dims:
+          type: object
+          additionalProperties: false
+          properties:
+            width_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d{1,2})?$
+              description: Milímetros decimales exactos; sin separador de miles.
+            height_mm:
+              type: string
+              pattern: ^-?\d+(?:\.\d{1,2})?$
+              description: Milímetros decimales exactos; sin separador de miles.
+          required:
+          - width_mm
+          - height_mm
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+      required:
+      - op
+      - system_id
+      - template
+      - dims
+      - location
+    OperationAddStackedUnit:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationAddStackedUnitOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+    OperationAddStackedUnitOpEnum:
+      type: string
+      enum:
+      - add_stacked_unit
+    OperationAddStackedUnitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationAddStackedUnitOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - module
+    OperationAddUnit:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationAddUnitOpEnum'
+        side:
+          $ref: '#/components/schemas/SideEnum'
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - side
+    OperationAddUnitOpEnum:
+      type: string
+      enum:
+      - add_unit
+    OperationAddUnitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationAddUnitOpEnum'
+        side:
+          $ref: '#/components/schemas/SideEnum'
+      required:
+      - op
+      - side
+    OperationApplyToPositions:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationApplyToPositionsOpEnum'
+        filter:
+          type: object
+          additionalProperties: false
+          properties:
+            location_contains:
+              type: string
+              minLength: 1
+              maxLength: 100
+            typology:
+              type: string
+              minLength: 1
+              maxLength: 100
+            position_ids:
+              type: array
+              items:
+                type: string
+                minLength: 1
+                maxLength: 160
+        ops:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: object
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - filter
+      - ops
+    OperationApplyToPositionsOpEnum:
+      type: string
+      enum:
+      - apply_to_positions
+    OperationApplyToPositionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationApplyToPositionsOpEnum'
+        filter:
+          type: object
+          additionalProperties: false
+          properties:
+            location_contains:
+              type: string
+              minLength: 1
+              maxLength: 100
+            typology:
+              type: string
+              minLength: 1
+              maxLength: 100
+            position_ids:
+              type: array
+              items:
+                type: string
+                minLength: 1
+                maxLength: 160
+        ops:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: object
+      required:
+      - op
+      - filter
+      - ops
+    OperationDuplicateModule:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationDuplicateModuleOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+    OperationDuplicateModuleOpEnum:
+      type: string
+      enum:
+      - duplicate_module
+    OperationDuplicateModuleRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationDuplicateModuleOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - module
+    OperationDuplicatePosition:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationDuplicatePositionOpEnum'
+        position_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        count:
+          type: integer
+          minimum: 1
+          maximum: 100
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - position_id
+      - count
+      - location
+    OperationDuplicatePositionOpEnum:
+      type: string
+      enum:
+      - duplicate_position
+    OperationDuplicatePositionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationDuplicatePositionOpEnum'
+        position_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        count:
+          type: integer
+          minimum: 1
+          maximum: 100
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - op
+      - position_id
+      - count
+      - location
+    OperationEqualizeAngles:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationEqualizeAnglesOpEnum'
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+    OperationEqualizeAnglesOpEnum:
+      type: string
+      enum:
+      - equalize_angles
+    OperationEqualizeAnglesRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationEqualizeAnglesOpEnum'
+      required:
+      - op
+    OperationEqualizeBays:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationEqualizeBaysOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        axis:
+          $ref: '#/components/schemas/AxisEnum'
+        count:
+          type: integer
+          minimum: 1
+          maximum: 12
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - axis
+    OperationEqualizeBaysOpEnum:
+      type: string
+      enum:
+      - equalize_bays
+    OperationEqualizeBaysRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationEqualizeBaysOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        axis:
+          $ref: '#/components/schemas/AxisEnum'
+        count:
+          type: integer
+          minimum: 1
+          maximum: 12
+      required:
+      - op
+      - module
+      - axis
+    OperationEqualizeWidths:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationEqualizeWidthsOpEnum'
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+    OperationEqualizeWidthsOpEnum:
+      type: string
+      enum:
+      - equalize_widths
+    OperationEqualizeWidthsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationEqualizeWidthsOpEnum'
+      required:
+      - op
+    OperationFlipHanding:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationFlipHandingOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - bay
+    OperationFlipHandingOpEnum:
+      type: string
+      enum:
+      - flip_handing
+    OperationFlipHandingRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationFlipHandingOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - bay
+    OperationInsertModule:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationInsertModuleOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - coupling
+    OperationInsertModuleOpEnum:
+      type: string
+      enum:
+      - insert_module
+    OperationInsertModuleRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationInsertModuleOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - coupling
+    OperationMoveDivider:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationMoveDividerOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        divider:
+          type: string
+          minLength: 1
+          maxLength: 160
+        offset_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        from:
+          $ref: '#/components/schemas/FromEnum'
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - divider
+      - offset_mm
+    OperationMoveDividerOpEnum:
+      type: string
+      enum:
+      - move_divider
+    OperationMoveDividerRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationMoveDividerOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        divider:
+          type: string
+          minLength: 1
+          maxLength: 160
+        offset_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        from:
+          $ref: '#/components/schemas/FromEnum'
+      required:
+      - op
+      - divider
+      - offset_mm
+    OperationPrepareEmit:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationPrepareEmitOpEnum'
+        project_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - project_id
+    OperationPrepareEmitOpEnum:
+      type: string
+      enum:
+      - prepare_emit
+    OperationPrepareEmitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationPrepareEmitOpEnum'
+        project_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - project_id
+    OperationPreparePaymentLink:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationPreparePaymentLinkOpEnum'
+        project_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - project_id
+    OperationPreparePaymentLinkOpEnum:
+      type: string
+      enum:
+      - prepare_payment_link
+    OperationPreparePaymentLinkRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationPreparePaymentLinkOpEnum'
+        project_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - project_id
+    OperationPreparePurchase:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationPreparePurchaseOpEnum'
+        project_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - project_id
+    OperationPreparePurchaseOpEnum:
+      type: string
+      enum:
+      - prepare_purchase
+    OperationPreparePurchaseRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationPreparePurchaseOpEnum'
+        project_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - project_id
+    OperationPrepareRelease:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationPrepareReleaseOpEnum'
+        project_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - project_id
+    OperationPrepareReleaseOpEnum:
+      type: string
+      enum:
+      - prepare_release
+    OperationPrepareReleaseRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationPrepareReleaseOpEnum'
+        project_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - project_id
+    OperationRemoveCoupling:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemoveCouplingOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - coupling
+    OperationRemoveCouplingOpEnum:
+      type: string
+      enum:
+      - remove_coupling
+    OperationRemoveCouplingRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemoveCouplingOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - coupling
+    OperationRemoveDivider:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemoveDividerOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        divider:
+          type: string
+          minLength: 1
+          maxLength: 160
+        keep_bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - divider
+    OperationRemoveDividerOpEnum:
+      type: string
+      enum:
+      - remove_divider
+    OperationRemoveDividerRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemoveDividerOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        divider:
+          type: string
+          minLength: 1
+          maxLength: 160
+        keep_bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - divider
+    OperationRemovePosition:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemovePositionOpEnum'
+        position_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - position_id
+    OperationRemovePositionOpEnum:
+      type: string
+      enum:
+      - remove_position
+    OperationRemovePositionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemovePositionOpEnum'
+        position_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - position_id
+    OperationRemoveUnit:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemoveUnitOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+    OperationRemoveUnitOpEnum:
+      type: string
+      enum:
+      - remove_unit
+    OperationRemoveUnitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemoveUnitOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - module
+    OperationResize:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationResizeOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        delta_width_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        delta_height_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+    OperationResizeOpEnum:
+      type: string
+      enum:
+      - resize
+    OperationResizeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationResizeOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        delta_width_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        delta_height_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - module
+    OperationSetBaySize:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetBaySizeOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        axis:
+          $ref: '#/components/schemas/AxisEnum'
+        size_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - bay
+      - axis
+      - size_mm
+    OperationSetBaySizeOpEnum:
+      type: string
+      enum:
+      - set_bay_size
+    OperationSetBaySizeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetBaySizeOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        axis:
+          $ref: '#/components/schemas/AxisEnum'
+        size_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - bay
+      - axis
+      - size_mm
+    OperationSetCouplingAngle:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetCouplingAngleOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+        angle_deg:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - coupling
+      - angle_deg
+    OperationSetCouplingAngleOpEnum:
+      type: string
+      enum:
+      - set_coupling_angle
+    OperationSetCouplingAngleRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetCouplingAngleOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+        angle_deg:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - coupling
+      - angle_deg
+    OperationSetCouplingKind:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetCouplingKindOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+        kind:
+          $ref: '#/components/schemas/OperationSetCouplingKindKindEnum'
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - coupling
+      - kind
+    OperationSetCouplingKindKindEnum:
+      type: string
+      enum:
+      - INLINE
+      - STACKED
+      - TEE
+      - CORNER
+    OperationSetCouplingKindOpEnum:
+      type: string
+      enum:
+      - set_coupling_kind
+    OperationSetCouplingKindRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetCouplingKindOpEnum'
+        coupling:
+          type: string
+          minLength: 1
+          maxLength: 160
+        kind:
+          $ref: '#/components/schemas/OperationSetCouplingKindKindEnum'
+      required:
+      - op
+      - coupling
+      - kind
+    OperationSetFinish:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetFinishOpEnum'
+        interior:
+          type: string
+          minLength: 1
+          maxLength: 100
+        exterior:
+          type: string
+          minLength: 1
+          maxLength: 100
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - interior
+      - exterior
+    OperationSetFinishOpEnum:
+      type: string
+      enum:
+      - set_finish
+    OperationSetFinishRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetFinishOpEnum'
+        interior:
+          type: string
+          minLength: 1
+          maxLength: 100
+        exterior:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - op
+      - interior
+      - exterior
+    OperationSetGlass:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetGlassOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 160
+        composition:
+          type: string
+          minLength: 1
+          maxLength: 100
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+    OperationSetGlassOpEnum:
+      type: string
+      enum:
+      - set_glass
+    OperationSetGlassRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetGlassOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 160
+        composition:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - op
+      - module
+    OperationSetGlassThickness:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetGlassThicknessOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - mm
+    OperationSetGlassThicknessOpEnum:
+      type: string
+      enum:
+      - set_glass_thickness
+    OperationSetGlassThicknessRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetGlassThicknessOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - module
+      - mm
+    OperationSetHandleHeight:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetHandleHeightOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        height_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        reference:
+          $ref: '#/components/schemas/ReferenceEnum'
+        sill_height_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - bay
+      - height_mm
+      - reference
+    OperationSetHandleHeightOpEnum:
+      type: string
+      enum:
+      - set_handle_height
+    OperationSetHandleHeightRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetHandleHeightOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        height_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        reference:
+          $ref: '#/components/schemas/ReferenceEnum'
+        sill_height_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - bay
+      - height_mm
+      - reference
+    OperationSetHeight:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetHeightOpEnum'
+        height_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - height_mm
+    OperationSetHeightOpEnum:
+      type: string
+      enum:
+      - set_height
+    OperationSetHeightRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetHeightOpEnum'
+        height_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - height_mm
+    OperationSetLocation:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetLocationOpEnum'
+        position_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - position_id
+      - location
+    OperationSetLocationOpEnum:
+      type: string
+      enum:
+      - set_location
+    OperationSetLocationRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetLocationOpEnum'
+        position_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - op
+      - position_id
+      - location
+    OperationSetModuleCount:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetModuleCountOpEnum'
+        count:
+          type: integer
+          minimum: 1
+          maximum: 12
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - count
+    OperationSetModuleCountOpEnum:
+      type: string
+      enum:
+      - set_module_count
+    OperationSetModuleCountRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetModuleCountOpEnum'
+        count:
+          type: integer
+          minimum: 1
+          maximum: 12
+      required:
+      - op
+      - count
+    OperationSetModuleWidth:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetModuleWidthOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        width_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - width_mm
+    OperationSetModuleWidthOpEnum:
+      type: string
+      enum:
+      - set_module_width
+    OperationSetModuleWidthRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetModuleWidthOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        width_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - module
+      - width_mm
+    OperationSetOpening:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetOpeningOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        opening:
+          oneOf:
+          - type: string
+            enum:
+            - FIXED
+            - TURN_LEFT
+            - TURN_RIGHT
+            - TILT_TURN_LEFT
+            - TILT_TURN_RIGHT
+            - SLIDING_2L
+            - SLIDING_3L
+            - SLIDING_4L
+            - SLIDING
+            - AWNING
+            - DOOR_ENTRY
+            - DOOR_DOUBLE
+          - type: object
+        opening_use:
+          $ref: '#/components/schemas/OpeningUseEnum'
+        hinged_layout:
+          type: object
+          nullable: true
+        sliding_layout:
+          type: object
+          nullable: true
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - opening
+    OperationSetOpeningOpEnum:
+      type: string
+      enum:
+      - set_opening
+    OperationSetOpeningRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetOpeningOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        opening:
+          oneOf:
+          - type: string
+            enum:
+            - FIXED
+            - TURN_LEFT
+            - TURN_RIGHT
+            - TILT_TURN_LEFT
+            - TILT_TURN_RIGHT
+            - SLIDING_2L
+            - SLIDING_3L
+            - SLIDING_4L
+            - SLIDING
+            - AWNING
+            - DOOR_ENTRY
+            - DOOR_DOUBLE
+          - type: object
+        opening_use:
+          $ref: '#/components/schemas/OpeningUseEnum'
+        hinged_layout:
+          type: object
+          nullable: true
+        sliding_layout:
+          type: object
+          nullable: true
+      required:
+      - op
+      - module
+      - opening
+    OperationSetPanel:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetPanelOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sku:
+          type: string
+          nullable: true
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - module
+      - sku
+    OperationSetPanelOpEnum:
+      type: string
+      enum:
+      - set_panel
+    OperationSetPanelRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetPanelOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sku:
+          type: string
+          nullable: true
+      required:
+      - op
+      - module
+      - sku
+    OperationSetQuantity:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetQuantityOpEnum'
+        position_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - position_id
+      - quantity
+    OperationSetQuantityOpEnum:
+      type: string
+      enum:
+      - set_quantity
+    OperationSetQuantityRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetQuantityOpEnum'
+        position_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+      required:
+      - op
+      - position_id
+      - quantity
+    OperationSetSlidingLayout:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetSlidingLayoutOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        panels:
+          type: string
+          pattern: ^[XO]{2,4}$
+        tracks:
+          type: integer
+          minimum: 2
+          maximum: 4
+        panel_tracks:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        travel_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - bay
+      - panels
+      - tracks
+    OperationSetSlidingLayoutOpEnum:
+      type: string
+      enum:
+      - set_sliding_layout
+    OperationSetSlidingLayoutRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetSlidingLayoutOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        panels:
+          type: string
+          pattern: ^[XO]{2,4}$
+        tracks:
+          type: integer
+          minimum: 2
+          maximum: 4
+        panel_tracks:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        travel_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - bay
+      - panels
+      - tracks
+    OperationSetSystem:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetSystemOpEnum'
+        system_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - system_id
+    OperationSetSystemOpEnum:
+      type: string
+      enum:
+      - set_system
+    OperationSetSystemRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetSystemOpEnum'
+        system_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+      required:
+      - op
+      - system_id
+    OperationSetTotalWidth:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetTotalWidthOpEnum'
+        width_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - width_mm
+    OperationSetTotalWidthOpEnum:
+      type: string
+      enum:
+      - set_total_width
+    OperationSetTotalWidthRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetTotalWidthOpEnum'
+        width_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - width_mm
+    OperationSetTravel:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetTravelOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        travel_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - bay
+      - travel_mm
+    OperationSetTravelOpEnum:
+      type: string
+      enum:
+      - set_travel
+    OperationSetTravelRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetTravelOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        travel_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+      required:
+      - op
+      - bay
+      - travel_mm
+    OperationSpec:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/NameEnum'
+        description:
+          type: string
+        scope:
+          $ref: '#/components/schemas/OperationSpecScopeEnum'
+        preconditions:
+          type: array
+          items:
+            type: string
+        handler:
+          type: string
+        schema: {}
+        examples:
+          type: array
+          items: {}
+      required:
+      - description
+      - examples
+      - handler
+      - name
+      - preconditions
+      - schema
+      - scope
+    OperationSpecScopeEnum:
+      enum:
+      - design
+      - position
+      - project
+      - prepare
+      type: string
+      description: |-
+        * `design` - design
+        * `position` - position
+        * `project` - project
+        * `prepare` - prepare
+    OperationSplitBay:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSplitBayOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        axis:
+          $ref: '#/components/schemas/AxisEnum'
+        offset_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        from:
+          $ref: '#/components/schemas/FromEnum'
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - bay
+      - axis
+      - from
+    OperationSplitBayOpEnum:
+      type: string
+      enum:
+      - split_bay
+    OperationSplitBayRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSplitBayOpEnum'
+        module:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bay:
+          type: string
+          minLength: 1
+          maxLength: 160
+        axis:
+          $ref: '#/components/schemas/AxisEnum'
+        offset_mm:
+          type: string
+          pattern: ^-?\d+(?:\.\d{1,2})?$
+          description: Milímetros decimales exactos; sin separador de miles.
+        from:
+          $ref: '#/components/schemas/FromEnum'
+      required:
+      - op
+      - bay
+      - axis
+      - from
     OperationalSummary:
       type: object
       properties:
@@ -24451,6 +27300,18 @@ components:
       - collected
       - currency
       - quoted
+    OperationsRegistry:
+      type: object
+      properties:
+        version:
+          type: string
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationSpec'
+      required:
+      - operations
+      - version
     OpsExport:
       type: object
       properties:
@@ -27833,6 +30694,86 @@ components:
             $ref: '#/components/schemas/ProjectResponse'
       required:
       - items
+    ProjectOpsApplyRequest:
+      type: object
+      properties:
+        ops:
+          type: array
+          items:
+            $ref: '#/components/schemas/DesignOperationRequest'
+        before_sig:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-f]{64}$
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 120
+      required:
+      - before_sig
+      - operation_key
+      - ops
+    ProjectOpsPreviewRequest:
+      type: object
+      properties:
+        ops:
+          type: array
+          items:
+            $ref: '#/components/schemas/DesignOperationRequest'
+      required:
+      - ops
+    ProjectOpsPreviewResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        before_sig:
+          type: string
+        valid:
+          type: boolean
+        ops:
+          type: array
+          items:
+            $ref: '#/components/schemas/DesignOperation'
+        positions:
+          type: array
+          items: {}
+        diff:
+          type: array
+          items: {}
+        simulations:
+          type: array
+          items: {}
+      required:
+      - before_sig
+      - diff
+      - ops
+      - positions
+      - project_id
+      - simulations
+      - valid
+    ProjectOpsResult:
+      type: object
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        state:
+          $ref: '#/components/schemas/ProjectOpsResultStateEnum'
+        project: {}
+      required:
+      - operation_id
+      - project
+      - state
+    ProjectOpsResultStateEnum:
+      enum:
+      - APPLIED
+      - UNDONE
+      type: string
+      description: |-
+        * `APPLIED` - APPLIED
+        * `UNDONE` - UNDONE
     ProjectPayment:
       type: object
       properties:
@@ -28358,6 +31299,12 @@ components:
       - price_change
       - proposal_token
       - revision_code
+    ReferenceEnum:
+      type: string
+      enum:
+      - LEAF_TOP
+      - LEAF_BOTTOM
+      - FLOOR
     Reinforcement:
       type: object
       properties:
@@ -28940,18 +31887,6 @@ components:
           items: {}
       required:
       - items
-    ScopeEnum:
-      enum:
-      - SYSTEM
-      - SERIES
-      - GLOBAL
-      - ORG
-      type: string
-      description: |-
-        * `SYSTEM` - SYSTEM
-        * `SERIES` - SERIES
-        * `GLOBAL` - GLOBAL
-        * `ORG` - ORG
     SearchResponse:
       type: object
       properties:
@@ -29172,6 +32107,11 @@ components:
       - expires_at
       - path
       - token
+    SideEnum:
+      type: string
+      enum:
+      - left
+      - right
     SignedAccessResponse:
       type: object
       properties:
@@ -29400,6 +32340,67 @@ components:
         * `PENDING` - PENDING
         * `ACCEPTED` - ACCEPTED
         * `REJECTED` - REJECTED
+    SimulateOpsRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        product: {}
+        ops:
+          type: array
+          items:
+            $ref: '#/components/schemas/DesignOperationRequest'
+      required:
+      - color
+      - ops
+      - product
+      - system_id
+    Simulation:
+      type: object
+      properties:
+        registry_version:
+          type: string
+        product: {}
+        system_id:
+          type: string
+          format: uuid
+        color:
+          type: string
+        ops:
+          type: array
+          items:
+            $ref: '#/components/schemas/DesignOperation'
+        valid:
+          type: boolean
+        status:
+          type: string
+        issues:
+          type: array
+          items: {}
+        engine: {}
+        price: {}
+        before: {}
+        diff:
+          type: array
+          items: {}
+      required:
+      - before
+      - color
+      - diff
+      - engine
+      - issues
+      - ops
+      - price
+      - product
+      - registry_version
+      - status
+      - system_id
+      - valid
     SlidingLayoutFacts:
       type: object
       properties:

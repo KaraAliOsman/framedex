@@ -24,6 +24,10 @@ import { assemblyCommands } from "./assemblyCommands";
 import { AlternativesPanel } from "./AlternativesPanel";
 import { AssistantPanel } from "./AssistantPanel";
 import { applyDesignOps } from "./designOps";
+import { designOperationsSimulate } from "../../api/generated/dekopen";
+import { ApiError } from "../../api/apiMutator";
+import type { DesignOperationRequest } from "../../api/generated/models";
+import type { CommandArgs, CommandSpec } from "../commands/types";
 import { useRegisterDesignOpsBridge } from "../assistant/assistantContext";
 import type { DesignOp } from "../commands/types";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
@@ -67,7 +71,6 @@ import {
   removeModuleDivision,
   removeUnit,
   resizeModuleSeam,
-  scaleModuleWidths,
   contourTopCorners,
   setAllModuleHeights,
   setContourBulge,
@@ -1992,16 +1995,95 @@ export function AssemblyEditor({
     onChanged();
   }
 
+  const bridgeProduct = useMemo(
+    () =>
+      product
+        ? {
+            ...product,
+            design_context: {
+              system_id: inputs.systemId,
+              color: inputs.color,
+            },
+          }
+        : null,
+    [product, inputs.systemId, inputs.color],
+  );
+
+  function applyRegisteredOps(ops: DesignOp[]): void {
+    if (!product) return;
+    const next = applyDesignOps(product, ops);
+    const attributes = ops.reduce<Record<string, string>>(
+      (current, op) => ({
+        ...current,
+        ...(op.context_effect && typeof op.context_effect === "object"
+          ? (op.context_effect as Record<string, string>)
+          : {}),
+      }),
+      {},
+    );
+    setTool("select");
+    commitInputs({
+      ...useCanvasStore.getState().inputs,
+      product: next,
+      ...(attributes.system_id ? { systemId: attributes.system_id } : {}),
+      ...(attributes.color ? { color: attributes.color } : {}),
+    });
+    onChanged();
+  }
+
+  const [operationBusy, setOperationBusy] = useState(false);
+  const [operationMessage, setOperationMessage] = useState("");
+  function simulateCommand(
+    ops: DesignOperationRequest[],
+    spec?: CommandSpec,
+    args: CommandArgs = {},
+  ): void {
+    const snapshot = useCanvasStore.getState().inputs;
+    if (!snapshot.product || !snapshot.systemId || disabled || operationBusy) return;
+    setOperationBusy(true);
+    setOperationMessage("");
+    void designOperationsSimulate(
+      { product: snapshot.product, system_id: snapshot.systemId, color: snapshot.color, ops },
+      { headers: { "X-Organization-ID": organizationId } },
+    )
+      .then((response) => {
+        if (response.status !== 200) throw new ApiError(response.status, response.data);
+        if (useCanvasStore.getState().inputs !== snapshot) throw Error("stale");
+        if (!response.data.valid) throw Error("invalid");
+        applyRegisteredOps(response.data.ops.map((op) => ({ ...op })));
+        if (spec) {
+          useCanvasStore.getState().recordMutation(spec.id, args);
+          spec.postCommit?.(
+            commandCtx!,
+            snapshot.product!,
+            response.data.product as ProductJson,
+            args,
+          );
+        }
+      })
+      .catch((error: unknown) => {
+        const detail =
+          error instanceof ApiError && error.payload && typeof error.payload === "object"
+            ? (error.payload as { error?: { detail?: string } }).error?.detail
+            : null;
+        setOperationMessage(
+          detail ||
+            "No se aplicó el cambio. Revisa la geometría y vuelve a intentar con el diseño actual.",
+        );
+      })
+      .finally(() => setOperationBusy(false));
+  }
+
   // The agent dock's ops bridge: publishes the live product plus an apply
   // channel that commits through the same registry path as a human click.
   // The hook forwards calls to the latest closure, so capturing `product` and
   // `commit` always lands on the current product — and the published product
   // re-registers on every commit so a stale-product apply is refused.
   useRegisterDesignOpsBridge(
-    product && !disabled ? (product as unknown as { [key: string]: unknown }) : null,
+    product && !disabled ? (bridgeProduct as unknown as { [key: string]: unknown }) : null,
     product && !disabled
       ? (ops: DesignOp[]) => {
-          if (product) commit(applyDesignOps(product, ops));
+          applyRegisteredOps(ops);
         }
       : null,
   );
@@ -2009,7 +2091,7 @@ export function AssemblyEditor({
   // Hooks before the empty branch — a starter pick flips product
   // null→object on the SAME mounted instance, so any early return placed
   // ahead of a hook crashes with "Rendered more hooks".
-  const busy = disabled;
+  const busy = disabled || operationBusy;
   const mullionSkus: Partial<Record<SplitType, string>> = useMemo(
     () => ({
       SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
@@ -2052,6 +2134,7 @@ export function AssemblyEditor({
       },
       disabled: busy,
       commit,
+      simulate: simulateCommand,
       select,
       setTool,
       focusAssistant: () => askAssistant(""),
@@ -2185,7 +2268,15 @@ export function AssemblyEditor({
           ? mullionSkus.SPLIT_H
           : undefined;
     if (divideToolType !== null && sku !== undefined) {
-      commit(splitModuleBay(productJson, id, { type: divideToolType, mullionSku: sku }, members));
+      simulateCommand([
+        {
+          op: "split_bay",
+          module: id,
+          bay: "b1",
+          axis: divideToolType === "SPLIT_V" ? "V" : "H",
+          from: "CENTER",
+        },
+      ]);
       setTool("select");
     }
     select(id);
@@ -2202,19 +2293,16 @@ export function AssemblyEditor({
       select(id);
       return;
     }
-    commit(
-      splitModuleBay(
-        productJson,
-        id,
-        {
-          type: divideToolType,
-          mullionSku: sku,
-          bayId: bayId ?? undefined,
-          offsetMm,
-        },
-        members,
-      ),
-    );
+    simulateCommand([
+      {
+        op: "split_bay",
+        module: id,
+        bay: bayId ?? "b1",
+        axis: divideToolType === "SPLIT_V" ? "V" : "H",
+        from: offsetMm === undefined ? "CENTER" : "START",
+        ...(offsetMm === undefined ? {} : { offset_mm: offsetMm }),
+      },
+    ]);
     setTool("select");
     select(id);
   }
@@ -2233,6 +2321,12 @@ export function AssemblyEditor({
       className={`assembly-editor${treeOpen ? "" : " assembly-editor--tree-closed"}`}
       aria-label={t("assembly.frontView")}
     >
+      {operationBusy ? <p role="status">Calculando el cambio con el motor…</p> : null}
+      {operationMessage ? (
+        <p role="alert" className="assembly-hint">
+          {operationMessage}
+        </p>
+      ) : null}
       <div className="assembly-tools" role="toolbar" aria-label={t("assembly.tools")}>
         <button
           type="button"
@@ -2456,13 +2550,19 @@ export function AssemblyEditor({
             }}
             onAddUnit={coupleUnit}
             onCommitModuleWidth={(moduleId, widthMm) =>
-              commit(setModuleWidth(product, moduleId, widthMm))
+              simulateCommand([{ op: "set_module_width", module: moduleId, width_mm: widthMm }])
             }
-            onCommitTotalWidth={(totalMm) => commit(scaleModuleWidths(product, totalMm))}
-            onCommitHeight={(heightMm) => commit(setAllModuleHeights(product, heightMm))}
+            onCommitTotalWidth={(totalMm) =>
+              simulateCommand([{ op: "set_total_width", width_mm: totalMm }])
+            }
+            onCommitHeight={(heightMm) =>
+              simulateCommand([{ op: "set_height", height_mm: heightMm }])
+            }
             onCommitDivide={divideModule}
             onMoveDivision={(moduleId, divisionId, offsetMm) =>
-              commit(moveModuleDivision(product, moduleId, divisionId, offsetMm))
+              simulateCommand([
+                { op: "move_divider", module: moduleId, divider: divisionId, offset_mm: offsetMm },
+              ])
             }
             onResizeSeam={(index, deltaMm) => commit(resizeModuleSeam(product, index, deltaMm))}
           />
@@ -2848,11 +2948,12 @@ export function AssemblyEditor({
               organizationId={organizationId}
               positionId={positionId}
               systemId={inputs.systemId}
+              color={inputs.color}
               product={product}
               disabled={disabled}
               draft={assistantDraft}
               onDraftHandled={() => setAssistantDraft(null)}
-              onApply={(ops) => commit(applyDesignOps(product, ops))}
+              onApply={applyRegisteredOps}
             />
             <AlternativesPanel
               organizationId={organizationId}

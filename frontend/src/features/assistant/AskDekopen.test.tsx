@@ -246,12 +246,14 @@ describe("AskDekopen — Agente mode", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
     await waitFor(() => expect(agentMock).toHaveBeenCalledTimes(1));
-    // The wire carries the stable-id projection the ops contract validates
-    // against — the same shape AssistantPanel sends.
+    // The complete graph lets the shared engine address bays and dividers.
     expect(agentMock.mock.calls[0]?.[0]).toMatchObject({
       product: {
-        modules: [{ id: "m1", width_mm: "1200", height_mm: "1500" }],
-        couplings: [],
+        version: "product-v2",
+        assembly: {
+          modules: [{ id: "m1", width_mm: "1200", height_mm: "1500" }],
+          couplings: [],
+        },
       },
     });
     const applyButton = await screen.findByRole("button", { name: /Aplicar 1 operaciones/i });

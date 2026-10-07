@@ -88,6 +88,11 @@ export function resolveCommands(ctx: CommandContext, specs: CommandSpec[]): Reso
  * `apply`'s result (one undoable transaction), non-mutating commands run their
  * own effect. Palette, shortcuts, context menus and AI all land here. */
 export function runCommand(ctx: CommandContext, spec: CommandSpec, args: CommandArgs = {}): void {
+  if (ctx.simulate && spec.operation) {
+    const ops = spec.operation(ctx, args);
+    if (ops?.length) ctx.simulate(ops, spec, args);
+    return;
+  }
   if (spec.apply) {
     const before = ctx.product;
     const next = spec.apply(ctx, args);

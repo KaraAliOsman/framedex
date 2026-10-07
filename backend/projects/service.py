@@ -493,7 +493,8 @@ def _typology(tree):
         ) from error
 
 
-def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=True):
+def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=True,
+                  create_id=None, create_index=None):
     editable(org_id, project_id)
     current = None
     if position_id:
@@ -541,7 +542,11 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
             "FROM public.project_positions WHERE project_id=%s AND org_id=%s",
             [project_id, org_id],
         )[0]["next_index"]
-        position_id = uuid4()
+        # Internal operation undo may restore a removed draft's identity.
+        # These arguments never come from a position HTTP serializer.
+        position_id = create_id or uuid4()
+        if create_index is not None:
+            index = create_index
         rows(
             "INSERT INTO public.project_positions(location_tag,quantity,typology,system_id,"
             "width_mm,height_mm,color_interior,color_exterior,parametric_tree,bom_snapshot,"

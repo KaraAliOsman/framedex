@@ -9,7 +9,18 @@ export type { DesignOp };
  * persists on each turn — a restored ops step refuses to apply when the live
  * product no longer matches the product its ops were validated against. */
 export function productFingerprint(product: unknown): string {
-  const text = JSON.stringify(product) ?? "";
+  function canonical(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(canonical);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value)
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(([key, item]) => [key, canonical(item)]),
+      );
+    }
+    return value;
+  }
+  const text = JSON.stringify(canonical(product)) ?? "";
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i += 1) {
     hash ^= text.charCodeAt(i);
@@ -18,45 +29,10 @@ export function productFingerprint(product: unknown): string {
   return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
-/** The product wire shape the design-ops contract validates against — stable
- * domain ids (modules/couplings refs), not the full ProductJson. AssistantPanel
- * and the agent share this projection so both apply against the same graph. */
-export function designAssistProduct(product: ProductJson): {
-  modules: {
-    id: string;
-    width_mm: string;
-    height_mm: string;
-    contour?: unknown;
-    frameless?: unknown;
-  }[];
-  couplings: {
-    id: string;
-    angle_deg: string;
-    kind?: "INLINE" | "STACKED" | "TEE" | "CORNER";
-    modules?: [string, string];
-    edges?: ["left" | "right" | "top" | "bottom", "left" | "right" | "top" | "bottom"];
-  }[];
-} {
-  return {
-    modules: product.assembly.modules.map((module) => ({
-      id: module.id,
-      width_mm: module.width_mm,
-      height_mm: module.height_mm,
-      /* The tree carries intra-module structure — a "divide this module" edit
-       * leaves dims/couplings untouched but must still stale a pending ops
-       * card, so the fingerprint has to see bay splits and openings. */
-      tree: module.tree,
-      ...(module.contour ? { contour: module.contour } : {}),
-      ...(module.frameless ? { frameless: module.frameless } : {}),
-    })),
-    couplings: product.assembly.couplings.map((coupling) => ({
-      id: coupling.id,
-      angle_deg: coupling.angle_deg,
-      ...(coupling.kind ? { kind: coupling.kind } : {}),
-      ...(coupling.modules ? { modules: coupling.modules } : {}),
-      ...(coupling.edges ? { edges: coupling.edges } : {}),
-    })),
-  };
+/** Both assistant surfaces send the complete graph, including bay geometry,
+ * opening authority and context. Every content change invalidates a plan. */
+export function designAssistProduct(product: ProductJson): ProductJson {
+  return product;
 }
 
 /** Wire op → product: dispatched through the shared command registry — the
@@ -68,6 +44,16 @@ export function applyDesignOp(
   specs: CommandSpec[] = ASSEMBLY_COMMANDS,
   state?: DesignOpState,
 ): ProductJson {
+  // New registry operations carry the engine's complete, validated effect.
+  // The browser performs no geometric or commercial arithmetic here.
+  if (typeof op.base_sig === "string" && op.result && typeof op.result === "object") {
+    if (productFingerprint(product) !== op.base_sig) throw new Error("proposal_stale");
+    const next = op.result as ProductJson;
+    if (next.version !== "product-v2" || !Array.isArray(next.assembly?.modules)) {
+      throw new Error("invalid_operation_effect");
+    }
+    return next;
+  }
   return applyDesignOpOn(specs, product, op, state);
 }
 
@@ -114,6 +100,7 @@ export function describeDesignOp(
   priorOps: DesignOp[] = [],
   specs: CommandSpec[] = ASSEMBLY_COMMANDS,
 ): string {
+  if (typeof op.description === "string") return op.description;
   const state: DesignOpState = { addedModules: [], addedCouplings: [], origin: product };
   const evolved = priorOps.reduce((current, prior) => {
     const next = applyDesignOp(current, prior, specs, state);

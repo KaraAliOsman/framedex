@@ -437,7 +437,7 @@ def _payments(org_id: UUID, project_id: UUID) -> dict:
 def _project(org_id: UUID, refs: dict) -> dict:
     project = _project_row(org_id, _ref(refs, "project_id"))
     positions = rows(
-        "SELECT id, position_index, location_tag, typology, width_mm, height_mm "
+        "SELECT id, position_index, location_tag, typology, width_mm, height_mm, system_id, quantity "
         "FROM public.project_positions WHERE org_id=%s AND project_id=%s "
         "ORDER BY position_index LIMIT %s",
         [org_id, project["id"], MAX_LIST],
@@ -469,6 +469,8 @@ def _project(org_id: UUID, refs: dict) -> dict:
                 "typology": _cut(p["typology"]),
                 "width_mm": _cut(p["width_mm"]),
                 "height_mm": _cut(p["height_mm"]),
+                "system_id": str(p["system_id"]),
+                "quantity": int(p["quantity"]),
             }
             for p in positions
         ],

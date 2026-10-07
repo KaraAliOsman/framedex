@@ -1,4 +1,5 @@
 import type { ProductJson } from "../canvas/productEditing";
+import type { DesignOperationRequest } from "../../api/generated/models";
 import type { TranslationKey } from "../../i18n/es-CL";
 
 /** The validated op contract returned by POST /positions/<id>/design-assist/.
@@ -47,6 +48,8 @@ export interface CommandContext {
   catalog: CommandCatalog;
   disabled: boolean;
   commit(next: ProductJson): void;
+  /** Live product surfaces dispatch registered intent to the engine. */
+  simulate?(ops: DesignOperationRequest[], spec?: CommandSpec, args?: CommandArgs): void;
   select(id: string | null): void;
   setTool?(tool: EditorTool): void;
   /** Focus the design assistant's prompt (editor affordance — UI commands
@@ -128,6 +131,7 @@ export interface CommandSpec {
     op: string;
     decode(op: DesignOp, product: ProductJson, state?: DesignOpState): CommandArgs | null;
   };
+  operation?(ctx: CommandContext, args: CommandArgs): DesignOperationRequest[] | null;
 }
 
 /** A command resolved against the live context — what the palette and other

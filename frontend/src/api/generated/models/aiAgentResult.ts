@@ -11,6 +11,7 @@ import type { AiAgentResultArtifactsItem } from "./aiAgentResultArtifactsItem";
 import type { AiAgentResultClaimsItem } from "./aiAgentResultClaimsItem";
 import type { AiAgentResultPlanItem } from "./aiAgentResultPlanItem";
 import type { AiAgentStep } from "./aiAgentStep";
+import type { Clarify } from "./clarify";
 
 /**
  * The payload act() stores on the job's `result` column — the envelope
@@ -24,6 +25,8 @@ export interface AiAgentResult {
   claims: AiAgentResultClaimsItem[];
   references: string[];
   questions: string[];
+  clarify?: Clarify | null;
+  metrics?: unknown;
   artifacts: AiAgentResultArtifactsItem[];
   steps: AiAgentStep[];
   queries: AiAgentQuery[];

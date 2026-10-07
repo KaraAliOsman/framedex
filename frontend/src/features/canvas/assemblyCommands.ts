@@ -1,4 +1,5 @@
 import { parseLocaleNumber } from "../../format";
+import type { DesignOperationRequest } from "../../api/generated/models";
 import { asGlassProduct, glassChoicePatch } from "../glass/glassModel";
 import { t } from "../../i18n/es-CL";
 import type {
@@ -1053,6 +1054,97 @@ export const UI_ASK_ASSISTANT: CommandSpec = {
   keywords: ["ia", "ai", "asistente", "preguntar", "dekopen", "ayuda", "help"],
   run: (ctx) => ctx.focusAssistant?.(),
 };
+
+/** Human controls emit the same discriminated intent that the AI proposes.
+ * Legacy pure handlers remain readers for historical stored proposals. */
+export function commandOperations(
+  spec: CommandSpec,
+  ctx: CommandContext,
+  args: CommandArgs,
+): DesignOperationRequest[] | null {
+  const module = moduleTarget(ctx, args);
+  const coupling = couplingTarget(ctx, args);
+  const name = spec.ai?.op;
+  let intent: Record<string, unknown> | null = null;
+  if (name === "add_unit") intent = { op: name, side: spec.id.endsWith("left") ? "left" : "right" };
+  else if (name === "set_module_count") intent = { op: name, count: Number(args.count) };
+  else if (name === "set_height") intent = { op: name, height_mm: normalizeMm(args.height ?? "") };
+  else if (name === "set_total_width")
+    intent = { op: name, width_mm: normalizeMm(args.width ?? "") };
+  else if (name === "set_module_width" && module)
+    intent = { op: name, module: module.id, width_mm: normalizeMm(args.width ?? "") };
+  else if (name === "set_opening" && module && args.opening) {
+    const patch = args.opening.startsWith("{")
+      ? structuredOpeningPatch(JSON.parse(args.opening))
+      : null;
+    intent = patch?.opening
+      ? {
+          op: name,
+          module: module.id,
+          bay: modulePrimaryBay(module)?.id,
+          opening: patch.opening,
+          opening_use: patch.opening_use,
+          hinged_layout: patch.hinged_layout,
+          sliding_layout: patch.sliding_layout,
+        }
+      : { op: name, module: module.id, opening: args.opening };
+  } else if (name === "set_glass" && module)
+    intent = { op: name, module: module.id, sku: args.glass };
+  else if (name === "set_glass_thickness" && module)
+    intent = { op: name, module: module.id, mm: args.thickness };
+  else if (name === "set_panel" && module)
+    intent = { op: name, module: module.id, sku: args.panel || null };
+  else if (["equalize_widths", "equalize_angles"].includes(name ?? "")) intent = { op: name };
+  else if (["duplicate_module", "add_stacked_unit", "remove_unit"].includes(name ?? "") && module)
+    intent = { op: name, module: module.id };
+  else if (["insert_module", "remove_coupling"].includes(name ?? "") && coupling)
+    intent = { op: name, coupling: coupling.id };
+  else if (name === "set_coupling_angle" && coupling)
+    intent = { op: name, coupling: coupling.id, angle_deg: normalizeAngle(args.angle ?? "") };
+  else if (name === "set_coupling_kind" && coupling)
+    intent = { op: name, coupling: coupling.id, kind: args.kind };
+  else if (spec.id === "module.clear-panel" && module)
+    intent = { op: "set_panel", module: module.id, sku: null };
+  else if (spec.id === "split.remove") {
+    const target = splitTarget(ctx, args);
+    if (target)
+      intent = { op: "remove_divider", module: target.module.id, divider: target.node.id };
+  } else if (spec.id === "bay.remove") {
+    const target = bayTarget(ctx, args);
+    const parent = target ? parentSplitOf(target.module.tree, target.node.id) : null;
+    const sibling = parent?.children?.find((child) => child.id !== target?.node.id);
+    if (target && parent && sibling)
+      intent = {
+        op: "remove_divider",
+        module: target.module.id,
+        divider: parent.id,
+        keep_bay: sibling.id,
+      };
+  } else if (spec.id === "product.straighten") {
+    return ctx.product.assembly.couplings.map((item) => ({
+      op: "set_coupling_angle",
+      coupling: item.id,
+      angle_deg: "0",
+    }));
+  } else if (spec.id === "coupling.clear-angle" && coupling)
+    intent = { op: "set_coupling_angle", coupling: coupling.id, angle_deg: "0" };
+  return intent ? [intent as unknown as DesignOperationRequest] : null;
+}
+
+for (const spec of ASSEMBLY_COMMANDS) {
+  if (
+    spec.ai ||
+    [
+      "module.clear-panel",
+      "split.remove",
+      "bay.remove",
+      "product.straighten",
+      "coupling.clear-angle",
+    ].includes(spec.id)
+  ) {
+    spec.operation = (ctx, args) => commandOperations(spec, ctx, args);
+  }
+}
 
 /** Commands the surface offers right now (selection/product-sensitive). */
 export function assemblyCommands(ctx: CommandContext): CommandSpec[] {

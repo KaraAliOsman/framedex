@@ -8,6 +8,7 @@
 import type { DocumentaryPreparationPosition } from "./documentaryPreparationPosition";
 
 export interface DocumentaryPreparationResponse {
+  missing?: unknown[];
   project_id: string;
   /** @pattern ^REV-[A-Z]+$ */
   revision_code: string;

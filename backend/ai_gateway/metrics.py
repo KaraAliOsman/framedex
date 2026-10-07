@@ -26,7 +26,7 @@ _SECONDS_PER_APPLIED_OP = 45
 def _step_ops(step: Any) -> list[Any]:
     if not isinstance(step, dict):
         return []
-    if str(step.get("kind")) not in ("prepare", "ops", "batch_ops"):
+    if str(step.get("kind")) not in ("prepare", "ops", "batch_ops", "project_ops"):
         return []
     ops = step.get("ops")
     if isinstance(ops, list):
@@ -63,7 +63,7 @@ def ai_metrics(*, org_id: UUID, days: int) -> dict[str, Any]:
     since = datetime.now(timezone.utc) - timedelta(days=days)
     with _ai_backend():
         jobs = rows(
-            "SELECT surface, state, error_code, plan, transcript, artifacts,"
+            "SELECT id, surface, state, error_code, plan, transcript, artifacts,"
             " outcomes, result, created_at, completed_at"
             " FROM public.ai_jobs WHERE org_id = %s AND created_at >= %s",
             [str(org_id), since],
@@ -139,6 +139,9 @@ def ai_metrics(*, org_id: UUID, days: int) -> dict[str, Any]:
 
     decided = applied + declined
     return {
+        "work": [{"job_id": str(job["id"]), "state": job["state"],
+                  "metrics": (job.get("result") or {}).get("metrics") if isinstance(job.get("result"), dict) else None,
+                  "proposed_ops": _proposed_ops(job), "outcomes": job.get("outcomes") or []} for job in jobs],
         "window_days": days,
         "jobs": {
             "total": len(jobs),

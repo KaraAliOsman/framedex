@@ -13,6 +13,7 @@ import {
   positionsRetrieve,
   positionsUpdate,
   projectDesignOptions,
+  designOperationsSimulate,
 } from "../../api/generated/dekopen";
 import type {
   EngineAssemblyCalculateResponse,
@@ -24,6 +25,7 @@ import { useCanvasStore } from "../canvas/canvasStore";
 import type { ProductJson } from "../canvas/productEditing";
 import { ProjectPositionEditor } from "./ProjectPositionEditor";
 import { ApiError } from "../../api/apiMutator";
+import { productFingerprint } from "../canvas/designOps";
 
 const identity = vi.hoisted(() => ({
   id: "org-a",
@@ -54,6 +56,7 @@ vi.mock("../../api/generated/dekopen", () => ({
   positionsRetrieve: vi.fn(),
   positionsUpdate: vi.fn(),
   projectDesignOptions: vi.fn(),
+  designOperationsSimulate: vi.fn(),
 }));
 
 const evaluate = vi.mocked(engineAssemblyCalculate);
@@ -566,12 +569,54 @@ it("fills glass defaults when the catalog has a single glazing thickness", async
 it("removes a selected module with Delete and undoes it", async () => {
   mount("/projects/project-a/positions/new");
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
+  await screen.findByRole("option", { name: /Sistema A/ });
+  change("projects.system", "system-a");
   fireEvent.click(screen.getByRole("button", { name: /Bow ×3/ }));
 
-  useCanvasStore.getState().select("m2");
+  const before = useCanvasStore.getState().inputs.product!;
+  const after: ProductJson = {
+    ...before,
+    assembly: {
+      modules: [before.assembly.modules[0]!, before.assembly.modules[2]!],
+      couplings: [
+        {
+          ...before.assembly.couplings[0]!,
+          modules: ["m1", "m3"],
+          edges: ["right", "left"],
+          kind: "INLINE",
+        },
+      ],
+    },
+  };
+  vi.mocked(designOperationsSimulate).mockResolvedValue(
+    ok({
+      registry_version: "design-ops-v1",
+      product: after,
+      system_id: "system-a",
+      color: "WHITE",
+      valid: true,
+      status: "VALID",
+      issues: [],
+      engine: {},
+      price: {},
+      before: {},
+      diff: [],
+      ops: [
+        { op: "remove_unit", module: "m2", base_sig: productFingerprint(before), result: after },
+      ],
+    }) as never,
+  );
+
+  act(() => useCanvasStore.getState().select("m2"));
   fireEvent.keyDown(window, { key: "Delete" });
 
-  expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(2);
+  await waitFor(() =>
+    expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(2),
+  );
+  expect(designOperationsSimulate).toHaveBeenCalledWith(
+    expect.objectContaining({ product: before, ops: [{ op: "remove_unit", module: "m2" }] }),
+    expect.anything(),
+  );
 
   fireEvent.click(screen.getByRole("button", { name: t("projects.undo") }));
   expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(3);

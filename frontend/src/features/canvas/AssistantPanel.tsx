@@ -6,8 +6,11 @@ import type { DesignAssistResponse } from "../../api/generated/models/designAssi
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { describeDesignOp, designAssistProduct, type DesignOp } from "./designOps";
 import type { ProductJson } from "./productEditing";
+import { SimulationPreview } from "../assistant/SimulationPreview";
 
 type Preview = {
+  simulation?: unknown;
+  clarify?: { question: string; options: { label: string; value: string }[] } | null;
   ops: DesignOp[];
   rejected: { op: string | null; reason: string }[];
   notes: string | null;
@@ -28,6 +31,7 @@ export function AssistantPanel({
   organizationId,
   positionId,
   systemId,
+  color,
   product,
   disabled,
   draft,
@@ -37,6 +41,7 @@ export function AssistantPanel({
   organizationId: string;
   positionId: string | null;
   systemId: string | null;
+  color?: string;
   product: ProductJson;
   disabled: boolean;
   /** A queued prompt from an external affordance ("Fix with DEKOPEN",
@@ -53,6 +58,7 @@ export function AssistantPanel({
   const [preview, setPreview] = useState<Preview | null>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const pendingClarification = useRef<{ request: string; question: string } | null>(null);
   /** Request generation token — a handled draft (or product change) must
    * invalidate any in-flight generate so its response can't restore ops
    * under a different prompt. */
@@ -65,7 +71,8 @@ export function AssistantPanel({
   useEffect(() => {
     requestSeq.current += 1;
     setPreview(null);
-  }, [product, systemId]);
+    pendingClarification.current = null;
+  }, [product, systemId, color]);
 
   useEffect(() => {
     if (draft === null) return;
@@ -88,10 +95,15 @@ export function AssistantPanel({
     prompt: string;
     product: ProductJson;
     systemId: string | null;
+    color?: string;
   } | null>(null);
 
   async function generate(rawPrompt?: string): Promise<void> {
-    const trimmed = (rawPrompt ?? prompt).trim();
+    const entered = (rawPrompt ?? prompt).trim();
+    const pending = pendingClarification.current;
+    const trimmed = pending
+      ? `${pending.request}\nAclaración: ${pending.question}\nRespuesta: ${entered}`
+      : entered;
     if (!positionId || !systemId || !trimmed) return;
     setBusy(true);
     setMessage("");
@@ -100,13 +112,15 @@ export function AssistantPanel({
       !operationKey.current ||
       operationKey.current.prompt !== trimmed ||
       operationKey.current.product !== product ||
-      operationKey.current.systemId !== systemId
+      operationKey.current.systemId !== systemId ||
+      operationKey.current.color !== color
     ) {
       operationKey.current = {
         key: crypto.randomUUID(),
         prompt: trimmed,
         product,
         systemId,
+        color,
       };
     }
     const seq = ++requestSeq.current;
@@ -120,7 +134,10 @@ export function AssistantPanel({
           // The wire carries stable domain ids — the same ones commands and
           // selection already use — so ops address modules/couplings by ref,
           // never by position; endpoints expose the assembly graph itself.
-          product: designAssistProduct(product),
+          product: {
+            ...designAssistProduct(product),
+            ...(color ? { design_context: { system_id: systemId, color } } : {}),
+          },
         },
         { headers: { "X-Organization-ID": organizationId } },
       );
@@ -129,6 +146,11 @@ export function AssistantPanel({
       // surface under a different prompt.
       if (seq !== requestSeq.current) return;
       const data = response.data as DesignAssistResponse;
+      const clarify = data.clarify as Preview["clarify"];
+      pendingClarification.current = clarify
+        ? { request: trimmed, question: clarify.question }
+        : null;
+      if (data.clarify) setPrompt("");
       setPreview({
         snapshot: product,
         systemId,
@@ -140,6 +162,8 @@ export function AssistantPanel({
         notes: data.notes,
         model: data.model,
         credits: data.credits_debited,
+        simulation: data.simulation,
+        clarify: data.clarify as Preview["clarify"],
       });
       if (data.ops.length === 0 && data.rejected.length === 0) {
         setMessage(t("assistant.empty"));
@@ -195,6 +219,25 @@ export function AssistantPanel({
           {preview && (
             <div className="assistant-panel__preview">
               {preview.notes && <p className="assistant-panel__notes">{preview.notes}</p>}
+              {preview.clarify ? (
+                <div aria-label="Aclaración del trabajo">
+                  <p>{preview.clarify.question}</p>
+                  <div className="ask-dock__chips">
+                    {preview.clarify.options.map((option) => (
+                      <button
+                        type="button"
+                        className="ask-dock__chip"
+                        key={option.value}
+                        disabled={busy || disabled}
+                        onClick={() => void generate(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              <SimulationPreview simulation={preview.simulation} organizationId={organizationId} />
               {preview.ops.length > 0 && (
                 <ul className="assistant-panel__ops">
                   {preview.ops.map((op, index) => (
@@ -223,6 +266,7 @@ export function AssistantPanel({
                     disabled={preview.ops.length === 0 || disabled}
                     onClick={() => {
                       onApply(preview.ops);
+                      pendingClarification.current = null;
                       setPreview(null);
                       setPrompt("");
                     }}

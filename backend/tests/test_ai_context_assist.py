@@ -239,6 +239,8 @@ def test_ask_project_surface_builds_projected_context(monkeypatch):
                     "id": position_id,
                     "position_index": 1,
                     "location_tag": "Fachada",
+                    "system_id": uuid4(),
+                    "quantity": 1,
                     "typology": "VENTANA",
                     "width_mm": "1200.00",
                     "height_mm": "1400.00",

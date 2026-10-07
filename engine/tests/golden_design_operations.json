@@ -1,0 +1,2352 @@
+{
+  "FLOOR_HANDLE": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "handle_height_mm": "498.00",
+              "hinged_layout": null,
+              "id": "b1",
+              "opening": null,
+              "opening_type": "TURN_LEFT",
+              "opening_use": null,
+              "sill_height_mm": "500",
+              "sliding_layout": null,
+              "type": "BAY"
+            },
+            "width_mm": "1000.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "glass": [
+      {
+        "area_m2": "0.7574",
+        "article_sku": null,
+        "bay_id": "b1",
+        "exposed_edges": null,
+        "glass_spec": "4",
+        "height_mm": "976.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "4.00",
+        "weight_kg": "7.57",
+        "width_mm": "776.00"
+      }
+    ],
+    "ops": [
+      {
+        "module": "m1",
+        "op": "set_module_width",
+        "width_mm": "1000"
+      },
+      {
+        "module": "m1",
+        "op": "set_opening",
+        "opening": "TURN_LEFT"
+      },
+      {
+        "bay": "b1",
+        "height_mm": "1050",
+        "op": "set_handle_height",
+        "reference": "FLOOR",
+        "sill_height_mm": "500"
+      }
+    ],
+    "trace": {
+      "infills": [
+        {
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "bay_id": "b1",
+          "composition": "4",
+          "direct_rect": {
+            "height_mm": "976.00",
+            "width_mm": "776.00",
+            "x_mm": "112.00",
+            "y_mm": "112.00"
+          },
+          "height_mm": "976.00",
+          "kind": "GLASS",
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "parent_leaf_id": "root/b1/leaf/PRIMARY",
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/b1/leaf/PRIMARY/infill",
+          "shape": null,
+          "technical_sku": "",
+          "topology_path": "root/b1",
+          "width_mm": "776.00"
+        }
+      ],
+      "leaves": [
+        {
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "bay_id": "b1",
+          "direct_rect": {
+            "height_mm": "1096.00",
+            "width_mm": "896.00",
+            "x_mm": "52.00",
+            "y_mm": "52.00"
+          },
+          "door_handedness": null,
+          "finished_height_mm": "1096.00",
+          "finished_width_mm": "896.00",
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "opening_type": "TURN_LEFT",
+          "placement_domain": "DIRECT",
+          "reference_rect": {
+            "height_mm": "1080.00",
+            "width_mm": "880.00",
+            "x_mm": "60.00",
+            "y_mm": "60.00"
+          },
+          "semantic_leaf_id": "root/b1/leaf/PRIMARY",
+          "slot_pitch_mm": null,
+          "topology_path": "root/b1"
+        }
+      ],
+      "members": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1006.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1000.00",
+              "y_mm": "0"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "970.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/TOP",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1006.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1000.00",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "1200.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "970.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/BOTTOM",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1206.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "0",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1170.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/LEFT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1206.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1000.00",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "1000.00",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1170.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/RIGHT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "902.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "948.00",
+              "y_mm": "52.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/b1/leaf/PRIMARY",
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "866.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/leaf/PRIMARY/TOP",
+          "topology_path": "root/b1",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "902.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "948.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "1148.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/b1/leaf/PRIMARY",
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "866.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/leaf/PRIMARY/BOTTOM",
+          "topology_path": "root/b1",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1102.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "52.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/b1/leaf/PRIMARY",
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1066.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/leaf/PRIMARY/LEFT",
+          "topology_path": "root/b1",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1102.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "948.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "948.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/b1/leaf/PRIMARY",
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1066.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/leaf/PRIMARY/RIGHT",
+          "topology_path": "root/b1",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "785.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/b1/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/leaf/PRIMARY/infill/bead-set/TOP",
+          "topology_path": "root/b1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "785.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/b1/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/leaf/PRIMARY/infill/bead-set/BOTTOM",
+          "topology_path": "root/b1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "985.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/b1/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/leaf/PRIMARY/infill/bead-set/LEFT",
+          "topology_path": "root/b1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "985.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/b1/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/leaf/PRIMARY/infill/bead-set/RIGHT",
+          "topology_path": "root/b1",
+          "workshop_sku": "JQ-24"
+        }
+      ],
+      "nominal_height_mm": "1200.00",
+      "nominal_width_mm": "1000.00",
+      "schema_version": 1
+    }
+  },
+  "RESIZE_EXACT": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "type": "BAY"
+            },
+            "width_mm": "1700.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "glass": [
+      {
+        "area_m2": "1.7871",
+        "article_sku": null,
+        "bay_id": "b1",
+        "exposed_edges": null,
+        "glass_spec": "4",
+        "height_mm": "1110.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "4.00",
+        "weight_kg": "17.87",
+        "width_mm": "1610.00"
+      }
+    ],
+    "ops": [
+      {
+        "delta_width_mm": "200",
+        "module": "m1",
+        "op": "resize"
+      }
+    ],
+    "trace": {
+      "infills": [
+        {
+          "assembly": "BAY:b1:FIXED",
+          "bay_id": "b1",
+          "composition": "4",
+          "direct_rect": {
+            "height_mm": "1110.00",
+            "width_mm": "1610.00",
+            "x_mm": "45.00",
+            "y_mm": "45.00"
+          },
+          "height_mm": "1110.00",
+          "kind": "GLASS",
+          "leaf_id": null,
+          "leaf_slot": null,
+          "parent_leaf_id": null,
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/b1/infill",
+          "shape": null,
+          "technical_sku": "",
+          "topology_path": "root/b1",
+          "width_mm": "1610.00"
+        }
+      ],
+      "leaves": [],
+      "members": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1706.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1700.00",
+              "y_mm": "0"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1670.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/TOP",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1706.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1700.00",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "1200.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1670.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/BOTTOM",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1206.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "0",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1170.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/LEFT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1206.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1700.00",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "1700.00",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1170.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/RIGHT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:FIXED",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1619.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/b1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/infill/bead-set/TOP",
+          "topology_path": "root/b1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:FIXED",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1619.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/b1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/infill/bead-set/BOTTOM",
+          "topology_path": "root/b1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:FIXED",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1119.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/b1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/infill/bead-set/LEFT",
+          "topology_path": "root/b1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:FIXED",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1119.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/b1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/b1/infill/bead-set/RIGHT",
+          "topology_path": "root/b1",
+          "workshop_sku": "JQ-24"
+        }
+      ],
+      "nominal_height_mm": "1200.00",
+      "nominal_width_mm": "1700.00",
+      "schema_version": 1
+    }
+  },
+  "THREE_BAYS": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "children": [
+                {
+                  "glass_spec": "4",
+                  "glass_thickness_mm": "4.00",
+                  "hinged_layout": null,
+                  "id": "b1",
+                  "opening": null,
+                  "opening_type": "TURN_LEFT",
+                  "opening_use": null,
+                  "sliding_layout": null,
+                  "type": "BAY"
+                },
+                {
+                  "children": [
+                    {
+                      "glass_spec": "4",
+                      "glass_thickness_mm": "4.00",
+                      "id": "ops-bay-1",
+                      "opening_type": "FIXED",
+                      "type": "BAY"
+                    },
+                    {
+                      "glass_spec": "4",
+                      "glass_thickness_mm": "4.00",
+                      "hinged_layout": null,
+                      "id": "ops-bay-2",
+                      "opening": null,
+                      "opening_type": "TURN_RIGHT",
+                      "opening_use": null,
+                      "sliding_layout": null,
+                      "type": "BAY"
+                    }
+                  ],
+                  "id": "ops-divider-1-1",
+                  "mullion_profile_sku": "POSTE-V",
+                  "split_offset_mm": "460.00",
+                  "type": "SPLIT_V"
+                }
+              ],
+              "id": "ops-divider-1-0",
+              "mullion_profile_sku": "POSTE-V",
+              "split_offset_mm": "500.00",
+              "type": "SPLIT_V"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "glass": [
+      {
+        "area_m2": "0.2889",
+        "article_sku": null,
+        "bay_id": "b1",
+        "exposed_edges": null,
+        "glass_spec": "4",
+        "height_mm": "976.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "4.00",
+        "weight_kg": "2.89",
+        "width_mm": "296.00"
+      },
+      {
+        "area_m2": "0.4995",
+        "article_sku": null,
+        "bay_id": "ops-bay-1",
+        "exposed_edges": null,
+        "glass_spec": "4",
+        "height_mm": "1110.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "4.00",
+        "weight_kg": "5.00",
+        "width_mm": "450.00"
+      },
+      {
+        "area_m2": "0.2889",
+        "article_sku": null,
+        "bay_id": "ops-bay-2",
+        "exposed_edges": null,
+        "glass_spec": "4",
+        "height_mm": "976.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "4.00",
+        "weight_kg": "2.89",
+        "width_mm": "296.00"
+      }
+    ],
+    "ops": [
+      {
+        "axis": "V",
+        "count": 3,
+        "module": "m1",
+        "op": "equalize_bays"
+      },
+      {
+        "bay": "b1",
+        "module": "m1",
+        "op": "set_opening",
+        "opening": "TURN_LEFT"
+      },
+      {
+        "bay": "b3",
+        "module": "m1",
+        "op": "set_opening",
+        "opening": "TURN_RIGHT"
+      }
+    ],
+    "trace": {
+      "infills": [
+        {
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "bay_id": "b1",
+          "composition": "4",
+          "direct_rect": {
+            "height_mm": "976.00",
+            "width_mm": "296.00",
+            "x_mm": "112.00",
+            "y_mm": "112.00"
+          },
+          "height_mm": "976.00",
+          "kind": "GLASS",
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "parent_leaf_id": "root/ops-divider-1-0/0/leaf/PRIMARY",
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill",
+          "shape": null,
+          "technical_sku": "",
+          "topology_path": "root/ops-divider-1-0/0",
+          "width_mm": "296.00"
+        },
+        {
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "bay_id": "ops-bay-1",
+          "composition": "4",
+          "direct_rect": {
+            "height_mm": "1110.00",
+            "width_mm": "450.00",
+            "x_mm": "525.00",
+            "y_mm": "45.00"
+          },
+          "height_mm": "1110.00",
+          "kind": "GLASS",
+          "leaf_id": null,
+          "leaf_slot": null,
+          "parent_leaf_id": null,
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/ops-divider-1-0/1/0/infill",
+          "shape": null,
+          "technical_sku": "",
+          "topology_path": "root/ops-divider-1-0/1/0",
+          "width_mm": "450.00"
+        },
+        {
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "bay_id": "ops-bay-2",
+          "composition": "4",
+          "direct_rect": {
+            "height_mm": "976.00",
+            "width_mm": "296.00",
+            "x_mm": "1092.00",
+            "y_mm": "112.00"
+          },
+          "height_mm": "976.00",
+          "kind": "GLASS",
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "parent_leaf_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY",
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill",
+          "shape": null,
+          "technical_sku": "",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "width_mm": "296.00"
+        }
+      ],
+      "leaves": [
+        {
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "bay_id": "b1",
+          "direct_rect": {
+            "height_mm": "1096.00",
+            "width_mm": "416.00",
+            "x_mm": "52.00",
+            "y_mm": "52.00"
+          },
+          "door_handedness": null,
+          "finished_height_mm": "1096.00",
+          "finished_width_mm": "416.00",
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "opening_type": "TURN_LEFT",
+          "placement_domain": "DIRECT",
+          "reference_rect": {
+            "height_mm": "1080.00",
+            "width_mm": "400.00",
+            "x_mm": "60.00",
+            "y_mm": "60.00"
+          },
+          "semantic_leaf_id": "root/ops-divider-1-0/0/leaf/PRIMARY",
+          "slot_pitch_mm": null,
+          "topology_path": "root/ops-divider-1-0/0"
+        },
+        {
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "bay_id": "ops-bay-2",
+          "direct_rect": {
+            "height_mm": "1096.00",
+            "width_mm": "416.00",
+            "x_mm": "1032.00",
+            "y_mm": "52.00"
+          },
+          "door_handedness": null,
+          "finished_height_mm": "1096.00",
+          "finished_width_mm": "416.00",
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "opening_type": "TURN_RIGHT",
+          "placement_domain": "DIRECT",
+          "reference_rect": {
+            "height_mm": "1080.00",
+            "width_mm": "400.00",
+            "x_mm": "1040.00",
+            "y_mm": "60.00"
+          },
+          "semantic_leaf_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY",
+          "slot_pitch_mm": null,
+          "topology_path": "root/ops-divider-1-0/1/1"
+        }
+      ],
+      "members": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1506.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1500.00",
+              "y_mm": "0"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1470.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/TOP",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1506.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1500.00",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "1200.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1470.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/BOTTOM",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1206.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "0",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1170.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/LEFT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1206.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1500.00",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "1500.00",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1170.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/RIGHT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "SPLIT:root/ops-divider-1-0",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1080.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "500.00",
+              "y_mm": "1140.00"
+            },
+            "start": {
+              "x_mm": "500.00",
+              "y_mm": "60.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "CENTER",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1070.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "MULLION_V",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/mullion",
+          "topology_path": "root/ops-divider-1-0",
+          "workshop_sku": "POSTE-V"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "422.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "468.00",
+              "y_mm": "52.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/ops-divider-1-0/0/leaf/PRIMARY",
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "386.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/0/leaf/PRIMARY/TOP",
+          "topology_path": "root/ops-divider-1-0/0",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "422.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "468.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "1148.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/ops-divider-1-0/0/leaf/PRIMARY",
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "386.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/0/leaf/PRIMARY/BOTTOM",
+          "topology_path": "root/ops-divider-1-0/0",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1102.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "52.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/ops-divider-1-0/0/leaf/PRIMARY",
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1066.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/0/leaf/PRIMARY/LEFT",
+          "topology_path": "root/ops-divider-1-0/0",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1102.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "468.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "468.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/ops-divider-1-0/0/leaf/PRIMARY",
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1066.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/0/leaf/PRIMARY/RIGHT",
+          "topology_path": "root/ops-divider-1-0/0",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "305.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill/bead-set/TOP",
+          "topology_path": "root/ops-divider-1-0/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "305.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill/bead-set/BOTTOM",
+          "topology_path": "root/ops-divider-1-0/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "985.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill/bead-set/LEFT",
+          "topology_path": "root/ops-divider-1-0/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "985.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/0/leaf/PRIMARY/infill/bead-set/RIGHT",
+          "topology_path": "root/ops-divider-1-0/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "SPLIT:root/ops-divider-1-0/1",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1080.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1000.00",
+              "y_mm": "1140.00"
+            },
+            "start": {
+              "x_mm": "1000.00",
+              "y_mm": "60.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "CENTER",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1070.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "MULLION_V",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/mullion",
+          "topology_path": "root/ops-divider-1-0/1",
+          "workshop_sku": "POSTE-V"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "axis": "HORIZONTAL",
+          "bay_id": "ops-bay-1",
+          "cut_length_mm": "459.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/1/0/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/0/infill/bead-set/TOP",
+          "topology_path": "root/ops-divider-1-0/1/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "axis": "HORIZONTAL",
+          "bay_id": "ops-bay-1",
+          "cut_length_mm": "459.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/1/0/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/0/infill/bead-set/BOTTOM",
+          "topology_path": "root/ops-divider-1-0/1/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "axis": "VERTICAL",
+          "bay_id": "ops-bay-1",
+          "cut_length_mm": "1119.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/1/0/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/0/infill/bead-set/LEFT",
+          "topology_path": "root/ops-divider-1-0/1/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "axis": "VERTICAL",
+          "bay_id": "ops-bay-1",
+          "cut_length_mm": "1119.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/1/0/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/0/infill/bead-set/RIGHT",
+          "topology_path": "root/ops-divider-1-0/1/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "ops-bay-2",
+          "cut_length_mm": "422.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1448.00",
+              "y_mm": "52.00"
+            },
+            "start": {
+              "x_mm": "1032.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY",
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "386.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/TOP",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "ops-bay-2",
+          "cut_length_mm": "422.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1448.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "1032.00",
+              "y_mm": "1148.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY",
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "386.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/BOTTOM",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "ops-bay-2",
+          "cut_length_mm": "1102.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1032.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "1032.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY",
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1066.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/LEFT",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "ops-bay-2",
+          "cut_length_mm": "1102.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1448.00",
+              "y_mm": "1148.00"
+            },
+            "start": {
+              "x_mm": "1448.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY",
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1066.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/RIGHT",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "workshop_sku": "HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "ops-bay-2",
+          "cut_length_mm": "305.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill/bead-set/TOP",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "axis": "HORIZONTAL",
+          "bay_id": "ops-bay-2",
+          "cut_length_mm": "305.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill/bead-set/BOTTOM",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "ops-bay-2",
+          "cut_length_mm": "985.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill/bead-set/LEFT",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-2:LEAF:PRIMARY",
+          "axis": "VERTICAL",
+          "bay_id": "ops-bay-2",
+          "cut_length_mm": "985.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": "PRIMARY",
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1-0/1/1/leaf/PRIMARY/infill/bead-set/RIGHT",
+          "topology_path": "root/ops-divider-1-0/1/1",
+          "workshop_sku": "JQ-24"
+        }
+      ],
+      "nominal_height_mm": "1200.00",
+      "nominal_width_mm": "1500.00",
+      "schema_version": 1
+    }
+  },
+  "TRANSOM_FROM_TOP": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "children": [
+                {
+                  "glass_spec": "4",
+                  "glass_thickness_mm": "4.00",
+                  "id": "b1",
+                  "opening_type": "FIXED",
+                  "type": "BAY"
+                },
+                {
+                  "glass_spec": "4",
+                  "glass_thickness_mm": "4.00",
+                  "id": "ops-bay-1",
+                  "opening_type": "FIXED",
+                  "type": "BAY"
+                }
+              ],
+              "id": "ops-divider-1",
+              "mullion_profile_sku": "POSTE-H",
+              "split_offset_mm": "400.00",
+              "type": "SPLIT_H"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1200.00",
+            "id": "m1",
+            "tree": {
+              "glass_spec": "4",
+              "glass_thickness_mm": "4.00",
+              "id": "b1",
+              "opening_type": "FIXED",
+              "type": "BAY"
+            },
+            "width_mm": "1500.00"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "glass": [
+      {
+        "area_m2": "0.4653",
+        "article_sku": null,
+        "bay_id": "b1",
+        "exposed_edges": null,
+        "glass_spec": "4",
+        "height_mm": "330.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "4.00",
+        "weight_kg": "4.65",
+        "width_mm": "1410.00"
+      },
+      {
+        "area_m2": "1.0293",
+        "article_sku": null,
+        "bay_id": "ops-bay-1",
+        "exposed_edges": null,
+        "glass_spec": "4",
+        "height_mm": "730.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "4.00",
+        "weight_kg": "10.29",
+        "width_mm": "1410.00"
+      }
+    ],
+    "ops": [
+      {
+        "axis": "H",
+        "bay": "b1",
+        "from": "START",
+        "offset_mm": "400",
+        "op": "split_bay"
+      }
+    ],
+    "trace": {
+      "infills": [
+        {
+          "assembly": "BAY:b1:FIXED",
+          "bay_id": "b1",
+          "composition": "4",
+          "direct_rect": {
+            "height_mm": "330.00",
+            "width_mm": "1410.00",
+            "x_mm": "45.00",
+            "y_mm": "45.00"
+          },
+          "height_mm": "330.00",
+          "kind": "GLASS",
+          "leaf_id": null,
+          "leaf_slot": null,
+          "parent_leaf_id": null,
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/ops-divider-1/0/infill",
+          "shape": null,
+          "technical_sku": "",
+          "topology_path": "root/ops-divider-1/0",
+          "width_mm": "1410.00"
+        },
+        {
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "bay_id": "ops-bay-1",
+          "composition": "4",
+          "direct_rect": {
+            "height_mm": "730.00",
+            "width_mm": "1410.00",
+            "x_mm": "45.00",
+            "y_mm": "425.00"
+          },
+          "height_mm": "730.00",
+          "kind": "GLASS",
+          "leaf_id": null,
+          "leaf_slot": null,
+          "parent_leaf_id": null,
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/ops-divider-1/1/infill",
+          "shape": null,
+          "technical_sku": "",
+          "topology_path": "root/ops-divider-1/1",
+          "width_mm": "1410.00"
+        }
+      ],
+      "leaves": [],
+      "members": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1506.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1500.00",
+              "y_mm": "0"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1470.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/TOP",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1506.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1500.00",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "1200.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1470.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/BOTTOM",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1206.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "0",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1170.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/LEFT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1206.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1500.00",
+              "y_mm": "1200.00"
+            },
+            "start": {
+              "x_mm": "1500.00",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1170.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/RIGHT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "MARCO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "SPLIT:root/ops-divider-1",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1380.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1440.00",
+              "y_mm": "400.00"
+            },
+            "start": {
+              "x_mm": "60.00",
+              "y_mm": "400.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "CENTER",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1370.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": null,
+          "role": "MULLION_H",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/mullion",
+          "topology_path": "root/ops-divider-1",
+          "workshop_sku": "POSTE-H"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:FIXED",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1419.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1/0/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/0/infill/bead-set/TOP",
+          "topology_path": "root/ops-divider-1/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:FIXED",
+          "axis": "HORIZONTAL",
+          "bay_id": "b1",
+          "cut_length_mm": "1419.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1/0/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/0/infill/bead-set/BOTTOM",
+          "topology_path": "root/ops-divider-1/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:FIXED",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "339.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1/0/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/0/infill/bead-set/LEFT",
+          "topology_path": "root/ops-divider-1/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:b1:FIXED",
+          "axis": "VERTICAL",
+          "bay_id": "b1",
+          "cut_length_mm": "339.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1/0/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/0/infill/bead-set/RIGHT",
+          "topology_path": "root/ops-divider-1/0",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "axis": "HORIZONTAL",
+          "bay_id": "ops-bay-1",
+          "cut_length_mm": "1419.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1/1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/1/infill/bead-set/TOP",
+          "topology_path": "root/ops-divider-1/1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "axis": "HORIZONTAL",
+          "bay_id": "ops-bay-1",
+          "cut_length_mm": "1419.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1/1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/1/infill/bead-set/BOTTOM",
+          "topology_path": "root/ops-divider-1/1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "axis": "VERTICAL",
+          "bay_id": "ops-bay-1",
+          "cut_length_mm": "739.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1/1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/1/infill/bead-set/LEFT",
+          "topology_path": "root/ops-divider-1/1",
+          "workshop_sku": "JQ-24"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:ops-bay-1:FIXED",
+          "axis": "VERTICAL",
+          "bay_id": "ops-bay-1",
+          "cut_length_mm": "739.00",
+          "direct_segment": null,
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": "root/ops-divider-1/1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/ops-divider-1/1/infill/bead-set/RIGHT",
+          "topology_path": "root/ops-divider-1/1",
+          "workshop_sku": "JQ-24"
+        }
+      ],
+      "nominal_height_mm": "1200.00",
+      "nominal_width_mm": "1500.00",
+      "schema_version": 1
+    }
+  }
+}

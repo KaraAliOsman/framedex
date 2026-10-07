@@ -22,6 +22,8 @@ import type { ProductJson } from "../canvas/productEditing";
 import { stableRefs, useDesignOpsBridge } from "./assistantContext";
 import { BatchOpsStep } from "./BatchOpsStep";
 import { BotFigure } from "./BotFigure";
+import { ProjectOpsStep } from "./ProjectOpsStep";
+import { SimulationPreview } from "./SimulationPreview";
 import { SURFACE_LABELS } from "./surfaces";
 
 /** The durable worker can leave the job running far longer than a request
@@ -66,6 +68,7 @@ type Turn = {
 };
 
 interface TranscriptAgentTurn {
+  clarify?: { question: string; options: { label: string; value: string }[] } | null;
   role?: string;
   text?: string;
   replay?: boolean;
@@ -156,7 +159,7 @@ function threadFromJob(job: AiJobDetail): Turn[] {
 }
 
 function asDesignOps(step: AiAgentStep): DesignOp[] {
-  return (step.ops ?? []).filter((item): item is DesignOp => typeof item.op === "string");
+  return (step.ops ?? []).map((item) => ({ ...item }));
 }
 
 export { SURFACE_LABELS };
@@ -563,6 +566,9 @@ export function AgentBody({
       bridge.apply(ops);
     } catch {
       reportOutcome(turn.transcriptIndex, stepIndex, "apply_failed", ops);
+      setMessage(
+        "No pudimos aplicar la propuesta. El diseño puede haber cambiado; vuelve a simularla.",
+      );
       return;
     }
     reportOutcome(turn.transcriptIndex, stepIndex, "applied", ops);
@@ -685,6 +691,24 @@ export function AgentBody({
                       ))}
                     </div>
                   ) : null}
+                  {turn.result.clarify ? (
+                    <div className="ask-dock__questions" aria-label="Aclaración del trabajo">
+                      <p>{turn.result.clarify.question}</p>
+                      <div className="ask-dock__chips">
+                        {turn.result.clarify.options.map((option) => (
+                          <button
+                            type="button"
+                            className="ask-dock__chip"
+                            key={option.value}
+                            disabled={busy || turnIndex !== thread.length - 1}
+                            onClick={() => void send(option.value)}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                   {turn.result.warnings?.length ? (
                     <ul className="ask-dock__warnings">
                       {turn.result.warnings.map((warning, i) => (
@@ -754,13 +778,30 @@ export function AgentBody({
                             />
                           );
                         }
+                        if (step.kind === "project_ops" && refs.project_id) {
+                          return (
+                            <ProjectOpsStep
+                              key={stepIndex}
+                              step={step}
+                              organizationId={organizationId}
+                              projectId={refs.project_id}
+                              onSettled={(action, ops) =>
+                                reportOutcome(turn.transcriptIndex, stepIndex, action, ops)
+                              }
+                            />
+                          );
+                        }
                         if (step.kind === "ops") {
                           const ops = asDesignOps(step);
                           if (!ops.length) return null;
                           const applied = turn.appliedOps.has(stepIndex);
                           const declined = turn.declinedOps.has(stepIndex);
                           const stale =
-                            !bridge || (turn.product !== null && turn.product !== bridge.product);
+                            !bridge ||
+                            (turn.product !== null
+                              ? turn.product !== bridge.product
+                              : turn.productSig !== null &&
+                                turn.productSig !== productFingerprint(bridge.product));
                           return (
                             <div key={stepIndex} className="ask-dock__ops">
                               <ul>
@@ -776,11 +817,22 @@ export function AgentBody({
                                   </li>
                                 ))}
                               </ul>
+                              <SimulationPreview
+                                simulation={step.simulation}
+                                organizationId={organizationId}
+                              />
                               <div className="ask-dock__ops-actions">
                                 <button
                                   type="button"
                                   className="ask-dock__action"
-                                  disabled={applied || declined || stale || !bridge}
+                                  disabled={
+                                    applied ||
+                                    declined ||
+                                    stale ||
+                                    !bridge ||
+                                    (step.simulation != null &&
+                                      (step.simulation as { valid?: boolean }).valid !== true)
+                                  }
                                   title={stale && bridge ? t("assistant.stale") : undefined}
                                   onClick={() => applyOps(turnIndex, stepIndex, ops)}
                                 >
