@@ -44,6 +44,20 @@ y precios públicos; costo no viaja en las previsualizaciones de extras. Tablas 
 políticas mantienen org_id y RLS. El catálogo DEMO v6 es adicional: el transporte
 histórico omite los campos nuevos cuando estaban ausentes.
 
+Las sugerencias de un ensamblaje conservan el módulo de origen y la selección
+local a su árbol. El API entrega compatibilidad por módulo o acepta un módulo
+explícito; una hoja móvil de otro módulo no habilita un accesorio incompatible.
+`WINDOW` significa un marco completo, incluidas sus divisiones internas;
+`LEAF` deriva cada hoja compatible. Un ensamblaje evalúa cada marco por módulo.
+
+Los endpoints de precio (preview, aplicar, retirar e historial) filtran costos
+por el rol resuelto del tenant. El estimador recibe venta y la causa de la
+restricción, sin costos de servicios, agregados, composición, reglas de compra
+ni autoridades privadas anidadas. La previsualización de cambios en lote también
+omite costos para el estimador y muestra esa causa; no convierte su ausencia en
+un delta cero. El dueño conserva lectura exacta. Ninguna proyección modifica el
+snapshot sellado, el cálculo del motor ni las reglas RLS de compra.
+
 ## Intención del dueño y producto
 
 El estimador debe cobrar lo que de verdad se instala. Sugerir vierteaguas o

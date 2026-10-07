@@ -152,3 +152,16 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   de cuantización a moneda; cantidad × tarifa + ajuste = sublínea. La base y sus
   sublíneas suman el total de posición sellado, también con descuento o margen
   objetivo de proyecto. Las tarifas DEMO se muestran como sintéticas.
+- «Por vano» (`WINDOW`) cuenta el marco completo, con sus divisiones internas.
+  «Por hoja» (`LEAF`) cuenta cada hoja compatible a sus dimensiones; un
+  ensamblaje contiene un marco por módulo. La definición del catálogo elige la
+  regla: no se transforma un mosquitero completo en piezas por bahía sin fuente.
+- El módulo de origen identifica las sugerencias de ensamblajes. El consumidor
+  aplica o descarta la selección solo en ese árbol; la compatibilidad se entrega
+  por módulo. El inspector actual consulta directamente su módulo seleccionado.
+- Costos confidenciales según PRD-05: los endpoints de venta aplican una
+  proyección por rol, conservando la autoridad interna completa. El estimador
+  ve venta y restricciones autorizadas; no ve costos de servicios ni agregados
+  que los revelen por resta. Los costos de cambios en lote quedan Sin dato con
+  la causa de permiso y nunca se presentan como delta cero. IA2/IA3 continúan el
+  diff de venta de esas propuestas sobre las operaciones tipadas.

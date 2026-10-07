@@ -255,6 +255,8 @@ class ProjectServicesView(APIView):
 
 class ExtrasPreviewResponseSerializer(serializers.Serializer):
     available_codes = serializers.ListField(child=serializers.CharField())
+    available_by_module = serializers.DictField(child=serializers.ListField(child=serializers.CharField()))
+    target_module_id = serializers.CharField(allow_null=True)
     leaf_targets = serializers.ListField(child=serializers.JSONField())
     extras = serializers.ListField(child=serializers.JSONField())
     suggestions = serializers.ListField(child=serializers.JSONField())
@@ -263,13 +265,17 @@ class ExtrasPreviewResponseSerializer(serializers.Serializer):
     reason = serializers.CharField(allow_null=True)
 
 
+class ExtrasPreviewRequestSerializer(EngineCalculateRequestSerializer):
+    target_module_id = serializers.CharField(required=False, max_length=150)
+
+
 class ExtrasPreviewView(APIView):
-    @extend_schema(operation_id="positionExtrasPreview",request=EngineCalculateRequestSerializer,
+    @extend_schema(operation_id="positionExtrasPreview",request=ExtrasPreviewRequestSerializer,
         responses={200:ExtrasPreviewResponseSerializer,**ERRORS},**SCHEMA)
     def post(self,request):
         from dekopen_engine.commercial import PricingError
         from pricing.service import pricing_public_detail
-        data = validate(EngineCalculateRequestSerializer,request.data)
+        data = validate(ExtrasPreviewRequestSerializer,request.data)
         with scope(request,{"OWNER","ESTIMATOR"}) as (_,_,org):
             try:
                 params = SystemParamsRepository().load_visible(data["system_id"],org)
@@ -281,23 +287,44 @@ class ExtrasPreviewView(APIView):
                 tree = data['parametric_tree']
                 modules = tree['assembly']['modules'] if tree.get('version') == 'product-v2' else [
                     {'tree':tree,'width_mm':data['nominal_width_mm'],'height_mm':data['nominal_height_mm']}]
-                leaves, leaf_targets = [], []
+                target = data.get('target_module_id')
+                if target is not None and (tree.get('version') != 'product-v2' or not any(module['id'] == target for module in modules)):
+                    raise ValueError('El módulo seleccionado no existe en este diseño. Recarga la posición.')
+                leaf_targets, available_by_module, classic_codes = [], {}, []
+                definitions = [item for item in params.extra_authority.definitions if item.scope == 'POSITION'] if params.extra_authority else []
                 for module in modules:
                     if module.get('contour') or module.get('frameless'):
-                        if module['tree'].get('extras'):
+                        if module['tree'].get('extras') or module.get('id') == target:
                             raise ValueError('Esta forma no declara una autoridad de accesorios; revisa su catálogo.')
+                        available_by_module[module['id']] = []
                         continue
                     root = normalized_root_from_api(parametric_tree=module['tree'],nominal_width_mm=Decimal(module['width_mm']),
                         nominal_height_mm=Decimal(module['height_mm']),color=data['color'],params=params)
                     computation = compute_geometry(root,params,finish=data['color'])
                     targets = accessory_leaves(computation,root)
-                    leaves.extend(targets)
+                    movements = {leaf.opening.movement.value for leaf in targets}
+                    codes = [item.code for item in definitions if not item.allowed_movements or movements.intersection(item.allowed_movements)]
+                    if tree.get('version') == 'product-v2':
+                        available_by_module[module['id']] = codes
+                    else:
+                        classic_codes = codes
+                    if target is not None and module['id'] != target:
+                        continue
+                    if target is not None:
+                        # Return local facts/selection targets for the selected
+                        # tree, after validating the complete assembly above.
+                        result = computation.result
+                        if result is None:
+                            raise ValueError('El módulo necesita completar su fabricación antes de calcular accesorios.')
                     prefix = str(module['id'])+'|' if tree.get('version') == 'product-v2' else ''
+                    if target is not None:
+                        prefix = ''
                     leaf_targets.extend({'bay_id':prefix+leaf.bay_id,'leaf_id':prefix+leaf.leaf_id if leaf.leaf_id else None,
-                        'width_mm':str(leaf.width_mm),'height_mm':str(leaf.height_mm),'movement':leaf.opening.movement.value} for leaf in targets)
-                known_movements = [leaf.opening.movement.value for leaf in leaves]
-                available_codes = [item.code for item in params.extra_authority.definitions if item.scope == "POSITION" and
-                    (not item.allowed_movements or any(value in item.allowed_movements for value in known_movements))] if params.extra_authority else []
+                        'width_mm':str(leaf.width_mm),'height_mm':str(leaf.height_mm),'movement':leaf.opening.movement.value,
+                        **({'module_id':module['id']} if tree.get('version') == 'product-v2' else {})} for leaf in targets)
+                # A whole assembly has no single selection target. Consumers
+                # must choose its module map or request an explicit target.
+                available_codes = available_by_module[target] if target else classic_codes
             except ValueError as error:
                 raise contract_error(422,"position_extras_invalid",str(error)) from error
             with extra_backend():
@@ -306,10 +333,9 @@ class ExtrasPreviewView(APIView):
                 try:
                     lines = converted_lines(repo,price_facts(params.extra_authority,result.extras)) if result.extras else []
                 except PricingError as error:
-                    return response({"available_codes":available_codes,"leaf_targets":leaf_targets,"extras":[fact.model_dump(mode="json") for fact in result.extras],"suggestions":[],"currency":currency,
+                    return response({"available_codes":available_codes,"available_by_module":available_by_module,"target_module_id":target,"leaf_targets":leaf_targets,"extras":[fact.model_dump(mode="json") for fact in result.extras],
+                        "suggestions":[item.model_dump(mode="json") for item in result.extra_suggestions],"currency":currency,
                         "total_price":None,"reason":pricing_public_detail(error.code)})
-            # Suggestions are scoped per module in the assembly response; a
-            # classic position can expose them directly here.
-            return response({"available_codes":available_codes,"leaf_targets":leaf_targets,"extras":[{key:value for key,value in service_price(item,currency).items() if key not in {"cost_rate","total_cost"}} for item in lines],
+            return response({"available_codes":available_codes,"available_by_module":available_by_module,"target_module_id":target,"leaf_targets":leaf_targets,"extras":[{key:value for key,value in service_price(item,currency).items() if key not in {"cost_rate","total_cost"}} for item in lines],
                 "suggestions":[item.model_dump(mode="json") for item in result.extra_suggestions],"currency":currency,
                 "total_price":str(sum((item.total_price for item in lines),start=0)),"reason":None})

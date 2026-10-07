@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_validator, model_serializer
 
 Code = Annotated[str, Field(min_length=1, max_length=80, pattern=r"^[A-Z0-9_+.-]+$")]
 Side = Literal["TOP", "RIGHT", "BOTTOM", "LEFT"]
@@ -179,7 +179,17 @@ class ExtraLine(ExtraFact):
 
 
 class ExtraSuggestion(ExtraModel):
+    # Selections remain local to their module tree. Assembly consumers use
+    # this target to accept/dismiss only the originating module's proposal.
+    module_id: str | None = None
     selection: ExtraSelection
     name: str
     cause: str
     source: str
+
+    @model_serializer(mode="wrap")
+    def optional_target(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        if self.module_id is None:
+            data.pop("module_id", None)
+        return data

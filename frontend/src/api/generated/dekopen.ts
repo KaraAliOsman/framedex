@@ -124,6 +124,7 @@ import type {
   EvidenceList,
   EvidenceReviewInputRequest,
   EvidenceRow,
+  ExtrasPreviewRequestRequest,
   ExtrasPreviewResponse,
   FinishPreviewRequestRequest,
   FinishPreviewResponse,
@@ -17020,7 +17021,7 @@ export const getPositionExtrasPreviewUrl = () => {
 };
 
 export const positionExtrasPreview = async (
-  engineCalculateRequestRequest: EngineCalculateRequestRequest,
+  extrasPreviewRequestRequest: ExtrasPreviewRequestRequest,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<positionExtrasPreviewResponse> => {
   const getHeaders = (
@@ -17035,7 +17036,7 @@ export const positionExtrasPreview = async (
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
-    body: JSON.stringify(engineCalculateRequestRequest),
+    body: JSON.stringify(extrasPreviewRequestRequest),
   });
 };
 

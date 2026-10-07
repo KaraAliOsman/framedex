@@ -97,6 +97,22 @@ decisión persistente; aceptar, descartar y deshacer se verifican con el product
 
 ## Validación técnica y límites
 
+Revisión del PR (07-10-2026): las sugerencias del BOM agregado conservan su
+módulo; el API calcula compatibilidad por módulo y admite un destino explícito.
+Las regresiones aceptan/descartan una propuesta sin modificar el otro módulo.
+«Por vano» significa un marco completo: el mosquitero fijo de un marco dividido
+cuenta una unidad a sus dimensiones; la regla por hoja cuenta cada hoja, y cada
+módulo del ensamblaje conserva su marco. Se mantiene la autoridad del catálogo.
+
+La lectura comercial ahora aplica privacidad a preview, aplicar, retirar e
+historial, y al costo de cambios en lote. El estimador recibe venta con causa de
+restricción; el dueño ve la autoridad de compra exacta. Se prueban costos de
+servicios, agregados, composición y autoridades anidadas; los snapshots internos
+no cambian. Playwright pasa 12 lecturas dueño/estimador en los tres anchos de
+oficina y ambos temas, sin hallazgos nuevos de extras ni errores de consola;
+evidencia `recorrido/navegador-privacy.json` y `privacidad-*.png`. La matriz de
+`ux:capture` para Precios se regenera con esta proyección.
+
 La semilla DEMO v6 es aditiva: conserva v1–v5 y omite campos opcionales ausentes
 en contratos históricos. Las tablas nuevas llevan organización y RLS;
 historial, revisión y precio aplicado permanecen inmutables. Policy y precio

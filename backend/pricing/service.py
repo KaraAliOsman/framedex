@@ -584,9 +584,8 @@ def design_batch_preview(org_id, _actor, request):
 
 
 def operation_public(operation):
-    # The decision surface reads cost next to price: both were stored at
-    # preview time from the same authority, so the margin the estimator sees
-    # is the margin the approver audited.
+    # Internal frozen authority for decision/sealing. HTTP callers must apply
+    # price_visibility for the active member before returning buying costs.
     snapshot = decoded(operation['input_snapshot'])
     costs = snapshot.get('cost_lines') or []
     snapshot_rules = snapshot.get('rules') or {}

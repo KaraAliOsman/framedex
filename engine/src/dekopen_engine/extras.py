@@ -115,6 +115,9 @@ def position_lines(authority: ExtraAuthority | None, selections: list[ExtraSelec
                     for side in (definition.default_sides if selection.sides is None else selection.sides)), D(0)) / D(1000),
                 "AREA": lambda: width * height / D(1000000),
                 "PERIMETER": lambda: D(2) * (width + height) / D(1000),
+                # WINDOW covers this complete frame, including divided bays.
+                # LEAF above covers individual leaves; assemblies evaluate
+                # WINDOW once per module, never once per internal division.
                 "WINDOW": lambda: D(1), "PER_POSITION": lambda: D(1),
                 "FIXED": lambda: D(1), "ZONE": lambda: D(1),
             }[definition.basis]()

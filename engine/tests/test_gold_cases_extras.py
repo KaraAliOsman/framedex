@@ -67,6 +67,60 @@ def test_suggestions_have_a_cause_and_discard_is_durable() -> None:
     assert "60 mm" in next(item.cause for item in gap if item.selection.code == "FRAME_EXTENSION")
 
 
+@pytest.mark.parametrize("decision", ["ACCEPT", "DISMISS"])
+def test_assembly_suggestions_target_only_their_origin_module(decision: str) -> None:
+    from dekopen_engine.product import CoupledAssembly, CouplingDef, ProductModel, ProductModule, evaluate_product
+
+    params, node = extra_context()
+    modules = [ProductModule(id=key, width_mm=D(1500), height_mm=D(1400), tree=node)
+               for key in ("m1", "m2")]
+    product = ProductModel(version="product-v2", assembly=CoupledAssembly(
+        modules=modules, couplings=[CouplingDef(id="c1")]))
+    result = evaluate_product(product, params, coupler_articles={}, finish="WHITE")
+    assert result.bom
+    proposals = [item for item in result.bom.extra_suggestions if item.selection.code == "SILL"]
+    assert {item.module_id for item in proposals} == {"m1", "m2"}
+    proposal = proposals[0]
+    # The proposal's selection is local; its explicit module chooses the tree.
+    selected = proposal.selection.model_copy(update={"decision": decision})
+    changed = product.model_copy(update={"assembly": product.assembly.model_copy(update={
+        "modules": [module.model_copy(update={"tree": module.tree.model_copy(update={"extras": [selected]})})
+                    if module.id == proposal.module_id else module for module in modules]})})
+    after = evaluate_product(changed, params, coupler_articles={}, finish="WHITE")
+    assert after.bom
+    assert [item.module_id for item in after.bom.extra_suggestions if item.selection.code == "SILL"] == ["m2"]
+    assert len(after.bom.extras) == (1 if decision == "ACCEPT" else 0)
+    assert product.assembly.modules[0].tree.extras == []
+
+
+def test_window_screen_covers_complete_divided_frame_and_leaf_screen_covers_each_leaf() -> None:
+    from dekopen_engine.models import ParametricNode
+    from dekopen_engine.extras import price_facts
+
+    params, fixed = extra_context()
+    tree = ParametricNode.model_validate_json(json.dumps({
+        "id": "split", "type": "SPLIT_V", "width_mm": "1500", "height_mm": "1400",
+        "split_offset_mm": "750", "mullion_profile_sku": "DEMO_60-MULLION-V",
+        "children": [fixed.model_dump(mode="json") | {"id": key, "width_mm": None, "height_mm": None}
+                     for key in ("left", "right")], "extras": [{"code": "SCREEN_FIXED"}]}))
+    # Resolve the actual catalog mullion rather than manufacturing a SKU.
+    from dekopen_engine.models import ProfileRole
+    tree = tree.model_copy(update={"mullion_profile_sku": params.effective_profile_articles[ProfileRole.MULLION_V].sku})
+    result = calculate_geometry(tree, params, finish="WHITE")
+    assert len(result.extras) == 1
+    fact = result.extras[0]
+    assert (fact.quantity, fact.width_mm, fact.height_mm) == (D(1), D(1500), D(1400))
+    assert sum(item.qty for item in result.fittings if item.extra_code == "SCREEN_FIXED") == 1
+    assert price_facts(params.extra_authority, result.extras)[0].total_price == D(33000)
+    _, moving = extra_context(opening="TURN_LEFT")
+    moving_tree = tree.model_copy(update={"height_mm": D(850), "children": [
+        moving.model_copy(update={"id": key, "width_mm": None, "height_mm": None}) for key in ("left", "right")],
+        "extras": [ExtraSelection(code="SCREEN_ROLL")]})
+    leaves = calculate_geometry(moving_tree, params, finish="WHITE")
+    assert len(leaves.extras) == 2 and {item.bay_id for item in leaves.extras} == {"left", "right"}
+    assert all(item.quantity == D(1) for item in leaves.extras)
+
+
 def test_no_guessed_extra_missing_authority_or_incompatible_screen() -> None:
     params,node = extra_context()
     with pytest.raises(ValueError,match="Sin dato"):

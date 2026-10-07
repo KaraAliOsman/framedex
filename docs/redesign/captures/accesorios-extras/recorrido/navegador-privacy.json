@@ -1,0 +1,122 @@
+[
+  {
+    "name": "privacidad-estimator-1440-light",
+    "screenshot": "privacidad-estimator-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-estimator-1440-dark",
+    "screenshot": "privacidad-estimator-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-estimator-1280-light",
+    "screenshot": "privacidad-estimator-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-estimator-1280-dark",
+    "screenshot": "privacidad-estimator-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-estimator-1024-light",
+    "screenshot": "privacidad-estimator-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-estimator-1024-dark",
+    "screenshot": "privacidad-estimator-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-owner-1440-light",
+    "screenshot": "privacidad-owner-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-owner-1440-dark",
+    "screenshot": "privacidad-owner-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-owner-1280-light",
+    "screenshot": "privacidad-owner-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-owner-1280-dark",
+    "screenshot": "privacidad-owner-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-owner-1024-light",
+    "screenshot": "privacidad-owner-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "privacidad-owner-1024-dark",
+    "screenshot": "privacidad-owner-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  }
+]

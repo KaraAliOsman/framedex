@@ -561,6 +561,63 @@ async function verifyChain(state) {
   await p.context().close();
   console.log("PASA D06 · precio aplicado, PDF sellado, OT y ensanche cortable");
 }
+
+async function verifyPrivacy(state) {
+  const project = await request("estimator", `/projects/${state.project.id}/`);
+  const operationId = project.current_pricing_operation_id;
+  if (!operationId) throw new Error("D06 pricing evidence must be applied first");
+  for (const role of ["estimator", "owner"]) {
+    const operations = (await request(role, "/pricing/operations/")).filter(
+      (item) => item.project_id === project.id,
+    );
+    const index = operations.findIndex((item) => item.id === operationId);
+    if (index < 0) throw new Error("D06 operation unavailable for role");
+    const authority = operations[index];
+    if (role === "estimator") {
+      expect(authority.costs_visible).toBe(false);
+      expect(authority.total_cost).toBeNull();
+      expect(authority.cost_lines).toEqual([]);
+      expect(authority.positions_breakdown).toEqual([]);
+      expect(authority.authorities).toEqual([]);
+      expect(authority.services_cost).toBeUndefined();
+      for (const item of authority.services) {
+        expect(item.cost_rate).toBeUndefined();
+        expect(item.total_cost).toBeUndefined();
+      }
+    } else {
+      expect(authority.costs_visible).toBe(true);
+      expect(authority.total_cost).not.toBeNull();
+      expect(authority.services[0].cost_rate).toBeDefined();
+    }
+    for (const size of [
+      { width: 1440, height: 900 },
+      { width: 1280, height: 800 },
+      { width: 1024, height: 768 },
+    ]) {
+      for (const theme of ["light", "dark"]) {
+        const p = await pageFor(role, theme, size);
+        await p.goto(base + `/projects/${project.id}/pricing`, { waitUntil: "networkidle" });
+        await p.getByRole("button", { name: "Recargar", exact: true }).click();
+        const review = p.getByRole("button", { name: "Revisar operación", exact: true });
+        await expect(review).toHaveCount(operations.length);
+        await review.nth(index).click();
+        const decision = p.locator(".operation-decision");
+        await expect(decision).toContainText("Instalación estándar");
+        if (role === "estimator") {
+          await expect(decision).toContainText("Los costos de compra son confidenciales");
+          await expect(decision.locator("dt").filter({ hasText: "Costo total" })).toHaveCount(0);
+          await expect(decision.locator("th").filter({ hasText: "Costo" })).toHaveCount(0);
+        } else {
+          await expect(decision).toContainText("Costo total");
+        }
+        await decision.locator(".extra-price-lines").last().scrollIntoViewIfNeeded();
+        await capture(p, `privacidad-${role}-${size.width}-${theme}`, ".extra-price-lines");
+        await p.context().close();
+      }
+    }
+  }
+  console.log("PASA D06 · precios de venta por rol y autoridad de costos conservada");
+}
 async function verifyPdfPolicies(state) {
   const original = await request("owner", "/organization/extras/");
   const cases = [];
@@ -765,6 +822,8 @@ try {
       JSON.stringify({ ...state, project, position: project.positions[0] }),
     );
     console.log("PASA D06 · borrador propio para matriz final del editor");
+  } else if (process.argv.includes("--privacy")) {
+    await verifyPrivacy(state);
   } else if (process.argv.includes("--pdf-policies")) {
     await verifyPdfPolicies(state);
   } else if (process.argv.includes("--publication")) {

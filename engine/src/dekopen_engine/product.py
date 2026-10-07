@@ -1048,7 +1048,9 @@ def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
         prefixed = prefixed.model_copy(update={"extras": [fact.model_copy(update={
             "bay_id": bay(fact.bay_id), "leaf_id": leaf(fact.leaf_id)}) for fact in result.extras]})
     if "extra_suggestions" in result.model_fields_set:
-        prefixed = prefixed.model_copy(update={"extra_suggestions": result.extra_suggestions})
+        prefixed = prefixed.model_copy(update={"extra_suggestions": [
+            item.model_copy(update={"module_id": module_id})
+            for item in result.extra_suggestions]})
     return prefixed
 
 
@@ -2218,6 +2220,9 @@ def evaluate_product(
                 fact for result in aggregated for fact in result.opening_leaves]})
         if any("extras" in result.model_fields_set for result in aggregated):
             bom = bom.model_copy(update={"extras": [fact for result in aggregated for fact in result.extras]})
+        if any("extra_suggestions" in result.model_fields_set for result in aggregated):
+            bom = bom.model_copy(update={"extra_suggestions": [
+                item for result in aggregated for item in result.extra_suggestions]})
 
     if any(issue.severity is Severity.ERROR for issue in issues):
         status = ProductStatus.INVALID

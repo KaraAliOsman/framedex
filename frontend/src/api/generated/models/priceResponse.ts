@@ -15,6 +15,9 @@ import type { PriceResponseRules } from "./priceResponseRules";
 import type { PriceResponseStateEnum } from "./priceResponseStateEnum";
 
 export interface PriceResponse {
+  costs_visible: boolean;
+  /** @nullable */
+  costs_reason: string | null;
   services?: unknown[];
   document_extra_prices?: DocumentExtraPricesEnum;
   id: string;
@@ -36,7 +39,8 @@ export interface PriceResponse {
   positions_breakdown: PositionBreakdown[];
   authorities: unknown[];
   rules: PriceResponseRules;
-  total_cost: string;
+  /** @nullable */
+  total_cost: string | null;
   project_net: string;
   project_tax: string;
   project_gross: string;

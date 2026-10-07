@@ -15482,13 +15482,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+              $ref: '#/components/schemas/ExtrasPreviewRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+              $ref: '#/components/schemas/ExtrasPreviewRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+              $ref: '#/components/schemas/ExtrasPreviewRequestRequest'
         required: true
       security:
       - SupabaseBearer: []
@@ -20231,6 +20231,11 @@ components:
     DesignBatchPreviewResponse:
       type: object
       properties:
+        costs_visible:
+          type: boolean
+        costs_reason:
+          type: string
+          nullable: true
         currency:
           type: string
         items:
@@ -20238,6 +20243,8 @@ components:
           items:
             $ref: '#/components/schemas/DesignBatchPreviewItemResponse'
       required:
+      - costs_reason
+      - costs_visible
       - currency
       - items
     DesignOptions:
@@ -21458,6 +21465,35 @@ components:
       required:
       - amount
       - label
+    ExtrasPreviewRequestRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        parametric_tree: {}
+        target_module_id:
+          type: string
+          minLength: 1
+          maxLength: 150
+      required:
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - parametric_tree
+      - system_id
     ExtrasPreviewResponse:
       type: object
       properties:
@@ -21465,6 +21501,15 @@ components:
           type: array
           items:
             type: string
+        available_by_module:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        target_module_id:
+          type: string
+          nullable: true
         leaf_targets:
           type: array
           items: {}
@@ -21483,12 +21528,14 @@ components:
           type: string
           nullable: true
       required:
+      - available_by_module
       - available_codes
       - currency
       - extras
       - leaf_targets
       - reason
       - suggestions
+      - target_module_id
       - total_price
     FinishAuthority:
       type: object
@@ -25997,6 +26044,11 @@ components:
     PriceResponse:
       type: object
       properties:
+        costs_visible:
+          type: boolean
+        costs_reason:
+          type: string
+          nullable: true
         services:
           type: array
           items: {}
@@ -26054,6 +26106,7 @@ components:
           additionalProperties: {}
         total_cost:
           type: string
+          nullable: true
         project_net:
           type: string
         project_tax:
@@ -26081,6 +26134,8 @@ components:
       - authorities
       - client_name
       - cost_lines
+      - costs_reason
+      - costs_visible
       - created_at
       - currency
       - discount_pct

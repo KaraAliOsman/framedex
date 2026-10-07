@@ -155,6 +155,56 @@ def test_extra_preview_motor_quantity_suggestions_and_no_cost_leak(real_rows):
     assert any(item['selection']['code']=='SILL' and item['cause'] for item in response.data['suggestions'])
 
 
+def test_assembly_extra_preview_keeps_suggestions_and_compatibility_per_module(real_rows):
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.demo_extras import extra_manifest
+    from pricing.repository import rows
+
+    # Declare accessories on an unlocked fixture with real coupler authority.
+    # The global v6 casement demo has no coupling profile; never invent one
+    # inside the production evaluator or mutate its locked historical series.
+    system = str(copy_fixed_catalog(real_rows.organizations['A']))
+    definitions = next(item['params']['extra_authority']['definitions'] for item in extra_manifest() if item['code'] == 'DEMO_60')
+    definitions = [item for item in definitions if item['kind'] != 'PROFILE']
+    for item in definitions:
+        if item['code'] == 'SCREEN_FIXED':
+            item['suggestion'] = 'WINDOW'
+    rows('UPDATE profile_systems SET extra_authority=%s::jsonb WHERE id=%s RETURNING id',
+         [json_text({'schema_version': 1, 'definitions': definitions, 'source': 'Accesorios declarados para ensayo D06'}), system])
+    set_role(real_rows, 'ESTIMATOR')
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT sku FROM profile_articles WHERE system_id=%s AND role='COUPLER' ORDER BY sku LIMIT 1", [system])
+        coupler = cursor.fetchone()[0]
+    modules = [{'id': key, 'width_mm': '900', 'height_mm': '850',
+                'tree': {'id': 'vano', 'type': 'BAY', 'opening_type': opening,
+                         'glass_thickness_mm': '24', 'glass_spec': '4-16-4'}}
+               for key, opening in [('fixed', 'FIXED'), ('moving', 'TURN_LEFT')]]
+    request = {'system_id': system, 'nominal_width_mm': '1800', 'nominal_height_mm': '850', 'color': 'WHITE',
+               'parametric_tree': {'version': 'product-v2', 'assembly': {'modules': modules,
+                   'couplings': [{'id': 'c1', 'angle_deg': '0', 'coupler_profile_sku': coupler}]}}}
+    client = client_for(real_rows)
+    response = client.post('/api/v1/projects/extras-preview/', request, format='json')
+    assert response.status_code == 200, response.data
+    assert response.data['available_codes'] == []
+    assert 'SCREEN_ROLL' not in response.data['available_by_module']['fixed']
+    assert 'SCREEN_ROLL' in response.data['available_by_module']['moving']
+    assert {item['module_id'] for item in response.data['suggestions'] if item['selection']['code'] == 'SCREEN_FIXED'} == {'fixed', 'moving'}
+    targeted = client.post('/api/v1/projects/extras-preview/', {**request, 'target_module_id': 'fixed'}, format='json')
+    assert targeted.status_code == 200, targeted.data
+    assert 'SCREEN_ROLL' not in targeted.data['available_codes']
+    assert all(item['module_id'] == 'fixed' and '|' not in item['bay_id'] for item in targeted.data['leaf_targets'])
+    changed = deepcopy(request)
+    changed['parametric_tree']['assembly']['modules'][0]['tree']['extras'] = [{'code': 'SCREEN_FIXED', 'decision': 'DISMISS'}]
+    after = client.post('/api/v1/projects/extras-preview/', changed, format='json')
+    assert after.status_code == 200, after.data
+    assert [item['module_id'] for item in after.data['suggestions'] if item['selection']['code'] == 'SCREEN_FIXED'] == ['moving']
+    changed['parametric_tree']['assembly']['modules'][0]['tree']['extras'] = [{'code': 'SCREEN_ROLL'}]
+    invalid = client.post('/api/v1/projects/extras-preview/', changed, format='json')
+    assert invalid.status_code == 422, invalid.data
+    missing = client.post('/api/v1/projects/extras-preview/', {**request, 'target_module_id': 'absent'}, format='json')
+    assert missing.status_code == 422, missing.data
+
+
 def test_service_project_id_cannot_cross_tenant(real_rows):
     set_role(real_rows,'ESTIMATOR')
     response=client_for(real_rows).get(f'/api/v1/projects/{uuid4()}/services/')

@@ -5,9 +5,13 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ExtrasPreviewResponseAvailableByModule } from "./extrasPreviewResponseAvailableByModule";
 
 export interface ExtrasPreviewResponse {
   available_codes: string[];
+  available_by_module: ExtrasPreviewResponseAvailableByModule;
+  /** @nullable */
+  target_module_id: string | null;
   leaf_targets: unknown[];
   extras: unknown[];
   suggestions: unknown[];

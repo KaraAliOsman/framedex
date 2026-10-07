@@ -180,6 +180,6 @@ def test_services_without_fx_keep_selection_and_explain_the_missing_authority(do
         response=services_response(org,project_row(org,project['id']))
         assert response['currency']=='USD' and response['lines']==[]
         assert response['selections'][0]['code']=='INSTALL'
-        assert response['reason'].startswith('Sin dato: falta la cotización de moneda')
+        assert response['reason'].startswith('Sin dato: Falta la cotización de moneda')
         assert 'regístrala antes de cotizar en otra moneda' in response['reason']
         assert 'missing_fx_authority' not in response['reason']

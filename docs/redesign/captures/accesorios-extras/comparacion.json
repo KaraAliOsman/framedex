@@ -365,25 +365,6 @@
       "precios-proyecto",
       "ESTIMATOR",
       "light",
-      "1024x768"
-    ],
-    "baseline_ref": "b0873d1a",
-    "before": 3,
-    "after": 1,
-    "new": [],
-    "overflow_before": false,
-    "overflow_after": false,
-    "http_before": [],
-    "http_after": [],
-    "console_before": [],
-    "console_after": []
-  },
-  {
-    "surface": "precios",
-    "route": [
-      "precios-proyecto",
-      "ESTIMATOR",
-      "light",
       "390x844"
     ],
     "baseline_ref": "b0873d1a",
@@ -440,27 +421,8 @@
     "route": [
       "precios-proyecto",
       "ESTIMATOR",
-      "dark",
-      "1440x900"
-    ],
-    "baseline_ref": "b0873d1a",
-    "before": 3,
-    "after": 1,
-    "new": [],
-    "overflow_before": false,
-    "overflow_after": false,
-    "http_before": [],
-    "http_after": [],
-    "console_before": [],
-    "console_after": []
-  },
-  {
-    "surface": "precios",
-    "route": [
-      "precios-proyecto",
-      "ESTIMATOR",
-      "dark",
-      "1280x800"
+      "light",
+      "1024x768"
     ],
     "baseline_ref": "b0873d1a",
     "before": 3,
@@ -498,7 +460,45 @@
       "precios-proyecto",
       "ESTIMATOR",
       "dark",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "dark",
       "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
     ],
     "baseline_ref": "b0873d1a",
     "before": 3,

@@ -1085,14 +1085,15 @@ function CostComposition({
 
 /** Whole-percent-free margin: (net − cost) / net, both Decimal strings —
  * computed in cents so the display never carries a float artifact. */
-function moneyCents(value: string): bigint | null {
+function moneyCents(value: string | null | undefined): bigint | null {
+  if (value == null) return null;
   const match = value.trim().match(/^(-?)(\d*)(?:\.(\d*))?$/);
   if (match === null || (match[2] === "" && (match[3] ?? "") === "")) return null;
   const units = match[2] === "" ? "0" : match[2];
   const fraction = `${match[3] ?? ""}00`.slice(0, 2);
   return BigInt(`${match[1]}${units}${fraction}`);
 }
-function marginText(net: string, cost: string, currency: string): string {
+function marginText(net: string, cost: string | null, currency: string): string {
   const netCents = moneyCents(net);
   const costCents = moneyCents(cost);
   if (netCents === null || costCents === null || netCents <= 0n) return "—";
@@ -1148,12 +1149,12 @@ function OperationDecision({
   onReject: () => void;
   onWithdraw?: () => void;
 }): JSX.Element {
+  const costsVisible = owner && operation.costs_visible !== false && operation.total_cost != null;
   const costs = new Map(
     (operation.cost_lines ?? []).map((line) => [line.position_index, line.line_cost]),
   );
-  // The preview's technical snapshot prices each position line-by-line:
-  // kind/SKU/quantity/cost plus the waste and labour rates the authority
-  // supplied. Estimators fold it open under each net line.
+  // Buying composition is available only to the owner. Estimators read the
+  // selling sublines supplied by the same frozen pricing authority.
   const breakdowns = new Map(
     (operation.positions_breakdown ?? []).map((entry) => [entry.position_index, entry]),
   );
@@ -1195,6 +1196,7 @@ function OperationDecision({
   // Per-position delta: the live price_net of the bound revision vs the
   // proposed line_net — same position index, same currency, never a guess.
   const canLineDelta = isBoundProject && sameCurrency;
+  const columnCount = 6 + (costsVisible ? 2 : 0) + (canLineDelta ? 1 : 0);
   // Category rollup: every cost component across all positions aggregated by
   // kind — the 'why' behind the total, in exact cents (no float artifacts).
   const kindTotals = new Map<string, bigint>();
@@ -1295,19 +1297,23 @@ function OperationDecision({
       ) : null}
 
       <div className="operation-totals">
-        <div className="operation-total">
-          <dt>{t("pricing.totalCost")}</dt>
-          <dd>{formatMoney(operation.total_cost, operation.currency)}</dd>
-        </div>
-        <div className="operation-total">
-          <dt>{t("pricing.marginNet")}</dt>
-          <dd>
-            {marginText(operation.project_net, operation.total_cost, operation.currency)}
-            {marginBelow && (
-              <span className="operation-warning">{t("pricing.marginBelowObjective")}</span>
-            )}
-          </dd>
-        </div>
+        {costsVisible && (
+          <div className="operation-total">
+            <dt>{t("pricing.totalCost")}</dt>
+            <dd>{formatMoney(operation.total_cost!, operation.currency)}</dd>
+          </div>
+        )}
+        {costsVisible && (
+          <div className="operation-total">
+            <dt>{t("pricing.marginNet")}</dt>
+            <dd>
+              {marginText(operation.project_net, operation.total_cost, operation.currency)}
+              {marginBelow && (
+                <span className="operation-warning">{t("pricing.marginBelowObjective")}</span>
+              )}
+            </dd>
+          </div>
+        )}
         {listNet !== null && (
           <div className="operation-total">
             <dt>{t("pricing.listPrice")}</dt>
@@ -1343,6 +1349,12 @@ function OperationDecision({
         )}
       </div>
 
+      {!costsVisible && (
+        <p className="operation-decision__audit">
+          {operation.costs_reason ??
+            "Los costos de compra son confidenciales. El dueño o jefe de taller puede consultarlos."}
+        </p>
+      )}
       <div className="operation-lines__wrap">
         <table className="operation-lines">
           <caption>{t("pricing.perPosition")}</caption>
@@ -1353,9 +1365,9 @@ function OperationDecision({
               <th scope="col">{t("pricing.quantity")}</th>
               <th scope="col">{t("pricing.unitPrice")}</th>
               <th scope="col">{t("pricing.lineDiscount")}</th>
-              <th scope="col">{t("pricing.lineCost")}</th>
+              {costsVisible && <th scope="col">{t("pricing.lineCost")}</th>}
               <th scope="col">{t("pricing.net")}</th>
-              <th scope="col">{t("pricing.marginNet")}</th>
+              {costsVisible && <th scope="col">{t("pricing.marginNet")}</th>}
               {canLineDelta && <th scope="col">{t("pricing.lineDelta")}</th>}
             </tr>
           </thead>
@@ -1385,9 +1397,11 @@ function OperationDecision({
                         ? `−${pctDisplay(lineDiscount)} %`
                         : "—"}
                     </td>
-                    <td className="operation-lines__money">
-                      {formatMoney(costs.get(line.position_index) ?? "0", operation.currency)}
-                    </td>
+                    {costsVisible && (
+                      <td className="operation-lines__money">
+                        {formatMoney(costs.get(line.position_index) ?? "0", operation.currency)}
+                      </td>
+                    )}
                     <td className="operation-lines__money">
                       {discount > 0 && position?.quantity ? (
                         <>
@@ -1406,13 +1420,15 @@ function OperationDecision({
                         formatMoney(line.line_net, operation.currency)
                       )}
                     </td>
-                    <td className="operation-lines__money">
-                      {marginText(
-                        line.line_net,
-                        costs.get(line.position_index) ?? "0",
-                        operation.currency,
-                      )}
-                    </td>
+                    {costsVisible && (
+                      <td className="operation-lines__money">
+                        {marginText(
+                          line.line_net,
+                          costs.get(line.position_index) ?? "0",
+                          operation.currency,
+                        )}
+                      </td>
+                    )}
                     {canLineDelta && (
                       <td className="operation-lines__delta operation-lines__money">
                         {position?.price_net != null
@@ -1433,7 +1449,7 @@ function OperationDecision({
                   </tr>
                   {line.sublines && (
                     <tr>
-                      <td colSpan={canLineDelta ? 9 : 8}>
+                      <td colSpan={columnCount}>
                         <ExtraPriceLines
                           lines={line.sublines}
                           currency={operation.currency}
@@ -1442,9 +1458,9 @@ function OperationDecision({
                       </td>
                     </tr>
                   )}
-                  {breakdown && (
+                  {costsVisible && breakdown && (
                     <tr className="operation-lines__detail">
-                      <td colSpan={canLineDelta ? 9 : 8}>
+                      <td colSpan={columnCount}>
                         <details>
                           <summary>{t("pricing.costComposition")}</summary>
                           <CostComposition
@@ -1465,7 +1481,7 @@ function OperationDecision({
         </table>
       </div>
 
-      {kindRows.length > 0 && (
+      {costsVisible && kindRows.length > 0 && (
         <details className="operation-authorities">
           <summary>{t("pricing.costByKind")}</summary>
           <table className="cost-composition__table">
@@ -1497,7 +1513,7 @@ function OperationDecision({
           ` · ${t("pricing.auditDecided")} ${formatDateTime(operation.approved_at)}`}
       </p>
 
-      {(operation.authorities ?? []).length > 0 && (
+      {costsVisible && (operation.authorities ?? []).length > 0 && (
         <details className="operation-authorities">
           <summary>{t("pricing.authorities")}</summary>
           <ul>

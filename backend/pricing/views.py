@@ -33,6 +33,7 @@ from pricing.service import (apply_operation, design_batch_preview, operation_pu
                              preview, withdraw_operation, pricing_public_detail)
 from pricing.xlsx_import import import_rows, parse_xlsx
 from projects.typology import derive_typology
+from pricing.visibility import price_visibility, batch_visibility
 
 logger = logging.getLogger(__name__)
 ERRORS = {code:OpenApiResponse(ErrorResponseSerializer) for code in (400,401,403,404,409,422,503)}
@@ -117,6 +118,8 @@ def _preview_attempt(token, claims, organization_header, data, service=preview):
         attempt_data = {**data,'_actor_id':token.user_id,'_actor_email':token.email}
         with commercial_backend():
             output = service(tenant.active_organization.organization_id,tenant,attempt_data)
+        role = tenant.active_organization.role
+        output = batch_visibility(output,role) if service is design_batch_preview else price_visibility(output,role)
     return output
 
 
@@ -213,6 +216,7 @@ class ApplyView(APIView):
             with commercial_backend():
                 output = apply_operation(org,token.user_id,tenant.active_organization.role,
                                          operation_id,**data)
+            output = price_visibility(output,tenant.active_organization.role)
         return Response(price_response(output))
 
 
@@ -227,6 +231,7 @@ class WithdrawView(APIView):
             with commercial_backend():
                 output = withdraw_operation(org,token.user_id,tenant.active_organization.role,
                                             operation_id,**data)
+            output = price_visibility(output,tenant.active_organization.role)
         return Response(price_response(output))
 
 
@@ -245,7 +250,7 @@ class OperationsView(APIView):
                               'AND project.org_id=operation.org_id '
                               'WHERE operation.org_id=%s'+condition+
                               ' ORDER BY operation.created_at DESC,operation.id LIMIT 100',parameters)
-                output = [price_response(operation_public(item)) for item in result]
+                output = [price_response(price_visibility(operation_public(item),tenant.active_organization.role)) for item in result]
         return Response(output)
 
 

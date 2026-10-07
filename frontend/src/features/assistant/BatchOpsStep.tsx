@@ -41,6 +41,7 @@ type Row = {
   error?: string;
   unitBefore?: string | null;
   unitAfter?: string | null;
+  costReason?: string | null;
 };
 
 /** The same save-payload shape the editor builds: a lone unit persists in
@@ -175,6 +176,7 @@ export function BatchOpsStep({
             }
             row.unitBefore = entry.unit_cost_before;
             row.unitAfter = entry.unit_cost_after;
+            row.costReason = preview.data.costs_reason;
           }
         } catch {
           // Pricing authority unavailable (no rules configured): rows stay
@@ -184,6 +186,7 @@ export function BatchOpsStep({
             if (row.status === "ready") {
               row.unitBefore = null;
               row.unitAfter = null;
+              row.costReason = "Sin dato: completa las reglas y tarifas del proyecto en Precios.";
             }
           }
         }
@@ -258,6 +261,8 @@ export function BatchOpsStep({
 
   const ready = rows.filter((row) => row.status === "ready");
   const applied = rows.filter((row) => row.status === "applied");
+  const hasCompleteCosts =
+    ready.length > 0 && ready.every((row) => row.unitBefore != null && row.unitAfter != null);
   const totalDelta = ready.reduce(
     (sum, row) => {
       const before = parseDecimal(row.unitBefore ?? "");
@@ -312,7 +317,8 @@ export function BatchOpsStep({
                     ? t("agent.batchUnsupported")
                     : row.unitBefore !== undefined && row.unitAfter !== undefined
                       ? row.unitBefore === null
-                        ? t("agent.batchNoCost")
+                        ? (row.costReason ??
+                          "Sin dato: revisa las tarifas del proyecto en Precios.")
                         : `${formatMoney(row.unitBefore, currency)} → ${formatMoney(row.unitAfter, currency)}`
                       : "…"}
             </span>
@@ -329,11 +335,13 @@ export function BatchOpsStep({
         ) : (
           <>
             <span>
-              {ready.length > 0
+              {hasCompleteCosts
                 ? t("agent.batchTotal")
                     .replace("{count}", String(ready.length))
                     .replace("{delta}", formatMoney(formatDecimal(totalDelta), currency))
-                : t("agent.batchNone")}
+                : ready.length > 0
+                  ? `${ready.length} posiciones · ${ready.find((row) => row.costReason)?.costReason ?? "Sin dato: revisa las tarifas del proyecto en Precios."}`
+                  : t("agent.batchNone")}
             </span>
             <button
               type="button"
