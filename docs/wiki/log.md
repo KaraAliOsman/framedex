@@ -344,3 +344,21 @@ Lint/typecheck/test/build, 24 comparaciones sin hallazgos nuevos, cinco estados
 y publicación/deshacer pasan; la rúbrica R1–R20 conserva sus dos rondas.
 El incidente local permanece visible y su ejecución se excluye de aceptación.
 La cola continúa con D06; main y Git dekopen no recibieron cambios.
+
+## 2026-10-06 — D06 · dominio y recorridos verificados antes de CI
+
+La rama `codex/D06-accesorios-extras` conecta catálogo/plantillas, sugerencias con
+causa, cantidades Decimal, BOM/cortes EXTRA, servicios por revisión y reparto
+comercial exacto. El recorrido real cotiza, aplica, emite dos políticas PDF,
+libera OT y verifica ensanche cortable. Los cinco estados, MFA real y
+importación/diff/publicación/deshacer pasan. Las 40 comparaciones de captura no
+registran hallazgos nuevos ni errores HTTP/consola; la limitación móvil anterior
+del editor permanece documentada para P04/P05.
+
+La inspección corrige tabla PDF, contraste, vocabulario de herrajes y consulta de
+pagos reservada al dueño. El fixture guarda un logo real con SHA y su API responde
+con bytes PNG; una regresión HTTP cubre el fallo heredado del renderer JSON.
+El gate inicial pasa 1 060 pgTAP y 330 integraciones, pero falla dos selectores
+anclados a v5: se actualizan a v6 conservando las aserciones. El cierre CI/merge
+queda pendiente de su comprobación final. Véase la aceptación D06; el incidente
+local previo conserva su informe y ninguna de sus ejecuciones afectadas se acepta.

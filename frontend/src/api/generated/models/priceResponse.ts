@@ -7,6 +7,7 @@
  */
 import type { CostLineResponse } from "./costLineResponse";
 import type { CurrencyEnum } from "./currencyEnum";
+import type { DocumentExtraPricesEnum } from "./documentExtraPricesEnum";
 import type { LineResponse } from "./lineResponse";
 import type { PositionBreakdown } from "./positionBreakdown";
 import type { PriceResponseExtrasItem } from "./priceResponseExtrasItem";
@@ -14,6 +15,8 @@ import type { PriceResponseRules } from "./priceResponseRules";
 import type { PriceResponseStateEnum } from "./priceResponseStateEnum";
 
 export interface PriceResponse {
+  services?: unknown[];
+  document_extra_prices?: DocumentExtraPricesEnum;
   id: string;
   project_id: string;
   project_code: string;

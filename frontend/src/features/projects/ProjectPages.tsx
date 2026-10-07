@@ -42,6 +42,7 @@ import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
+import { ProjectServicesPanel } from "./ProjectServicesPanel";
 import { Button, DeniedState, EmptyState, PageHeader, useConfirm } from "../../ui";
 
 const fields = [
@@ -1785,6 +1786,7 @@ function ProjectWorkspace({
                   <summary>{t("projects.compareTitle")}</summary>
                   <RevisionComparePanel project={project} />
                 </details>
+                <ProjectServicesPanel projectId={project.id} orgId={orgId} canWrite={canWrite} />
                 <ProjectActivitySection project={project} orgId={orgId} />
               </>
             </div>

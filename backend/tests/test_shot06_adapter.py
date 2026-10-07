@@ -74,7 +74,7 @@ def test_system_params_contract_accounts_for_every_field() -> None:
         "sliding_glazing_deduction_height_mm", "door_leaf_side_clearance_mm", "available_panel_rules",
         "rail_count", "finishes", "system_family", "sliding", "dimensional_limits", "legacy_authority",
         "opening_capabilities", "paired_leaf_rule", "compatible_opening_systems",
-        "finish_authority", "finish_profile_skus",
+        "finish_authority", "finish_profile_skus", "extra_authority",
     }
     assert len(demo_60_params().model_dump()) == 33
     assert not {"finish_authority", "finish_profile_skus"} & demo_60_params().model_dump().keys()

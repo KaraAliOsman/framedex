@@ -172,7 +172,7 @@ export const test = base.extend<{
       const sources = await readRows(
         "profile_systems",
         "code=eq.DEMO_60&org_id=is.null&is_global=eq.true&is_demo=eq.true" +
-          `&version=eq.${fixtureRole === "ESTIMATOR" ? 5 : 2}` +
+          `&version=eq.${fixtureRole === "ESTIMATOR" ? 6 : 2}` +
           `&legacy_authority=eq.false&is_active=eq.true&select=${systemSelect}`,
       );
       expect(sources).toHaveLength(1);
@@ -182,7 +182,7 @@ export const test = base.extend<{
       if (fixtureRole === "ESTIMATOR") {
         // Project editing uses the complete canonical synthetic catalog, including
         // its immutable inspection, manufacturing and purchasing authorities.
-        // Discovery offers v5; catalog CRUD below keeps an unreferenced v2 copy.
+        // Discovery offers v6; catalog CRUD below keeps an unreferenced v2 copy.
         await authenticate(page, email, supabaseUrl, mailpitUrl);
         await use({
           organizationId,

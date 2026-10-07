@@ -7,6 +7,8 @@ from decimal import Decimal
 from typing import Literal
 
 from dekopen_engine.bom import build_engine_result
+from dekopen_engine.extra_models import ExtraFact
+from dekopen_engine.extras import AccessoryLeaf
 from dekopen_engine.catalog_rules import (
     leaf_profile_role, reinforcement_required, reinforcement_screws, reinforcement_sku,
     rounded_profile_cut, sliding_parameters, validate_family, validate_leaf_limits,
@@ -429,6 +431,7 @@ def _append_profile(
     angle_right: Decimal = _ANGLE_WELDED,
     bay_id: str | None = None,
     leaf_id: str | None = None,
+    extra_code: str | None = None,
 ) -> None:
     validate_profile_authority(article, legacy=accumulator.legacy_authority,
                                reinforced_member=welded_ends is not None)
@@ -455,6 +458,8 @@ def _append_profile(
             leaf_id=leaf_id,
         )
     )
+    if extra_code is not None:
+        accumulator.profile_cuts[-1] = accumulator.profile_cuts[-1].model_copy(update={"extra_code": extra_code})
     steel_length: Decimal | None = None
     if ((article.reinforcement_rule is not None
          or (welded_ends is not None and article.material is MaterialType.PVC))
@@ -474,9 +479,13 @@ def _append_profile(
                 leaf_id=leaf_id,
             )
         )
+        if extra_code is not None:
+            accumulator.reinforcements[-1] = accumulator.reinforcements[-1].model_copy(update={"extra_code": extra_code})
         screws = reinforcement_screws(article, steel_length, qty=qty,
                                       bay_id=bay_id, leaf_id=leaf_id)
         if screws is not None:
+            if extra_code is not None:
+                screws = screws.model_copy(update={"extra_code": extra_code})
             accumulator.fittings.append(screws)
     for placement in placements:
         accumulator.semantic_members.append(
@@ -1702,6 +1711,88 @@ def _walk_node(
     )
 
 
+def accessory_leaves(computation: GeometryComputation, root: ParametricNode) -> list[AccessoryLeaf]:
+    nodes: dict[str, ParametricNode] = {}
+    def visit(node: ParametricNode) -> None:
+        nodes[node.id] = node
+        for child in node.children:
+            visit(child)
+    visit(root)
+    leaves = [AccessoryLeaf(bay_id=leaf.bay_id,leaf_id=leaf.leaf_id,width_mm=leaf.finished_width_mm,
+        height_mm=leaf.finished_height_mm,opening=leaf.opening or node_opening(nodes[leaf.bay_id]),
+        use=node_use(nodes[leaf.bay_id])) for leaf in computation.leaves]
+    seen = {leaf.bay_id for leaf in leaves}
+    leaves.extend(AccessoryLeaf(bay_id=opening.bay_id,leaf_id=None,width_mm=opening.width_mm,height_mm=opening.height_mm,
+        opening=node_opening(nodes[opening.bay_id]),use=node_use(nodes[opening.bay_id]))
+        for opening in computation.openings if opening.bay_id not in seen)
+    return leaves
+
+
+def _append_extras(accumulator: _GeometryAccumulator, root: ParametricNode, params: SystemParams) -> list[ExtraFact]:
+    from dekopen_engine.extras import position_lines, selected_definition
+    from dekopen_engine.extra_models import ExtraSelection
+
+    def no_nested(node: ParametricNode) -> None:
+        for child in node.children:
+            if child.extras or child.extra_context:
+                raise ValueError("Los extras se declaran en la raíz del módulo, con su hoja cuando corresponde.")
+            no_nested(child)
+
+    no_nested(root)
+    lines = position_lines(params.extra_authority, root.extras,
+        width=accumulator.nominal_width_mm, height=accumulator.nominal_height_mm,
+        leaves=accessory_leaves(accumulator.computation,root))
+    facts = []
+    for item in lines:
+        definition = selected_definition(params.extra_authority, ExtraSelection(code=item.code), "POSITION")
+        if item.kind in {"SCREEN", "FITTING"}:
+            assert item.sku is not None
+            if definition.replaces_handle:
+                replaced = False
+                for index, kit in enumerate(accumulator.hardware_items):
+                    if (kit.bay_id, kit.leaf_id) != (item.bay_id, item.leaf_id):
+                        continue
+                    if kit.resolution is None:
+                        raise ValueError("La manilla especial requiere un herraje con componentes declarados.")
+                    handles = [component for component in kit.contents if component.category == "HANDLE"]
+                    if not handles or sum((component.qty for component in handles), Decimal(0)) != 1:
+                        raise ValueError("La manilla especial requiere una manilla base por hoja.")
+                    accumulator.hardware_items[index] = kit.model_copy(update={
+                        "contents": [component for component in kit.contents if component.category != "HANDLE"]})
+                    replaced = True
+                if not replaced:
+                    raise ValueError("La hoja no declara una manilla reemplazable.")
+            accumulator.fittings.append(FittingPiece(kind=item.kind, sku=item.sku, qty=1,
+                bay_id=item.bay_id, leaf_id=item.leaf_id, extra_code=item.code))
+        elif item.kind == "PROFILE":
+            assert definition.profile_role is not None
+            role = ProfileRole(definition.profile_role)
+            article = _article(params, role)
+            selection = next(selection for selection in root.extras if selection.code == item.code and selection.decision == "ACCEPT")
+            w, h = accumulator.nominal_width_mm, accumulator.nominal_height_mm
+            if definition.basis == "SILL":
+                segments = [("BOTTOM", -selection.overhang_left_mm, h, w+selection.overhang_right_mm, h)]
+            else:
+                coordinates = {"TOP": (Decimal(0), Decimal(0), w, Decimal(0)),
+                    "RIGHT": (w, Decimal(0), w, h), "BOTTOM": (Decimal(0), h, w, h),
+                    "LEFT": (Decimal(0), Decimal(0), Decimal(0), h)}
+                segments = [(side, *coordinates[side]) for side in (definition.default_sides if selection.sides is None else selection.sides)]
+            cut_total = Decimal(0)
+            for side, x1, y1, x2, y2 in segments:
+                length = abs(x2-x1)+abs(y2-y1)
+                path = f"extra/{item.code}"
+                _append_profile(accumulator, article=article, length_mm=length, qty=1,
+                    welded_ends=None, placements=[_MemberPlacement(f"{path}/{side}", path, "EXTRA",
+                        None, side, Axis.HORIZONTAL if y1 == y2 else Axis.VERTICAL,
+                        PlacementDomain.DIRECT, _trace_segment(x1,y1,x2,y2))],
+                    angle_left=_ANGLE_SQUARE, angle_right=_ANGLE_SQUARE, extra_code=item.code)
+                cut_total += accumulator.profile_cuts[-1].length_mm
+            # The charged length follows the actual, catalog-rounded cuts.
+            item = item.model_copy(update={"quantity": cut_total / Decimal(1000), "sku": article.sku})
+        facts.append(item.fact())
+    return facts
+
+
 def compute_geometry(
     root: ParametricNode,
     params: SystemParams,
@@ -1791,6 +1882,7 @@ def compute_geometry(
             clearance_mm=clearance_mm,
             is_top=True,
         )
+    extra_facts = _append_extras(accumulator, root, params) if root.extras else []
     accumulator.computation.manufacturing_trace = GeometryManufacturingTraceV1(
         nominal_width_mm=nominal_width_mm,
         nominal_height_mm=nominal_height_mm,
@@ -1811,6 +1903,13 @@ def compute_geometry(
         if accumulator.opening_leaves:
             accumulator.computation.result = accumulator.computation.result.model_copy(
                 update={"opening_leaves": accumulator.opening_leaves})
+        if root.extras:
+            accumulator.computation.result = accumulator.computation.result.model_copy(update={"extras": extra_facts})
+        if params.extra_authority is not None:
+            from dekopen_engine.extras import suggestions
+            accumulator.computation.result = accumulator.computation.result.model_copy(update={"extra_suggestions": suggestions(
+                params.extra_authority, root.extras, width=nominal_width_mm, height=nominal_height_mm,
+                leaves=accessory_leaves(accumulator.computation,root), context=root.extra_context)})
         if finish is not None:
             accumulator.computation.result = finish_result(accumulator.computation.result, params, finish)
     return accumulator.computation

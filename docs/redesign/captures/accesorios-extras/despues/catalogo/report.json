@@ -1,0 +1,528 @@
+{
+  "generatedAt": "2026-10-07T01:58:44.155Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "catalogo",
+      "path": "/catalogs/systems",
+      "reachedPath": "/catalogs/systems",
+      "role": "WORKSHOP_MANAGER",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "catalogo__WORKSHOP_MANAGER__light__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "CUT_SAW",
+          "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "MACHINING_CELL",
+          "sample": "jo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado Soldadora · WELDER · Soldadura Limpiadora de e"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CLEANING_STATION",
+          "sample": "ado Soldadora · WELDER · Soldadura Limpiadora de esquinas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Pren"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CRIMPING_MACHINE",
+          "sample": "inas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Ba"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "ASSEMBLY_BENCH",
+          "sample": "de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "SASH_ASSEMBLY_BENCH",
+          "sample": "do · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · H"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "HARDWARE_BENCH",
+          "sample": "ASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puest"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "GLAZING_BENCH",
+          "sample": "de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calida"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "QC_STATION",
+          "sample": "co de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Em"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "PACK_STATION",
+          "sample": "trol · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Embalaje Fuentes De dónde viene cada valor: documento, p"
+        }
+      ]
+    },
+    {
+      "routeId": "catalogo",
+      "path": "/catalogs/systems",
+      "reachedPath": "/catalogs/systems",
+      "role": "WORKSHOP_MANAGER",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "catalogo__WORKSHOP_MANAGER__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "CUT_SAW",
+          "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "MACHINING_CELL",
+          "sample": "jo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado Soldadora · WELDER · Soldadura Limpiadora de e"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CLEANING_STATION",
+          "sample": "ado Soldadora · WELDER · Soldadura Limpiadora de esquinas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Pren"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CRIMPING_MACHINE",
+          "sample": "inas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Ba"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "ASSEMBLY_BENCH",
+          "sample": "de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "SASH_ASSEMBLY_BENCH",
+          "sample": "do · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · H"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "HARDWARE_BENCH",
+          "sample": "ASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puest"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "GLAZING_BENCH",
+          "sample": "de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calida"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "QC_STATION",
+          "sample": "co de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Em"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "PACK_STATION",
+          "sample": "trol · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Embalaje Fuentes De dónde viene cada valor: documento, p"
+        }
+      ]
+    },
+    {
+      "routeId": "catalogo",
+      "path": "/catalogs/systems",
+      "reachedPath": "/catalogs/systems",
+      "role": "WORKSHOP_MANAGER",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "catalogo__WORKSHOP_MANAGER__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "CUT_SAW",
+          "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "MACHINING_CELL",
+          "sample": "jo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado Soldadora · WELDER · Soldadura Limpiadora de e"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CLEANING_STATION",
+          "sample": "ado Soldadora · WELDER · Soldadura Limpiadora de esquinas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Pren"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CRIMPING_MACHINE",
+          "sample": "inas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Ba"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "ASSEMBLY_BENCH",
+          "sample": "de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "SASH_ASSEMBLY_BENCH",
+          "sample": "do · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · H"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "HARDWARE_BENCH",
+          "sample": "ASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puest"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "GLAZING_BENCH",
+          "sample": "de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calida"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "QC_STATION",
+          "sample": "co de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Em"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "PACK_STATION",
+          "sample": "trol · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Embalaje Fuentes De dónde viene cada valor: documento, p"
+        }
+      ]
+    },
+    {
+      "routeId": "catalogo",
+      "path": "/catalogs/systems",
+      "reachedPath": "/catalogs/systems",
+      "role": "WORKSHOP_MANAGER",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "catalogo__WORKSHOP_MANAGER__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "CUT_SAW",
+          "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "MACHINING_CELL",
+          "sample": "jo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado Soldadora · WELDER · Soldadura Limpiadora de e"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CLEANING_STATION",
+          "sample": "ado Soldadora · WELDER · Soldadura Limpiadora de esquinas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Pren"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CRIMPING_MACHINE",
+          "sample": "inas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Ba"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "ASSEMBLY_BENCH",
+          "sample": "de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "SASH_ASSEMBLY_BENCH",
+          "sample": "do · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · H"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "HARDWARE_BENCH",
+          "sample": "ASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puest"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "GLAZING_BENCH",
+          "sample": "de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calida"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "QC_STATION",
+          "sample": "co de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Em"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "PACK_STATION",
+          "sample": "trol · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Embalaje Fuentes De dónde viene cada valor: documento, p"
+        }
+      ]
+    },
+    {
+      "routeId": "catalogo",
+      "path": "/catalogs/systems",
+      "reachedPath": "/catalogs/systems",
+      "role": "WORKSHOP_MANAGER",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "catalogo__WORKSHOP_MANAGER__dark__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "CUT_SAW",
+          "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "MACHINING_CELL",
+          "sample": "jo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado Soldadora · WELDER · Soldadura Limpiadora de e"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CLEANING_STATION",
+          "sample": "ado Soldadora · WELDER · Soldadura Limpiadora de esquinas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Pren"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CRIMPING_MACHINE",
+          "sample": "inas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Ba"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "ASSEMBLY_BENCH",
+          "sample": "de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "SASH_ASSEMBLY_BENCH",
+          "sample": "do · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · H"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "HARDWARE_BENCH",
+          "sample": "ASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puest"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "GLAZING_BENCH",
+          "sample": "de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calida"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "QC_STATION",
+          "sample": "co de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Em"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "PACK_STATION",
+          "sample": "trol · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Embalaje Fuentes De dónde viene cada valor: documento, p"
+        }
+      ]
+    },
+    {
+      "routeId": "catalogo",
+      "path": "/catalogs/systems",
+      "reachedPath": "/catalogs/systems",
+      "role": "WORKSHOP_MANAGER",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "catalogo__WORKSHOP_MANAGER__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "CUT_SAW",
+          "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "MACHINING_CELL",
+          "sample": "jo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado Soldadora · WELDER · Soldadura Limpiadora de e"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CLEANING_STATION",
+          "sample": "ado Soldadora · WELDER · Soldadura Limpiadora de esquinas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Pren"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CRIMPING_MACHINE",
+          "sample": "inas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Ba"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "ASSEMBLY_BENCH",
+          "sample": "de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "SASH_ASSEMBLY_BENCH",
+          "sample": "do · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · H"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "HARDWARE_BENCH",
+          "sample": "ASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puest"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "GLAZING_BENCH",
+          "sample": "de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calida"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "QC_STATION",
+          "sample": "co de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Em"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "PACK_STATION",
+          "sample": "trol · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Embalaje Fuentes De dónde viene cada valor: documento, p"
+        }
+      ]
+    },
+    {
+      "routeId": "catalogo",
+      "path": "/catalogs/systems",
+      "reachedPath": "/catalogs/systems",
+      "role": "WORKSHOP_MANAGER",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "catalogo__WORKSHOP_MANAGER__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "CUT_SAW",
+          "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "MACHINING_CELL",
+          "sample": "jo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado Soldadora · WELDER · Soldadura Limpiadora de e"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CLEANING_STATION",
+          "sample": "ado Soldadora · WELDER · Soldadura Limpiadora de esquinas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Pren"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CRIMPING_MACHINE",
+          "sample": "inas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Ba"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "ASSEMBLY_BENCH",
+          "sample": "de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "SASH_ASSEMBLY_BENCH",
+          "sample": "do · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · H"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "HARDWARE_BENCH",
+          "sample": "ASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puest"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "GLAZING_BENCH",
+          "sample": "de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calida"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "QC_STATION",
+          "sample": "co de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Em"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "PACK_STATION",
+          "sample": "trol · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Embalaje Fuentes De dónde viene cada valor: documento, p"
+        }
+      ]
+    },
+    {
+      "routeId": "catalogo",
+      "path": "/catalogs/systems",
+      "reachedPath": "/catalogs/systems",
+      "role": "WORKSHOP_MANAGER",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "catalogo__WORKSHOP_MANAGER__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "CUT_SAW",
+          "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "MACHINING_CELL",
+          "sample": "jo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado Soldadora · WELDER · Soldadura Limpiadora de e"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CLEANING_STATION",
+          "sample": "ado Soldadora · WELDER · Soldadura Limpiadora de esquinas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Pren"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CRIMPING_MACHINE",
+          "sample": "inas · CLEANING_STATION · Limpieza Prensadora de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Ba"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "ASSEMBLY_BENCH",
+          "sample": "de esquinas · CRIMPING_MACHINE · Prensado Banco de armado · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "SASH_ASSEMBLY_BENCH",
+          "sample": "do · ASSEMBLY_BENCH · Ensamblaje Banco de armado de hojas · SASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · H"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "HARDWARE_BENCH",
+          "sample": "ASH_ASSEMBLY_BENCH · Ensamblaje de hoja Banco de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puest"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "GLAZING_BENCH",
+          "sample": "de herrajes · HARDWARE_BENCH · Herrajes Banco de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calida"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "QC_STATION",
+          "sample": "co de vidriado · GLAZING_BENCH · Vidrío Puesto de control · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Em"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "PACK_STATION",
+          "sample": "trol · QC_STATION · Control de calidad Puesto de embalaje · PACK_STATION · Embalaje Fuentes De dónde viene cada valor: documento, p"
+        }
+      ]
+    }
+  ],
+  "topFindings": [
+    {
+      "key": "raw-enum",
+      "count": 80,
+      "routes": [
+        "catalogo"
+      ],
+      "sample": "de proceso vinculado. Centros de trabajo Sierra de corte · CUT_SAW · Corte Centro de mecanizado · MACHINING_CELL · Mecanizado"
+    }
+  ]
+}

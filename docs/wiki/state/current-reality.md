@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-06
 volatility: high
-verified_ref: 94f9f5e773cfd227bca820460011ada77ce95baa
+verified_ref: codex/D06-accesorios-extras
 sources:
   - repository main
   - P00 foundation PR #114
@@ -23,6 +23,28 @@ sources:
 ---
 
 # Current reality
+
+## D06 · accesorios y servicios, rama en verificación (2026-10-06)
+
+`codex/D06-accesorios-extras` agrega definiciones compatibles, cantidades exactas,
+sugerencias con causa, extras con BOM/cortes y servicios por revisión. Base y
+sublíneas suman el neto aplicado; el ajuste monetario queda explícito. Instalación
+explícita y costo completo no se duplican. Policy, plantillas y presentación
+se revisan en Ajustes con MFA y conservan historial y autoridad sellada.
+
+El recorrido propio verificó guardar/reabrir, deshacer, importación/publicación,
+cinco estados, precio/apply, emisión de ambas políticas PDF y liberación/corte.
+Las 40 comparaciones formales no tienen hallazgos nuevos ni errores HTTP/consola.
+Los PDF finales se rasterizaron e inspeccionaron; servicios mantiene título y
+tabla juntos. Se corrigió la entrega binaria del logo y el fixture ahora conserva
+un PNG real con SHA verificable. La regresión HTTP y presentación documental pasan.
+
+El cierre local/CI/merge de D06 está pendiente y no se acredita como integrado.
+El primer gate aprobó 1 060 pgTAP y 330 integraciones, pero falló dos selectores
+del catálogo anterior; se actualizan explícitamente a v6 sin retirar aserciones.
+Véanse [accesorios y servicios](../product/accessories-services.md) y
+[aceptación D06](../../redesign/captures/accesorios-extras/aceptacion.md).
+El incidente de aislamiento previo permanece visible en la sección D05.
 
 ## D05 · carta por caras integrada y verificada, 2026-10-06
 

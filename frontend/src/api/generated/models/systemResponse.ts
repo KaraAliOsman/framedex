@@ -25,6 +25,7 @@ export interface SystemResponse {
   /** @nullable */
   readonly technical_reviewed_by: string | null;
   readonly review_pending: boolean;
+  extra_authority?: unknown | null;
   system_family:
     (typeof SystemResponseSystemFamily)[keyof typeof SystemResponseSystemFamily] | null;
   sliding_parameters?: SlidingSystemParameters | null;

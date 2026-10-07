@@ -124,6 +124,7 @@ import type {
   EvidenceList,
   EvidenceReviewInputRequest,
   EvidenceRow,
+  ExtrasPreviewResponse,
   FinishPreviewRequestRequest,
   FinishPreviewResponse,
   FlowAcknowledgement,
@@ -192,6 +193,8 @@ import type {
   PaymentRecordResponse,
   PaymentVoidRequest,
   PaymentsSummary,
+  PolicyResponse,
+  PolicyWriteRequest,
   PortalQuote,
   PositionResponse,
   PositionUpdateRequest,
@@ -232,6 +235,8 @@ import type {
   SearchResponse,
   SectionImportResponse,
   SendOrderRequestRequest,
+  ServicesResponse,
+  ServicesWriteRequest,
   ShareQuoteResponse,
   SignedAccessResponse,
   SiiCaf,
@@ -8315,6 +8320,159 @@ export const organizationBrandingLogoDelete = async (
       method: "DELETE",
     },
   );
+};
+
+export type organizationExtraPolicyResponse200 = {
+  data: PolicyResponse;
+  status: 200;
+};
+
+export type organizationExtraPolicyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationExtraPolicyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationExtraPolicyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationExtraPolicyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationExtraPolicyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationExtraPolicyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationExtraPolicyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationExtraPolicyResponseSuccess = organizationExtraPolicyResponse200 & {
+  headers: Headers;
+};
+export type organizationExtraPolicyResponseError = (
+  | organizationExtraPolicyResponse400
+  | organizationExtraPolicyResponse401
+  | organizationExtraPolicyResponse403
+  | organizationExtraPolicyResponse404
+  | organizationExtraPolicyResponse409
+  | organizationExtraPolicyResponse422
+  | organizationExtraPolicyResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationExtraPolicyResponse =
+  organizationExtraPolicyResponseSuccess | organizationExtraPolicyResponseError;
+
+export const getOrganizationExtraPolicyUrl = () => {
+  return `/api/v1/organization/extras/`;
+};
+
+export const organizationExtraPolicy = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationExtraPolicyResponse> => {
+  return apiMutator<organizationExtraPolicyResponse>(getOrganizationExtraPolicyUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type organizationExtraPolicySaveResponse200 = {
+  data: PolicyResponse;
+  status: 200;
+};
+
+export type organizationExtraPolicySaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationExtraPolicySaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationExtraPolicySaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationExtraPolicySaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationExtraPolicySaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationExtraPolicySaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationExtraPolicySaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationExtraPolicySaveResponseSuccess = organizationExtraPolicySaveResponse200 & {
+  headers: Headers;
+};
+export type organizationExtraPolicySaveResponseError = (
+  | organizationExtraPolicySaveResponse400
+  | organizationExtraPolicySaveResponse401
+  | organizationExtraPolicySaveResponse403
+  | organizationExtraPolicySaveResponse404
+  | organizationExtraPolicySaveResponse409
+  | organizationExtraPolicySaveResponse422
+  | organizationExtraPolicySaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationExtraPolicySaveResponse =
+  organizationExtraPolicySaveResponseSuccess | organizationExtraPolicySaveResponseError;
+
+export const getOrganizationExtraPolicySaveUrl = () => {
+  return `/api/v1/organization/extras/`;
+};
+
+export const organizationExtraPolicySave = async (
+  policyWriteRequest: PolicyWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationExtraPolicySaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<organizationExtraPolicySaveResponse>(getOrganizationExtraPolicySaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(policyWriteRequest),
+  });
 };
 
 export type portalQuoteRetrieveResponse200 = {
@@ -16482,6 +16640,161 @@ export const projectsResetPricing = async (
   });
 };
 
+export type projectExtraServicesResponse200 = {
+  data: ServicesResponse;
+  status: 200;
+};
+
+export type projectExtraServicesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectExtraServicesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectExtraServicesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectExtraServicesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectExtraServicesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectExtraServicesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectExtraServicesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectExtraServicesResponseSuccess = projectExtraServicesResponse200 & {
+  headers: Headers;
+};
+export type projectExtraServicesResponseError = (
+  | projectExtraServicesResponse400
+  | projectExtraServicesResponse401
+  | projectExtraServicesResponse403
+  | projectExtraServicesResponse404
+  | projectExtraServicesResponse409
+  | projectExtraServicesResponse422
+  | projectExtraServicesResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectExtraServicesResponse =
+  projectExtraServicesResponseSuccess | projectExtraServicesResponseError;
+
+export const getProjectExtraServicesUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/services/`;
+};
+
+export const projectExtraServices = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectExtraServicesResponse> => {
+  return apiMutator<projectExtraServicesResponse>(getProjectExtraServicesUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectExtraServicesSaveResponse200 = {
+  data: ServicesResponse;
+  status: 200;
+};
+
+export type projectExtraServicesSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectExtraServicesSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectExtraServicesSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectExtraServicesSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectExtraServicesSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectExtraServicesSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectExtraServicesSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectExtraServicesSaveResponseSuccess = projectExtraServicesSaveResponse200 & {
+  headers: Headers;
+};
+export type projectExtraServicesSaveResponseError = (
+  | projectExtraServicesSaveResponse400
+  | projectExtraServicesSaveResponse401
+  | projectExtraServicesSaveResponse403
+  | projectExtraServicesSaveResponse404
+  | projectExtraServicesSaveResponse409
+  | projectExtraServicesSaveResponse422
+  | projectExtraServicesSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectExtraServicesSaveResponse =
+  projectExtraServicesSaveResponseSuccess | projectExtraServicesSaveResponseError;
+
+export const getProjectExtraServicesSaveUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/services/`;
+};
+
+export const projectExtraServicesSave = async (
+  projectId: string,
+  servicesWriteRequest: ServicesWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectExtraServicesSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectExtraServicesSaveResponse>(getProjectExtraServicesSaveUrl(projectId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(servicesWriteRequest),
+  });
+};
+
 export type projectsStartSuccessorResponse200 = {
   data: ProjectResponse;
   status: 200;
@@ -16641,6 +16954,88 @@ export const projectDesignOptions = async (
   return apiMutator<projectDesignOptionsResponse>(getProjectDesignOptionsUrl(systemId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type positionExtrasPreviewResponse200 = {
+  data: ExtrasPreviewResponse;
+  status: 200;
+};
+
+export type positionExtrasPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type positionExtrasPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type positionExtrasPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type positionExtrasPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type positionExtrasPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type positionExtrasPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type positionExtrasPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type positionExtrasPreviewResponseSuccess = positionExtrasPreviewResponse200 & {
+  headers: Headers;
+};
+export type positionExtrasPreviewResponseError = (
+  | positionExtrasPreviewResponse400
+  | positionExtrasPreviewResponse401
+  | positionExtrasPreviewResponse403
+  | positionExtrasPreviewResponse404
+  | positionExtrasPreviewResponse409
+  | positionExtrasPreviewResponse422
+  | positionExtrasPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type positionExtrasPreviewResponse =
+  positionExtrasPreviewResponseSuccess | positionExtrasPreviewResponseError;
+
+export const getPositionExtrasPreviewUrl = () => {
+  return `/api/v1/projects/extras-preview/`;
+};
+
+export const positionExtrasPreview = async (
+  engineCalculateRequestRequest: EngineCalculateRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<positionExtrasPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<positionExtrasPreviewResponse>(getPositionExtrasPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(engineCalculateRequestRequest),
   });
 };
 

@@ -14,9 +14,9 @@ from dekopen_engine import (
 from dekopen_engine.models import ParametricNode
 
 
-def test_system_params_contract_has_exactly_35_scoped_fields() -> None:
-    assert len(SystemParams.model_fields) == 35
-    assert {"finish_authority", "finish_profile_skus"} <= SystemParams.model_fields.keys()
+def test_system_params_contract_has_exactly_36_scoped_fields() -> None:
+    assert len(SystemParams.model_fields) == 36
+    assert {"finish_authority", "finish_profile_skus", "extra_authority"} <= SystemParams.model_fields.keys()
     assert {"system_family", "sliding", "dimensional_limits"} <= SystemParams.model_fields.keys()
     assert "frame_face_width_mm" not in SystemParams.model_fields
     assert "sash_face_width_mm" not in SystemParams.model_fields

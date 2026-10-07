@@ -157,6 +157,17 @@ class OpeningAuthorityJSONField(serializers.JSONField):
 
 
 class SystemWriteSerializer(StrictSerializer):
+    extra_authority = OpeningAuthorityJSONField(required=False, allow_null=True)
+
+    def validate_extra_authority(self, value):
+        from dekopen_engine.extra_models import ExtraAuthority
+        if value is None:
+            return None
+        try:
+            return ExtraAuthority.model_validate_json(json_text(value)).model_dump(mode="json")
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Declara las reglas, artículos, tarifas exactas y fuentes de los extras.") from None
+
     system_family = serializers.ChoiceField(choices=[item.value for item in SystemFamily])
     sliding_parameters = SlidingSystemParametersSerializer(required=False, allow_null=True)
     dimensional_limits = SystemDimensionalLimitSerializer(many=True, required=False)

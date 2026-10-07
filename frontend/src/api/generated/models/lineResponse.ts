@@ -7,6 +7,8 @@
  */
 
 export interface LineResponse {
+  base_net?: string;
+  sublines?: unknown[];
   position_index: number;
   line_net: string;
   /** @nullable */

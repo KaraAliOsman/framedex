@@ -12,6 +12,7 @@ import type { SystemDimensionalLimitRequest } from "./systemDimensionalLimitRequ
 import type { SystemFamilyEnum } from "./systemFamilyEnum";
 
 export interface PatchedSystemWriteRequest {
+  extra_authority?: unknown | null;
   system_family?: SystemFamilyEnum;
   sliding_parameters?: SlidingSystemParametersRequest | null;
   dimensional_limits?: SystemDimensionalLimitRequest[];

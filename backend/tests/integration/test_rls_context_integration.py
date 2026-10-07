@@ -371,7 +371,7 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
     assert demo == {
         "id": str(real_rows.global_systems["DEMO_60"]),
         "code": "DEMO_60",
-        "name": "PVC practicable 60 mm · acabados v5 · DEMO",
+        "name": "PVC practicable 60 mm · extras v6 · DEMO",
         "is_demo": True,
         "system_family": "CASEMENT",
         "quote_ready": True,
@@ -434,10 +434,11 @@ def test_shot06_all_28_catalog_fields_reach_typed_engine(real_rows: RLSFixtures)
     expected_fields = expected.model_dump()
     actual_fields["available_hardware_kits"] = sorted(actual_fields["available_hardware_kits"], key=lambda k: k["sku"])
     expected_fields["available_hardware_kits"] = sorted(expected_fields["available_hardware_kits"], key=lambda k: k["sku"])
-    assert len(SystemParams.model_fields) == 35
+    assert len(SystemParams.model_fields) == 36
     assert len(actual_fields) == 33
     assert loaded.finish_authority is None and loaded.finish_profile_skus == {}
     assert not {"finish_authority", "finish_profile_skus"} & actual_fields.keys()
+    assert loaded.extra_authority is None and "extra_authority" not in actual_fields
     assert actual_fields["opening_capabilities"] == ()
     assert actual_fields["paired_leaf_rule"] is None
     compatible = actual_fields.pop("compatible_opening_systems")

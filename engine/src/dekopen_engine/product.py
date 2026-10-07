@@ -1044,6 +1044,11 @@ def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
         prefixed = prefixed.model_copy(update={"opening_leaves": [fact.model_copy(
             update={"bay_id": bay(fact.bay_id), "leaf_id": leaf(fact.leaf_id)})
             for fact in result.opening_leaves]})
+    if "extras" in result.model_fields_set:
+        prefixed = prefixed.model_copy(update={"extras": [fact.model_copy(update={
+            "bay_id": bay(fact.bay_id), "leaf_id": leaf(fact.leaf_id)}) for fact in result.extras]})
+    if "extra_suggestions" in result.model_fields_set:
+        prefixed = prefixed.model_copy(update={"extra_suggestions": result.extra_suggestions})
     return prefixed
 
 
@@ -1851,6 +1856,8 @@ def evaluate_product(
         result: EngineResult | None = None
         try:
             validate_family(_top_with_module_dims(module), params)
+            if (module.frameless is not None or module.contour is not None) and module.tree.extras:
+                raise ValueError("Sin dato: esta forma no declara una autoridad de accesorios; revisa su catálogo.")
             if module.frameless is not None:
                 result, frameless_issues = _evaluate_frameless_module(
                     module, coupler_articles=coupler_articles
@@ -2209,6 +2216,8 @@ def evaluate_product(
         if any("opening_leaves" in result.model_fields_set for result in aggregated):
             bom = bom.model_copy(update={"opening_leaves": [
                 fact for result in aggregated for fact in result.opening_leaves]})
+        if any("extras" in result.model_fields_set for result in aggregated):
+            bom = bom.model_copy(update={"extras": [fact for result in aggregated for fact in result.extras]})
 
     if any(issue.severity is Severity.ERROR for issue in issues):
         status = ProductStatus.INVALID

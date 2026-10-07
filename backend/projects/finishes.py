@@ -80,11 +80,14 @@ def finish_preview(org_id, data):
                     "width_mm": data["nominal_width_mm"], "height_mm": data["nominal_height_mm"],
                     "color_interior": code, "color_exterior": code, "parametric_tree": data["parametric_tree"],
                     "typology": _typology(data["parametric_tree"])}
-                cost, area, result, _ = position_cost(repo, position, calculated_rules)
+                cost, area, result, formation = position_cost(repo, position, calculated_rules)
+                from dekopen_engine.extra_models import ExtraLine
+                from pricing.repository import json_text
+                extra_lines = [ExtraLine.model_validate_json(json_text(item)) for item in formation.get("extra_lines",[])]
                 finish = resolve_finish(params, code)
                 position.update(color_interior=finish.interior.code, color_exterior=finish.exterior.code)
                 price = configured_unit_price(repo, mode, position, cost=cost, area=area,
-                    result=result, margin=rules[0]["default_margin_pct"], context_code="DEFAULT")
+                    result=result, margin=rules[0]["default_margin_pct"], context_code="DEFAULT",extras=extra_lines)
                 if price < cost:
                     raise PricingError("negative_margin")
                 totals.append(price)

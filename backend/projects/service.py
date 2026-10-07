@@ -488,7 +488,7 @@ def _typology(tree):
         ) from error
 
 
-def save_position(org_id, project_id, data, *, position_id=None):
+def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=True):
     editable(org_id, project_id)
     current = None
     if position_id:
@@ -497,6 +497,9 @@ def save_position(org_id, project_id, data, *, position_id=None):
             missing()
         unchanged(current, data["expected_updated_at"])
     design = data["design"]
+    if current is None and apply_defaults:
+        from projects.extras import apply_position_defaults
+        design = apply_position_defaults(org_id,design)
     with connection.cursor() as cursor:
         cursor.execute("SELECT private.reserve_catalog_authority(%s,%s)",
                        [design["system_id"], org_id])
@@ -722,7 +725,9 @@ def clone_project(org_id, actor_id, project_id, data):
             }
         )
         serializer.is_valid(raise_exception=True)
-        save_position(org_id, copied["id"], serializer.validated_data)
+        save_position(org_id, copied["id"], serializer.validated_data,apply_defaults=False)
+    from projects.extras import copy_services
+    copy_services(org_id,source,copied)
     return project_public(org_id, project_row(org_id, copied["id"]), detail=True)
 
 
@@ -805,6 +810,8 @@ def start_successor(org_id, project_id, expected_current_revision=None):
         )
     if not updated_positions or len(updated_projects) != 1:
         raise contract_error(403, "successor_permission_denied", "Tu rol no permite crear revisiones.")
+    from projects.extras import copy_services
+    copy_services(org_id,project,{**project,'current_revision':successor})
     return {
         **project_public(org_id, project_row(org_id, project_id), detail=True),
         "successor_created": True,

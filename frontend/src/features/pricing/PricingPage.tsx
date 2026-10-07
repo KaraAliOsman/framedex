@@ -12,6 +12,7 @@ import { actionErrorDetail } from "../errors";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { DeniedState, PageHeader, Tabs } from "../../ui";
 import { PositionThumb } from "../projects/PositionThumb";
+import { ExtraPriceLines } from "../projects/ExtraPriceLines";
 import { t } from "../../i18n/es-CL";
 import { useCanvasStore } from "../canvas/canvasStore";
 import "./pricing.css";
@@ -34,6 +35,8 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
   HARDWARE: "pricing.hardware",
   PANEL: "pricing.panel",
   ACCESSORY: "pricing.accessory",
+  EXTRA: "pricing.accessory",
+  FITTING: "pricing.hardware",
   BAR: "pricing.bar",
   M: "pricing.metre",
   M2: "pricing.squareMetre",
@@ -1428,6 +1431,17 @@ function OperationDecision({
                       </td>
                     )}
                   </tr>
+                  {line.sublines && (
+                    <tr>
+                      <td colSpan={canLineDelta ? 9 : 8}>
+                        <ExtraPriceLines
+                          lines={line.sublines}
+                          currency={operation.currency}
+                          title={`Extras de la posición ${line.position_index}`}
+                        />
+                      </td>
+                    </tr>
+                  )}
                   {breakdown && (
                     <tr className="operation-lines__detail">
                       <td colSpan={canLineDelta ? 9 : 8}>
@@ -1494,6 +1508,11 @@ function OperationDecision({
         </details>
       )}
 
+      <ExtraPriceLines
+        lines={operation.services}
+        currency={operation.currency}
+        title="Servicios del proyecto"
+      />
       <div className="operation-decision__actions">
         {["PREVIEW", "PENDING"].includes(operation.state) &&
           (owner || operation.state !== "PENDING") && (
@@ -1544,9 +1563,6 @@ function CommercialOperations({
   const [confirmed, setConfirmed] = useState(false);
   const [projectId, setProjectId] = useState(boundProjectId ?? "");
   const [selectedMode, setSelectedMode] = useState("COST_PLUS_MARGIN");
-  // Project-level charges (instalación, traslado) — priced extras that ride
-  // the pricing request into the sealed revision. Amounts are net.
-  const [extras, setExtras] = useState<{ label: string; kind: string; amount: string }[]>([]);
   const [history, setHistory] = useState<Operation[]>([]);
   const [boundProject, setBoundProject] = useState<ProjectResponse | undefined>();
   // Bumped after a successful apply — the project's live totals changed, so
@@ -1804,16 +1820,8 @@ function CommercialOperations({
             if (data[key] !== undefined && data[key] !== "")
               data[key] = String(Number(data[key]) / 100);
           }
-          const extraLines = extras
-            .filter((item) => item.label.trim() !== "" && item.amount !== "")
-            .map((item) => ({
-              label: item.label.trim(),
-              kind: item.kind,
-              amount: item.amount,
-            }));
           void runCurrent(
-            () =>
-              request<Operation>("preview/", "POST", { ...data, extras: extraLines, confirmed }),
+            () => request<Operation>("preview/", "POST", { ...data, confirmed }),
             publishOperation,
             "pricing.calculateError",
           );
@@ -1942,70 +1950,16 @@ function CommercialOperations({
           </select>
         </label>
         <p className="field-hint">{t("pricing.segmentHint")}</p>
-        <fieldset className="pricing-extras">
-          <legend>{t("pricing.extras")}</legend>
-          <p className="field-hint">{t("pricing.extrasHint")}</p>
-          {extras.map((item, index) => (
-            <div className="pricing-extras__row" key={index}>
-              <select
-                aria-label={t("pricing.extras")}
-                value={item.kind}
-                onChange={(event) =>
-                  setExtras(
-                    extras.map((entry, i) =>
-                      i === index ? { ...entry, kind: event.target.value } : entry,
-                    ),
-                  )
-                }
-              >
-                <option value="INSTALLATION">{t("pricing.extraKindInstallation")}</option>
-                <option value="FREIGHT">{t("pricing.extraKindFreight")}</option>
-                <option value="OTHER">{t("pricing.extraKindOther")}</option>
-              </select>
-              <input
-                aria-label={t("pricing.extraLabel")}
-                placeholder={t("pricing.extraLabel")}
-                maxLength={120}
-                value={item.label}
-                onChange={(event) =>
-                  setExtras(
-                    extras.map((entry, i) =>
-                      i === index ? { ...entry, label: event.target.value } : entry,
-                    ),
-                  )
-                }
-              />
-              <input
-                aria-label={t("pricing.extraAmount")}
-                placeholder={t("pricing.extraAmount")}
-                type="number"
-                min="0"
-                step="1"
-                value={item.amount}
-                onChange={(event) =>
-                  setExtras(
-                    extras.map((entry, i) =>
-                      i === index ? { ...entry, amount: event.target.value } : entry,
-                    ),
-                  )
-                }
-              />
-              <button type="button" onClick={() => setExtras(extras.filter((_, i) => i !== index))}>
-                {t("pricing.extraRemove")}
-              </button>
-            </div>
-          ))}
-          {extras.length < 10 && (
-            <button
-              type="button"
-              onClick={() =>
-                setExtras([...extras, { label: "", kind: "INSTALLATION", amount: "" }])
-              }
-            >
-              {t("pricing.extraAdd")}
-            </button>
-          )}
-        </fieldset>
+        <p className="field-hint">
+          Los accesorios se calculan en el editor. Revisa instalación, retiro y flete en{" "}
+          <Link
+            className="pricing-services-link"
+            to={boundProjectId ? `/projects/${boundProjectId}` : "/projects"}
+          >
+            Servicios del proyecto
+          </Link>{" "}
+          antes de cotizar.
+        </p>
         <label>
           {t("pricing.reason")}
           <input

@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from django.http import HttpResponse
 
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.response import Response
@@ -536,7 +537,7 @@ class OrganizationBrandingLogoView(APIView):
     def get(self, request):
         with scope(request, READ_ROLES) as (_, _, org):
             content, content_type = org_branding.logo_bytes(org_id=org)
-        return Response(
+        return HttpResponse(
             content,
             content_type=content_type,
             headers={"Cache-Control": "private, max-age=300"},

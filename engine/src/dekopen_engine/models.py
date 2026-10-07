@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler
 
 from dekopen_engine.glass_composition import GlassComposition, GlassProcessing, GlassProduct, total_glass_thickness
 from dekopen_engine.finish_models import FinishAuthority, ResolvedFinish
+from dekopen_engine.extra_models import ExtraAuthority, ExtraContext, ExtraFact, ExtraSelection, ExtraSuggestion
 
 
 class EngineModel(BaseModel):
@@ -807,7 +808,7 @@ class SystemParams(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_historical_finish_authority(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        for key in ("finish_authority", "finish_profile_skus"):
+        for key in ("finish_authority", "finish_profile_skus", "extra_authority"):
             if key not in self.model_fields_set:
                 result.pop(key, None)
         return result
@@ -849,6 +850,7 @@ class SystemParams(EngineModel):
     finishes: tuple[str, ...] = ("WHITE",)
     finish_authority: FinishAuthority | None = None
     finish_profile_skus: dict[str, dict[str, str]] = Field(default_factory=dict)
+    extra_authority: ExtraAuthority | None = None
     sliding_glazing_deduction_width_mm: Decimal | None = None
     sliding_glazing_deduction_height_mm: Decimal | None = None
     door_leaf_side_clearance_mm: Decimal
@@ -893,6 +895,8 @@ class SystemParams(EngineModel):
 
 
 class ParametricNode(EngineModel):
+    extras: list[ExtraSelection] = Field(default_factory=list, max_length=30)
+    extra_context: ExtraContext | None = None
     id: str
     type: NodeType
     width_mm: Decimal | None = None
@@ -936,13 +940,14 @@ class ParametricNode(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_legacy_presence(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        for key in ("opening", "opening_use", "hinged_layout", "hardware_selection"):
+        for key in ("opening", "opening_use", "hinged_layout", "hardware_selection", "extras", "extra_context"):
             if key not in self.model_fields_set:
                 result.pop(key, None)
         return result
 
 
 class ProfileCut(EngineModel):
+    extra_code: str | None = None
     sku: str
     role: ProfileRole
     material: MaterialType
@@ -962,7 +967,7 @@ class ProfileCut(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_historical_cut(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        for key in ("commercial_sku", "stock_color"):
+        for key in ("commercial_sku", "stock_color", "extra_code"):
             if key not in self.model_fields_set:
                 result.pop(key, None)
         return result
@@ -978,9 +983,18 @@ class FittingPiece(EngineModel):
     qty: int = Field(gt=0)
     bay_id: str | None = None
     leaf_id: str | None = None
+    extra_code: str | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_extra(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        if "extra_code" not in self.model_fields_set:
+            result.pop("extra_code", None)
+        return result
 
 
 class ReinforcementPiece(EngineModel):
+    extra_code: str | None = None
     parent_profile_sku: str
     reinforcement_sku: str | None = None
     role: ProfileRole
@@ -990,6 +1004,13 @@ class ReinforcementPiece(EngineModel):
     leaf_id: str | None = None
     # Curved reinforcement follows its parent member's arc.
     sagitta_mm: Decimal | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_extra(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        if "extra_code" not in self.model_fields_set:
+            result.pop("extra_code", None)
+        return result
 
 
 class OpeningHandleFact(EngineModel):
@@ -1018,6 +1039,8 @@ class LeafOpeningFact(EngineModel):
 
 
 class EngineResult(EngineModel):
+    extras: list[ExtraFact] = Field(default_factory=list)
+    extra_suggestions: list[ExtraSuggestion] = Field(default_factory=list)
     finish: ResolvedFinish | None = None
     profile_cuts: list[ProfileCut]
     reinforcements: list[ReinforcementPiece]
@@ -1031,7 +1054,7 @@ class EngineResult(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_historical_bom(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        for key in ("opening_leaves", "finish"):
+        for key in ("opening_leaves", "finish", "extras", "extra_suggestions"):
             if key not in self.model_fields_set:
                 result.pop(key, None)
         return result

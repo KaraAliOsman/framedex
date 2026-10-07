@@ -15,6 +15,8 @@ import type { Reinforcement } from "./reinforcement";
 import type { ResolvedFinish } from "./resolvedFinish";
 
 export interface EngineResultPayload {
+  extras?: unknown[];
+  extra_suggestions?: unknown[];
   finish?: ResolvedFinish | null;
   profile_cuts: ProfileCut[];
   reinforcements: Reinforcement[];

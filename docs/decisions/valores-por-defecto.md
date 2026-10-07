@@ -126,7 +126,29 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   El margen objetivo requiere calcular el proyecto completo y muestra Sin dato
   por posición; una tarifa o conversión ausente también explica Sin dato.
   La resta exacta pertenece al motor. No hay un recargo universal oculto.
+
 - Sin textura del fabricante se usa la muestra lineal declarada, marcada como
   aproximada; no se inventa grano ni brillo emisivo. Los límites, refuerzo y
   días adicionales son datos revisables de catálogo. Un plazo no declarado
   permanece Sin dato. DEMO v5 nunca acredita una ficha productiva.
+
+## D06 · accesorios y servicios (2026-10-06)
+
+- DOC-01 muestra sublíneas con precio por defecto. El dueño puede elegir precio
+  agrupado en Ajustes › Extras y servicios; la revisión conserva la política que
+  se selló al emitir. Un cambio posterior no altera un documento anterior.
+- No se agregan servicios ni accesorios silenciosamente cuando la organización
+  no los declaró. Ajustes permite definir plantillas para nuevas posiciones,
+  con regla, tarifa y fuente. La página del proyecto mantiene visible la revisión
+  de instalación/flete/retiro y explica la ausencia de tarifas. Una plantilla
+  incompatible bloquea su creación con causa, sin desaparecer en otra serie.
+- Las sugerencias del motor requieren aceptación del estimador; descartar queda
+  guardado y deshacer lo revierte. Los vuelos, lados y reglas por vano/hoja son
+  datos configurables de catálogo; no se adopta una medida universal de obra.
+- Las tarifas representan el accesorio o servicio completo. Su BOM se conserva
+  para fabricar/comprar, pero no genera un segundo costo. La instalación explícita
+  reemplaza el cargo histórico equivalente; dos reglas de instalación se rechazan.
+- El neto aplicado gobierna la presentación. El reparto exacto incluye el ajuste
+  de cuantización a moneda; cantidad × tarifa + ajuste = sublínea. La base y sus
+  sublíneas suman el total de posición sellado, también con descuento o margen
+  objetivo de proyecto. Las tarifas DEMO se muestran como sintéticas.

@@ -114,6 +114,7 @@ class PanelChoiceSerializer(serializers.Serializer):
 
 
 class DesignOptionsSerializer(serializers.Serializer):
+    extra_definitions = serializers.ListField(child=serializers.JSONField(),required=False)
     finish_authority = FinishAuthoritySerializer(allow_null=True, required=False)
     system_id = serializers.UUIDField()
     system_family = serializers.CharField(allow_null=True)
@@ -169,6 +170,7 @@ class DesignOptionsView(APIView):
                         pass  # Unresolved cost is displayed explicitly below.
             relative = relative_glass_prices(rates)
             glass_choices = []
+            from projects.extras import public_definition
             for item in glass_rows:
                 product = item["resolved_product"]
                 total = total_glass_thickness(product.composition) if product else None
@@ -185,6 +187,8 @@ class DesignOptionsView(APIView):
             return response(
                 {
                     "system_id": system_id,
+                    "extra_definitions": [public_definition(item)
+                        for item in params.extra_authority.definitions if item.scope == "POSITION"] if params.extra_authority else [],
                     "finish_authority": params.finish_authority.model_dump(mode="json") if params.finish_authority else None,
                     "system_family": params.system_family.value if params.system_family else None,
                     "is_demo": bool(rows("SELECT is_demo FROM public.profile_systems WHERE id=%s", [system_id])[0]["is_demo"]),

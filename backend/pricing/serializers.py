@@ -133,6 +133,8 @@ class WithdrawSerializer(StrictSerializer):
 
 
 class LineResponseSerializer(serializers.Serializer):
+    base_net = serializers.CharField(required=False)
+    sublines = serializers.ListField(child=serializers.JSONField(),required=False)
     position_index = serializers.IntegerField()
     line_net = serializers.CharField()
     quantity = serializers.IntegerField(allow_null=True, required=False)
@@ -166,6 +168,8 @@ class PositionBreakdownSerializer(serializers.Serializer):
 
 
 class PriceResponseSerializer(serializers.Serializer):
+    services = serializers.ListField(child=serializers.JSONField(),required=False)
+    document_extra_prices = serializers.ChoiceField(choices=['ITEMIZED','GROUPED'],required=False)
     id = serializers.UUIDField()
     project_id = serializers.UUIDField()
     project_code = serializers.CharField(allow_blank=True)

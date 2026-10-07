@@ -28,6 +28,7 @@ D = Decimal
 # raised while iterating positions get prefixed with the position label
 # ("Vano 3 · Dormitorio: …") so the blocker names where it lives.
 PRICING_ERROR_DETAILS = {
+    'installation_rule_duplicate': 'la instalación está seleccionada por posición y por proyecto; elige una sola regla',
     'ambiguous_authority': 'hay más de una autoridad de costos vigente para la fecha; revisa las listas de costos',
     'ambiguous_cost_list': 'hay más de una lista de costos vigente; revisa las vigencias en Configuración',
     'ambiguous_selected_glass': 'usa más de un vidrio distinto y el precio por m² exige un solo vidrio por vano',
@@ -183,7 +184,10 @@ def position_cost(repo, position, rules):
     color = position_finish_code(position)
     materials = []
     composition = []
+    glass_extras = []
     for cut in result.profile_cuts:
+        if cut.extra_code is not None:
+            continue  # Extra's sourced supply cost includes its physical BOM.
         stock = profile_stocks[cut.sku]
         cost = linear_cost(repo,stock.commercial_sku,cut.length_mm*cut.qty,stock.stock_length_mm)
         materials.append(cost)
@@ -198,12 +202,15 @@ def position_cost(repo, position, rules):
                 "amount": (repo.convert(surcharge_rule.amount, surcharge_rule.currency)
                            if surcharge_rule.kind in {"FIXED", "PER_M"} else surcharge_rule.amount),
                 "currency": repo.currency})})})})
+        priced_result = priced_result.model_copy(update={"profile_cuts":[cut for cut in priced_result.profile_cuts if cut.extra_code is None]})
         surcharge = finish_surcharge(priced_result, sum(materials, D('0')), repo.currency)
         materials.append(surcharge)
         composition.append({'kind':'FINISH','sku':color,'quantity':'1','unit':'EA',
             'cost':str(surcharge.quantize(D('0.0001'))), 'source':surcharge_rule.source,
             'rule':surcharge_rule.model_dump(mode='json')})
     for steel in result.reinforcements:
+        if steel.extra_code is not None:
+            continue
         stock = steel_stocks[(steel.parent_profile_sku,steel.reinforcement_sku)]
         cost = linear_cost(repo,stock.commercial_sku,steel.length_mm*steel.qty,stock.stock_length_mm)
         materials.append(cost)
@@ -231,7 +238,11 @@ def position_cost(repo, position, rules):
                 shape_perimeter_m=glass_polygon_perimeter_m(glass.shape) if glass.shape else None)
         except ValueError as error:
             raise PricingError('glass_processing_cost_missing') from error
-        cost = priced.total_cost
+        from dekopen_engine.extras import glass_bar_lines
+        if priced.bars_length_m:
+            glass_extras.extend(glass_bar_lines(priced,node.glass_product,bay_id=glass.bay_id,currency=repo.currency,
+                waste=rules['waste_factor_pct'],margin=rules['default_margin_pct']))
+        cost = priced.total_cost-sum((charge.total_cost for charge in priced.charges if charge.kind in {'Palillaje por metro','Cruce de palillaje'}),D(0))
         materials.append(cost)
         composition.append({'kind':'GLASS','sku':sku,
                             'quantity':str(priced.billable_area_m2.quantize(D('0.0001'))),
@@ -265,24 +276,35 @@ def position_cost(repo, position, rules):
     # Frameless supports/fittings are counted pieces: a declared SKU must
     # resolve a unit price or the quote fails — never silently priced at zero.
     for fitting in result.fittings:
+        if fitting.extra_code is not None:
+            continue
         cost = repo.cost(fitting.sku,'EA') * fitting.qty
         materials.append(cost)
         composition.append({'kind':'FITTING','sku':fitting.sku,
                             'quantity':str(fitting.qty),'unit':'EA',
                             'cost':str(cost.quantize(D('0.0001')))})
     area = exact_glass_area_m2(position['width_mm'],position['height_mm'])
+    from projects.extras import converted_lines
+    from dekopen_engine.extras import price_facts
+    extra_lines = converted_lines(repo,price_facts(params.extra_authority,result.extras)) if result.extras else []
+    extra_lines.extend(glass_extras)
+    installation = D('0') if rules.get('explicit_project_installation') or any(item.installation for item in extra_lines) else rules['installation_rate_per_m2']
     total = direct_cost(materials,area,rules['waste_factor_pct'],rules['labor_rate_per_m2'],
-                        rules['installation_rate_per_m2'])
+                        installation) + sum((item.total_cost for item in extra_lines),D('0'))
+    composition.extend({'kind':'EXTRA','sku':item.code,'quantity':str(item.quantity),'unit':item.unit,
+                        'cost':str(item.total_cost),'source':item.source} for item in extra_lines)
     formation = {'composition':composition,
+                 'extra_authority':params.extra_authority.model_dump(mode='json') if params.extra_authority else None,
+                 'extra_lines':[item.model_dump(mode='json') for item in extra_lines],
                  'materials_cost':str(sum(materials,D('0')).quantize(D('0.0001'))),
                  'waste_pct':str(rules['waste_factor_pct']),
                  'labor_rate_per_m2':str(rules['labor_rate_per_m2']),
-                 'installation_rate_per_m2':str(rules['installation_rate_per_m2']),
+                 'installation_rate_per_m2':str(installation),
                  'area_m2':str(area.quantize(D('0.0001')))}
     return total, area, result, formation
 
 
-def configured_unit_price(repo, mode, position, *, cost, area, result, margin, context_code):
+def configured_unit_price(repo, mode, position, *, cost, area, result, margin, context_code, extras=()):
     """One selling-price authority for project pricing and indicative finish deltas."""
     if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
         raise PricingError('project_mode_requires_project')
@@ -303,9 +325,11 @@ def configured_unit_price(repo, mode, position, *, cost, area, result, margin, c
             extra = {'cells': repo.matrix(config)}
         else:
             extra = {'catalog_price': repo.convert(config['catalog_price'], config['currency'])}
-    return unit_price(mode, cost=cost, margin=margin, area=area,
+    from dekopen_engine.extras import position_price
+    base_price = unit_price(mode, cost=cost-sum((item.total_cost for item in extras),D('0')), margin=margin, area=area,
                       width=position['width_mm'], height=position['height_mm'],
                       foil=position['color_interior'] != 'WHITE' or position['color_exterior'] != 'WHITE', **extra)
+    return position_price(base_price,extras)
 
 
 def preview(org_id, actor, request):
@@ -336,6 +360,13 @@ def preview(org_id, actor, request):
     calculation_rules = {**rules,
         'labor_rate_per_m2':repo.convert(rules['labor_rate_per_m2'],organization['currency']),
         'installation_rate_per_m2':repo.convert(rules['installation_rate_per_m2'],organization['currency'])}
+    from projects.extras import service_lines, policy_record, lock_policy
+    from dekopen_engine.extra_models import ExtraLine
+    from dekopen_engine.extras import partition_price, service_price, target_services
+    lock_policy(org_id)
+    policy_evidence = policy_record(org_id)
+    project_services = service_lines(org_id,project,positions,repo)
+    calculation_rules['explicit_project_installation'] = any(item.installation for item in project_services)
     discount = request['discount_pct']
     state = discount_state(actor.active_organization.role,discount,request['confirmed'])
     if mode == PricingMode.COMMERCIAL_LIST_WITH_DISCOUNTS:
@@ -346,22 +377,28 @@ def preview(org_id, actor, request):
         validate_segment(request['segment'],discount,sum(p['quantity'] for p in positions))
     if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT and discount:
         raise PricingError('target_margin_already_defines_final_price')
-    cost_lines, priced_lines, technical = [], [], []
+    cost_lines, priced_lines, technical, extras_by_index, price_weights = [], [], [], {}, {}
     with localcontext() as context:
         context.prec = 80
         for position in positions:
             try:
                 cost, area, result, formation = position_cost(repo,position,calculation_rules)
                 index = position['position_index']
+                position_extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation.get('extra_lines',[])]
+                if calculation_rules['explicit_project_installation'] and any(item.installation for item in position_extras):
+                    raise PricingError('installation_rule_duplicate')
+                extras_by_index[index] = position_extras
                 cost_lines.append((index,cost*position['quantity']))
                 technical.append({'position_id':position['id'],
                                   'position_index':index,
                                   'unit_cost':str(cost.quantize(D('0.0001'))),
                                   'bom':result.model_dump(mode='json'),**formation})
                 if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
+                    price_weights[index] = cost-sum((item.total_cost for item in position_extras),D('0'))
                     continue
                 exact_price = configured_unit_price(repo, mode, position, cost=cost, area=area,
-                    result=result, margin=rules['default_margin_pct'], context_code=request['context_code'])
+                    result=result, margin=rules['default_margin_pct'], context_code=request['context_code'],extras=position_extras)
+                price_weights[index] = exact_price-sum((item.total_price for item in position_extras),D('0'))
                 priced_lines.append(CommercialLine(index,position['quantity'],cost,exact_price,discount))
             except PricingError as error:
                 # The estimator fixing this has to know WHICH vano fails —
@@ -370,9 +407,15 @@ def preview(org_id, actor, request):
                     error.code,'la operación comercial requiere revisar sus permisos, datos o configuración')
                 raise contract_error(422,error.code,f'{_position_label(position)}: {detail}.') from error
         extra_amounts = [D(str(item['amount'])) for item in request.get('extras') or []]
-        output = (target_project(cost_lines,request['target_margin'],request['currency'],rules['tax_rate_pct'],extra_amounts)
-                  if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT
-                  else finish_lines(priced_lines,request['currency'],rules['tax_rate_pct'],extra_amounts))
+        service_rows = [service_price(item,request['currency']) for item in project_services]
+        extra_amounts.extend(D(row['amount']) for row in service_rows)
+        if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT and project_services:
+            output, service_rows = target_services(cost_lines,project_services,request['target_margin'],request['currency'],rules['tax_rate_pct'],
+                [D(str(item['amount'])) for item in request.get('extras') or []])
+        else:
+            output = (target_project(cost_lines,request['target_margin'],request['currency'],rules['tax_rate_pct'],extra_amounts)
+                      if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT
+                      else finish_lines(priced_lines,request['currency'],rules['tax_rate_pct'],extra_amounts))
     # Per-line selling detail so the decision screen can show unit price,
     # quantity and discount next to the line total — a line net is a per-
     # position TOTAL (unit × qty × (1−discount)), never a unit price. The
@@ -392,6 +435,10 @@ def preview(org_id, actor, request):
              'unit_price': str(line.exact_unit_price.quantize(D('0.0001'))),
              'discount_pct': str(line.discount)}
             for line in priced_lines]
+    for detail,(index,net) in zip(line_detail,output.lines,strict=True):
+        if extras_by_index[index]:
+            detail.update(partition_price(net,price_weights[index],[(item,item.total_cost if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT else item.total_price)
+                for item in extras_by_index[index]],quantity=quantities[index],currency=request['currency']))
     audit_reason(request['reason'])
     record = one(
         'INSERT INTO public.pricing_operations(org_id,project_id,requested_by,requested_by_email,'
@@ -399,8 +446,8 @@ def preview(org_id, actor, request):
         'VALUES(%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id,created_at',
         [org_id,project['id'],request['_actor_id'],request.get('_actor_email'),
          json_text({key:value for key,value in request.items() if not key.startswith('_')}),
-         json_text({'rules':rules,'authorities':repo.authorities,'positions':technical,'cost_lines':cost_lines}),
-         json_text({**asdict(output),'line_detail':line_detail}),source_revision(project,positions),project['current_revision'],
+         json_text({'rules':rules,'authorities':repo.authorities,'positions':technical,'cost_lines':cost_lines,'extra_policy':policy_evidence}),
+         json_text({**asdict(output),'line_detail':line_detail,'services':service_rows,'services_cost':str(sum((item.total_cost for item in project_services),D('0'))),'document_extra_prices':policy_evidence['policy']['document_prices']}),source_revision(project,positions),project['current_revision'],
          'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
     costs = [(index, D(str(cost))) for index, cost in cost_lines]
     breakdown = [{
@@ -425,11 +472,13 @@ def preview(org_id, actor, request):
             'segment':request.get('segment') or '',
             'currency':request['currency'],**asdict(output),
             'line_detail':line_detail,
+            'services':service_rows,
+            'document_extra_prices':policy_evidence['policy']['document_prices'],
             'extras':[{'label':item['label'],'kind':item['kind'],
                        'amount':str(item['amount'])}
                       for item in request.get('extras') or []],
             'cost_lines':[{'position_index':index,'line_cost':str(cost)} for index,cost in costs],
-            'total_cost':str(sum((cost for _, cost in costs), D('0'))),
+            'total_cost':str(sum((cost for _, cost in costs), D('0'))+sum((item.total_cost for item in project_services),D('0'))),
             'positions_breakdown':breakdown,
             'authorities':repo.authorities,
             'rules':{key:str(rules[key]) for key in
@@ -566,7 +615,7 @@ def operation_public(operation):
                        'amount':str(item['amount'])}
                       for item in decoded(operation['request']).get('extras') or []],
             'cost_lines':[{'position_index':index,'line_cost':str(cost)} for index,cost in costs],
-            'total_cost':str(sum((D(str(cost)) for _, cost in costs), D('0'))),
+            'total_cost':str(sum((D(str(cost)) for _, cost in costs), D('0'))+D(str(decoded(operation['result']).get('services_cost','0')))),
             'positions_breakdown':breakdown,
             'authorities':snapshot.get('authorities') or [],
             'rules':{key:str(snapshot_rules[key]) for key in
@@ -607,6 +656,11 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
         raise PricingError('stale_pricing_operation')
     output = decoded(operation['result'])
     snapshot = decoded(operation['input_snapshot'])
+    if 'extra_policy' in snapshot:
+        from projects.extras import policy_record, lock_policy
+        lock_policy(org_id)
+        if policy_record(org_id) != snapshot['extra_policy']:
+            raise PricingError('stale_pricing_operation')
     costs = {int(index):D(str(cost)) for index,cost in snapshot['cost_lines']}
     prices = {int(index):D(str(price)) for index,price in output['lines']}
     with connection.cursor() as cursor:
@@ -619,7 +673,7 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
                            [costs[index],prices[index],request['discount_pct'],position['id'],org_id])
         cursor.execute('UPDATE public.projects SET total_cost_net=%s,total_price_net=%s,total_price_tax=%s,'
                        'total_price_gross=%s,updated_at=now() WHERE id=%s AND org_id=%s',
-                       [sum(costs.values(),D('0')),output['project_net'],output['project_tax'],
+                       [sum(costs.values(),D('0'))+D(str(output.get('services_cost','0'))),output['project_net'],output['project_tax'],
                         output['project_gross'],project['id'],org_id])
         cursor.execute("UPDATE public.pricing_operations SET state='APPLIED',approved_by=%s,approved_at=clock_timestamp(),reason=%s "
                        'WHERE id=%s AND org_id=%s',[actor_id,reason,operation_id,org_id])

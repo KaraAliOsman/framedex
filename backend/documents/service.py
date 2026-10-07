@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from math import ceil
+import json
 from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -142,7 +143,7 @@ def _pricing_state_matches(
             or D(str(position["discount_pct"])) != discount
         ):
             raise DocumentaryError("applied_pricing_binding_mismatch")
-    expected_cost = _stored_money(sum(costs.values(), D("0")))
+    expected_cost = _stored_money(sum(costs.values(), D("0"))+D(str(result.get("services_cost","0"))))
     expected_net = _stored_money(D(str(result.get("project_net"))))
     expected_tax = _stored_money(D(str(result.get("project_tax"))))
     expected_gross = _stored_money(D(str(result.get("project_gross"))))
@@ -1077,6 +1078,8 @@ def freeze_revision_a(
         pricing_result = _json_object(operation["result"], "invalid_applied_pricing_result")
         _pricing_state_matches(project, positions, request, pricing_snapshot, pricing_result)
         priced_bom = _technical_bom(pricing_snapshot)
+        extra_authorities = {str(item['position_id']):item['extra_authority'] for item in pricing_snapshot.get('positions',[])
+                             if 'extra_authority' in item}
 
         position_inputs: list[dict[str, object]] = []
         bom: list[dict[str, object]] = []
@@ -1112,6 +1115,12 @@ def freeze_revision_a(
             color = _position_finish(position)
             system_id = UUID(str(position["system_id"]))
             params = SystemParamsRepository().load_visible(system_id, org_id)
+            if position_id in extra_authorities:
+                from dekopen_engine.extra_models import ExtraAuthority
+                authority = extra_authorities[position_id]
+                params = params.model_copy(update={'extra_authority':ExtraAuthority.model_validate_json(json.dumps(authority)) if authority else None})
+                if authority is None:
+                    params.__pydantic_fields_set__.discard('extra_authority')
             calculations, result = _position_calculations(
                 tree=tree,
                 width_mm=D(str(position["width_mm"])),
