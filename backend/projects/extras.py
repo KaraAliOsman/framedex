@@ -173,6 +173,8 @@ class ServicesResponseSerializer(serializers.Serializer):
 
 def services_response(org,project):
     from projects.service import _priced
+    from dekopen_engine.commercial import PricingError
+    from pricing.service import pricing_public_detail
     reason, lines = None, []
     with extra_backend():
         currency = one("SELECT currency FROM public.tenancy_organizations WHERE id=%s",[org])["currency"]
@@ -198,6 +200,8 @@ def services_response(org,project):
             repo = PricingRepository(org,datetime.now(ZoneInfo("America/Santiago")).date(),currency)
             try:
                 lines = service_lines(org,project,positions,repo)
+            except PricingError as error:
+                reason = "Sin dato: " + pricing_public_detail(error.code)
             except ValueError as error:
                 reason = str(error)
         public_lines = [{key:value for key,value in service_price(item,currency).items() if key not in {"cost_rate","total_cost"}} for item in lines]

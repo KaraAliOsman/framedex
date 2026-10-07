@@ -5,6 +5,7 @@ from uuid import UUID
 import json
 
 import pytest
+from django.db import connection
 
 from backend.tests.integration.test_shot09_documentary import documentary_tenant as documentary_tenant, as_user, _seed_project, _tenant
 from catalogs.glass import load_products
@@ -156,3 +157,29 @@ def test_new_position_template_is_motor_intent_not_a_past_revision_rewrite(docum
         saved=save_position(org,project['id'],serializer.validated_data)
         assert saved['design']['parametric_tree']['extras'][0]['code']=='INSTALL'
         assert D(saved['bom']['extras'][0]['quantity'])==D('5.8')
+
+
+def test_services_without_fx_keep_selection_and_explain_the_missing_authority(documentary_tenant):
+    org,_,users,_=documentary_tenant
+    owner=users['OWNER']
+    design=fixture(org,owner)
+    # Fixture setup stays outside the member role; production code never
+    # broadens organization update permissions to resolve a missing rate.
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE public.tenancy_organizations SET currency='USD' WHERE id=%s",[org])
+    with as_user(owner):
+        project=create_project(org,owner,{'name':'Servicios en otra moneda · DEMO','client_name':'Ensayo'})
+        serializer=PositionWriteSerializer(data={'location_tag':'Patio · DEMO','quantity':2,'design':design})
+        serializer.is_valid(raise_exception=True)
+        save_position(org,project['id'],serializer.validated_data)
+        save_policy(org,ExtraPolicy(services=[installation()]))
+        with extra_backend():
+            rows('INSERT INTO project_extra_services(org_id,project_id,revision_code,selections) '
+                 'VALUES(%s,%s,%s,%s::jsonb) RETURNING project_id',
+                 [org,project['id'],'REV-A',json_text([{'code':'INSTALL'}])])
+        response=services_response(org,project_row(org,project['id']))
+        assert response['currency']=='USD' and response['lines']==[]
+        assert response['selections'][0]['code']=='INSTALL'
+        assert response['reason'].startswith('Sin dato: falta la cotización de moneda')
+        assert 'regístrala antes de cotizar en otra moneda' in response['reason']
+        assert 'missing_fx_authority' not in response['reason']
