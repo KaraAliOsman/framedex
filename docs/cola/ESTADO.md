@@ -12,7 +12,7 @@
 | D07 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/125 | f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d | CI 4/4 verde; vano/montaje, evidencia y Δ de rectificación; 1090 pgTAP, 362 RLS, 11 E2E y ocho upgrades PG16; seis observaciones corregidas. |
 | IA2 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/126 | 0835e3f0834e2680674458693626617a84cc19f8 | CI 4/4 verde; 50 operaciones UI/IA/API, MiMo 21/26 y E+J 19/21 (90,48 %), aplicar/recargar/deshacer; 1101 pgTAP y 380 integraciones; tres observaciones corregidas. |
 | IA3 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/127 | 64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa | CI 4/4 verde; MiMo 22/26 y E+J 19/21; 6 transportes, presupuesto/rutas/trazas; 1137 pgTAP, 395 integraciones y 11 E2E; cuatro observaciones corregidas. |
-| P02 | 1 | pendiente |  |  |  |
+| P02 | 1 | en curso |  |  |  |
 | P25 | 1 | pendiente |  |  |  |
 | P04 | 1 | pendiente |  |  |  |
 | P05 | 1 | pendiente |  |  |  |
