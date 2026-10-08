@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-08
 volatility: high
-verified_ref: 64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa
+verified_ref: 4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb
 sources:
+  - P02 PR #128, CI run 37789541479 on 839524bb, squash 4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb, 2026-10-08
   - repository main
   - P00 foundation PR #114
   - local stack fixes PR #116
@@ -25,7 +26,7 @@ sources:
 
 # Current reality
 
-## P02 · gates locales verificados, integración pendiente (08-10-2026)
+## P02 · integrado y verificado tras revisión (08-10-2026)
 
 La rama `codex/P02-identificadores-humanos`, base `18c814bc`, conserva órdenes,
 recibos, retazos y huellas históricos y agrega direcciones OC/REC/RT por tenant.
@@ -48,8 +49,10 @@ identidad de unidad y formato de área/peso. Los cuatro gates locales pasan:
 744 motor (+2 xfail), 1.249 backend y 817 frontend. El gate DB completo pasa
 1.156 pgTAP, 403 integraciones y 11 E2E. Nueve verificadores PG16 cubren diez
 upgrades poblados, incluido el backfill P02. Se restauró el bind propio de pgTAP
-tras reiniciar Docker, sin cambiar checks. El PR #128 pasó CI sobre `4f18e061`;
-las correcciones requieren CI del nuevo HEAD antes del squash. Véase
+tras reiniciar Docker, sin cambiar checks. El PR #128 pasó sus cuatro checks
+sobre el HEAD final `839524bb` en la corrida `37789541479` y quedó integrado
+con squash `4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb`. Las tres conversaciones
+de revisión están resueltas. Véase
 [aceptación P02](../../redesign/P02-ACEPTACION.md).
 
 La revisión limita a 100 candidatos de OT las búsquedas sin orden y pide el QR

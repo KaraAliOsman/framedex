@@ -650,3 +650,13 @@ vistas/impresiones válidas y la decodificación de ocho capturas, 24 PDF y cuat
 impresiones pasan otra vez. Se corrigieron color del enlace y llegada al plan;
 las PNG se comprimieron conservando píxeles. La aplicación propia queda detenida.
 La nueva corrida de CI y el squash se registrarán tras pasar.
+
+## 2026-10-08 — P02 · integración final
+
+El PR [#128](https://github.com/KaraAliOsman/framedex/pull/128) pasa los cuatro
+checks requeridos sobre `839524bb48563a68334e137cff4f762d9f8df2c7` en la corrida
+`37789541479`; Database Gate termina PASA a las 14:19 UTC. Las tres conversaciones
+de revisión siguen resueltas y la base no recibió avances incompatibles.
+Se integra por squash `4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb`, se actualizan
+la aceptación, `verified_ref` y la fila P02. La aplicación propia permanece
+detenida. La cola continúa con P25; sus superficies todavía no están aceptadas.

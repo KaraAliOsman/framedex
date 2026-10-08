@@ -1,9 +1,9 @@
 # P02 · identificadores humanos y presentación exacta
 
-Estado: recorridos y documentos finales verificados en
-`codex/P02-identificadores-humanos`, base `18c814bc`; gates locales PASA el
-08-10-2026.
-No se considera integrado hasta los cuatro checks del PR y squash.
+Estado: integrado en `integracion/v1` por el PR
+[#128](https://github.com/KaraAliOsman/framedex/pull/128), squash
+`4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb`, el 08-10-2026.
+Los cuatro checks de CI pasan sobre el HEAD final `839524bb`; gates locales PASA.
 
 Las compras, recepciones y retazos se nombran OC/REC/RT mediante alias inmutables
 por organización. Los códigos, payloads, hashes y artefactos históricos no se
@@ -45,7 +45,9 @@ byte; el segundo intento completo pasa. No se cambió un check ni el SQL para
 corregir el entorno. El gate detuvo y limpió su stack aislado; la aplicación
 propia permanece detenida durante el gate. El PR
 [#128](https://github.com/KaraAliOsman/framedex/pull/128) pasó los cuatro checks
-sobre `4f18e061`; las correcciones requieren una nueva corrida de CI antes del squash.
+sobre el HEAD final `839524bb` en la corrida `37789541479`, incluidas las
+correcciones. Las tres conversaciones de revisión están resueltas. El squash
+`4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb` queda integrado sin cambios ajenos.
 
 ## Correcciones de revisión
 
