@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-08
 volatility: medium
-verified_ref: codex/P25-marca-identidad
+verified_ref: 588835689c0324b6f76f0ea474f6460c6c22f0b1
 sources:
   - docs/design/marca.md
   - docs/redesign/P25-ACEPTACION.md

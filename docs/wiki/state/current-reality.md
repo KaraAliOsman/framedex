@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-08
 volatility: high
-verified_ref: 4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb
+verified_ref: 588835689c0324b6f76f0ea474f6460c6c22f0b1
 sources:
+  - P25 PR #129, CI run 37824851379 on 8622ba03, squash 588835689c0324b6f76f0ea474f6460c6c22f0b1, 2026-10-08
   - P02 PR #128, CI run 37789541479 on 839524bb, squash 4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb, 2026-10-08
   - repository main
   - P00 foundation PR #114
@@ -26,7 +27,7 @@ sources:
 
 # Current reality
 
-## P25 · verificación local, integración pendiente (08-10-2026)
+## P25 · integrado y verificado tras revisión (08-10-2026)
 
 La rama `codex/P25-marca-identidad`, base `bcbd8060`, aplica B con geometría
 óptica, assets de ambos temas y firma impresa. El onboarding crea una posición
@@ -45,7 +46,10 @@ sin reescribir el anterior. Dieciséis vistas adicionales pasan en ambos temas.
 Los cuatro gates locales pasan: 744 motor (+2 xfail), 1.272 backend y 830
 frontend. Database Gate pasa 1.173 pgTAP, 410 integraciones y 11 E2E reales;
 los upgrades PG16 conservan también la identidad, snapshots, hashes y precios
-históricos de P25. CI y squash permanecen pendientes. La aceptación está en
+históricos de P25. El PR #129 pasó sus cuatro checks sobre `8622ba03` en
+la corrida `37824851379` y se integró con squash
+`588835689c0324b6f76f0ea474f6460c6c22f0b1`. Las cuatro conversaciones están
+resueltas. La aplicación propia quedó detenida con respaldo. La aceptación está en
 [P25](../../redesign/P25-ACEPTACION.md).
 
 ## P02 · integrado y verificado tras revisión (08-10-2026)

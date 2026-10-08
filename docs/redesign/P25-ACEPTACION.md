@@ -1,8 +1,9 @@
 # P25 · marca, emisor y correo
 
-Estado: verificado localmente en `codex/P25-marca-identidad`, base `bcbd8060`.
-Cuatro gates locales y Database Gate PASA. CI e integración pendientes; no se
-considera integrado hasta cerrar los cuatro checks del PR.
+Estado: integrado por PR #129 en `integracion/v1`, squash
+`588835689c0324b6f76f0ea474f6460c6c22f0b1`. Cuatro gates locales y Database
+Gate PASA. CI 4/4 PASA sobre `8622ba03`, corrida `37824851379`; cuatro
+conversaciones de revisión resueltas.
 
 La sección B reemplaza la O con contornos Plex Sans 600. La marca dispone de
 SVG, PNG de cinco tamaños por tema y manifest verificado en el build.

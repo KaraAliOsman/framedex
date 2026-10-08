@@ -711,3 +711,11 @@ hashes y precios históricos quedan byte idénticos. El scratch se limpió;
 Supabase del fixture está detenido con respaldo y la aplicación propia está
 detenida. La auditoría de 41 archivos de revisión y 272 PNG detecta cero
 secretos; no cambia píxeles. El CI del nuevo commit y squash siguen pendientes.
+
+## 2026-10-08 — P25 · integrado
+
+PR #129 pasó cuatro checks sobre `8622ba030d38bc3fe720bd774884ca43dfedb77c`
+en la corrida `37824851379` y se integró en `integracion/v1` con squash
+`588835689c0324b6f76f0ea474f6460c6c22f0b1`. Las cuatro conversaciones de
+revisión están resueltas. ESTADO y los refs de la wiki registran la aceptación
+verificada; P04 continúa la cola. Servicios propios detenidos con respaldo.
