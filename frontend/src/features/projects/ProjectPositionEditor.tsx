@@ -22,7 +22,12 @@ import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useShellLeaf } from "../../app/shellLeaf";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
 import { domainLabel } from "../../i18n/domainLabels";
-import { DeniedState } from "../../ui";
+import { DeniedState, ErrorState, LoadingState } from "../../ui";
+import { Popover } from "../../ui/Overlays";
+import { EditorPriceChip } from "../canvas/EditorPriceChip";
+import { EditorBottomPanel } from "../canvas/EditorBottomPanel";
+import { useEditorMedia } from "../canvas/useEditorLayout";
+import { chartFinish } from "../canvas/finishColors";
 import { completeFirstPosition } from "../onboarding/draft";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { useProject } from "./useProject";
@@ -53,6 +58,7 @@ import {
 } from "../canvas/productEditing";
 
 import "./projects.css";
+import "./editor.css";
 import { FinishSelector } from "./FinishSelector";
 import { MeasurementPanel } from "./MeasurementPanel";
 import type { MeasurementRecord } from "./mountingModel";
@@ -71,6 +77,14 @@ export function ProjectPositionEditor(): JSX.Element {
   // tracking initialize (review: the «Nuevo vano» dead-end on quoted deals).
   const projectQuery = useProject(canEdit && id ? id : null);
   if (!canEdit) return <DeniedState reason={t("projects.denied")} />;
+  if (projectQuery.isPending) return <LoadingState label="Cargando el proyecto" />;
+  if (projectQuery.isError)
+    return (
+      <ErrorState
+        title="No se pudo abrir el proyecto"
+        onRetry={() => void projectQuery.refetch()}
+      />
+    );
   const project = projectQuery.data;
   // Mirrors backend editable(): a closed revision is status≠DRAFT, a sealed
   // version row for current_revision, or an applied pricing authority.
@@ -320,6 +334,7 @@ function PositionWorkspace({
   preferredSystem: string | null;
 }): JSX.Element {
   const navigate = useNavigate();
+  const readOnly = useEditorMedia("(max-width: 1023px)");
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState<PositionResponse | null>(null);
   const [result, setResult] = useState<EngineCalculateResponse | null>(null);
@@ -339,6 +354,10 @@ function PositionWorkspace({
   const [message, setMessage] = useState("");
   const [uncertainCreate, setUncertainCreate] = useState(false);
   const [assemblyEval, setAssemblyEval] = useState<EngineAssemblyCalculateResponse | null>(null);
+  const [calculationState, setCalculationState] = useState<{
+    pending: boolean;
+    error: string | null;
+  }>({ pending: false, error: null });
   const [createdId, setCreatedId] = useState<string | null>(null);
   // Bump when a starter replaces the product — the canvas re-fits even if
   // the user had panned/zoomed the previous drawing away.
@@ -353,6 +372,8 @@ function PositionWorkspace({
   // New positions open on the design library (the start point); saved ones go
   // straight to the canvas — picking a starter collapses it.
   const [libraryOpen, setLibraryOpen] = useState(!positionId && !copyId);
+  const [issuesOpen, setIssuesOpen] = useState(false);
+  const project = useProject(projectId);
   const generation = useRef(0);
   const inputs = useCanvasStore((s) => s.inputs);
   const canUndo = useCanvasStore((s) => s.past.length > 0);
@@ -549,12 +570,21 @@ function PositionWorkspace({
     navigate(`/projects/${projectId}/positions/${createdId}/edit`, { replace: true });
   }, [createdId, navigate, projectId]);
 
-  const onAssemblyEvaluation = useCallback((evaluation: EngineAssemblyCalculateResponse | null) => {
-    setAssemblyEval(evaluation);
-    setResult(
-      evaluation?.bom ? { ...evaluation.bom, calculation_hash: evaluation.calculation_hash } : null,
-    );
-  }, []);
+  const onAssemblyEvaluation = useCallback(
+    (
+      evaluation: EngineAssemblyCalculateResponse | null,
+      state?: { pending: boolean; error: string | null },
+    ) => {
+      setAssemblyEval(evaluation);
+      if (state) setCalculationState(state);
+      setResult(
+        evaluation?.bom
+          ? { ...evaluation.bom, calculation_hash: evaluation.calculation_hash }
+          : null,
+      );
+    },
+    [],
+  );
 
   // designIdentity deep-serializes the product — memoize on the inputs
   // reference so location/quantity keystrokes skip the canonicalization.
@@ -617,9 +647,11 @@ function PositionWorkspace({
   async function save(): Promise<void> {
     if (
       uncertainCreate ||
+      readOnly ||
       mutationLock.current ||
       !result ||
       assemblyUnsaveable ||
+      fillUnassigned ||
       mountingChanged ||
       busy ||
       !options.data ||
@@ -735,9 +767,18 @@ function PositionWorkspace({
     setLibraryOpen(false);
     onAssemblyChanged();
   };
-  // Overview-level position facts — the editable fields live in the
-  // .position-head strip; this card answers "what is this vano" at a glance.
+  // Position facts accompany an unselected drawing.
   const systemName = systems.data?.find((system) => system.id === inputs.systemId)?.name ?? "—";
+  const finish = options.data?.finish_authority
+    ? chartFinish(options.data.finish_authority, inputs.color)
+    : null;
+  const finishName = finish
+    ? finish.interior.name === finish.exterior.name
+      ? finish.interior.name
+      : `${finish.interior.name} / ${finish.exterior.name}`
+    : declaredColors.includes(inputs.color)
+      ? tDynamic("projects.color", inputs.color)
+      : "Sin dato";
   const positionPanel = (
     <section className="assembly-inspector position-panel" aria-label={t("projects.positionData")}>
       <header className="assembly-inspector__header">
@@ -762,37 +803,213 @@ function PositionWorkspace({
   return (
     <section className="projects-page position-editor">
       <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
-      <header className="projects-header">
-        <div>
-          <Link
-            className="ui-backlink ui-backlink--back"
-            to={projectId ? `/projects/${projectId}` : "/projects"}
-          >
-            {t("projects.back")}
-          </Link>
-          <h1>{location || t("projects.position")}</h1>
-        </div>
-        <span role="status">
-          {dirty
-            ? t("projects.unsaved")
-            : saved === null
-              ? t("projects.draft")
-              : t("projects.savedState")}
+      <header className="position-strip">
+        <h1 className="visually-hidden">{location || t("projects.position")}</h1>
+        <Link
+          className="editor-project-link"
+          aria-label="Volver al proyecto"
+          to={projectId ? `/projects/${projectId}` : "/projects"}
+          title={project.data?.name ?? t("projects.back")}
+        >
+          ‹ Proyecto
+        </Link>
+        <span className="editor-position-code">
+          {saved ? `Pos. ${saved.position_index}` : "Nuevo vano"}
         </span>
-        <button disabled={!canUndo || busy} onClick={() => applyHistory("undo")}>
-          {t("projects.undo")}
+        <input
+          className="editor-location"
+          aria-label={t("projects.location")}
+          placeholder="Ubicación del vano"
+          value={location}
+          disabled={busy || readOnly}
+          onChange={(e) => setLocation(e.target.value)}
+        />
+        <label className="editor-quantity">
+          <span>Cant.</span>
+          <input
+            inputMode="numeric"
+            aria-label={t("pricing.quantity")}
+            value={quantity}
+            disabled={busy || readOnly}
+            onChange={(e) => setQuantity(e.target.value)}
+            aria-invalid={quantityInvalid || undefined}
+          />
+        </label>
+        <Popover
+          label="Serie de perfiles"
+          trigger={
+            <button type="button" className="editor-chip editor-system-chip" title={systemName}>
+              {systemId ? systemName : "Elegir serie"}
+            </button>
+          }
+        >
+          <label className="editor-system-field">
+            <span>{t("projects.system")}</span>
+            <select
+              className="assembly-select"
+              aria-label={t("projects.system")}
+              disabled={busy || readOnly}
+              value={systemId}
+              onChange={(e) => {
+                const next = e.target.value || null;
+                if (inputs.systemId !== next) {
+                  useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+                  setMessage("");
+                  onAssemblyChanged();
+                }
+              }}
+            >
+              <option value="">{t("projects.chooseSystem")}</option>
+              {systemId &&
+                systems.data &&
+                !systems.data.some((system) => system.id === systemId && system.quote_ready) && (
+                  <option value={systemId}>
+                    Catálogo histórico del producto{options.data?.is_demo ? " · DEMO" : ""}
+                  </option>
+                )}
+              {systems.data
+                ?.filter((system) => system.quote_ready)
+                .map((system) => (
+                  <option key={system.id} value={system.id}>
+                    {system.is_demo ? system.name.replace(/\s*·\s*DEMO\s*$/u, "") : system.name}
+                    {system.is_demo ? " · DEMO · sintético, sin certificación" : ""}
+                  </option>
+                ))}
+            </select>
+          </label>
+          {(systems.isError || options.isError) && (
+            <p className="editor-catalog-status" role="alert">
+              {t("projects.catalogError")}
+              <button
+                type="button"
+                onClick={() => {
+                  void systems.refetch();
+                  if (systemId) void options.refetch();
+                }}
+              >
+                Reintentar catálogo
+              </button>
+            </p>
+          )}
+          {(systems.isPending || (systemId && options.isPending)) && (
+            <p className="editor-catalog-status" role="status">
+              {t("projects.loading")}
+            </p>
+          )}
+        </Popover>
+        <Popover
+          label="Acabado"
+          trigger={
+            <button type="button" className="editor-chip" title={finishName}>
+              Acabado · {finishName}
+            </button>
+          }
+        >
+          {!options.data?.finish_authority && (
+            <label className="editor-system-field">
+              <span>{t("projects.color")}</span>
+              <select
+                className="assembly-select"
+                aria-label={t("projects.color")}
+                disabled={busy || readOnly || declaredColors.length === 0}
+                value={inputs.color}
+                onChange={(event) =>
+                  useCanvasStore.getState().commitInputs({
+                    ...inputs,
+                    color: event.target.value as CanvasDesignInputs["color"],
+                  })
+                }
+              >
+                {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
+                {colorChoices.map((color) => (
+                  <option key={color} value={color}>
+                    {tDynamic("projects.color", color)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {options.data?.finish_authority && (
+            <FinishSelector
+              authority={options.data.finish_authority}
+              value={inputs.color}
+              design={designPayload(inputs, declaredColors)}
+              organizationId={orgId}
+              disabled={busy || readOnly}
+              onChange={(color) => useCanvasStore.getState().commitInputs({ ...inputs, color })}
+            />
+          )}
+        </Popover>
+        <span className="editor-save-state" role="status">
+          {busy
+            ? "Guardando…"
+            : dirty
+              ? t("projects.unsaved")
+              : saved === null
+                ? t("projects.draft")
+                : t("projects.savedState")}
+        </span>
+        <button
+          type="button"
+          className="editor-history"
+          aria-label={t("projects.undo")}
+          title="Deshacer · Ctrl+Z"
+          disabled={!canUndo || busy || readOnly}
+          onClick={() => applyHistory("undo")}
+        >
+          <span aria-hidden="true">↶</span>
         </button>
-        <button disabled={!canRedo || busy} onClick={() => applyHistory("redo")}>
-          {t("projects.redo")}
+        <button
+          type="button"
+          className="editor-history"
+          aria-label={t("projects.redo")}
+          title="Rehacer · Ctrl+Y"
+          disabled={!canRedo || busy || readOnly}
+          onClick={() => applyHistory("redo")}
+        >
+          <span aria-hidden="true">↷</span>
+        </button>
+        <EditorPriceChip
+          organizationId={orgId}
+          inputs={inputs}
+          quantity={quantity}
+          pending={calculationState.pending}
+          ready={Boolean(
+            result && options.data && !assemblyUnsaveable && !quantityInvalid && !colorUndeclared,
+          )}
+        />
+        <button
+          type="button"
+          className="editor-chip editor-verdict"
+          aria-expanded={issuesOpen}
+          aria-controls="editor-missing"
+          title="Revisar qué falta"
+          onClick={() => setIssuesOpen((open) => !open)}
+        >
+          {!systemId
+            ? "Elegir serie"
+            : systems.isError || options.isError || calculationState.error
+              ? "Error de cálculo"
+              : saveBlockReason
+                ? "Bloqueado"
+                : !assemblyEval || calculationState.pending
+                  ? "Calculando…"
+                  : assemblyUnsaveable
+                    ? "Bloqueado"
+                    : assemblyEval.issues.length
+                      ? `${assemblyEval.issues.length} avisos`
+                      : "Válido"}
         </button>
         <button
           className="primary-action"
           disabled={
+            readOnly ||
             uncertainCreate ||
             busy ||
             !result ||
             !options.data ||
             assemblyUnsaveable ||
+            fillUnassigned ||
             mountingChanged ||
             quantityInvalid ||
             colorUndeclared
@@ -809,33 +1026,15 @@ function PositionWorkspace({
           {t("projects.save")}
         </button>
       </header>
-      {/* The blocked hint lives BELOW the header row — inside the flex it
-       * pushed Deshacer/Guardar left whenever it appeared, and a click aimed
-       * at Guardar landed on Deshacer (silent undo). */}
-      {loaded && (busy || assemblyUnsaveable || result === null || saveBlockReason !== null) && (
-        <p className="handle-pending" role="status">
-          {busy
-            ? t("projects.savingBusy")
-            : (saveBlockReason ??
-              (fillUnassigned ? t("projects.glazingMissing") : t("projects.saveBlocked")))}
+      {readOnly && (
+        <p className="editor-readonly" role="status">
+          Vista de lectura · edición disponible desde 1024 px.
         </p>
       )}
-      {message && <p role="status">{message}</p>}
-      {saved && (
-        <details className="position-measurements">
-          <summary>Estado de medidas para producción</summary>
-          <MeasurementPanel
-            position={saved}
-            orgId={orgId}
-            canConfirm
-            dirty={isDirty}
-            onSaved={() =>
-              void positionsRetrieve(saved.id, requestOptions).then((r) => {
-                if (r.status === 200) setSaved(r.data);
-              })
-            }
-          />
-        </details>
+      {message && (
+        <output className="editor-message" role="status">
+          {message}
+        </output>
       )}
       {copyId && loaded && copiedFrom && (
         <div className="draft-banner" role="status">
@@ -867,122 +1066,8 @@ function PositionWorkspace({
           </button>
         </div>
       )}
-      <fieldset className="position-head" disabled={busy}>
-        {/* <fieldset> can't be a flex container — the row wraps the fields
-            so the strip stays horizontal. */}
-        <div className="position-head__row">
-          <label className="position-head__field">
-            <span>{t("projects.location")}</span>
-            <input
-              aria-label={t("projects.location")}
-              placeholder={t("projects.locationPlaceholder")}
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
-          </label>
-          <label className="position-head__field">
-            <span>{t("pricing.quantity")}</span>
-            <input
-              inputMode="numeric"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-            />
-          </label>
-          <label className="position-head__field position-head__field--wide">
-            <span>{t("projects.system")}</span>
-            <select
-              className="assembly-select"
-              aria-label={t("projects.system")}
-              value={systemId}
-              onChange={(e) => {
-                const next = e.target.value || null;
-                if (inputs.systemId !== next) {
-                  useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
-                  setMessage("");
-                }
-              }}
-            >
-              <option value="">{t("projects.chooseSystem")}</option>
-              {systemId &&
-                systems.data &&
-                !systems.data.some((system) => system.id === systemId && system.quote_ready) && (
-                  <option value={systemId}>
-                    Catálogo histórico del producto{options.data?.is_demo ? " · DEMO" : ""}
-                  </option>
-                )}
-              {systems.data
-                ?.filter((system) => system.quote_ready)
-                .map((system) => (
-                  <option key={system.id} value={system.id}>
-                    {system.is_demo ? system.name.replace(/\s*·\s*DEMO\s*$/u, "") : system.name}
-                    {system.is_demo ? " · DEMO · sintético, sin certificación" : ""}
-                  </option>
-                ))}
-            </select>
-          </label>
-          {(systems.isError || options.isError) && (
-            <p className="position-head__alert" role="alert">
-              {t("projects.catalogError")}
-            </p>
-          )}
-          {(systems.isPending || (systemId && options.isPending)) && (
-            <p className="position-head__alert" role="status">
-              {t("projects.loading")}
-            </p>
-          )}
-          {!options.data?.finish_authority && (
-            <label className="position-head__color">
-              <span>{t("projects.color")}</span>
-              <select
-                className="assembly-select"
-                aria-label={t("projects.color")}
-                disabled={busy || declaredColors.length === 0}
-                value={inputs.color}
-                onChange={(event) =>
-                  useCanvasStore.getState().commitInputs({
-                    ...inputs,
-                    color: event.target.value as CanvasDesignInputs["color"],
-                  })
-                }
-              >
-                {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
-                {colorChoices.map((color) => (
-                  <option key={color} value={color}>
-                    {tDynamic("projects.color", color)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-      </fieldset>
-      {options.data?.finish_authority && (
-        <FinishSelector
-          authority={options.data.finish_authority}
-          value={inputs.color}
-          design={designPayload(inputs, declaredColors)}
-          organizationId={orgId}
-          disabled={busy}
-          onChange={(color) => useCanvasStore.getState().commitInputs({ ...inputs, color })}
-        />
-      )}
       <div className="position-body">
         <div className="position-workspace">
-          <details
-            className="starter-library"
-            open={libraryOpen}
-            onToggle={(event) => setLibraryOpen(event.currentTarget.open)}
-          >
-            <summary>{t("assembly.starterLibrary")}</summary>
-            <StarterGallery
-              allowedOpenings={
-                options.data?.system_family ? options.data.compatible_openings : undefined
-              }
-              members={resolveMembers(options.data)}
-              disabled={busy}
-              onPick={pickStarter}
-            />
-          </details>
           <AssemblyEditor
             organizationId={orgId}
             couplerSkus={options.data?.coupler_skus ?? []}
@@ -990,7 +1075,39 @@ function PositionWorkspace({
             panelSkus={options.data?.panel_skus ?? []}
             options={options.data}
             optionsReady={options.data !== undefined || options.isError}
-            disabled={busy}
+            disabled={busy || readOnly}
+            quantity={quantityInvalid ? 1 : Number(quantity)}
+            libraryOpen={libraryOpen}
+            onLibraryToggle={() => setLibraryOpen((open) => !open)}
+            library={
+              options.isError ? (
+                <ErrorState
+                  title="No se pudo cargar la biblioteca"
+                  onRetry={() => void options.refetch()}
+                />
+              ) : systemId.length === 0 ? (
+                <p>Elige una serie para ver sus tipologías compatibles.</p>
+              ) : options.data === undefined ? (
+                <LoadingState label="Cargando las tipologías compatibles" />
+              ) : (
+                <StarterGallery
+                  options={options.data}
+                  allowedOpenings={
+                    options.data.system_family ? options.data.compatible_openings : undefined
+                  }
+                  members={resolveMembers(options.data)}
+                  disabled={busy || readOnly}
+                  onPick={pickStarter}
+                />
+              )
+            }
+            issuesOpen={issuesOpen}
+            onCloseIssues={() => setIssuesOpen(false)}
+            onOpenIssues={() => setIssuesOpen(true)}
+            saveBlockReason={saveBlockReason}
+            onChooseSystem={() =>
+              document.querySelector<HTMLButtonElement>(".editor-system-chip")?.click()
+            }
             onChanged={onAssemblyChanged}
             onEvaluationChange={onAssemblyEvaluation}
             positionId={saved?.id ?? null}
@@ -999,20 +1116,56 @@ function PositionWorkspace({
           />
         </div>
       </div>
-      {result ? (
-        <ProjectBom result={result} />
-      ) : (
-        <p role="status">{t("projects.calculationRequired")}</p>
-      )}
+      <footer className="editor-bottom">
+        <EditorBottomPanel title="Posiciones del proyecto">
+          <nav className="editor-position-list" aria-label="Posiciones del proyecto">
+            {project.data?.positions?.map((item) => (
+              <Link
+                key={item.id}
+                to={`/projects/${projectId}/positions/${item.id}/edit`}
+                aria-current={item.id === positionId ? "page" : undefined}
+              >
+                Pos. {item.position_index} · {item.location_tag || "Sin ubicación"}
+              </Link>
+            ))}
+            <Link to={`/projects/${projectId}/positions/new`}>Nuevo vano</Link>
+          </nav>
+        </EditorBottomPanel>
+        {saved && (
+          <EditorBottomPanel title="Medidas para producción">
+            <MeasurementPanel
+              position={saved}
+              orgId={orgId}
+              canConfirm={!readOnly}
+              dirty={isDirty}
+              onSaved={() =>
+                void positionsRetrieve(saved.id, requestOptions).then((r) => {
+                  if (r.status === 200) setSaved(r.data);
+                })
+              }
+            />
+          </EditorBottomPanel>
+        )}
+        {result ? (
+          <ProjectBom result={result} floating />
+        ) : (
+          <span>{t("projects.calculationRequired")}</span>
+        )}
+      </footer>
     </section>
   );
 }
 
-export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX.Element {
+export function ProjectBom({
+  result,
+  floating = false,
+}: {
+  result: EngineCalculateResponse;
+  floating?: boolean;
+}): JSX.Element {
   const longestCut = Math.max(0, ...result.profile_cuts.map((cut) => Number(cut.length_mm)));
-  return (
-    <details className="project-bom">
-      <summary>{t("projects.bom")}</summary>
+  const content = (
+    <div className="project-bom-content">
       <div className="projects-table-scroll">
         <table>
           <thead>
@@ -1135,6 +1288,14 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
           </table>
         </div>
       )}
+    </div>
+  );
+  return floating ? (
+    <EditorBottomPanel title={t("projects.bom")}>{content}</EditorBottomPanel>
+  ) : (
+    <details className="project-bom">
+      <summary>{t("projects.bom")}</summary>
+      {content}
     </details>
   );
 }

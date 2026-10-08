@@ -2,6 +2,11 @@ import type { DesignOptions } from "../../api/generated/models";
 import type { IntentNode } from "./intentEditing";
 import { choiceMatches, choicePatch, openingChoices } from "./physicalOpenings";
 import { OpeningSymbol } from "../../ui/OpeningSymbol";
+import { Popover } from "../../ui/Overlays";
+import { physicalNodeLabel } from "./physicalOpenings";
+import { OPENING_OPTIONS } from "./openings";
+import { t } from "../../i18n/es-CL";
+import { dismissFloatingLayers } from "../../ui/floatingLayer";
 
 export function OpeningPalette({
   options,
@@ -9,15 +14,17 @@ export function OpeningPalette({
   disabled,
   onPick,
   onPreview,
+  compact = false,
 }: {
   options: DesignOptions;
   bay: IntentNode;
   disabled: boolean;
   onPick(patch: Partial<IntentNode>): void;
   onPreview(patch: Partial<IntentNode> | null): void;
+  compact?: boolean;
 }): JSX.Element {
   const choices = openingChoices(options);
-  return (
+  const content = (
     <>
       <div className="opening-palette" role="group" aria-label="Aperturas del sistema">
         {choices.map((choice) => (
@@ -34,6 +41,7 @@ export function OpeningPalette({
             onClick={() => {
               onPreview(null);
               onPick(choicePatch(choice));
+              if (compact) dismissFloatingLayers();
             }}
           >
             <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -102,5 +110,29 @@ export function OpeningPalette({
         </ul>
       </details>
     </>
+  );
+  const currentLabel =
+    physicalNodeLabel(bay) ??
+    choices.find((choice) => choiceMatches(bay, choice))?.label ??
+    t(OPENING_OPTIONS.find(([opening]) => opening === bay.opening_type)?.[1] ?? "intent.fixed");
+  return compact ? (
+    <Popover
+      label="Elegir apertura"
+      trigger={
+        <button
+          className="editor-opening-trigger"
+          type="button"
+          aria-label={`Elegir apertura · ${currentLabel}`}
+          disabled={disabled}
+        >
+          <span>Apertura</span>
+          <span>{currentLabel}</span>
+        </button>
+      }
+    >
+      {content}
+    </Popover>
+  ) : (
+    content
   );
 }

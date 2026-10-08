@@ -1,6 +1,9 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 const floatingLayers = new Set<() => void>();
+export function dismissFloatingLayers(): void {
+  for (const dismiss of floatingLayers) dismiss();
+}
 /** Opening a new operational layer dismisses the previous one. */
 export function useFloatingLayer(open: boolean, onClose: () => void): void {
   const close = useRef(onClose);

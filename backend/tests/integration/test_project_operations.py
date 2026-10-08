@@ -292,3 +292,61 @@ def test_shared_preview_includes_engine_leaf_and_handle_authority_for_both_drawi
         assert Decimal(price["net"]) == Decimal(price["net"]).quantize(Decimal("1"))
         assert Decimal(price["net"]) == Decimal(price["unit_net"]).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     assert Decimal(after["delta_net"]) + Decimal(before["net"]) == Decimal(after["net"])
+
+
+@pytest.mark.parametrize("quantity", [1, 7, 2147483647])
+def test_editor_price_and_proposal_delta_reconcile_line_quantity(documentary_tenant, quantity):
+    from projects.ops_registry import product_from_position
+    from projects.service import position_row
+    from dekopen_engine.commercial import indicative_line_net
+    org, _, users, _ = documentary_tenant
+    _, position = setup_project(org, users["OWNER"])
+    with as_user(users["OWNER"]):
+        product = product_from_position(position_row(org, position["id"]))
+    body = {"system_id": str(position["design"]["system_id"]), "color": position["design"]["color"],
+            "product": product, "quantity": quantity,
+            "ops": [{"op": "set_module_width", "module": "single", "width_mm": "1000"}]}
+    result = client_for(users["ESTIMATOR"]).post("/api/v1/projects/operations/simulate/", body,
+        format="json", HTTP_X_ORGANIZATION_ID=str(org))
+    assert result.status_code == 200, result.content
+    value = result.json()
+    before, after = value["before"]["price"], value["price"]
+    assert before["net"] is not None and after["net"] is not None
+    for price in (before, after):
+        assert Decimal(price["net"]) == indicative_line_net(Decimal(price["unit_net"]), quantity, price["currency"])
+        assert "cost" not in price
+    assert Decimal(before["net"]) + Decimal(after["delta_net"]) == Decimal(after["net"])
+
+
+@pytest.mark.parametrize("quantity", [0, -1, "1.1", 2147483648])
+def test_editor_simulation_rejects_invalid_quantity_before_evaluation(quantity):
+    from projects.ops_registry import SimulateOpsSerializer
+    data = SimulateOpsSerializer(data={"system_id": str(uuid4()), "color": "WHITE",
+                                      "product": {}, "ops": [], "quantity": quantity})
+    assert not data.is_valid()
+    assert "quantity" in data.errors
+
+
+def test_editor_read_only_price_evaluates_without_an_operation(documentary_tenant):
+    from projects.ops_registry import product_from_position
+    from projects.service import position_row
+    from dekopen_engine.commercial import indicative_line_net
+    org, _, users, _ = documentary_tenant
+    _, position = setup_project(org, users["OWNER"])
+    with as_user(users["OWNER"]):
+        before = position_row(org, position["id"])
+        product = product_from_position(before)
+    result = client_for(users["ESTIMATOR"]).post("/api/v1/projects/operations/simulate/",
+        {"system_id": str(position["design"]["system_id"]), "color": position["design"]["color"],
+         "product": product, "quantity": 7, "ops": []},
+        format="json", HTTP_X_ORGANIZATION_ID=str(org))
+    assert result.status_code == 200, result.content
+    value = result.json()
+    assert value["valid"]
+    assert value["ops"] == [] and value["diff"] == []
+    assert value["product"] == product
+    price = value["price"]
+    assert Decimal(price["net"]) == indicative_line_net(Decimal(price["unit_net"]), 7, price["currency"])
+    assert Decimal(price["delta_net"]) == Decimal("0")
+    with as_user(users["OWNER"]):
+        assert position_row(org, position["id"]) == before

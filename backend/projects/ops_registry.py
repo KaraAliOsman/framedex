@@ -57,6 +57,7 @@ class SimulateOpsSerializer(StrictSerializer):
     color = serializers.CharField(max_length=50)
     product = serializers.JSONField()
     ops = DesignOperationSerializer(many=True, max_length=50)
+    quantity = serializers.IntegerField(min_value=1, max_value=2147483647, default=1)
 
 
 class SimulationSerializer(serializers.Serializer):
@@ -115,7 +116,7 @@ def calculate_product(org_id, product, system_id, color, catalog=None):
         "nominal_width_mm": width, "nominal_height_mm": height}, evaluation)
 
 
-def sale_price(org_id, product, system_id, color):
+def sale_price(org_id, product, system_id, color, quantity=1):
     """Read-only indicative selling price; no buying costs leave this adapter."""
     design = design_from_product(product, system_id, color)
     with commercial_backend():
@@ -138,7 +139,7 @@ def sale_price(org_id, product, system_id, color):
             extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation.get("extra_lines", [])]
             net = configured_unit_price(repo, mode, position, cost=cost, area=area, result=result,
                                        margin=rules["default_margin_pct"], context_code="DEFAULT", extras=extras)
-            return {"net": str(indicative_line_net(net, 1, currency)), "unit_net": str(net), "currency": currency, "reason": None,
+            return {"net": str(indicative_line_net(net, quantity, currency)), "unit_net": str(net), "currency": currency, "reason": None,
                     "source": "Motor comercial; modo y tarifa predeterminados de Ajustes; precio neto indicativo sin descuento."}
         except (PricingError, ContractAPIException) as error:
             detail = pricing_public_detail(error.code) if isinstance(error, PricingError) else error.public_detail
@@ -160,11 +161,15 @@ def _diff(before, after, path=""):
     return [{"field": path, "before": before, "after": after}]
 
 
-def simulate_ops(org_id, product, ops, system_id, color):
+def simulate_ops(org_id, product, ops, system_id, color, quantity=1):
     previous_system, previous_color = system_id, color
     catalog = catalog_for(org_id, system_id)
     before = as_product(product)
-    if any(BY_NAME.get(op.get("op"), {}).get("scope") == "position" for op in ops):
+    if not ops:
+        # A read-only editor quote evaluates accepted intent without inventing
+        # a mutation. Actual editing still requires the engine's operation gate.
+        output = {"product": before, "ops": [], "registry_version": VERSION}
+    elif any(BY_NAME.get(op.get("op"), {}).get("scope") == "position" for op in ops):
         current = deepcopy(before)
         normalized = []
         for raw in ops:
@@ -189,8 +194,8 @@ def simulate_ops(org_id, product, ops, system_id, color):
         previous_engine = None
     issues = engine.get("issues", [])
     valid = engine.get("status") in {"VALID", "MANUFACTURING_INCOMPLETE"} and not any(issue.get("severity") == "error" for issue in issues)
-    previous = sale_price(org_id, before, previous_system, previous_color)
-    price = sale_price(org_id, output["product"], system_id, color) if valid else {"net": None, "currency": previous["currency"], "reason": "Corrige la geometría antes de preciar."}
+    previous = sale_price(org_id, before, previous_system, previous_color, quantity)
+    price = sale_price(org_id, output["product"], system_id, color, quantity) if valid else {"net": None, "currency": previous["currency"], "reason": "Corrige la geometría antes de preciar."}
     delta = str(finish_selling_delta(Decimal(previous["net"]), Decimal(price["net"]))) if price.get("net") is not None and previous.get("net") is not None else None
     return {**output, "system_id": str(system_id), "color": color, "valid": valid, "status": engine["status"], "issues": issues, "engine": engine,
             "before": {"product": before, "system_id": str(previous_system), "color": previous_color, "price": previous, "engine": previous_engine}, "price": {**price, "delta_net": delta},
@@ -235,7 +240,7 @@ class SimulateOpsView(APIView):
         data = validate(SimulateOpsSerializer, request.data)
         try:
             with scope(request, READ_ROLES) as (_, _, org):
-                return response(simulate_ops(org, data["product"], data["ops"], data["system_id"], data["color"]))
+                return response(simulate_ops(org, data["product"], data["ops"], data["system_id"], data["color"], data["quantity"]))
         except OperationError as error:
             raise contract_error(422, error.code, str(error)) from error
         except (ValueError, InvalidEngineRequest, UnsupportedEngineContract) as error:

@@ -719,3 +719,15 @@ en la corrida `37824851379` y se integró en `integracion/v1` con squash
 `588835689c0324b6f76f0ea474f6460c6c22f0b1`. Las cuatro conversaciones de
 revisión están resueltas. ESTADO y los refs de la wiki registran la aceptación
 verificada; P04 continúa la cola. Servicios propios detenidos con respaldo.
+
+## 2026-10-08 — P04 · validación del editor
+
+La rama `codex/P04-editor-canvas-first`, base `c2ecdbc1`, concentra cotas,
+herramientas y selección en el lienzo. Se agregan venta indicativa por cantidad,
+consulta sin mutación y propuesta de tres paños con fantasma/Δ/deshacer.
+Las 24 integraciones focalizadas, seis E2E nuevos, matriz de cuatro tamaños
+y runner oficial de 16 vistas sustentan [la aceptación](../redesign/P04-ACEPTACION.md).
+Los recorridos existentes detectaron selector abierto y consulta vacía rechazada;
+se corrigieron y se repiten los gates antes de integrar. La nueva
+[página](product/editor-canvas.md) distingue intención, evidencia y límites de
+P05/P06/P19. El catálogo DEMO sigue sin certificación.

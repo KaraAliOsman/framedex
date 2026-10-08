@@ -268,6 +268,30 @@ function moduleLabel(args: CommandArgs): string {
  * specs; `apply` is the only mutation path (one undoable commit upstream). */
 export const ASSEMBLY_COMMANDS: CommandSpec[] = [
   {
+    id: "product.three-bays-inward",
+    title: "cmd.threeBaysInward",
+    keywords: ["partir en tres centro fijo laterales abatibles hacia el centro", "tres paños"],
+    mutates: true,
+    applicable: (ctx) =>
+      ctx.propose !== undefined &&
+      ctx.catalog.mullionSkus.SPLIT_V !== undefined &&
+      ["FIXED", "TURN_LEFT", "TURN_RIGHT"].every((value) =>
+        ctx.catalog.compatibleOpenings?.includes(value),
+      ) &&
+      ctx.product.assembly.modules.length === 1 &&
+      !ctx.product.assembly.modules[0]?.contour &&
+      !ctx.product.assembly.modules[0]?.frameless,
+    run: (ctx) => {
+      const module = ctx.product.assembly.modules[0]!.id;
+      ctx.propose?.([
+        { op: "equalize_bays", module, count: 3, axis: "V" },
+        { op: "set_opening", module, bay: "b1", opening: "TURN_LEFT" },
+        { op: "set_opening", module, bay: "b2", opening: "FIXED" },
+        { op: "set_opening", module, bay: "b3", opening: "TURN_RIGHT" },
+      ]);
+    },
+  },
+  {
     id: "product.add-right",
     title: "cmd.addUnitRight",
     keywords: ["añadir", "unidad", "vano", "hoja", "derecha", "modulo", "agregar"],
@@ -1033,7 +1057,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     id: "tool.split-vertical",
     title: "cmd.splitVertical",
     keywords: ["dividir", "partir", "vertical", "montante", "mullion"],
-    shortcut: "m",
+    shortcut: ["m", "|", "shift+|"],
     applicable: (ctx) => ctx.catalog.mullionSkus.SPLIT_V !== undefined,
     run: (ctx) => ctx.setTool?.("split_v"),
   },
@@ -1041,7 +1065,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     id: "tool.split-horizontal",
     title: "cmd.splitHorizontal",
     keywords: ["dividir", "partir", "horizontal", "travesaño", "transom"],
-    shortcut: "t",
+    shortcut: ["t", "–", "-"],
     applicable: (ctx) => ctx.catalog.mullionSkus.SPLIT_H !== undefined,
     run: (ctx) => ctx.setTool?.("split_h"),
   },

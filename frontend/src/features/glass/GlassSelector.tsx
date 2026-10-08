@@ -600,6 +600,7 @@ export function GlassSelector({
   context,
   busy,
   onPatch,
+  compact = false,
 }: {
   options?: DesignOptions;
   choices: GlassSpecChoice[];
@@ -607,6 +608,7 @@ export function GlassSelector({
   context: GlassContext;
   busy: boolean;
   onPatch(patch: Partial<IntentNode>): void;
+  compact?: boolean;
 }) {
   const auth = useAuthSession();
   const orgId = auth.me?.active_organization?.id;
@@ -739,7 +741,7 @@ export function GlassSelector({
   const processing = node.glass_processing ?? NO_PROCESSING;
   return (
     <section
-      className="glass-selector"
+      className={`glass-selector${compact ? " glass-selector--compact" : ""}`}
       aria-label={t("glass.selector")}
       aria-busy={catalog.isFetching}
     >
@@ -758,6 +760,35 @@ export function GlassSelector({
         <p>
           {t("glass.empty")} <Link to="/catalogs">{t("glass.openCatalog")}</Link>
         </p>
+      ) : compact ? (
+        <label className="assembly-field">
+          <span>Vidrio</span>
+          <select
+            aria-label="Vidrio"
+            disabled={busy || catalog.isFetching}
+            value={selected?.sku ?? ""}
+            onChange={(event) => {
+              const choice = visible.find((item) => item.sku === event.target.value);
+              if (choice) onPatch(glassChoicePatch(choice));
+            }}
+          >
+            <option value="">Elige un vidrio compatible</option>
+            {visible.map((choice) => (
+              <option
+                key={choice.sku}
+                value={choice.sku}
+                disabled={
+                  !choice.product ||
+                  choice.compatible === false ||
+                  catalog.data?.[choice.sku]?.findings.some((finding) => finding.blocking)
+                }
+              >
+                {asGlassProduct(choice.product)?.name ?? choice.spec}
+                {asGlassProduct(choice.product)?.synthetic ? " · DEMO" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
       ) : (
         <div className="glass-products" role="group" aria-label={t("glass.compatible")}>
           {visible.map((choice) => {
@@ -872,6 +903,7 @@ export function GlassSelector({
           <input
             inputMode="decimal"
             value={decimalInputValue(node.sill_height_mm)}
+            disabled={busy}
             onChange={(event) => {
               const value = parseDecimalInput(event.target.value);
               if (value !== null || !event.target.value) onPatch({ sill_height_mm: value });

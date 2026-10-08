@@ -16,4 +16,9 @@ export interface SimulateOpsRequest {
   color: string;
   product: unknown;
   ops: DesignOperationRequest[];
+  /**
+   * @minimum 1
+   * @maximum 2147483647
+   */
+  quantity?: number;
 }

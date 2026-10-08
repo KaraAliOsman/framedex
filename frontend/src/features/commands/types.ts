@@ -50,6 +50,7 @@ export interface CommandContext {
   commit(next: ProductJson): void;
   /** Live product surfaces dispatch registered intent to the engine. */
   simulate?(ops: DesignOperationRequest[], spec?: CommandSpec, args?: CommandArgs): void;
+  propose?(ops: DesignOperationRequest[]): void;
   select(id: string | null): void;
   setTool?(tool: EditorTool): void;
   /** Focus the design assistant's prompt (editor affordance — UI commands
