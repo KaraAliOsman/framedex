@@ -82,6 +82,12 @@ Decisiones en [valores por defecto](../decisions/valores-por-defecto.md).
 No se cambia SQL, RLS ni permiso; Database Gate de CI verifica la integración.
 No hay integración externa nueva ni sandbox comercial añadido por P05.
 
+Database Gate detectó una aserción histórica que exigía el ID interno `m1`
+en el cuerpo comercial. Se sustituye por la comprobación de los tres rótulos
+«Módulo 1–3», la vista declarada y los dos ángulos de 15°. Las identidades
+de fabricación siguen comprobadas en el snapshot sellado. Los tres casos
+PostgreSQL focalizados pasan; se repite el gate completo antes de integrar.
+
 Riesgos: el catálogo DEMO no certifica fabricante; sin orden de carriles físico
 se declara convención. Curvado pendiente mantiene fabricación incompleta.
 D08 conserva los movimientos avanzados, P06 el bow, P07 el rediseño comercial
