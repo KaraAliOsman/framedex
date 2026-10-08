@@ -12,6 +12,8 @@ export {
 } from "./Controls";
 export type { ButtonProps, ButtonSize, ButtonVariant, SelectOption } from "./Controls";
 export { Dialog } from "./Dialog";
+export { EmptyIllustration } from "./EmptyIllustration";
+export type { EmptyIllustrationKind } from "./EmptyIllustration";
 export { InlineEdit } from "./InlineEdit";
 export { PageHeader } from "./PageHeader";
 export type { Crumb } from "./PageHeader";

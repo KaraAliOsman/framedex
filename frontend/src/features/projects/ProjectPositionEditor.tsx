@@ -23,6 +23,7 @@ import { useShellLeaf } from "../../app/shellLeaf";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
 import { domainLabel } from "../../i18n/domainLabels";
 import { DeniedState } from "../../ui";
+import { completeFirstPosition } from "../onboarding/draft";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { useProject } from "./useProject";
 import { AssemblyEditor, issueText } from "../canvas/AssemblyEditor";
@@ -661,6 +662,7 @@ function PositionWorkspace({
       if (response.status !== 200 && response.status !== 201)
         throw new ApiError(response.status, response.data);
       const value = response.data as PositionResponse;
+      completeFirstPosition(orgId, projectId);
       setSaved(value);
       setResult(value.bom);
       setBaseline({ design: designIdentity(inputs), location, quantity });

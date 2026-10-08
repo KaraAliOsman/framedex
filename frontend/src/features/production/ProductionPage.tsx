@@ -1,4 +1,5 @@
 import { ValidatedForm } from "../../ui/FormValidation";
+import { Wordmark } from "../../brand/Brand";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -54,7 +55,7 @@ import type {
 import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { formatDateTime } from "../../format";
-import { DeniedState, PageHeader, usePrompt } from "../../ui";
+import { DeniedState, EmptyState, PageHeader, usePrompt } from "../../ui";
 import { fmtMm, fmtPct } from "../../format";
 import { formatDate } from "../money";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
@@ -2268,7 +2269,11 @@ export function ProductionPage(): JSX.Element {
                       <CncPanel orderId={detail.id} canWrite={canOptimize} />
                     ) : null}
                     {!optimization ? (
-                      <p className="production-optimize-empty">{t("production.optimizeEmpty")}</p>
+                      <EmptyState
+                        kind="cut-plan"
+                        title="Esta orden aún no tiene plan de corte"
+                        body={t("production.optimizeEmpty")}
+                      />
                     ) : (
                       <>
                         {optimization.invalidated ? (
@@ -2638,6 +2643,7 @@ export function ProductionPage(): JSX.Element {
                       <ul className="production-labels">
                         {labels.map((label) => (
                           <li key={label.label_code} className="production-label">
+                            <Wordmark width={72} />
                             <span className="production-label-code">{label.label_code}</span>
                             <span
                               className="production-label-qr"
@@ -2670,6 +2676,7 @@ export function ProductionPage(): JSX.Element {
                         ))}
                         {physicalLabels.map((piece) => (
                           <li key={piece.stable_id} className="production-label">
+                            <Wordmark width={72} />
                             <span className="production-label-code">{piece.code}</span>
                             <span
                               className="production-label-qr"

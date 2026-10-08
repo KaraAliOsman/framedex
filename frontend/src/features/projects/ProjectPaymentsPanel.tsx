@@ -34,6 +34,7 @@ import { formatDate, formatMoney, parseMoneyInput } from "../money";
 import { formatRevision } from "../../format";
 import { compareDecimal, decimalInputValue } from "../../decimal";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
+import { MailComposer } from "../notifications/MailPanels";
 import { useConfirm, usePrompt } from "../../ui";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
@@ -689,6 +690,14 @@ export function ProjectPaymentsPanel({
                 </td>
                 {canWrite && (
                   <td>
+                    {!payment.voided_at && (
+                      <MailComposer
+                        key={`${orgId}-${payment.id}`}
+                        orgId={orgId}
+                        projectId={projectId}
+                        paymentId={payment.id}
+                      />
+                    )}
                     {!payment.voided_at && (
                       <button type="button" onClick={() => voidPayment(payment)} disabled={busy}>
                         {t("projects.paymentVoid")}

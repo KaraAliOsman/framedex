@@ -26,6 +26,28 @@ sources:
 
 # Current reality
 
+## P25 · verificación local, integración pendiente (08-10-2026)
+
+La rama `codex/P25-marca-identidad`, base `bcbd8060`, aplica B con geometría
+óptica, assets de ambos temas y firma impresa. El onboarding crea una posición
+real, conserva contacto y borrador por tenant. El emisor se sella para documento,
+portal, metadata y correo; las preferencias históricas no se reescriben.
+Los cinco correos se recorrieron con Mailpit, PDFs reales y confirmación humana.
+Una entrega incierta no se repite hasta comprobar ausencia y confirmar recovery.
+La matriz de 84 vistas, 56 estados, ocho MFA reales y 32 estados de correo pasa
+en cuatro tamaños y ambos temas. La captura oficial produce 16 registros sin
+hallazgos. El detalle de proyecto conserva su desborde anterior al abrir
+Cotización a 1440/1280; el correo no lo aumenta y P21 mantiene ese alcance.
+La revisión presenta el PDF sellado exacto antes de confirmar. SHA y adjunto
+coinciden byte a byte. Respuesta perdida y recarga conservan una sola intención;
+un enlace revocado falla antes de SMTP y conduce a un envío nuevo confirmado,
+sin reescribir el anterior. Dieciséis vistas adicionales pasan en ambos temas.
+Los cuatro gates locales pasan: 744 motor (+2 xfail), 1.272 backend y 830
+frontend. Database Gate pasa 1.173 pgTAP, 410 integraciones y 11 E2E reales;
+los upgrades PG16 conservan también la identidad, snapshots, hashes y precios
+históricos de P25. CI y squash permanecen pendientes. La aceptación está en
+[P25](../../redesign/P25-ACEPTACION.md).
+
 ## P02 · integrado y verificado tras revisión (08-10-2026)
 
 La rama `codex/P02-identificadores-humanos`, base `18c814bc`, conserva órdenes,

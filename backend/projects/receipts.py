@@ -94,6 +94,7 @@ def issue_receipt(
             "code": project["code"],
             "name": project["name"],
             "client_name": project["client_name"],
+            "client_email": project.get("client_email"),
             "client_rut": project["client_rut"],
             "delivery_address": project["delivery_address"],
             "currency": deal["currency"],
@@ -112,14 +113,10 @@ def issue_receipt(
         "balance": {
             "deal_total": str(deal["total"]) if deal["total"] is not None else None,
             "collected": str(collected),
-            "remaining": str(deal["total"] - collected)
-            if deal["total"] is not None
-            else None,
+            "remaining": str(deal["total"] - collected) if deal["total"] is not None else None,
         },
     }
-    identifier = hashlib.sha256(
-        json.dumps(payload, sort_keys=True).encode("utf-8")
-    ).hexdigest()
+    identifier = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
     content, media_type = render_payment_receipt(payload, pdf_identifier=identifier)
     content_hash = _file_sha256(content)
     object_key = (

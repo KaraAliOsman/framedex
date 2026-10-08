@@ -34,13 +34,56 @@ Este indice no contiene secretos. Los valores reales se cargan como variables de
 
 ## Correo con dominio propio
 
-| Campo        | Detalle                                                                                                               |
-| ------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Estado       | Diferida; Mailpit cubre local.                                                                                        |
-| Adaptador    | Backend de notificaciones/correo que use el proveedor elegido.                                                        |
-| Variables    | `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_FROM`, `EMAIL_USE_TLS`. |
-| Activacion   | Verificar dominio, SPF/DKIM/DMARC, cargar credenciales del proveedor y probar magic link/cotizacion enviada.          |
-| Verificacion | Correo recibido en bandeja externa, enlaces validos y sin secretos en logs.                                           |
+P25 deja dos transportes: las notificaciones comerciales salen del worker Django;
+los enlaces de acceso salen de Supabase Auth. Ambos usan Mailpit en local. El
+estado y la bandeja se consultan en Ajustes › Integraciones › Correo. Un dominio
+externo queda «No conectado» hasta configurar SMTP en el servidor.
+
+1. Verifique el dominio del remitente con el proveedor e instale SPF, DKIM y
+   DMARC. Use un remitente del fabricante para conservar la identidad de los
+   correos al cliente. Obtenga host, puerto y credenciales SMTP.
+2. Cargue exclusivamente en backend y worker `MAIL_PROVIDER=smtp`,
+   `MAIL_FROM_ADDRESS`, `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_USER` y
+   `MAIL_SMTP_PASSWORD`. Use `MAIL_SMTP_STARTTLS=true` para puerto 587 o
+   `MAIL_SMTP_SSL=true` y `MAIL_SMTP_STARTTLS=false` para puerto 465. El adaptador
+   rechaza SMTP sin TLS. Declare `DEKOPEN_PUBLIC_APP_URL` con el origen HTTPS.
+3. Genere una `MAIL_ENCRYPTION_KEY` aleatoria de alta entropía y manténgala igual
+   en backend/worker. Producción exige declararla. Respalde la clave con acceso
+   restringido: los correos sellados dependen de ella; cambiarla sin conservar la
+   anterior vuelve ilegibles los envíos pendientes. No se muestra en Ajustes.
+4. En Supabase Auth configure el SMTP y remitente del mismo proveedor, Site URL
+   y URL de retorno `/auth/callback`. Copie como plantilla Magic Link el HTML de
+   `supabase/templates/magic-link.html`; la imagen está en `/mail-lockup.png` del
+   frontend publicado. Confirme que el enlace se usa una sola vez y entra en la
+   organización esperada. Para el CLI local, `supabase/config.toml` ya referencia
+   la plantilla; configure `MAIL_SANDBOX_HOST`/`MAIL_SANDBOX_PORT` con su Mailpit.
+5. El dueño configura logo, nombre y color en Ajustes › Identidad. Un color sin
+   contraste AA cae a teal-800 con aviso. Indique un correo de encargado y active
+   los avisos internos si los necesita. Estas preferencias no alteran emisiones
+   antiguas. El emisor documental y sus pies se sellan en la revisión nueva.
+6. Emita una cotización con correo del cliente, abra su vista previa y el
+   **PDF sellado**. Si falta, use **Preparar PDF de la cotización** y ábralo
+   antes de confirmar **Enviar al cliente**. El servidor exige el SHA revisado;
+   una respuesta perdida conserva la misma intención incluso tras recargar.
+   Compruebe HTML,
+   texto, PDF adjunto y enlace de la revisión. Registre un pago y repita la vista
+   previa/envío del comprobante. Apruebe desde el portal y bloquee una estación
+   de ensayo para comprobar los dos avisos internos.
+7. Compruebe los cinco correos en una bandeja externa y la bandeja de Ajustes.
+   «Aceptado por el servidor» significa aceptación SMTP, no lectura ni entrega
+   final. Una respuesta perdida muestra «Entrega sin confirmar». Revise servidor
+   y destinatario antes de confirmar **Comprobé que no llegó; reenviar**. No hay
+   reenvío automático de una entrega dudosa; el mismo envío mantiene su contenido,
+   destinatario e identificador de mensaje y registra otro intento.
+
+El sandbox solo entrega a Mailpit local y nunca contacta al destinatario externo.
+Los enlaces del portal se cifran en la outbox y no se publican en jobs ni logs.
+SMTP no ofrece exactamente una entrega: el control explícito de recuperación es
+parte del contrato. Una cotización reemplazada/vencida o un pago anulado fallan
+en la comprobación previa al envío y requieren resolver su causa.
+Si el enlace del correo venció o fue revocado, **Preparar nuevo correo** abre la
+cotización para revisar y confirmar otro envío con enlace nuevo. El registro
+anterior se conserva. Un pago anulado no permite reenviar su comprobante.
 
 ## Webhooks productivos
 

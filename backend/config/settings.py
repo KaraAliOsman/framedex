@@ -101,6 +101,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CORS_ALLOWED_ORIGINS = _csv_env("CORS_ALLOWED_ORIGINS", "http://127.0.0.1:5173")
 CORS_ALLOW_CREDENTIALS = False
 DEKOPEN_PUBLIC_APP_URL = os.environ.get("DEKOPEN_PUBLIC_APP_URL", "http://127.0.0.1:5173").rstrip("/")
+MAIL_PROVIDER = os.environ.get("MAIL_PROVIDER", "sandbox")
+MAIL_ENCRYPTION_KEY = os.environ.get("MAIL_ENCRYPTION_KEY", SECRET_KEY)
+MAIL_FROM_ADDRESS = os.environ.get("MAIL_FROM_ADDRESS", "noreply@example.invalid")
+MAIL_SANDBOX_HOST = os.environ.get("MAIL_SANDBOX_HOST", "127.0.0.1")
+MAIL_SANDBOX_PORT = int(os.environ.get("MAIL_SANDBOX_PORT", "25325"))
+MAIL_SMTP_HOST = os.environ.get("MAIL_SMTP_HOST", "")
+MAIL_SMTP_PORT = int(os.environ.get("MAIL_SMTP_PORT", "587"))
+MAIL_SMTP_SSL = os.environ.get("MAIL_SMTP_SSL", "false").lower() == "true"
+MAIL_SMTP_STARTTLS = os.environ.get("MAIL_SMTP_STARTTLS", "true").lower() == "true"
+MAIL_SMTP_USER = os.environ.get("MAIL_SMTP_USER", "")
+MAIL_SMTP_PASSWORD = os.environ.get("MAIL_SMTP_PASSWORD", "")
+if PRODUCTION and not os.environ.get("MAIL_ENCRYPTION_KEY"):
+    raise ValueError("MAIL_ENCRYPTION_KEY is required in production")
 CORS_ALLOW_HEADERS = (*default_headers, "x-organization-id")
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://127.0.0.1:25321").rstrip("/")

@@ -1,16 +1,7 @@
 import { t } from "../../i18n/es-CL";
 import "./orb.css";
 
-/** DEKOPEN Bot — flat 2D identity inspired by modern assistant marks (Grok):
- * a solid graphite sphere, two cyan capsule eyes, and one thin cyan orbit
- * line tilted through the silhouette — drawn as a flat ellipse whose back
- * half hides behind the sphere and whose front half sweeps under it. No
- * gradients, no gloss, no specular, no body, no mouth — geometry and one
- * accent color carry the whole character, so it reads crisp at any size.
- *
- * Two orthogonal channels carry meaning: the eyes carry life (breathe, blink,
- * gaze, poses) and a thin circular arc carries job status in the state-pill
- * hues; the orbit line is identity, tinted on consequential states. */
+/** Graphite body and one teal orbit. Static poses reflect the real job state. */
 export type OrbState =
   | "idle"
   | "input"
@@ -88,7 +79,7 @@ export function Orb({
       {/* Semantics channel — the status arc, hidden unless the state needs it. */}
       <circle className="orb__ring" cx="24" cy="24" r="22.5" />
 
-      {/* Life channel — everything that tilts, breathes and blinks. */}
+      {/* Static job pose — updated only when the job changes state. */}
       <g className="orb__tilt">
         {/* Orbit line, back sweep — a wide flat ellipse tilted through the
             sphere; the far arc hides behind the body. */}
@@ -139,8 +130,6 @@ export function Orb({
             past the silhouette on both sides. Never a mouth. */}
         <g transform="rotate(-8 24 29)">
           <path className="orb__ribbon orb__ribbon--front" d="M46.5 29 A22.5 5.8 0 0 1 1.5 29" />
-          {/* Working state: a bright segment runs the front line. */}
-          <path className="orb__ribbon-run" d="M46.5 29 A22.5 5.8 0 0 1 1.5 29" />
         </g>
       </g>
     </svg>

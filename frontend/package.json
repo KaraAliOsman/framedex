@@ -15,7 +15,7 @@
     "test:e2e": "playwright test",
     "ux:capture": "node --experimental-strip-types scripts/ux-capture/index.ts",
     "api:generate": "orval --config orval.config.ts",
-    "build": "vite build"
+    "build": "vite build && node scripts/check-brand-build.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",

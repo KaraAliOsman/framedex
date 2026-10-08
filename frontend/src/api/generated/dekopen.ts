@@ -171,6 +171,13 @@ import type {
   KitList,
   KitResponse,
   KitWriteRequest,
+  MailExample,
+  MailIntegration,
+  MailListParams,
+  MailPreview,
+  MailRecord,
+  MailRecoveryRequest,
+  MailSendRequest,
   MaterialRecheck,
   MeasurementConfirmRequest,
   MeasurementResponse,
@@ -6400,6 +6407,76 @@ export const clientsDeactivate = async (
   });
 };
 
+export type mailExamplesResponse200 = {
+  data: MailExample[];
+  status: 200;
+};
+
+export type mailExamplesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mailExamplesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mailExamplesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mailExamplesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mailExamplesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mailExamplesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mailExamplesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mailExamplesResponseSuccess = mailExamplesResponse200 & {
+  headers: Headers;
+};
+export type mailExamplesResponseError = (
+  | mailExamplesResponse400
+  | mailExamplesResponse401
+  | mailExamplesResponse403
+  | mailExamplesResponse404
+  | mailExamplesResponse409
+  | mailExamplesResponse422
+  | mailExamplesResponse503
+) & {
+  headers: Headers;
+};
+
+export type mailExamplesResponse = mailExamplesResponseSuccess | mailExamplesResponseError;
+
+export const getMailExamplesUrl = () => {
+  return `/api/v1/dev/mail/`;
+};
+
+export const mailExamples = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mailExamplesResponse> => {
+  return apiMutator<mailExamplesResponse>(getMailExamplesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type documentaryGenerateArtifactResponse200 = {
   data: ArtifactResponse;
   status: 200;
@@ -8351,6 +8428,169 @@ export const jobsRetry = async (
   });
 };
 
+export type mailListResponse200 = {
+  data: MailRecord[];
+  status: 200;
+};
+
+export type mailListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mailListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mailListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mailListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mailListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mailListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mailListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mailListResponseSuccess = mailListResponse200 & {
+  headers: Headers;
+};
+export type mailListResponseError = (
+  | mailListResponse400
+  | mailListResponse401
+  | mailListResponse403
+  | mailListResponse404
+  | mailListResponse409
+  | mailListResponse422
+  | mailListResponse503
+) & {
+  headers: Headers;
+};
+
+export type mailListResponse = mailListResponseSuccess | mailListResponseError;
+
+export const getMailListUrl = (params?: MailListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/mail/?${stringifiedParams}` : `/api/v1/mail/`;
+};
+
+export const mailList = async (
+  params?: MailListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mailListResponse> => {
+  return apiMutator<mailListResponse>(getMailListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type mailRecoverResponse200 = {
+  data: MailRecord;
+  status: 200;
+};
+
+export type mailRecoverResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mailRecoverResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mailRecoverResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mailRecoverResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mailRecoverResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mailRecoverResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mailRecoverResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mailRecoverResponseSuccess = mailRecoverResponse200 & {
+  headers: Headers;
+};
+export type mailRecoverResponseError = (
+  | mailRecoverResponse400
+  | mailRecoverResponse401
+  | mailRecoverResponse403
+  | mailRecoverResponse404
+  | mailRecoverResponse409
+  | mailRecoverResponse422
+  | mailRecoverResponse503
+) & {
+  headers: Headers;
+};
+
+export type mailRecoverResponse = mailRecoverResponseSuccess | mailRecoverResponseError;
+
+export const getMailRecoverUrl = (mailId: string) => {
+  return `/api/v1/mail/${mailId}/recover/`;
+};
+
+export const mailRecover = async (
+  mailId: string,
+  mailRecoveryRequest: MailRecoveryRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mailRecoverResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<mailRecoverResponse>(getMailRecoverUrl(mailId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(mailRecoveryRequest),
+  });
+};
+
 export type organizationBrandingGetResponse200 = {
   data: OrgBranding;
   status: 200;
@@ -8883,6 +9123,77 @@ export const organizationExtraPolicySave = async (
     method: "PUT",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(policyWriteRequest),
+  });
+};
+
+export type mailIntegrationStatusResponse200 = {
+  data: MailIntegration;
+  status: 200;
+};
+
+export type mailIntegrationStatusResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mailIntegrationStatusResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mailIntegrationStatusResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mailIntegrationStatusResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mailIntegrationStatusResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mailIntegrationStatusResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mailIntegrationStatusResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mailIntegrationStatusResponseSuccess = mailIntegrationStatusResponse200 & {
+  headers: Headers;
+};
+export type mailIntegrationStatusResponseError = (
+  | mailIntegrationStatusResponse400
+  | mailIntegrationStatusResponse401
+  | mailIntegrationStatusResponse403
+  | mailIntegrationStatusResponse404
+  | mailIntegrationStatusResponse409
+  | mailIntegrationStatusResponse422
+  | mailIntegrationStatusResponse503
+) & {
+  headers: Headers;
+};
+
+export type mailIntegrationStatusResponse =
+  mailIntegrationStatusResponseSuccess | mailIntegrationStatusResponseError;
+
+export const getMailIntegrationStatusUrl = () => {
+  return `/api/v1/organization/mail/`;
+};
+
+export const mailIntegrationStatus = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mailIntegrationStatusResponse> => {
+  return apiMutator<mailIntegrationStatusResponse>(getMailIntegrationStatusUrl(), {
+    ...options,
+    method: "GET",
   });
 };
 
@@ -17234,6 +17545,162 @@ export const projectPaymentVoid = async (
   });
 };
 
+export type paymentMailPreviewResponse200 = {
+  data: MailPreview;
+  status: 200;
+};
+
+export type paymentMailPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type paymentMailPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type paymentMailPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type paymentMailPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type paymentMailPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type paymentMailPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type paymentMailPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type paymentMailPreviewResponseSuccess = paymentMailPreviewResponse200 & {
+  headers: Headers;
+};
+export type paymentMailPreviewResponseError = (
+  | paymentMailPreviewResponse400
+  | paymentMailPreviewResponse401
+  | paymentMailPreviewResponse403
+  | paymentMailPreviewResponse404
+  | paymentMailPreviewResponse409
+  | paymentMailPreviewResponse422
+  | paymentMailPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type paymentMailPreviewResponse =
+  paymentMailPreviewResponseSuccess | paymentMailPreviewResponseError;
+
+export const getPaymentMailPreviewUrl = (projectId: string, paymentId: string) => {
+  return `/api/v1/projects/${projectId}/payments/${paymentId}/mail/`;
+};
+
+export const paymentMailPreview = async (
+  projectId: string,
+  paymentId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<paymentMailPreviewResponse> => {
+  return apiMutator<paymentMailPreviewResponse>(getPaymentMailPreviewUrl(projectId, paymentId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type paymentMailSendResponse200 = {
+  data: MailRecord;
+  status: 200;
+};
+
+export type paymentMailSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type paymentMailSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type paymentMailSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type paymentMailSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type paymentMailSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type paymentMailSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type paymentMailSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type paymentMailSendResponseSuccess = paymentMailSendResponse200 & {
+  headers: Headers;
+};
+export type paymentMailSendResponseError = (
+  | paymentMailSendResponse400
+  | paymentMailSendResponse401
+  | paymentMailSendResponse403
+  | paymentMailSendResponse404
+  | paymentMailSendResponse409
+  | paymentMailSendResponse422
+  | paymentMailSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type paymentMailSendResponse = paymentMailSendResponseSuccess | paymentMailSendResponseError;
+
+export const getPaymentMailSendUrl = (projectId: string, paymentId: string) => {
+  return `/api/v1/projects/${projectId}/payments/${paymentId}/mail/`;
+};
+
+export const paymentMailSend = async (
+  projectId: string,
+  paymentId: string,
+  mailSendRequest: MailSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<paymentMailSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<paymentMailSendResponse>(getPaymentMailSendUrl(projectId, paymentId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(mailSendRequest),
+  });
+};
+
 export type projectPaymentReceiptResponse200 = {
   data: PaymentReceiptAccess;
   status: 200;
@@ -17619,6 +18086,160 @@ export const projectQuoteLinkRevoke = async (
       method: "POST",
     },
   );
+};
+
+export type quoteMailPreviewResponse200 = {
+  data: MailPreview;
+  status: 200;
+};
+
+export type quoteMailPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quoteMailPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quoteMailPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quoteMailPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quoteMailPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quoteMailPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quoteMailPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quoteMailPreviewResponseSuccess = quoteMailPreviewResponse200 & {
+  headers: Headers;
+};
+export type quoteMailPreviewResponseError = (
+  | quoteMailPreviewResponse400
+  | quoteMailPreviewResponse401
+  | quoteMailPreviewResponse403
+  | quoteMailPreviewResponse404
+  | quoteMailPreviewResponse409
+  | quoteMailPreviewResponse422
+  | quoteMailPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type quoteMailPreviewResponse =
+  quoteMailPreviewResponseSuccess | quoteMailPreviewResponseError;
+
+export const getQuoteMailPreviewUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/quote-mail/`;
+};
+
+export const quoteMailPreview = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quoteMailPreviewResponse> => {
+  return apiMutator<quoteMailPreviewResponse>(getQuoteMailPreviewUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type quoteMailSendResponse200 = {
+  data: MailRecord;
+  status: 200;
+};
+
+export type quoteMailSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quoteMailSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quoteMailSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quoteMailSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quoteMailSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quoteMailSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quoteMailSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quoteMailSendResponseSuccess = quoteMailSendResponse200 & {
+  headers: Headers;
+};
+export type quoteMailSendResponseError = (
+  | quoteMailSendResponse400
+  | quoteMailSendResponse401
+  | quoteMailSendResponse403
+  | quoteMailSendResponse404
+  | quoteMailSendResponse409
+  | quoteMailSendResponse422
+  | quoteMailSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type quoteMailSendResponse = quoteMailSendResponseSuccess | quoteMailSendResponseError;
+
+export const getQuoteMailSendUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/quote-mail/`;
+};
+
+export const quoteMailSend = async (
+  projectId: string,
+  mailSendRequest: MailSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quoteMailSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quoteMailSendResponse>(getQuoteMailSendUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(mailSendRequest),
+  });
 };
 
 export type projectsResetPricingResponse200 = {

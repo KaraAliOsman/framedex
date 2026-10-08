@@ -442,6 +442,7 @@ def _brand_block(organization: dict | None) -> str:
     'Generado con DEKOPEN' stays as the discreet tool attribution. A snapshot
     frozen before branding renders the bare DEKOPEN wordmark."""
     org = organization if isinstance(organization, dict) else {}
+    current_brand = org.get("brand_schema") == 1
     uri = _logo_uri(org)
     name = (
         _value(org.get("commercial_name"))
@@ -451,20 +452,25 @@ def _brand_block(organization: dict | None) -> str:
     if uri:
         # Logo + commercial name together — the name must survive the logo.
         name_line = (
-            f'<div class="brand" style="font-size:9pt;letter-spacing:1.2pt">'
-            f'{escape(name)}</div>'
+            f'<div class="brand" style="font-size:9pt;letter-spacing:1.2pt">{escape(name)}</div>'
             if name != "—"
             else ""
         )
         brand = f'<img class="brand-logo" src="{uri}" alt="">{name_line}'
     else:
         if name == "—":
-            brand = '<div class="brand">DEKOPEN<span class="mark"></span></div>'
+            brand = (
+                '<div class="brand">Emisor sin identificar</div>'
+                if current_brand
+                else '<div class="brand">DEKOPEN<span class="mark"></span></div>'
+            )
         else:
             brand = f'<div class="brand">{escape(name)}</div>'
     attribution = (
         '<div class="brand-sub">Generado con DEKOPEN</div>'
-        if isinstance(organization, dict) and organization.get("name")
+        if isinstance(organization, dict)
+        and organization.get("name")
+        and (not current_brand or org.get("document_attribution", False))
         else ""
     )
     return f"<div>{brand}{attribution}</div>"
@@ -504,7 +510,6 @@ def _rev_display(raw: object) -> str:
     """'REV-A' reads 'A' under a Rev. label — the folio keeps the full code."""
     text = _value(raw)
     return text[4:] if text.upper().startswith("REV-") else text
-
 
 
 def _num(value: object) -> Decimal:
@@ -2745,9 +2750,18 @@ def render_pdf_document(
         body = _doc08(snapshot)
     else:
         raise DocumentaryError("pdf_document_type_invalid")
-    if snapshot.get("is_demo") or _has_synthetic_glass(snapshot) or any(isinstance(position, dict) and position.get("is_demo")
-                                     for position in snapshot.get("positions", [])):
-        body = '<p class="demo-notice"><strong>DEMO</strong> · Catálogo sintético, sin certificación. Medidas y precios de prueba.</p>' + body
+    if (
+        snapshot.get("is_demo")
+        or _has_synthetic_glass(snapshot)
+        or any(
+            isinstance(position, dict) and position.get("is_demo")
+            for position in snapshot.get("positions", [])
+        )
+    ):
+        body = (
+            '<p class="demo-notice"><strong>DEMO</strong> · Catálogo sintético, sin certificación. Medidas y precios de prueba.</p>'
+            + body
+        )
     # Order-scoped payloads (DOC-02/DOC-04/DOC-07) carry `order`, not
     # `project` — resolve the code from whichever envelope the snapshot is.
     project_obj = snapshot.get("project")
@@ -2757,10 +2771,17 @@ def render_pdf_document(
         order_obj = snapshot.get("order")
         title_code = order_obj.get("project_code") if isinstance(order_obj, dict) else None
     title = escape(f"{document_type} {_value(title_code)}")
+    css = _CSS
+    org = snapshot.get("organization")
+    if document_type == "DOC-01" and isinstance(org, dict) and org.get("brand_schema") == 1:
+        from projects.brand_color import effective_color
+
+        color, _ = effective_color(org.get("brand_primary_color"))
+        css = css.replace(_TEAL_800, color).replace(_TEAL_700, color)
     html = (
-        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        '<!doctype html><html lang="es-CL"><head><meta charset="utf-8">'
         f"<title>{title}</title>"
-        f"<style>{_CSS}{_DEMO_NOTICE_CSS}</style></head><body>"
+        f"<style>{css}{_DEMO_NOTICE_CSS}</style></head><body>"
         f"{body}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
@@ -3079,6 +3100,7 @@ _CATEGORY_ES = {
     "HARDWARE_KIT": "Kit herraje", "PANEL": "Panel",
     "ACCESSORY": "Accesorio", "FITTING": "Fijación",
 }
+
 
 def _product_caption(position: dict[str, object]) -> str:
     """A commercial name from the sealed opening, separate from tariff buckets."""

@@ -5,6 +5,7 @@ import { t } from "./i18n/es-CL";
 
 import { AppShell } from "./app/AppShell";
 import { RouteErrorBoundary } from "./app/RouteErrorBoundary";
+import { ConnectionBoundary, RecoveryPage } from "./app/RecoveryPage";
 import { DashboardPage } from "./app/DashboardPage";
 import { JobsPage } from "./app/JobsPage";
 import { SettingsPage } from "./app/SettingsPage";
@@ -16,11 +17,14 @@ import { MfaPage } from "./auth/MfaPage";
 import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
 import { consumeReturnTo } from "./auth/returnTo";
 import { LandingPage } from "./features/landing/LandingPage";
+import { AboutPage } from "./brand/AboutPage";
 
 export const DEV_ONLY_ROUTE_PATHS = [
   "/projects/demo/positions/g1/edit",
   "/benchmark",
   "/dev/ui",
+  "/dev/marca",
+  "/dev/correos",
 ] as const;
 
 export function visibleDevOnlyRoutePaths(
@@ -103,6 +107,12 @@ const BenchmarkPage = lazy(async () => {
 });
 const UiPage = import.meta.env.DEV
   ? lazy(async () => ({ default: (await import("./dev/UiPage")).UiPage }))
+  : null;
+const BrandPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/BrandPage")).BrandPage }))
+  : null;
+const MailExamplesPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/MailExamplesPage")).MailExamplesPage }))
   : null;
 
 function isFloorRole(role: string | undefined): boolean {
@@ -190,6 +200,28 @@ export function AppRoutes(): JSX.Element {
         />
         {visibleDevOnlyRoutePaths().length > 0 && (
           <>
+            {BrandPage ? (
+              <Route
+                path="/dev/marca"
+                element={
+                  <Suspense fallback={<p role="status">Cargando marca</p>}>
+                    <BrandPage />
+                  </Suspense>
+                }
+              />
+            ) : null}
+            {MailExamplesPage ? (
+              <Route
+                path="/dev/correos"
+                element={
+                  <ReadyGuard>
+                    <Suspense fallback={<p role="status">Cargando correos</p>}>
+                      <MailExamplesPage />
+                    </Suspense>
+                  </ReadyGuard>
+                }
+              />
+            ) : null}
             {UiPage ? (
               <Route
                 path="/dev/ui"
@@ -249,6 +281,14 @@ export function AppRoutes(): JSX.Element {
           }
         />
         <Route path="/" element={<HomeRedirect />} />
+        <Route
+          path="/about"
+          element={
+            <ReadyGuard>
+              <AboutPage />
+            </ReadyGuard>
+          }
+        />
         <Route
           path="/cotizacion/:token"
           element={
@@ -404,7 +444,7 @@ export function AppRoutes(): JSX.Element {
          * inside General. */}
         <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
         <Route path="/inventory" element={<Navigate to="/purchasing" replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<RecoveryPage kind="not-found" />} />
       </Routes>
     </RouteErrorBoundary>
   );
@@ -413,5 +453,9 @@ export function AppRoutes(): JSX.Element {
 const router = createBrowserRouter([{ path: "*", element: <AppRoutes /> }]);
 
 export function App(): JSX.Element {
-  return <RouterProvider router={router} />;
+  return (
+    <ConnectionBoundary>
+      <RouterProvider router={router} />
+    </ConnectionBoundary>
+  );
 }

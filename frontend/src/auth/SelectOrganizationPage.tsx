@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
+import { Wordmark } from "../brand/Brand";
 import { roleLabel } from "../app/shellUtils";
 import { StatusBadge } from "../ui";
 
@@ -17,8 +18,7 @@ export function SelectOrganizationPage(): JSX.Element {
     <main className="auth-screen" data-testid="organization-selector">
       <section className="auth-card" aria-labelledby="org-title">
         <div className="auth-card__brand">
-          <span className="brand">{t("app.brand")}</span>
-          <span className="brand-os">{t("app.brandOs")}</span>
+          <Wordmark width={176} />
         </div>
         <header className="auth-card__header">
           <h1 id="org-title">{t("org.select")}</h1>

@@ -520,15 +520,25 @@ class OrgBrandingSerializer(serializers.Serializer):
     brand_email = serializers.CharField(allow_null=True, allow_blank=True)
     brand_logo_key = serializers.CharField(allow_null=True, allow_blank=True)
     brand_logo_sha256 = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_primary_color = serializers.CharField()
+    brand_effective_color = serializers.CharField()
+    brand_color_fallback = serializers.BooleanField()
+    document_attribution = serializers.BooleanField()
+    portal_attribution = serializers.BooleanField()
+    notification_email = serializers.EmailField(allow_null=True, allow_blank=True)
+    internal_mail_enabled = serializers.BooleanField()
 
 
 class OrgBrandingWriteSerializer(StrictSerializer):
+    brand_primary_color = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
+    document_attribution = serializers.BooleanField(required=False)
+    portal_attribution = serializers.BooleanField(required=False)
+    notification_email = serializers.EmailField(required=False, allow_null=True, allow_blank=True)
+    internal_mail_enabled = serializers.BooleanField(required=False)
     commercial_name = serializers.CharField(
         allow_null=True, allow_blank=True, required=False, max_length=255
     )
-    giro = serializers.CharField(
-        allow_null=True, allow_blank=True, required=False, max_length=255
-    )
+    giro = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=255)
     brand_address = serializers.CharField(
         allow_null=True, allow_blank=True, required=False, max_length=255
     )

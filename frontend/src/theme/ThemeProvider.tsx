@@ -1,6 +1,14 @@
-import { createContext, type PropsWithChildren, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { telemetry } from "../telemetry/telemetry";
+import { applyAppBrand } from "../brand/head";
 
 export type Theme = "light" | "dark";
 
@@ -22,6 +30,9 @@ function initialTheme(): Theme {
 export function ThemeProvider({ children }: PropsWithChildren): JSX.Element {
   const [theme, setTheme] = useState<Theme>(initialTheme);
   document.documentElement.dataset.theme = theme;
+  useEffect(() => {
+    if (!window.location.pathname.startsWith("/cotizacion/")) applyAppBrand(theme);
+  }, [theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({

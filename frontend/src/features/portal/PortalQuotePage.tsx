@@ -3,6 +3,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
+import { applyAppBrand } from "../../brand/head";
 import { portalQuoteDecide, portalQuoteRetrieve } from "../../api/generated/dekopen";
 import type { PortalPosition, PortalQuote } from "../../api/generated/models";
 import type { PositionDesign } from "../../api/generated/models";
@@ -380,10 +381,50 @@ export function PortalQuotePage(): JSX.Element {
 
   // The only page a customer ever sees carries the issuer's name in the tab.
   useEffect(() => {
+    const previousTitle = document.title;
+    const links = [
+      ...document.querySelectorAll<HTMLLinkElement>(
+        'link[rel="icon"],link[rel="apple-touch-icon"],link[rel="manifest"]',
+      ),
+    ];
+    const saved = links.map((link) => ({
+      link,
+      href: link.getAttribute("href"),
+      type: link.getAttribute("type"),
+    }));
+    const description = document.querySelector('meta[name="description"]');
+    const previousDescription = description?.getAttribute("content");
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    const previousColor = themeColor?.getAttribute("content");
     const issuer = quote?.organization?.commercial_name || quote?.organization?.name || "";
     document.title = issuer
       ? `${issuer} · ${t("portal.proposalTitle")} · ${quote?.project_code ?? ""}`
       : t("portal.proposalTitle");
+    for (const link of links) {
+      if (link.rel === "manifest") link.removeAttribute("href");
+      else {
+        link.setAttribute("href", quote?.organization?.brand_logo_url || "/portal-favicon.svg");
+        link.removeAttribute("type");
+      }
+    }
+    description?.setAttribute(
+      "content",
+      issuer ? `Cotización de ${issuer}` : t("portal.proposalTitle"),
+    );
+    if (quote?.organization?.brand_primary_color)
+      themeColor?.setAttribute("content", quote.organization.brand_primary_color);
+    return () => {
+      document.title = previousTitle;
+      for (const { link, href, type } of saved) {
+        if (href) link.setAttribute("href", href);
+        else link.removeAttribute("href");
+        if (type) link.setAttribute("type", type);
+        else link.removeAttribute("type");
+      }
+      if (previousDescription) description?.setAttribute("content", previousDescription);
+      if (previousColor) themeColor?.setAttribute("content", previousColor);
+      applyAppBrand(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+    };
   }, [quote]);
 
   async function decide(decision: "APPROVED" | "DECLINED"): Promise<void> {
@@ -449,7 +490,10 @@ export function PortalQuotePage(): JSX.Element {
       ? divideDecimal(taxTotal, netTotal)
       : null;
   const org = quote.organization;
-  const issuer = org?.commercial_name || org?.name || "DEKOPEN";
+  const issuer =
+    org?.commercial_name ||
+    org?.name ||
+    (org?.brand_schema === 1 ? "Emisor sin identificar" : "DEKOPEN");
   const issuerContact =
     [org?.brand_address, org?.brand_phone, org?.brand_email]
       .filter((part) => part != null && part !== "")
@@ -463,7 +507,14 @@ export function PortalQuotePage(): JSX.Element {
   }, null);
 
   return (
-    <main className="portal-page">
+    <main
+      className="portal-page"
+      style={
+        {
+          "--portal-brand-color": org?.brand_primary_color ?? "var(--teal-800)",
+        } as React.CSSProperties
+      }
+    >
       <article className="portal-proposal">
         <header className="portal-proposal__head">
           <div className="portal-proposal__issuer">
@@ -761,7 +812,9 @@ export function PortalQuotePage(): JSX.Element {
           </ValidatedForm>
         )}
 
-        <footer className="portal-proposal__brand">{t("portal.brand")}</footer>
+        {org?.portal_attribution !== false ? (
+          <footer className="portal-proposal__brand">{t("portal.brand")}</footer>
+        ) : null}
       </article>
     </main>
   );

@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 
 import { t } from "../../i18n/es-CL";
 import { Orb } from "../assistant/Orb";
+import { Wordmark } from "../../brand/Brand";
 
 import "./landing.css";
 
@@ -25,10 +26,10 @@ export function LandingPage(): JSX.Element {
     <main className="landing">
       <header className="landing-top">
         <span className="landing-brand">
-          <span className="brand">{t("app.brand")}</span>
+          <Wordmark width={144} />
           <span className="brand-os">{t("app.brandOs")}</span>
         </span>
-        <Link className="ui-button ui-button--primary" to="/login">
+        <Link className="ui-button" to="/login">
           {t("landing.enter")}
         </Link>
       </header>

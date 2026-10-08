@@ -4,7 +4,7 @@ import "./orb.css";
 
 /** DEKOPEN Bot at figure scale (96–200px) — welcome and empty states. The
  * same flat-2D identity as the Orb: solid graphite sphere with a darker
- * bottom crescent, twin cyan capsule eyes, one thin orbit line through the
+ * bottom crescent, twin teal capsule eyes, one thin orbit line through the
  * silhouette, and the reference's flat translucent window panes behind it.
  * Pure SVG: zero runtime weight, no WebGL, prints safely. States come from
  * the same Orb vocabulary — the figure poses the character, it doesn't
@@ -78,7 +78,7 @@ export function BotFigure({
           d="M36.8 118 A66 66 0 0 0 155.2 118 A76 52 0 0 1 36.8 118 Z"
         />
 
-        {/* Capsule eyes — flat cyan, no glow halo. */}
+        {/* Capsule eyes — flat teal, no glow halo. */}
         <g className="bot-figure__eyes">
           <rect x="69" y="67" width="19.2" height="45.8" rx="9.6" fill="var(--orb-eye)" />
           <rect x="111.7" y="67" width="19.2" height="45.8" rx="9.6" fill="var(--orb-eye)" />
@@ -91,7 +91,6 @@ export function BotFigure({
             className="bot-figure__ribbon bot-figure__ribbon--front"
             d="M190 121 A94 24 0 0 1 2 121"
           />
-          <path className="bot-figure__ribbon-run" d="M190 121 A94 24 0 0 1 2 121" />
         </g>
       </g>
     </svg>

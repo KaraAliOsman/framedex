@@ -1,0 +1,39 @@
+.recovery-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  background: var(--bg-app);
+  padding: var(--space-32px);
+}
+.recovery-sheet {
+  background: var(--surface-sheet);
+  border: 1px solid var(--border-default);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  padding: var(--space-32px);
+  max-width: 28rem;
+  width: 100%;
+  display: grid;
+  gap: var(--space-16px);
+}
+.recovery-sheet h1 {
+  margin: 0;
+  font-size: var(--type-title-l);
+}
+.recovery-sheet p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.connection-content[hidden] {
+  display: none;
+}
+@media (max-width: 640px) {
+  .recovery-page {
+    padding: var(--space-16px);
+  }
+  .recovery-sheet {
+    padding: var(--space-24px);
+  }
+  .recovery-sheet .ui-button {
+    min-height: var(--density-loose);
+  }
+}

@@ -2,6 +2,35 @@
 
 Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguientes deben mantener esta tabla cuando implementen o cambien un valor configurable.
 
+## P25 · marca, entrada y correo (2026-10-08)
+
+- Dirección B y Plex Sans 600 convertida a contornos; corrección óptica solo en
+  marca inferior a 24 px y favicon. La cota D se reserva a Acerca de y correo.
+  Son contratos de identidad del producto, sin variantes arbitrarias en Ajustes.
+- Onboarding de cuatro pasos: serie vigente, cliente, obra y primera posición.
+  Pide solo nombres; el contacto queda en divulgación progresiva. Usa las series
+  que ofrece el motor; una respuesta perdida solo adopta una coincidencia fresca
+  única con el mismo cliente y todos los campos enviados. Guarda por organización.
+- Color de organización: teal-800, hexadecimal de seis caracteres, contraste
+  mínimo 4,5:1 contra paper. Ajustes › Identidad permite cambiarlo y explica el
+  fallback. Las emisiones nuevas sellan color y pies; las antiguas no se alteran.
+- Atribución documental oculta y portal discreto visible por defecto. Ambos pies
+  se configuran en Ajustes › Identidad para emisiones nuevas. Los correos al
+  cliente conservan siempre su emisor, sin marca de plataforma.
+- Avisos internos desactivados. El dueño declara el correo del encargado y los
+  activa en Ajustes › Identidad. Aprobar o bloquear una OT registra el aviso;
+  enviar al cliente exige vista previa y clic explícito.
+- Proveedor de correo `sandbox` con Mailpit; SMTP TLS se configura en el servidor
+  siguiendo ACTIVACION.md. El contenido se cifra y permanece sellado. SMTP no
+  garantiza entrega única: una respuesta perdida o worker interrumpido muestra
+  «Entrega sin confirmar». No se reenvía hasta comprobar ausencia y confirmarla.
+- El correo comercial presenta el PDF sellado antes de confirmar y liga el
+  clic al SHA revisado. La intención se conserva en la sesión del navegador
+  después de una respuesta perdida o recarga; otra confirmación crea un envío
+  nuevo. Son garantías de autorización e idempotencia, sin preferencia que las
+  desactive. Un enlace revocado conserva su historia y conduce a una nueva
+  revisión/confirmación en la cotización vigente.
+
 | Decision                   | Valor por defecto                                                                                               | Donde se cambia                   | Estado      | Encargo que la implementa |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------- | ------------------------- |
 | Papel de los documentos    | Carta                                                                                                           | Ajustes > Documentos              | por defecto | P09                       |
