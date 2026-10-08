@@ -290,10 +290,12 @@ def test_trace_piece_physical_code_resolves_spec() -> None:
         report = trace.trace_piece(org_id=ORG, piece_id="P02-U01-M02")
 
     assert report["matches"], "printed P-U-M code must resolve to pieces"
+    assert len(report["matches"]) == 1
     for match in report["matches"]:
         piece = match["location"]["piece"]
         assert piece["workshop_sku"] == "MARCO-60"
         assert piece["source_position_id"] == "pos-1"
+        assert piece["code"] == "P02-U01-M02"
         assert match["location"]["position_code"] == "P02"
     # The reinforcement of that member resolves too — same printed grammar.
     fake_rows, fake_one = _physical_code_factories()
@@ -314,6 +316,73 @@ def test_trace_piece_physical_code_unknown_returns_empty() -> None:
          patch("production.trace.documentary_backend"):
         report = trace.trace_piece(org_id=ORG, piece_id="P09-U09-M99")
     assert report["matches"] == []
+
+
+def test_trace_piece_address_scopes_order_and_checks_stable_identity() -> None:
+    from production.pieces import entity_address
+    fake_rows, fake_one = _physical_code_factories()
+    with patch("production.trace.rows", side_effect=fake_rows), \
+         patch("production.trace.one", side_effect=fake_one), \
+         patch("production.trace.documentary_backend"):
+        original = trace.trace_piece(org_id=ORG, piece_id="P02-U01-M02")
+    stable = original["matches"][0]["location"]["piece"]["stable_id"]
+    for identity, expected in ((stable, 1), ("another-physical-piece", 0)):
+        fake_rows, fake_one = _physical_code_factories()
+        with patch("production.trace.rows", side_effect=fake_rows) as queried, \
+             patch("production.trace.one", side_effect=fake_one), \
+             patch("production.trace.documentary_backend"):
+            report = trace.trace_piece(org_id=ORG, piece_id=entity_address(
+                "/production", order=ORDER, piece="P02-U01-M02", identity=identity))
+        assert len(report["matches"]) == expected
+        sql, parameters = queried.call_args_list[0].args
+        assert "AND id = %s" in sql and parameters == [str(ORG), str(ORDER)]
+
+
+def test_packing_unit_address_checks_unit_identity_and_returns_only_its_pieces() -> None:
+    from production.pieces import entity_address
+
+    for identity, expected in ((f"{ORDER}:U1", True), (f"{ORDER}:U2", False), ("wrong", False)):
+        fake_rows, fake_one = _physical_code_factories()
+        with patch("production.trace.rows", side_effect=fake_rows), \
+             patch("production.trace.one", side_effect=fake_one), \
+             patch("production.trace.documentary_backend"):
+            report = trace.trace_piece(org_id=ORG, piece_id=entity_address(
+                "/production", order=ORDER, piece="OT-0001-U01", identity=identity))
+        assert bool(report["matches"]) is expected
+        assert all(match["location"]["piece"]["unit_index"] == 1 for match in report["matches"])
+
+
+def test_piece_trace_route_preserves_a_decoded_qr_url() -> None:
+    from django.urls import resolve
+    from production.pieces import entity_address
+
+    address = entity_address("/production", order=ORDER, piece="P02-U01-M02", identity="stable-piece")
+    match = resolve("/api/v1/production/pieces/" + address + "/trace/")
+    assert match.kwargs["piece_id"] == address
+
+
+def test_malformed_scan_address_is_rejected_before_reading_work_orders() -> None:
+    import pytest
+    from documents.repository import DocumentaryError
+
+    with patch("production.trace.rows") as queried:
+        with pytest.raises(DocumentaryError, match="work_order_piece_invalid"):
+            trace.trace_piece(org_id=ORG, piece_id="https://[invalid/production?piece=P01-U01-M01")
+    queried.assert_not_called()
+
+
+def test_unqualified_piece_scan_bounds_workshop_candidates_without_partial_results() -> None:
+    import pytest
+    from documents.repository import DocumentaryError
+
+    with patch("production.trace.rows", return_value=[{}] * 101) as queried, \
+         patch("production.trace.one") as snapshot:
+        with pytest.raises(DocumentaryError, match="work_order_piece_order_required"):
+            trace.trace_piece(org_id=ORG, piece_id="P01-U01-M01")
+    query, parameters = queried.call_args.args
+    assert "order_type = 'WORKSHOP_OT'" in query and "LIMIT 101" in query
+    assert parameters == [str(ORG)]
+    snapshot.assert_not_called()
 
 
 def test_trace_piece_unknown_returns_empty() -> None:

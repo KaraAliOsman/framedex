@@ -235,10 +235,10 @@ function _loc(
 ): string {
   const parts: string[] = [];
   if (piece.bay_id) {
-    parts.push(labels[piece.bay_id] ?? `b·${piece.bay_id.slice(0, 4)}`);
+    parts.push(labels[piece.bay_id] ?? "Sin dato · vano sin código");
   }
   if (piece.leaf_id) {
-    parts.push(labels[piece.leaf_id] ?? `h·${piece.leaf_id.slice(0, 4)}`);
+    parts.push(labels[piece.leaf_id] ?? "Sin dato · hoja sin código");
   }
   const prefix = piece.unit_index ? `u${piece.unit_index}` : "";
   return [prefix, ...parts].filter(Boolean).join(" · ");

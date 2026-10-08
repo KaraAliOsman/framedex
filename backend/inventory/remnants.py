@@ -13,7 +13,9 @@ import json
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
+from urllib.parse import urlencode
 
+from django.conf import settings
 from django.db import transaction
 
 from dekopen_engine.cutting import RemnantBar
@@ -24,6 +26,7 @@ from documents.repository import DocumentaryError, documentary_backend, one, row
 def _remnant_row(row: dict[str, object]) -> dict[str, object]:
     return {
         "id": str(row["id"]),
+        "code": row["code"],
         "kind": row["kind"],
         "stock_authority_id": (
             str(row["stock_authority_id"]) if row["stock_authority_id"] else None
@@ -58,7 +61,8 @@ def _remnant_row(row: dict[str, object]) -> dict[str, object]:
 
 
 _SELECT = """
-    SELECT id, kind, stock_authority_id, sheet_workshop_sku,
+    SELECT id, private.entity_code(org_id, 'RT', id) AS code,
+           kind, stock_authority_id, sheet_workshop_sku,
            physical_stock_identity, material, color,
            length_mm, width_mm, height_mm, status, origin,
            origin_order_id, reserved_order_id, consumed_order_id,
@@ -107,7 +111,7 @@ def list_remnants(
         {
             str(row["id"]): str(row["order_code"])
             for row in rows(
-                "SELECT id, order_code FROM public.orders"
+                "SELECT id, private.entity_code(org_id, 'OC', id, order_code) AS order_code FROM public.orders"
                 " WHERE org_id = %s AND id = ANY(%s::uuid[])",
                 [str(org_id), sorted(order_ids)],
             )
@@ -566,10 +570,11 @@ def remnant_label(*, org_id: UUID, remnant_id: UUID) -> dict[str, object]:
             or remnant["physical_stock_identity"]
             or "—"
         )
-    payload = f"DEKOPEN|REMNANT|{remnant['id']}"
+    query = urlencode({"remnant": remnant["id"], "code": remnant["code"]})
+    payload = f"{settings.DEKOPEN_PUBLIC_APP_URL.rstrip('/')}/purchasing?{query}"
     return {
         "remnant": remnant,
         "identity": identity,
         "qr_payload": payload,
-        "qr_svg": segno.make(payload, error="m").svg_inline(border=2, scale=6),
+        "qr_svg": segno.make(payload, error="m").svg_inline(border=4, scale=6, omitsize=True),
     }

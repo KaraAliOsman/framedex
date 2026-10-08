@@ -854,6 +854,7 @@ export * from "./paymentRecordResponse";
 export * from "./paymentsSummary";
 export * from "./paymentStatusEnum";
 export * from "./paymentVoidRequest";
+export * from "./physicalPieceLabel";
 export * from "./planCoupling";
 export * from "./planGeometry";
 export * from "./planModule";

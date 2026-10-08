@@ -250,7 +250,7 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             [version_id, org_id],
         )
         orders = rows(
-            "SELECT o.id,o.order_code,o.order_type::text,o.status::text,o.supplier_identity,"
+            "SELECT o.id,private.entity_code(o.org_id,'OC',o.id,o.order_code) AS order_code,o.order_type::text,o.status::text,o.supplier_identity,"
             "o.supplier_name,o.order_snapshot_hash,o.confirmed_at,o.sent_at,o.expected_at,"
             "o.sent_to,o.cancelled_at,o.supplier_details::text AS supplier_details,"
             "l.line_count,l.total_qty,l.released_qty,l.lines_preview::text AS lines_preview,"
@@ -492,7 +492,7 @@ def confirm_order_type_batch(
                 return (
                     [
                         _public(item) for item in rows(
-                            "SELECT id,order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
+                            "SELECT id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
                             "FROM public.orders "
                             "WHERE project_version_id=%s AND org_id=%s AND order_type=%s "
                             "AND status <> 'CANCELLED' ORDER BY supplier_name,id",
@@ -590,7 +590,12 @@ def confirm_order_type_batch(
                 NAMESPACE_URL,
                 f"https://dekopen.local/order/{batch_id}/{eligibility_id}",
             )
-            order_code = f"PO-{order_id.hex[:12].upper()}"
+            # Reserve inside this transaction before sealing. A rollback also
+            # rolls back the counter; a replay reuses the same entity address.
+            order_code = str(one(
+                "SELECT private.assign_entity_code(%s,'OC',%s) AS code",
+                [org_id, order_id],
+            )["code"])
             allocation_identity = documentary_sha256_v1({
                 "batch_allocation_hash": allocation_hash,
                 "supplier_eligibility_id": eligibility_id,
@@ -689,7 +694,7 @@ def send_order(
         raise DocumentaryError("order_send_confirmation_required")
     with documentary_backend():
         order = one(
-            "SELECT id,order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
+            "SELECT id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
             "FROM public.orders WHERE id=%s AND org_id=%s FOR UPDATE",
             [order_id, org_id],
             "order_not_found",
@@ -706,7 +711,7 @@ def send_order(
         updated = one(
             "UPDATE public.orders SET status='SENT',sent_by=%s,sent_at=%s,"
             "expected_at=%s,sent_to=%s,updated_at=%s "
-            "WHERE id=%s AND org_id=%s RETURNING id,order_code,order_type::text,status::text,"
+            "WHERE id=%s AND org_id=%s RETURNING id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,"
             "supplier_name,order_snapshot_hash,expected_at,sent_to",
             [actor_id, sent_at, expected_at, sent_to, sent_at, order_id, org_id],
         )
@@ -726,7 +731,7 @@ def cancel_order(
         raise DocumentaryError("order_cancel_confirmation_required")
     with documentary_backend():
         order = one(
-            "SELECT id,order_code,order_type::text,status::text,supplier_name,"
+            "SELECT id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,supplier_name,"
             "order_snapshot_hash,cancelled_by,cancelled_at,expected_at "
             "FROM public.orders WHERE id=%s AND org_id=%s FOR UPDATE",
             [order_id, org_id],
@@ -742,7 +747,7 @@ def cancel_order(
         updated = one(
             "UPDATE public.orders SET status='CANCELLED',cancelled_by=%s,"
             "cancelled_at=%s,updated_at=%s "
-            "WHERE id=%s AND org_id=%s RETURNING id,order_code,order_type::text,"
+            "WHERE id=%s AND org_id=%s RETURNING id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,"
             "status::text,supplier_name,order_snapshot_hash,cancelled_by,"
             "cancelled_at,expected_at",
             [actor_id, cancelled_at, cancelled_at, order_id, org_id],
@@ -775,7 +780,7 @@ def orders_index(org_id: UUID, status: str | None = None) -> dict[str, object]:
         params.append(status)
     with documentary_backend():
         orders = rows(
-            "SELECT o.id,o.order_code,o.order_type::text,o.status::text,o.supplier_identity,"
+            "SELECT o.id,private.entity_code(o.org_id,'OC',o.id,o.order_code) AS order_code,o.order_type::text,o.status::text,o.supplier_identity,"
             "o.supplier_name,o.expected_at,o.sent_at,o.sent_to,o.created_at,"
             "v.revision_code,v.id AS project_version_id,"
             "p.id AS project_id,p.code AS project_code,"

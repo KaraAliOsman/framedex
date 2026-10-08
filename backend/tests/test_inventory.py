@@ -370,6 +370,7 @@ def _remnant_row(remnant_id, order_id):
 
     return {
         "id": remnant_id,
+        "code": "RT-000001",
         "kind": "BAR",
         "stock_authority_id": uuid4(),
         "sheet_workshop_sku": None,
@@ -986,7 +987,11 @@ def test_remnant_label_returns_qr_and_identity() -> None:
 
     # Identity is the authority's commercial SKU, not the internal psi UUID.
     assert output["identity"] == "PROF-60-W"
-    assert f"DEKOPEN|REMNANT|{remnant_id}" == output["qr_payload"]
+    from urllib.parse import parse_qs, urlsplit
+
+    address = urlsplit(output["qr_payload"])
+    assert address.path == "/purchasing"
+    assert parse_qs(address.query) == {"remnant": [str(remnant_id)], "code": ["RT-000001"]}
     assert "<svg" in output["qr_svg"]
     assert output["remnant"]["id"] == str(remnant_id)
 

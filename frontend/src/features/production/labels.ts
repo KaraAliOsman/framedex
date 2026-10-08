@@ -1,5 +1,28 @@
 import { t } from "../../i18n/es-CL";
 
+export function stockSourceLabel(source: string | null | undefined): string {
+  return source === "NEW"
+    ? "Material nuevo"
+    : source === "REMNANT"
+      ? "Retazo"
+      : "Sin dato · falta origen";
+}
+
+export function movementLabel(type: string | null | undefined): string {
+  const known = new Set([
+    "RECEIPT",
+    "CONSUMPTION",
+    "RESERVATION",
+    "RELEASE",
+    "ADJUSTMENT",
+    "RETURN",
+    "SCRAP",
+  ]);
+  return type && known.has(type)
+    ? t(`inventory.movement.${type}` as Parameters<typeof t>[0])
+    : "Sin dato · falta tipo de movimiento";
+}
+
 export function cutRoleLabel(role: string | null | undefined): string {
   if (role === null || role === undefined || role === "") return "—";
   const known: ReadonlySet<string> = new Set([
@@ -180,7 +203,7 @@ export function opBasisLabel(basis: string | null | undefined): string {
     return `Política herraje ${basis.split(":", 2)[1] ?? ""}`;
   }
   if (basis.startsWith("handle_policy:")) {
-    return `Herraje ${(basis.split(":", 2)[1] ?? "").slice(0, 8)}`;
+    return "Política de manilla sellada";
   }
   return basis;
 }

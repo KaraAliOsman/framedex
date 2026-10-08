@@ -299,11 +299,24 @@ class PackingLabelSerializer(serializers.Serializer):
     qr_svg = serializers.CharField()
 
 
+class PhysicalPieceLabelSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    stable_id = serializers.CharField()
+    qr_payload = serializers.CharField()
+    qr_svg = serializers.CharField()
+    length_mm = serializers.CharField(allow_null=True)
+    width_mm = serializers.CharField(allow_null=True)
+    height_mm = serializers.CharField(allow_null=True)
+    workshop_sku = serializers.CharField(allow_null=True)
+
+
 class PackingLabelsSerializer(serializers.Serializer):
     order_id = serializers.UUIDField()
     order_code = serializers.CharField()
     status = serializers.CharField()
     labels = PackingLabelSerializer(many=True)
+    piece_labels = PhysicalPieceLabelSerializer(many=True)
+    piece_labels_blocked_reason = serializers.CharField(required=False, allow_blank=True)
 
 
 class WorkCenterSerializer(serializers.Serializer):

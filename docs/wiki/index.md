@@ -26,6 +26,7 @@ Content-oriented map of durable project knowledge.
 ## Current state
 
 - [Design system](product/design-system.md) — constitution tokens, technical primitives, exact presentation and regression guardrails.
+- [Human addresses](product/human-addresses.md) — immutable tenant codes, physical label reconciliation, QR and exact presentation.
 
 - [Current reality](state/current-reality.md) — volatile map of implementation state; must always carry a verification ref/date.
 

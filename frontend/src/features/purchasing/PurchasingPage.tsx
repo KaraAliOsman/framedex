@@ -1,9 +1,17 @@
 import { ValidatedForm } from "../../ui/FormValidation";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { apiMutator, ApiError } from "../../api/apiMutator";
-import { PageHeader, useConfirm } from "../../ui";
+import { EntityCode, PageHeader, Qty, useConfirm } from "../../ui";
 import { documentaryArtifactAccess } from "../../api/generated/dekopen";
 import type { OrderIndexItem } from "../../api/generated/models";
 import { InventorySection } from "./InventorySection";
@@ -18,6 +26,15 @@ import "./purchasing.css";
 
 type OrderType =
   "SUPPLIER_PROFILE_PO" | "SUPPLIER_GLASS_PO" | "SUPPLIER_HARDWARE_PO" | "SUPPLIER_PANEL_PO";
+function purchaseQty(value: string | number | null | undefined, unit?: string | null): JSX.Element {
+  return (
+    <Qty
+      value={value}
+      precision={unit === "M" || unit === "M2" ? 2 : unit === "KG" ? 1 : 0}
+      unit=""
+    />
+  );
+}
 function categoryLabel(category: string): string {
   const key = `purchasing.categoryValue.${category}` as Parameters<typeof t>[0];
   const known: ReadonlySet<string> = new Set([
@@ -156,6 +173,7 @@ type ReceivingState = {
   receipts: Array<{
     id: string;
     receipt_key: string;
+    receipt_code: string;
     created_at: string;
     note: string | null;
   }>;
@@ -229,7 +247,7 @@ function usePurchasingRequest(orgId: string): {
   lifetime: { current: AbortController };
 } {
   const lifetime = useRef(new AbortController());
-  useEffect(() => {
+  useLayoutEffect(() => {
     const controller = new AbortController();
     lifetime.current = controller;
     return () => controller.abort();
@@ -332,6 +350,8 @@ function PurchasingWorkspace({
   initialVersionId: string;
 }): JSX.Element {
   const { request } = usePurchasingRequest(orgId);
+  const [params, setParams] = useSearchParams();
+  const targetOrderId = params.get("order");
   const [versions, setVersions] = useState<VersionItem[]>([]);
   const [ordersIndex, setOrdersIndex] = useState<OrderIndexItem[]>([]);
   const [indexStatus, setIndexStatus] = useState<string>("");
@@ -448,6 +468,12 @@ function PurchasingWorkspace({
       current = false;
     };
   }, [request, versionId, revision]);
+  useEffect(() => {
+    if (!targetOrderId || !state?.orders?.some((order) => order.id === targetOrderId)) return;
+    const card = document.getElementById(`purchase-${targetOrderId}`);
+    card?.focus();
+    card?.scrollIntoView({ block: "start" });
+  }, [targetOrderId, state]);
 
   async function action(task: Promise<unknown>): Promise<boolean> {
     setBusy(true);
@@ -551,7 +577,10 @@ function PurchasingWorkspace({
         status={indexStatus}
         onStatus={setIndexStatus}
         onOpen={(order) => {
-          if (order.project_version_id) setVersionId(order.project_version_id);
+          if (order.project_version_id) {
+            setVersionId(order.project_version_id);
+            setParams({ version: order.project_version_id, order: order.id });
+          }
         }}
       />
       <SupplierDirectory suppliers={suppliers} orders={ordersIndex} />
@@ -698,17 +727,17 @@ function PurchasingWorkspace({
                       {purchaseUnitLabel(line.unit, 2)}
                     </span>
                   </td>
-                  <td>{line.required}</td>
-                  <td>{line.on_hand}</td>
-                  <td>{line.reserved}</td>
-                  <td>{line.open_ordered}</td>
+                  <td>{purchaseQty(line.required, line.unit)}</td>
+                  <td>{purchaseQty(line.on_hand, line.unit)}</td>
+                  <td>{purchaseQty(line.reserved, line.unit)}</td>
+                  <td>{purchaseQty(line.open_ordered, line.unit)}</td>
                   <td>
                     {line.received !== "0" ? (
                       <strong className="purchasing-coverage-received">
-                        {line.received} · {t("purchasing.receivedMark")}
+                        {purchaseQty(line.received, line.unit)} · {t("purchasing.receivedMark")}
                       </strong>
                     ) : (
-                      line.received
+                      purchaseQty(line.received, line.unit)
                     )}
                   </td>
                   <td>
@@ -722,12 +751,14 @@ function PurchasingWorkspace({
                   </td>
                   <td>
                     {line.shortage !== "0" ? (
-                      <strong className="purchasing-coverage-short">{line.shortage}</strong>
+                      <strong className="purchasing-coverage-short">
+                        {purchaseQty(line.shortage, line.unit)}
+                      </strong>
                     ) : (
                       "0"
                     )}
                   </td>
-                  <td>{line.recommended_purchase}</td>
+                  <td>{purchaseQty(line.recommended_purchase, line.unit)}</td>
                 </tr>
               ))}
             </tbody>
@@ -813,13 +844,13 @@ function PurchasingWorkspace({
                     <td>
                       {item.name} · {purchaseUnitLabel(item.unit, 2)}
                     </td>
-                    <td>{item.on_hand_qty}</td>
-                    <td>{item.reserved_qty}</td>
-                    <td>{item.available_qty}</td>
+                    <td>{purchaseQty(item.on_hand_qty, item.unit)}</td>
+                    <td>{purchaseQty(item.reserved_qty, item.unit)}</td>
+                    <td>{purchaseQty(item.available_qty, item.unit)}</td>
                     <td>
                       {item.incoming_qty && item.incoming_qty !== "0" ? (
                         <strong className="purchasing-coverage-received">
-                          {item.incoming_qty}
+                          {purchaseQty(item.incoming_qty, item.unit)}
                         </strong>
                       ) : (
                         "0"
@@ -839,6 +870,7 @@ function PurchasingWorkspace({
           item_id: item.item_id,
           sku: item.sku,
           name: item.name,
+          unit: item.unit,
         }))}
       />
       {state?.version && (
@@ -1026,15 +1058,16 @@ function RequirementRow({
         requirement.open_qty > 0 &&
         requirement.open_qty < (qtyNumber(requirement.quantity) ?? requirement.open_qty) ? (
           <>
-            {requirement.open_qty} {purchaseUnitLabel(requirement.unit, requirement.open_qty)}
+            {purchaseQty(requirement.open_qty, requirement.unit)}{" "}
+            {purchaseUnitLabel(requirement.unit, requirement.open_qty)}
             <br />
             <small>
-              {t("purchasing.pendingOf")} {requirement.quantity}
+              {t("purchasing.pendingOf")} {purchaseQty(requirement.quantity, requirement.unit)}
             </small>
           </>
         ) : (
           <>
-            {requirement.quantity}{" "}
+            {purchaseQty(requirement.quantity, requirement.unit)}{" "}
             {purchaseUnitLabel(requirement.unit, qtyNumber(requirement.quantity))}
           </>
         )}
@@ -1092,10 +1125,14 @@ function RequirementRow({
             {requirement.source_trace.map((entry, index) => {
               const raw = typeof entry === "string" ? entry : traceLine(entry);
               const label = requirement.source_trace_labels?.[index];
-              const shown = label ?? (raw.length > 20 ? `${raw.slice(0, 12)}…` : raw);
+              const shown = label ?? "Sin dato · fuente sin etiqueta";
               return (
-                <li key={index} title={shown === raw ? undefined : raw}>
+                <li key={index}>
                   {shown}
+                  <details>
+                    <summary>Detalles técnicos</summary>
+                    <EntityCode kind="fuente" code={raw} />
+                  </details>
                 </li>
               );
             })}
@@ -1247,7 +1284,7 @@ function EligibilityForm({
               <label key={item.id}>
                 <input type="checkbox" name={`key_${item.id}`} defaultChecked />
                 {categoryLabel(item.category)} ·{" "}
-                {item.purchasing_sku ?? item.requirement_key.slice(0, 12)}
+                {item.purchasing_sku ?? "Sin dato · falta SKU de compra"}
               </label>
             ))}
           </fieldset>
@@ -1283,9 +1320,13 @@ function OrderCard({
     typeof order.supplier_details?.email === "string" ? order.supplier_details.email : "";
   const [sentTo, setSentTo] = useState(supplierEmail);
   return (
-    <article className={`purchasing-order purchasing-order-${order.status.toLowerCase()}`}>
+    <article
+      id={`purchase-${order.id}`}
+      tabIndex={-1}
+      className={`purchasing-order purchasing-order-${order.status.toLowerCase()}`}
+    >
       <header>
-        <strong>{order.order_code}</strong>
+        <EntityCode kind="orden de compra" code={order.order_code} />
         <span>
           {t(orderTypeLabels[order.order_type])} · {order.supplier_name} ·{" "}
           {t(orderStatusLabels[order.status])}
@@ -1295,14 +1336,17 @@ function OrderCard({
         <ul className="purchasing-order-lines">
           {order.lines_preview.map((line, index) => (
             <li key={index}>
-              {line.sku} × {line.qty} {line.unit}
+              {line.sku} × <span className="ui-value">{purchaseQty(line.qty, line.unit)}</span>{" "}
+              {purchaseUnitLabel(line.unit ?? "", qtyNumber(line.qty))}
             </li>
           ))}
         </ul>
       )}
       {(order.expected_at || order.sent_to) && (
         <p className="purchasing-order-expected">
-          {order.expected_at ? `${t("purchasing.expectedAt")}: ${order.expected_at}` : ""}
+          {order.expected_at
+            ? `${t("purchasing.expectedAt")}: ${formatDate(order.expected_at)}`
+            : ""}
           {order.expected_at && order.sent_to ? " · " : ""}
           {order.sent_to ? `${t("purchasing.sentTo")}: ${order.sent_to}` : ""}
         </p>
@@ -1313,7 +1357,7 @@ function OrderCard({
           {order.released_qty && order.released_qty !== "0" && (
             <>
               {" · "}
-              {t("purchasing.cancelledReleased")}: {order.released_qty}
+              {t("purchasing.cancelledReleased")}: {fmtMm(order.released_qty)}
             </>
           )}
         </p>
@@ -1336,7 +1380,7 @@ function OrderCard({
       )}
       {Number(order.damaged_qty ?? "0") > 0 && (
         <p className="purchasing-order-damaged" role="alert">
-          {t("purchasing.damagedIncidence")}: {order.damaged_qty}
+          {t("purchasing.damagedIncidence")}: {fmtMm(order.damaged_qty)}
         </p>
       )}
       {order.status === "DRAFT" && canWrite && (
@@ -1397,9 +1441,13 @@ function OrderCard({
       {canWrite && order.status !== "FULFILLED" && order.status !== "CANCELLED" && (
         <CancelOrderButton order={order} busy={busy} request={request} action={action} />
       )}
-      {canWrite && (order.status === "SENT" || order.status === "PARTIALLY_RECEIVED") && (
-        <ReceivingPanel order={order} busy={busy} request={request} action={action} />
-      )}
+      <ReceivingPanel
+        order={order}
+        busy={busy}
+        request={request}
+        action={action}
+        canReceive={canWrite && (order.status === "SENT" || order.status === "PARTIALLY_RECEIVED")}
+      />
     </article>
   );
 }
@@ -1566,7 +1614,9 @@ function OrdersIndex({
                 }
               }}
             >
-              <td>{order.order_code}</td>
+              <td>
+                <EntityCode kind="orden de compra" code={order.order_code} />
+              </td>
               <td>
                 {order.project_code ?? "—"} · {formatRevision(order.revision_code ?? "")}
               </td>
@@ -1581,17 +1631,17 @@ function OrdersIndex({
                   ? t(orderStatusLabels[order.status as OrderStatus])
                   : order.status}
               </td>
-              <td>{order.expected_at ?? "—"}</td>
+              <td>{order.expected_at ? formatDate(order.expected_at) : "Sin dato"}</td>
               <td>
                 {Number(order.receipt_count ?? 0) > 0 ? order.receipt_count : "—"}
                 {Number(order.damaged_qty ?? 0) > 0 && (
                   <span className="purchasing-coverage-short">
                     {" "}
-                    {t("purchasing.indexDamaged")}: {order.damaged_qty}
+                    {t("purchasing.indexDamaged")}: {fmtMm(order.damaged_qty)}
                   </span>
                 )}
               </td>
-              <td>{order.status === "CANCELLED" ? "—" : order.outstanding_qty}</td>
+              <td>{order.status === "CANCELLED" ? "—" : fmtMm(order.outstanding_qty)}</td>
             </tr>
           ))}
         </tbody>
@@ -1638,13 +1688,17 @@ function ReceivingPanel({
   busy,
   request,
   action,
+  canReceive,
 }: {
   order: Order;
   busy: boolean;
   request: RequestFn;
   action: (task: Promise<unknown>) => Promise<boolean>;
+  canReceive: boolean;
 }): JSX.Element {
-  const [open, setOpen] = useState(false);
+  const [params] = useSearchParams();
+  const targetReceipt = params.get("order") === order.id ? params.get("receipt") : null;
+  const [open, setOpen] = useState(Boolean(targetReceipt));
   const [state, setState] = useState<ReceivingState | null>(null);
   const [note, setNote] = useState("");
   const [formError, setFormError] = useState("");
@@ -1654,7 +1708,12 @@ function ReceivingPanel({
   );
 
   useEffect(() => {
+    if (targetReceipt) setOpen(true);
+  }, [targetReceipt]);
+
+  useEffect(() => {
     if (!open) return;
+    setFormError("");
     let current = true;
     void request<ReceivingState>(`inventory/orders/${order.id}/receiving/`)
       .then((data) => {
@@ -1672,7 +1731,10 @@ function ReceivingPanel({
         });
       })
       .catch(() => {
-        if (current) setState(null);
+        if (current) {
+          setState(null);
+          setFormError("No se pudo cargar la recepción. Cierra y vuelve a abrir para reintentar.");
+        }
       });
     return () => {
       current = false;
@@ -1681,7 +1743,7 @@ function ReceivingPanel({
 
   function submit(event: FormEvent): void {
     event.preventDefault();
-    if (!state) return;
+    if (!state || !canReceive) return;
     setFormError("");
     const lines = state.lines
       .map((line) => {
@@ -1738,8 +1800,14 @@ function ReceivingPanel({
       >
         {t("purchasing.receiving")}
       </summary>
-      {open && !state && <p>{t("purchasing.receivingLoading")}</p>}
+      {open && !state && !formError && <p>{t("purchasing.receivingLoading")}</p>}
       {formError ? <p role="alert">{formError}</p> : null}
+      {open && !canReceive && (
+        <p className="purchasing-hint">
+          Consulta de recepciones. Solo el jefe de taller puede recibir una orden enviada y
+          pendiente.
+        </p>
+      )}
       {open && state && (
         <ValidatedForm onSubmit={submit}>
           <div className="purchasing-receiving-scroll">
@@ -1761,15 +1829,21 @@ function ReceivingPanel({
                   <tr key={line.id}>
                     <td>{line.purchasing_sku ?? line.category}</td>
                     <td>
-                      {line.ordered_qty} {purchaseUnitLabel(line.unit, qtyNumber(line.ordered_qty))}
+                      {purchaseQty(line.ordered_qty, line.unit)}{" "}
+                      {purchaseUnitLabel(line.unit, qtyNumber(line.ordered_qty))}
                     </td>
-                    <td>{line.received_qty}</td>
+                    <td>{purchaseQty(line.received_qty, line.unit)}</td>
                     <td>
-                      {Number(line.outstanding_qty) < 0 ? "0" : line.outstanding_qty}
+                      {Number(line.outstanding_qty) < 0
+                        ? "0"
+                        : purchaseQty(line.outstanding_qty, line.unit)}
                       {Number(line.outstanding_qty) < 0 ? (
                         <small className="purchasing-hint">
                           {" "}
-                          (+{Math.abs(Number(line.outstanding_qty))}{" "}
+                          (+{purchaseQty(
+                            String(line.outstanding_qty).replace(/^-/, ""),
+                            line.unit,
+                          )}{" "}
                           {t("purchasing.receiveSurplus")})
                         </small>
                       ) : null}
@@ -1780,7 +1854,7 @@ function ReceivingPanel({
                         min="0"
                         step="any"
                         aria-label={`${t("purchasing.receiveNow")} · ${line.purchasing_sku ?? line.category}`}
-                        disabled={busy || Number(line.outstanding_qty) <= 0}
+                        disabled={!canReceive || busy || Number(line.outstanding_qty) <= 0}
                         value={quantities[line.id]?.received ?? "0"}
                         onChange={(event) =>
                           setQuantities((previous) => ({
@@ -1803,7 +1877,7 @@ function ReceivingPanel({
                         min="0"
                         step="any"
                         aria-label={`${t("purchasing.receiveDamaged")} · ${line.purchasing_sku ?? line.category}`}
-                        disabled={busy || Number(line.outstanding_qty) <= 0}
+                        disabled={!canReceive || busy || Number(line.outstanding_qty) <= 0}
                         value={quantities[line.id]?.damaged ?? "0"}
                         onChange={(event) =>
                           setQuantities((previous) => ({
@@ -1824,7 +1898,7 @@ function ReceivingPanel({
                       <input
                         type="text"
                         aria-label={`${t("purchasing.receiveLot")} · ${line.purchasing_sku ?? line.category}`}
-                        disabled={busy || Number(line.outstanding_qty) <= 0}
+                        disabled={!canReceive || busy || Number(line.outstanding_qty) <= 0}
                         placeholder={t("purchasing.receiveLot")}
                         value={quantities[line.id]?.lot_code ?? ""}
                         onChange={(event) =>
@@ -1846,7 +1920,7 @@ function ReceivingPanel({
                       <input
                         type="text"
                         aria-label={`${t("purchasing.receiveRack")} · ${line.purchasing_sku ?? line.category}`}
-                        disabled={busy || Number(line.outstanding_qty) <= 0}
+                        disabled={!canReceive || busy || Number(line.outstanding_qty) <= 0}
                         placeholder={t("purchasing.receiveRack")}
                         value={quantities[line.id]?.rack_location ?? ""}
                         onChange={(event) =>
@@ -1874,13 +1948,13 @@ function ReceivingPanel({
             <input
               type="text"
               value={note}
-              disabled={busy}
+              disabled={!canReceive || busy}
               onChange={(event) => setNote(event.target.value)}
             />
           </label>
           <button
             type="button"
-            disabled={busy}
+            disabled={!canReceive || busy}
             onClick={() =>
               setQuantities(() => {
                 const next: Quantities = {};
@@ -1900,7 +1974,9 @@ function ReceivingPanel({
           </button>
           <button
             type="submit"
-            disabled={busy || state.lines.every((line) => Number(line.outstanding_qty) <= 0)}
+            disabled={
+              !canReceive || busy || state.lines.every((line) => Number(line.outstanding_qty) <= 0)
+            }
           >
             {t("purchasing.receiveSubmit")}
           </button>
@@ -1916,8 +1992,13 @@ function ReceivingPanel({
               </thead>
               <tbody>
                 {state.receipts.map((receipt) => (
-                  <tr key={receipt.id}>
-                    <td>{receipt.receipt_key}</td>
+                  <tr
+                    key={receipt.id}
+                    aria-current={receipt.id === targetReceipt ? "true" : undefined}
+                  >
+                    <td>
+                      <EntityCode kind="recepción" code={receipt.receipt_code} />
+                    </td>
                     <td>{formatDateTime(receipt.created_at)}</td>
                     <td>{receipt.note || "—"}</td>
                   </tr>

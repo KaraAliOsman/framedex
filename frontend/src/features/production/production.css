@@ -495,8 +495,17 @@
 
 .production-packing {
   margin-block: var(--space-4, 16px);
+  scroll-margin-block-start: var(--space-64px);
   /* Packing tables can exceed a phone's width — scroll inside the section. */
   overflow-x: auto;
+}
+
+.production-label-blocker a {
+  color: var(--interactive);
+}
+
+#production-cut-plan {
+  scroll-margin-block-start: var(--space-64px);
 }
 
 .production-label-code {
@@ -520,6 +529,7 @@
   text-align: center;
 }
 .production-label-qr svg {
+  background: var(--paper);
   width: 100%;
   max-width: 140px;
   height: auto;
@@ -568,11 +578,16 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    color: var(--g-950);
+    background: var(--paper);
   }
   .production-label {
     break-inside: avoid;
-    border: 0.4pt solid var(--theme-border);
+    border: 0.4pt solid var(--g-700);
     padding: 4mm;
+  }
+  .production-label-parts {
+    color: var(--g-700);
   }
 }
 .production-delivery {

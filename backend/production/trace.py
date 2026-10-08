@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import re
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 from uuid import UUID
 
 from documents.repository import (
@@ -63,7 +64,8 @@ def _trace_piece(cut: dict[str, Any], code: str | None = None) -> dict[str, Any]
     paper name the same piece identically."""
     return {
         "piece_id": cut.get("piece_id"),
-        "code": code,
+        "stable_id": cut.get("piece_stable_id"),
+        "code": cut.get("piece_code") or code,
         "sequence": cut.get("sequence"),
         "role": cut.get("role"),
         "length_mm": cut.get("length_mm"),
@@ -222,7 +224,7 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
                movement.quantity, movement.note,
                movement.created_at, movement.actor_id::text,
                item.id::text AS item_id, item.sku, item.variant_key,
-               item.name AS item_name
+               item.name AS item_name, item.unit
         FROM public.inventory_movements movement
         JOIN public.inventory_items item ON item.id = movement.item_id
         WHERE movement.order_id = %s AND movement.org_id = %s
@@ -233,7 +235,7 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
 
     remnants = rows(
         """
-        SELECT id::text, kind, status, material, color,
+        SELECT id::text, private.entity_code(org_id,'RT',id) AS code, kind, status, material, color,
                stock_authority_id::text, sheet_workshop_sku,
                physical_stock_identity::text,
                length_mm, width_mm, height_mm, origin,
@@ -267,6 +269,9 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
             piece_label_map = {}
             cut_map = {}
             infill_map = {}
+    from production.pieces import addressed_plan
+
+    display_plan = addressed_plan(version_snapshot or {}, optimization, order_id=order_id)
     return {
         "work_order": {
             "id": order["id"],
@@ -285,8 +290,8 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
             "strategy": optimization.get("strategy"),
             "color": optimization.get("color"),
             "units": optimization.get("units"),
-            "bars": _plan_bars(optimization, cut_map),
-            "sheets": _plan_sheets(optimization, infill_map),
+            "bars": _plan_bars(display_plan, cut_map),
+            "sheets": _plan_sheets(display_plan, infill_map),
             "unnested": optimization.get("unnested") or [],
         },
         "stock": {
@@ -423,6 +428,7 @@ def _piece_hits(
     unit_index: int | None = None,
     cut_map: dict[tuple[str, ...], str] | None = None,
     infill_map: dict[tuple[str, str, str], str] | None = None,
+    display_plan: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Locate ``piece_id`` inside one order's sealed plan — directly by piece
     hash, or indirectly through a resolved printed code: ``spec_keys`` are the
@@ -430,7 +436,7 @@ def _piece_hits(
     ``infill_keys`` the (position, bay, leaf) tuples an I-xx resolves to, and
     the plain id sets cover location (V-xx/H-xx/P-nn) and unit (-Unn) codes."""
     payload = _decoded(order_row["payload_json"])
-    optimization = _decoded(payload.get("optimization")) or {}
+    optimization = display_plan if display_plan is not None else _decoded(payload.get("optimization")) or {}
     hits: list[dict[str, Any]] = []
     for bar in _plan_bars(optimization, cut_map):
         for cut in bar["cuts"]:
@@ -491,6 +497,25 @@ _PHYSICAL_RE = re.compile(
 )
 
 
+def _scan_address(query: str) -> dict[str, str] | None:
+    try:
+        address = urlsplit(query.strip())
+    except ValueError as error:
+        raise DocumentaryError("work_order_piece_invalid", detail=
+            "La dirección escaneada no es válida. Vuelve a escanear la etiqueta de la pieza.") from error
+    if address.path != "/production" or not address.query:
+        return None
+    params = parse_qs(address.query)
+    if not params.get("piece") or not params.get("order"):
+        return None
+    try:
+        order = str(UUID(params["order"][0]))
+    except ValueError as error:
+        raise DocumentaryError("work_order_piece_invalid", detail=
+            "La dirección escaneada no es válida. Vuelve a escanear la etiqueta de la pieza.") from error
+    return {"order": order, "piece": params["piece"][0], "identity": (params.get("identity") or [""])[0]}
+
+
 def _scan_order_hint(query: str) -> str | None:
     """The label itself says which order it belongs to — a QR payload
     (``DEKOPEN|<order>|<label>|…``) or a printed ``<order>-U<nn>`` code.
@@ -509,7 +534,8 @@ def _normalize_query(query: str) -> str:
     """Reduce a scanned QR payload or printed label code to the piece code
     grammar ``_CODE_RE`` understands — operators scan what the label carries,
     not the raw spec codes."""
-    text = query.strip().upper()
+    address = _scan_address(query)
+    text = (address["piece"] if address else query.strip()).upper()
     qr = _QR_RE.match(text)
     if qr:
         text = qr.group(2)
@@ -598,7 +624,7 @@ def _resolve_physical(
     IS the label value, so an exact match hands back the frozen entity ids
     without re-walking the manufacturing facts."""
     position_digits, unit_digits, kind, seq_digits, reinf = match.groups()
-    suffix = "·R" if reinf else ""
+    suffix = "-R" if reinf else ""
     canonical = (
         f"P{int(position_digits):02d}-U{int(unit_digits):02d}-"
         f"{kind.upper()}{int(seq_digits):02d}{suffix}"
@@ -663,6 +689,9 @@ def _resolve_physical(
     return resolved
 
 
+_PIECE_CANDIDATE_LIMIT = 100
+
+
 def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
     """Backward lookup: which work order(s) and plan location carry a
     physical piece — walk from the piece back to order → version → project."""
@@ -673,13 +702,16 @@ def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
         _CODE_RE.match(normalized) or _PHYSICAL_RE.match(normalized)
     )
     # A printed code never appears inside payload_json, so the LIKE prefilter
-    # only applies to raw piece_id scans — code lookups scan every order in
-    # the org (bounded; an operator scan is a rare call). When the scanned
-    # label carries its own order code (QR payload, printed -Unn code),
-    # scope to that order instead of listing every order's unit 1.
-    order_hint = _scan_order_hint(piece_id)
+    # only applies to raw piece_id scans. QR/order addresses remain exact;
+    # an unqualified code needs an order when its candidate set is too large.
+    # Never silently present the first page as a complete historical search.
+    address = _scan_address(piece_id)
+    order_hint = _scan_order_hint(piece_id) if address is None else None
     params: list[Any] = [str(org_id)]
     extra = ""
+    if address:
+        extra += " AND id = %s"
+        params.append(address["order"])
     if order_hint:
         extra += " AND order_code = %s"
         params.append(order_hint)
@@ -691,12 +723,16 @@ def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
         SELECT id::text, order_code, status::text,
                project_id::text, project_version_id::text, payload_json::text
         FROM public.orders
-        WHERE org_id = %s
+        WHERE org_id = %s AND order_type = 'WORKSHOP_OT'
         """
         + extra
-        + " ORDER BY created_at",
+        + f" ORDER BY created_at LIMIT {_PIECE_CANDIDATE_LIMIT + 1}",
         params,
     )
+    if len(orders) > _PIECE_CANDIDATE_LIMIT:
+        raise DocumentaryError("work_order_piece_order_required", detail=
+            "El código necesita una orden para buscar en este historial. "
+            "Escanea el QR de la etiqueta, que incluye la OT.")
     matches: list[dict[str, Any]] = []
     snapshots: dict[str, dict[str, Any]] = {}
 
@@ -718,6 +754,7 @@ def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
     for order in orders:
         resolved: dict[str, Any] = {}
         labels: dict[str, dict[Any, str]] = {}
+        from production.pieces import addressed_plan
         # A code lookup resolves against the sealed snapshot before the piece
         # scan; a raw piece_id scan only needs the snapshot once the order
         # actually carries a hit (saves one read per non-matching order).
@@ -737,7 +774,23 @@ def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
             unit_index=resolved.get("unit_index"),
             cut_map=resolved.get("cut_map"),
             infill_map=resolved.get("infill_map"),
+            display_plan=(
+                addressed_plan(
+                    _snapshot(str(order["project_version_id"])),
+                    _decoded(order["payload_json"]).get("optimization") or {}, order_id=order["id"],
+                ) if order["project_version_id"] and code_query else None
+            ),
         )
+        if _PHYSICAL_RE.match(normalized):
+            canonical = normalized.replace("·R", "-R")
+            hits = [hit for hit in hits if (hit.get("piece") or {}).get("code") == canonical]
+        if address and address["identity"]:
+            unit_index = resolved.get("unit_index")
+            if unit_index is not None:
+                if address["identity"] != f"{order['id']}:U{unit_index}":
+                    hits = []
+            else:
+                hits = [hit for hit in hits if (hit.get("piece") or {}).get("stable_id") == address["identity"]]
         if not hits:
             continue
         if order["project_version_id"]:
@@ -790,6 +843,8 @@ def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
                 if spec_key == key:
                     member_ids = {str(mid) for mid in ids}
                     break
+            if piece.get("stable_id"):
+                member_ids = {str(piece["stable_id"])}
             host_ops = [
                 {
                     **op,

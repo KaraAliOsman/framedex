@@ -80,6 +80,7 @@ def _order_snapshot(order_id: UUID, project_version_id: UUID, org_id: UUID) -> t
 ]:
     order = one(
         "SELECT id,project_id,project_version_id,org_id,order_type::text,order_code,status,"
+        "private.entity_code(org_id,'OC',id,order_code) AS human_code,"
         "supplier_name,payload_json::text,bom_hash,revision_snapshot_sha256,"
         "order_snapshot_hash,confirmed_at,expected_at,sent_at FROM public.orders "
         "WHERE id=%s AND project_version_id=%s AND org_id=%s",
@@ -96,6 +97,7 @@ def _order_snapshot(order_id: UUID, project_version_id: UUID, org_id: UUID) -> t
     # send time, after the snapshot was sealed at confirmation.
     order_block = snapshot.get("order")
     if isinstance(order_block, dict):
+        order_block["order_code"] = order.get("human_code", order["order_code"])
         order_block["expected_at"] = (
             None if order["expected_at"] is None else str(order["expected_at"])
         )

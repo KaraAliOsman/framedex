@@ -455,8 +455,6 @@
   --theme-hover: var(--surface-hover);
   --theme-line: var(--border-subtle);
   --theme-ok: var(--state-success-ink);
-  --theme-on-primary: var(--text-on-fill);
-  --theme-primary: var(--interactive-fill);
   --theme-radius: var(--r-2);
   --theme-radius-pill: var(--r-1);
   --theme-radius-sm: var(--r-1);

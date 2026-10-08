@@ -1509,6 +1509,15 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     machining_issues = []
     hardware_operations(items=items, fact_units=_operations_fact_units(sealed_snapshot, str(position_id) if sealed_snapshot else None), issues=machining_issues)
     output["hardware_machining"] = machining_issues
+    from production.pieces import addressed_plan, add_remnant_codes
+
+    display_payload = output.get("payload") or {}
+    if isinstance(display_payload.get("optimization"), dict):
+        display_payload["optimization"] = addressed_plan(
+            sealed_snapshot, display_payload["optimization"], order_id=order_id,
+        )
+        with documentary_backend():
+            add_remnant_codes(display_payload["optimization"], org_id)
     output["events"] = [
         {
             "id": str(event["id"]),
@@ -2446,7 +2455,7 @@ def _cnc_bars_csv(
                 bar.get("commercial_sku"),
                 bar.get("stock_length_mm"),
                 cut.get("sequence"),
-                (cut_map or {}).get(_cut_key(cut), ""),
+                cut.get("piece_code") or (cut_map or {}).get(_cut_key(cut), ""),
                 cut.get("piece_id"),
                 cut.get("length_mm"),
                 cut.get("angle_left"),
@@ -2464,7 +2473,7 @@ def _cnc_sheets_csv(optimization: dict[str, object]) -> str:
     then Y then X — deterministic input for a panel saw / glass table."""
     rows_out = [
         "sheet_index,purchasing_sku,sheet_width_mm,sheet_height_mm,"
-        "x_mm,y_mm,width_mm,height_mm,rotated,piece_id,unit_index,bay_id,leaf_id"
+        "x_mm,y_mm,width_mm,height_mm,rotated,piece_id,unit_index,bay_id,leaf_id,piece_label"
     ]
     for sheet in sorted(
         optimization.get("sheets") or [], key=lambda s: int(s.get("sheet_index") or 0)
@@ -2489,6 +2498,7 @@ def _cnc_sheets_csv(optimization: dict[str, object]) -> str:
                 placement.get("unit_index"),
                 placement.get("bay_id"),
                 placement.get("leaf_id"),
+                placement.get("piece_code"),
             )))
     return "\n".join(rows_out) + "\n"
 
@@ -2557,6 +2567,7 @@ def export_cnc_files(
         # Printed piece codes join the saw rows so a labeled stick finds its
         # program line without a second file.
         cnc_cut_map: dict[tuple[str, ...], str] = {}
+        cnc_snapshot = {}
         if order.get("project_version_id"):
             version_row = one(
                 """
@@ -2573,13 +2584,16 @@ def export_cnc_files(
             except DocumentaryError:
                 cnc_cut_map = {}
         fingerprint = _optimization_fingerprint(optimization)
+        from production.pieces import addressed_plan
+
+        display_plan = addressed_plan(cnc_snapshot, optimization, order_id=order_id)
         header = (
             f"# dekopen order={order['order_code']} plan={fingerprint[:12]}"
             f" emitted={datetime.now(timezone.utc).isoformat()}\n"
         )
-        files = {"bars.csv": header + _cnc_bars_csv(optimization, cut_map=cnc_cut_map)}
+        files = {"bars.csv": header + _cnc_bars_csv(display_plan, cut_map=cnc_cut_map)}
         if optimization.get("sheets"):
-            files["sheets.csv"] = header + _cnc_sheets_csv(optimization)
+            files["sheets.csv"] = header + _cnc_sheets_csv(display_plan)
         export = {
             "schema": "work_order_cnc_export_v2",
             "optimization_fingerprint": fingerprint,
@@ -3108,7 +3122,9 @@ def export_dxf_files(
                         _infill_key(placement),
                         str(placement["piece_id"]),
                     )
-        files = dxf_files(optimization, codes=codes)
+        from production.pieces import addressed_plan
+
+        files = dxf_files(addressed_plan(snapshot, optimization, order_id=order_id), codes=codes)
         if not files:
             raise DocumentaryError("dxf_requires_optimization")
         export = {
@@ -3297,14 +3313,13 @@ def generate_packing_manifest(
 def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     """Printable unit labels: the stored manifest plus a QR per unit.
 
-    The QR encodes ``DEKOPEN|<order_code>|<label_code>|<piece_count>`` so a
-    scanned label identifies the order, the unit, and its checklist even
-    without a terminal at hand. Rendered on read — the manifest is already
-    sealed, so labels never drift from it."""
+    The QR address binds order, printed code and stable unit identity. The
+    scan opens the same unit's pieces and checklist; historical printed codes
+    remain readable. Rendered on read from the already sealed manifest."""
     with transaction.atomic(), documentary_backend():
         order = one(
             """
-            SELECT id, order_code, status::text, payload_json FROM public.orders
+            SELECT id, order_code, status::text, payload_json, project_version_id FROM public.orders
             WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
             """,
             [str(order_id), str(org_id)],
@@ -3323,9 +3338,10 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                 + int(unit.get("hardware") or 0)
                 + int(unit.get("fittings") or 0)
             )
-            qr_payload = (
-                f"DEKOPEN|{order['order_code']}|{unit['label_code']}|{pieces}"
-            )
+            from production.pieces import entity_address
+
+            qr_payload = entity_address("/production", order=order_id,
+                piece=unit["label_code"], identity=f"{order_id}:U{unit['unit_index']}")
             labels.append(
                 {
                     "unit_index": int(unit["unit_index"]),
@@ -3339,15 +3355,34 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                     "fittings": int(unit.get("fittings") or 0),
                     "qr_payload": qr_payload,
                     "qr_svg": segno.make(qr_payload, error="m").svg_inline(
-                        border=2, scale=6
+                        border=4, scale=6, omitsize=True
                     ),
                 }
             )
+        from production.pieces import addressed_plan, physical_labels
+
+        payload = _decoded(order["payload_json"])
+        optimization = payload.get("optimization") or {}
+        piece_labels = []
+        blocked_reason = ""
+        if not optimization or optimization.get("invalidated"):
+            blocked_reason = (
+                "El plan de corte fue invalidado al liberar material. " if optimization.get("invalidated")
+                else "Sin dato · la orden no tiene un plan de corte vigente. "
+            ) + "Optimiza la orden antes de imprimir etiquetas de piezas."
+        else:
+            snapshot = _decoded(one(
+                "SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
+                [str(order["project_version_id"]), str(org_id)], "version_not_found",
+            )["snapshot_json"]) if order.get("project_version_id") else {}
+            piece_labels = physical_labels(addressed_plan(snapshot, optimization, order_id=order_id))
         return {
             "order_id": str(order_id),
             "order_code": order["order_code"],
             "status": str(order["status"]),
             "labels": labels,
+            "piece_labels": piece_labels,
+            "piece_labels_blocked_reason": blocked_reason,
         }
 
 

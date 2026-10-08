@@ -1,0 +1,215 @@
+{
+  "result": "PASS",
+  "records": [
+    {
+      "order": "OT-P-000018-REV-A-01",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-01",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P01-U01-I01"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-02",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-02",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P02-U01-I01",
+        "P02-U02-I01"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-03",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-03",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P03-U01-I01",
+        "P03-U01-I02",
+        "P03-U02-I01",
+        "P03-U02-I02",
+        "P03-U03-I01",
+        "P03-U03-I02"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-04",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-04",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P04-U01-I01"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-05",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-05",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P05-U01-I01",
+        "P05-U02-I01"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-06",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-06",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P06-U01-I01",
+        "P06-U02-I01",
+        "P06-U03-I01"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-07",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-07",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P07-U01-I01",
+        "P07-U01-I02"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-08",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-08",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P08-U01-I01",
+        "P08-U02-I01"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-09",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-09",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P09-U01-I01",
+        "P09-U02-I01",
+        "P09-U03-I01"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-10",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-10",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P10-U01-I01"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-11",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-11",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P11-U01-I01",
+        "P11-U01-I02",
+        "P11-U02-I01",
+        "P11-U02-I02"
+      ],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-12",
+      "kind": "corte",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [],
+      "format": "PASS"
+    },
+    {
+      "order": "OT-P-000018-REV-A-12",
+      "kind": "produccion",
+      "equal_codes": true,
+      "referenced_unplanned_codes": [
+        "P12-U01-I01",
+        "P12-U02-I01",
+        "P12-U03-I01"
+      ],
+      "format": "PASS"
+    }
+  ]
+}

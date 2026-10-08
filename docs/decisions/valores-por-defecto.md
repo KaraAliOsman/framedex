@@ -233,3 +233,28 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   proveedor, modelo, tiempo, reintentos o modo de herramientas exige otra prueba
   de esa capacidad; las demás conservan su evidencia. Una nueva tarifa solo
   afecta intercambios futuros y no reescribe costos sellados.
+
+## P02 · códigos como direcciones (2026-10-07)
+
+- OC, RT y REC usan seis dígitos como mínimo y contador por organización y tipo.
+  Son contratos de identidad, no preferencias de marca editables. Los proyectos
+  conservan su secuencia global. Un rollback no consume código; una entidad
+  eliminada conserva el alias para impedir reutilización.
+- El alias histórico se guarda aparte. No se vuelve a firmar una compra ni se
+  altera su código fuente para mejorar la lectura. Una OC nueva reserva código
+  antes de sellarse. Los documentos anteriores conservan sus bytes y los slots
+  de artefacto ya emitidos; la proyección nueva verifica primero la huella.
+- La etiqueta física conserva posición, unidad y miembro del snapshot; el sufijo
+  visible de refuerzo es `-R`, dictable por radio y común a todos los formatos.
+  El escáner sigue aceptando `·R` y QR históricos. Una dirección nueva incluye
+  OT e identidad estable; el código solo no sustituye la autorización.
+- La interfaz y el papel usan la tabla de `ENGINEERING.md`. Los archivos CNC
+  mantienen punto decimal y datos exactos, pues los consume una máquina.
+  Se agrega la etiqueta al final del CSV de láminas para conservar las columnas.
+  Sin autoridad de ángulo o código, se declara Sin dato; no se inventa 90° ni
+  se sustituye una pieza desconocida por un hash recortado.
+- Escanear un código sin OT se admite hasta 100 candidatos de taller. Por encima
+  se exige la dirección QR con OT, sin resultados parciales ni cargar snapshots.
+  Es un límite de búsqueda, no una pérdida del historial. Las etiquetas de bulto
+  conservan su historia; las de corte exigen un plan vigente y muestran su causa
+  y la acción de optimizar cuando no lo hay.

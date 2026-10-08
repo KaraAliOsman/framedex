@@ -3176,7 +3176,11 @@ def test_packing_labels_render_qr_per_unit(monkeypatch) -> None:
     assert len(out["labels"]) == 1
     label = out["labels"][0]
     assert label["pieces"] == 20
-    assert label["qr_payload"] == "DEKOPEN|OT-LBL-1|OT-LBL-1-U01|20"
+    from urllib.parse import parse_qs, urlsplit
+
+    address = urlsplit(label["qr_payload"])
+    assert address.path == "/production"
+    assert parse_qs(address.query) == {"order": [str(order_id)], "piece": ["OT-LBL-1-U01"], "identity": [f"{order_id}:U1"]}
     assert label["qr_svg"].startswith("<svg") and "path" in label["qr_svg"]
 
 
@@ -3192,6 +3196,24 @@ def test_packing_labels_require_manifest(monkeypatch) -> None:
     monkeypatch.setattr(service.transaction, "atomic", _atomic)
     with pytest.raises(DocumentaryError, match="packing_required"):
         service.packing_labels(org_id=uuid4(), order_id=uuid4())
+
+
+@pytest.mark.parametrize("optimization", [{}, {"invalidated": True, "bars": {"workshop_cut_plan": [{"piece_code": "P01-U01-M01"}]}}])
+def test_packing_labels_preserve_unit_history_but_block_stale_piece_labels(monkeypatch, optimization) -> None:
+    order = {"id": uuid4(), "order_code": "OT-LBL-3", "status": "RELEASED",
+        "project_version_id": uuid4(), "payload_json": json.dumps({
+            "packing": {"units": [{"unit_index": 1, "label_code": "OT-LBL-3-U01", "profiles": 6}]},
+            "optimization": optimization,
+        })}
+    monkeypatch.setattr(service, "one", lambda *a, **k: order)
+    monkeypatch.setattr(service, "documentary_backend", _atomic)
+    monkeypatch.setattr(service.transaction, "atomic", _atomic)
+    with patch("production.pieces.addressed_plan") as projected:
+        result = service.packing_labels(org_id=uuid4(), order_id=order["id"])
+    projected.assert_not_called()
+    assert result["labels"][0]["label_code"] == "OT-LBL-3-U01"
+    assert result["piece_labels"] == []
+    assert "Optimiza la orden" in result["piece_labels_blocked_reason"]
 
 
 def test_installation_requires_dispatched_and_is_idempotent(monkeypatch) -> None:
@@ -4388,7 +4410,7 @@ def test_cut_pack_resolves_physical_piece_identity_per_unit() -> None:
     )
     for code in (
         "P02-U01-M01", "P02-U01-M02", "P02-U02-M01", "P02-U02-M02",
-        "P02-U01-M02·R", "P02-U02-M02·R",
+        "P02-U01-M02-R", "P02-U02-M02-R",
     ):
         # once in the diagram label plus once in the table row — no third
         # occurrence would mean a physical piece printed twice.

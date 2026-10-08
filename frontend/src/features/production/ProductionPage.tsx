@@ -43,6 +43,7 @@ import type {
   ProductionPieceTrace,
   MethodEnum,
   PackingLabel,
+  PhysicalPieceLabel,
   PaymentKindEnum,
   ProductionOrder,
   ProductionOrderDetail,
@@ -57,6 +58,7 @@ import { DeniedState, PageHeader, usePrompt } from "../../ui";
 import { fmtMm, fmtPct } from "../../format";
 import { formatDate } from "../money";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
+import { domainLabels } from "../../i18n/domainLabels";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { PLAN_REQUIRED_CODES, STEP_STOCK_KINDS, cutRoleLabel, stationCodeLabel } from "./labels";
 
@@ -297,6 +299,8 @@ export function ProductionPage(): JSX.Element {
   const [optColor, setOptColor] = useState("");
   const [optStrategy, setOptStrategy] = useState("auto");
   const [labels, setLabels] = useState<PackingLabel[]>([]);
+  const [physicalLabels, setPhysicalLabels] = useState<PhysicalPieceLabel[]>([]);
+  const [pieceLabelsBlockedReason, setPieceLabelsBlockedReason] = useState("");
   const [stationQueue, setStationQueue] = useState<StationQueueGroup[]>([]);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
@@ -417,6 +421,8 @@ export function ProductionPage(): JSX.Element {
       if (response.status === 200) {
         setDetail(response.data);
         setLabels([]);
+        setPhysicalLabels([]);
+        setPieceLabelsBlockedReason("");
         const sealedColor = response.data.payload?.color;
         if (typeof sealedColor === "string" && sealedColor.trim()) {
           setOptColor(sealedColor);
@@ -498,6 +504,8 @@ export function ProductionPage(): JSX.Element {
     // during loadDetail's gap lets actions fire against the stale id.
     setDetail(null);
     setLabels([]);
+    setPhysicalLabels([]);
+    setPieceLabelsBlockedReason("");
     setDelivery(null);
     setDeliveries([]);
     setPendingUnits([]);
@@ -557,9 +565,12 @@ export function ProductionPage(): JSX.Element {
     async (queryOverride?: string) => {
       const query = (queryOverride ?? pieceQuery).trim();
       if (!query) return;
+      setMessage("");
+      setPieceReport(null);
+      setPieceMiss(false);
       setPieceBusy(true);
       try {
-        const response = await productionPieceTrace(query);
+        const response = await productionPieceTrace(encodeURIComponent(query));
         if (response.status === 200) {
           setPieceReport(response.data);
           setPieceMiss(false);
@@ -571,7 +582,9 @@ export function ProductionPage(): JSX.Element {
           setPieceReport(null);
           setPieceMiss(true);
         } else if (mounted.current) {
-          setMessage(t("production.loadError"));
+          setPieceReport(null);
+          setPieceMiss(false);
+          setMessage(actionErrorDetail(error));
         }
       } finally {
         setPieceBusy(false);
@@ -598,30 +611,52 @@ export function ProductionPage(): JSX.Element {
   const lastDeepPiece = useRef<string | null>(null);
   useEffect(() => {
     const deep = params.get("piece");
-    if (!deep || lastDeepPiece.current === deep) return;
-    lastDeepPiece.current = deep;
+    if (!deep) return;
+    const scan = params.has("order") ? `/production?${params.toString()}` : deep;
+    if (lastDeepPiece.current === scan) return;
+    lastDeepPiece.current = scan;
     setPieceQuery(deep);
-    void lookupPiece(deep);
+    void lookupPiece(scan);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
   // A scan that resolves to exactly one order lands on it — the piece's
   // station preselects the operator card. Ambiguous hits stay a list.
   useEffect(() => {
-    if (!params.get("piece") || !pieceReport) return;
+    if (!pieceReport) return;
     const matches = (pieceReport.matches as PieceMatch[] | undefined) ?? [];
     const orderIds = [
       ...new Set(
         matches.map((match) => match.work_order?.id).filter((id): id is string => Boolean(id)),
       ),
     ];
-    if (orderIds.length !== 1) return;
-    const match = matches.find((entry) => entry.work_order?.id === orderIds[0]);
+    const addressedOrder = params.get("piece") ? params.get("order") : null;
+    const matchedOrder =
+      addressedOrder && orderIds.includes(addressedOrder)
+        ? addressedOrder
+        : orderIds.length === 1
+          ? orderIds[0]
+          : null;
+    if (!matchedOrder) return;
+    const match = matches.find((entry) => entry.work_order?.id === matchedOrder);
     const station = match?.operations?.find((op) => op.station)?.station;
     setPendingStepCode(station ?? null);
     const next = new URLSearchParams(params);
-    next.delete("piece");
-    next.set("order", orderIds[0]!);
+    if (!next.has("piece")) {
+      let scannedCode = pieceQuery;
+      try {
+        const address = new URL(pieceQuery, window.location.origin);
+        if (address.pathname === "/production") {
+          scannedCode = address.searchParams.get("piece") ?? pieceQuery;
+          const identity = address.searchParams.get("identity");
+          if (identity) next.set("identity", identity);
+        }
+      } catch {
+        /* Legacy printed codes remain valid scan input. */
+      }
+      next.set("piece", scannedCode);
+    }
+    next.set("order", matchedOrder);
     setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pieceReport]);
@@ -846,6 +881,8 @@ export function ProductionPage(): JSX.Element {
   async function showLabels(orderId: string): Promise<void> {
     const generation = ++labelsGeneration.current;
     setLabels([]);
+    setPhysicalLabels([]);
+    setPieceLabelsBlockedReason("");
     setBusy(true);
     try {
       const response = await productionOrderLabels(orderId);
@@ -858,6 +895,8 @@ export function ProductionPage(): JSX.Element {
         return;
       }
       setLabels(response.data.labels);
+      setPhysicalLabels(response.data.piece_labels);
+      setPieceLabelsBlockedReason(response.data.piece_labels_blocked_reason ?? "");
     } catch {
       if (generation === labelsGeneration.current && selectedIdRef.current === orderId) {
         setMessage(t("production.labelsError"));
@@ -1793,7 +1832,8 @@ export function ProductionPage(): JSX.Element {
                     ? making.color_exterior
                     : null,
                 ]
-                  .filter(Boolean)
+                  .filter((color): color is string => Boolean(color))
+                  .map((color) => domainLabels[color] ?? color)
                   .join(" / ");
                 const dims =
                   making.width_mm && making.height_mm
@@ -1914,6 +1954,7 @@ export function ProductionPage(): JSX.Element {
                 );
                 return (
                   <section
+                    id="production-cut-plan"
                     className="production-optimize"
                     aria-label={t("production.optimizeTitle")}
                   >
@@ -2233,9 +2274,6 @@ export function ProductionPage(): JSX.Element {
                         {optimization.invalidated ? (
                           <p className="production-invalidated" role="alert">
                             {t("production.planInvalidated")}
-                            {optimization.invalidated_by ? (
-                              <code>{String(optimization.invalidated_by).slice(0, 8)}</code>
-                            ) : null}
                           </p>
                         ) : null}
                         {!optimization.invalidated && (cutPlan.length || layouts.length) ? (
@@ -2269,7 +2307,7 @@ export function ProductionPage(): JSX.Element {
                                         {" "}
                                         {t("production.optimizeRemnantBar")}
                                         {bar.remnant_id
-                                          ? ` · REM-${String(bar.remnant_id).slice(0, 8)}`
+                                          ? ` · ${bar.remnant_code ?? "Sin dato · falta código del retazo"}`
                                           : ""}
                                         {consumedLocations.get(String(bar.remnant_id ?? ""))
                                           ? ` · ${consumedLocations.get(String(bar.remnant_id ?? ""))}`
@@ -2295,7 +2333,7 @@ export function ProductionPage(): JSX.Element {
                                       </span>
                                     ) : null}
                                   </td>
-                                  <td>{fmtPct(bar.yield_pct)}%</td>
+                                  <td>{fmtPct(bar.yield_pct)} %</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -2448,8 +2486,12 @@ export function ProductionPage(): JSX.Element {
                                     `${metrics.bars ?? 0} barras`,
                                     `${metrics.purchased_bars ?? 0} compra`,
                                     `${metrics.remnant_bars ?? 0} barras retazo`,
-                                    `${metrics.process_waste_mm ?? "0"} mm merma de proceso`,
-                                    `${metrics.reusable_remnant_mm ?? "0"} mm retazo reutilizable`,
+                                    metrics.process_waste_mm == null
+                                      ? "Sin dato · falta merma de proceso"
+                                      : `${fmtMm(metrics.process_waste_mm)} mm merma de proceso`,
+                                    metrics.reusable_remnant_mm == null
+                                      ? "Sin dato · falta retazo reutilizable"
+                                      : `${fmtMm(metrics.reusable_remnant_mm)} mm retazo reutilizable`,
                                     `${metrics.cuts ?? 0} cortes`,
                                   ].join(" · ")}
                                 </p>
@@ -2466,7 +2508,7 @@ export function ProductionPage(): JSX.Element {
                                               typeof t
                                             >[0],
                                           ) || key
-                                        }${comparison?.chosen === key ? " ← " + t("production.optimizeChosen") : ""}: ${m?.purchased_bars ?? 0} barras · ${m?.process_waste_mm ?? "0"} mm`,
+                                        }${comparison?.chosen === key ? " ← " + t("production.optimizeChosen") : ""}: ${m?.purchased_bars ?? 0} barras · ${fmtMm(m?.process_waste_mm)} mm`,
                                     )
                                     .join("  ·  ")}
                                 </p>
@@ -2510,7 +2552,7 @@ export function ProductionPage(): JSX.Element {
                                       <span className="production-remnant-tag">
                                         {t("production.optimizeRemnantBar")}
                                         {layout.remnant_id
-                                          ? ` · REM-${String(layout.remnant_id).slice(0, 8)}`
+                                          ? ` · ${layout.remnant_code ?? "Sin dato · falta código del retazo"}`
                                           : ""}
                                         {consumedLocations.get(String(layout.remnant_id ?? ""))
                                           ? ` · ${consumedLocations.get(String(layout.remnant_id ?? ""))}`
@@ -2524,7 +2566,7 @@ export function ProductionPage(): JSX.Element {
                                       )
                                       .join(" · ")}
                                   </td>
-                                  <td>{fmtPct(layout.yield_pct)}%</td>
+                                  <td>{fmtPct(layout.yield_pct)} %</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -2586,6 +2628,12 @@ export function ProductionPage(): JSX.Element {
                         </button>
                       ) : null}
                     </header>
+                    {pieceLabelsBlockedReason ? (
+                      <p className="production-label-blocker" role="status">
+                        {pieceLabelsBlockedReason}{" "}
+                        <a href="#production-cut-plan">Revisar plan de corte</a>
+                      </p>
+                    ) : null}
                     {labels.length ? (
                       <ul className="production-labels">
                         {labels.map((label) => (
@@ -2618,6 +2666,21 @@ export function ProductionPage(): JSX.Element {
                                   .join(" · ")
                               }
                             </span>
+                          </li>
+                        ))}
+                        {physicalLabels.map((piece) => (
+                          <li key={piece.stable_id} className="production-label">
+                            <span className="production-label-code">{piece.code}</span>
+                            <span
+                              className="production-label-qr"
+                              dangerouslySetInnerHTML={{ __html: piece.qr_svg }}
+                            />
+                            <span className="ui-value">
+                              {piece.length_mm
+                                ? `${fmtMm(piece.length_mm)} mm`
+                                : `${fmtMm(piece.width_mm)} × ${fmtMm(piece.height_mm)} mm`}
+                            </span>
+                            <span>{piece.workshop_sku}</span>
                           </li>
                         ))}
                       </ul>

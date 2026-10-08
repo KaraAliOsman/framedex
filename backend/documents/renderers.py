@@ -264,7 +264,10 @@ def _value(value: object) -> str:
     if isinstance(value, Decimal):
         return format(value.normalize(), "f")
     if isinstance(value, (str, int)):
-        return str(value)
+        text = str(value)
+        if re.fullmatch(r"-?\d+\.\d+", text):
+            return format(Decimal(text).normalize(), "f")
+        return text
     if isinstance(value, float):
         raise DocumentaryError("pdf_float_authority_forbidden")
     raise DocumentaryError("pdf_value_not_scalar")
@@ -283,12 +286,23 @@ def _spec_value(value: object) -> str:
     return _value(value)
 
 
+_STRATEGY_ES = {"auto": "Automática", "fast": "Rápida", "deep": "Profunda"}
+
+
+def _measure(value: object, unit: str, precision: int) -> str:
+    """Presentation precision for a declared physical quantity, never a default."""
+    if value is None:
+        return "Sin dato"
+    number = Decimal(_value(value)).quantize(Decimal(1).scaleb(-precision), rounding=ROUND_HALF_UP)
+    return f"{number:,.{precision}f}".replace(",", "\u202f").replace(".", ",") + " " + unit
+
+
 def _pct(value: object) -> str:
     """Yield percentages print at one decimal — 93.5%, not 93.4667%."""
     if value is None:
         return "—"
     try:
-        return format(Decimal(str(value)).quantize(Decimal("0.1")), "f")
+        return format(Decimal(str(value)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP), "f").replace(".", ",")
     except (InvalidOperation, ValueError):
         return _value(value)
 
@@ -324,7 +338,12 @@ def _cell(value: object, class_name: str = "") -> str:
     css = f' class="{escape(class_name)}"' if class_name else ""
     if isinstance(value, _Raw):
         return f"<td{css}>{value}</td>"
-    return f"<td{css}>{escape(_value(value))}</td>"
+    if class_name == "dimension" and value is not None and re.fullmatch(r"-?\d+(?:\.\d+)?", str(value)):
+        return f"<td{css}>{escape(_survey_dim(value))}</td>"
+    text = _value(value)
+    if re.fullmatch(r"-?\d+\.\d+", text):
+        text = text.replace(".", ",")
+    return f"<td{css}>{escape(text)}</td>"
 
 
 def _row(values: list[object], classes: list[str] | None = None) -> str:
@@ -461,8 +480,9 @@ def _money(amount: object, currency: object) -> str:
         context.rounding = ROUND_HALF_UP
         if code == "CLP":
             grouped = f"{value:,.0f}".replace(",", ".")
-            return f"$\u00a0{grouped}"
-        return f"{code}\u00a0{value:,.2f}"
+            return f"${grouped}"
+        grouped = f"{value:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+        return f"{'US$' if code == 'USD' else code} {grouped}"
 
 
 def _cldate(raw: object) -> str:
@@ -477,7 +497,7 @@ def _discount_label(raw: object) -> str:
     value = _num(raw)
     if value <= 1:
         value = value * 100
-    return f"{value.normalize():f}%"
+    return f"{_pct(value)} %"
 
 
 def _rev_display(raw: object) -> str:
@@ -1232,14 +1252,13 @@ def _extra_table(rows: list[dict[str, object]], currency: object, *, prices: boo
         body += '<tr><td>Base de la posición</td><td></td><td></td><td class="numeric">'+escape(_money(base,currency))+'</td></tr>'
     for item in rows:
         unit = {"EA":"un.","M":"m","M2":"m²"}.get(str(item.get("unit")),"Sin dato")
-        qty = _dim(item.get("quantity")).replace('.',',')
+        precision = 2 if item.get("unit") in ("M", "M2") else 1 if item.get("unit") == "KG" else 0
+        qty = format(_num(item.get("quantity")).quantize(Decimal(1).scaleb(-precision), rounding=ROUND_HALF_UP), 'f').replace('.', ',')
         name = _value(item.get("name"))+(" · DEMO" if item.get("synthetic") else '')
         body += '<tr><td>'+escape(name)+'</td><td class="numeric">'+escape(qty+' '+unit)+'</td>'
         if prices:
-            rate = _num(item.get('unit_price',item.get('selling_rate')))
-            tariff = f"{rate:,.0f}" if currency == 'CLP' else f"{rate:,.2f}".rstrip('0').rstrip('.')
-            tariff = tariff.replace(',','_').replace('.',',').replace('_','.')
-            body += '<td class="numeric">'+escape(('$' if currency == 'CLP' else 'US$ ')+tariff)+'</td><td class="numeric">'+escape(_money(item.get("net",item.get("amount")),currency))+'</td>'
+            tariff = _money(item.get('unit_price',item.get('selling_rate')), currency)
+            body += '<td class="numeric">'+escape(tariff)+'</td><td class="numeric">'+escape(_money(item.get("net",item.get("amount")),currency))+'</td>'
         body += '</tr>'
         if prices and item.get('rounding') is not None and _num(item['rounding']) != 0:
             body += '<tr><td colspan="4"><small>Ajuste de redondeo incluido en el neto: '+escape(_dim(item['rounding']).replace('.',','))+' '+escape(_value(currency))+'</small></td></tr>'
@@ -1964,7 +1983,7 @@ def _piece_labels(
             for index, item in enumerate(reinforcements, 1):
                 parent_code = member.get(item.get("parent_member_id"))
                 reinforcement[item.get("reinforcement_id")] = (
-                    f"{parent_code}·R"
+                    f"{parent_code}-R"
                     if parent_code is not None
                     else f"{prefix}-R{index:02d}"
                 )
@@ -2032,10 +2051,7 @@ def _piece_labels(
 def _short_id(value: object) -> str:
     """Raw 64-hex/UUID identities dump a full hash cell — truncate for
     display while staying recognizably unique to the shop."""
-    text = _value(value)
-    if len(text) > 20:
-        return text[:12] + "…"
-    return text
+    return "Sin dato · falta código" if value is not None else "Sin dato"
 
 
 def _norm_dec(value: object) -> str:
@@ -2315,10 +2331,10 @@ def _infill_key(piece: dict[str, object]) -> tuple[str, str, str]:
 
 
 def _location(labels: dict[str, dict[object, str]], bay_id: object, leaf_id: object) -> str:
-    bay = labels["bay"].get(bay_id, _value(bay_id))
+    bay = labels["bay"].get(bay_id, "Sin dato")
     if leaf_id is None:
         return str(bay)
-    return f"{bay} / {labels['leaf'].get(leaf_id, _value(leaf_id))}"
+    return f"{bay} / {labels['leaf'].get(leaf_id, 'Sin dato')}"
 
 
 def _doc05(snapshot: dict[str, object]) -> str:
@@ -2337,8 +2353,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
             f"<h2>{escape(_value(group.get('purchasing_sku')))} · "
             f"{escape(_CATEGORY_ES.get(_value(group.get('source_kind')), _value(group.get('source_kind'))))}</h2>"
             f"<p><strong>Largo:</strong> {escape(_value(group.get('stock_length_mm')))} mm · "
-            f"<strong>Barras:</strong> {escape(_value(group.get('purchased_bar_count')))} · "
-            f'<span class="hash">stock {escape(_value(group.get("physical_stock_identity")))}</span></p>'
+            f"<strong>Barras:</strong> {escape(_value(group.get('purchased_bar_count')))}</p>"
         )
         for bar_value in _array(group.get("bars"), "invalid_stock_group"):
             bar = _object(bar_value, "invalid_cut_bar")
@@ -2359,7 +2374,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
                 f"{escape(_value(bar.get('stock_length_mm')))} mm · "
                 f"{remainder_label} {escape(_value(bar.get('remainder_mm')))} mm"
                 + (
-                    f" · aprovechamiento {_pct(bar.get('yield_pct'))}%"
+                    f" · aprovechamiento {_pct(bar.get('yield_pct'))} %"
                     if bar.get("yield_pct") is not None
                     else ""
                 )
@@ -2400,7 +2415,7 @@ def _doc06(snapshot: dict[str, object]) -> str:
         config = _object(inspector[0].get("config"), "invalid_inspector_evidence")
         r10 = config.get("R10")
         if isinstance(r10, dict) and r10.get("tolerance_mm") is not None:
-            tolerance = _value(r10.get("tolerance_mm"))
+            tolerance = _survey_dim(r10.get("tolerance_mm"))
     # The checklist must bind to the physical units it covers — a QC hold has
     # to name the position it stops, not float over "the revision".
     units_rows = []

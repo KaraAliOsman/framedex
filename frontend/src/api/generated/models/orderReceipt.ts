@@ -8,6 +8,7 @@
 
 export interface OrderReceipt {
   id: string;
+  receipt_code: string;
   receipt_key: string;
   /** @nullable */
   note: string | null;
