@@ -219,6 +219,7 @@ class SlidingPanelFactsSerializer(serializers.Serializer):
     kind = serializers.ChoiceField(choices=["MOVING", "FIXED"])
     track = serializers.IntegerField(allow_null=True)
     leaf_id = serializers.CharField(allow_null=True)
+    travel = serializers.ChoiceField(choices=["LEFT", "RIGHT"], allow_null=True, required=False)
 
 
 class SlidingLayoutFactsSerializer(serializers.Serializer):
@@ -227,11 +228,54 @@ class SlidingLayoutFactsSerializer(serializers.Serializer):
     panels = SlidingPanelFactsSerializer(many=True)
 
 
+class DimensionSegmentSerializer(serializers.Serializer):
+    start_mm = serializers.CharField()
+    end_mm = serializers.CharField()
+    value_mm = serializers.CharField()
+
+
+class DimensionChainSerializer(serializers.Serializer):
+    axis = serializers.ChoiceField(choices=["V", "H"])
+    level = serializers.IntegerField()
+    segments = DimensionSegmentSerializer(many=True)
+
+
+class DrawingBaySerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    x_mm = serializers.CharField()
+    y_mm = serializers.CharField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+
+
+class DrawingHandleDatumSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    height_from_bottom_mm = serializers.CharField()
+    y_mm = serializers.CharField()
+    bottom_mm = serializers.CharField()
+
+
+class DrawingFactsSerializer(serializers.Serializer):
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+    chains = DimensionChainSerializer(many=True)
+    bays = DrawingBaySerializer(many=True)
+    authored_handles = DrawingHandleDatumSerializer(many=True)
+
+
 class ModuleEvaluationSerializer(serializers.Serializer):
     module_id = serializers.CharField()
     issues = ProductIssueSerializer(many=True)
     result = EngineResultPayloadSerializer(allow_null=True)
     sliding = SlidingLayoutFactsSerializer(many=True)
+    drawing = DrawingFactsSerializer(allow_null=True, required=False)
+
+
+class DrawingEnvelopeSerializer(serializers.Serializer):
+    min_x_mm = serializers.CharField()
+    min_y_mm = serializers.CharField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
 
 
 class EngineAssemblyCalculateResponseSerializer(serializers.Serializer):
@@ -241,6 +285,7 @@ class EngineAssemblyCalculateResponseSerializer(serializers.Serializer):
     issues = ProductIssueSerializer(many=True)
     plan = PlanGeometrySerializer(allow_null=True)
     modules = ModuleEvaluationSerializer(many=True)
+    elevation = DrawingEnvelopeSerializer(allow_null=True, required=False)
     bom = EngineResultPayloadSerializer(allow_null=True)
     calculation_hash = serializers.RegexField(regex=r"^sha256:[0-9a-f]{64}$")
 

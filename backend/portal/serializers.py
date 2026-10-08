@@ -39,6 +39,7 @@ class PortalOpeningSerializer(serializers.Serializer):
 
 
 class PortalPositionSerializer(serializers.Serializer):
+    opening_leaves = serializers.ListField(child=serializers.JSONField(), required=False)
     resolved_finish = ResolvedFinishSerializer(required=False, allow_null=True)
     id = serializers.CharField(allow_blank=True)
     position_index = serializers.IntegerField(allow_null=True)

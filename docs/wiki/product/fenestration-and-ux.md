@@ -48,6 +48,10 @@ See [physical openings](physical-openings.md) for verified behavior and limits.
 
 Use one coherent grammar across Studio, quotations and manufacturing documents, with deliberate simplification by audience.
 
+P05 makes that grammar executable in Python/TS/PDF with shared fixtures,
+declared slider travel and both views. Exact contour extrema govern total arch
+height. See [opening drawings](opening-drawings.md) and its acceptance evidence.
+
 ## Composition
 
 Bow/bay/corner products should emerge from modules/units joined by explicit couplings, transforms and angles.

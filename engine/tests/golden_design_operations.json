@@ -2123,6 +2123,12 @@
           }
         ]
       },
+      "elevation": {
+        "height_mm": "1200.00",
+        "min_x_mm": "0.00",
+        "min_y_mm": "0.00",
+        "width_mm": "2400.00"
+      },
       "issues": [
         {
           "code": "member_bending_required",
@@ -2145,6 +2151,21 @@
       ],
       "modules": [
         {
+          "drawing": {
+            "authored_handles": [],
+            "bays": [
+              {
+                "bay_id": "b1",
+                "height_mm": "1200.00",
+                "width_mm": "2400.00",
+                "x_mm": "0",
+                "y_mm": "0"
+              }
+            ],
+            "chains": [],
+            "height_mm": "1200.00",
+            "width_mm": "2400.00"
+          },
           "issues": [
             {
               "code": "member_bending_required",

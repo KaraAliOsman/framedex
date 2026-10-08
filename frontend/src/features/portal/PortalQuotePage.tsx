@@ -10,6 +10,7 @@ import type { PositionDesign } from "../../api/generated/models";
 import { t, TranslationKey } from "../../i18n/es-CL";
 import { formatRevision, fmtMm } from "../../format";
 import { PositionThumb, THUMB_MEMBERS } from "../projects/PositionThumb";
+import type { OpeningLeafFact } from "../canvas/physicalOpenings";
 import {
   addDecimal,
   divideByInt,
@@ -45,9 +46,9 @@ function positionMembers(
       .normalize("NFD")
       .replace(/\p{Diacritic}/gu, "");
   for (const [pattern, material] of FINISH_SURFACES) {
-    if (pattern.test(text)) return reSkinMembers(THUMB_MEMBERS, material);
+    if (pattern.test(text)) return { ...reSkinMembers(THUMB_MEMBERS, material), viewFace: face };
   }
-  return THUMB_MEMBERS;
+  return { ...THUMB_MEMBERS, viewFace: face };
 }
 
 /** The contract error body carries a precise public detail for portal codes
@@ -141,6 +142,7 @@ function groupPositions(positions: PortalPosition[]): {
       position.resolved_finish,
       position.price_net,
       position.parametric_tree,
+      position.opening_leaves,
       position.opening_measurements,
     ]);
     const group = groups.get(key);
@@ -202,7 +204,12 @@ function PositionGroupCard({
   return (
     <article className="portal-position">
       <div className="portal-position__thumb">
-        <PositionThumb design={positionDesign(position)} variant={variant} members={members} />
+        <PositionThumb
+          design={positionDesign(position)}
+          variant={variant}
+          members={members}
+          openingLeaves={(position.opening_leaves ?? []) as OpeningLeafFact[]}
+        />
         <div className="portal-position__views" role="group" aria-label={t("portal.views")}>
           <button
             type="button"

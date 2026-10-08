@@ -7,6 +7,7 @@
  */
 import type { OperationSetSlidingLayoutContextEffect } from "./operationSetSlidingLayoutContextEffect";
 import type { OperationSetSlidingLayoutOp } from "./operationSetSlidingLayoutOp";
+import type { OperationSetSlidingLayoutPanelTravelItem } from "./operationSetSlidingLayoutPanelTravelItem";
 import type { OperationSetSlidingLayoutResult } from "./operationSetSlidingLayoutResult";
 
 export interface OperationSetSlidingLayout {
@@ -29,6 +30,10 @@ export interface OperationSetSlidingLayout {
    */
   tracks: number;
   panel_tracks?: (number | null)[];
+  panel_travel?: (
+    | (typeof OperationSetSlidingLayoutPanelTravelItem)[keyof typeof OperationSetSlidingLayoutPanelTravelItem]
+    | null
+  )[];
   /**
    * Milímetros decimales exactos; sin separador de miles.
    * @pattern ^-?\d+(?:\.\d{1,2})?$

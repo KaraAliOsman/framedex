@@ -7,6 +7,7 @@ import { resolveMembers, type MemberGeometry } from "../canvas/members";
 import { isProductModel, wrapTreeAsProduct, type ProductJson } from "../canvas/productEditing";
 import { frontLayout, ProductFrontContent } from "../canvas/ProductFrontSvg";
 import { webglAvailable } from "../canvas/webglAvailable";
+import type { OpeningLeafFact } from "../canvas/physicalOpenings";
 
 // three.js stays behind the dynamic boundary — the studio renderer only
 // loads when a card actually renders it (lazy fetches on first render).
@@ -15,6 +16,7 @@ const LazyStudioImage = lazy(() =>
 );
 
 const NO_ISSUES: ProductIssue[] = [];
+const NO_LEAVES: OpeningLeafFact[] = [];
 const NOOP = () => {};
 
 /** Neutral PVC-60 member geometry — the thumbnail shows real bay layout and
@@ -61,6 +63,7 @@ export function PositionThumb({
   design,
   variant = "elevation",
   members = THUMB_MEMBERS,
+  openingLeaves = NO_LEAVES,
 }: {
   design: PositionDesign;
   /** "studio" renders the §05 commercial view — the premium visual for
@@ -70,8 +73,30 @@ export function PositionThumb({
   /** Member geometry+material override — callers that know the sealed finish
    * (portal) pass a re-skinned set so the render matches the quoted color. */
   members?: MemberGeometry;
+  openingLeaves?: OpeningLeafFact[];
 }): JSX.Element {
   const product = useMemo(() => designProduct(design), [design]);
+  const openingFacts = useMemo(
+    () =>
+      Object.fromEntries(
+        product.assembly.modules.map((module) => [
+          module.id,
+          openingLeaves
+            .filter(
+              (leaf) =>
+                leaf.bay_id.startsWith(module.id + "|") ||
+                (product.assembly.modules.length === 1 && !leaf.bay_id.includes("|")),
+            )
+            .map((leaf) => ({
+              ...leaf,
+              bay_id: leaf.bay_id.startsWith(module.id + "|")
+                ? leaf.bay_id.slice(module.id.length + 1)
+                : leaf.bay_id,
+            })),
+        ]),
+      ),
+    [product, openingLeaves],
+  );
   const [hostRef, visible] = useVisible<HTMLDivElement>();
   // Grid cards re-render on every parent pass — the layout must not.
   const { totalW, height, lift, dip, leftOver, rightOver } = useMemo(
@@ -91,6 +116,7 @@ export function PositionThumb({
       <ProductFrontContent
         product={product}
         members={members}
+        openingFacts={openingFacts}
         selectedId={null}
         issues={NO_ISSUES}
         disabled

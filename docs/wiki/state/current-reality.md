@@ -28,6 +28,19 @@ sources:
 
 # Current reality
 
+## P05 · verificado localmente, pendiente de CI (08-10-2026)
+
+Rama `codex/P05-simbologia-cotas`, base `a67bcefa`, aún sin merge: gramática
+DIN exportada del motor, 56 fixtures compartidos, viaje explícito/compatibilidad
+histórica, vistas y cotas/extremos exactos. Guardado/recarga/undo/rechazo pasan;
+editor, formas, conjuntos DEV y portal sellado tienen matrices sin colisiones.
+Los runners oficiales pasan 16 vistas editor y ocho portal sin hallazgos.
+PDF de conjuntos conserva texto legible en dos caras; DOM/PDF muestran total
+del arco sin confundir arranque nominal. Véase [aceptación P05](../../redesign/P05-ACEPTACION.md).
+El `verified_ref` general seguirá en P04 hasta integrar P05 y registrar su SHA.
+Los fixtures sin acoplador autorizado y movimientos reservados son gramática,
+no autoridad fabricable; P06/P07/P09/P13/D08 conservan sus propios alcances.
+
 ## P04 · integrado y verificado (08-10-2026)
 
 `codex/P04-editor-canvas-first` sobre `c2ecdbc1` dispone de franja compacta,

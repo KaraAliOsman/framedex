@@ -247,8 +247,18 @@ class SlidingPanelKind(str, Enum):
     FIXED = "FIXED"  # glazed in-frame — an "O" panel
 
 
+class SlidingTravel(str, Enum):
+    LEFT = "LEFT"
+    RIGHT = "RIGHT"
+
+
 class SlidingPanel(EngineModel):
-    """One slot of a sliding unit, ordered left→right in elevation."""
+    """One slot, left→right in INTERIOR elevation. Track 0 is exterior.
+
+    Rail order is a drawing convention, not manufacturer section authority.
+    Missing travel is accepted only by the historical transport; explicit
+    travel is mandatory for newly authored moving panels.
+    """
 
     slot: str
     kind: SlidingPanelKind
@@ -256,6 +266,23 @@ class SlidingPanel(EngineModel):
     # a fixed pane has no rail. Two adjacent MOVING panels may not share a
     # track (they would collide before overlapping).
     track: int | None = None
+    travel: SlidingTravel | None = None
+
+    @model_validator(mode="after")
+    def declared_travel(self) -> SlidingPanel:
+        if self.kind is SlidingPanelKind.FIXED and self.travel is not None:
+            raise ValueError("Un paño fijo no declara recorrido.")
+        if (self.kind is SlidingPanelKind.MOVING and "travel" in self.model_fields_set
+                and self.travel is None):
+            raise ValueError("Declara hacia dónde corre la hoja móvil.")
+        return self
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_travel(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = handler(self)
+        if "travel" not in self.model_fields_set:
+            value.pop("travel", None)
+        return value
 
 
 class SlidingLayout(EngineModel):

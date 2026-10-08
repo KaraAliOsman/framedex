@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { OperationSetSlidingLayoutRequestOp } from "./operationSetSlidingLayoutRequestOp";
+import type { OperationSetSlidingLayoutRequestPanelTravelItem } from "./operationSetSlidingLayoutRequestPanelTravelItem";
 
 export interface OperationSetSlidingLayoutRequest {
   op: OperationSetSlidingLayoutRequestOp;
@@ -27,6 +28,10 @@ export interface OperationSetSlidingLayoutRequest {
    */
   tracks: number;
   panel_tracks?: (number | null)[];
+  panel_travel?: (
+    | (typeof OperationSetSlidingLayoutRequestPanelTravelItem)[keyof typeof OperationSetSlidingLayoutRequestPanelTravelItem]
+    | null
+  )[];
   /**
    * Milímetros decimales exactos; sin separador de miles.
    * @pattern ^-?\d+(?:\.\d{1,2})?$

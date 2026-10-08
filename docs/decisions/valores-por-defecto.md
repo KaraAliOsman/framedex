@@ -303,3 +303,21 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   La densidad contextual conserva los controles de taller existentes.
 - Tres paños se propone con registro tipado: fantasma/Δ antes del clic,
   deshacer después. Cambiar diseño o cantidad invalida una respuesta tardía.
+
+## P05 · gramática y vista declarada (2026-10-08)
+
+- Vista interior al abrir; el selector interior/exterior cambia la lectura
+  sin mutar el diseño. Es un control de cada dibujo, disponible también en
+  el portal; no crea una preferencia de fabricación ni altera lo emitido.
+- Carril 0 representa el exterior, índices crecientes hacia interior. Es una
+  convención de dibujo explícita hasta contar con sección/orden del fabricante;
+  no se convierte en autoridad de corte. La planta numera desde 1.
+- Una dirección histórica ausente conserva sus bytes y la convención anterior
+  como «Dirección inferida». El inspector y las recetas nuevas declaran el
+  viaje, validado por el motor; una móvil no puede viajar hacia su jamba.
+- Cotas técnicas en mm enteros, HALF_UP solo en presentación. La altura total
+  del arco viene de sus extremos exactos; «Alto hasta arranque» sigue editable.
+  Las cadenas cortas y módulos apilados reservan niveles propios fuera del
+  conjunto. No se modifica una medida manufacturada para hacer legible su cota.
+- Sin acoplador autorizado, los ejemplos DEV de conjuntos son solo gramática
+  DEMO del motor. No se agrega un SKU ni se habilita fabricación para capturarlos.

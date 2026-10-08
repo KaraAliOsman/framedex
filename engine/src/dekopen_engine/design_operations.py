@@ -12,7 +12,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import json
 from typing import Any, cast
 
-from .geometry import compute_geometry, validate_sliding_layout
+from .geometry import compute_geometry, validate_sliding_layout, resolved_sliding_layout, sliding_travel
 from .catalog_rules import CatalogRuleError, FAMILY_OPENINGS, validate_family
 from .models import BayOpeningType, OpeningMovement, LeafRole, ParametricNode, ProfileRole, SystemParams, HardwareSelection
 from .glass_composition import GlassProcessing
@@ -105,6 +105,7 @@ REGISTRY = [
     spec("set_sliding_layout", "Define corredera: X móvil, O fijo; cada móvil declara carril.",
          {**TARGET, "panels": {"type": "string", "pattern": "^[XO]{2,4}$"}, "tracks": {"type": "integer", "minimum": 2, "maximum": 4},
           "panel_tracks": {"type": "array", "items": {"type": ["integer", "null"]}},
+          "panel_travel": {"type": "array", "items": {"enum": ["LEFT", "RIGHT", None]}},
           "travel_mm": MM}, ["bay", "panels", "tracks"], {"bay": "b1", "panels": "XX", "tracks": 2}),
     spec("set_travel", "Prepara el recorrido declarado de corredera; exige soporte explícito del modelo.",
          {**TARGET, "travel_mm": MM}, ["bay", "travel_mm"], {"bay": "b1", "travel_mm": "600"},
@@ -340,6 +341,14 @@ def _opening(node: dict[str, Any], value: Any, params: SystemParams, op: dict[st
                 hinged_layout=op.get("hinged_layout"), sliding_layout=op.get("sliding_layout"))
     parsed = ParametricNode.model_validate_json(json.dumps(node))
     physical = node_opening(parsed)
+    if physical.movement is OpeningMovement.SLIDE:
+        layout = resolved_sliding_layout(parsed)
+        node["sliding_layout"] = {"tracks": layout.tracks, "panels": [
+            {**panel.model_dump(mode="json"), "travel": (
+                sliding_travel(panel, index, len(layout.panels))
+                if panel.kind.value == "MOVING" else None)}
+            for index, panel in enumerate(layout.panels)]}
+        parsed = ParametricNode.model_validate_json(json.dumps(node))
     if (isinstance(value, str) and params.opening_capabilities
             and physical.movement is not OpeningMovement.SLIDE
             and physical.leaf_role is LeafRole.SINGLE):
@@ -650,10 +659,15 @@ def _apply(product: dict[str, Any], op: dict[str, Any], params: SystemParams, ca
         tracks = op["tracks"]
         kinds = op["panels"]
         declared = op.get("panel_tracks")
+        travel = op.get("panel_travel")
+        if travel is not None and len(travel) != len(kinds):
+            raise OperationError("sliding_layout_invalid", "Declara el recorrido de cada hoja.")
         if declared is not None and len(declared) != len(kinds):
             raise OperationError("sliding_layout_invalid", "Declara un carril por panel.")
         panels = [{"slot": f"S{index + 1}", "kind": "MOVING" if kind == "X" else "FIXED",
-                   "track": declared[index] if declared is not None else (index % tracks if kind == "X" else None)}
+                   "track": declared[index] if declared is not None else (index % tracks if kind == "X" else None),
+                   "travel": (travel[index] if travel is not None else
+                              ("RIGHT" if index * 2 < len(kinds) else "LEFT") if kind == "X" else None)}
                   for index, kind in enumerate(kinds)]
         _opening(node, {"movement": "SLIDE", "hinge_side": "NONE", "direction": "INWARD",
                         "leaf_role": "SINGLE", "fixed_in_sash": False}, params,

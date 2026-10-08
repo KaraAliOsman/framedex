@@ -160,7 +160,8 @@
 .opening-choice .opening-glyph line,
 .opening-choice .opening-glyph path {
   stroke: var(--theme-text-primary);
-  stroke-width: 3;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
 }
 .inspector-actions {
   display: flex;

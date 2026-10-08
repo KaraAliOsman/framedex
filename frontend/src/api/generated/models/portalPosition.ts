@@ -10,6 +10,7 @@ import type { PortalOpening } from "./portalOpening";
 import type { ResolvedFinish } from "./resolvedFinish";
 
 export interface PortalPosition {
+  opening_leaves?: unknown[];
   resolved_finish?: ResolvedFinish | null;
   id: string;
   /** @nullable */

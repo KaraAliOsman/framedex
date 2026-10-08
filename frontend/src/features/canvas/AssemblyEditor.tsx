@@ -57,6 +57,7 @@ import {
 
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
 import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
+import { declareSlidingTravel, slidingTravel } from "./intentEditing";
 import {
   findNode,
   intentBays,
@@ -748,16 +749,22 @@ function SlidingPanelsEditor({
   instanceId,
   layout,
   busy,
-  onChange,
+  onChange: commit,
 }: {
   instanceId: string;
   layout: SlidingLayout;
   busy: boolean;
   onChange(next: SlidingLayout): void;
 }): JSX.Element {
+  const onChange = (next: SlidingLayout) => commit(declareSlidingTravel(next));
   return (
     <details className="inspector-section" open>
       <summary>{t("assembly.slidingLayout")}</summary>
+      {layout.panels.some((panel) => panel.kind === "MOVING" && panel.travel == null) && (
+        <p className="sliding-inferred" role="status">
+          Dirección inferida · revisa el recorrido de cada hoja.
+        </p>
+      )}
       <div className="inspector-field">
         <label htmlFor={`tracks-${instanceId}`}>{t("assembly.slidingTracks")}</label>
         <select
@@ -805,6 +812,11 @@ function SlidingPanelsEditor({
                     ? {
                         ...item,
                         kind,
+                        travel:
+                          kind === "FIXED"
+                            ? null
+                            : (item.travel ??
+                              (index * 2 < layout.panels.length ? "RIGHT" : "LEFT")),
                         track:
                           kind === "MOVING"
                             ? (item.track ?? index % Math.max(layout.tracks, 1))
@@ -819,24 +831,48 @@ function SlidingPanelsEditor({
               <option value="FIXED">{t("assembly.panelFixed")}</option>
             </select>
             {panel.kind === "MOVING" && (
-              <select
-                aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("assembly.panelTrack")}`}
-                value={panel.track ?? 0}
-                disabled={busy}
-                onChange={(event) => {
-                  const track = Number(event.target.value);
-                  const panels = layout.panels.map((item, at) =>
-                    at === index ? { ...item, track } : item,
-                  );
-                  onChange({ ...layout, panels });
-                }}
-              >
-                {Array.from({ length: layout.tracks }, (_, track) => (
-                  <option key={track} value={track}>
-                    {t("assembly.panelTrack")} {track + 1}
+              <>
+                <select
+                  aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("assembly.panelTrack")}`}
+                  value={panel.track ?? 0}
+                  disabled={busy}
+                  onChange={(event) => {
+                    const track = Number(event.target.value);
+                    const panels = layout.panels.map((item, at) =>
+                      at === index ? { ...item, track } : item,
+                    );
+                    onChange({ ...layout, panels });
+                  }}
+                >
+                  {Array.from({ length: layout.tracks }, (_, track) => (
+                    <option key={track} value={track}>
+                      {t("assembly.panelTrack")} {track + 1}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label={`Hoja ${index + 1} recorrido`}
+                  disabled={busy}
+                  value={slidingTravel(panel, index, layout.panels.length) ?? "RIGHT"}
+                  onChange={(event) =>
+                    onChange({
+                      ...layout,
+                      panels: layout.panels.map((item, at) =>
+                        at === index
+                          ? { ...item, travel: event.target.value as "LEFT" | "RIGHT" }
+                          : item,
+                      ),
+                    })
+                  }
+                >
+                  <option value="LEFT" disabled={index === 0}>
+                    Hacia la izquierda
                   </option>
-                ))}
-              </select>
+                  <option value="RIGHT" disabled={index === layout.panels.length - 1}>
+                    Hacia la derecha
+                  </option>
+                </select>
+              </>
             )}
           </li>
         ))}
@@ -1046,7 +1082,7 @@ function BayInspector({
       opening: null,
       opening_use: null,
       hinged_layout: null,
-      sliding_layout: next === "SLIDING" ? structuredClone(SLIDING_PRESETS.SLIDING_2L!) : null,
+      sliding_layout: next === "SLIDING" ? declareSlidingTravel(SLIDING_PRESETS.SLIDING_2L!) : null,
       panel_article_sku: next === "DOOR_ENTRY" ? (bay.panel_article_sku ?? null) : null,
       door_handedness: next === "DOOR_ENTRY" ? bay.door_handedness : null,
     });
@@ -1074,7 +1110,7 @@ function BayInspector({
           }
         />
         <DraftField
-          label="Alto del marco"
+          label={module.contour?.bulges.some(Boolean) ? "Alto hasta arranque" : "Alto del marco"}
           value={module.height_mm}
           unit="mm"
           disabled={busy}
@@ -1702,7 +1738,9 @@ function ModuleInspector({
           }
         />
         <DraftField
-          label={t("assembly.height")}
+          label={
+            module.contour?.bulges.some(Boolean) ? "Alto hasta arranque" : t("assembly.height")
+          }
           value={module.height_mm}
           unit="mm"
           disabled={busy}
@@ -2421,11 +2459,23 @@ export function AssemblyEditor({
   const front = useMemo(() => (product ? frontLayout(product) : null), [product]);
   const frontBox = useMemo(() => {
     if (!front) return null;
-    const box = frontBounds(front);
+    const box = frontBounds(
+      front,
+      Object.fromEntries(
+        (drawingEvaluation?.modules ?? []).map((item) => [item.module_id, item.drawing ?? null]),
+      ),
+      detail === "technical",
+      Object.fromEntries(
+        (drawingEvaluation?.modules ?? []).map((item) => [
+          item.module_id,
+          (item.result?.opening_leaves ?? []) as unknown as OpeningLeafFact[],
+        ]),
+      ),
+    );
     return inputs.mounting?.length
       ? { ...box, y: box.y - 180, h: box.h + 180, x: box.x - 60, w: box.w + 120 }
       : box;
-  }, [front, inputs.mounting]);
+  }, [front, inputs.mounting, drawingEvaluation, detail]);
   const selectionBox = useMemo(
     () => (front ? frontModuleBox(front, selection) : null),
     [front, selection],
@@ -2557,7 +2607,9 @@ export function AssemblyEditor({
   // state, and save still requires the fresh engine verdict upstream.
   const evaluating = isPending && inputs.systemId !== null;
   const planBox = couplings.length > 0 && evaluation?.plan ? planBounds(evaluation.plan) : null;
-  const statusText = `${fmtMm(front.totalW)} × ${fmtMm(front.height)} mm`;
+  const statusText = drawingEvaluation?.elevation
+    ? `${fmtMm(drawingEvaluation.elevation.width_mm)} × ${fmtMm(drawingEvaluation.elevation.height_mm)} mm`
+    : `${fmtMm(front.totalW)} × ${fmtMm(front.height)} mm${front.lift > 0 ? " hasta arranque" : ""}`;
   // Labels derive from actual product membership — selection ids are
   // arbitrary strings, so a coupling legitimately named "coupling-x" must
   // still resolve (prefix sniffing would hide it).
@@ -2937,6 +2989,17 @@ export function AssemblyEditor({
             Vista exterior
           </button>
         </div>
+        <details className="assembly-symbol-legend">
+          <summary>Simbología</summary>
+          <p>
+            Vértice hacia la manilla. Continuo: abre hacia usted. Discontinuo: se aleja. Flecha:
+            recorrido de la corredera.
+          </p>
+          <p>
+            Carril 1 al exterior, numeración hacia el interior · convención de dibujo; contraste la
+            sección del fabricante.
+          </p>
+        </details>
         {openingPreviewProduct && (
           <span className="opening-preview-label" role="status">
             {openingPreview.isPending
@@ -2959,6 +3022,13 @@ export function AssemblyEditor({
           contentEpoch={contentEpoch}
         >
           <ProductFrontContent
+            elevation={drawingEvaluation?.elevation}
+            drawingFacts={Object.fromEntries(
+              (drawingEvaluation?.modules ?? []).map((item) => [
+                item.module_id,
+                item.drawing ?? null,
+              ]),
+            )}
             hideOverallWidth={(inputs.mounting?.length ?? 0) > 0}
             openingFacts={Object.fromEntries(
               (drawingEvaluation?.modules ?? []).map((item) => [

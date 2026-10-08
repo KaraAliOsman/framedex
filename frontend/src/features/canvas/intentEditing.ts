@@ -25,12 +25,32 @@ export type SlidingPanel = {
   slot: string;
   kind: "MOVING" | "FIXED";
   track: number | null;
+  travel?: "LEFT" | "RIGHT" | null;
 };
 
 export type SlidingLayout = {
   tracks: number;
   panels: SlidingPanel[];
 };
+
+/** Historical drawings remain readable without silently rewriting saved intent. */
+export function slidingTravel(
+  panel: SlidingPanel,
+  index: number,
+  count: number,
+): "LEFT" | "RIGHT" | null {
+  return panel.kind === "FIXED" ? null : (panel.travel ?? (index * 2 < count ? "RIGHT" : "LEFT"));
+}
+
+export function declareSlidingTravel(layout: SlidingLayout): SlidingLayout {
+  return {
+    ...layout,
+    panels: layout.panels.map((panel, index) => ({
+      ...panel,
+      travel: slidingTravel(panel, index, layout.panels.length),
+    })),
+  };
+}
 
 /** Presets mirrored from the engine (`geometry._SLIDING_PRESETS`) — every
  * arrangement alternates tracks so adjacent leaves never collide. */
