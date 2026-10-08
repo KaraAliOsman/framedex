@@ -731,3 +731,14 @@ Los recorridos existentes detectaron selector abierto y consulta vacía rechazad
 se corrigieron y se repiten los gates antes de integrar. La nueva
 [página](product/editor-canvas.md) distingue intención, evidencia y límites de
 P05/P06/P19. El catálogo DEMO sigue sin certificación.
+
+
+## 2026-10-08 — P04 · integrado
+
+PR #130 pasa los cuatro checks sobre `dcff50911165817920025c8a24ea5dbfafe6f07d` en la corrida `37845765629`
+y se integra con squash `f5dbaa92958b279471bd6adfdbc0fe3693e70538` en `integracion/v1`. Lienzo/cotas, consulta
+sin mutación, precio por cantidad, fantasma/aplicar/deshacer y guard de enlaces
+tienen evidencia real. Los 17 E2E y 418 integraciones de Database Gate pasan;
+42 PNG conservan píxeles tras compresión y el trazo de 1,5 px se verifica en
+pantalla. ESTADO y `verified_ref` registran el squash. P05 continúa símbolos
+y cotas técnicas sobre esta base; DEMO sigue sin certificación.

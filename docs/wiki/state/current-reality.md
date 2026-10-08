@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-08
 volatility: high
-verified_ref: 588835689c0324b6f76f0ea474f6460c6c22f0b1
+verified_ref: f5dbaa92958b279471bd6adfdbc0fe3693e70538
 sources:
+  - P04 PR #130, CI run 37845765629 on dcff50911165817920025c8a24ea5dbfafe6f07d, squash f5dbaa92958b279471bd6adfdbc0fe3693e70538, 2026-10-08
   - P25 PR #129, CI run 37824851379 on 8622ba03, squash 588835689c0324b6f76f0ea474f6460c6c22f0b1, 2026-10-08
   - P02 PR #128, CI run 37789541479 on 839524bb, squash 4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb, 2026-10-08
   - repository main
@@ -27,7 +28,7 @@ sources:
 
 # Current reality
 
-## P04 · validación en curso (08-10-2026)
+## P04 · integrado y verificado (08-10-2026)
 
 `codex/P04-editor-canvas-first` sobre `c2ecdbc1` dispone de franja compacta,
 riel nombrado, biblioteca compatible, drawer/lectura por tamaño y cotas
@@ -39,9 +40,10 @@ nuevos pasan; el recorrido de emisión existente pasó tras adaptar selección
 en modo de división. Lint, typecheck, test y build locales pasan: 744 pruebas
 del motor (dos xfail esperados), 1272 del backend y 831 del frontend.
 Database Gate pasa: 1173 pgTAP, 418 integraciones, 17 E2E y actualizaciones
-pobladas de PostgreSQL 16. CI sigue en verificación antes del merge.
+pobladas de PostgreSQL 16. PR #130 pasa los cuatro checks en dcff50911165817920025c8a24ea5dbfafe6f07d,
+corrida 37845765629; squash f5dbaa92958b279471bd6adfdbc0fe3693e70538 en `integracion/v1`.
 Véase [aceptación P04](../../redesign/P04-ACEPTACION.md). El `verified_ref`
-general conserva P25 mientras P04 no se integre; no afirma código en main.
+general identifica el squash P04 en integración; no afirma código en main.
 
 ## P25 · integrado y verificado tras revisión (08-10-2026)
 

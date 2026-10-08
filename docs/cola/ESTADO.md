@@ -14,7 +14,7 @@
 | IA3 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/127 | 64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa | CI 4/4 verde; MiMo 22/26 y E+J 19/21; 6 transportes, presupuesto/rutas/trazas; 1137 pgTAP, 395 integraciones y 11 E2E; cuatro observaciones corregidas. |
 | P02 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/128 | 4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb | CI 4/4 verde; OC/REC/RT y dirección física común; 646 colocaciones, QR desde píxeles, 1156 pgTAP, 403 integraciones y 11 E2E; revisión corregida. |
 | P25 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/129 | 588835689c0324b6f76f0ea474f6460c6c22f0b1 | CI 4/4 verde; marca B, primera posición y emisor sellado; PDF revisado, correo idempotente/revocado, 1173 pgTAP, 410 integraciones y 11 E2E; revisión corregida. |
-| P04 | 1 | en curso |  |  |  |
+| P04 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/130 | f5dbaa92958b279471bd6adfdbc0fe3693e70538 | CI 4/4 verde; lienzo/cotas, precio por cantidad y fantasma/aplicar/deshacer; 1173 pgTAP, 418 integraciones y 17 E2E; rúbrica PASA. |
 | P05 | 1 | pendiente |  |  |  |
 | P09 | 1 | pendiente |  |  |  |
 | P07 | 1 | pendiente |  |  |  |

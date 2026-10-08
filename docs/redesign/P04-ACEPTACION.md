@@ -1,7 +1,8 @@
 # P04 · editor centrado en el lienzo
 
 Rama `codex/P04-editor-canvas-first`, base `c2ecdbc1`, revisión local
-08-10-2026. Integración y CI pendientes de registrar después de sus gates.
+08-10-2026. [PR #130](https://github.com/KaraAliOsman/framedex/pull/130) integrado con squash `f5dbaa92958b279471bd6adfdbc0fe3693e70538`
+en `integracion/v1`; cuatro checks PASA sobre `dcff50911165817920025c8a24ea5dbfafe6f07d`.
 
 El estimador abre una posición, elige una tipología compatible, edita las
 cotas sobre el dibujo y guarda. La franja compacta reúne ubicación, cantidad,
@@ -125,5 +126,5 @@ revisiones, artefactos e historiales anteriores. Los 12 recorridos combinados
 del stack de desarrollo también pasan. Las 24 integraciones focalizadas
 reconcilian cantidades y consulta sin mutación.
 
-CI e integración se registran tras los cuatro checks requeridos. No se
-debilita ningún gate.
+[CI 37845765629](https://github.com/KaraAliOsman/framedex/actions/runs/37845765629): los cuatro checks PASA sobre `dcff50911165817920025c8a24ea5dbfafe6f07d`.
+Squash `f5dbaa92958b279471bd6adfdbc0fe3693e70538` en `integracion/v1`. No se debilita ningún gate.
