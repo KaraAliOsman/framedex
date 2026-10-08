@@ -3362,16 +3362,27 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         from production.pieces import addressed_plan, physical_labels
 
         payload = _decoded(order["payload_json"])
-        snapshot = _decoded(one(
-            "SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
-            [str(order["project_version_id"]), str(org_id)], "version_not_found",
-        )["snapshot_json"]) if order.get("project_version_id") else {}
+        optimization = payload.get("optimization") or {}
+        piece_labels = []
+        blocked_reason = ""
+        if not optimization or optimization.get("invalidated"):
+            blocked_reason = (
+                "El plan de corte fue invalidado al liberar material. " if optimization.get("invalidated")
+                else "Sin dato · la orden no tiene un plan de corte vigente. "
+            ) + "Optimiza la orden antes de imprimir etiquetas de piezas."
+        else:
+            snapshot = _decoded(one(
+                "SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
+                [str(order["project_version_id"]), str(org_id)], "version_not_found",
+            )["snapshot_json"]) if order.get("project_version_id") else {}
+            piece_labels = physical_labels(addressed_plan(snapshot, optimization, order_id=order_id))
         return {
             "order_id": str(order_id),
             "order_code": order["order_code"],
             "status": str(order["status"]),
             "labels": labels,
-            "piece_labels": physical_labels(addressed_plan(snapshot, payload.get("optimization") or {}, order_id=order_id)),
+            "piece_labels": piece_labels,
+            "piece_labels_blocked_reason": blocked_reason,
         }
 
 

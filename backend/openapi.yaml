@@ -29647,6 +29647,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PhysicalPieceLabel'
+        piece_labels_blocked_reason:
+          type: string
       required:
       - labels
       - order_code

@@ -498,7 +498,11 @@ _PHYSICAL_RE = re.compile(
 
 
 def _scan_address(query: str) -> dict[str, str] | None:
-    address = urlsplit(query.strip())
+    try:
+        address = urlsplit(query.strip())
+    except ValueError as error:
+        raise DocumentaryError("work_order_piece_invalid", detail=
+            "La dirección escaneada no es válida. Vuelve a escanear la etiqueta de la pieza.") from error
     if address.path != "/production" or not address.query:
         return None
     params = parse_qs(address.query)
@@ -507,7 +511,8 @@ def _scan_address(query: str) -> dict[str, str] | None:
     try:
         order = str(UUID(params["order"][0]))
     except ValueError as error:
-        raise DocumentaryError("work_order_piece_invalid") from error
+        raise DocumentaryError("work_order_piece_invalid", detail=
+            "La dirección escaneada no es válida. Vuelve a escanear la etiqueta de la pieza.") from error
     return {"order": order, "piece": params["piece"][0], "identity": (params.get("identity") or [""])[0]}
 
 
@@ -684,6 +689,9 @@ def _resolve_physical(
     return resolved
 
 
+_PIECE_CANDIDATE_LIMIT = 100
+
+
 def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
     """Backward lookup: which work order(s) and plan location carry a
     physical piece — walk from the piece back to order → version → project."""
@@ -694,10 +702,9 @@ def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
         _CODE_RE.match(normalized) or _PHYSICAL_RE.match(normalized)
     )
     # A printed code never appears inside payload_json, so the LIKE prefilter
-    # only applies to raw piece_id scans — code lookups scan every order in
-    # the org (bounded; an operator scan is a rare call). When the scanned
-    # label carries its own order code (QR payload, printed -Unn code),
-    # scope to that order instead of listing every order's unit 1.
+    # only applies to raw piece_id scans. QR/order addresses remain exact;
+    # an unqualified code needs an order when its candidate set is too large.
+    # Never silently present the first page as a complete historical search.
     address = _scan_address(piece_id)
     order_hint = _scan_order_hint(piece_id) if address is None else None
     params: list[Any] = [str(org_id)]
@@ -716,12 +723,16 @@ def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
         SELECT id::text, order_code, status::text,
                project_id::text, project_version_id::text, payload_json::text
         FROM public.orders
-        WHERE org_id = %s
+        WHERE org_id = %s AND order_type = 'WORKSHOP_OT'
         """
         + extra
-        + " ORDER BY created_at",
+        + f" ORDER BY created_at LIMIT {_PIECE_CANDIDATE_LIMIT + 1}",
         params,
     )
+    if len(orders) > _PIECE_CANDIDATE_LIMIT:
+        raise DocumentaryError("work_order_piece_order_required", detail=
+            "El código necesita una orden para buscar en este historial. "
+            "Escanea el QR de la etiqueta, que incluye la OT.")
     matches: list[dict[str, Any]] = []
     snapshots: dict[str, dict[str, Any]] = {}
 

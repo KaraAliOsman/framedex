@@ -253,3 +253,8 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   Se agrega la etiqueta al final del CSV de láminas para conservar las columnas.
   Sin autoridad de ángulo o código, se declara Sin dato; no se inventa 90° ni
   se sustituye una pieza desconocida por un hash recortado.
+- Escanear un código sin OT se admite hasta 100 candidatos de taller. Por encima
+  se exige la dirección QR con OT, sin resultados parciales ni cargar snapshots.
+  Es un límite de búsqueda, no una pérdida del historial. Las etiquetas de bulto
+  conservan su historia; las de corte exigen un plan vigente y muestran su causa
+  y la acción de optimizar cuando no lo hay.

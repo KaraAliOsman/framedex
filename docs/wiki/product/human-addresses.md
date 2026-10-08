@@ -1,7 +1,7 @@
 ---
 type: concept
 status: active
-updated: 2026-10-07
+updated: 2026-10-08
 volatility: medium
 sources:
   - supabase/migrations/20270107000000_human_entity_codes.sql
@@ -38,6 +38,18 @@ installer searches do not expose commercial data. A piece QR binds order, code
 and identity, and works by navigation or by pasting into the scanner. The link
 does not bypass authentication or RLS. Unknown/cross-organization addresses show
 the missing state. See [format and identity contracts](../../ENGINEERING.md).
+
+Unqualified piece searches read workshop orders only and at most 101 candidate
+rows. More than 100 requires an OT address, before loading snapshots; partial
+history is never represented as complete. Exact QR/order lookups keep their
+scope, and historical technical IDs retain their payload filter. A malformed
+scan gets an actionable error and clears the previous result. Missing or
+invalidated cutting plans retain historical unit labels but produce no physical
+cut labels, with an explicit reason and an action to review optimization.
+
+The Purchasing HTTP read contract explicitly authorizes OWNER, ESTIMATOR and
+WORKSHOP_MANAGER. Integration checks index/receipt reads under those identities
+before palette lookup; documentary authority does not expand that role set.
 
 Current evidence is a synthetic DEMO fixture, with twelve positions released as
 twelve OT, containing 646 physical codes. This verifies artifact reconciliation,

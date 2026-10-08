@@ -300,6 +300,7 @@ export function ProductionPage(): JSX.Element {
   const [optStrategy, setOptStrategy] = useState("auto");
   const [labels, setLabels] = useState<PackingLabel[]>([]);
   const [physicalLabels, setPhysicalLabels] = useState<PhysicalPieceLabel[]>([]);
+  const [pieceLabelsBlockedReason, setPieceLabelsBlockedReason] = useState("");
   const [stationQueue, setStationQueue] = useState<StationQueueGroup[]>([]);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
@@ -421,6 +422,7 @@ export function ProductionPage(): JSX.Element {
         setDetail(response.data);
         setLabels([]);
         setPhysicalLabels([]);
+        setPieceLabelsBlockedReason("");
         const sealedColor = response.data.payload?.color;
         if (typeof sealedColor === "string" && sealedColor.trim()) {
           setOptColor(sealedColor);
@@ -503,6 +505,7 @@ export function ProductionPage(): JSX.Element {
     setDetail(null);
     setLabels([]);
     setPhysicalLabels([]);
+    setPieceLabelsBlockedReason("");
     setDelivery(null);
     setDeliveries([]);
     setPendingUnits([]);
@@ -562,6 +565,9 @@ export function ProductionPage(): JSX.Element {
     async (queryOverride?: string) => {
       const query = (queryOverride ?? pieceQuery).trim();
       if (!query) return;
+      setMessage("");
+      setPieceReport(null);
+      setPieceMiss(false);
       setPieceBusy(true);
       try {
         const response = await productionPieceTrace(encodeURIComponent(query));
@@ -576,7 +582,9 @@ export function ProductionPage(): JSX.Element {
           setPieceReport(null);
           setPieceMiss(true);
         } else if (mounted.current) {
-          setMessage(t("production.loadError"));
+          setPieceReport(null);
+          setPieceMiss(false);
+          setMessage(actionErrorDetail(error));
         }
       } finally {
         setPieceBusy(false);
@@ -874,6 +882,7 @@ export function ProductionPage(): JSX.Element {
     const generation = ++labelsGeneration.current;
     setLabels([]);
     setPhysicalLabels([]);
+    setPieceLabelsBlockedReason("");
     setBusy(true);
     try {
       const response = await productionOrderLabels(orderId);
@@ -887,6 +896,7 @@ export function ProductionPage(): JSX.Element {
       }
       setLabels(response.data.labels);
       setPhysicalLabels(response.data.piece_labels);
+      setPieceLabelsBlockedReason(response.data.piece_labels_blocked_reason ?? "");
     } catch {
       if (generation === labelsGeneration.current && selectedIdRef.current === orderId) {
         setMessage(t("production.labelsError"));
@@ -1944,6 +1954,7 @@ export function ProductionPage(): JSX.Element {
                 );
                 return (
                   <section
+                    id="production-cut-plan"
                     className="production-optimize"
                     aria-label={t("production.optimizeTitle")}
                   >
@@ -2617,6 +2628,12 @@ export function ProductionPage(): JSX.Element {
                         </button>
                       ) : null}
                     </header>
+                    {pieceLabelsBlockedReason ? (
+                      <p className="production-label-blocker" role="status">
+                        {pieceLabelsBlockedReason}{" "}
+                        <a href="#production-cut-plan">Revisar plan de corte</a>
+                      </p>
+                    ) : null}
                     {labels.length ? (
                       <ul className="production-labels">
                         {labels.map((label) => (

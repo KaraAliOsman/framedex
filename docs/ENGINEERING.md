@@ -88,3 +88,10 @@ onto the read plan, never persisted or included in an engine fingerprint.
 Production release creates one OT per position; the twelve-position fixture has
 twelve OT. A technical ID is shown only under technical details; a shortened
 document/plan fingerprint belongs in the title-block footer.
+
+An unqualified piece scan searches only workshop OT and bounds candidates to
+100. An extra candidate rejects the search before loading snapshots and asks
+for the QR containing the OT; no partial history is exposed as complete. Exact
+addresses keep their scope. Invalidated or missing cutting plans cannot produce
+physical cut labels; historical unit-manifest labels remain readable with an
+explicit cutting-label blocker.

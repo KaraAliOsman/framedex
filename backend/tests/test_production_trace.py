@@ -361,6 +361,30 @@ def test_piece_trace_route_preserves_a_decoded_qr_url() -> None:
     assert match.kwargs["piece_id"] == address
 
 
+def test_malformed_scan_address_is_rejected_before_reading_work_orders() -> None:
+    import pytest
+    from documents.repository import DocumentaryError
+
+    with patch("production.trace.rows") as queried:
+        with pytest.raises(DocumentaryError, match="work_order_piece_invalid"):
+            trace.trace_piece(org_id=ORG, piece_id="https://[invalid/production?piece=P01-U01-M01")
+    queried.assert_not_called()
+
+
+def test_unqualified_piece_scan_bounds_workshop_candidates_without_partial_results() -> None:
+    import pytest
+    from documents.repository import DocumentaryError
+
+    with patch("production.trace.rows", return_value=[{}] * 101) as queried, \
+         patch("production.trace.one") as snapshot:
+        with pytest.raises(DocumentaryError, match="work_order_piece_order_required"):
+            trace.trace_piece(org_id=ORG, piece_id="P01-U01-M01")
+    query, parameters = queried.call_args.args
+    assert "order_type = 'WORKSHOP_OT'" in query and "LIMIT 101" in query
+    assert parameters == [str(ORG)]
+    snapshot.assert_not_called()
+
+
 def test_trace_piece_unknown_returns_empty() -> None:
     with patch("production.trace.rows", return_value=[]):
         report = trace.trace_piece(org_id=ORG, piece_id="nope")

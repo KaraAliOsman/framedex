@@ -85,8 +85,30 @@ def test_remnant_insert_trigger_and_org_cascade(committed_commercial_rows):
     assert assign(org, "RT", uuid4()) == "RT-000002"
 
 
+def test_large_unqualified_piece_history_requires_order_but_qr_stays_scoped(documentary_tenant):
+    from documents.repository import DocumentaryError
+    from production.pieces import entity_address
+    from production.trace import trace_piece
+
+    org, _, users, _ = documentary_tenant
+    project, _, _ = _seed_project(org, users['OWNER'])
+    candidates = rows("INSERT INTO public.orders(org_id,project_id,order_type,order_code,payload_json)"
+        " SELECT %s,%s,'WORKSHOP_OT','OT-P02-HISTORY-'||n,'{}'::jsonb"
+        " FROM generate_series(1,101) n RETURNING id", [org, project])
+    with as_user(users['OWNER']):
+        with pytest.raises(DocumentaryError, match="work_order_piece_order_required"):
+            trace_piece(org_id=org, piece_id="P01-U01-M01")
+        # The address still searches its one exact OT even in a large history;
+        # these synthetic unplanned orders correctly have no physical pieces.
+        report = trace_piece(org_id=org, piece_id=entity_address(
+            "/production", order=candidates[0]['id'], piece="P01-U01-M01"))
+        assert report['matches'] == []
+
+
 def test_purchase_search_uses_authorized_read_scope_and_no_cross_tenant_leak(documentary_tenant):
     from search.service import search
+    from purchasing.service import orders_index
+    from inventory.service import order_receiving
 
     org, other, users, other_user = documentary_tenant
     for tenant, actor in ((org, users['OWNER']), (other, other_user)):
@@ -99,6 +121,12 @@ def test_purchase_search_uses_authorized_read_scope_and_no_cross_tenant_leak(doc
              " VALUES(%s,%s,%s,'P02-search') RETURNING id", [receipt, tenant, order])
     for role in ('OWNER', 'ESTIMATOR', 'WORKSHOP_MANAGER'):
         with as_user(users[role]):
+            # The palette and the existing Purchasing endpoints share their
+            # authorized documentary read scope, beyond direct-table grants.
+            visible_order = orders_index(org)['orders'][0]
+            assert visible_order['order_code'] == 'OC-000001'
+            receiving = order_receiving(org_id=org, order_id=visible_order['id'])
+            assert receiving['receipts'][0]['receipt_code'] == 'REC-000001'
             for code in ('OC-000001', 'REC-000001'):
                 found = search(org, code, role)['results']
                 assert len(found) == 1 and found[0]['title'] == code

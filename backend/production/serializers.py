@@ -316,6 +316,7 @@ class PackingLabelsSerializer(serializers.Serializer):
     status = serializers.CharField()
     labels = PackingLabelSerializer(many=True)
     piece_labels = PhysicalPieceLabelSerializer(many=True)
+    piece_labels_blocked_reason = serializers.CharField(required=False, allow_blank=True)
 
 
 class WorkCenterSerializer(serializers.Serializer):

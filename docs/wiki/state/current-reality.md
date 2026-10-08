@@ -30,7 +30,7 @@ sources:
 La rama `codex/P02-identificadores-humanos`, base `18c814bc`, conserva órdenes,
 recibos, retazos y huellas históricos y agrega direcciones OC/REC/RT por tenant.
 La migración poblada PG16 verifica determinismo y compara ocho tablas completas;
-los siete casos PostgreSQL y 19 pgTAP del encargo pasan antes del gate completo.
+los ocho casos PostgreSQL y 19 pgTAP del encargo pasan en el gate completo.
 
 El recorrido real reconcilia 646 colocaciones planificadas de doce OT entre web,
 PDF de corte, CSV, DXF y etiquetas/QR. El bundle completo de producción se
@@ -45,11 +45,23 @@ decodifica ocho QR de pantalla, 24 PDF de taller y cuatro impresiones. El retazo
 se imprime en una página y la impresión de piezas contiene sus 16 códigos y
 la unidad, en ambos temas. Se corrigieron contraste, viewBox, quiet zone,
 identidad de unidad y formato de área/peso. Los cuatro gates locales pasan:
-744 motor (+2 xfail), 1.245 backend y 817 frontend. El gate DB completo pasa
-1.156 pgTAP, 402 integraciones, 11 E2E y nueve upgrades PG16, incluido el
-backfill poblado P02. Se restauró el bind propio de pgTAP tras reiniciar Docker,
-sin cambiar checks. CI y squash siguen pendientes; véase
+744 motor (+2 xfail), 1.249 backend y 817 frontend. El gate DB completo pasa
+1.156 pgTAP, 403 integraciones y 11 E2E. Nueve verificadores PG16 cubren diez
+upgrades poblados, incluido el backfill P02. Se restauró el bind propio de pgTAP
+tras reiniciar Docker, sin cambiar checks. El PR #128 pasó CI sobre `4f18e061`;
+las correcciones requieren CI del nuevo HEAD antes del squash. Véase
 [aceptación P02](../../redesign/P02-ACEPTACION.md).
+
+La revisión limita a 100 candidatos de OT las búsquedas sin orden y pide el QR
+antes de cargar snapshots si el historial supera ese límite. No expone una
+página parcial como resultado completo. Los escaneos mal formados responden
+422 en español y retiran el resultado anterior. Las etiquetas de bulto conservan
+su historia; un plan ausente/invalidado bloquea solo las de corte con causa y
+acción al plan. 32 capturas adicionales pasan a cuatro tamaños y ambos temas,
+con las intercepciones de estado declaradas; se revalidaron etiquetas válidas,
+impresiones y QR desde píxeles. Los lectores OC/REC de Compras se contrastaron
+contra su contrato HTTP y la integración, sin cambiar permisos. La aplicación
+propia queda detenida con los puertos 8000/5173 libres.
 
 ## IA3 · integrado y verificado tras revisión (07-10-2026)
 

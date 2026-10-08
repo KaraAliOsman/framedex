@@ -495,8 +495,17 @@
 
 .production-packing {
   margin-block: var(--space-4, 16px);
+  scroll-margin-block-start: var(--space-64px);
   /* Packing tables can exceed a phone's width — scroll inside the section. */
   overflow-x: auto;
+}
+
+.production-label-blocker a {
+  color: var(--interactive);
+}
+
+#production-cut-plan {
+  scroll-margin-block-start: var(--space-64px);
 }
 
 .production-label-code {

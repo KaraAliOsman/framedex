@@ -10,10 +10,12 @@ const anon = process.env.SUPABASE_ANON_KEY;
 const org = "548b9ce5-746b-5a4a-9127-733c4dcd0582";
 if (new URL(supa).port !== "25331")
   throw new Error("P02 requires the owned framedex-cola fixture.");
-const out = fileURLToPath(
+const flowOut = fileURLToPath(
   new URL("../../docs/redesign/captures/identificadores-humanos/recorrido", import.meta.url),
 );
-const state = JSON.parse(await fs.readFile(out + "/http-flow.json", "utf8"));
+const reviewOnly = process.argv.includes("--review-only");
+const out = reviewOnly ? flowOut + "/revision" : flowOut;
+const state = JSON.parse(await fs.readFile(flowOut + "/http-flow.json", "utf8"));
 const browser = await chromium.launch({ headless: true });
 const sessions = new Map();
 const records = [];
@@ -68,6 +70,8 @@ async function pageFor(role, theme, viewport) {
   return page;
 }
 async function capture(page, name, scope, simulation = null) {
+  if ([".production-packing", ".production-action-error"].includes(scope))
+    await page.locator(scope).evaluate((node) => node.scrollIntoView({ block: "start" }));
   if ([".inventory-label", ".purchasing-receipts", ".production-labels"].includes(scope))
     await page.locator(scope).scrollIntoViewIfNeeded();
   await page.mouse.move(2, 2);
@@ -103,7 +107,9 @@ try {
     { width: 390, height: 844 },
   ];
   if (
-    !["--units-only", "--print-only", "--labels-only"].some((flag) => process.argv.includes(flag))
+    !["--units-only", "--print-only", "--labels-only", "--review-only"].some((flag) =>
+      process.argv.includes(flag),
+    )
   ) {
     for (const viewport of viewports)
       for (const theme of ["light", "dark"]) {
@@ -247,6 +253,103 @@ try {
       await page.context().close();
     }
   }
+  if (reviewOnly) {
+    for (const viewport of viewports)
+      for (const theme of ["light", "dark"]) {
+        const key = `${viewport.width}-${theme}`;
+        const page = await pageFor("manager", theme, viewport);
+        await page.goto(new URL(piece.qr_payload, base).href);
+        await expect(page.locator(".production-trace-matches")).toContainText(piece.code);
+        const scan = page.locator(".production-trace-lookup");
+        await scan.locator("input").fill("https://[invalid/production?order=bad&piece=P01-U01-M01");
+        const malformedResponse = page.waitForResponse(
+          (response) =>
+            response.url().includes("/production/pieces/") && response.request().method() === "GET",
+        );
+        await scan.getByRole("button").click();
+        expect((await malformedResponse).status()).toBe(422);
+        await expect(page.locator(".production-action-error")).toContainText(
+          "La dirección escaneada no es válida. Vuelve a escanear la etiqueta de la pieza.",
+        );
+        await expect(page.locator(".production-trace-matches")).toHaveCount(0);
+        await capture(page, `direccion-invalida-${key}`, ".production-action-error");
+
+        const tracePattern = "**/api/v1/production/pieces/**/trace/";
+        await page.route(tracePattern, (route) =>
+          route.fulfill({
+            status: 422,
+            contentType: "application/json",
+            body: JSON.stringify({
+              error: {
+                code: "work_order_piece_order_required",
+                detail:
+                  "El código necesita una orden para buscar en este historial. Escanea el QR de la etiqueta, que incluye la OT.",
+              },
+            }),
+          }),
+        );
+        await scan.locator("input").fill(piece.code);
+        await scan.getByRole("button").click();
+        await expect(page.locator(".production-action-error")).toContainText(
+          "El código necesita una orden",
+        );
+        await expect(page.locator(".production-trace-matches")).toHaveCount(0);
+        await capture(
+          page,
+          `requiere-orden-${key}`,
+          ".production-action-error",
+          "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+        );
+        await page.unrouteAll({ behavior: "wait" });
+        await scan.locator("input").fill(piece.qr_payload);
+        await scan.getByRole("button").click();
+        await expect(page.locator(".production-trace-matches")).toContainText(piece.code);
+        await expect(page.locator(".production-action-error")).toHaveCount(0);
+        await expect(page.locator(".production-detail")).toContainText(first.code);
+
+        const labelsPattern = `**/api/v1/production/orders/${first.order}/labels/`;
+        for (const mode of ["invalidado", "sin-plan"]) {
+          const reason =
+            (mode === "invalidado"
+              ? "El plan de corte fue invalidado al liberar material. "
+              : "Sin dato · la orden no tiene un plan de corte vigente. ") +
+            "Optimiza la orden antes de imprimir etiquetas de piezas.";
+          await page.route(labelsPattern, (route) =>
+            route.fulfill({
+              status: 200,
+              contentType: "application/json",
+              body: JSON.stringify({
+                ...labels,
+                piece_labels: [],
+                piece_labels_blocked_reason: reason,
+              }),
+            }),
+          );
+          await page.getByRole("button", { name: "Etiquetas", exact: true }).click();
+          const packing = page.locator(".production-packing");
+          await expect(packing.getByRole("status")).toContainText(reason);
+          const codes = await packing
+            .locator(".production-labels .production-label-code")
+            .allTextContents();
+          expect(codes).toEqual(labels.labels.map((label) => label.label_code));
+          expect(codes).not.toContain(piece.code);
+          await capture(
+            page,
+            `etiquetas-${mode}-${key}`,
+            ".production-packing",
+            "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+          );
+          await packing.getByRole("link", { name: "Revisar plan de corte" }).click();
+          await expect(page).toHaveURL(/#production-cut-plan$/);
+          await expect(page.locator("#production-cut-plan")).toBeInViewport();
+          await page.unrouteAll({ behavior: "wait" });
+        }
+        await page.getByRole("button", { name: "Etiquetas", exact: true }).click();
+        await expect(page.locator(".production-labels")).toContainText(piece.code);
+        await expect(page.locator(".production-packing").getByRole("status")).toHaveCount(0);
+        await page.context().close();
+      }
+  }
   if (process.argv.includes("--units-only")) {
     const unit = labels.labels[0];
     for (const viewport of viewports)
@@ -329,20 +432,24 @@ try {
       await page.context().close();
     }
   }
-  const report = process.argv.includes("--units-only")
-    ? "unit-browser-flow"
-    : process.argv.includes("--print-only")
-      ? "print-browser-flow"
-      : process.argv.includes("--labels-only")
-        ? "label-browser-flow"
-        : "browser-flow";
+  const report = reviewOnly
+    ? "review-browser-flow"
+    : process.argv.includes("--units-only")
+      ? "unit-browser-flow"
+      : process.argv.includes("--print-only")
+        ? "print-browser-flow"
+        : process.argv.includes("--labels-only")
+          ? "label-browser-flow"
+          : "browser-flow";
   await fs.writeFile(out + `/${report}.json`, JSON.stringify({ result: "PASS", records }, null, 2));
   console.log(
     "P02 browser flow PASS:",
     records.length,
-    process.argv.includes("--units-only")
-      ? "captures; unit QR, physical labels and print."
-      : "captures; four codes, direct/scanned QR, permissions and states.",
+    reviewOnly
+      ? "captures; malformed scan, order requirement, blocked cut labels and recovery."
+      : process.argv.includes("--units-only")
+        ? "captures; unit QR, physical labels and print."
+        : "captures; four codes, direct/scanned QR, permissions and states.",
   );
 } catch (error) {
   if (lastPage && !lastPage.isClosed()) {

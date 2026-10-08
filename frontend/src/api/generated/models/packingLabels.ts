@@ -14,4 +14,5 @@ export interface PackingLabels {
   status: string;
   labels: PackingLabel[];
   piece_labels: PhysicalPieceLabel[];
+  piece_labels_blocked_reason?: string;
 }

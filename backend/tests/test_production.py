@@ -3198,6 +3198,24 @@ def test_packing_labels_require_manifest(monkeypatch) -> None:
         service.packing_labels(org_id=uuid4(), order_id=uuid4())
 
 
+@pytest.mark.parametrize("optimization", [{}, {"invalidated": True, "bars": {"workshop_cut_plan": [{"piece_code": "P01-U01-M01"}]}}])
+def test_packing_labels_preserve_unit_history_but_block_stale_piece_labels(monkeypatch, optimization) -> None:
+    order = {"id": uuid4(), "order_code": "OT-LBL-3", "status": "RELEASED",
+        "project_version_id": uuid4(), "payload_json": json.dumps({
+            "packing": {"units": [{"unit_index": 1, "label_code": "OT-LBL-3-U01", "profiles": 6}]},
+            "optimization": optimization,
+        })}
+    monkeypatch.setattr(service, "one", lambda *a, **k: order)
+    monkeypatch.setattr(service, "documentary_backend", _atomic)
+    monkeypatch.setattr(service.transaction, "atomic", _atomic)
+    with patch("production.pieces.addressed_plan") as projected:
+        result = service.packing_labels(org_id=uuid4(), order_id=order["id"])
+    projected.assert_not_called()
+    assert result["labels"][0]["label_code"] == "OT-LBL-3-U01"
+    assert result["piece_labels"] == []
+    assert "Optimiza la orden" in result["piece_labels_blocked_reason"]
+
+
 def test_installation_requires_dispatched_and_is_idempotent(monkeypatch) -> None:
     org_id, order_id = uuid4(), uuid4()
     statuses = iter(["IN_PROGRESS", "DISPATCHED", "INSTALLED"])

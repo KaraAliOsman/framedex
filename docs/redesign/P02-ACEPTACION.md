@@ -23,7 +23,7 @@ congeladas de cada posición: incluye además 30 referencias sin solución de
 corte, con su causa, que no se exportan a una máquina. La matriz unitaria
 comprueba además 96 códigos de doce posiciones con formatos combinados.
 
-Siete regresiones PostgreSQL cubren concurrencia, rollback, independencia por
+Ocho regresiones PostgreSQL cubren concurrencia, rollback, independencia por
 organización, replay, permisos, inmutabilidad y búsqueda/aislamiento. Diecinueve
 pgTAP comprueban el contrato de alias. `check_human_codes_upgrade.py` se incorpora
 al gate PostgreSQL 16 para el backfill poblado conservando filas completas.
@@ -31,17 +31,55 @@ al gate PostgreSQL 16 para el backfill poblado conservando filas completas.
 ## Gates finales
 
 `make lint typecheck test build` pasa con 744 pruebas del motor (+2 xfail),
-1.245 del backend y 817 del frontend. OpenAPI/orval y guardas reproducibles;
+1.249 del backend y 817 del frontend tras las correcciones de revisión.
+OpenAPI/orval y guardas reproducibles;
 fórmulas y goldens intactos. `make test-db` pasa completo: 1.156 pgTAP en 79
-fuentes, 402 integraciones PostgreSQL, 11 E2E de Chromium y nueve upgrades
-poblados de PostgreSQL 16, incluido P02. El backfill conserva las ocho tablas
+fuentes, 403 integraciones PostgreSQL y 11 E2E de Chromium. Nueve verificadores
+de PostgreSQL 16 cubren diez recorridos de upgrades poblados, incluido P02.
+El backfill conserva las ocho tablas
 históricas comparadas y continúa OC-000004.
 
 El primer intento del gate DB tras reiniciar Docker encontró vacío el bind
 de pgTAP del daemon. Se restauraron sus 79 fuentes y se verificaron byte a
 byte; el segundo intento completo pasa. No se cambió un check ni el SQL para
 corregir el entorno. El gate detuvo y limpió su stack aislado; la aplicación
-propia permanece detenida. CI y squash siguen pendientes hasta abrir el PR.
+propia permanece detenida durante el gate. El PR
+[#128](https://github.com/KaraAliOsman/framedex/pull/128) pasó los cuatro checks
+sobre `4f18e061`; las correcciones requieren una nueva corrida de CI antes del squash.
+
+## Correcciones de revisión
+
+La búsqueda de pieza consulta únicamente OT y trae como máximo 101 candidatos.
+Si supera 100, rechaza la consulta antes de cargar snapshots y pide escanear el
+QR con la OT. No presenta una página parcial como todo el historial. Las
+direcciones QR y los códigos de unidad con OT siguen acotados a esa orden;
+se conserva el filtro de identificador técnico histórico. Una dirección mal
+formada se rechaza con detalle en español, sin responder 500. Iniciar otro
+escaneo retira el resultado anterior y el mensaje, y un rechazo no deja piezas
+de la consulta anterior visibles.
+
+Las etiquetas de bulto conservan el manifiesto histórico. Si el plan no existe
+o fue invalidado, las etiquetas de corte quedan vacías con su causa y la acción
+«Revisar plan de corte». No se proyecta el snapshot en esos casos. Regenerar una
+consulta válida sustituye el bloqueo; no se imprimen piezas obsoletas.
+
+La observación de permisos se contrastó con `purchasing/views.py`: sus lectores
+son dueño, estimador y jefe de taller. `orders_index`, `order_receiving` y la
+paleta usan la misma autoridad documental. La integración comprueba lectura
+de OC y REC antes de buscar por código con cada rol, y conserva aislamiento y
+rechazo de operario/instalador. No se cambió un grant ni el permiso de Compras.
+
+La matriz de revisión conserva 32 capturas adicionales en
+`recorrido/revision/`, cuatro tamaños × ambos temas: dirección mal formada
+contra la API real (ocho), límite que requiere OT (ocho) y etiquetas con plan
+invalidado/ausente (dieciséis). Las dos últimas superficies usan intercepción
+HTTP declarada; el límite de 101 OT se verifica en PostgreSQL y el bloqueo se
+prueba en backend sin llamar a la proyección. Cero hallazgos numéricos, errores
+de página o desborde. Recuperar el QR real limpia el error; abrir de nuevo las
+etiquetas válidas repone las piezas y retira la causa. El enlace al corte usa
+teal del tema y lleva al plan; su margen conserva la cabecera visible.
+Se repitieron las ocho capturas/impresiones de unidad válidas y la lectura QR
+de píxeles de ocho capturas, 24 PDF y cuatro impresiones: PASA.
 
 ## Navegador y edición
 
