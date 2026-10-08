@@ -88,18 +88,6 @@
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
-/* The double dimension needs room at laptop height, including when the
-   existing finish controls above the drawing take several rows. */
-.position-editor:has(.mounting-dimensions) {
-  height: auto;
-  max-height: none;
-}
-.position-editor:has(.mounting-dimensions) .position-body {
-  overflow: visible;
-}
-.position-editor:has(.mounting-dimensions) .assembly-editor {
-  height: max(560px, 60dvh);
-}
 .mounting-rule-sides {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));

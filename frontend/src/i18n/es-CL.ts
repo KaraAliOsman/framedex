@@ -3285,6 +3285,7 @@ export const messages = {
   "cmd.deselect": "Deseleccionar",
   "cmd.repeatLast": "Repetir última operación",
   "cmd.selectTool": "Herramienta de selección",
+  "cmd.threeBaysInward": "Partir en tres, centro fijo, laterales abatibles hacia el centro",
 
   "crumb.label": "Ruta de navegación",
   "crumb.dashboard": "Panel",

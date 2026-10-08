@@ -72,7 +72,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   const projectName = `E2E sintético ${crypto.randomUUID()}`;
   const save = () => page.getByRole("button", { name: "Guardar", exact: true }).click();
-  // Navigation uses the editor's own backlink ("Volver al proyecto"). React
+  // Navigation uses the editor's accessible project backlink. React
   // Query may serve the project from its fresh cache without a fetch, so the
   // reload makes the backend round-trip (and in-memory reset) explicit.
   const back = () => page.getByRole("link", { name: /Volver al proyecto/ }).click();
@@ -119,6 +119,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina original");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
 
+  await page.locator(".editor-system-chip").click();
   await responseTo(page, "GET", `/api/v1/projects/design-options/${manual.systemId}/`, 200, () =>
     page
       .getByRole("combobox", { name: "Serie de perfiles", exact: true })
@@ -131,11 +132,13 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     "POST",
     "/api/v1/engine/assembly/calculate/",
     200,
-    () => page.locator('[data-glass-sku="DEMO_60-VIDRIO-4-16-4"]').click(),
+    () =>
+      page
+        .getByRole("combobox", { name: "Vidrio", exact: true })
+        .selectOption("DEMO_60-VIDRIO-4-16-4"),
   );
-  await expect(page.locator('[data-glass-sku="DEMO_60-VIDRIO-4-16-4"]')).toHaveAttribute(
-    "aria-pressed",
-    "true",
+  await expect(page.getByRole("combobox", { name: "Vidrio", exact: true })).toHaveValue(
+    "DEMO_60-VIDRIO-4-16-4",
   );
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
 
@@ -158,34 +161,35 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   // The shared registry refuses invalid edits atomically. The field returns
   // to the accepted design and a cause explains that the edit was not applied.
-  await page.getByRole("textbox", { name: "Ancho mm" }).fill("10.00");
+  await page.getByRole("textbox", { name: "Ancho", exact: true }).fill("10.00");
   const refused = await responseTo<{ error: { code: string } }>(
     page,
     "POST",
     "/api/v1/projects/operations/simulate/",
     422,
-    () => page.getByRole("textbox", { name: "Ancho mm" }).press("Enter"),
+    () => page.getByRole("textbox", { name: "Ancho", exact: true }).press("Enter"),
   );
   expect(refused.error.code).toBe("dimension_invalid");
   await expect(page.getByRole("alert")).toContainText("Revisa el ancho y alto del marco.");
-  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1000.00");
+  await expect(page.getByRole("textbox", { name: "Ancho", exact: true })).toHaveValue("1000");
   expect(
     (await manual.readRows("project_positions", `id=eq.${initial.id}&select=width_mm::text`))[0]
       ?.width_mm,
   ).toBe("1000.00");
 
   // Exercise a real update, not only an unsaved creation preview.
-  await page.getByRole("textbox", { name: "Ancho mm" }).fill("1100.25");
+  await page.getByRole("textbox", { name: "Ancho", exact: true }).fill("1100.25");
   await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByRole("textbox", { name: "Ancho mm" }).press("Enter"),
+    page.getByRole("textbox", { name: "Ancho", exact: true }).press("Enter"),
   );
   // Drafts are uncommitted until blur/Enter — the live model (and its
   // evaluation) is unchanged until the field commits.
-  await page.getByRole("textbox", { name: "Alto mm" }).fill("1050.50");
+  await page.getByRole("textbox", { name: "Alto", exact: true }).fill("1050.50");
 
   await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByRole("textbox", { name: "Alto mm" }).press("Enter"),
+    page.getByRole("textbox", { name: "Alto", exact: true }).press("Enter"),
   );
+  await page.locator(".editor-opening-trigger").click();
   const editedBom = (
     await responseTo<EngineAssemblyCalculateResponse>(
       page,
@@ -215,7 +219,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await save();
   await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
-  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
+  await expect(page.getByRole("textbox", { name: "Ancho", exact: true })).toHaveValue("1100,25");
   const beforeRetry = await manual.readRows(
     "project_positions",
     `id=eq.${initial.id}&select=width_mm::text`,
@@ -246,11 +250,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   });
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
-  const bom = page.locator("details.project-bom");
-  await bom.waitFor({ state: "attached" });
-  await bom.evaluate((element) => {
-    (element as HTMLDetailsElement).open = true;
-  });
+  await page.getByRole("button", { name: "Despiece y materiales", exact: true }).click();
+  const bom = page.locator(".editor-bottom-panel .project-bom-content");
   const profileRows = bom.locator("table").first().locator("tbody tr");
   await expect(profileRows).toHaveCount(editedBom.profile_cuts.length);
   for (const [index, cut] of editedBom.profile_cuts.entries()) {
@@ -310,20 +311,18 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     card(page, "Cocina original", "Abrir diseño").then((link) => link.click()),
   );
   expect(reopened).toEqual(saved);
-  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
-  await expect(page.getByRole("textbox", { name: "Alto mm" })).toHaveValue("1050.50");
+  await expect(page.getByRole("textbox", { name: "Ancho", exact: true })).toHaveValue("1100,25");
+  await expect(page.getByRole("textbox", { name: "Alto", exact: true })).toHaveValue("1050,5");
+  await page.locator(".editor-opening-trigger").click();
   await expect(
     page.locator(".opening-palette").getByRole("button", {
       name: "Abatible hacia adentro — bisagras a la derecha",
       exact: true,
     }),
   ).toHaveAttribute("aria-pressed", "true");
-  // The canvas sheet overlays the summary on this layout; open the details
-  // declaratively instead of clicking through the overlay.
-  await bom.waitFor({ state: "attached" });
-  await bom.evaluate((element) => {
-    (element as HTMLDetailsElement).open = true;
-  });
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Despiece y materiales", exact: true }).click();
+  await bom.waitFor({ state: "visible" });
   await bom.scrollIntoViewIfNeeded();
   await screenshot(page, info, "03-reopened-bom");
 

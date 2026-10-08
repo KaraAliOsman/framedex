@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import { ApiError } from "../../api/apiMutator";
 import { engineAssemblyCalculate } from "../../api/generated/dekopen";
@@ -45,7 +46,8 @@ function assemblyErrorCode(error: unknown): string {
   return typeof payload.error?.code === "string" ? payload.error.code : "calculation_failed";
 }
 
-/** Evaluate the compositional product through the engine (debounced by React Query keys). */
+/** Evaluate current intent after a short editing pause; previous geometry
+ * can remain visible but never authorizes a save for a pending identity. */
 export function useAssemblyCalculation(
   organizationId: string,
   inputs: CanvasDesignInputs,
@@ -55,7 +57,15 @@ export function useAssemblyCalculation(
   currentEvaluation: EngineAssemblyCalculateResponse | null;
   isPending: boolean;
   errorCode: string | null;
+  retry(): Promise<unknown>;
 } {
+  const identity = JSON.stringify([organizationId, inputs.systemId, inputs.color, inputs.product]);
+  const [settled, setSettled] = useState(identity);
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(identity), 250);
+    return () => clearTimeout(timer);
+  }, [identity]);
+  const debouncing = settled !== identity;
   const query = useQuery({
     queryKey: assemblyCalculationKey(organizationId, inputs),
     queryFn: async () => {
@@ -65,7 +75,7 @@ export function useAssemblyCalculation(
       }
       return response.data;
     },
-    enabled: inputs.systemId !== null && inputs.product !== null,
+    enabled: !debouncing && inputs.systemId !== null && inputs.product !== null,
     // A fresh product key resets data to undefined mid-fetch; keeping the
     // last valid evaluation stops the plan inset, 3D view and BOM from
     // unmounting on every canvas commit.
@@ -75,8 +85,10 @@ export function useAssemblyCalculation(
   });
   return {
     evaluation: query.data ?? null,
-    currentEvaluation: query.isPlaceholderData ? null : (query.data ?? null),
-    isPending: query.isPending || query.isPlaceholderData,
+    currentEvaluation: debouncing || query.isPlaceholderData ? null : (query.data ?? null),
+    isPending:
+      inputs.systemId !== null && (debouncing || query.isPending || query.isPlaceholderData),
     errorCode: query.isError ? assemblyErrorCode(query.error) : null,
+    retry: query.refetch,
   };
 }

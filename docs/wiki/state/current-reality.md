@@ -27,6 +27,22 @@ sources:
 
 # Current reality
 
+## P04 · validación en curso (08-10-2026)
+
+`codex/P04-editor-canvas-first` sobre `c2ecdbc1` dispone de franja compacta,
+riel nombrado, biblioteca compatible, drawer/lectura por tamaño y cotas
+editables mediante el registro. Consulta precio por cantidad sin mutación y
+propone tres paños con fantasma/Δ/aplicar/deshacer. La matriz tiene lienzo
+928×725 a 1440 y once campos/lecturas a 1024×768. Dieciséis capturas
+oficiales pasan sin hallazgos. Las 24 integraciones focalizadas y seis E2E
+nuevos pasan; el recorrido de emisión existente pasó tras adaptar selección
+en modo de división. Lint, typecheck, test y build locales pasan: 744 pruebas
+del motor (dos xfail esperados), 1272 del backend y 831 del frontend.
+Database Gate pasa: 1173 pgTAP, 418 integraciones, 17 E2E y actualizaciones
+pobladas de PostgreSQL 16. CI sigue en verificación antes del merge.
+Véase [aceptación P04](../../redesign/P04-ACEPTACION.md). El `verified_ref`
+general conserva P25 mientras P04 no se integre; no afirma código en main.
+
 ## P25 · integrado y verificado tras revisión (08-10-2026)
 
 La rama `codex/P25-marca-identidad`, base `bcbd8060`, aplica B con geometría

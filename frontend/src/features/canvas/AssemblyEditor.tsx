@@ -36,7 +36,15 @@ import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTreeView";
 import { buildObjectTree } from "./objectTree";
 import { resolveMembers, type MemberGeometry } from "./members";
+import { EditorFlyout } from "./EditorFlyout";
+import { useEditorMedia } from "./useEditorLayout";
+import { dividerNudge } from "./dividerNudge";
+import { dismissFloatingLayers, useFloatingLayer } from "../../ui/floatingLayer";
+import { decimalInputValue, formatMoney } from "../../decimal";
+import type { Simulation } from "../../api/generated/models";
+import type { EditorPrice } from "./useEditorPrice";
 import { HardwarePanel } from "./HardwarePanel";
+import type { HardwareResolution } from "./hardwareContracts";
 import { SectionView } from "./SectionView";
 import { SectionPreviewSvg } from "./SectionPreviewSvg";
 import {
@@ -67,6 +75,7 @@ import {
   modulePrimaryBay,
   contourTopCorners,
   setModuleTree,
+  isProductModel,
   type CouplingJson,
   type FramelessEdge,
   type FramelessFittingJson,
@@ -266,14 +275,24 @@ function DraftField({
   normalize,
   rejectHint,
 }: DraftFieldProps): JSX.Element {
-  const [draft, setDraft] = useState(value);
+  const inputText = decimalInputValue(value).replace(".", ",");
+  const [draft, setDraft] = useState(inputText);
   const [invalid, setInvalid] = useState(false);
+  const committed = useRef(false);
   useEffect(() => {
-    if (!disabled) {
-      setDraft(value);
+    setDraft(decimalInputValue(value).replace(".", ","));
+    setInvalid(false);
+  }, [value]);
+  useEffect(() => {
+    // A refused operation keeps the declared value unchanged. Reset only a
+    // submitted draft after that transaction, preserving typing during engine
+    // recalculation and unrelated pending evaluations.
+    if (!disabled && committed.current) {
+      committed.current = false;
+      setDraft(decimalInputValue(value).replace(".", ","));
       setInvalid(false);
     }
-  }, [value, disabled]);
+  }, [disabled, value]);
   return (
     <label className={`assembly-field${invalid ? " is-invalid" : ""}`}>
       {label ? <span>{label}</span> : null}
@@ -282,6 +301,7 @@ function DraftField({
           value={draft}
           disabled={disabled}
           inputMode="decimal"
+          aria-label={label}
           aria-invalid={invalid || undefined}
           onFocus={(event) => event.currentTarget.select()}
           onChange={(event) => {
@@ -289,14 +309,18 @@ function DraftField({
             setInvalid(false);
           }}
           onBlur={() => {
+            if (draft === inputText) return;
             const normalized = normalize(draft);
             if (normalized === null) {
               // Revert to the last valid value but keep the field flagged —
               // a silent snap-back reads as the input being ignored.
-              setDraft(value);
+              setDraft(inputText);
               setInvalid(true);
             } else {
-              if (normalized !== value) onCommit(normalized);
+              if (normalized !== value) {
+                committed.current = true;
+                onCommit(normalized);
+              }
               setInvalid(false);
             }
           }}
@@ -311,8 +335,10 @@ function DraftField({
               }
             }
             if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
               setInvalid(false);
-              setDraft(value);
+              setDraft(inputText);
             }
           }}
         />
@@ -854,6 +880,115 @@ function SlidingPanelsEditor({
   );
 }
 
+function LeafFacts({
+  module,
+  bay,
+  evaluation,
+  options,
+  busy,
+  onHandleHeight,
+}: {
+  module: ProductModuleJson;
+  bay: IntentNode;
+  evaluation: EngineAssemblyCalculateResponse | null;
+  options?: DesignOptions;
+  busy: boolean;
+  onHandleHeight(value: string): void;
+}) {
+  const result = evaluation?.modules.find((item) => item.module_id === module.id)?.result;
+  const facts = (result?.opening_leaves ?? []) as OpeningLeafFact[];
+  const leaf = facts.find((item) => item.bay_id === bay.id);
+  const hardware = result?.hardware_items.find((item) => item.bay_id === bay.id);
+  const kit = options?.hardware_kits.find((item) => item.sku === hardware?.kit_sku);
+  const resolved = hardware?.resolution as HardwareResolution | null | undefined;
+  const glass = options?.glass_specs.find((item) => item.sku === bay.glass_article_sku);
+  const handleHeight = bay.handle_height_mm ?? resolved?.handle_height_mm;
+  return (
+    <>
+      {handleHeight != null && (
+        <DraftField
+          label="Altura de manilla"
+          value={handleHeight}
+          unit="mm"
+          disabled={busy || resolved?.handle_minimum_mm === resolved?.handle_maximum_mm}
+          normalize={normalizeMm}
+          onCommit={onHandleHeight}
+        />
+      )}
+      <dl className="editor-leaf-facts">
+        <div>
+          <dt>Composición</dt>
+          <dd>{glass?.spec ?? bay.glass_spec ?? "Sin dato · elige vidrio"}</dd>
+        </div>
+        <div>
+          <dt>Espesor</dt>
+          <dd>
+            {bay.glass_thickness_mm
+              ? `${fmtMm(bay.glass_thickness_mm)} mm`
+              : "Sin dato · elige vidrio"}
+          </dd>
+        </div>
+        <div>
+          <dt>Hoja · ancho</dt>
+          <dd>
+            {leaf || resolved
+              ? `${fmtMm(leaf?.width_mm ?? resolved?.width_mm)} mm`
+              : visualOpening(bay) === "FIXED"
+                ? "No requiere · paño fijo"
+                : "Sin dato · calcula el marco"}
+          </dd>
+        </div>
+        <div>
+          <dt>Hoja · alto</dt>
+          <dd>
+            {leaf || resolved
+              ? `${fmtMm(leaf?.height_mm ?? resolved?.height_mm)} mm`
+              : visualOpening(bay) === "FIXED"
+                ? "No requiere · paño fijo"
+                : "Sin dato · calcula el marco"}
+          </dd>
+        </div>
+        <div>
+          <dt>Kit derivado</dt>
+          <dd>
+            {kit?.name ??
+              (visualOpening(bay) === "FIXED"
+                ? "No requiere · paño fijo"
+                : "Sin dato · revisa herrajes")}
+          </dd>
+        </div>
+        <div>
+          <dt>Manilla · lado</dt>
+          <dd>
+            {leaf?.handle
+              ? leaf.handle.side === "LEFT"
+                ? "Izquierda"
+                : leaf.handle.side === "RIGHT"
+                  ? "Derecha"
+                  : "Cierre superior/inferior"
+              : visualOpening(bay) === "FIXED"
+                ? "No requiere · paño fijo"
+                : "Sin dato · revisa apertura"}
+          </dd>
+        </div>
+        <div>
+          <dt>Fuente</dt>
+          <dd>
+            <details className="editor-leaf-facts__source">
+              <summary>¿De dónde sale?</summary>
+              <p>
+                {leaf?.source ??
+                  resolved?.source ??
+                  "Evaluación del motor sobre la apertura declarada; composición y kit del catálogo de la serie."}
+              </p>
+            </details>
+          </dd>
+        </div>
+      </dl>
+    </>
+  );
+}
+
 /** A bay (paño) is the leaf granularity the workshop thinks in — opening,
  * glazing and handle placement edit on this leaf alone, through the same
  * normalized request-tree every other canvas edit uses. */
@@ -927,36 +1062,31 @@ function BayInspector({
           {t("assembly.bay")} {bayOrdinal} · {t("assembly.module")} {moduleOrdinal}
         </h4>
       </header>
-      <CatalogLimitNotice options={options} opening={opening} />
-      <ProvenanceStrip
-        items={[
-          { label: t("assembly.opening"), state: "DECLARED" },
-          // A panelled door leaf is complete without glass — name the panel,
-          // not a "Sin definir Vidrio" chip for a leaf that has none.
-          isDoor && bay.panel_article_sku
-            ? { label: t("assembly.panel"), state: "VERIFIED" as const }
-            : {
-                label: t("assembly.glass"),
-                state: bay.glass_article_sku
-                  ? ("VERIFIED" as const)
-                  : opening === "FIXED" || isDoor
-                    ? ("UNKNOWN" as const)
-                    : ("BLOCKED" as const),
-              },
-          {
-            label: t("assembly.glassThickness"),
-            state: bay.glass_thickness_mm ? "DECLARED" : "UNKNOWN",
-          },
-          {
-            label: t("assembly.handleHeight"),
-            state: bay.handle_height_mm ? "DECLARED" : "UNKNOWN",
-          },
-        ]}
-      />
+      <div className="editor-basic-dimensions">
+        <DraftField
+          label="Ancho del marco"
+          value={module.width_mm}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) =>
+            commit([{ op: "set_module_width", module: module.id, width_mm: value }])
+          }
+        />
+        <DraftField
+          label="Alto del marco"
+          value={module.height_mm}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) => commit([{ op: "set_height", height_mm: value }])}
+        />
+      </div>
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
         {options?.opening_capabilities?.length ? (
           <OpeningPalette
+            compact
             options={options}
             bay={bay}
             disabled={busy}
@@ -1032,21 +1162,10 @@ function BayInspector({
           onChange={(next) => commit([slidingOperation(module.id, bay.id, next)])}
         />
       )}
-      {operable && (
-        <HardwarePanel
-          options={options}
-          module={module}
-          bay={bay}
-          organizationId={organizationId}
-          color={color}
-          busy={busy}
-          onPatch={patchBay}
-          onTree={(tree) => commit([{ op: "set_module_tree", module: module.id, tree }])}
-        />
-      )}
       <details className="inspector-section" open>
         <summary>{t("inspector.glazing")}</summary>
         <GlassSelector
+          compact
           options={options}
           choices={glassSpecs}
           node={bay}
@@ -1097,6 +1216,60 @@ function BayInspector({
             {physicalHandle.source}
           </p>
         )}
+      </details>
+      <LeafFacts
+        module={module}
+        bay={bay}
+        evaluation={evaluation}
+        options={options}
+        busy={busy}
+        onHandleHeight={(value) =>
+          commit(bayOperations(module.id, bay.id, { handle_height_mm: value }))
+        }
+      />
+      {operable && (
+        <details className="inspector-section">
+          <summary>Avanzado · herrajes y manilla</summary>
+          <HardwarePanel
+            options={options}
+            module={module}
+            bay={bay}
+            organizationId={organizationId}
+            color={color}
+            busy={busy}
+            onPatch={patchBay}
+            onTree={(tree) => commit([{ op: "set_module_tree", module: module.id, tree }])}
+          />
+        </details>
+      )}
+      <details className="inspector-section editor-advanced">
+        <summary>Avanzado · perfiles y procedencia</summary>
+        <CatalogLimitNotice options={options} opening={opening} />
+        <ProvenanceStrip
+          items={[
+            { label: t("assembly.opening"), state: "DECLARED" },
+            // A panelled door leaf is complete without glass — name the panel,
+            // not a "Sin definir Vidrio" chip for a leaf that has none.
+            isDoor && bay.panel_article_sku
+              ? { label: t("assembly.panel"), state: "VERIFIED" as const }
+              : {
+                  label: t("assembly.glass"),
+                  state: bay.glass_article_sku
+                    ? ("VERIFIED" as const)
+                    : opening === "FIXED" || isDoor
+                      ? ("UNKNOWN" as const)
+                      : ("BLOCKED" as const),
+                },
+            {
+              label: t("assembly.glassThickness"),
+              state: bay.glass_thickness_mm ? "DECLARED" : "UNKNOWN",
+            },
+            {
+              label: t("assembly.handleHeight"),
+              state: bay.handle_height_mm ? "DECLARED" : "UNKNOWN",
+            },
+          ]}
+        />
       </details>
       {onAskAssistant && (
         <div className="inspector-actions">
@@ -1453,6 +1626,8 @@ function TechnicalPanel({
 
 function ModuleInspector({
   options,
+  organizationId,
+  color,
   evaluation,
   module,
   product,
@@ -1460,7 +1635,6 @@ function ModuleInspector({
   glassSpecs,
   panelSkus,
   panelChoices,
-  mullionSkus,
   couplerSkus,
   busy,
   commit,
@@ -1469,6 +1643,8 @@ function ModuleInspector({
   onMountingChanged,
 }: {
   options?: DesignOptions;
+  organizationId: string;
+  color: string;
   evaluation: EngineAssemblyCalculateResponse | null;
   module: ProductJson["assembly"]["modules"][number];
   product: ProductJson;
@@ -1500,41 +1676,45 @@ function ModuleInspector({
         <h4>
           {t("assembly.module")} {ordinal}
         </h4>
-        <button
-          type="button"
-          className="ghost-button is-danger"
-          disabled={busy || product.assembly.modules.length <= 1}
-          title={t("assembly.removeUnit")}
-          aria-label={t("assembly.removeUnit")}
-          onClick={() => commit([{ op: "remove_unit", module: module.id }])}
-        >
-          ×
-        </button>
+        {product.assembly.modules.length > 1 && (
+          <button
+            type="button"
+            className="ghost-button is-danger"
+            disabled={busy || product.assembly.modules.length <= 1}
+            title={t("assembly.removeUnit")}
+            aria-label={t("assembly.removeUnit")}
+            onClick={() => commit([{ op: "remove_unit", module: module.id }])}
+          >
+            ×
+          </button>
+        )}
       </header>
-      <CatalogLimitNotice options={options} opening={opening} />
-      <MountingInspector
-        module={module}
-        product={product}
-        busy={busy}
-        onChanged={onMountingChanged}
-      />
-      <ProvenanceStrip
-        items={[
-          { label: t("inspector.dimensions"), state: "DECLARED" },
-          {
-            label: t("assembly.glass"),
-            state: moduleGlassSku(module) !== null ? "VERIFIED" : "UNKNOWN",
-          },
-          {
-            label: t("assembly.coupler"),
-            state: couplerSkus.length > 0 ? "VERIFIED" : "UNKNOWN",
-          },
-        ]}
-      />
+      <details className="inspector-section" open>
+        <summary>{t("inspector.dimensions")}</summary>
+        <DraftField
+          label={t("assembly.width")}
+          value={module.width_mm}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) =>
+            commit([{ op: "set_module_width", module: module.id, width_mm: value }])
+          }
+        />
+        <DraftField
+          label={t("assembly.height")}
+          value={module.height_mm}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) => commit([{ op: "set_height", height_mm: value }])}
+        />
+      </details>
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
         {options?.opening_capabilities?.length && modulePrimaryBay(module) ? (
           <OpeningPalette
+            compact
             options={options}
             bay={modulePrimaryBay(module)!}
             disabled={busy}
@@ -1579,44 +1759,6 @@ function ModuleInspector({
             </div>
           </>
         )}
-        <div className="inspector-actions">
-          <button
-            type="button"
-            className="ghost-button"
-            disabled={busy || mullionSkus.SPLIT_V === undefined || isDoor}
-            onClick={() =>
-              commit([
-                {
-                  op: "split_bay",
-                  module: module.id,
-                  bay: modulePrimaryBay(module)!.id,
-                  axis: "V",
-                  from: "CENTER",
-                },
-              ])
-            }
-          >
-            {t("assembly.splitV")}
-          </button>
-          <button
-            type="button"
-            className="ghost-button"
-            disabled={busy || mullionSkus.SPLIT_H === undefined || isDoor}
-            onClick={() =>
-              commit([
-                {
-                  op: "split_bay",
-                  module: module.id,
-                  bay: modulePrimaryBay(module)!.id,
-                  axis: "H",
-                  from: "CENTER",
-                },
-              ])
-            }
-          >
-            {t("assembly.splitH")}
-          </button>
-        </div>
       </details>
       {slidingLayout && slidingBay && (
         <SlidingPanelsEditor
@@ -1627,61 +1769,9 @@ function ModuleInspector({
         />
       )}
       <details className="inspector-section" open>
-        <summary>{t("inspector.dimensions")}</summary>
-        <DraftField
-          label={t("assembly.width")}
-          value={module.width_mm}
-          unit="mm"
-          disabled={busy}
-          normalize={normalizeMm}
-          onCommit={(value) =>
-            commit([{ op: "set_module_width", module: module.id, width_mm: value }])
-          }
-        />
-        <DraftField
-          label={t("assembly.height")}
-          value={module.height_mm}
-          unit="mm"
-          disabled={busy}
-          normalize={normalizeMm}
-          onCommit={(value) => commit([{ op: "set_height", height_mm: value }])}
-        />
-      </details>
-      {!module.frameless && (
-        <details className="inspector-section">
-          <summary>{t("assembly.sectionTitle")}</summary>
-          <div className="section-preview-list">
-            <div>
-              <p className="inspector-note">{members.frame.sku ?? t("assembly.frame")}</p>
-              <SectionPreviewSvg
-                section={members.frame.section}
-                faceWidthMm={members.frame.faceWidthMm}
-                material={members.frame.material}
-              />
-            </div>
-            <div>
-              <p className="inspector-note">{members.sash.sku ?? t("assembly.sash")}</p>
-              <SectionPreviewSvg
-                section={members.sash.section}
-                faceWidthMm={members.sash.faceWidthMm}
-                material={members.sash.material}
-              />
-            </div>
-          </div>
-        </details>
-      )}
-      {module.contour && <ContourShapeSection module={module} busy={busy} commit={commit} />}
-      <FramelessSection module={module} couplerSkus={couplerSkus} busy={busy} commit={commit} />
-      <ExtrasInspector
-        options={options}
-        module={module}
-        evaluation={evaluation}
-        busy={busy}
-        commit={commit}
-      />
-      <details className="inspector-section" open>
         <summary>{t("inspector.glazing")}</summary>
         <GlassSelector
+          compact
           options={options}
           choices={glassSpecs}
           node={modulePrimaryBay(module)!}
@@ -1713,6 +1803,90 @@ function ModuleInspector({
             </select>
           </label>
         )}
+      </details>
+      <LeafFacts
+        module={module}
+        bay={modulePrimaryBay(module)!}
+        evaluation={evaluation}
+        options={options}
+        busy={busy}
+        onHandleHeight={(value) =>
+          commit(
+            bayOperations(module.id, modulePrimaryBay(module)!.id, { handle_height_mm: value }),
+          )
+        }
+      />
+      {moduleOpening(module) !== "FIXED" && (
+        <details className="inspector-section">
+          <summary>Avanzado · herrajes y manilla</summary>
+          <HardwarePanel
+            options={options}
+            module={module}
+            bay={modulePrimaryBay(module)!}
+            organizationId={organizationId}
+            color={color}
+            busy={busy}
+            onPatch={(patch) =>
+              commit(bayOperations(module.id, modulePrimaryBay(module)!.id, patch))
+            }
+            onTree={(tree) => commit([{ op: "set_module_tree", module: module.id, tree }])}
+          />
+        </details>
+      )}
+      <details className="inspector-section editor-advanced">
+        <summary>Avanzado · montaje, extras y perfiles</summary>
+        <CatalogLimitNotice options={options} opening={opening} />
+        <MountingInspector
+          module={module}
+          product={product}
+          busy={busy}
+          onChanged={onMountingChanged}
+        />
+        <ProvenanceStrip
+          items={[
+            { label: t("inspector.dimensions"), state: "DECLARED" },
+            {
+              label: t("assembly.glass"),
+              state: moduleGlassSku(module) !== null ? "VERIFIED" : "UNKNOWN",
+            },
+            {
+              label: t("assembly.coupler"),
+              state: couplerSkus.length > 0 ? "VERIFIED" : "UNKNOWN",
+            },
+          ]}
+        />
+        {!module.frameless && (
+          <details className="inspector-section">
+            <summary>{t("assembly.sectionTitle")}</summary>
+            <div className="section-preview-list">
+              <div>
+                <p className="inspector-note">{members.frame.sku ?? t("assembly.frame")}</p>
+                <SectionPreviewSvg
+                  section={members.frame.section}
+                  faceWidthMm={members.frame.faceWidthMm}
+                  material={members.frame.material}
+                />
+              </div>
+              <div>
+                <p className="inspector-note">{members.sash.sku ?? t("assembly.sash")}</p>
+                <SectionPreviewSvg
+                  section={members.sash.section}
+                  faceWidthMm={members.sash.faceWidthMm}
+                  material={members.sash.material}
+                />
+              </div>
+            </div>
+          </details>
+        )}
+        {module.contour && <ContourShapeSection module={module} busy={busy} commit={commit} />}
+        <FramelessSection module={module} couplerSkus={couplerSkus} busy={busy} commit={commit} />
+        <ExtrasInspector
+          options={options}
+          module={module}
+          evaluation={evaluation}
+          busy={busy}
+          commit={commit}
+        />
       </details>
       {onAskAssistant && (
         <div className="inspector-actions">
@@ -1822,6 +1996,12 @@ function ToolIcon({ name }: { name: string }): JSX.Element {
     couple_left: <path d="M6 3h7v10H6z M5.5 8H1 M2.5 5.5L1 8l1.5 2.5" />,
     couple_right: <path d="M3 3h7v10H3z M10.5 8H15 M13.5 5.5L15 8l-1.5 2.5" />,
     equalize: <path d="M3 5h10 M8 2.5L10.5 5 8 7.5 M3 11h10 M8 8.5L10.5 11 8 13.5" />,
+    opening: <path d="M3 3h10v10H3z M3 3l10 5-10 5" />,
+    glass: <path d="M3 3h10v10H3z M5 4l-1 2 M12 10l-2 2" />,
+    measure: <path d="M2 4v9h12 M4 8v2 M7 8v2 M10 8v2" />,
+    library: <path d="M3 2v12 M6 2v12 M9 2l4 11" />,
+    inspector: <path d="M2 3h12 M2 8h12 M2 13h12 M6 2v2 M10 7v2 M6 12v2" />,
+    help: <path d="M5 5a3 3 0 1 1 4 3c-1 .5-1 1-1 2 M8 12v1" />,
     tree: <path d="M4 3h9 M4 8h9 M4 13h9 M1 3h.5 M1 8h.5 M1 13h.5" />,
   };
   return (
@@ -1844,6 +2024,15 @@ export function AssemblyEditor({
   positionPanel,
   contentEpoch = 0,
   optionsReady = options !== undefined,
+  quantity = 1,
+  libraryOpen = false,
+  onLibraryToggle,
+  library,
+  issuesOpen = false,
+  onCloseIssues,
+  onOpenIssues,
+  saveBlockReason,
+  onChooseSystem,
 }: {
   organizationId: string;
   couplerSkus: string[];
@@ -1852,9 +2041,21 @@ export function AssemblyEditor({
   options: DesignOptions | undefined;
   disabled: boolean;
   onChanged(): void;
-  onEvaluationChange(evaluation: EngineAssemblyCalculateResponse | null): void;
+  onEvaluationChange(
+    evaluation: EngineAssemblyCalculateResponse | null,
+    state?: { pending: boolean; error: string | null },
+  ): void;
   positionId: string | null;
   positionPanel?: JSX.Element;
+  quantity?: number;
+  libraryOpen?: boolean;
+  onLibraryToggle?(): void;
+  library?: JSX.Element;
+  issuesOpen?: boolean;
+  onCloseIssues?(): void;
+  onOpenIssues?(): void;
+  saveBlockReason?: string | null;
+  onChooseSystem?(): void;
   /** Bumped when the product is replaced wholesale (starter pick) so the
    * canvas viewport re-fits even after the user took manual pan/zoom control. */
   contentEpoch?: number;
@@ -1879,7 +2080,7 @@ export function AssemblyEditor({
   const openingPreview = useAssemblyCalculation(organizationId, previewInputs, false);
   const previewReady =
     openingPreviewProduct !== null && openingPreview.evaluation?.status === "VALID";
-  const { evaluation, currentEvaluation, isPending, errorCode } = useAssemblyCalculation(
+  const { evaluation, currentEvaluation, isPending, errorCode, retry } = useAssemblyCalculation(
     organizationId,
     inputs,
   );
@@ -1892,10 +2093,37 @@ export function AssemblyEditor({
     [options, inputs.color, viewFace],
   );
   const [tool, setTool] = useState<EditorTool>("select");
-  const [treeOpen, setTreeOpen] = useState(
-    () =>
-      typeof window.matchMedia !== "function" || !window.matchMedia("(max-width: 1279px)").matches,
-  );
+  const [treeOpen, setTreeOpen] = useState(false);
+  const narrow = useEditorMedia("(max-width: 1279px)");
+  const readOnly = useEditorMedia("(max-width: 1023px)");
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const inspectorRef = useRef<HTMLDivElement>(null);
+  const [proposal, setProposal] = useState<{
+    simulation: Simulation;
+    snapshot: typeof inputs;
+    quantity: number;
+  } | null>(null);
+  const liveQuantity = useRef(quantity);
+  liveQuantity.current = quantity;
+  useFloatingLayer(treeOpen, () => setTreeOpen(false));
+  useEffect(() => {
+    if (narrow && (treeOpen || helpOpen || libraryOpen || issuesOpen)) setInspectorOpen(false);
+  }, [narrow, treeOpen, helpOpen, libraryOpen, issuesOpen]);
+  useEffect(() => {
+    if (!narrow || !inspectorOpen) return;
+    const dismiss = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (!target.closest(".assembly-side, .assembly-tools, .ui-popover")) setInspectorOpen(false);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [narrow, inspectorOpen]);
+  useEffect(() => {
+    setProposal(null);
+  }, [inputs, quantity]);
   /** Right-rail detail level — overview/design/technical over the same
    * selection; complexity stays hidden until the user asks for it. */
   const [detail, setDetail] = useState<DetailLevel>("design");
@@ -1909,10 +2137,11 @@ export function AssemblyEditor({
     text: string;
     submit?: boolean;
   } | null>(null);
-  const assistantSectionRef = useRef<HTMLDivElement>(null);
+
   const issuesListRef = useRef<HTMLUListElement>(null);
   /** Canvas context menu — cursor position, closed on action/outside/Escape. */
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  useFloatingLayer(contextMenu !== null, () => setContextMenu(null));
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   /** Measured on-screen position — null until the first layout pass, so the
    * menu can flip away from viewport edges instead of overflowing them. */
@@ -1937,13 +2166,17 @@ export function AssemblyEditor({
     // Only the current request can authorize a save. Undo can restore the same
     // cached result while a previous request is pending: publish it again for
     // that input identity instead of leaving the parent's result cleared.
-    onEvaluationChange(operationBusy ? null : currentEvaluation);
-  }, [currentEvaluation, inputs, operationBusy, onEvaluationChange]);
+    onEvaluationChange(operationBusy ? null : currentEvaluation, {
+      pending: isPending || operationBusy,
+      error: errorCode,
+    });
+  }, [currentEvaluation, inputs, operationBusy, isPending, errorCode, onEvaluationChange]);
 
   /** Every "…with DEKOPEN" affordance: scroll the assistant into view and
    * hand it a prompt draft — "" focuses the field untouched. */
   function askAssistant(prompt: string, submit = false): void {
-    assistantSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    setAssistantOpen(true);
+    setInspectorOpen(true);
     setAssistantDraft({ text: prompt, submit });
   }
 
@@ -1964,7 +2197,7 @@ export function AssemblyEditor({
   }, [contextMenu]);
 
   function commit(next: ProductJson): void {
-    if (next === product) return;
+    if (next === product || disabled || readOnly) return;
     // Any product edit ends modal tool state — an armed divide must not
     // survive an unrelated edit and surprise the next module click.
     setTool("select");
@@ -1987,7 +2220,7 @@ export function AssemblyEditor({
   );
 
   function applyRegisteredOps(ops: DesignOperation[]): void {
-    if (!product) return;
+    if (!product || disabled || readOnly) return;
     const next = applyOperationEffects(product, ops);
     const attributes = ops.reduce<Record<string, string>>(
       (current, op) => ({
@@ -2014,11 +2247,17 @@ export function AssemblyEditor({
     args: CommandArgs = {},
   ): void {
     const snapshot = useCanvasStore.getState().inputs;
-    if (!snapshot.product || !snapshot.systemId || disabled || operationBusy) return;
+    if (!snapshot.product || !snapshot.systemId || disabled || readOnly || operationBusy) return;
     setOperationBusy(true);
     setOperationMessage("");
     void designOperationsSimulate(
-      { product: snapshot.product, system_id: snapshot.systemId, color: snapshot.color, ops },
+      {
+        product: snapshot.product,
+        system_id: snapshot.systemId,
+        color: snapshot.color,
+        ops,
+        quantity,
+      },
       { headers: { "X-Organization-ID": organizationId } },
     )
       .then((response) => {
@@ -2049,14 +2288,116 @@ export function AssemblyEditor({
       .finally(() => setOperationBusy(false));
   }
 
+  function proposeCommand(ops: DesignOperationRequest[]): void {
+    const snapshot = useCanvasStore.getState().inputs;
+    const snapshotQuantity = quantity;
+    if (!snapshot.product || !snapshot.systemId || disabled || readOnly || operationBusy) return;
+    setProposal(null);
+    setOperationBusy(true);
+    setOperationMessage("");
+    void designOperationsSimulate(
+      {
+        product: snapshot.product,
+        system_id: snapshot.systemId,
+        color: snapshot.color,
+        ops,
+        quantity,
+      },
+      { headers: { "X-Organization-ID": organizationId } },
+    )
+      .then((response) => {
+        if (response.status !== 200) throw new ApiError(response.status, response.data);
+        if (
+          useCanvasStore.getState().inputs !== snapshot ||
+          liveQuantity.current !== snapshotQuantity
+        )
+          return;
+        setProposal({ simulation: response.data, snapshot, quantity: snapshotQuantity });
+      })
+      .catch(() =>
+        setOperationMessage(
+          "No se pudo simular la propuesta. Revisa la serie y los datos del diseño y vuelve a ejecutar el comando.",
+        ),
+      )
+      .finally(() => setOperationBusy(false));
+  }
+
+  function showInspector(field?: string): void {
+    dismissFloatingLayers();
+    setInspectorOpen(true);
+    setDetail("design");
+    const current = useCanvasStore.getState();
+    if (!current.selection) current.select(current.inputs.product?.assembly.modules[0]?.id ?? null);
+    requestAnimationFrame(() => {
+      const target =
+        field === "opening"
+          ? inspectorRef.current?.querySelector<HTMLButtonElement>(".editor-opening-trigger")
+          : field === "glass"
+            ? inspectorRef.current?.querySelector<HTMLSelectElement>('select[aria-label="Vidrio"]')
+            : inspectorRef.current?.querySelector<HTMLElement>("input, button");
+      target?.focus();
+      if (field === "opening") target?.click();
+    });
+  }
+
+  // Editor-only gestures never run while a text field is being edited.
+  useEffect(() => {
+    const key = (event: KeyboardEvent) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest("input, textarea, select, [contenteditable='true'], [role='dialog']")
+      )
+        return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.key === "?") {
+        event.preventDefault();
+        setHelpOpen((open) => !open);
+      }
+      if (event.key === "Escape") {
+        setInspectorOpen(false);
+        setHelpOpen(false);
+        setTreeOpen(false);
+        setProposal(null);
+      }
+      if (disabled || readOnly || operationBusy || !event.key.startsWith("Arrow")) return;
+      const current = useCanvasStore.getState();
+      const [moduleId, nodeId] = current.selection?.split("/") ?? [];
+      const module = current.inputs.product?.assembly.modules.find((item) => item.id === moduleId);
+      const division = module && nodeId ? findNode(module.tree, nodeId) : null;
+      if (!division?.split_offset_mm) return;
+      const horizontal = division.type === "SPLIT_H";
+      if (
+        horizontal
+          ? !["ArrowUp", "ArrowDown"].includes(event.key)
+          : !["ArrowLeft", "ArrowRight"].includes(event.key)
+      )
+        return;
+      event.preventDefault();
+      // Exact adjustment of declared intent, no geometry is derived here.
+      event.stopPropagation();
+      const step =
+        (event.shiftKey ? 10 : 1) * (["ArrowUp", "ArrowLeft"].includes(event.key) ? -1 : 1);
+      const offset = dividerNudge(division.split_offset_mm, step);
+      if (offset === null) return;
+      simulateCommand([
+        { op: "move_divider", module: moduleId!, divider: nodeId!, offset_mm: offset },
+      ]);
+    };
+    window.addEventListener("keydown", key, true);
+    return () => window.removeEventListener("keydown", key, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- gestures dispatch against the live store
+  }, [disabled, readOnly, operationBusy]);
+
   // The agent dock's ops bridge: publishes the live product plus an apply
   // channel that commits through the same registry path as a human click.
   // The hook forwards calls to the latest closure, so capturing `product` and
   // `commit` always lands on the current product — and the published product
   // re-registers on every commit so a stale-product apply is refused.
   useRegisterDesignOpsBridge(
-    product && !disabled ? (bridgeProduct as unknown as { [key: string]: unknown }) : null,
-    product && !disabled
+    product && !disabled && !readOnly
+      ? (bridgeProduct as unknown as { [key: string]: unknown })
+      : null,
+    product && !disabled && !readOnly
       ? (ops: DesignOperation[]) => {
           applyRegisteredOps(ops);
         }
@@ -2066,7 +2407,7 @@ export function AssemblyEditor({
   // Hooks before the empty branch — a starter pick flips product
   // null→object on the SAME mounted instance, so any early return placed
   // ahead of a hook crashes with "Rendered more hooks".
-  const busy = disabled || operationBusy;
+  const busy = disabled || readOnly || operationBusy;
   const mullionSkus: Partial<Record<SplitType, string>> = useMemo(
     () => ({
       SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
@@ -2110,6 +2451,7 @@ export function AssemblyEditor({
       disabled: busy,
       commit,
       simulate: simulateCommand,
+      propose: proposeCommand,
       select,
       setTool,
       focusAssistant: () => askAssistant(""),
@@ -2148,6 +2490,7 @@ export function AssemblyEditor({
     canRedo,
     specClipboard,
     lastMutation,
+    quantity,
   ]);
   const surface = useMemo(
     () =>
@@ -2187,7 +2530,9 @@ export function AssemblyEditor({
 
   const modules = product.assembly.modules;
   const couplings = product.assembly.couplings;
-  const selectedModule = modules.find((module) => module.id === selection);
+  const selectedModule =
+    modules.find((module) => module.id === selection) ??
+    (selection === null ? modules[0] : undefined);
   const selectedCoupling = couplings.find((coupling) => coupling.id === selection);
   // Leaf granularity: canvas bay clicks and tree leaf rows select the
   // composite "moduleId/bayId" — resolved back into (module, bay node) here.
@@ -2212,7 +2557,7 @@ export function AssemblyEditor({
   // state, and save still requires the fresh engine verdict upstream.
   const evaluating = isPending && inputs.systemId !== null;
   const planBox = couplings.length > 0 && evaluation?.plan ? planBounds(evaluation.plan) : null;
-  const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm`;
+  const statusText = `${fmtMm(front.totalW)} × ${fmtMm(front.height)} mm`;
   // Labels derive from actual product membership — selection ids are
   // arbitrary strings, so a coupling legitimately named "coupling-x" must
   // still resolve (prefix sniffing would hide it).
@@ -2221,7 +2566,7 @@ export function AssemblyEditor({
       ? intentBays(selectedBayModule.tree).findIndex((node) => node.id === selectedBayNode.id) + 1
       : 0;
   const selectedLabel = selectedModule
-    ? `${t("assembly.module")} ${modules.findIndex((item) => item.id === selection) + 1}`
+    ? `${t("assembly.module")} ${modules.findIndex((item) => item.id === selectedModule.id) + 1}`
     : selectedBayModule && selectedBayNode
       ? `${t("assembly.bay")} ${bayOrdinal} · ${t("assembly.module")} ${modules.findIndex((item) => item.id === selectedBayModule.id) + 1}`
       : selectedDivisionModule && selectedDivisionNode
@@ -2291,99 +2636,246 @@ export function AssemblyEditor({
       className={`assembly-editor${treeOpen ? "" : " assembly-editor--tree-closed"}`}
       aria-label={t("assembly.frontView")}
     >
-      {operationBusy ? <p role="status">Calculando el cambio con el motor…</p> : null}
-      {operationMessage ? (
-        <p role="alert" className="assembly-hint">
+      {operationBusy && (
+        <output className="editor-operation-message" role="status">
+          Calculando el cambio con el motor…
+        </output>
+      )}
+      {operationMessage && (
+        <output className="editor-operation-message" role="alert">
           {operationMessage}
-        </p>
-      ) : null}
+        </output>
+      )}
       <div className="assembly-tools" role="toolbar" aria-label={t("assembly.tools")}>
-        <button
-          type="button"
-          className={`tool-button${tool === "select" ? " is-active" : ""}`}
-          title={t("assembly.toolSelect")}
-          aria-label={t("assembly.toolSelect")}
-          aria-pressed={tool === "select"}
-          onClick={() => setTool("select")}
-        >
-          <ToolIcon name="select" />
-        </button>
-        <button
-          type="button"
-          className={`tool-button${tool === "split_v" ? " is-active" : ""}`}
-          title={t("assembly.toolDivideV")}
-          aria-label={t("assembly.toolDivideV")}
-          aria-pressed={tool === "split_v"}
-          disabled={busy || splitReady.SPLIT_V === undefined}
-          onClick={() => setTool(tool === "split_v" ? "select" : "split_v")}
-        >
-          <ToolIcon name="split_v" />
-        </button>
-        <button
-          type="button"
-          className={`tool-button${tool === "split_h" ? " is-active" : ""}`}
-          title={t("assembly.toolDivideH")}
-          aria-label={t("assembly.toolDivideH")}
-          aria-pressed={tool === "split_h"}
-          disabled={busy || splitReady.SPLIT_H === undefined}
-          onClick={() => setTool(tool === "split_h" ? "select" : "split_h")}
-        >
-          <ToolIcon name="split_h" />
-        </button>
+        {[
+          {
+            name: "select",
+            label: "Seleccionar",
+            key: "V",
+            action: () => setTool("select"),
+            active: tool === "select",
+          },
+          {
+            name: "split_v",
+            label: "Dividir vertical",
+            key: "|",
+            action: () => setTool(tool === "split_v" ? "select" : "split_v"),
+            active: tool === "split_v",
+            unavailable: busy || splitReady.SPLIT_V === undefined,
+          },
+          {
+            name: "split_h",
+            label: "Dividir horizontal",
+            key: "–",
+            action: () => setTool(tool === "split_h" ? "select" : "split_h"),
+            active: tool === "split_h",
+            unavailable: busy || splitReady.SPLIT_H === undefined,
+          },
+          {
+            name: "opening",
+            label: "Apertura",
+            key: "",
+            action: () => showInspector("opening"),
+            unavailable: busy,
+          },
+          {
+            name: "glass",
+            label: "Vidrio",
+            key: "",
+            action: () => showInspector("glass"),
+            unavailable: busy,
+          },
+          {
+            name: "couple_right",
+            label: "Acoplar",
+            key: "",
+            action: () => coupleUnit("right"),
+            unavailable: busy || couplerSkus.length === 0,
+          },
+          {
+            name: "measure",
+            label: "Medir",
+            key: "",
+            action: () => {
+              setDetail("technical");
+              setInspectorOpen(true);
+            },
+          },
+        ].map((item) => (
+          <button
+            key={item.name}
+            type="button"
+            className={`tool-button${item.active ? " is-active" : ""}`}
+            title={`${item.label}${item.key ? ` · ${item.key}` : ""}`}
+            aria-label={item.label}
+            aria-pressed={item.active}
+            disabled={item.unavailable}
+            onClick={item.action}
+          >
+            <ToolIcon name={item.name} />
+            <span>{item.label}</span>
+            {item.key && <kbd>{item.key}</kbd>}
+          </button>
+        ))}
         <span className="assembly-tools__divider" aria-hidden="true" />
-        <button
-          type="button"
-          className="tool-button"
-          title={t("assembly.addUnitLeft")}
-          aria-label={t("assembly.addUnitLeft")}
-          disabled={busy}
-          onClick={() => coupleUnit("left")}
-        >
-          <ToolIcon name="couple_left" />
-        </button>
-        <button
-          type="button"
-          className="tool-button"
-          title={t("assembly.addUnitRight")}
-          aria-label={t("assembly.addUnitRight")}
-          disabled={busy}
-          onClick={() => coupleUnit("right")}
-        >
-          <ToolIcon name="couple_right" />
-        </button>
-        <span className="assembly-tools__divider" aria-hidden="true" />
-        <button
-          type="button"
-          className="tool-button"
-          title={t("assembly.equalizeModules")}
-          aria-label={t("assembly.equalizeModules")}
-          disabled={busy || modules.length <= 1}
-          onClick={() => simulateCommand([{ op: "equalize_widths" }])}
-        >
-          <ToolIcon name="equalize" />
-        </button>
-        <button
-          type="button"
-          className="tool-button"
-          title={t("assembly.equalizeAngles")}
-          aria-label={t("assembly.equalizeAngles")}
-          disabled={busy || couplings.length === 0}
-          onClick={() => simulateCommand([{ op: "equalize_angles" }])}
-        >
-          <ToolIcon name="equalize" />
-        </button>
+        {onLibraryToggle && (
+          <button
+            type="button"
+            className="tool-button"
+            aria-label="Biblioteca de tipologías"
+            title="Biblioteca de tipologías"
+            aria-expanded={libraryOpen}
+            onClick={onLibraryToggle}
+          >
+            <ToolIcon name="library" />
+            <span>Tipologías</span>
+          </button>
+        )}
+        {narrow && (
+          <button
+            type="button"
+            className="tool-button"
+            aria-label="Inspector"
+            title="Inspector"
+            aria-expanded={inspectorOpen}
+            onClick={() => {
+              if (!inspectorOpen) dismissFloatingLayers();
+              setInspectorOpen((open) => !open);
+            }}
+          >
+            <ToolIcon name="inspector" />
+            <span>Inspector</span>
+          </button>
+        )}
         <span className="assembly-tools__spacer" aria-hidden="true" />
         <button
           type="button"
-          className={`tool-button${treeOpen ? " is-active" : ""}`}
-          title={t("assembly.toggleTree")}
-          aria-label={t("assembly.toggleTree")}
-          aria-pressed={treeOpen}
+          className="tool-button"
+          aria-label="Árbol del conjunto"
+          title="Árbol del conjunto"
+          aria-expanded={treeOpen}
           onClick={() => setTreeOpen((open) => !open)}
         >
           <ToolIcon name="tree" />
+          <span>Conjunto</span>
+        </button>
+        <button
+          type="button"
+          className="tool-button"
+          aria-label="Atajos del editor"
+          title="Atajos del editor · ?"
+          onClick={() => setHelpOpen((open) => !open)}
+        >
+          <ToolIcon name="help" />
+          <span>Atajos</span>
+          <kbd>?</kbd>
         </button>
       </div>
+      {libraryOpen && library && (
+        <EditorFlyout
+          title="Biblioteca de tipologías"
+          onClose={() => onLibraryToggle?.()}
+          className="editor-library"
+        >
+          {library}
+        </EditorFlyout>
+      )}
+      {helpOpen && (
+        <EditorFlyout title="Atajos del editor" onClose={() => setHelpOpen(false)}>
+          <dl className="editor-shortcuts">
+            {[
+              ["V", "Seleccionar"],
+              ["| / M", "Dividir vertical"],
+              ["– / T", "Dividir horizontal"],
+              ["F / Mayús+1", "Centrar"],
+              ["Mayús+2", "Ajustar a selección"],
+              ["Rueda", "Zoom al cursor"],
+              ["Espacio + arrastrar / botón medio", "Desplazar dibujo"],
+              ["Flechas / Mayús+flechas", "Divisor: 1 mm / 10 mm"],
+              ["Ctrl+Z / Ctrl+Y", "Deshacer / rehacer"],
+              ["Supr", "Eliminar selección"],
+              ["Enter / Esc", "Confirmar / cancelar cota"],
+              ["Ctrl+K", "Buscar o ejecutar comando"],
+              ["Ctrl+S", "Guardar"],
+            ].map(([key, action]) => (
+              <div key={key}>
+                <dt>
+                  <kbd>{key}</kbd>
+                </dt>
+                <dd>{action}</dd>
+              </div>
+            ))}
+          </dl>
+        </EditorFlyout>
+      )}
+      {issuesOpen && (
+        <EditorFlyout
+          id="editor-missing"
+          title="Qué falta"
+          onClose={() => onCloseIssues?.()}
+          className="editor-missing"
+        >
+          {!inputs.systemId && (
+            <p>
+              Elige una serie con autoridad para calcular el diseño.{" "}
+              <button type="button" onClick={onChooseSystem}>
+                Elegir serie
+              </button>
+            </p>
+          )}
+          {saveBlockReason && (
+            <p>
+              {saveBlockReason}
+              <button
+                type="button"
+                onClick={() => {
+                  onCloseIssues?.();
+                  showInspector(saveBlockReason.includes("vidrio") ? "glass" : undefined);
+                }}
+              >
+                Completar en el inspector
+              </button>
+            </p>
+          )}
+          {errorCode && (
+            <p role="alert">
+              No se pudo evaluar el diseño. Revisa la conexión y el catálogo.{" "}
+              <button type="button" onClick={() => void retry()}>
+                Reintentar cálculo
+              </button>
+            </p>
+          )}
+          {issues.length ? (
+            <ul className="assembly-issues" ref={issuesListRef}>
+              {issues.map((issue, index) => (
+                <li key={index}>
+                  <p>{issueText(issue, modules, couplings)}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = issue.target;
+                      if (target.startsWith("module:") || target.startsWith("coupling:"))
+                        select(target.slice(target.indexOf(":") + 1));
+                      onCloseIssues?.();
+                      showInspector();
+                    }}
+                  >
+                    Revisar {issue.target.startsWith("coupling:") ? "unión" : "marco"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : saveBlockReason === null && inputs.systemId ? (
+            <p>
+              {evaluating
+                ? "El motor está calculando el diseño actual."
+                : errorCode
+                  ? "No se pudo evaluar. Revisa los datos del catálogo y vuelve a intentar."
+                  : "El diseño está listo para guardar."}
+            </p>
+          ) : null}
+        </EditorFlyout>
+      )}
       {treeOpen && (
         <div className="assembly-tree">
           <ObjectTree
@@ -2406,6 +2898,10 @@ export function AssemblyEditor({
       )}
       <div
         className="assembly-canvas"
+        onDoubleClick={(event) => {
+          if ((event.target as Element).closest("[role='button'][aria-label^='Paño']"))
+            showInspector("opening");
+        }}
         onContextMenu={(event) => {
           event.preventDefault();
           setContextMenu({ x: event.clientX, y: event.clientY });
@@ -2452,6 +2948,12 @@ export function AssemblyEditor({
         )}
         <CanvasViewport
           contentBox={frontBox}
+          visibleBox={{
+            x: -front.leftOver,
+            y: -front.lift,
+            w: front.totalW + front.leftOver + front.rightOver,
+            h: front.height + front.lift + front.dip,
+          }}
           selectionBox={selectionBox}
           status={statusText}
           contentEpoch={contentEpoch}
@@ -2544,10 +3046,91 @@ export function AssemblyEditor({
                 ]);
             }}
           />
+          {proposal &&
+            proposal.snapshot === inputs &&
+            isProductModel(proposal.simulation.product) && (
+              <g
+                className="command-ghost"
+                aria-label="Propuesta del motor en fantasma"
+                pointerEvents="none"
+              >
+                <ProductFrontContent
+                  product={proposal.simulation.product}
+                  members={members}
+                  selectedId={null}
+                  issues={[]}
+                  disabled
+                  dimLevel="overview"
+                  openingFacts={Object.fromEntries(
+                    (
+                      (proposal.simulation.engine as EngineAssemblyCalculateResponse)?.modules ?? []
+                    ).map((item) => [
+                      item.module_id,
+                      (item.result?.opening_leaves ?? []) as OpeningLeafFact[],
+                    ]),
+                  )}
+                  onSelectModule={() => {}}
+                  onAddUnit={() => {}}
+                  onCommitModuleWidth={() => {}}
+                  onCommitTotalWidth={() => {}}
+                  onCommitHeight={() => {}}
+                />
+              </g>
+            )}
           {inputs.mounting?.length ? (
             <MountingDimensions product={product} evidence={inputs.mounting} />
           ) : null}
         </CanvasViewport>
+        {proposal && proposal.snapshot === inputs && (
+          <section className="editor-proposal" aria-label="Propuesta por revisar">
+            <h3>Tres paños · centro fijo</h3>
+            <p>
+              Laterales abatibles hacia el centro · simulación del motor
+              {options?.is_demo ? " · DEMO" : ""}
+            </p>
+            <p className="editor-proposal-price">
+              Δ neto de línea ·{" "}
+              {(proposal.simulation.price as EditorPrice).delta_net == null
+                ? "Sin dato"
+                : formatMoney(
+                    (proposal.simulation.price as EditorPrice).delta_net,
+                    (proposal.simulation.price as EditorPrice).currency,
+                  )}
+            </p>
+            <details>
+              <summary>¿De dónde sale?</summary>
+              <p>
+                {(proposal.simulation.price as EditorPrice).reason ??
+                  (proposal.simulation.price as EditorPrice).source}
+              </p>
+              <p>
+                Operaciones del registro sobre el diseño actual; diferencia exacta de ventas
+                calculada por el motor. Se conserva la cantidad de la posición.
+              </p>
+            </details>
+            {!proposal.simulation.valid && (
+              <p role="alert">
+                El motor bloquea la propuesta. Revisa las medidas y la autoridad de la serie antes
+                de aplicar.
+              </p>
+            )}
+            <button
+              type="button"
+              className="primary-action"
+              disabled={busy || !proposal.simulation.valid}
+              onClick={() => {
+                if (proposal.snapshot !== useCanvasStore.getState().inputs) return;
+                applyRegisteredOps(proposal.simulation.ops.map((op) => ({ ...op })));
+                setProposal(null);
+              }}
+            >
+              Aplicar propuesta
+            </button>
+            <button type="button" onClick={() => setProposal(null)}>
+              Descartar
+            </button>
+          </section>
+        )}
         {couplings.length > 0 && evaluation?.plan && planBox && planOpen && (
           <div className="plan-inset" role="complementary" aria-label={t("assembly.planView")}>
             <div className="plan-inset__header">
@@ -2705,7 +3288,26 @@ export function AssemblyEditor({
           )}
         </div>
       )}
-      <div className="assembly-side">
+      <div
+        className={`assembly-side${inspectorOpen ? " is-open" : ""}`}
+        ref={inspectorRef}
+        aria-label="Inspector contextual"
+      >
+        <header className="editor-inspector-header">
+          <h3>Inspector</h3>
+          <button
+            type="button"
+            aria-label="Cerrar inspector"
+            onClick={() => setInspectorOpen(false)}
+          >
+            ×
+          </button>
+        </header>
+        {isPending && (
+          <p className="editor-calculation-note" role="status">
+            Calculando las medidas de hoja y el kit. El dibujo conserva la última evaluación.
+          </p>
+        )}
         <div className="detail-levels" role="group" aria-label={t("assembly.detailLevels")}>
           {DETAIL_LEVELS.map(({ level, labelKey }) => (
             <button
@@ -2719,42 +3321,9 @@ export function AssemblyEditor({
             </button>
           ))}
         </div>
-        {issues.length > 0 && (
-          <ul className="assembly-issues" aria-label={t("assembly.issues")} ref={issuesListRef}>
-            {issues.map((issue, index) => (
-              <li key={`${issue.code}-${index}`}>
-                <button
-                  type="button"
-                  className={`issue-chip issue-chip--${issue.severity}`}
-                  onClick={() => {
-                    const target = issue.target;
-                    if (target.startsWith("module:") || target.startsWith("coupling:")) {
-                      select(target.slice(target.indexOf(":") + 1));
-                    }
-                  }}
-                >
-                  {issueText(issue, modules, couplings)}
-                </button>
-                <button
-                  type="button"
-                  className="issue-fix"
-                  title={t("assistant.fixWith")}
-                  onClick={() =>
-                    askAssistant(
-                      `${t("assistant.fixPrompt")} ${issueText(issue, modules, couplings)}`,
-                      true,
-                    )
-                  }
-                >
-                  {t("assistant.fixWith")}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
         {detail === "technical" ? (
           <TechnicalPanel
-            evaluation={evaluation}
+            evaluation={currentEvaluation}
             options={options}
             moduleId={selectedBayModule?.id ?? selectedModule?.id}
             bayId={selectedBayNode && selectedBayModule ? selectedBayNode.id : null}
@@ -2848,10 +3417,12 @@ export function AssemblyEditor({
           )
         ) : selectedModule ? (
           <ModuleInspector
+            organizationId={organizationId}
+            color={inputs.color}
             onMountingChanged={onChanged}
             onOpeningPreview={setOpeningPreviewProduct}
             options={options}
-            evaluation={evaluation}
+            evaluation={currentEvaluation}
             module={selectedModule}
             product={product}
             members={members}
@@ -2872,7 +3443,7 @@ export function AssemblyEditor({
           <BayInspector
             onOpeningPreview={setOpeningPreviewProduct}
             options={options}
-            evaluation={evaluation}
+            evaluation={currentEvaluation}
             module={selectedBayModule}
             bay={selectedBayNode}
             product={product}
@@ -2922,7 +3493,12 @@ export function AssemblyEditor({
           </section>
         )}
         {product && (
-          <div ref={assistantSectionRef}>
+          <details
+            open={assistantOpen}
+            onToggle={(event) => setAssistantOpen(event.currentTarget.open)}
+            className="editor-assistant"
+          >
+            <summary>Asistente y alternativas</summary>
             <AssistantPanel
               organizationId={organizationId}
               positionId={positionId}
@@ -2955,7 +3531,7 @@ export function AssemblyEditor({
                 .sort()
                 .join("|")}
             />
-          </div>
+          </details>
         )}
       </div>
       <footer className="assembly-statusbar">
@@ -2980,6 +3556,7 @@ export function AssemblyEditor({
             type="button"
             className="assembly-statusbar__issues"
             onClick={() => {
+              onOpenIssues?.();
               const first = issues[0];
               if (
                 first &&

@@ -287,3 +287,19 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   Es un límite de búsqueda, no una pérdida del historial. Las etiquetas de bulto
   conservan su historia; las de corte exigen un plan vigente y muestran su causa
   y la acción de optimizar cuando no lo hay.
+
+## P04 · lienzo y venta indicativa (2026-10-08)
+
+- El precio de franja es neto indicativo sin descuento, con fuente y enlace
+  a las reglas comerciales configurables existentes. Cantidad/multiplicación
+  y redondeo pertenecen al motor. No se crea autoridad comercial aplicada.
+  Una consulta sin operaciones solo evalúa y conserva diseño/fila persistida.
+- El precio se sustituye por estado explícito durante cálculo; sin autoridad
+  muestra «Sin dato» con causa. Las cifras viejas no autorizan guardar.
+- Biblioteca ofrece únicamente recetas compatibles con serie, apertura,
+  perfiles y acopladores del catálogo. Geometría/glifos siguen en P05.
+- Desde 1024 se edita; debajo se lee, con navegación, cotas/precio y Centrar.
+  Es el contrato de interacción de P04, no una preferencia comercial.
+  La densidad contextual conserva los controles de taller existentes.
+- Tres paños se propone con registro tipado: fantasma/Δ antes del clic,
+  deshacer después. Cambiar diseño o cantidad invalida una respuesta tardía.

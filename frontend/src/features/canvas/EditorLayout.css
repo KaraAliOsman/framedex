@@ -1,0 +1,488 @@
+/* CAD workspace: the drawing owns the available area; the tree is a flyout. */
+.assembly-editor,
+.assembly-editor--tree-closed {
+  display: grid;
+  position: relative;
+  height: calc(100dvh - 110px);
+  min-height: 0;
+  grid-template-columns: 112px minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(0, 1fr) 28px;
+  grid-template-areas: "tools canvas side" "tools status side";
+  gap: var(--space-2);
+  min-width: 0;
+}
+.assembly-canvas {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: none;
+  background: var(--bg-app);
+}
+.assembly-view-choices {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: var(--z-rail);
+  background: var(--surface-panel);
+  padding: var(--space-1);
+  border: 1px solid var(--border-default);
+}
+.assembly-editor .canvas-viewport {
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background: var(--surface-sheet);
+  border-radius: var(--r-0);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+.assembly-tools {
+  align-items: stretch;
+  border-radius: var(--r-0);
+  padding: var(--space-1);
+  gap: var(--space-1);
+}
+.assembly-tools .tool-button {
+  width: 100%;
+  min-height: 44px;
+  height: auto;
+  justify-content: flex-start;
+  gap: var(--space-1);
+  font-size: var(--type-label);
+  text-align: left;
+  padding: var(--space-1);
+}
+.tool-button .tool-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+.tool-button kbd {
+  margin-left: auto;
+  font-size: var(--type-micro);
+}
+.assembly-tools__divider {
+  width: 100%;
+}
+.assembly-tree {
+  position: absolute;
+  grid-area: auto;
+  left: 120px;
+  bottom: 32px;
+  top: auto;
+  width: 280px;
+  max-width: calc(100% - 128px);
+  max-height: 60%;
+  z-index: var(--z-popover);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  overflow: auto;
+  box-shadow: var(--e2);
+}
+.assembly-side {
+  background: var(--surface-panel);
+  border-left: 1px solid var(--border-default);
+  gap: var(--space-2);
+}
+.editor-inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-3) 0;
+}
+.editor-inspector-header h3,
+.position-editor .editor-inspector-header h3 {
+  margin: 0;
+  font-size: var(--type-title-m);
+}
+.editor-inspector-header button {
+  display: none;
+}
+.assembly-inspector {
+  border: none;
+  background: transparent;
+  padding: var(--space-2) var(--space-3);
+  gap: var(--space-2);
+}
+.assembly-inspector__header h4 {
+  font-size: var(--type-title-m);
+}
+.assembly-inspector .inspector-section {
+  display: block;
+}
+.inspector-section > summary {
+  font-size: var(--type-label);
+  padding-block: var(--space-1);
+}
+.position-editor .assembly-inspector .assembly-field {
+  display: flex;
+  min-height: 28px;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-block: var(--space-1);
+}
+.assembly-inspector .assembly-field > span:first-child {
+  font-size: var(--type-dense);
+}
+.position-editor .assembly-inspector .assembly-field input {
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  min-height: 28px;
+  height: 28px;
+  padding: var(--space-1) 32px var(--space-1) var(--space-1);
+  width: 112px;
+  max-width: 100%;
+}
+.position-editor .assembly-inspector .assembly-field select {
+  box-sizing: border-box;
+  max-width: 196px;
+  width: 196px;
+  min-height: 28px;
+  height: 28px;
+  padding: var(--space-1);
+  font-size: var(--type-dense);
+}
+.editor-opening-trigger,
+.position-editor .editor-opening-trigger {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--space-1);
+  text-align: left;
+  font-size: var(--type-dense);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2);
+}
+.editor-opening-trigger > span:first-child {
+  color: var(--text-secondary);
+}
+.assembly-inspector > .inspector-section:has(.editor-opening-trigger) > summary,
+.assembly-inspector > .inspector-section:has(.glass-selector--compact) > summary {
+  display: none;
+}
+.assembly-inspector .ui-popover-anchor {
+  display: block;
+  width: 100%;
+}
+.position-editor .assembly-inspector .editor-opening-trigger {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  width: 100%;
+  min-height: 28px;
+  padding: var(--space-1);
+}
+.editor-opening-trigger > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.assembly-inspector .glass-selector--compact .glass-help {
+  margin: var(--space-1) 0;
+  font-size: var(--type-micro);
+}
+.assembly-inspector .glass-selector--compact > details > summary {
+  font-size: var(--type-micro);
+  margin-block: var(--space-1);
+}
+.editor-basic-dimensions {
+  display: grid;
+  gap: var(--space-1);
+}
+.editor-leaf-facts {
+  margin: 0;
+  font-size: var(--type-dense);
+}
+.editor-leaf-facts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-height: 28px;
+}
+.editor-leaf-facts dt {
+  color: var(--text-secondary);
+}
+.editor-leaf-facts dd,
+.position-editor .editor-leaf-facts dd {
+  margin: 0;
+  text-align: right;
+  max-width: 196px;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+}
+.editor-leaf-facts__source {
+  margin-block: var(--space-1);
+  font-size: var(--type-micro);
+}
+.editor-calculation-note {
+  margin: 0;
+  padding-inline: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--type-dense);
+}
+.assembly-inspector .assembly-unit {
+  font-size: var(--type-micro);
+  right: var(--space-2);
+}
+.position-editor .assembly-inspector .glass-field {
+  margin-block: var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.position-editor .assembly-inspector .glass-field select {
+  width: 196px;
+  min-width: 0;
+  height: 28px;
+  font-size: var(--type-dense);
+  padding: var(--space-1);
+}
+.position-editor .assembly-inspector .glass-selector--compact {
+  margin: 0;
+  border: 0;
+}
+.position-editor .detail-levels__btn {
+  padding: var(--space-1);
+  font-size: var(--type-dense);
+}
+.assembly-side .detail-levels {
+  padding-inline: var(--space-3);
+}
+.editor-flyout {
+  position: absolute;
+  left: 120px;
+  top: var(--space-2);
+  z-index: var(--z-popover);
+  width: min(520px, calc(100% - 136px));
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  padding: var(--space-3);
+  box-shadow: var(--e2);
+}
+.editor-flyout > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.editor-flyout h3,
+.editor-proposal h3 {
+  font-size: var(--type-title-m);
+  margin: 0;
+}
+.editor-flyout > header button {
+  min-width: 32px;
+  height: 32px;
+}
+.editor-missing {
+  left: auto;
+  right: var(--space-2);
+}
+.editor-shortcuts {
+  margin: 0;
+}
+.editor-shortcuts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-1);
+}
+.editor-shortcuts dd {
+  margin: 0;
+}
+.editor-library .starter-gallery {
+  display: block;
+  overflow: visible;
+  padding: 0;
+}
+.starter-family h4 {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--type-label);
+  text-transform: uppercase;
+}
+.starter-family > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.editor-library .starter-card {
+  min-width: 0;
+  width: 100%;
+}
+.editor-library .starter-thumb {
+  height: 96px;
+}
+.editor-library .starter-thumb [role="button"],
+.editor-library .starter-thumb foreignObject {
+  display: none;
+}
+.editor-library .starter-search input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.editor-assistant {
+  padding: var(--space-3);
+  border-top: 1px solid var(--border-default);
+}
+.editor-assistant > summary {
+  cursor: pointer;
+}
+.editor-operation-message {
+  position: absolute;
+  bottom: 32px;
+  left: 128px;
+  z-index: var(--z-rail);
+  max-width: calc(100% - 464px);
+  padding: var(--space-2);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+}
+.editor-proposal {
+  position: absolute;
+  left: var(--space-3);
+  bottom: 56px;
+  width: min(400px, calc(100% - 32px));
+  box-sizing: border-box;
+  z-index: var(--z-rail);
+  padding: var(--space-3);
+  background: var(--surface-panel);
+  border: 1px solid var(--mark);
+}
+.editor-proposal p {
+  margin-block: var(--space-2);
+}
+.editor-proposal-price {
+  font-family: var(--font-mono);
+}
+.editor-proposal button {
+  margin-right: var(--space-2);
+}
+.command-ghost :is(path, polyline, line, rect) {
+  fill: none;
+  stroke: var(--mark);
+  stroke-dasharray: 8 5;
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+.command-ghost text {
+  fill: var(--state-person-ink);
+}
+.viewport-island {
+  background: var(--surface-panel);
+}
+.viewport-button--fit {
+  gap: var(--space-1);
+}
+.assembly-statusbar {
+  min-width: 0;
+  font-size: var(--type-micro);
+}
+.assembly-statusbar__dims {
+  white-space: nowrap;
+}
+.assembly-statusbar .assembly-status {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: var(--type-micro);
+}
+.plan-inset {
+  width: min(240px, 30%);
+  height: 120px;
+  right: var(--space-3);
+  bottom: 48px;
+  box-shadow: var(--e2);
+}
+.model3d-inset {
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100% - 80px);
+}
+.assembly-side .glass-selector {
+  padding: 0;
+}
+.assembly-side .hardware-panel {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.assembly-side .hardware-panel h5 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--type-label);
+}
+.assembly-side .hardware-class {
+  margin-block: var(--space-1);
+}
+.assembly-side .hardware-panel p {
+  margin-block: var(--space-1);
+  font-size: var(--type-dense);
+}
+@media (max-width: 1279px) {
+  .assembly-editor,
+  .assembly-editor--tree-closed {
+    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) 28px;
+    grid-template-areas: "tools canvas" "tools status";
+  }
+  .assembly-tools .tool-button {
+    justify-content: center;
+  }
+  .assembly-tools .tool-button :is(span, kbd) {
+    display: none;
+  }
+  .assembly-side {
+    display: none;
+  }
+  .assembly-side.is-open {
+    display: flex;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 320px;
+    z-index: var(--z-drawer);
+    box-shadow: var(--e2);
+  }
+  .editor-inspector-header button {
+    display: block;
+  }
+  .editor-flyout {
+    left: 56px;
+    width: min(520px, calc(100% - 64px));
+  }
+  .editor-missing {
+    left: auto;
+    right: var(--space-2);
+  }
+  .assembly-tree {
+    left: 56px;
+  }
+  .editor-operation-message {
+    left: 64px;
+    max-width: calc(100% - 80px);
+  }
+}
+@media (max-width: 1023px) {
+  .assembly-editor,
+  .assembly-editor--tree-closed {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "canvas" "status";
+  }
+  .assembly-tools {
+    display: none;
+  }
+  .editor-library {
+    display: none;
+  }
+  .assembly-canvas .model3d-toggle {
+    display: none;
+  }
+}

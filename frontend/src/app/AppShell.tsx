@@ -3,7 +3,7 @@ import { AiModeBadge } from "../features/assistant/AiModeBadge";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { t, type TranslationKey } from "../i18n/es-CL";
-import { Wordmark } from "../brand/Brand";
+import { BrandMark, Wordmark } from "../brand/Brand";
 
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { MOD_K_HINT } from "../platform";
@@ -219,7 +219,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
           />
           <aside className="app-rail">
             <div className="app-rail__brand">
-              <Wordmark width={120} />
+              {isStudio ? <BrandMark size={24} title="DEKOPEN" /> : <Wordmark width={120} />}
             </div>
             <OrgSwitcher />
             <nav className="app-rail__nav" aria-label={t("shell.navigation")}>

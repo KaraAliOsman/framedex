@@ -25,6 +25,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Editor centrado en el lienzo](product/editor-canvas.md) — operaciones, precio indicativo, interacción y límites por tamaño.
+
 - [Design system](product/design-system.md) — constitution tokens, technical primitives, exact presentation and regression guardrails.
 - [Human addresses](product/human-addresses.md) — immutable tenant codes, physical label reconciliation, QR and exact presentation.
 - [Brand and sender identity](product/brand-identity.md) — profile-section signature, sealed manufacturer identity, onboarding and human-controlled mail recovery.

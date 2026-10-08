@@ -330,13 +330,14 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
+  await page.locator(".editor-system-chip").click();
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
     label: demoSeriesLabel,
   });
   // The catalog recipe determines thickness; the inspector selects one product.
-  const glass = page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]');
-  await glass.click();
-  await expect(glass).toHaveAttribute("aria-pressed", "true");
+  const glass = page.getByRole("combobox", { name: "Vidrio", exact: true });
+  await glass.selectOption("DEMO_60-VIDRIO-4");
+  await expect(glass).toHaveValue("DEMO_60-VIDRIO-4");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
@@ -530,20 +531,27 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   const compositeProject = (await (await compositeCreation).json()) as { id: string };
   await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
+  await page.locator(".editor-system-chip").click();
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
     label: demoSeriesLabel,
   });
-  await page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]').click();
-  await expect(page.locator('[data-glass-sku="DEMO_60-VIDRIO-4"]')).toHaveAttribute(
-    "aria-pressed",
-    "true",
+  await page
+    .getByRole("combobox", { name: "Vidrio", exact: true })
+    .selectOption("DEMO_60-VIDRIO-4");
+  await expect(page.getByRole("combobox", { name: "Vidrio", exact: true })).toHaveValue(
+    "DEMO_60-VIDRIO-4",
   );
+  await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   const dividedCalculation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
-      new URL(response.url()).pathname === "/api/v1/projects/operations/simulate/",
+      new URL(response.url()).pathname === "/api/v1/projects/operations/simulate/" &&
+      // The live price uses the same read-only endpoint without an edit.
+      (response.request().postDataJSON() as { ops: unknown[] }).ops.length > 0,
   );
-  await page.getByRole("button", { name: "Dividir en vertical", exact: true }).click();
+  await page.getByRole("button", { name: "Dividir vertical", exact: true }).click();
+  // In divide mode the module owns hit-testing; leaf selection is suspended.
+  await page.locator(".canvas-sheet .front-module").first().click();
   const dividedResponse = await dividedCalculation;
   expect(dividedResponse.status()).toBe(200);
   expect((await dividedResponse.json()).valid).toBe(true);

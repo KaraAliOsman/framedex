@@ -35059,6 +35059,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DesignOperationRequest'
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          default: 1
       required:
       - color
       - ops

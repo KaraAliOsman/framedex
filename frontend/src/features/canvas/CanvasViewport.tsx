@@ -24,8 +24,8 @@ import {
 } from "./viewport";
 
 /** Canvas viewport: a pannable/zoomable drawing sheet. Content renders in mm
- * coordinates inside a `<g transform>` the viewport owns. Wheel pans,
- * Ctrl/⌘+wheel zooms to the cursor, space or middle-drag pans, Shift+1 fits,
+ * coordinates inside a `<g transform>` the viewport owns. Wheel zooms to
+ * the cursor, space or middle-drag pans, Shift+1 fits,
  * Shift+2 zooms to the selection, Shift+0 restores 100%. A floating island
  * bottom-left carries the same controls; the status readout sits bottom-right. */
 
@@ -42,12 +42,15 @@ export function useViewportScale(): number {
 
 export function CanvasViewport({
   contentBox,
+  visibleBox,
   selectionBox,
   status,
   contentEpoch = 0,
   children,
 }: {
   contentBox: Box;
+  /** Physical drawing bounds, excluding the dimension gutters used for fit. */
+  visibleBox?: Box;
   selectionBox: Box | null;
   status: string;
   /** Bumped by the caller when the content is REPLACED wholesale (starter
@@ -56,6 +59,7 @@ export function CanvasViewport({
   contentEpoch?: number;
   children: ReactNode;
 }): JSX.Element {
+  const panBox = visibleBox ?? contentBox;
   const hostRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   // Pre-fit render: content at 100% near the origin — the first real measure
@@ -70,6 +74,7 @@ export function CanvasViewport({
   const [panning, setPanning] = useState(false);
   const fittedRef = useRef(false);
   const spaceRef = useRef(false);
+  const suppressClickRef = useRef(false);
   const dragRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   // Auto-fit bookkeeping: once the user manually pans/zooms we stop following
   // contentBox changes (the async plan arriving later must not jump the view).
@@ -151,23 +156,31 @@ export function CanvasViewport({
           target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT" ||
           target.isContentEditable);
-      if (event.code === "Space" && !editing) spaceRef.current = true;
+      if (event.code === "Space" && !editing) {
+        event.preventDefault();
+        spaceRef.current = true;
+      }
     };
     const up = (event: KeyboardEvent) => {
       if (event.code === "Space") spaceRef.current = false;
     };
+    const blur = () => {
+      spaceRef.current = false;
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
     };
   }, []);
 
   // Wheel handler is bound once — latest box/size reach it through refs.
-  const boxRef = useRef(contentBox);
+  const boxRef = useRef(panBox);
   const sizeRef = useRef(size);
-  boxRef.current = contentBox;
+  boxRef.current = panBox;
   sizeRef.current = size;
 
   // Native wheel listener: React's delegated wheel events are passive and
@@ -179,24 +192,20 @@ export function CanvasViewport({
       event.preventDefault();
       userInteractedRef.current = true;
       const rect = host.getBoundingClientRect();
-      if (event.ctrlKey || event.metaKey) {
+      if (!event.shiftKey) {
         const factor = Math.pow(1.0015, -event.deltaY);
         setView((current) =>
-          zoomAt(current, event.clientX - rect.left, event.clientY - rect.top, factor),
-        );
-      } else if (event.shiftKey) {
-        setView((current) =>
           clampViewToBox(
-            panBy(current, -event.deltaY, 0),
+            zoomAt(current, event.clientX - rect.left, event.clientY - rect.top, factor),
             boxRef.current,
             sizeRef.current.w,
             sizeRef.current.h,
           ),
         );
-      } else {
+      } else if (event.shiftKey) {
         setView((current) =>
           clampViewToBox(
-            panBy(current, -event.deltaX, -event.deltaY),
+            panBy(current, -event.deltaY, 0),
             boxRef.current,
             sizeRef.current.w,
             sizeRef.current.h,
@@ -209,12 +218,16 @@ export function CanvasViewport({
   }, []);
 
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    suppressClickRef.current = false;
+    if ((event.target as Element).closest(".viewport-island, input, button")) return;
     if (event.button === 1 || (event.button === 0 && spaceRef.current)) {
       event.preventDefault();
+      event.stopPropagation();
       userInteractedRef.current = true;
       dragRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
       event.currentTarget.setPointerCapture(event.pointerId);
       setPanning(true);
+      suppressClickRef.current = true;
     }
   }
 
@@ -224,7 +237,7 @@ export function CanvasViewport({
     setView((current) =>
       clampViewToBox(
         panBy(current, event.clientX - drag.x, event.clientY - drag.y),
-        contentBox,
+        panBox,
         size.w,
         size.h,
       ),
@@ -241,6 +254,9 @@ export function CanvasViewport({
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.defaultPrevented) return;
+    if ((event.target as Element).closest("input, textarea, select, [contenteditable='true']"))
+      return;
     // event.code pins shortcuts to physical keys — `key` varies across
     // keyboard layouts (Shift+2 is "@" in US, `"` in es-CL).
     if (event.shiftKey && event.code === "Digit1") {
@@ -255,32 +271,54 @@ export function CanvasViewport({
     } else if (event.shiftKey && event.code === "Digit0") {
       event.preventDefault();
       userInteractedRef.current = true;
-      setView((current) => zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale));
+      setView((current) =>
+        clampViewToBox(
+          zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale),
+          panBox,
+          size.w,
+          size.h,
+        ),
+      );
     } else if (event.key === "ArrowLeft") {
       userInteractedRef.current = true;
-      setView((current) => clampViewToBox(panBy(current, PAN_STEP, 0), contentBox, size.w, size.h));
+      setView((current) => clampViewToBox(panBy(current, PAN_STEP, 0), panBox, size.w, size.h));
     } else if (event.key === "ArrowRight") {
       userInteractedRef.current = true;
-      setView((current) =>
-        clampViewToBox(panBy(current, -PAN_STEP, 0), contentBox, size.w, size.h),
-      );
+      setView((current) => clampViewToBox(panBy(current, -PAN_STEP, 0), panBox, size.w, size.h));
     } else if (event.key === "ArrowUp") {
       userInteractedRef.current = true;
-      setView((current) => clampViewToBox(panBy(current, 0, PAN_STEP), contentBox, size.w, size.h));
+      setView((current) => clampViewToBox(panBy(current, 0, PAN_STEP), panBox, size.w, size.h));
     } else if (event.key === "ArrowDown") {
       userInteractedRef.current = true;
-      setView((current) =>
-        clampViewToBox(panBy(current, 0, -PAN_STEP), contentBox, size.w, size.h),
-      );
+      setView((current) => clampViewToBox(panBy(current, 0, -PAN_STEP), panBox, size.w, size.h));
     }
   }
+
+  useEffect(() => {
+    const onFit = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest("input, textarea, select, [contenteditable='true']")
+      )
+        return;
+      if (event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        fit();
+      }
+    };
+    window.addEventListener("keydown", onFit);
+    return () => window.removeEventListener("keydown", onFit);
+  }, [fit]);
 
   const zoomStep = useCallback(
     (factor: number) => {
       userInteractedRef.current = true;
-      setView((current) => zoomAt(current, size.w / 2, size.h / 2, factor));
+      setView((current) =>
+        clampViewToBox(zoomAt(current, size.w / 2, size.h / 2, factor), panBox, size.w, size.h),
+      );
     },
-    [size.w, size.h],
+    [size.w, size.h, panBox],
   );
 
   const percent = Math.round((view.scale / SCALE_100) * 100);
@@ -290,7 +328,14 @@ export function CanvasViewport({
         label: `${t("canvas.zoomActual")} (100%)`,
         run: () => {
           userInteractedRef.current = true;
-          setView((current) => zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale));
+          setView((current) =>
+            clampViewToBox(
+              zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale),
+              panBox,
+              size.w,
+              size.h,
+            ),
+          );
         },
         disabled: false,
       },
@@ -310,7 +355,7 @@ export function CanvasViewport({
         disabled: !selectionBox,
       },
     ],
-    [fit, selectionBox, size.w, size.h],
+    [fit, selectionBox, size.w, size.h, panBox],
   );
 
   return (
@@ -320,10 +365,18 @@ export function CanvasViewport({
       role="application"
       aria-label={t("assembly.frontView")}
       tabIndex={0}
-      onPointerDown={onPointerDown}
+      onPointerDownCapture={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onLostPointerCapture={endDrag}
+      onClickCapture={(event) => {
+        if (suppressClickRef.current) {
+          event.preventDefault();
+          event.stopPropagation();
+          suppressClickRef.current = false;
+        }
+      }}
       onKeyDown={onKeyDown}
     >
       {/* role="group" keeps the interactive member nodes in the AT tree —
@@ -366,13 +419,12 @@ export function CanvasViewport({
         >
           +
         </button>
-        {/* Fit lives on the island, not only in the % menu — after wheel-pan
-         * the product can sit fully off-canvas and Encajar is the recovery. */}
+        {/* Centrar stays on the island for direct recovery after bounded pan/zoom. */}
         <button
           type="button"
-          className="viewport-button"
-          aria-label={t("canvas.fit")}
-          title={t("canvas.fit")}
+          className="viewport-button viewport-button--fit"
+          aria-label={`Centrar · ${t("canvas.fit")}`}
+          title="Centrar · F / Mayús+1"
           onClick={fit}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
@@ -383,6 +435,7 @@ export function CanvasViewport({
               strokeWidth="1.4"
             />
           </svg>
+          <span>Centrar</span>
         </button>
         {menuOpen && (
           <div className="viewport-menu">
