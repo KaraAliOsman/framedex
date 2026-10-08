@@ -22,6 +22,8 @@ exigen revisión y confirmación, los internos requieren activación del dueño.
 | Magic Link y MFA | PASA. UI → Mailpit → enlace de un uso → callback → organización. MFA real a cuatro tamaños/ambos temas, seguido de verificación por UI; no se capturan QR, secreto ni código. |
 | Marca del fabricante | PASA. Color inválido se rechaza en español; blanco activa fallback AA; logo y color se guardan por UI. PDF Carta real sin palabra DEKOPEN; portal sin marca de plataforma cuando su pie está oculto. |
 | Cotización y pago | PASA. Clic deshabilitado hasta confirmar, mensajes reales en Mailpit con cotización/comprobante PDF y marca del emisor; `correo-real.json`. |
+| Revisión de PDF e intención de envío | PASA. Preparación con job real de la emisión exacta; SHA del PDF revisado y bytes adjuntos idénticos. Respuesta perdida después del commit y recarga conservan una sola operación; `revision-correo.json`. |
+| Enlace revocado antes de SMTP | PASA. Falla sin transportar; la bandeja abre la cotización y exige otra revisión/confirmación para un registro y enlace nuevos. El correo anterior conserva todos sus campos; `revision-correo.json`. |
 | Aprobación y OT bloqueada | PASA. Decisión desde portal móvil y transición real BLOCK generan avisos internos; UNBLOCK devuelve la estación al estado previo. |
 | Entrega incierta | PASA. SMTP local sin respuesta deja entrega sin confirmar; el worker no repite. UI exige comprobación humana, registra segundo intento y entrega en Mailpit. |
 | Etiqueta de taller e impresión | PASA. B a 72 px en etiqueta clara/oscura y PDF real; inspección del raster impreso. |
@@ -47,6 +49,10 @@ Mailpit; no se presentan imágenes CID rotas como verificación del correo.
 - `npm --prefix frontend run ux:capture` produjo 16 registros reales para inicio
   y login: `captura/inicio/report.json` y `captura/login/report.json`, sin hallazgos.
   Se corrigió la selección de rutas del ensayo inicial que producía cero registros.
+- 16 vistas nuevas de PDF pendiente/revisable: `recorrido/revision-matriz.json`,
+  cuatro tamaños y ambos temas, sin hallazgos ni desborde añadido. La ausencia
+  de metadata en el primer caso es controlada; preparación, PDF, envío,
+  respuesta perdida tras commit y revocación se probaron con operaciones reales.
 - Evidencia anterior en `antes/`: acceso, onboarding y ruta ausente. Antes la
   ruta ausente redirigía al panel; la nueva hoja explica y permite volver.
 
@@ -57,10 +63,13 @@ de correo se declaran; complementan recorridos y permisos reales, sin simular
 
 ## Gates
 
-`make lint typecheck test build` PASA: 744 pruebas del motor (+2 xfail), 1.267
-backend y 827 frontend. OpenAPI/orval reproducibles, goldens sin cambios y prueba
+Tras la revisión: `make lint typecheck test build` PASA: 744 pruebas del motor
+(+2 xfail), 1.272 backend y 830 frontend. Las regresiones focalizadas pasan 23
+unitarios backend, siete integraciones reales y tres casos nuevos del frontend.
+OpenAPI/orval reproducibles, goldens sin cambios y prueba
 del build verifica manifest, entrada y dimensiones de ambas familias de íconos.
-`make test-db` PASA: 80 archivos / 1.173 pgTAP, 408 integraciones y 11 E2E reales.
+`make test-db` PASA tras revisión: 80 archivos / 1.173 pgTAP, 410 integraciones
+y 11 E2E reales.
 El esquema limpio y los upgrades poblados pasan en PostgreSQL 16. El nuevo
 verificador P25 compara identidad, tres tablas completas, snapshots, hashes y
 precios históricos byte a byte; conserva los defaults explícitos sin actualizar
@@ -86,6 +95,11 @@ explícita la recuperación de entrega incierta. La revisión de contraste corri
 deshabilitados del onboarding y enlaces de inicio; se retiraron el estilo muerto
 de la marca textual, radios de 8 px y sombras ajenas a la escala en capturas de
 inicio. El detector pasa de nuevo. La evidencia final del correo verifica CID.
+
+La revisión del PR añade el enlace al PDF exacto antes de la confirmación,
+conserva la intención al perder una respuesta y permite un correo nuevo cuando
+el token anterior se revoca. Se prueba el destinatario interno válido/vacío y
+las cuatro combinaciones de TLS; SSL directo no inicia un segundo STARTTLS.
 
 F10: pared y tabique reconocibles en 16 px, 160 px y etiqueta impresa.
 La capacidad que sube el techo conecta una primera ventana calculada con su

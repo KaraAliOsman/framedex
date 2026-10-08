@@ -687,3 +687,27 @@ verificó por SHA; no cambió el helper estricto de Magic Link ni ningún check.
 La auditoría revisa 394 archivos publicables y 250 PNG sin secretos; las imágenes
 conservan píxeles. Se redujo el formateo ajeno al alcance verificando igualdad
 del AST completo de los módulos. CI y squash se registrarán después de pasar.
+
+## 2026-10-08 — P25 · revisión de correo
+
+La vista ofrece el PDF sellado antes de autorizar; su SHA y los bytes adjuntos
+recibidos en Mailpit son idénticos. La preparación usa el job de la emisión
+exacta. Una respuesta perdida tras commit y una recarga conservan una intención
+y un solo registro. Revocar el enlace antes del transporte produce FAILED sin
+SMTP; la acción de la bandeja abre la cotización y requiere otra confirmación
+para un registro y enlace nuevos. El correo anterior queda idéntico. Dieciséis
+vistas de PDF pendiente/revisable pasan en cuatro tamaños y ambos temas.
+SSL directo no negocia STARTTLS; cuatro variantes tienen regresión. La alerta
+de destinatarios se contrastó con código e integración válida/vacía y era un
+falso positivo. Cuatro gates locales pasan: 744 motor (+2 xfail), 1.272 backend
+y 830 frontend; 410 integraciones y 11 E2E también pasan. Los upgrades poblados,
+CI del commit corregido y squash se registrarán cuando terminen.
+
+## 2026-10-08 — P25 · Database Gate posterior a revisión
+
+El gate completo corregido pasa 80 archivos / 1.173 pgTAP, 410 integraciones,
+11 E2E reales y los upgrades poblados PG16. La identidad del emisor, snapshots,
+hashes y precios históricos quedan byte idénticos. El scratch se limpió;
+Supabase del fixture está detenido con respaldo y la aplicación propia está
+detenida. La auditoría de 41 archivos de revisión y 272 PNG detecta cero
+secretos; no cambia píxeles. El CI del nuevo commit y squash siguen pendientes.

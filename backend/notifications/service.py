@@ -143,6 +143,11 @@ def quote_source(*, org_id: UUID, project_id: UUID, lock=False) -> dict:
                 "quote_link_stale",
                 detail="La revisión emitida fue reemplazada. Emite la revisión vigente antes de enviar.",
             )
+        documents = rows(
+            "SELECT storage_object_key,file_sha256 FROM public.document_artifacts "
+            "WHERE org_id=%s AND project_version_id=%s AND document_type='DOC-01' AND format='PDF'",
+            [str(org_id), str(version["id"])],
+        )
     snapshot = decoded(version["snapshot_json"])
     project = snapshot["project"]
     return {
@@ -151,6 +156,8 @@ def quote_source(*, org_id: UUID, project_id: UUID, lock=False) -> dict:
         "organization": snapshot.get("organization", {}),
         "reference": f"{project['code']} · {version['revision_code']}",
         "recipient": project.get("client_email") or "",
+        "document": documents[0] if documents else None,
+        "document_name": "cotizacion.pdf",
         "body": f"{project['client_name']}:\nSu cotización de {project['name']} está disponible para revisión. Puede consultar el documento adjunto y responder en el portal.",
     }
 
@@ -179,6 +186,8 @@ def payment_source(*, org_id: UUID, project_id: UUID, payment_id: UUID) -> dict:
         "reference": f"{project['code']} · {receipt['receipt_code']}",
         "recipient": project.get("client_email") or "",
         "receipt": receipt,
+        "document": receipt,
+        "document_name": "comprobante.pdf",
         "body": f"{project['client_name']}:\nSe registró su pago por {_money(payload['payment']['amount'], project['currency'])}. Se adjunta el comprobante emitido al registrar el pago.",
     }
 
@@ -191,12 +200,18 @@ def preview(source: dict) -> dict:
         body=source["body"],
         logo=_logo(source["organization"]),
     )
+    document = source["document"]
     return {
         "source_id": source["id"],
         "recipient": source["recipient"],
         "reference": source["reference"],
         "html": templates.preview_html(message),
         "provider": settings.MAIL_PROVIDER,
+        "document_url": SupabaseDocumentStorage().signed_url(str(document["storage_object_key"]))
+        if document
+        else None,
+        "document_sha256": str(document["file_sha256"]) if document else None,
+        "document_name": source["document_name"],
     }
 
 
@@ -215,6 +230,41 @@ def _validate_target(source: dict, data: dict):
             detail="La emisión no tiene correo de cliente. Corrígelo y emite una nueva revisión.",
         )
     validate_email(source["recipient"])
+    if not source["document"]:
+        raise DocumentaryError(
+            "mail_document_required",
+            detail="Prepara y revisa el PDF sellado de esta emisión antes de enviar el correo.",
+        )
+    if data["expected_document_sha256"] != str(source["document"]["file_sha256"]):
+        raise DocumentaryError(
+            "mail_preview_stale",
+            detail="El documento no coincide con la vista revisada. Abre el PDF de nuevo antes de enviar.",
+        )
+
+
+def _existing_send(*, org_id: UUID, project_id: UUID, event_key: str, source: dict):
+    """Retry one confirmed intent, never silently reuse another send's payload."""
+    with mail_backend():
+        rows("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))", [f"{org_id}:{event_key}"])
+        found = rows(
+            "SELECT * FROM public.mail_outbox WHERE org_id=%s AND event_key=%s",
+            [str(org_id), event_key],
+        )
+    if not found:
+        return None
+    row = found[0]
+    message = crypto.open_message(row["content_ciphertext"], org_id=org_id, mail_id=row["id"])
+    if (
+        str(row["project_id"]) != str(project_id)
+        or row["recipient"] != source["recipient"]
+        or message.get("source_id") != source["id"]
+        or message.get("document_sha256") != str(source["document"]["file_sha256"])
+    ):
+        raise DocumentaryError(
+            "mail_operation_key_conflict",
+            detail="Este intento pertenece a otro envío. Cierra la vista y revisa un correo nuevo.",
+        )
+    return public(row)
 
 
 def send_quote(*, org_id: UUID, project_id: UUID, actor_id: UUID, role: str, data: dict) -> dict:
@@ -223,13 +273,12 @@ def send_quote(*, org_id: UUID, project_id: UUID, actor_id: UUID, role: str, dat
     with transaction.atomic():
         source = quote_source(org_id=org_id, project_id=project_id, lock=True)
         _validate_target(source, data)
-        with documentary_backend():
-            existing = rows(
-                "SELECT " + _PUBLIC + " FROM public.mail_outbox WHERE org_id=%s AND event_key=%s",
-                [str(org_id), f"quote:{source['id']}"],
-            )
+        event_key = f"quote:{data['operation_key']}"
+        existing = _existing_send(
+            org_id=org_id, project_id=project_id, event_key=event_key, source=source
+        )
         if existing:
-            return public(existing[0])
+            return existing
         link = share_quote(org_id=org_id, project_id=project_id, actor_id=actor_id, role=role)
         url = f"{settings.DEKOPEN_PUBLIC_APP_URL}/cotizacion/{link['token']}"
         message = templates.render(
@@ -240,18 +289,15 @@ def send_quote(*, org_id: UUID, project_id: UUID, actor_id: UUID, role: str, dat
             action_url=url,
             logo=_logo(source["organization"]),
         )
-        with documentary_backend():
-            artifact = one(
-                "SELECT storage_object_key,file_sha256 FROM public.document_artifacts WHERE org_id=%s AND project_version_id=%s AND document_type='DOC-01' AND format='PDF'",
-                [str(org_id), source["id"]],
-            )
-        message["attachments"] = [_pdf_attachment(artifact, "cotizacion.pdf")]
+        message["attachments"] = [_pdf_attachment(source["document"], source["document_name"])]
+        message["source_id"] = source["id"]
+        message["document_sha256"] = str(source["document"]["file_sha256"])
         message["quote_token_hash"] = hashlib.sha256(str(link["token"]).encode()).hexdigest()
         message["version_id"] = source["id"]
         return seal_mail(
             org_id=org_id,
             actor_id=actor_id,
-            event_key=f"quote:{source['id']}",
+            event_key=event_key,
             kind="QUOTE",
             recipient=source["recipient"],
             message=message,
@@ -265,6 +311,12 @@ def send_payment(
     with transaction.atomic():
         source = payment_source(org_id=org_id, project_id=project_id, payment_id=payment_id)
         _validate_target(source, data)
+        event_key = f"payment:{data['operation_key']}"
+        existing = _existing_send(
+            org_id=org_id, project_id=project_id, event_key=event_key, source=source
+        )
+        if existing:
+            return existing
         message = templates.render(
             "PAYMENT",
             organization=source["organization"],
@@ -274,10 +326,12 @@ def send_payment(
         )
         message["attachments"] = [_pdf_attachment(source["receipt"], "comprobante.pdf")]
         message["payment_id"] = str(payment_id)
+        message["source_id"] = source["id"]
+        message["document_sha256"] = str(source["document"]["file_sha256"])
         return seal_mail(
             org_id=org_id,
             actor_id=actor_id,
-            event_key=f"payment:{payment_id}",
+            event_key=event_key,
             kind="PAYMENT",
             recipient=source["recipient"],
             message=message,
@@ -439,8 +493,13 @@ def dispatch(*, org_id: UUID, mail_id: UUID) -> dict:
             message = crypto.open_message(row["content_ciphertext"], org_id=org_id, mail_id=mail_id)
             _check_live(row, message)
             adapters.mime_message(message, mail_id=mail_id, recipient=row["recipient"])
-        except Exception:
-            preflight_error = "mail_preflight_failed"
+        except Exception as error:
+            code = str(error) if isinstance(error, ValueError) else None
+            preflight_error = (
+                code
+                if code in {"mail_quote_link_inactive", "mail_payment_voided"}
+                else "mail_preflight_failed"
+            )
         row = one(
             "UPDATE public.mail_outbox SET state='DISPATCHING',attempt=attempt+1,dispatch_started_at=now(),error_code=NULL WHERE id=%s AND org_id=%s RETURNING *",
             [str(mail_id), str(org_id)],

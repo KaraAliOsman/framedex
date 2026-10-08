@@ -1238,6 +1238,10 @@ function ProjectWorkspace({
   const locked = useRef(false);
 
   useEffect(() => {
+    if (params.get("correo") === "cotizacion") setOpenSection("quote");
+  }, [params]);
+
+  useEffect(() => {
     const controller = new AbortController();
     lifetime.current = controller;
     return () => controller.abort();
@@ -1738,6 +1742,7 @@ function ProjectWorkspace({
                       key={`quote-mail-${orgId}-${project.id}`}
                       orgId={orgId}
                       projectId={project.id}
+                      autoOpen={params.get("correo") === "cotizacion"}
                     />
                   ) : null}
                   <ProjectQuotationPanel

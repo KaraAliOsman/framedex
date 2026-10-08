@@ -7,8 +7,14 @@
  */
 
 export interface MailSendRequest {
+  operation_key: string;
   expected_source_id: string;
   /** @minLength 1 */
   expected_recipient: string;
+  /**
+   * @minLength 1
+   * @pattern ^[0-9a-f]{64}$
+   */
+  expected_document_sha256: string;
   confirmed: boolean;
 }

@@ -9,11 +9,16 @@ class MailPreviewSerializer(serializers.Serializer):
     reference = serializers.CharField()
     html = serializers.CharField()
     provider = serializers.CharField()
+    document_url = serializers.URLField(allow_null=True)
+    document_sha256 = serializers.CharField(allow_null=True)
+    document_name = serializers.CharField()
 
 
 class MailSendSerializer(StrictSerializer):
+    operation_key = serializers.UUIDField()
     expected_source_id = serializers.UUIDField()
     expected_recipient = serializers.EmailField()
+    expected_document_sha256 = serializers.RegexField(r"^[0-9a-f]{64}$")
     confirmed = serializers.BooleanField()
 
     def validate_confirmed(self, value):

@@ -12,4 +12,9 @@ export interface MailPreview {
   reference: string;
   html: string;
   provider: string;
+  /** @nullable */
+  document_url: string | null;
+  /** @nullable */
+  document_sha256: string | null;
+  document_name: string;
 }

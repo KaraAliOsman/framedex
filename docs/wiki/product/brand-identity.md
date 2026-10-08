@@ -36,7 +36,12 @@ la identidad de la aplicación. El correo comercial siempre usa al fabricante.
 Los snapshots históricos sin `brand_schema` mantienen su contrato anterior.
 
 Cotización y comprobante requieren destinatario y documento revisados, más
-confirmación humana. La outbox cifra el mensaje y adjunta PDFs verificados por
+confirmación humana. La vista presenta el enlace al PDF sellado y permite
+preparar DOC-01 con el job de la emisión exacta si falta. La confirmación liga
+el envío al SHA revisado y a una intención UUID conservada en sesión: una
+respuesta perdida y una recarga repiten esa intención sin crear otro correo.
+Otra confirmación crea otro registro, con un enlace nuevo de cliente.
+La outbox cifra el mensaje y adjunta PDFs verificados por
 SHA-256; el job solo contiene su identificador. Aprobar o bloquear una OT genera
 un aviso interno únicamente después de activar su destinatario en Ajustes.
 Supabase Auth envía el enlace de acceso con su propia plantilla y transporte.
@@ -48,9 +53,13 @@ previo al contacto es `FAILED`; una respuesta perdida o worker interrumpido es
 ausencia y la generación de intento, conserva contenido y deja otro intento.
 `SENT` significa aceptación SMTP: no acredita recepción ni lectura. Un worker
 tardío no puede sobrescribir el estado de un intento ya recuperado.
+Un enlace revocado o vencido falla antes del transporte. La bandeja conserva
+ese correo y lleva a la cotización vigente para revisar y confirmar otro envío;
+no intenta rehabilitar el token anterior. Un pago anulado no ofrece reenvío.
 
 El sandbox usa Mailpit local. El adaptador SMTP exige TLS y mantiene su clave
-de cifrado fuera de la interfaz. Dominio, DNS y credenciales productivas son
-activación posterior: véase [ACTIVACION](../../operations/ACTIVACION.md).
+de cifrado fuera de la interfaz. El transporte distingue SSL directo de STARTTLS
+y evita negociar ambos. Dominio, DNS y credenciales productivas son activación
+posterior: véase [ACTIVACION](../../operations/ACTIVACION.md).
 Las capturas verificadas resuelven imágenes CID desde los bytes MIME recibidos;
 los enlaces de un uso y del portal se omiten en la evidencia publicada.

@@ -2,9 +2,11 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
+from uuid import UUID, uuid4
 
 from django.db import close_old_connections, connection, DatabaseError, transaction
 import pytest
+from authentication.errors import ContractAPIException
 
 from backend.tests.integration.test_shot08_pricing import (
     committed_commercial_rows as committed_commercial_rows,
@@ -200,3 +202,112 @@ def test_branding_rls_preferences_and_contrast_are_tenant_owned(
     with as_user(users["INSTALLER"]):
         with pytest.raises((DatabaseError, DocumentaryError)), transaction.atomic():
             org_branding.save_branding(org_id=org, data={"commercial_name": "Bad"})
+    with as_user(users["OWNER"]):
+        saved = org_branding.save_branding(
+            org_id=org,
+            data={"internal_mail_enabled": True, "notification_email": "valid@example.invalid"},
+        )
+        assert (
+            saved["internal_mail_enabled"]
+            and saved["notification_email"] == "valid@example.invalid"
+        )
+        with (
+            pytest.raises(ContractAPIException) as missing,
+            transaction.atomic(),
+        ):
+            org_branding.save_branding(org_id=org, data={"notification_email": "  "})
+        assert missing.value.contract_code == "mail_notification_recipient_missing"
+
+
+def test_inactive_quote_fails_before_smtp_and_keeps_revoked_authority(
+    committed_commercial_rows, monkeypatch
+):
+    org, _, users = committed_commercial_rows
+    mail = service.seal_mail(
+        org_id=org,
+        actor_id=users["ESTIMATOR"],
+        event_key="inactive-quote",
+        kind="QUOTE",
+        recipient="cliente@example.invalid",
+        message={
+            "subject": "Cotización",
+            "html": "<p>Obra</p>",
+            "text": "Obra",
+            "images": [],
+            "from_name": "Sur",
+            "quote_token_hash": "a" * 64,
+            "version_id": str(uuid4()),
+        },
+    )
+    delivered = []
+    monkeypatch.setattr(adapters, "deliver", lambda *args, **kwargs: delivered.append(kwargs))
+    result = service.dispatch(org_id=org, mail_id=mail["id"])
+    assert result["state"] == "FAILED" and result["error_code"] == "mail_quote_link_inactive"
+    assert delivered == []
+    assert service.dispatch(org_id=org, mail_id=mail["id"])["state"] == "FAILED"
+
+
+def test_concurrent_send_intents_reject_key_reuse_with_different_payload(committed_commercial_rows):
+    org, _, users = committed_commercial_rows
+    from projects import service as project_service
+
+    with as_user(users["ESTIMATOR"]):
+        project = project_service.create_project(
+            org, users["ESTIMATOR"], {"name": "Mail intent fixture", "client_name": "Fixture"}
+        )
+    project_id = UUID(str(project["id"]))
+    barrier = Barrier(2)
+    sources = [
+        {
+            "id": str(uuid4()),
+            "recipient": "cliente@example.invalid",
+            "document": {"file_sha256": "a" * 64},
+        }
+        for _ in range(2)
+    ]
+
+    def send(source):
+        close_old_connections()
+        try:
+            barrier.wait(timeout=10)
+            with transaction.atomic(), service.mail_backend():
+                existing = service._existing_send(
+                    org_id=org, project_id=project_id, event_key="quote:parallel", source=source
+                )
+                if existing:
+                    return "replayed"
+                service.seal_mail(
+                    org_id=org,
+                    actor_id=users["ESTIMATOR"],
+                    event_key="quote:parallel",
+                    kind="QUOTE",
+                    project_id=project_id,
+                    recipient=source["recipient"],
+                    message={
+                        "subject": "Cotización",
+                        "html": "<p>Obra</p>",
+                        "text": "Obra",
+                        "images": [],
+                        "from_name": "Sur",
+                        "source_id": source["id"],
+                        "document_sha256": "a" * 64,
+                    },
+                )
+            return "created"
+        except DocumentaryError as error:
+            assert str(error) == "mail_operation_key_conflict"
+            return "conflict"
+        finally:
+            connection.close()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(send, sources))
+    assert sorted(outcomes) == ["conflict", "created"]
+    assert one("SELECT count(*) AS n FROM public.mail_outbox WHERE org_id=%s", [org])["n"] == 1
+    assert (
+        one(
+            "SELECT count(*) AS n FROM public.job_runs WHERE org_id=%s AND type='mail.deliver'",
+            [org],
+        )["n"]
+        == 1
+    )

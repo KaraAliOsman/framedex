@@ -24,6 +24,12 @@ Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguient
   siguiendo ACTIVACION.md. El contenido se cifra y permanece sellado. SMTP no
   garantiza entrega única: una respuesta perdida o worker interrumpido muestra
   «Entrega sin confirmar». No se reenvía hasta comprobar ausencia y confirmarla.
+- El correo comercial presenta el PDF sellado antes de confirmar y liga el
+  clic al SHA revisado. La intención se conserva en la sesión del navegador
+  después de una respuesta perdida o recarga; otra confirmación crea un envío
+  nuevo. Son garantías de autorización e idempotencia, sin preferencia que las
+  desactive. Un enlace revocado conserva su historia y conduce a una nueva
+  revisión/confirmación en la cotización vigente.
 
 | Decision                   | Valor por defecto                                                                                               | Donde se cambia                   | Estado      | Encargo que la implementa |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------- | ------------------------- |

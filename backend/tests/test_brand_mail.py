@@ -1,7 +1,7 @@
 """White-label, contrast, MIME and capability encryption regressions."""
 
 from io import BytesIO
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from cryptography.exceptions import InvalidTag
 import pytest
@@ -112,7 +112,12 @@ def test_portal_capability_is_encrypted_and_bound_to_tenant_row(settings):
 
 
 def test_customer_send_and_uncertain_recovery_require_explicit_click():
-    data = {"expected_source_id": str(uuid4()), "expected_recipient": "cliente@example.invalid"}
+    data = {
+        "operation_key": str(uuid4()),
+        "expected_source_id": str(uuid4()),
+        "expected_recipient": "cliente@example.invalid",
+        "expected_document_sha256": "a" * 64,
+    }
     assert not MailSendSerializer(data=data).is_valid()
     assert not MailSendSerializer(data={**data, "confirmed": False}).is_valid()
     assert MailSendSerializer(data={**data, "confirmed": True}).is_valid()
@@ -122,3 +127,90 @@ def test_customer_send_and_uncertain_recovery_require_explicit_click():
     assert MailRecoverySerializer(
         data={"expected_attempt": 1, "confirmed_remote_absence": True}
     ).is_valid()
+
+
+@pytest.mark.parametrize(
+    "implicit_tls,starttls", [(True, True), (True, False), (False, True), (False, False)]
+)
+def test_smtp_chooses_one_tls_handshake_before_credentials(
+    implicit_tls, starttls, monkeypatch, settings
+):
+    events = []
+
+    class SMTP:
+        def __init__(self, host, port, **kwargs):
+            events.append("ssl" if isinstance(self, SSL) else "plain")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def starttls(self, **kwargs):
+            events.append("starttls")
+
+        def login(self, *args):
+            events.append("login")
+
+        def send_message(self, message):
+            events.append("send")
+            return {}
+
+    class SSL(SMTP):
+        pass
+
+    monkeypatch.setattr(adapters.smtplib, "SMTP", SMTP)
+    monkeypatch.setattr(adapters.smtplib, "SMTP_SSL", SSL)
+    settings.MAIL_PROVIDER = "smtp"
+    settings.MAIL_SMTP_HOST = "smtp.example.invalid"
+    settings.MAIL_SMTP_SSL = implicit_tls
+    settings.MAIL_SMTP_STARTTLS = starttls
+    settings.MAIL_SMTP_USER = "fixture"
+    payload = templates.render("APPROVAL", organization={}, reference="Fixture", body="Obra")
+    if not implicit_tls and not starttls:
+        with pytest.raises(ValueError, match="mail_smtp_tls_required"):
+            adapters.deliver(payload, mail_id=uuid4(), recipient="cliente@example.invalid")
+        assert events == ["plain"]
+    else:
+        adapters.deliver(payload, mail_id=uuid4(), recipient="cliente@example.invalid")
+        assert events == (["ssl"] if implicit_tls else ["plain", "starttls"]) + ["login", "send"]
+
+
+def test_preview_exposes_exact_sealed_document_without_creating_a_share(monkeypatch):
+    from notifications import service
+
+    source = {
+        "id": str(uuid4()),
+        "kind": "QUOTE",
+        "organization": {"name": "Fábrica Sur"},
+        "recipient": "cliente@example.invalid",
+        "reference": "P-000123 · REV-A",
+        "body": "Su cotización.",
+        "document_name": "cotizacion.pdf",
+        "document": None,
+    }
+    monkeypatch.setattr(service, "_logo", lambda _: None)
+    missing = service.preview(source)
+    assert missing["document_url"] is None and missing["document_sha256"] is None
+
+    class Storage:
+        def signed_url(self, key):
+            assert key == "sealed/doc01.pdf"
+            return "https://storage.example.invalid/sealed.pdf"
+
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", Storage)
+    source["document"] = {"storage_object_key": "sealed/doc01.pdf", "file_sha256": "a" * 64}
+    ready = service.preview(source)
+    assert ready["document_url"] == "https://storage.example.invalid/sealed.pdf"
+    assert ready["document_sha256"] == "a" * 64 and ready["document_name"] == "cotizacion.pdf"
+    assert "/cotizacion/" not in ready["html"]
+    request = {
+        "expected_source_id": UUID(source["id"]),
+        "expected_recipient": source["recipient"],
+        "expected_document_sha256": "b" * 64,
+    }
+    from documents.repository import DocumentaryError
+
+    with pytest.raises(DocumentaryError, match="mail_preview_stale"):
+        service._validate_target(source, request)

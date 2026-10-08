@@ -59,7 +59,7 @@ def deliver(payload: dict, *, mail_id: object, recipient: str) -> None:
     kwargs = {"context": ssl.create_default_context()} if transport is smtplib.SMTP_SSL else {}
     with transport(host, port, timeout=15, **kwargs) as client:
         if provider == "smtp":
-            if settings.MAIL_SMTP_STARTTLS:
+            if settings.MAIL_SMTP_STARTTLS and not settings.MAIL_SMTP_SSL:
                 client.starttls(context=ssl.create_default_context())
             if not (settings.MAIL_SMTP_SSL or settings.MAIL_SMTP_STARTTLS):
                 raise ValueError("mail_smtp_tls_required")

@@ -61,8 +61,11 @@ externo queda «No conectado» hasta configurar SMTP en el servidor.
    contraste AA cae a teal-800 con aviso. Indique un correo de encargado y active
    los avisos internos si los necesita. Estas preferencias no alteran emisiones
    antiguas. El emisor documental y sus pies se sellan en la revisión nueva.
-6. Emita una cotización con correo del cliente, abra su vista previa, revise
-   destinatario y documento y confirme **Enviar al cliente**. Compruebe HTML,
+6. Emita una cotización con correo del cliente, abra su vista previa y el
+   **PDF sellado**. Si falta, use **Preparar PDF de la cotización** y ábralo
+   antes de confirmar **Enviar al cliente**. El servidor exige el SHA revisado;
+   una respuesta perdida conserva la misma intención incluso tras recargar.
+   Compruebe HTML,
    texto, PDF adjunto y enlace de la revisión. Registre un pago y repita la vista
    previa/envío del comprobante. Apruebe desde el portal y bloquee una estación
    de ensayo para comprobar los dos avisos internos.
@@ -78,6 +81,9 @@ Los enlaces del portal se cifran en la outbox y no se publican en jobs ni logs.
 SMTP no ofrece exactamente una entrega: el control explícito de recuperación es
 parte del contrato. Una cotización reemplazada/vencida o un pago anulado fallan
 en la comprobación previa al envío y requieren resolver su causa.
+Si el enlace del correo venció o fue revocado, **Preparar nuevo correo** abre la
+cotización para revisar y confirmar otro envío con enlace nuevo. El registro
+anterior se conserva. Un pago anulado no permite reenviar su comprobante.
 
 ## Webhooks productivos
 

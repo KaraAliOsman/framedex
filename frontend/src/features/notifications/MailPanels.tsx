@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/apiMutator";
 import {
@@ -10,10 +11,11 @@ import {
   quoteMailPreview,
   quoteMailSend,
 } from "../../api/generated/dekopen";
-import type { MailRecord } from "../../api/generated/models";
+import type { MailPreview, MailRecord } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { formatDateTime } from "../../format";
 import { actionErrorDetail } from "../errors";
+import { runJob } from "../jobs/runJob";
 import { BlockedState, Button, EmptyState, ErrorState, LoadingState, useConfirm } from "../../ui";
 import "./mail.css";
 
@@ -31,6 +33,24 @@ const KIND: Record<string, string> = {
   ORDER_BLOCKED: "OT bloqueada",
 };
 
+function pendingKey(key: string, source: MailPreview | undefined): string | null {
+  if (!source) return null;
+  try {
+    const saved: unknown = JSON.parse(sessionStorage.getItem(key) ?? "null");
+    if (!saved || typeof saved !== "object") return null;
+    const record = saved as Record<string, unknown>;
+    return typeof record.operation_key === "string" &&
+      /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(record.operation_key) &&
+      record.expected_source_id === source.source_id &&
+      record.expected_recipient === source.recipient &&
+      record.expected_document_sha256 === source.document_sha256
+      ? record.operation_key
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export function MailFrame({ html, title }: { html: string; title: string }): JSX.Element {
   return <iframe className="mail-preview-frame" title={title} srcDoc={html} sandbox="" />;
 }
@@ -39,18 +59,22 @@ export function MailComposer({
   orgId,
   projectId,
   paymentId,
+  autoOpen = false,
 }: {
   orgId: string;
   projectId: string;
   paymentId?: string;
+  autoOpen?: boolean;
 }): JSX.Element {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
+  const [operationKey, setOperationKey] = useState<string>(() => crypto.randomUUID());
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState<MailRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const options = { headers: { "X-Organization-ID": orgId } };
+  const intentStorageKey = `mail-intent:${orgId}:${projectId}:${paymentId ?? "quote"}`;
   const query = useQuery({
     queryKey: ["mail-preview", orgId, projectId, paymentId],
     enabled: open,
@@ -62,21 +86,69 @@ export function MailComposer({
       return response.data;
     },
   });
+  useEffect(() => {
+    setConfirmed(false);
+    setOperationKey(pendingKey(intentStorageKey, query.data) ?? crypto.randomUUID());
+  }, [intentStorageKey, query.data?.source_id, query.data?.recipient, query.data?.document_sha256]);
+  async function prepareDocument(): Promise<void> {
+    if (!query.data || busy || paymentId) return;
+    setBusy(true);
+    setConfirmed(false);
+    setError(null);
+    try {
+      await runJob(
+        {
+          type: "document.artifact.generate",
+          payload: {
+            document_type: "DOC-01",
+            format: "PDF",
+            project_version_id: query.data.source_id,
+            order_id: null,
+          },
+          idempotency_key: `doc01:${query.data.source_id}`,
+        },
+        options,
+      );
+      await query.refetch();
+    } catch (caught) {
+      setError(
+        actionErrorDetail(
+          caught,
+          "No se pudo preparar el PDF. Revisa la emisión y vuelve a intentarlo.",
+        ),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   async function send(): Promise<void> {
-    if (!query.data || !confirmed || busy) return;
+    if (!query.data?.document_sha256 || !confirmed || busy || query.isFetching) return;
     setBusy(true);
     setError(null);
     const body = {
+      operation_key: operationKey,
       expected_source_id: query.data.source_id,
       expected_recipient: query.data.recipient,
+      expected_document_sha256: query.data.document_sha256,
       confirmed: true,
     };
+    try {
+      sessionStorage.setItem(intentStorageKey, JSON.stringify(body));
+    } catch {
+      setError(
+        "No se pudo conservar el intento de envío. Habilita el almacenamiento de sesión del navegador antes de enviar.",
+      );
+      setBusy(false);
+      return;
+    }
     try {
       const response = paymentId
         ? await paymentMailSend(projectId, paymentId, body, options)
         : await quoteMailSend(projectId, body, options);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setSent(response.data);
+      if (pendingKey(intentStorageKey, query.data) === operationKey)
+        sessionStorage.removeItem(intentStorageKey);
       void queryClient.invalidateQueries({ queryKey: ["mail", orgId] });
     } catch (caught) {
       setError(
@@ -92,7 +164,13 @@ export function MailComposer({
   return (
     <div className="mail-composer">
       {!open ? (
-        <Button onClick={() => setOpen(true)}>
+        <Button
+          onClick={() => {
+            setOperationKey(pendingKey(intentStorageKey, query.data) ?? crypto.randomUUID());
+            setSent(null);
+            setOpen(true);
+          }}
+        >
           {paymentId ? "Enviar comprobante por correo" : "Enviar cotización por correo"}
         </Button>
       ) : (
@@ -120,6 +198,41 @@ export function MailComposer({
                 </p>
               ) : null}
               <MailFrame html={query.data.html} title="Vista previa del correo al cliente" />
+              {query.data.document_url ? (
+                <div className="mail-document">
+                  <a
+                    className="mail-document-link"
+                    href={query.data.document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Abrir PDF sellado · {query.data.document_name}
+                  </a>
+                  <p>Este es el documento que se adjuntará al correo.</p>
+                </div>
+              ) : (
+                <BlockedState
+                  reason="Falta el PDF de esta emisión. Prepáralo y revísalo antes de enviar."
+                  action={
+                    !paymentId ? (
+                      <Button
+                        disabled={busy}
+                        onClick={() => {
+                          void prepareDocument();
+                        }}
+                      >
+                        {busy ? "Preparando PDF sellado" : "Preparar PDF de la cotización"}
+                      </Button>
+                    ) : undefined
+                  }
+                />
+              )}
+              {!paymentId ? (
+                <p className="mail-hint">
+                  El enlace de acceso del cliente se crea al confirmar el envío; esta vista aún no
+                  comparte la cotización.
+                </p>
+              ) : null}
               {sent ? (
                 <p role="status">
                   Envío registrado · {STATE[sent.state] ?? "Revisar estado en la bandeja"}. La
@@ -131,13 +244,14 @@ export function MailComposer({
                     <input
                       type="checkbox"
                       checked={confirmed}
+                      disabled={!query.data.document_sha256 || query.isFetching || busy}
                       onChange={(event) => setConfirmed(event.target.checked)}
                     />
                     Revisé el destinatario, el documento y autorizo este envío.
                   </label>
                   <Button
                     variant="primary"
-                    disabled={!confirmed || busy}
+                    disabled={!confirmed || busy || query.isFetching || !query.data.document_sha256}
                     onClick={() => {
                       void send();
                     }}
@@ -269,7 +383,27 @@ export function MailHistory({
                   La respuesta se perdió. Comprueba la entrega antes de volver a enviar.
                 </p>
               ) : null}
-              {canWrite && ["FAILED", "UNCERTAIN"].includes(row.state) ? (
+              {row.error_code === "mail_quote_link_inactive" ? (
+                <p>
+                  El enlace venció o fue revocado. Revisa la cotización vigente y confirma un nuevo
+                  correo; el envío anterior se conserva.
+                </p>
+              ) : row.error_code === "mail_payment_voided" ? (
+                <p>
+                  El pago fue anulado. Este comprobante no se puede volver a enviar como un pago
+                  vigente.
+                </p>
+              ) : null}
+              {canWrite && row.error_code === "mail_quote_link_inactive" && row.project_id ? (
+                <Link
+                  className="mail-document-link"
+                  to={`/projects/${row.project_id}?correo=cotizacion`}
+                >
+                  Preparar nuevo correo
+                </Link>
+              ) : canWrite &&
+                row.error_code !== "mail_payment_voided" &&
+                ["FAILED", "UNCERTAIN"].includes(row.state) ? (
                 <Button
                   disabled={busy}
                   onClick={() => {

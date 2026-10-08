@@ -23,6 +23,22 @@
 .mail-hint {
   color: var(--text-secondary);
 }
+.mail-document {
+  display: grid;
+  gap: var(--space-8px);
+  min-width: 0;
+}
+.mail-document-link {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--density-default);
+  padding: var(--space-4px) var(--space-8px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  color: var(--interactive);
+  overflow-wrap: anywhere;
+}
 .mail-confirm {
   display: flex;
   align-items: flex-start;
@@ -66,7 +82,8 @@
     padding: var(--space-16px);
   }
   .mail-composer .ui-button,
-  .mail-history .ui-button {
+  .mail-history .ui-button,
+  .mail-document-link {
     min-height: var(--density-loose);
   }
 }

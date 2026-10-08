@@ -26226,7 +26226,19 @@ components:
           type: string
         provider:
           type: string
+        document_url:
+          type: string
+          format: uri
+          nullable: true
+        document_sha256:
+          type: string
+          nullable: true
+        document_name:
+          type: string
       required:
+      - document_name
+      - document_sha256
+      - document_url
       - html
       - provider
       - recipient
@@ -26288,6 +26300,9 @@ components:
     MailSendRequest:
       type: object
       properties:
+        operation_key:
+          type: string
+          format: uuid
         expected_source_id:
           type: string
           format: uuid
@@ -26295,12 +26310,18 @@ components:
           type: string
           format: email
           minLength: 1
+        expected_document_sha256:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-f]{64}$
         confirmed:
           type: boolean
       required:
       - confirmed
+      - expected_document_sha256
       - expected_recipient
       - expected_source_id
+      - operation_key
     MaterialEnum:
       enum:
       - PVC
