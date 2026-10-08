@@ -6,10 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { PackingLabel } from "./packingLabel";
+import type { PhysicalPieceLabel } from "./physicalPieceLabel";
 
 export interface PackingLabels {
   order_id: string;
   order_code: string;
   status: string;
   labels: PackingLabel[];
+  piece_labels: PhysicalPieceLabel[];
 }

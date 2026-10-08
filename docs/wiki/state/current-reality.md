@@ -1,7 +1,7 @@
 ---
 type: state
 status: active
-updated: 2026-10-07
+updated: 2026-10-08
 volatility: high
 verified_ref: 64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa
 sources:
@@ -24,6 +24,32 @@ sources:
 ---
 
 # Current reality
+
+## P02 · gates locales verificados, integración pendiente (08-10-2026)
+
+La rama `codex/P02-identificadores-humanos`, base `18c814bc`, conserva órdenes,
+recibos, retazos y huellas históricos y agrega direcciones OC/REC/RT por tenant.
+La migración poblada PG16 verifica determinismo y compara ocho tablas completas;
+los siete casos PostgreSQL y 19 pgTAP del encargo pasan antes del gate completo.
+
+El recorrido real reconcilia 646 colocaciones planificadas de doce OT entre web,
+PDF de corte, CSV, DXF y etiquetas/QR. El bundle completo de producción se
+compara con sus hechos congelados, incluidas 30 referencias no planificadas con
+causa; no reciben coordenadas CNC. Los 24 PDF finales pasan. La matriz conserva
+40 antes y 40 después, con cero hallazgos numéricos, firmas nuevas o desborde.
+Los 96 SKU DEMO adicionales por más OC se conservan en la comparación.
+
+54 capturas del flujo, ocho de unidad y dos de impresión verifican paleta,
+permisos, retry, escaneo directo/pegado y etiquetas. La lectura de píxeles
+decodifica ocho QR de pantalla, 24 PDF de taller y cuatro impresiones. El retazo
+se imprime en una página y la impresión de piezas contiene sus 16 códigos y
+la unidad, en ambos temas. Se corrigieron contraste, viewBox, quiet zone,
+identidad de unidad y formato de área/peso. Los cuatro gates locales pasan:
+744 motor (+2 xfail), 1.245 backend y 817 frontend. El gate DB completo pasa
+1.156 pgTAP, 402 integraciones, 11 E2E y nueve upgrades PG16, incluido el
+backfill poblado P02. Se restauró el bind propio de pgTAP tras reiniciar Docker,
+sin cambiar checks. CI y squash siguen pendientes; véase
+[aceptación P02](../../redesign/P02-ACEPTACION.md).
 
 ## IA3 · integrado y verificado tras revisión (07-10-2026)
 

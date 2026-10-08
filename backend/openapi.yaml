@@ -29328,6 +29328,8 @@ components:
         id:
           type: string
           format: uuid
+        receipt_code:
+          type: string
         receipt_key:
           type: string
         note:
@@ -29343,6 +29345,7 @@ components:
       - created_at
       - id
       - note
+      - receipt_code
       - receipt_key
       - received_by
     OrderReceiptRequestRequest:
@@ -29640,10 +29643,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PackingLabel'
+        piece_labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhysicalPieceLabel'
       required:
       - labels
       - order_code
       - order_id
+      - piece_labels
       - status
     PackingManifest:
       type: object
@@ -30557,6 +30565,38 @@ components:
       - quote_total_gross
       - sealed_revision
       - status
+    PhysicalPieceLabel:
+      type: object
+      properties:
+        code:
+          type: string
+        stable_id:
+          type: string
+        qr_payload:
+          type: string
+        qr_svg:
+          type: string
+        length_mm:
+          type: string
+          nullable: true
+        width_mm:
+          type: string
+          nullable: true
+        height_mm:
+          type: string
+          nullable: true
+        workshop_sku:
+          type: string
+          nullable: true
+      required:
+      - code
+      - height_mm
+      - length_mm
+      - qr_payload
+      - qr_svg
+      - stable_id
+      - width_mm
+      - workshop_sku
     PlanCoupling:
       type: object
       properties:
@@ -33295,6 +33335,8 @@ components:
         id:
           type: string
           format: uuid
+        code:
+          type: string
         kind:
           $ref: '#/components/schemas/StockKindEnum'
         stock_authority_id:
@@ -33367,6 +33409,7 @@ components:
           type: string
           format: date-time
       required:
+      - code
       - color
       - consumed_order_id
       - created_at

@@ -10,6 +10,8 @@ import { t, tOptional } from "../../i18n/es-CL";
 // mm/area/pct value arrives as a decimal string).
 export type CutPlacement = {
   piece_id: string;
+  piece_code?: string | null;
+  piece_stable_id?: string;
   source_kind?: "PROFILE" | "REINFORCEMENT";
   workshop_sku?: string;
   material?: string;
@@ -42,6 +44,7 @@ export type CutBar = {
   stock_authority_id?: string;
   source?: "NEW" | "REMNANT";
   remnant_id?: string | null;
+  remnant_code?: string | null;
 };
 export type PurchaseLine = {
   commercial_sku: string;
@@ -51,6 +54,8 @@ export type PurchaseLine = {
 export type SheetPurchase = { purchasing_sku: string; qty_sheets: number };
 export type NestPlacement = {
   piece_id: string;
+  piece_code?: string | null;
+  piece_stable_id?: string;
   workshop_sku?: string;
   x_mm: string;
   y_mm: string;
@@ -73,6 +78,7 @@ export type SheetLayout = {
   workshop_sku?: string;
   source?: "NEW" | "REMNANT";
   remnant_id?: string | null;
+  remnant_code?: string | null;
   produced_remnants?: { x_mm: string; y_mm: string; width_mm: string; height_mm: string }[];
 };
 export type UnnestedPiece = {
@@ -222,7 +228,7 @@ function CutPlanBarSvg({
     cursor += w + kerf;
     const key = `b${bar.bar_index}-c${index}`;
     const code = `B${bar.bar_index}-${cut.sequence ?? index + 1}`;
-    const shopCode = pieceCodes[cut.piece_id];
+    const shopCode = cut.piece_code ?? pieceCodes[cut.piece_id];
     const keyOfPiece = memberKey(cut);
     const selected = selectedKey === key;
     const memberHit = selectedMember !== null && keyOfPiece === selectedMember;
@@ -333,7 +339,7 @@ function CutPlanBarSvg({
         {bar.cuts.map((cut, index) => {
           const key = `b${bar.bar_index}-c${index}`;
           const code = `B${bar.bar_index}-${cut.sequence ?? index + 1}`;
-          const shopCode = pieceCodes[cut.piece_id];
+          const shopCode = cut.piece_code ?? pieceCodes[cut.piece_id];
           const angleL =
             cut.angle_left != null && num(cut.angle_left) !== 90 ? num(cut.angle_left) : null;
           const angleR =
@@ -386,7 +392,7 @@ function CutPlanSheetSvg({
         {layout.placements.map((piece, index) => {
           const key = `s${layout.sheet_index}-p${index}`;
           const code = `S${layout.sheet_index}-${piece.sequence ?? index + 1}`;
-          const shopCode = pieceCodes[piece.piece_id];
+          const shopCode = piece.piece_code ?? pieceCodes[piece.piece_id];
           const memberHit = selectedMember !== null && memberKey(piece) === selectedMember;
           const selected = selectedKey === key;
           const px = (num(piece.x_mm) / w) * vw;
@@ -424,7 +430,7 @@ function CutPlanSheetSvg({
         {layout.placements.map((piece, index) => {
           const key = `s${layout.sheet_index}-p${index}`;
           const code = `S${layout.sheet_index}-${piece.sequence ?? index + 1}`;
-          const shopCode = pieceCodes[piece.piece_id];
+          const shopCode = piece.piece_code ?? pieceCodes[piece.piece_id];
           return (
             <li key={key}>
               <button
@@ -445,7 +451,7 @@ function CutPlanSheetSvg({
 }
 
 function shortId(value: string | null | undefined): string {
-  return value ? value.slice(0, 8) : "—";
+  return value ? "Sin dato · falta código" : "Sin dato";
 }
 
 /** Human piece identity for the workshop: the workshop SKU the printed
@@ -480,7 +486,7 @@ export function CutPlanView({
     const nest = piece as NestPlacement;
     const angles =
       isCut && (cut.angle_left != null || cut.angle_right != null)
-        ? `${cut.angle_left ?? "90"}° / ${cut.angle_right ?? "90"}°`
+        ? `${fmtMm(cut.angle_left)}° / ${fmtMm(cut.angle_right)}°`
         : null;
     return {
       id: selected.shopCode ?? pieceLabel(piece, selected.code),

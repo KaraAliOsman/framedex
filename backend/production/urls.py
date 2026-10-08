@@ -65,7 +65,7 @@ urlpatterns = [
         name="production-order-trace",
     ),
     path(
-        "pieces/<str:piece_id>/trace/",
+        "pieces/<path:piece_id>/trace/",
         ProductionPieceTraceView.as_view(),
         name="production-piece-trace",
     ),

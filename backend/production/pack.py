@@ -19,14 +19,17 @@ from dekopen_engine.manufacturing import ManufacturingFactsV1
 from dekopen_engine.operations import OperationKind, operations_from_plan
 from documents.renderers import (
     _CATEGORY_ES,
+    _COLOR_ES,
     _CSS,
     _ROLE_ES,
+    _STRATEGY_ES,
     _cldate,
     _cut_member_map,
     _cut_piece_ids,
     _infill_code_map,
     _infill_key,
     _location,
+    _measure,
     _pct,
     _piece_labels,
     _role_name,
@@ -117,7 +120,7 @@ def _op_anchor(member: dict[str, object], op: dict[str, object]) -> Decimal | No
 
 def _member_svg(member: dict[str, object], ops: list[dict[str, object]]) -> str:
     """Member strip for the machining pack: the member's real cut length,
-    op markers projected onto the run, sagitta note when arched."""
+    op markers projected onto the run, flecha note when arched."""
     length = _mm(member.get("cut_length_mm"))
     span = max(length, Decimal("1"))
     # Diagram strip, not a to-scale section: exaggerate thickness so the bar
@@ -389,7 +392,7 @@ def _unit_map_svg(
         code = labels["handle"].get(handle.handle_id, "MAN")
         x, y = _mm(handle.point.x_mm), _mm(handle.point.y_mm)
         r = font * Decimal("0.55")
-        label = f"{code} · {_value(handle.requested_height_mm)} mm"
+        label = f"{code} · {_fmt_mm(handle.requested_height_mm)} mm"
         # Right-hand default flips to left-of-mark when it would clip the
         # viewBox edge (handle near the right jamb).
         est = Decimal(len(label)) * small * Decimal("0.55")
@@ -432,14 +435,14 @@ def _qc_rows(
             code = labels["member"].get(member.member_id, member.semantic_member_id)
             angles = f"{_value(member.angle_left)}° / {_value(member.angle_right)}°"
             sag = (
-                f" · sag. {_value(member.sagitta_mm)} mm"
+                f" · sag. {_fmt_mm(member.sagitta_mm)} mm"
                 if member.sagitta_mm is not None
                 else ""
             )
             rows.append(
                 [
                     code,
-                    f"largo {_value(member.cut_length_mm)} mm · {angles}{sag}",
+                    f"largo {_fmt_mm(member.cut_length_mm)} mm · {angles}{sag}",
                 ]
             )
         for reinf in unit.reinforcements:
@@ -448,7 +451,7 @@ def _qc_rows(
             rows.append(
                 [
                     code,
-                    f"refuerzo de {host} · {_value(reinf.cut_length_mm)} mm",
+                    f"refuerzo de {host} · {_fmt_mm(reinf.cut_length_mm)} mm",
                 ]
             )
         for infill in unit.infills:
@@ -458,7 +461,7 @@ def _qc_rows(
             rows.append(
                 [
                     code,
-                    f"{_value(rect.width_mm)}×{_value(rect.height_mm)} mm · "
+                    f"{_fmt_mm(rect.width_mm)}×{_fmt_mm(rect.height_mm)} mm · "
                     f"{infill.composition}{shape}",
                 ]
             )
@@ -468,7 +471,7 @@ def _qc_rows(
                 [
                     code,
                     "altura "
-                    f"{_value(handle.requested_height_mm)} mm desde "
+                    f"{_fmt_mm(handle.requested_height_mm)} mm desde "
                     f"{_VERTICAL_REFERENCE_LABELS.get(str(handle.vertical_reference.value), handle.vertical_reference.value)}",
                 ]
             )
@@ -508,8 +511,11 @@ def _pack_html(
     polishing = payload.get("glass_polishing") or []
     quantity = max(int(payload.get("quantity") or 1), 1)
     member_count = sum(len(unit.members) for unit in fact_units)
+    from production.pieces import without_addresses
+
+    engine_bars = (without_addresses(optimization).get("bars") or {}).get("workshop_cut_plan") or []
     ops = operations_from_plan(
-        bars=[CutBar.model_validate_json(json.dumps(b)) for b in bars],
+        bars=[CutBar.model_validate_json(json.dumps(b)) for b in engine_bars],
         fact_units=fact_units,
     )
     from production.service import _sealed_hardware_operations
@@ -531,14 +537,16 @@ def _pack_html(
 
     body = titleblock("Pack de producción")
     # ---- cover ----
-    qr_payload = f"DEKOPEN|{order_code}|PACK|{short_fp}"
-    qr_svg = segno.make(qr_payload, error="m").svg_inline(border=2, scale=6)
+    from production.pieces import entity_address
+
+    qr_payload = entity_address("/production", order=order.get("id", ""), code=order_code)
+    qr_svg = segno.make(qr_payload, error="m").svg_inline(border=4, scale=6, omitsize=True)
     body += (
         '<main class="workshop"><section class="pack-section first">'
         '<div class="masthead"><span class="brand">DEKOPEN'
         '<span class="mark"></span></span>'
         f'<div class="meta"><strong>{escape(order_code)}</strong><br/>'
-        f'Pack de producción · {escape(short_fp)}</div></div>'
+        'Pack de producción</div></div>'
         '<div class="rule-stack"></div>'
         '<div class="cover-stats">'
         f'<div class="cover-stat"><strong>{quantity}</strong><span>unidades</span></div>'
@@ -549,10 +557,10 @@ def _pack_html(
         f'<div class="cover-stat"><strong>{len(glasses)}</strong><span>vidrios</span></div>'
         "</div>"
         '<div class="pack-meta">'
-        f'<span>Color: <strong>{escape(_value(optimization.get("color")))}</strong></span>'
-        f'<span>Estrategia: <strong>{escape(_value(optimization.get("strategy")))}</strong></span>'
+        f'<span>Color: <strong>{escape(_COLOR_ES.get(str(optimization.get("color")), _value(optimization.get("color"))))}</strong></span>'
+        f'<span>Estrategia: <strong>{escape(_STRATEGY_ES.get(str(optimization.get("strategy")), "Sin dato · falta estrategia"))}</strong></span>'
         f'<span>Optimizado: <strong>{escape(_cldate(optimization.get("optimized_at")))}</strong></span>'
-        f'<span>Merma de proceso: <strong>{_value(metrics.get("process_waste_mm"))} mm</strong></span>'
+        f'<span>Merma de proceso: <strong>{_fmt_mm(metrics.get("process_waste_mm"))} mm</strong></span>'
         "</div>"
         '<div class="sign-row">'
         f'<div class="qr">{qr_svg}</div>'
@@ -575,13 +583,13 @@ def _pack_html(
         headers = ["Sec.", "Pieza", "Posición", "Vano / hoja", "Función", "Corte mm", "Ángulos"]
         classes = ["", "", "", "", "", "dimension", ""]
         if has_sagitta:
-            headers.append("Sagitta")
+            headers.append("Flecha")
             classes.append("dimension")
         for bar in bars:
             source = str(bar.get("source") or "NEW")
             badge = (
                 '<span class="badge badge-remnant">retazo '
-                + escape(_value(bar.get("remnant_id"))[:8].upper())
+                + escape(str(bar.get("remnant_code") or "Sin dato"))
                 + "</span>"
                 if source == "REMNANT"
                 else '<span class="badge badge-new">barra nueva</span>'
@@ -615,7 +623,7 @@ def _pack_html(
             codes: list[str] = []
             table_rows: list[list[object]] = []
             for index, cut in enumerate(cuts):
-                code, _entity = _claim_piece(cut, pools, labels, cut_map)
+                code, _entity = (cut["piece_code"], cut.get("piece_stable_id")) if cut.get("piece_code") else _claim_piece(cut, pools, labels, cut_map)
                 codes.append(code)
                 row: list[object] = [
                     cut.get("sequence") or index + 1,
@@ -644,7 +652,7 @@ def _pack_html(
                     f"{_fmt_mm(cut.get('angle_right'))}°",
                 ]
                 if has_sagitta:
-                    row.append(_value(cut.get("sagitta_mm")))
+                    row.append(_fmt_mm(cut.get("sagitta_mm")))
                 table_rows.append(row)
             body += (
                 '<div class="bar-block">'
@@ -652,8 +660,8 @@ def _pack_html(
                 + '<div class="bar-band">'
                 + f"<h3>Barra {bar_no} · {escape(bar_sku)} · "
                 f"{escape(_value(bar.get('material')))} · "
-                f"{_value(bar.get('stock_length_mm'))} mm {badge} · "
-                f"rendimiento {_pct(bar.get('yield_pct'))}%</h3>"
+                f"{_fmt_mm(bar.get('stock_length_mm'))} mm {badge} · "
+                f"rendimiento {_pct(bar.get('yield_pct'))} %</h3>"
                 + _bar_svg(bar, labels, cut_map, codes=codes)
                 + "</div>"
                 + _table(
@@ -697,9 +705,9 @@ def _pack_html(
                 + ("<h2>Plan de láminas</h2>" if first else "")
                 + f"<h3>Lámina {_value(sheet.get('sheet_index'))} · "
                 f"{escape(_value(sheet.get('purchasing_sku')))} · "
-                f"{_value(sheet.get('sheet_width_mm'))}×"
-                f"{_value(sheet.get('sheet_height_mm'))} mm · "
-                f"rendimiento {_pct(sheet.get('yield_pct'))}%</h3>"
+                f"{_fmt_mm(sheet.get('sheet_width_mm'))}×"
+                f"{_fmt_mm(sheet.get('sheet_height_mm'))} mm · "
+                f"rendimiento {_pct(sheet.get('yield_pct'))} %</h3>"
                 + _sheet_svg(sheet, labels, infills)
                 + "</div>"
             )
@@ -721,9 +729,9 @@ def _pack_html(
                             labels, item.get("bay_id"), item.get("leaf_id")
                         ),
                         item.get("group"),
-                        f"{_value(item.get('width_mm'))}×{_value(item.get('height_mm'))}"
+                        f"{_fmt_mm(item.get('width_mm'))}×{_fmt_mm(item.get('height_mm'))}"
                         if item.get("width_mm")
-                        else _value(item.get("length_mm")),
+                        else _fmt_mm(item.get("length_mm")),
                         _UNNEST_REASONS.get(
                             str(item.get("reason") or ""),
                             item.get("reason"),
@@ -787,7 +795,7 @@ def _pack_html(
                 '<div class="member-card">'
                 f"<h4>{escape(code)} · "
                 f"{escape(member_dict.get('workshop_sku', '') or '')} · "
-                f"{_value(member_dict.get('cut_length_mm'))} mm</h4>"
+                f"{_fmt_mm(member_dict.get('cut_length_mm'))} mm</h4>"
                 + _member_svg(member_dict, op_dicts)
                 + '<div class="op-table">'
                 + '<table><colgroup>'
@@ -805,7 +813,7 @@ def _pack_html(
                                 _op_anchor(member_dict, op_dicts[index])
                             ),
                             _op_reference(op.detail),
-                            _value(op.depth_mm),
+                            _fmt_mm(op.depth_mm),
                             _TOOL_LABELS.get(
                                 str(op.tool_id or ""), _value(op.tool_id)
                             ),
@@ -830,8 +838,8 @@ def _pack_html(
             pos_label = labels["position"].get(unit.position_id, unit.position_id[:8])
             body += (
                 f"<h3>Unidad {index} · Posición {escape(str(pos_label))} · "
-                f"{_value(unit.nominal_width_mm)}×"
-                f"{_value(unit.nominal_height_mm)} mm · "
+                f"{_fmt_mm(unit.nominal_width_mm)}×"
+                f"{_fmt_mm(unit.nominal_height_mm)} mm · "
                 f"{escape(_VIEW_LABELS.get(unit.view, unit.view))}</h3>"
                 f'<div class="unit-map">{_unit_map_svg(unit, labels)}</div>'
                 + _table(
@@ -842,7 +850,7 @@ def _pack_html(
                             "Miembro",
                             f"{escape(m.workshop_sku)} · "
                             f"{escape(_ROLE_LABELS.get(m.identity.role.value, m.identity.role.value))}"
-                            f" · largo {_value(m.cut_length_mm)} mm",
+                            f" · largo {_fmt_mm(m.cut_length_mm)} mm",
                         ]
                         for m in unit.members
                     ]
@@ -851,7 +859,7 @@ def _pack_html(
                             labels["reinforcement"].get(r.reinforcement_id, "R"),
                             "Refuerzo",
                             f"{escape(r.workshop_sku)} · "
-                            f"{_value(r.cut_length_mm)} mm",
+                            f"{_fmt_mm(r.cut_length_mm)} mm",
                         ]
                         for r in unit.reinforcements
                     ]
@@ -868,7 +876,7 @@ def _pack_html(
                             labels["handle"].get(h.handle_id, "MAN"),
                             "Herraje",
                             f"{escape(_SLOT_ES.get(h.handle_domain_slot, h.handle_domain_slot))} · "
-                            f"{_value(h.requested_height_mm)} mm",
+                            f"{_fmt_mm(h.requested_height_mm)} mm",
                         ]
                         for h in unit.handles
                     ],
@@ -926,11 +934,11 @@ def _pack_html(
                         _location(
                             labels, glass.get("bay_id"), glass.get("leaf_id")
                         ),
-                        f"{_value(glass.get('width_mm'))}×"
-                        f"{_value(glass.get('height_mm'))}",
-                        _value(glass.get("area_m2")),
-                        _value(glass.get("weight_kg")),
-                        _value(glass.get("thickness_net_mm")),
+                        f"{_fmt_mm(glass.get('width_mm'))}×"
+                        f"{_fmt_mm(glass.get('height_mm'))}",
+                        _measure(glass.get("area_m2"), "m²", 2),
+                        _measure(glass.get("weight_kg"), "kg", 1),
+                        _fmt_mm(glass.get("thickness_net_mm")),
                         polish_for(glass),
                     ]
                     for glass in pieces
@@ -992,8 +1000,8 @@ def _pack_html(
                     "fittings",
                 )
             )
-            qr = segno.make(
-                f"DEKOPEN|{order_code}|{label_code}|{pieces}", error="m"
+            qr = segno.make(entity_address("/production", order=order.get("id", ""),
+                piece=label_code, identity=f"{order.get('id', '')}:U{unit['unit_index']}"), error="m"
             ).svg_inline(border=3, scale=5, dark="#161C1F", light="#FFFFFF")
             body += (
                 f'<div class="unit-label"><div class="qr">{qr}</div>'
@@ -1007,10 +1015,7 @@ def _pack_html(
                 f"{unit.get('fittings') or 0}</p></div></div>"
             )
         body += "</div>"
-    body += (
-        f'<p class="muted">Huella completa del plan: {escape(fingerprint)}'
-        "</p></section></main>"
-    )
+    body += "</section></main>"
     return (
         '<!doctype html><html lang="es-CL"><head><meta charset="utf-8">'
         f"<style>{_CSS}{_CSS_PACK}{_CSS_BUNDLE}</style></head>"
@@ -1069,6 +1074,9 @@ def render_production_pack(*, org_id: UUID, order_id: UUID) -> tuple[bytes, str]
             )
         ]
         fingerprint = _optimization_fingerprint(optimization)
+        from production.pieces import addressed_plan, add_remnant_codes
+
+        optimization = add_remnant_codes(addressed_plan(snapshot, optimization, order_id=order_id), org_id)
         html = _pack_html(
             order=order,
             payload=payload,

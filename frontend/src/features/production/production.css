@@ -520,6 +520,7 @@
   text-align: center;
 }
 .production-label-qr svg {
+  background: var(--paper);
   width: 100%;
   max-width: 140px;
   height: auto;
@@ -568,11 +569,16 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    color: var(--g-950);
+    background: var(--paper);
   }
   .production-label {
     break-inside: avoid;
-    border: 0.4pt solid var(--theme-border);
+    border: 0.4pt solid var(--g-700);
     padding: 4mm;
+  }
+  .production-label-parts {
+    color: var(--g-700);
   }
 }
 .production-delivery {

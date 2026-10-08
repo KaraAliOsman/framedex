@@ -15,6 +15,7 @@ from documents.renderers import (
     _COLOR_ES,
     _CSS,
     _ROLE_ES,
+    _STRATEGY_ES,
     _cldate,
     _cut_key,
     _cut_member_map,
@@ -106,7 +107,9 @@ def _fmt_mm(value: object) -> str:
         number = Decimal(str(value))
     except Exception:
         return text
-    out = format(number.normalize(), "f")
+    from documents.renderers import _survey_dim
+
+    out = _survey_dim(number)
     return out if out else "0"
 
 
@@ -158,15 +161,15 @@ def _bar_svg(
         return cut_map.get(
             _cut_key(cut),
             labels["member"].get(
-                piece_id, labels["reinforcement"].get(piece_id, piece_id[:10])
+                piece_id, labels["reinforcement"].get(piece_id, "Sin dato · falta código")
             ),
         )
 
-    def _angle(value: object) -> Decimal:
+    def _angle(value: object) -> Decimal | None:
         try:
             return Decimal(str(value))
         except Exception:
-            return Decimal("90")
+            return None
 
     inside_flags: list[bool] = []
     for index, cut in enumerate(cuts):
@@ -258,7 +261,7 @@ def _bar_svg(
         location = _location(labels, cut.get("bay_id"), cut.get("leaf_id"))
         position = labels["position"].get(cut.get("source_position_id"), "")
         angles = (
-            f"{_value(cut.get('angle_left'))}°/{_value(cut.get('angle_right'))}°"
+            f"{_fmt_mm(cut.get('angle_left'))}°/{_fmt_mm(cut.get('angle_right'))}°"
         )
         seq = str(cut.get("sequence") or index + 1)
         svg.append(
@@ -270,13 +273,13 @@ def _bar_svg(
         # left/right angles in the table (drawing a direction would invent
         # geometry the plan does not carry).
         miter = bar_h * Decimal("0.45")
-        if _angle(cut.get("angle_left")) != Decimal("90"):
+        if _angle(cut.get("angle_left")) not in (None, Decimal("90")):
             svg.append(
                 f'<line x1="{x + u * Decimal("0.4")}" '
                 f'y1="{pad_top}" x2="{x + u * Decimal("0.4") + miter}" '
                 f'y2="{pad_top + miter}" stroke="#FCFDFC" stroke-width="2"/>'
             )
-        if _angle(cut.get("angle_right")) != Decimal("90"):
+        if _angle(cut.get("angle_right")) not in (None, Decimal("90")):
             svg.append(
                 f'<line x1="{x + piece_len - u * Decimal("0.4")}" '
                 f'y1="{pad_top}" '
@@ -299,7 +302,7 @@ def _bar_svg(
                 f'{escape(location)}{" " if position else ""}'
                 f'{escape(str(position))}</text>'
             )
-            dim_label = f'{_value(cut.get("length_mm"))} mm · {angles}'
+            dim_label = f'{_fmt_mm(cut.get("length_mm"))} mm · {angles}'
             dim_half = _est(dim_label, fs_dim) / 2
             dim_lane = next(
                 (
@@ -327,7 +330,7 @@ def _bar_svg(
                     f'font-weight="600">{seq}</text>'
                 )
             side = "above" if index % 2 == 0 else "below"
-            label = f"{seq} · {code} · {_value(cut.get('length_mm'))}"
+            label = f"{seq} · {code} · {_fmt_mm(cut.get('length_mm'))}"
             half = _est(label, fs_code) / 2
             lane = 0
             while (
@@ -467,7 +470,7 @@ def _claim_piece(
             labels["member"].get(
                 cut.get("piece_id"),
                 labels["reinforcement"].get(
-                    cut.get("piece_id"), str(cut.get("piece_id") or "")[:10]
+                    cut.get("piece_id"), "Sin dato · falta código"
                 ),
             ),
         )
@@ -600,7 +603,7 @@ def _sheet_svg(
         x, y = _mm(placement["x_mm"]), _mm(placement["y_mm"])
         w, h = _mm(placement["width_mm"]), _mm(placement["height_mm"])
         location = _location(labels, placement.get("bay_id"), placement.get("leaf_id"))
-        code = infills.get(_infill_key(placement), str(placement.get("piece_id") or ""))
+        code = placement.get("piece_code") or infills.get(_infill_key(placement), "Sin dato")
         rotated = bool(placement.get("rotated"))
         # Print-size labels: a full-height piece earns ~5mm code text; fonts
         # shrink with the smaller piece dimension so narrow panes stay legible.
@@ -621,7 +624,7 @@ def _sheet_svg(
             f'<text x="{x + w / 2}" y="{y + h / 2 + fs_dim}" text-anchor="middle" '
             'fill="#161C1F" '
             f'font-size="{fs_dim}">'
-            f'{_value(w)}×{_value(h)}</text>'
+              f'{_fmt_mm(w)}×{_fmt_mm(h)}</text>'
             f'<text x="{x + w / 2}" y="{y + h / 2 + gap + fs_dim}" '
             'text-anchor="middle" '
             f'fill="#4A5559" font-size="{fs_loc}">{escape(location)}</text>'
@@ -653,10 +656,12 @@ def _pack_html(
 ) -> str:
     order_code = _value(order["order_code"])
     short_fp = fingerprint[:16]
-    qr_payload = f"DEKOPEN|{order_code}|CUTPACK|{short_fp}"
+    from production.pieces import entity_address
+
+    qr_payload = entity_address("/production", order=order.get("id", ""), code=order_code)
     import segno
 
-    qr_svg = segno.make(qr_payload, error="m").svg_inline(border=2, scale=6)
+    qr_svg = segno.make(qr_payload, error="m").svg_inline(border=4, scale=6, omitsize=True)
     bars = [b for b in (optimization.get("bars") or {}).get("workshop_cut_plan") or []
             if isinstance(b, dict)]
     sheets = [s for s in optimization.get("sheets") or [] if isinstance(s, dict)]
@@ -688,12 +693,12 @@ def _pack_html(
         '<div class="masthead"><span class="brand">DEKOPEN<span class="mark">'
         "</span></span>"
         f'<div class="meta"><strong>{escape(order_code)}</strong><br/>'
-        f'Pack de corte · {escape(short_fp)}</div></div>'
+        'Pack de corte</div></div>'
         '<div class="rule-stack"></div>'
         '<div class="pack-meta">'
         f'<span>Color: <strong>{escape(_COLOR_ES.get(str(optimization.get("color")), _value(optimization.get("color"))))}</strong></span>'
         f'<span>Unidades: <strong>{_value(optimization.get("units"))}</strong></span>'
-        f'<span>Estrategia: <strong>{escape(strategy)}</strong></span>'
+        f'<span>Estrategia: <strong>{escape(_STRATEGY_ES.get(strategy, "Sin dato · falta estrategia"))}</strong></span>'
         f'<span>Barras nuevas: <strong>{_value(stats.get("bars_new", metrics.get("bars")))}</strong></span>'
         f'<span>Barras de retazo: <strong>{_value(stats.get("bars_remnant", 0))}</strong></span>'
         f'<span>Cortes: <strong>{_value(stats.get("cuts_total", metrics.get("cuts")))}</strong></span>'
@@ -710,8 +715,8 @@ def _pack_html(
             remnant_id = str(bar.get("remnant_id") or "")
             rack = remnant_racks.get(remnant_id)
             badge = (
-                '<span class="badge badge-remnant">retazo RET-'
-                + escape(remnant_id[:8].upper())
+                '<span class="badge badge-remnant">retazo '
+                + escape(str(bar.get("remnant_code") or "Sin dato"))
                 + (f" · rack {escape(rack)}" if rack else "")
                 + "</span>"
                 if source == "REMNANT"
@@ -742,11 +747,14 @@ def _pack_html(
             codes: list[str] = []
             rows_data: list[list[object]] = []
             for index, cut in enumerate(cuts):
-                code, entity_id = _claim_piece(cut, pools, labels, cut_map)
+                if cut.get("piece_code"):
+                    code, entity_id = cut["piece_code"], cut.get("piece_stable_id")
+                else:
+                    code, entity_id = _claim_piece(cut, pools, labels, cut_map)
                 codes.append(code)
                 notes = []
                 if cut.get("sagitta_mm") not in (None, "", "0", "0.00"):
-                    notes.append(f"sagitta {_fmt_mm(cut.get('sagitta_mm'))} mm")
+                    notes.append(f"flecha {_fmt_mm(cut.get('sagitta_mm'))} mm")
                 if entity_id is not None and op_marks.get(str(entity_id)):
                     notes.append("lleva mecanizado")
                 function = " · ".join(
@@ -814,7 +822,7 @@ def _pack_html(
                 f"{escape(material)} · {escape(color)} · "
                 f"{_fmt_mm(stock)} mm</h3>{badge}"
                 f'<span class="muted">aprovechamiento '
-                f"{_pct(bar.get('yield_pct'))}%</span></div>"
+                f"{_pct(bar.get('yield_pct'))} %</span></div>"
                 + f'<div class="bar-orient">{section}'
                 f'<span class="conv">{escape(" ".join(orient_bits))}</span>'
                 "</div>"
@@ -864,7 +872,7 @@ def _pack_html(
                 f"{escape(_value(sheet.get('purchasing_sku')))} · "
                 f"{_fmt_mm(sheet.get('sheet_width_mm'))}×"
                 f"{_fmt_mm(sheet.get('sheet_height_mm'))} mm · "
-                f"aprovechamiento {_pct(sheet.get('yield_pct'))}%</h3>"
+                f"aprovechamiento {_pct(sheet.get('yield_pct'))} %</h3>"
                 + _sheet_svg(sheet, labels, infills)
                 + "</div>"
             )
@@ -904,8 +912,8 @@ def _pack_html(
                       + _location(labels, item.get("bay_id"), item.get("leaf_id")),
                   ),
                   item.get("group"),
-                  f"{_value(item.get('width_mm'))}×{_value(item.get('height_mm'))}"
-                  if item.get("width_mm") else _value(item.get("length_mm")),
+                  f"{_fmt_mm(item.get('width_mm'))}×{_fmt_mm(item.get('height_mm'))}"
+                  if item.get("width_mm") else _fmt_mm(item.get("length_mm")),
                   _UNNEST_REASONS.get(str(item.get("reason") or ""),
                                       _value(item.get("reason")))]
                  for item in unnested],
@@ -917,7 +925,7 @@ def _pack_html(
         '<div class="sign-cell sign-date"><span class="sign-label">Fecha</span></div>'
         '<div class="sign-cell"><span class="sign-label">Operario</span></div>'
         '<div class="sign-cell"><span class="sign-label">Verificado por</span></div>'
-        f"</div><p class=\"muted\">Huella completa: {escape(fingerprint)}</p></main>"
+        "</div></main>"
     )
     return (
         '<!doctype html><html lang="es-CL"><head><meta charset="utf-8">'
@@ -978,9 +986,12 @@ def render_cut_pack(*, org_id: UUID, order_id: UUID) -> tuple[bytes, str]:
             if isinstance(entry, dict) and entry.get("id")
         }
         fingerprint = _optimization_fingerprint(optimization)
+        from production.pieces import addressed_plan, add_remnant_codes
+
+        display_plan = add_remnant_codes(addressed_plan(snapshot, optimization, order_id=order_id), org_id)
         html = _pack_html(
             order=order,
-            optimization=optimization,
+            optimization=display_plan,
             snapshot=snapshot,
             labels=labels,
             cut_map=_cut_member_map(snapshot, labels),

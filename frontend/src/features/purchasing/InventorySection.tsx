@@ -1,16 +1,18 @@
 import { ValidatedForm } from "../../ui/FormValidation";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
-import { fmtMm } from "../../format";
+import { fmtMm, formatDecimal } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { formatDateTime } from "../../format";
-import { useConfirm } from "../../ui";
+import { EntityCode, ErrorState, LoadingState, useConfirm } from "../../ui";
 
 type RequestFn = <T>(path: string, method?: string, body?: unknown) => Promise<T>;
 
 type Remnant = {
   id: string;
+  code: string;
   kind: "BAR" | "SHEET";
   stock_authority_id: string | null;
   article_sku?: string | null;
@@ -48,6 +50,7 @@ type StockIdentity = {
   item_id: string;
   sku: string;
   name: string;
+  unit?: string;
   racks?: string | null;
 };
 
@@ -128,12 +131,18 @@ export function InventorySection({
   stockItems: StockIdentity[];
 }): JSX.Element {
   const confirm = useConfirm();
+  const [params] = useSearchParams();
+  const targetId = params.get("remnant");
+  const targetRow = useRef<HTMLTableRowElement>(null);
   const [remnants, setRemnants] = useState<Remnant[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [statusFilter, setStatusFilter] = useState("AVAILABLE");
   const [remnantQuery, setRemnantQuery] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const inventoryReady = !loading && !loadError;
   const [showCreate, setShowCreate] = useState(false);
   const [adjustItem, setAdjustItem] = useState<string | null>(null);
   const [adjustForm, setAdjustForm] = useState({
@@ -157,26 +166,56 @@ export function InventorySection({
   });
   const [authorities, setAuthorities] = useState<BarAuthority[]>([]);
   const [label, setLabel] = useState<{
-    remnant_id: string;
+    code: string;
     identity: string;
     qr_svg: string;
     dims: string;
     rack: string;
   } | null>(null);
 
+  const loadGeneration = useRef(0);
   const load = useCallback(() => {
-    void request<{ remnants?: Remnant[] }>("inventory/remnants/")
-      .then((data) => setRemnants(data.remnants ?? []))
-      .catch(() => setRemnants([]));
-    void request<{ movements?: Movement[] }>("inventory/movements/")
-      .then((data) => setMovements(data.movements ?? []))
-      .catch(() => setMovements([]));
-    void request<{ authorities?: BarAuthority[] }>("inventory/bar-authorities/")
-      .then((data) => setAuthorities(data.authorities ?? []))
-      .catch(() => setAuthorities([]));
+    const generation = ++loadGeneration.current;
+    setLoading(true);
+    setLoadError(false);
+    void Promise.all([
+      request<{ remnants?: Remnant[] }>("inventory/remnants/"),
+      request<{ movements?: Movement[] }>("inventory/movements/"),
+      request<{ authorities?: BarAuthority[] }>("inventory/bar-authorities/"),
+    ])
+      .then(([pool, ledger, bars]) => {
+        if (generation !== loadGeneration.current) return;
+        setRemnants(pool.remnants ?? []);
+        setMovements(ledger.movements ?? []);
+        setAuthorities(bars.authorities ?? []);
+      })
+      .catch(() => {
+        if (generation === loadGeneration.current) setLoadError(true);
+      })
+      .finally(() => {
+        if (generation === loadGeneration.current) setLoading(false);
+      });
   }, [request]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    load();
+    return () => {
+      loadGeneration.current += 1;
+    };
+  }, [load]);
+  const target = remnants.find((r) => r.id === targetId);
+  useEffect(() => {
+    if (target) {
+      setStatusFilter(target.status);
+      setRemnantQuery(target.code);
+    }
+  }, [target]);
+  useEffect(() => {
+    if (target && statusFilter === target.status && remnantQuery === target.code) {
+      targetRow.current?.focus();
+      targetRow.current?.scrollIntoView({ block: "center" });
+    }
+  }, [target, statusFilter, remnantQuery]);
 
   async function run(task: Promise<unknown>, fallback: string): Promise<boolean> {
     setBusy(true);
@@ -211,7 +250,7 @@ export function InventorySection({
     const q = remnantQuery.trim().toLowerCase();
     if (!q) return true;
     return [
-      `RET-${r.id.slice(0, 8).toUpperCase()}`,
+      r.code,
       r.sheet_workshop_sku ?? "",
       r.article_sku ?? "",
       authorityNames.get(r.stock_authority_id ?? "") ?? "",
@@ -280,18 +319,21 @@ export function InventorySection({
     }>(`inventory/remnants/${remnant.id}/label/`)
       .then((data) =>
         setLabel({
-          remnant_id: remnant.id.slice(0, 8).toUpperCase(),
+          code: data.remnant.code,
           identity: data.identity,
           qr_svg: data.qr_svg,
           dims: remnantDims(remnant),
           rack: remnant.rack_location ?? "—",
         }),
       )
-      .catch(() => setLabel(null));
+      .catch(() => {
+        setLabel(null);
+        setMessage("No se pudo abrir la etiqueta. Reintenta desde el retazo.");
+      });
   }
 
   return (
-    <section className="purchasing-stock" aria-label={t("inventory.title")}>
+    <section className="purchasing-stock inventory-workspace" aria-label={t("inventory.title")}>
       {canWrite && stockItems.length > 0 ? (
         <details className="inventory-adjust">
           <summary>{t("inventory.adjustTitle")}</summary>
@@ -369,6 +411,25 @@ export function InventorySection({
       ) : null}
       <h2>{t("inventory.remnants")}</h2>
       <p className="purchasing-hint">{t("inventory.remnantsHint")}</p>
+      {loading ? <LoadingState label="Cargando retazos y movimientos" /> : null}
+      {loadError ? (
+        <ErrorState
+          title="No se pudo cargar el inventario"
+          body="Falta la respuesta de retazos, movimientos o barras. Reintenta para leer el estado actual."
+          onRetry={load}
+          technical="inventory/remnants · inventory/movements · inventory/bar-authorities"
+        />
+      ) : null}
+      {!canWrite ? (
+        <p className="purchasing-hint">
+          Solo lectura. El jefe de taller puede registrar, liberar o descartar retazos.
+        </p>
+      ) : null}
+      {targetId && !loading && !loadError && !target ? (
+        <p role="alert">
+          No se encontró el retazo en esta organización. Busca su código en la paleta.
+        </p>
+      ) : null}
       <div className="inventory-remnant-filter" role="group" aria-label={t("inventory.filter")}>
         {[...REMNANT_STATUS].map((status) => (
           <button
@@ -504,7 +565,7 @@ export function InventorySection({
           </button>
         </ValidatedForm>
       ) : null}
-      {visible.length > 0 ? (
+      {!loading && !loadError && visible.length > 0 ? (
         <table className="inventory-remnants">
           <thead>
             <tr>
@@ -521,9 +582,14 @@ export function InventorySection({
           </thead>
           <tbody>
             {visible.map((r) => (
-              <tr key={r.id}>
+              <tr
+                key={r.id}
+                ref={r.id === targetId ? targetRow : undefined}
+                tabIndex={r.id === targetId ? -1 : undefined}
+                aria-current={r.id === targetId ? "true" : undefined}
+              >
                 <td className="inventory-remnant-code">
-                  {`RET-${r.id.slice(0, 8).toUpperCase()}`}
+                  <EntityCode kind="retazo" code={r.code} />
                 </td>
                 <td>{remnantKindLabel(r.kind)}</td>
                 <td>
@@ -534,7 +600,7 @@ export function InventorySection({
                       ([r.material, r.color].filter(Boolean).join(" · ") || "—"))}
                   {r.notes ? <span className="purchasing-hint"> — {r.notes}</span> : null}
                 </td>
-                <td>{remnantDims(r)}</td>
+                <td className="ui-value">{remnantDims(r)}</td>
                 <td>{r.rack_location ?? "—"}</td>
                 <td>
                   {remnantOriginLabel(r.origin)}
@@ -542,7 +608,7 @@ export function InventorySection({
                 </td>
                 <td>
                   {r.status === "RESERVED"
-                    ? (r.reserved_order_code ?? r.reserved_order_id?.slice(0, 8) ?? "—")
+                    ? (r.reserved_order_code ?? "Sin dato · orden no disponible")
                     : "—"}
                 </td>
                 <td>
@@ -596,14 +662,14 @@ export function InventorySection({
             ))}
           </tbody>
         </table>
-      ) : (
+      ) : inventoryReady ? (
         <p className="purchasing-hint">{t("inventory.noRemnants")}</p>
-      )}
+      ) : null}
       {label ? (
         <div className="inventory-label" role="figure" aria-label={t("inventory.label")}>
           <div className="qr" dangerouslySetInnerHTML={{ __html: label.qr_svg }} />
           <div>
-            <p className="inventory-label-id">RET-{label.remnant_id}</p>
+            <p className="inventory-label-id">{label.code}</p>
             <p className="inventory-label-name">{label.identity}</p>
             <p className="inventory-label-dims">{label.dims}</p>
             <p className="inventory-label-rack">
@@ -640,8 +706,19 @@ export function InventorySection({
                 <tr key={m.id}>
                   <td>{formatDateTime(m.created_at)}</td>
                   <td>{movementLabel(m.movement_type)}</td>
-                  <td>{itemNames.get(m.item_id) ?? m.item_id.slice(0, 8)}</td>
-                  <td>{m.quantity}</td>
+                  <td>{itemNames.get(m.item_id) ?? "Sin dato · artículo no disponible"}</td>
+                  <td className="ui-value">
+                    {formatDecimal(
+                      m.quantity,
+                      ["M", "M2"].includes(
+                        stockItems.find((s) => s.item_id === m.item_id)?.unit ?? "",
+                      )
+                        ? 2
+                        : stockItems.find((s) => s.item_id === m.item_id)?.unit === "KG"
+                          ? 1
+                          : 0,
+                    )}
+                  </td>
                   <td>{m.rack_location ?? "—"}</td>
                   <td>{m.actor_label ?? "—"}</td>
                   <td>{m.note ?? m.lot_code ?? "—"}</td>

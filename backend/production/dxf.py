@@ -108,6 +108,8 @@ def _dxf(entities: str, extmax_x: Decimal, extmax_y: Decimal) -> str:
 def _placement_code(piece: dict, codes: dict[str, str] | None) -> str:
     """Printed piece identity: the member/infill code when the caller
     resolved one, else a short id — never the raw 64-hex hash wall."""
+    if piece.get("piece_code"):
+        return str(piece["piece_code"])
     piece_id = str(piece.get("piece_id") or "?")
     code = piece_id if len(piece_id) <= 12 else piece_id[:10]
     if codes:

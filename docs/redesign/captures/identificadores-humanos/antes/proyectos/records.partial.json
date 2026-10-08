@@ -1,0 +1,194 @@
+[
+  {
+    "routeId": "proyectos",
+    "path": "/projects",
+    "reachedPath": "/projects",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "proyectos__ESTIMATOR__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "TORRE_BARROS",
+        "sample": "Completar y cotizar Obra grande demo — edificio (fixture) [TORRE_BARROS]P-000004 Constructora Rio Claro SpA Borrador Revisión A 100"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "CASA_LOMAS",
+        "sample": "ndiente Completar y cotizar Vivienda demo — casa (fixture) [CASA_LOMAS]P-000001 Maria Paz Rojas Borrador Revisión A 12 06-10-2026"
+      }
+    ]
+  },
+  {
+    "routeId": "proyectos",
+    "path": "/projects",
+    "reachedPath": "/projects",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "proyectos__ESTIMATOR__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "TORRE_BARROS",
+        "sample": "Completar y cotizar Obra grande demo — edificio (fixture) [TORRE_BARROS]P-000004 Constructora Rio Claro SpA Borrador Revisión A 100"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "CASA_LOMAS",
+        "sample": "ndiente Completar y cotizar Vivienda demo — casa (fixture) [CASA_LOMAS]P-000001 Maria Paz Rojas Borrador Revisión A 12 06-10-2026"
+      }
+    ]
+  },
+  {
+    "routeId": "proyectos",
+    "path": "/projects",
+    "reachedPath": "/projects",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "proyectos__ESTIMATOR__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "TORRE_BARROS",
+        "sample": "Completar y cotizar Obra grande demo — edificio (fixture) [TORRE_BARROS]P-000004 Constructora Rio Claro SpA Borrador Revisión A 100"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "CASA_LOMAS",
+        "sample": "ndiente Completar y cotizar Vivienda demo — casa (fixture) [CASA_LOMAS]P-000001 Maria Paz Rojas Borrador Revisión A 12 06-10-2026"
+      }
+    ]
+  },
+  {
+    "routeId": "proyectos",
+    "path": "/projects",
+    "reachedPath": "/projects",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "proyectos__ESTIMATOR__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "TORRE_BARROS",
+        "sample": "Completar y cotizar Obra grande demo — edificio (fixture) [TORRE_BARROS]P-000004 Constructora Rio Claro SpA Borrador Revisión A 100"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "CASA_LOMAS",
+        "sample": "ndiente Completar y cotizar Vivienda demo — casa (fixture) [CASA_LOMAS]P-000001 Maria Paz Rojas Borrador Revisión A 12 06-10-2026"
+      }
+    ]
+  },
+  {
+    "routeId": "proyectos",
+    "path": "/projects",
+    "reachedPath": "/projects",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "proyectos__ESTIMATOR__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "TORRE_BARROS",
+        "sample": "Completar y cotizar Obra grande demo — edificio (fixture) [TORRE_BARROS]P-000004 Constructora Rio Claro SpA Borrador Revisión A 100"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "CASA_LOMAS",
+        "sample": "ndiente Completar y cotizar Vivienda demo — casa (fixture) [CASA_LOMAS]P-000001 Maria Paz Rojas Borrador Revisión A 12 06-10-2026"
+      }
+    ]
+  },
+  {
+    "routeId": "proyectos",
+    "path": "/projects",
+    "reachedPath": "/projects",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "proyectos__ESTIMATOR__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "TORRE_BARROS",
+        "sample": "Completar y cotizar Obra grande demo — edificio (fixture) [TORRE_BARROS]P-000004 Constructora Rio Claro SpA Borrador Revisión A 100"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "CASA_LOMAS",
+        "sample": "ndiente Completar y cotizar Vivienda demo — casa (fixture) [CASA_LOMAS]P-000001 Maria Paz Rojas Borrador Revisión A 12 06-10-2026"
+      }
+    ]
+  },
+  {
+    "routeId": "proyectos",
+    "path": "/projects",
+    "reachedPath": "/projects",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "proyectos__ESTIMATOR__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "TORRE_BARROS",
+        "sample": "Completar y cotizar Obra grande demo — edificio (fixture) [TORRE_BARROS]P-000004 Constructora Rio Claro SpA Borrador Revisión A 100"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "CASA_LOMAS",
+        "sample": "ndiente Completar y cotizar Vivienda demo — casa (fixture) [CASA_LOMAS]P-000001 Maria Paz Rojas Borrador Revisión A 12 06-10-2026"
+      }
+    ]
+  },
+  {
+    "routeId": "proyectos",
+    "path": "/projects",
+    "reachedPath": "/projects",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "proyectos__ESTIMATOR__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "TORRE_BARROS",
+        "sample": "Completar y cotizar Obra grande demo — edificio (fixture) [TORRE_BARROS]P-000004 Constructora Rio Claro SpA Borrador Revisión A 100"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "CASA_LOMAS",
+        "sample": "ndiente Completar y cotizar Vivienda demo — casa (fixture) [CASA_LOMAS]P-000001 Maria Paz Rojas Borrador Revisión A 12 06-10-2026"
+      }
+    ]
+  }
+]

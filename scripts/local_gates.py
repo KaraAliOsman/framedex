@@ -298,6 +298,7 @@ def verify_postgres16() -> None:
         import check_opening_upgrade
         import check_hardware_upgrade
         import check_finish_upgrade
+        import check_human_codes_upgrade
 
         check_migration_upgrades.verify(container)
         check_pricing_upgrade.verify(container)
@@ -307,6 +308,7 @@ def verify_postgres16() -> None:
         check_opening_upgrade.verify(container)
         check_hardware_upgrade.verify(container)
         check_finish_upgrade.verify(container)
+        check_human_codes_upgrade.verify(container)
     finally:
         if owned:
             run([docker, "rm", "--force", container])

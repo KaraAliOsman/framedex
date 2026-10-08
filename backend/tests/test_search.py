@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+from contextlib import nullcontext
 
 import pytest
 
@@ -19,6 +20,7 @@ def fake_rows(monkeypatch):
         return responses.pop(0) if responses else []
 
     monkeypatch.setattr(service, "rows", _rows)
+    monkeypatch.setattr(service, "documentary_backend", nullcontext)
     return calls, responses
 
 
@@ -76,7 +78,8 @@ def test_every_group_maps_row_to_result(fake_rows):
     assert by_group["positions"][0]["path"] == f"/projects/{pid}/positions/{pos}/edit"
     assert by_group["systems"][0]["title"] == "DEMO_60 · Demo 60"
     assert len(by_group["articles"]) == 2
-    assert by_group["orders"][0]["path"] == "/production"
+    order = by_group["orders"][0]
+    assert order["path"] == f"/production?order={order['id']}"
     assert by_group["documents"][0]["title"] == "FAC-3"
     assert by_group["documents"][1]["title"] == "GD-2"
     assert by_group["inventory"][0]["path"] == "/purchasing"

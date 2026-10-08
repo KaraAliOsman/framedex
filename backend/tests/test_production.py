@@ -3176,7 +3176,11 @@ def test_packing_labels_render_qr_per_unit(monkeypatch) -> None:
     assert len(out["labels"]) == 1
     label = out["labels"][0]
     assert label["pieces"] == 20
-    assert label["qr_payload"] == "DEKOPEN|OT-LBL-1|OT-LBL-1-U01|20"
+    from urllib.parse import parse_qs, urlsplit
+
+    address = urlsplit(label["qr_payload"])
+    assert address.path == "/production"
+    assert parse_qs(address.query) == {"order": [str(order_id)], "piece": ["OT-LBL-1-U01"], "identity": [f"{order_id}:U1"]}
     assert label["qr_svg"].startswith("<svg") and "path" in label["qr_svg"]
 
 
@@ -4388,7 +4392,7 @@ def test_cut_pack_resolves_physical_piece_identity_per_unit() -> None:
     )
     for code in (
         "P02-U01-M01", "P02-U01-M02", "P02-U02-M01", "P02-U02-M02",
-        "P02-U01-M02·R", "P02-U02-M02·R",
+        "P02-U01-M02-R", "P02-U02-M02-R",
     ):
         # once in the diagram label plus once in the table row — no third
         # occurrence would mean a physical piece printed twice.

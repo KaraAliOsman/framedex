@@ -603,3 +603,32 @@ los seis oráculos reales de transporte, 82 regresiones y 15 integraciones IA3,
 no agregan hallazgos; los cuatro fallos de negocio y la historia del PDF se conservan.
 La ola D2 queda registrada en cinco líneas y continúa P02. `main` y recursos
 ajenos no se modifican.
+
+## 2026-10-07 — P02 · identidad sin reescribir historia
+
+La rama `codex/P02-identificadores-humanos` agrega aliases OC/REC/RT inmutables
+por organización, backfill poblado determinista y proyección física compartida
+entre web/PDF/CSV/DXF/etiqueta/QR. Se preservan fuente, huellas y CNC exacto.
+El fixture real DEMO reconcilia 646 colocaciones de doce OT; el bundle nombra
+también 30 piezas congeladas aún sin solución de corte, sin inventar coordenadas.
+Los 24 PDF y 40 comparaciones formales pasan; se conservan los deltas de SKU
+heredados. 54 capturas del flujo, ocho de unidad y dos de impresión verifican
+direcciones, permisos, estados y retry. La decodificación de píxeles cubre ocho
+capturas, 24 PDF de taller y cuatro impresiones. Se corrigieron QR oscuro,
+SVG recortado, unidad frente a pieza y papel/tinta; imprimir el retazo produce
+una página. La guarda exige tokens de tamaño y las pruebas de cantidad leen el
+nombre accesible de la celda sin cambiar los oráculos de permiso/confirmación.
+Los gates finales/CI y la integración se registrarán tras pasar; el baseline de
+la anatomía de las pantallas permanece para sus encargos y ED1/ED2.
+
+## 2026-10-08 — P02 · gates locales completos
+
+Sobre la rama P02, los cuatro gates locales pasan con 744 motor (+2 xfail),
+1.245 backend y 817 frontend. El gate DB pasa 1.156 pgTAP en 79 fuentes,
+402 integraciones, 11 E2E Chromium y nueve upgrades poblados PG16. El nuevo
+upgrade compara ocho tablas históricas íntegramente y continúa OC-000004.
+Tras reiniciar Docker, el primer intento encontró vacío el bind del daemon
+para pgTAP; se restauraron y compararon sus 79 fuentes byte a byte y se repitió
+el gate completo. No se modificaron checks ni datos ajenos. Se retiraron dos
+artefactos de fallo obsoletos; los seis informes finales del recorrido pasan.
+CI y squash se registrarán tras pasar en el PR.

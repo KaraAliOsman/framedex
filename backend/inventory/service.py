@@ -208,7 +208,8 @@ def order_receiving(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     with documentary_backend():
         order = one(
             """
-            SELECT id, order_code, order_type::text, status::text, supplier_name
+            SELECT id, private.entity_code(org_id, 'OC', id, order_code) AS order_code,
+                   order_type::text, status::text, supplier_name
             FROM public.orders WHERE id = %s AND org_id = %s
             """,
             [str(order_id), str(org_id)],
@@ -233,7 +234,8 @@ def order_receiving(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         )
         receipts = rows(
             """
-            SELECT id, receipt_key, note, received_by, created_at
+            SELECT id, private.entity_code(org_id, 'REC', id) AS receipt_code,
+                   receipt_key, note, received_by, created_at
             FROM public.order_receipts
             WHERE order_id = %s AND org_id = %s
             ORDER BY created_at
