@@ -71,7 +71,9 @@ Segunda ronda: compactar inspector con unidades separadas/Avanzado plegado;
 acotar pan/zoom sobre el dibujo físico; corregir capas/borradores rechazados.
 La revisión adicional corrige altura móvil y registra el menú contextual como
 capa excluyente. El riel de 64 px usa la sección de marca de P25 en lugar de
-recortar su logotipo completo. Cierre del selector y consulta sin edición fueron fallos
+recortar su logotipo completo. Los íconos conservan 1,5 px de trazo en pantalla
+mediante `non-scaling-stroke`, verificado en `trazo-herramientas.json`.
+Cierre del selector y consulta sin edición fueron fallos
 detectados y reparados en los recorridos existentes.
 
 | Revisión | Resultado | Evidencia del alcance P04 |
