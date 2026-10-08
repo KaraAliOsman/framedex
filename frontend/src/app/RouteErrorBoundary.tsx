@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { t } from "../i18n/es-CL";
+import { RecoveryPage } from "./RecoveryPage";
 
 type Props = { children: ReactNode };
 type State = { error: Error | null };
@@ -22,28 +22,6 @@ export class RouteErrorBoundary extends Component<Props, State> {
 
   override render(): ReactNode {
     if (!this.state.error) return this.props.children;
-    return (
-      <main className="route-error" role="alert">
-        <div className="route-error-card">
-          <h1>{t("app.errorTitle")}</h1>
-          <p>{t("app.errorBody")}</p>
-          <div className="route-error-actions">
-            <button type="button" onClick={() => window.location.reload()}>
-              {t("app.errorReload")}
-            </button>
-            <button
-              type="button"
-              className="route-error-secondary"
-              onClick={() => {
-                this.setState({ error: null });
-                window.location.assign("/");
-              }}
-            >
-              {t("app.errorHome")}
-            </button>
-          </div>
-        </div>
-      </main>
-    );
+    return <RecoveryPage kind="error" technical={this.state.error.name} />;
   }
 }

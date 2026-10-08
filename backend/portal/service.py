@@ -324,7 +324,7 @@ def _sealed_organization(version: dict[str, object]) -> dict[str, object]:
             logo_url = SupabaseDocumentStorage().signed_url(str(logo_key))
         except Exception:
             logo_url = None
-    return {
+    result = {
         "name": org.get("name"),
         "tax_id": org.get("tax_id"),
         "commercial_name": org.get("commercial_name"),
@@ -333,6 +333,15 @@ def _sealed_organization(version: dict[str, object]) -> dict[str, object]:
         "brand_email": org.get("brand_email"),
         "brand_logo_url": logo_url,
     }
+    if org.get("brand_schema") == 1:
+        result.update(
+            {
+                "brand_schema": 1,
+                "brand_primary_color": org.get("brand_primary_color", "#075F5A"),
+                "portal_attribution": org.get("portal_attribution", True),
+            }
+        )
+    return result
 
 
 def _sealed_extras(version: dict[str, object]) -> list[dict[str, object]]:
@@ -497,9 +506,7 @@ def _transition_project_approved(
     """
     claims = json.dumps({"sub": str(approval["created_by"])})
     with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT set_config('request.jwt.claims', %s, true)", [claims]
-        )
+        cursor.execute("SELECT set_config('request.jwt.claims', %s, true)", [claims])
         cursor.execute("SET LOCAL ROLE pricing_backend")
     updated = rows(
         "UPDATE public.projects SET status='APPROVED',updated_at=%s "
@@ -531,6 +538,9 @@ def _transition_project_approved(
         idempotency_key=f"auto:prep:{version_id}",
         version_id=version_id,
     )
+    from notifications.service import approval_event
+
+    approval_event(approval=approval, version_id=version_id)
 
 
 def approve_internal(

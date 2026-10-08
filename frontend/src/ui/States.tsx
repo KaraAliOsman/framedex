@@ -3,18 +3,22 @@ import { type PropsWithChildren, type ReactNode, useEffect, useState } from "rea
 import { t } from "../i18n/es-CL";
 import { Button } from "./Controls";
 import { DimLoader } from "./Signature";
+import { EmptyIllustration, type EmptyIllustrationKind } from "./EmptyIllustration";
 
 export function EmptyState({
   title,
   body,
   action,
+  kind = "sheet",
 }: {
   title: string;
   body?: string;
   action?: ReactNode;
+  kind?: EmptyIllustrationKind;
 }): JSX.Element {
   return (
     <div className="ui-empty">
+      <EmptyIllustration kind={kind} />
       <p className="ui-empty__title">{title}</p>
       {body ? <p className="ui-empty__body">{body}</p> : null}
       {action ? <div className="ui-empty__action">{action}</div> : null}

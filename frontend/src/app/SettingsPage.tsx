@@ -1,6 +1,15 @@
 import { ValidatedForm } from "../ui/FormValidation";
-import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from "react";
 import { Link } from "react-router-dom";
+import { MailIntegrationCard } from "../features/notifications/MailPanels";
 
 import { ApiError } from "../api/apiMutator";
 import {
@@ -439,6 +448,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
 }
 
 function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
+  const [colorFallback, setColorFallback] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [pickFile, setPickFile] = useState<File | null>(null);
   const pickRef = useRef<HTMLInputElement>(null);
@@ -450,8 +460,13 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
     brand_address: "",
     brand_phone: "",
     brand_email: "",
+    brand_primary_color: "",
+    document_attribution: false,
+    portal_attribution: true,
+    notification_email: "",
+    internal_mail_enabled: false,
   });
-  const requestOptions = { headers: { "X-Organization-ID": orgId } };
+  const requestOptions = useMemo(() => ({ headers: { "X-Organization-ID": orgId } }), [orgId]);
 
   const load = useCallback(async () => {
     try {
@@ -463,7 +478,13 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
         brand_address: response.data.brand_address ?? "",
         brand_phone: response.data.brand_phone ?? "",
         brand_email: response.data.brand_email ?? "",
+        brand_primary_color: response.data.brand_primary_color,
+        document_attribution: response.data.document_attribution,
+        portal_attribution: response.data.portal_attribution,
+        notification_email: response.data.notification_email ?? "",
+        internal_mail_enabled: response.data.internal_mail_enabled,
       });
+      setColorFallback(response.data.brand_color_fallback);
       if (response.data.brand_logo_key) {
         try {
           const { blob } = await apiFetchBlob(getOrganizationBrandingLogoReadUrl());
@@ -480,7 +501,7 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
     } catch {
       setMessage({ text: t("settings.brandingLoadError"), error: true });
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [requestOptions]);
 
   useEffect(() => {
     void load();
@@ -488,7 +509,22 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
 
   async function save(event: FormEvent): Promise<void> {
     event.preventDefault();
-    const field = (name: keyof typeof form) => form[name].trim() || null;
+    const field = (
+      name:
+        | "commercial_name"
+        | "giro"
+        | "brand_address"
+        | "brand_phone"
+        | "brand_email"
+        | "notification_email",
+    ) => form[name].trim() || null;
+    if (!/^#[0-9A-Fa-f]{6}$/.test(form.brand_primary_color)) {
+      setMessage({
+        text: "El color debe tener # y seis caracteres hexadecimales. Corrige el color antes de guardar.",
+        error: true,
+      });
+      return;
+    }
     setBusy(true);
     setMessage(null);
     try {
@@ -499,10 +535,16 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
           brand_address: field("brand_address"),
           brand_phone: field("brand_phone"),
           brand_email: field("brand_email"),
+          brand_primary_color: form.brand_primary_color,
+          document_attribution: form.document_attribution,
+          portal_attribution: form.portal_attribution,
+          notification_email: field("notification_email"),
+          internal_mail_enabled: form.internal_mail_enabled,
         },
         requestOptions,
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setColorFallback(response.data.brand_color_fallback);
       setMessage({ text: t("settings.brandingSaved"), error: false });
     } catch {
       setMessage({ text: t("settings.brandingSaveError"), error: true });
@@ -550,6 +592,15 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
     <div className="settings-card">
       <h3 className="eyebrow">{t("settings.branding")}</h3>
       <p className="settings-hint">{t("settings.brandingHint")}</p>
+      <p className="settings-hint">
+        La marca y el pie se sellan al emitir. Los documentos anteriores conservan su identidad.
+      </p>
+      {colorFallback ? (
+        <p role="status">
+          El color elegido no alcanza contraste AA contra paper. Usamos teal-800 en tus nuevas
+          emisiones; elige un color más oscuro si quieres reemplazarlo.
+        </p>
+      ) : null}
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       <div className="settings-branding-preview">
         {logoUrl ? (
@@ -607,6 +658,58 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
             value={form.brand_email}
             onChange={(event) => setForm((prev) => ({ ...prev, brand_email: event.target.value }))}
           />
+        </label>
+        <label>
+          Color de la marca (#RRGGBB)
+          <input
+            value={form.brand_primary_color}
+            maxLength={7}
+            required
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, brand_primary_color: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.document_attribution}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, document_attribution: event.target.checked }))
+            }
+          />
+          Mostrar «Generado con DEKOPEN» en documentos nuevos
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.portal_attribution}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, portal_attribution: event.target.checked }))
+            }
+          />
+          Mostrar la atribución discreta en portales nuevos
+        </label>
+        <label>
+          Correo para avisos internos
+          <input
+            type="email"
+            value={form.notification_email}
+            required={form.internal_mail_enabled}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, notification_email: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.internal_mail_enabled}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, internal_mail_enabled: event.target.checked }))
+            }
+          />
+          Enviar avisos internos al recibir una aprobación o bloquear una OT
         </label>
         <div className="payments-form-actions">
           <button type="submit" className="primary-action" disabled={busy}>
@@ -760,7 +863,10 @@ export function SettingsPage(): JSX.Element {
             {t("settings.groupDocs")}
           </h2>
           <div className="settings-grid">
-            <OrgBrandingCard orgId={org.id} />
+            <OrgBrandingCard key={org.id} orgId={org.id} />
+            <Link className="ui-backlink" to="/about">
+              Acerca de DEKOPEN
+            </Link>
           </div>
         </section>
       )}
@@ -772,6 +878,7 @@ export function SettingsPage(): JSX.Element {
           </h2>
           <div className="settings-grid">
             <FlowIntegrationCard orgId={org.id} />
+            <MailIntegrationCard key={`mail-${org.id}`} orgId={org.id} />
             <SiiCafCard orgId={org.id} />
             <SiiCertificateCard orgId={org.id} />
           </div>

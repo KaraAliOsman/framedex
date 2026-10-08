@@ -3,6 +3,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
+import { Wordmark } from "../brand/Brand";
 import { telemetry } from "../telemetry/telemetry";
 import { useAuthSession } from "./AuthSessionProvider";
 import { consumeReturnTo } from "./returnTo";
@@ -109,8 +110,7 @@ export function MfaPage(): JSX.Element {
     <main className="auth-screen" data-testid="mfa-page">
       <section className="auth-card">
         <div className="auth-card__brand">
-          <span className="brand">{t("app.brand")}</span>
-          <span className="brand-os">{t("app.brandOs")}</span>
+          <Wordmark width={176} />
         </div>
         <header className="auth-card__header">
           <p className="eyebrow">{t("auth.mfaEyebrow")}</p>

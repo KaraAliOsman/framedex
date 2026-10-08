@@ -1,0 +1,302 @@
+[
+  {
+    "id": "bandeja-vacio",
+    "width": 1440,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1440,
+    "findings": []
+  },
+  {
+    "id": "bandeja-carga",
+    "width": 1440,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1440,
+    "findings": []
+  },
+  {
+    "id": "bandeja-error",
+    "width": 1440,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1440,
+    "findings": []
+  },
+  {
+    "id": "correo-bloqueado",
+    "width": 1440,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_before": 1561,
+    "page_width_after": 1561,
+    "baseline_cause": "Fila de posición anterior al abrir correo; P21 pendiente",
+    "findings": []
+  },
+  {
+    "id": "bandeja-vacio",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1440,
+    "findings": []
+  },
+  {
+    "id": "bandeja-carga",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1440,
+    "findings": []
+  },
+  {
+    "id": "bandeja-error",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1440,
+    "findings": []
+  },
+  {
+    "id": "correo-bloqueado",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_before": 1561,
+    "page_width_after": 1561,
+    "baseline_cause": "Fila de posición anterior al abrir correo; P21 pendiente",
+    "findings": []
+  },
+  {
+    "id": "bandeja-vacio",
+    "width": 1280,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1280,
+    "findings": []
+  },
+  {
+    "id": "bandeja-carga",
+    "width": 1280,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1280,
+    "findings": []
+  },
+  {
+    "id": "bandeja-error",
+    "width": 1280,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1280,
+    "findings": []
+  },
+  {
+    "id": "correo-bloqueado",
+    "width": 1280,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_before": 1473,
+    "page_width_after": 1473,
+    "baseline_cause": "Fila de posición anterior al abrir correo; P21 pendiente",
+    "findings": []
+  },
+  {
+    "id": "bandeja-vacio",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1280,
+    "findings": []
+  },
+  {
+    "id": "bandeja-carga",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1280,
+    "findings": []
+  },
+  {
+    "id": "bandeja-error",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1280,
+    "findings": []
+  },
+  {
+    "id": "correo-bloqueado",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_before": 1473,
+    "page_width_after": 1473,
+    "baseline_cause": "Fila de posición anterior al abrir correo; P21 pendiente",
+    "findings": []
+  },
+  {
+    "id": "bandeja-vacio",
+    "width": 1024,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1024,
+    "findings": []
+  },
+  {
+    "id": "bandeja-carga",
+    "width": 1024,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1024,
+    "findings": []
+  },
+  {
+    "id": "bandeja-error",
+    "width": 1024,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1024,
+    "findings": []
+  },
+  {
+    "id": "correo-bloqueado",
+    "width": 1024,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_before": 1024,
+    "page_width_after": 1024,
+    "findings": []
+  },
+  {
+    "id": "bandeja-vacio",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1024,
+    "findings": []
+  },
+  {
+    "id": "bandeja-carga",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1024,
+    "findings": []
+  },
+  {
+    "id": "bandeja-error",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 1024,
+    "findings": []
+  },
+  {
+    "id": "correo-bloqueado",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_before": 1024,
+    "page_width_after": 1024,
+    "findings": []
+  },
+  {
+    "id": "bandeja-vacio",
+    "width": 390,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 390,
+    "findings": []
+  },
+  {
+    "id": "bandeja-carga",
+    "width": 390,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 390,
+    "findings": []
+  },
+  {
+    "id": "bandeja-error",
+    "width": 390,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 390,
+    "findings": []
+  },
+  {
+    "id": "correo-bloqueado",
+    "width": 390,
+    "theme": "light",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_before": 390,
+    "page_width_after": 390,
+    "findings": []
+  },
+  {
+    "id": "bandeja-vacio",
+    "width": 390,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 390,
+    "findings": []
+  },
+  {
+    "id": "bandeja-carga",
+    "width": 390,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 390,
+    "findings": []
+  },
+  {
+    "id": "bandeja-error",
+    "width": 390,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_after": 390,
+    "findings": []
+  },
+  {
+    "id": "correo-bloqueado",
+    "width": 390,
+    "theme": "dark",
+    "source": "Respuesta controlada de aceptación; no envía ni altera datos",
+    "overflow": false,
+    "page_width_before": 390,
+    "page_width_after": 390,
+    "findings": []
+  }
+]

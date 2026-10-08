@@ -11,6 +11,9 @@ class ShareQuoteResponseSerializer(serializers.Serializer):
 
 
 class PortalOrganizationSerializer(serializers.Serializer):
+    brand_schema = serializers.IntegerField(allow_null=True, required=False)
+    brand_primary_color = serializers.CharField(required=False)
+    portal_attribution = serializers.BooleanField(required=False)
     name = serializers.CharField(allow_null=True, allow_blank=True)
     tax_id = serializers.CharField(allow_null=True, allow_blank=True)
     commercial_name = serializers.CharField(allow_null=True, allow_blank=True)

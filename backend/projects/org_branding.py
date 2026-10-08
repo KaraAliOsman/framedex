@@ -14,6 +14,7 @@ from django.db import transaction
 from authentication.errors import contract_error
 from documents.repository import DocumentaryError, documentary_backend, one
 from documents.storage import SupabaseDocumentStorage
+from projects.brand_color import effective_color, snapshot_preferences
 
 
 _MAX_LOGO_BYTES = 512 * 1024
@@ -36,6 +37,7 @@ def _detect(content: bytes) -> tuple[str, str] | None:
 
 
 def _branding(row: dict) -> dict:
+    color, fallback = effective_color(row.get("brand_primary_color"))
     return {
         "name": row.get("name"),
         "tax_id": row.get("tax_id"),
@@ -46,12 +48,20 @@ def _branding(row: dict) -> dict:
         "brand_email": row.get("brand_email"),
         "brand_logo_key": row.get("brand_logo_key"),
         "brand_logo_sha256": row.get("brand_logo_sha256"),
+        "brand_primary_color": row.get("brand_primary_color", "#075F5A"),
+        "brand_effective_color": color,
+        "brand_color_fallback": fallback,
+        "document_attribution": row.get("document_attribution", False),
+        "portal_attribution": row.get("portal_attribution", True),
+        "notification_email": row.get("notification_email"),
+        "internal_mail_enabled": row.get("internal_mail_enabled", False),
     }
 
 
 _FIELDS = (
     "name, tax_id, commercial_name, giro, brand_address, brand_phone,"
-    " brand_email, brand_logo_key, brand_logo_sha256"
+    " brand_email, brand_logo_key, brand_logo_sha256, brand_primary_color,"
+    " document_attribution, portal_attribution, notification_email, internal_mail_enabled"
 )
 
 
@@ -68,7 +78,12 @@ def branding_for_snapshot(*, org_id: UUID) -> dict:
     """Frozen-authority identity block: only fields that belong on a sealed
     document. The sha-pinned key means re-rendering later can prove the logo
     bytes are the ones the document was sealed with."""
-    return get_branding(org_id=org_id)
+    result = get_branding(org_id=org_id)
+    # Notification preferences never belong in a customer deliverable.
+    result.pop("notification_email", None)
+    result.pop("internal_mail_enabled", None)
+    result.update(snapshot_preferences(result))
+    return result
 
 
 def _blank(value):
@@ -82,17 +97,32 @@ def save_branding(*, org_id: UUID, data: dict) -> dict:
 
 
 def _save_branding(*, org_id: UUID, data: dict) -> dict:
+    current = get_branding(org_id=org_id)
+    if data.get("internal_mail_enabled", current["internal_mail_enabled"]) and not _blank(
+        data.get("notification_email", current["notification_email"])
+    ):
+        raise contract_error(
+            400,
+            "mail_notification_recipient_missing",
+            "Indica el correo del encargado antes de activar los avisos internos.",
+        )
     row = one(
         "UPDATE public.tenancy_organizations SET "
         "commercial_name=%s, giro=%s, brand_address=%s, brand_phone=%s,"
-        " brand_email=%s, updated_at=now() "
+        " brand_email=%s, brand_primary_color=%s, document_attribution=%s,"
+        " portal_attribution=%s, notification_email=%s, internal_mail_enabled=%s, updated_at=now() "
         "WHERE id=%s RETURNING " + _FIELDS,
         [
-            _blank(data.get("commercial_name"))[:255] if data.get("commercial_name") else None,
-            _blank(data.get("giro"))[:255] if data.get("giro") else None,
-            _blank(data.get("brand_address"))[:255] if data.get("brand_address") else None,
-            _blank(data.get("brand_phone"))[:64] if data.get("brand_phone") else None,
-            _blank(data.get("brand_email"))[:255] if data.get("brand_email") else None,
+            _blank(data.get("commercial_name")),
+            _blank(data.get("giro")),
+            _blank(data.get("brand_address")),
+            _blank(data.get("brand_phone")),
+            _blank(data.get("brand_email")),
+            data.get("brand_primary_color", current["brand_primary_color"]).upper(),
+            data.get("document_attribution", current["document_attribution"]),
+            data.get("portal_attribution", current["portal_attribution"]),
+            _blank(data.get("notification_email", current["notification_email"])),
+            data.get("internal_mail_enabled", current["internal_mail_enabled"]),
             str(org_id),
         ],
         "organization_not_found",

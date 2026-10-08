@@ -27,4 +27,11 @@ export interface OrgBranding {
   brand_logo_key: string | null;
   /** @nullable */
   brand_logo_sha256: string | null;
+  brand_primary_color: string;
+  brand_effective_color: string;
+  brand_color_fallback: boolean;
+  document_attribution: boolean;
+  portal_attribution: boolean;
+  notification_email: string | null;
+  internal_mail_enabled: boolean;
 }

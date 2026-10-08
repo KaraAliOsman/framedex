@@ -2193,6 +2193,10 @@ def transition_step(
         )
         # §08: a completed station queues the next-step notice — recomputed
         # when the job runs so a retried task reports the true successor.
+        if new_status == "BLOCKED":
+            from notifications.service import blocked_event
+
+            blocked_event(org_id=org_id, actor_id=actor_id, step_id=step_id)
         if new_status == "DONE":
             from automations.service import emit
 

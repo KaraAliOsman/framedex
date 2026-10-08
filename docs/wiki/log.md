@@ -660,3 +660,30 @@ de revisión siguen resueltas y la base no recibió avances incompatibles.
 Se integra por squash `4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb`, se actualizan
 la aceptación, `verified_ref` y la fila P02. La aplicación propia permanece
 detenida. La cola continúa con P25; sus superficies todavía no están aceptadas.
+
+## 2026-10-08 — P25 · identidad y recorridos locales
+
+La sección B se aplica a assets, acceso, onboarding y etiquetas; la cota D queda
+en Acerca de/correo interno. Se retiran estilos muertos del flujo anterior y
+brillos/bucles del Orb sin cambiar su API. El primer contacto se conserva al
+crear la obra y luego queda sellado en la emisión. Color/fallback AA y pies son
+preferencias para emisiones nuevas; el portal adopta también su metadata.
+Cinco correos reales en Mailpit, cotización y comprobante adjuntos, aprobación,
+BLOCK/UNBLOCK y recuperación explícita de entrega incierta pasan. La evidencia
+resuelve CID desde bytes MIME y omite enlaces privados. Matrices de 84 vistas,
+56 estados, ocho MFA y 32 estados de correo pasan; captura oficial de inicio/
+login da 16 registros sin hallazgos. Los PNG se comprimen sin alterar píxeles.
+Se conserva el baseline de desborde de filas del proyecto para P21, sin aumento
+al abrir correo. Database Gate, CI y squash se registrarán cuando pasen.
+
+## 2026-10-08 — P25 · gates locales completos
+
+Los cuatro gates locales pasan con 744 pruebas del motor (+2 xfail), 1.267
+backend y 827 frontend. Database Gate pasa 80 archivos / 1.173 pgTAP, 408
+integraciones y 11 E2E reales. El upgrade P25 poblado en PG16 conserva el emisor
+original, tres tablas completas, snapshots, hashes y precios byte a byte.
+El montaje de plantilla en el daemon del checkout Linux aislado se corrigió y
+verificó por SHA; no cambió el helper estricto de Magic Link ni ningún check.
+La auditoría revisa 394 archivos publicables y 250 PNG sin secretos; las imágenes
+conservan píxeles. Se redujo el formateo ajeno al alcance verificando igualdad
+del AST completo de los módulos. CI y squash se registrarán después de pasar.

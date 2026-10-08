@@ -38,6 +38,7 @@ import { projectNameWrite } from "./projectNames";
 import { useProjectView } from "./useProject";
 import "./projects.css";
 import { PositionThumb } from "./PositionThumb";
+import { MailComposer } from "../notifications/MailPanels";
 import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
@@ -1732,6 +1733,13 @@ function ProjectWorkspace({
                   open={openSection === "quote"}
                 >
                   <summary>{t("projects.quoteSection")}</summary>
+                  {canWrite && ["QUOTED", "APPROVED"].includes(project.status) ? (
+                    <MailComposer
+                      key={`quote-mail-${orgId}-${project.id}`}
+                      orgId={orgId}
+                      projectId={project.id}
+                    />
+                  ) : null}
                   <ProjectQuotationPanel
                     project={project}
                     orgId={orgId}
@@ -1811,7 +1819,13 @@ function ProjectWorkspace({
                 </Link>
               )}
             </div>
-            {project.position_count === 0 && <p>{t("projects.noPositions")}</p>}
+            {project.position_count === 0 && (
+              <EmptyState
+                kind="positions"
+                title="Sin posiciones"
+                body={t("projects.noPositions")}
+              />
+            )}
             <div className="position-grid" role="listbox" aria-label={t("projects.positions")}>
               {project.positions?.map((position, positionIndex) => {
                 const status = positionStatusKey(project, position);

@@ -8,6 +8,10 @@
 
 export interface PortalOrganization {
   /** @nullable */
+  brand_schema?: number | null;
+  brand_primary_color?: string;
+  portal_attribution?: boolean;
+  /** @nullable */
   name: string | null;
   /** @nullable */
   tax_id: string | null;

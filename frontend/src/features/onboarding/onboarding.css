@@ -1,0 +1,103 @@
+.onboarding {
+  max-width: 46rem;
+  margin-inline: auto;
+  display: grid;
+  gap: var(--space-24px);
+  padding: var(--space-24px) var(--space-16px);
+}
+.onboarding-head {
+  display: grid;
+  gap: var(--space-8px);
+}
+.onboarding-head h1 {
+  font-size: var(--type-title-l);
+  margin: 0;
+}
+.onboarding-head p,
+.onboarding-card p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.onboarding-card {
+  display: grid;
+  gap: var(--space-16px);
+  padding: var(--space-24px);
+  border: 1px solid var(--border-default);
+  background: var(--surface-sheet);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+.onboarding-card h2 {
+  margin: 0;
+  font-size: var(--type-title-m);
+}
+.onboarding-card .auth-form {
+  display: grid;
+  gap: var(--space-8px);
+}
+.onboarding-card input {
+  min-width: 0;
+  width: 100%;
+}
+.onboarding-card label {
+  display: grid;
+  gap: var(--space-4px);
+}
+.onboarding-card .ui-button--primary {
+  justify-self: start;
+}
+.onboarding-systems {
+  display: grid;
+  gap: var(--space-8px);
+}
+.onboarding-system {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12px);
+  padding: var(--space-8px) var(--space-12px);
+  text-align: left;
+  border: 1px solid var(--border-default);
+  background: var(--surface-panel);
+  border-radius: var(--r-1);
+}
+.onboarding-system > span:first-child {
+  display: grid;
+  gap: var(--space-4px);
+  min-width: 0;
+}
+.onboarding-system.is-picked {
+  border-color: var(--interactive);
+  background: var(--surface-selected);
+  box-shadow: none;
+}
+.onboarding-system:disabled {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+.onboarding .ui-button:disabled {
+  color: var(--text-secondary);
+  background: var(--surface-card);
+  opacity: 1;
+}
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-8px);
+}
+@media (max-width: 640px) {
+  .onboarding {
+    padding: var(--space-16px) var(--space-8px);
+    gap: var(--space-16px);
+  }
+  .onboarding-card {
+    padding: var(--space-16px);
+  }
+  .onboarding input,
+  .onboarding .ui-button,
+  .onboarding-system {
+    min-height: var(--density-loose);
+  }
+  .onboarding .ui-stepper {
+    flex-wrap: wrap;
+  }
+}

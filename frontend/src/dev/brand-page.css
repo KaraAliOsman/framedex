@@ -1,0 +1,28 @@
+.brand-specimen {
+  margin-inline: auto;
+  max-width: 60rem;
+  padding: var(--space-24px);
+  display: grid;
+  gap: var(--space-24px);
+}
+.brand-specimen-sizes,
+.brand-specimen-orbs {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: var(--space-24px);
+}
+.brand-specimen figure {
+  margin: 0;
+  display: grid;
+  gap: var(--space-12px);
+  justify-items: start;
+}
+.brand-specimen figcaption {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+.brand-specimen section {
+  display: grid;
+  gap: var(--space-16px);
+}

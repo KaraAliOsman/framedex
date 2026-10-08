@@ -48,6 +48,10 @@ enable_signup = true
 [auth.mfa]
 max_enrolled_factors = 10
 
+[auth.email.template.magic_link]
+subject = "DEKOPEN · Tu enlace de acceso"
+content_path = "./supabase/templates/magic-link.html"
+
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true

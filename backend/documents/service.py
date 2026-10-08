@@ -64,6 +64,7 @@ from engine_api.inspection_repository import InspectorAuthorities, InspectorRepo
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import commercial_backend
 from production.service import process_facts_snapshot
+from projects.brand_color import snapshot_preferences
 
 from documents.repository import (
     DocumentaryError,
@@ -998,8 +999,12 @@ def _collect_purchase_authorities(
 
 
 def freeze_revision_a(
-    *, org_id: UUID, actor_id: UUID, project_id: UUID,
-    pricing_operation_id: UUID, confirmed: bool,
+    *,
+    org_id: UUID,
+    actor_id: UUID,
+    project_id: UUID,
+    pricing_operation_id: UUID,
+    confirmed: bool,
     allow_incomplete_workshop: bool = False,
 ) -> dict[str, object]:
     if not confirmed:
@@ -1499,7 +1504,8 @@ def freeze_revision_a(
         )
         organization = one(
             "SELECT name, tax_id, commercial_name, giro, brand_address,"
-            " brand_phone, brand_email, brand_logo_key, brand_logo_sha256"
+            " brand_phone, brand_email, brand_logo_key, brand_logo_sha256,"
+            " brand_primary_color, document_attribution, portal_attribution"
             " FROM public.tenancy_organizations WHERE id = %s",
             [str(org_id)],
             "organization_not_found",
@@ -1517,6 +1523,7 @@ def freeze_revision_a(
             # The logo key is content-addressed, so the frozen sha pins the
             # exact bytes a re-rendered document may show.
             "organization": {
+                **snapshot_preferences(organization),
                 "name": str(organization["name"]),
                 "tax_id": str(organization["tax_id"]),
                 "commercial_name": organization["commercial_name"],
@@ -1568,15 +1575,19 @@ def freeze_revision_a(
             "purchase_requirements": purchase.model_dump(mode="python") if purchase else None,
             "purchase_authorities": {
                 "physical_stock_bindings": [
-                    item.model_dump(mode="python")
-                    for item in purchase_authorities.stock_bindings
+                    item.model_dump(mode="python") for item in purchase_authorities.stock_bindings
                 ],
-                "glass": [item.model_dump(mode="python")
-                          for item in purchase_authorities.glass_mappings],
-                "hardware": [item.model_dump(mode="python")
-                             for item in purchase_authorities.hardware_mappings],
-                "panel": [item.model_dump(mode="python")
-                          for item in purchase_authorities.panel_authorities],
+                "glass": [
+                    item.model_dump(mode="python") for item in purchase_authorities.glass_mappings
+                ],
+                "hardware": [
+                    item.model_dump(mode="python")
+                    for item in purchase_authorities.hardware_mappings
+                ],
+                "panel": [
+                    item.model_dump(mode="python")
+                    for item in purchase_authorities.panel_authorities
+                ],
             },
             "production_allowed": production_allowed,
             "documentary_complete": documentary_complete,
