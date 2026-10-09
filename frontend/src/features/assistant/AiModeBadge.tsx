@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { useQuery } from "@tanstack/react-query";
 import { aiModeGet } from "../../api/generated/dekopen";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
@@ -16,11 +17,12 @@ export function AiModeBadge(): JSX.Element | null {
     },
   });
   return import.meta.env.DEV && query.data ? (
-    <span
+    <StatusBadge
+      showIcon={false}
       className="status-chip"
       title="La IA de esta organización incluye un proveedor de prueba explícito"
     >
       Proveedor de prueba
-    </span>
+    </StatusBadge>
   ) : null;
 }

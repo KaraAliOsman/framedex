@@ -955,3 +955,22 @@ en la corrida `37958419127` y se integra con squash `d5500d69bbc843162a9c189805a
 CodeRabbit y Devin omitieron revisión; se conserva la evidencia propia de flujos,
 rúbrica, gates y límites. ESTADO registra el cierre de la ola en cinco líneas.
 El stack propio está detenido y el fixture permanece intacto. Continúa ED1.
+
+## 2026-10-09 — ED1 · coherencia y autoridad editorial
+
+La revisión conjunta conserva firmas y capacidades reales de la ola 1.
+Se unifican veintiocho insignias en catorce fuentes, paleta heredada de
+módulo/paño y fechas; se eliminan noventa declaraciones CSS duplicadas,
+CSS huérfano y once alias de tokens muertos. La tarea determina densidad:
+Producción y el shell del jefe adoptan taller sin ampliar permisos.
+Secciones trasladan rótulos fuera del SVG y no imprimen una profundidad
+aproximada como autoridad. El plan conserva longitudes, texto constante,
+tinta física y selección táctil por leyenda de piezas estrechas. Material
+y acabado usan el glosario; un ángulo ausente no se completa con 90°.
+La matriz oficial baja de ocho fuentes pequeñas, 954 objetivos táctiles
+y ocho advertencias de consola a cero en 192 vistas posteriores, conservando
+192 anteriores. Baseline 257/716 → 69/187; se eliminan 279 infracciones reales.
+Recorridos estimador/emisión/DOC-01, dueño/aprobación, jefe/remake y operario/QR
+pasan, junto con una nueva propuesta MiMo de Low-E aplicada y deshecha.
+Uw permanece Sin dato y DEMO no certifica. La aceptación y decisiones
+editoriales guían la ola 2; gates finales y squash se registrarán al integrar.

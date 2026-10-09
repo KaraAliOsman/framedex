@@ -10,7 +10,11 @@ import "./SectionPreviewSvg.css";
  * from a declared shape, never mistaken for one. */
 
 const PAD_MM = 10;
-const FONT_RATIO = 0.16;
+const AXIS_LABELS: Record<string, string> = {
+  GLAZING: "Vidrio",
+  WEB: "Alma",
+  FIXING: "Fijación",
+};
 
 function polygonBounds(section: ProfileSection) {
   const xs = section.polygon.map((point) => Number(point.x_mm));
@@ -44,11 +48,10 @@ export function SectionPreviewSvg({
   const bounds = declared
     ? polygonBounds(declared)
     : { minX: 0, minY: 0, width: widthMm, height: heightMm };
-  const fontSize = Math.max(widthMm, heightMm) * FONT_RATIO;
   const viewX = bounds.minX - PAD_MM;
-  const viewY = bounds.minY - PAD_MM - fontSize;
+  const viewY = bounds.minY - PAD_MM;
   const viewW = widthMm + PAD_MM * 2;
-  const viewH = heightMm + PAD_MM * 2 + fontSize;
+  const viewH = heightMm + PAD_MM * 2;
   const surface = memberSurface(material ?? "PVC");
   const provenance = declared
     ? declared.source === "DXF_REFERENCE"
@@ -93,22 +96,22 @@ export function SectionPreviewSvg({
               x2={bounds.minX + widthMm}
               y2={Number(axis.y_mm)}
             />
-            <text
-              className="section-preview__axis-label"
-              x={bounds.minX - PAD_MM / 4}
-              y={Number(axis.y_mm)}
-              fontSize={fontSize}
-              textAnchor="end"
-              dominantBaseline="middle"
-            >
-              {axis.name}
-            </text>
           </g>
         ))}
       </svg>
       <figcaption>
         <span className="section-preview__dims">{`${fmtMm(widthMm)} × ${fmtMm(heightMm)} mm`}</span>
         <span>{provenance}</span>
+        {declared?.axes?.length ? (
+          <dl className="section-preview__axes" aria-label="Ejes de la sección">
+            {declared.axes.map((axis) => (
+              <div key={axis.name}>
+                <dt>{AXIS_LABELS[axis.name.toUpperCase()] ?? "Eje declarado"}</dt>
+                <dd>{fmtMm(axis.y_mm)} mm</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
       </figcaption>
     </figure>
   );

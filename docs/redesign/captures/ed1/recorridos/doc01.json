@@ -1,0 +1,34 @@
+{
+  "pages": 4,
+  "net": "68211",
+  "gross": "81171",
+  "sealed_totals_present": true,
+  "internal_price_fields_absent": true,
+  "pdf_hash": "14e271d9d7ba99d1d2cf211387ef2a420ae865a5937c615aaf4072f99313eb02",
+  "page_sizes": [
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ],
+    [
+      612.0,
+      792.0
+    ]
+  ],
+  "fonts": [
+    "IAPHVP+IBM-Plex-Mono-Bold",
+    "LCRRNU+IBM-Plex-Sans-Semi-Bold",
+    "LGGWOI+IBM-Plex-Sans-Bold",
+    "PRUBHW+IBM-Plex-Mono",
+    "RLMMQV+IBM-Plex-Sans",
+    "UUNZFJ+IBM-Plex-Mono-Medium"
+  ]
+}

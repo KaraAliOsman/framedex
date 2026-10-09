@@ -109,6 +109,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const parts = location.pathname.split("/").filter(Boolean);
   const projectId = parts[0] === "projects" && parts[1] !== undefined ? parts[1] : null;
   const isStudio = parts[0] === "projects" && parts[2] === "positions" && parts.length >= 4;
+  const workshop = parts[0] === "production" || role === "OPERATOR" || role === "INSTALLER";
   const compact = isStudio || collapsed;
   const domainGroups = navigationFor(role);
   const navItems = domainGroups.flatMap((group) => group.items);
@@ -131,7 +132,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
         <div
           className={`app-shell${railOpen ? " rail-open" : ""}${compact ? " rail-collapsed" : ""}`}
           data-studio={isStudio || undefined}
-          data-density={role === "OPERATOR" || role === "INSTALLER" ? "workshop" : "office"}
+          data-density={workshop ? "workshop" : "office"}
           data-theme={theme}
           data-testid="app-shell"
         >

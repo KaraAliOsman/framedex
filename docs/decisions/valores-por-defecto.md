@@ -422,3 +422,21 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - MOCK exige habilitación explícita en desarrollo y se muestra como «Proveedor
   de prueba» solo en DEV. La aceptación conserva MiMo en la organización
   principal y separa el tenant sintético. No se activa fallback silencioso.
+
+## ED1 · reglas editoriales comunes (2026-10-09)
+
+- La densidad sigue la tarea: Producción y su shell usan `workshop` para
+  jefe/dueño/operario. No cambia permisos. La apariencia claro/oscuro sigue
+  configurable con el control existente, conservando la preferencia elegida.
+- La sección distingue forma aproximada y profundidad declarada. El dibujo
+  puede conservar proporciones esquemáticas; la medida sin catálogo dice
+  «Sin dato · declara la sección en Catálogo». No se crea autoridad por un
+  fallback de presentación ni se redondea una profundidad fraccional.
+- El plan mantiene proporciones longitudinales y altura de barra esquemática.
+  Textos tienen tamaño físico constante y tinta legible sobre el material.
+  Si una pieza queda bajo 44 px, su leyenda HTML conserva la selección completa.
+  No se ensancha una pieza para alterar su lectura como longitud fabricada.
+- Materiales y fechas comparten glosario/formateadores. Un ángulo ausente
+  sigue Sin dato; los rótulos nunca completan 90° por presentación.
+- `StatusBadge` centraliza el tono; naranja significa decisión humana.
+  No aparecen nuevos defaults comerciales configurables en este pase.

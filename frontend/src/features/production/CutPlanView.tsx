@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import type { OptimizeStrategyStats } from "../../api/generated/models";
 import { cutRoleLabel } from "./labels";
 import { fmtMm, fmtPct } from "../../format";
+import { domainLabels } from "../../i18n/domainLabels";
 import { t, tOptional } from "../../i18n/es-CL";
 
 // Full engine payload contract (backend/production/service.py →
@@ -198,6 +199,31 @@ function materialClass(material: string | undefined, kind?: string): string {
   }
 }
 
+/** Keep labels and hit targets in screen pixels while the material geometry
+ * stays in the engine's proportional drawing space. Narrow pieces remain
+ * selectable through the full-size HTML legend. */
+function useDiagramScale() {
+  const ref = useRef<SVGSVGElement>(null);
+  const [scale, setScale] = useState({ x: 1, y: 1 });
+  useLayoutEffect(() => {
+    const svg = ref.current;
+    if (!svg) return;
+    const measure = () => {
+      const matrix = svg.getScreenCTM?.();
+      if (!matrix || matrix.a <= 0 || matrix.d <= 0) return;
+      setScale((old) =>
+        old.x === matrix.a && old.y === matrix.d ? old : { x: matrix.a, y: matrix.d },
+      );
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, scale };
+}
+
 function CutPlanBarSvg({
   bar,
   selectedMember,
@@ -211,15 +237,13 @@ function CutPlanBarSvg({
   pieceCodes: Record<string, string>;
   onSelect: (ref: PieceRef) => void;
 }) {
+  const { ref, scale } = useDiagramScale();
   const stock = num(bar.stock_length_mm) || 1;
   const head = num(bar.head_trim_mm);
   const tail = num(bar.tail_trim_mm);
   const kerf = num(bar.kerf_mm);
   const scaled = (mm: number) => (mm / stock) * 1000;
-  // The strip is the thing a saw operator reads — it has to stay legible at
-  // arm's length, so the band itself carries most of the height and the
-  // labels stay large inside it (narrow pieces keep their identity in the
-  // legend below, mirroring the printed pack's leader list).
+  // Bar height is schematic; lengths and ordering keep their exact proportions.
   const barH = 96;
   let cursor = head;
   const pieces = bar.cuts.map((cut, index) => {
@@ -235,6 +259,7 @@ function CutPlanBarSvg({
     const xSc = scaled(x);
     const wSc = scaled(w);
     const mid = xSc + wSc / 2;
+    const interactive = wSc * scale.x >= 44 && (barH - 20) * scale.y >= 44;
     const angleL = cut.angle_left != null && num(cut.angle_left) !== 90;
     const angleR = cut.angle_right != null && num(cut.angle_right) !== 90;
     return (
@@ -243,26 +268,34 @@ function CutPlanBarSvg({
         className={`cutplan-cut ${materialClass(cut.material, cut.source_kind)}${
           memberHit ? " is-member" : ""
         }${selected ? " is-selected" : ""}`}
-        onClick={() => onSelect({ kind: "cut", key, code, shopCode, piece: cut })}
-        role="button"
-        tabIndex={0}
+        onClick={
+          interactive ? () => onSelect({ kind: "cut", key, code, shopCode, piece: cut }) : undefined
+        }
+        role={interactive ? "button" : undefined}
+        tabIndex={interactive ? 0 : undefined}
         onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
+          if (interactive && (event.key === "Enter" || event.key === " ")) {
             event.preventDefault();
             onSelect({ kind: "cut", key, code, shopCode, piece: cut });
           }
         }}
       >
         <rect x={xSc} y={10} width={Math.max(wSc, 1)} height={barH - 20} rx={2} />
-        {wSc > 60 ? (
-          <text x={mid} y={42} textAnchor="middle" className="cutplan-cut-id">
-            {shopCode ?? pieceLabel(cut, code)}
-          </text>
+        {wSc * scale.x >= 44 ? (
+          <g transform={`translate(${mid} 32) scale(${1 / scale.x} ${1 / scale.y})`}>
+            <text textAnchor="middle" className="cutplan-cut-id">
+              {wSc * scale.x >= 160
+                ? (shopCode ?? pieceLabel(cut, code))
+                : (cut.sequence ?? index + 1)}
+            </text>
+          </g>
         ) : null}
-        {wSc > 44 ? (
-          <text x={mid} y={68} textAnchor="middle" className="cutplan-cut-len">
-            {fmtMm(cut.length_mm)}
-          </text>
+        {wSc * scale.x >= 100 ? (
+          <g transform={`translate(${mid} 62) scale(${1 / scale.x} ${1 / scale.y})`}>
+            <text textAnchor="middle" className="cutplan-cut-len">
+              {fmtMm(cut.length_mm)} mm
+            </text>
+          </g>
         ) : null}
         {angleL ? (
           <polygon
@@ -289,8 +322,10 @@ function CutPlanBarSvg({
   return (
     <div className="cutplan-barwrap">
       <svg
+        ref={ref}
         className="cutplan-bar"
         viewBox={`0 0 1000 ${barH}`}
+        preserveAspectRatio="none"
         role="group"
         aria-label={`${t("production.optimizeBar")} #${bar.bar_index}`}
       >
@@ -352,8 +387,10 @@ function CutPlanBarSvg({
                 onClick={() => onSelect({ kind: "cut", key, code, shopCode, piece: cut })}
               >
                 {cut.sequence ?? index + 1} · {shopCode ?? pieceLabel(cut, code)} ·{" "}
-                {fmtMm(cut.length_mm)}mm
-                {angleL !== null || angleR !== null ? ` · ${angleL ?? 90}°/${angleR ?? 90}°` : ""}
+                {fmtMm(cut.length_mm)} mm
+                {angleL !== null || angleR !== null
+                  ? ` · ${angleL === null ? "Sin dato" : `${angleL}°`} / ${angleR === null ? "Sin dato" : `${angleR}°`}`
+                  : ""}
               </button>
             </li>
           );
@@ -376,6 +413,7 @@ function CutPlanSheetSvg({
   pieceCodes: Record<string, string>;
   onSelect: (ref: PieceRef) => void;
 }) {
+  const { ref, scale } = useDiagramScale();
   const w = num(layout.sheet_width_mm) || 1;
   const h = num(layout.sheet_height_mm) || 1;
   const vw = 320;
@@ -383,6 +421,7 @@ function CutPlanSheetSvg({
   return (
     <div className="cutplan-sheetwrap">
       <svg
+        ref={ref}
         className="cutplan-sheet"
         viewBox={`0 0 ${vw} ${vh}`}
         role="group"
@@ -399,28 +438,38 @@ function CutPlanSheetSvg({
           const py = (num(piece.y_mm) / h) * vh;
           const pw = Math.max((num(piece.width_mm) / w) * vw, 1);
           const ph = Math.max((num(piece.height_mm) / h) * vh, 1);
+          const interactive = pw * scale.x >= 44 && ph * scale.y >= 44;
           return (
             <g
               key={key}
               className={`cutplan-nest${memberHit ? " is-member" : ""}${
                 selected ? " is-selected" : ""
               }`}
-              onClick={() => onSelect({ kind: "nest", key, code, shopCode, piece })}
-              role="button"
-              tabIndex={0}
+              onClick={
+                interactive
+                  ? () => onSelect({ kind: "nest", key, code, shopCode, piece })
+                  : undefined
+              }
+              role={interactive ? "button" : undefined}
+              tabIndex={interactive ? 0 : undefined}
               onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
+                if (interactive && (event.key === "Enter" || event.key === " ")) {
                   event.preventDefault();
                   onSelect({ kind: "nest", key, code, shopCode, piece });
                 }
               }}
             >
               <rect x={px} y={py} width={pw} height={ph} rx={1} />
-              {pw > 30 && ph > 12 ? (
-                <text x={px + pw / 2} y={py + ph / 2} textAnchor="middle" dominantBaseline="middle">
-                  {shopCode ?? pieceLabel(piece, code)}
-                  {piece.rotated ? " ⟳" : ""}
-                </text>
+              {interactive ? (
+                <g
+                  transform={`translate(${px + pw / 2} ${py + ph / 2}) scale(${1 / scale.x} ${1 / scale.y})`}
+                >
+                  <text textAnchor="middle" dominantBaseline="middle">
+                    {pw * scale.x >= 160
+                      ? (shopCode ?? pieceLabel(piece, code))
+                      : (piece.sequence ?? index + 1)}
+                  </text>
+                </g>
               ) : null}
             </g>
           );
@@ -439,7 +488,7 @@ function CutPlanSheetSvg({
                 onClick={() => onSelect({ kind: "nest", key, code, shopCode, piece })}
               >
                 {piece.sequence ?? index + 1} · {shopCode ?? pieceLabel(piece, code)} ·{" "}
-                {fmtMm(piece.width_mm)}×{fmtMm(piece.height_mm)}
+                {fmtMm(piece.width_mm)} × {fmtMm(piece.height_mm)} mm
                 {piece.rotated ? ` ${t("production.optimizeRotated")}` : ""}
               </button>
             </li>
@@ -492,19 +541,19 @@ export function CutPlanView({
       id: selected.shopCode ?? pieceLabel(piece, selected.code),
       planRef: selected.code,
       kind: selected.kind,
-      sku: piece.workshop_sku ?? "—",
-      material: cut.material ?? "—",
-      color: cut.color ?? "—",
+      sku: piece.workshop_sku ?? "Sin dato · falta código de catálogo",
+      material: (cut.material && domainLabels[cut.material]) ?? "Sin dato · falta material",
+      color: cut.color ? (domainLabels[cut.color] ?? cut.color) : null,
       role: cutRoleLabel(cut.role),
       position:
         (piece.source_position_id && labels[piece.source_position_id]) ??
         shortId(piece.source_position_id),
       bay: (piece.bay_id && labels[piece.bay_id]) ?? shortId(piece.bay_id),
       leaf: (piece.leaf_id && labels[piece.leaf_id]) ?? shortId(piece.leaf_id),
-      unit: piece.unit_index ?? 1,
+      unit: piece.unit_index ?? "Sin dato",
       measure: isCut
         ? `${fmtMm(cut.length_mm)} mm`
-        : `${fmtMm(nest.width_mm)}×${fmtMm(nest.height_mm)} mm${nest.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
+        : `${fmtMm(nest.width_mm)} × ${fmtMm(nest.height_mm)} mm${nest.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
       angles,
       memberCount: 0,
     };
@@ -536,7 +585,7 @@ export function CutPlanView({
                 {t("production.optimizeBar")} #{bar.bar_index}
               </strong>{" "}
               {bar.commercial_sku} · {fmtMm(bar.stock_length_mm)} mm ·{" "}
-              {t("production.cutplanYield")} {fmtPct(bar.yield_pct)}% ·{" "}
+              {t("production.cutplanYield")} {fmtPct(bar.yield_pct)} % ·{" "}
               {t("production.cutplanRemainder")} {fmtMm(bar.remainder_mm)} mm
             </figcaption>
             <CutPlanBarSvg
@@ -556,9 +605,9 @@ export function CutPlanView({
                   <strong>
                     {t("production.optimizeSheet")} #{layout.sheet_index}
                   </strong>{" "}
-                  {layout.purchasing_sku} · {fmtMm(layout.sheet_width_mm)}×
+                  {layout.purchasing_sku} · {fmtMm(layout.sheet_width_mm)} ×{" "}
                   {fmtMm(layout.sheet_height_mm)} mm · {t("production.cutplanYield")}{" "}
-                  {fmtPct(layout.yield_pct)}%
+                  {fmtPct(layout.yield_pct)} %
                 </figcaption>
                 <CutPlanSheetSvg
                   layout={layout}
@@ -586,13 +635,16 @@ export function CutPlanView({
                 {unnested.map((pane, index) => (
                   <tr key={index}>
                     <td>
-                      {pane.group ?? "—"}
+                      {pane.group ?? "Sin dato · falta grupo de vidrio"}
                       {pane.quantity > 1 ? ` ×${pane.quantity}` : ""}
                     </td>
                     <td>
-                      {fmtMm(pane.width_mm)}×{fmtMm(pane.height_mm)} mm
+                      {fmtMm(pane.width_mm)} × {fmtMm(pane.height_mm)} mm
                     </td>
-                    <td>{tOptional(`production.unnestedReason.${pane.reason}`) ?? pane.reason}</td>
+                    <td>
+                      {tOptional(`production.unnestedReason.${pane.reason}`) ??
+                        "Sin dato · revisa la autoridad del vidrio en Catálogo."}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -630,7 +682,7 @@ export function CutPlanView({
               <dt>{t("production.cutplanMaterial")}</dt>
               <dd>
                 {detail.material}
-                {detail.color !== "—" ? ` · ${detail.color}` : ""}
+                {detail.color ? ` · ${detail.color}` : ""}
               </dd>
             </div>
             <div>
@@ -641,7 +693,7 @@ export function CutPlanView({
               <dt>{t("production.cutplanOrigin")}</dt>
               <dd>
                 {t("production.cutplanPosition")} {detail.position} · {t("production.cutplanBay")}{" "}
-                {detail.bay} · {t("production.cutplanLeaf")} {detail.leaf} · u{detail.unit}
+                {detail.bay} · {t("production.cutplanLeaf")} {detail.leaf} · unidad {detail.unit}
               </dd>
             </div>
             <div>

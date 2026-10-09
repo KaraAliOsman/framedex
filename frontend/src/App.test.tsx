@@ -7,6 +7,9 @@ import { AppRoutes, DEV_ONLY_ROUTE_PATHS, visibleDevOnlyRoutePaths } from "./App
 import { AuthSessionContext, type AuthSessionContextValue } from "./auth/AuthSessionProvider";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import { ConfirmProvider } from "./ui";
+// Compile the real lazy destination during test setup. The route assertion
+// verifies navigation/rendering, independently of concurrent Vite transforms.
+import "./features/projects/ProjectPages";
 vi.mock("./api/generated/dekopen", () => ({
   projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
   analyticsToday: vi.fn().mockResolvedValue({

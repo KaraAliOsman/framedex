@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { Wordmark } from "../../brand/Brand";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -1420,9 +1421,12 @@ function ProductionOfficePage(): JSX.Element {
               <>
                 <header className="production-detail-head">
                   <h2>{detail.order_code}</h2>
-                  <span className={`production-chip status-${detail.status.toLowerCase()}`}>
+                  <StatusBadge
+                    showIcon={false}
+                    className={`production-chip status-${detail.status.toLowerCase()}`}
+                  >
                     {t(orderStatusKey[detail.status] ?? "production.orderReleased")}
-                  </span>
+                  </StatusBadge>
                   {detail.quantity ? (
                     <span className="production-order-progress">
                       {detail.quantity}{" "}
@@ -1430,9 +1434,9 @@ function ProductionOfficePage(): JSX.Element {
                     </span>
                   ) : null}
                   {detail.shortage > 0 ? (
-                    <span className="production-chip is-warn">
+                    <StatusBadge showIcon={false} className="production-chip is-warn">
                       {t("production.shortageChip").replace("{count}", String(detail.shortage))}
-                    </span>
+                    </StatusBadge>
                   ) : null}
                   {detail.version_shortage > detail.shortage &&
                   !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
@@ -1453,9 +1457,9 @@ function ProductionOfficePage(): JSX.Element {
                     </button>
                   ) : null}
                   {detail.dispatch_ready ? (
-                    <span className="production-chip is-ready">
+                    <StatusBadge showIcon={false} className="production-chip is-ready">
                       {t("production.dispatchReadyChip")}
-                    </span>
+                    </StatusBadge>
                   ) : null}
                   {activeTab === "embalaje" ? (
                     <>
@@ -2532,14 +2536,15 @@ function ProductionOfficePage(): JSX.Element {
                       <header className="production-optimize-head">
                         <h3>{t("production.deliveryTitle")}</h3>
                         {delivery ? (
-                          <span
+                          <StatusBadge
+                            showIcon={false}
                             className={`production-chip delivery-${delivery.status.toLowerCase()}`}
                           >
                             {t(
                               deliveryStatusKey[delivery.status] ??
                                 "production.deliveryStatusScheduled",
                             )}
-                          </span>
+                          </StatusBadge>
                         ) : null}
                         {canSchedule &&
                         deliveryForm === null &&
@@ -2653,14 +2658,15 @@ function ProductionOfficePage(): JSX.Element {
                         <ul className="production-delivery-trips">
                           {deliveries.map((trip) => (
                             <li key={trip.id} className="production-delivery-trip">
-                              <span
+                              <StatusBadge
+                                showIcon={false}
                                 className={`production-chip delivery-${trip.status.toLowerCase()}`}
                               >
                                 {t(
                                   deliveryStatusKey[trip.status] ??
                                     "production.deliveryStatusScheduled",
                                 )}
-                              </span>
+                              </StatusBadge>
                               <span className="production-delivery-trip-date">
                                 {trip.scheduled_date}
                               </span>

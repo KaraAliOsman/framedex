@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { fmtMm } from "../../format";
 import { decimalInputValue } from "../../decimal";
@@ -2128,9 +2129,13 @@ export function ProjectQuotationPanel({
                   data-status={link.status.toLowerCase()}
                   key={link.id}
                 >
-                  <span className="status-chip" data-status={link.status.toLowerCase()}>
+                  <StatusBadge
+                    showIcon={false}
+                    className="status-chip"
+                    data-status={link.status.toLowerCase()}
+                  >
                     {t(approvalStatusKeys[link.status] ?? "quotation.linkPending")}
-                  </span>
+                  </StatusBadge>
                   <strong>{formatRevision(link.revision_code)}</strong>
                   <span>
                     {link.link_source === "DOCUMENT"

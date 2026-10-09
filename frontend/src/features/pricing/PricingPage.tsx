@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -723,11 +724,15 @@ function CoverageList({
                 </button>
               </>
             )}
-            <span className="status-chip" data-status={uncovered ? "declined" : "approved"}>
+            <StatusBadge
+              showIcon={false}
+              className="status-chip"
+              data-status={uncovered ? "declined" : "approved"}
+            >
               {uncovered
                 ? t("pricing.coverageMissing")
                 : `${Number(item.active_cost_items ?? 0)} ${t("pricing.coverageLists")}`}
-            </span>
+            </StatusBadge>
           </article>
         );
       })}
@@ -855,12 +860,13 @@ function AuditCard({ item }: { item: Row }): JSX.Element {
     <article className="audit-card">
       <header className="audit-card__header">
         <strong>{t(auditEntityLabels[entity] ?? "pricing.auditEntity.other")}</strong>
-        <span
+        <StatusBadge
+          showIcon={false}
           className="status-chip"
           data-status={verb === "INSERT" ? "completed" : verb === "DELETE" ? "revoked" : "pending"}
         >
           {t(auditActionLabels[verb] ?? "pricing.auditAction.other")}
-        </span>
+        </StatusBadge>
         {project !== "" && <span className="audit-card__project">{project}</span>}
       </header>
       {label !== "" && <p className="audit-card__title">{label}</p>}

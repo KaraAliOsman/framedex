@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
@@ -228,7 +229,8 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                 >
                   <div className="ai-route-heading">
                     <h3 id={`ai-${route.capability}`}>{AI_CAPABILITIES[route.capability]}</h3>
-                    <span
+                    <StatusBadge
+                      showIcon={false}
                       className="status-chip"
                       data-status={
                         route.state === "CONNECTED"
@@ -239,8 +241,12 @@ export function AiSettingsSection({ orgId }: { orgId: string }): JSX.Element {
                       }
                     >
                       {STATES[route.state]}
-                    </span>
-                    {route.test_mode && <span className="status-chip">Modo de prueba</span>}
+                    </StatusBadge>
+                    {route.test_mode && (
+                      <StatusBadge showIcon={false} className="status-chip">
+                        Modo de prueba
+                      </StatusBadge>
+                    )}
                   </div>
                   <div className="ai-route-fields">
                     <label>

@@ -166,6 +166,6 @@ describe("CutPlanView", () => {
     expect(nest.classList.contains("is-selected")).toBe(true);
     const aside = container.querySelector(".cutplan-detail") as Element;
     expect(aside.textContent).toContain("VID-4MM · S1-2");
-    expect(aside.textContent).toContain("1\u2009400×1\u2009000");
+    expect(aside.textContent).toContain("1\u2009400 × 1\u2009000");
   });
 });

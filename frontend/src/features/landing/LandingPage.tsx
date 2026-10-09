@@ -56,7 +56,7 @@ export function LandingPage(): JSX.Element {
             alt={t("landing.studioAlt")}
             width={1440}
             height={900}
-            fetchPriority="high"
+            {...{ fetchpriority: "high" }}
           />
           <figcaption>{t("landing.studioCaption")}</figcaption>
         </figure>

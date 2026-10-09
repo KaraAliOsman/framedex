@@ -39,6 +39,25 @@ sources:
 
 # Current reality
 
+## ED1 · coherencia editorial de la ola 1 (09-10-2026)
+
+Sobre `81ee66d7`, la rama `codex/ED1-pase-editorial-ola1` unifica estados,
+paleta de aperturas heredadas, formatos y tokens. Producción y su shell
+reflejan la tarea de taller. Secciones y planes conservan geometría real,
+texto legible y medidas solo cuando hay autoridad. La leyenda del plan
+conserva selección de piezas estrechas sin alterar la longitud del motor.
+La matriz oficial pasa 192 vistas posteriores con cero hallazgos, HTTP,
+consola y desbordes; se mantienen 192 anteriores para comparación.
+Recorridos reales cubren estimador/emisión/PDF, dueño/aprobación,
+jefe/QC/remake y operario/QR/bloqueo. MiMo prepara Low-E en dos posiciones,
+conserva la cocina y restaura cambios con auditoría. Se verifican doce
+vistas técnicas, ocho planes y estados de transporte/reduced motion.
+Baseline: 257 claves/716 ocurrencias → 69/187; las infracciones reales
+iniciales eran 155/466. No se flexibiliza detector ni check. Véase
+[aceptación](../../redesign/ED1-ACEPTACION.md).
+El cierre local y CI se registran al integrar. DEMO y Uw Sin dato siguen
+explícitos; no se acredita aquí el alcance comercial/planta posterior.
+
 ## P17 · asistente, trabajos y presencia (09-10-2026)
 
 La presencia es privada por persona/organización y contexto exacto, independiente
@@ -74,9 +93,10 @@ procedencia. Se conserva el conjunto sellado y el remake requiere su propio plan
 El índice de mecanizado se limita a las posiciones del plan, conservando códigos
 históricos, bytes y fingerprint. La matriz final tiene 96 observaciones sin
 hallazgos y tiempos de 822–1.035 ms (jefe) y 891–936 ms (operario).
-El capturador oficial pasa 16 vistas sin hallazgos nuevos; operario pasa ocho
-con cero. Jefe conserva 32–50 hallazgos de controles heredados de oficina bajo
-el config histórico de taller, sin cambiar detectores ni sus muestras.
+En la aceptación histórica de P12, el capturador oficial pasa 16 vistas sin
+hallazgos nuevos y el operario pasa ocho con cero. Entonces el jefe conservaba
+32–50 hallazgos de controles heredados. ED1 corrige esa deuda mediante densidad
+de taller también en el shell, sin cambiar los detectores ni sus muestras.
 El recorrido real une QR, Corte, bloqueo, tablero/Hoy, desbloqueo y QC/remake.
 La evidencia del primer ensayo defectuoso se conserva; la decisión corregida
 RM-02 conserva la pieza y su retry devuelve la misma OT.

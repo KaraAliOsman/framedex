@@ -1,0 +1,86 @@
+[
+  {
+    "case": "Corte horizontal con rótulos legibles y profundidad declarada",
+    "theme": "light",
+    "width": 1440,
+    "screenshot": "corte-horizontal-light-1440.png",
+    "findings": []
+  },
+  {
+    "case": "Sección del perfil con ejes reales y leyenda HTML",
+    "theme": "light",
+    "width": 1440,
+    "screenshot": "seccion-perfil-light-1440.png",
+    "findings": []
+  },
+  {
+    "case": "Corte horizontal con rótulos legibles y profundidad declarada",
+    "theme": "light",
+    "width": 1280,
+    "screenshot": "corte-horizontal-light-1280.png",
+    "findings": []
+  },
+  {
+    "case": "Sección del perfil con ejes reales y leyenda HTML",
+    "theme": "light",
+    "width": 1280,
+    "screenshot": "seccion-perfil-light-1280.png",
+    "findings": []
+  },
+  {
+    "case": "Corte horizontal con rótulos legibles y profundidad declarada",
+    "theme": "light",
+    "width": 1024,
+    "screenshot": "corte-horizontal-light-1024.png",
+    "findings": []
+  },
+  {
+    "case": "Sección del perfil con ejes reales y leyenda HTML",
+    "theme": "light",
+    "width": 1024,
+    "screenshot": "seccion-perfil-light-1024.png",
+    "findings": []
+  },
+  {
+    "case": "Corte horizontal con rótulos legibles y profundidad declarada",
+    "theme": "dark",
+    "width": 1440,
+    "screenshot": "corte-horizontal-dark-1440.png",
+    "findings": []
+  },
+  {
+    "case": "Sección del perfil con ejes reales y leyenda HTML",
+    "theme": "dark",
+    "width": 1440,
+    "screenshot": "seccion-perfil-dark-1440.png",
+    "findings": []
+  },
+  {
+    "case": "Corte horizontal con rótulos legibles y profundidad declarada",
+    "theme": "dark",
+    "width": 1280,
+    "screenshot": "corte-horizontal-dark-1280.png",
+    "findings": []
+  },
+  {
+    "case": "Sección del perfil con ejes reales y leyenda HTML",
+    "theme": "dark",
+    "width": 1280,
+    "screenshot": "seccion-perfil-dark-1280.png",
+    "findings": []
+  },
+  {
+    "case": "Corte horizontal con rótulos legibles y profundidad declarada",
+    "theme": "dark",
+    "width": 1024,
+    "screenshot": "corte-horizontal-dark-1024.png",
+    "findings": []
+  },
+  {
+    "case": "Sección del perfil con ejes reales y leyenda HTML",
+    "theme": "dark",
+    "width": 1024,
+    "screenshot": "seccion-perfil-dark-1024.png",
+    "findings": []
+  }
+]

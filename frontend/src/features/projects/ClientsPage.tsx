@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -419,9 +420,13 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                         </time>
                       </span>
                       {!item.is_active && (
-                        <span className="status-chip" data-status="cancelled">
+                        <StatusBadge
+                          showIcon={false}
+                          className="status-chip"
+                          data-status="cancelled"
+                        >
                           {t("clients.inactive")}
-                        </span>
+                        </StatusBadge>
                       )}
                     </button>
                   </li>
@@ -528,12 +533,13 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                           <Link to={`/projects/${project.id}`} className="clients-project-row">
                             <span className="dashboard-row-code">{project.code}</span>
                             <span className="dashboard-row-name">{project.name}</span>
-                            <span
+                            <StatusBadge
+                              showIcon={false}
                               className="status-chip"
                               data-status={project.status.toLowerCase()}
                             >
                               {t(projectStatusKey[project.status] ?? "projects.draft")}
-                            </span>
+                            </StatusBadge>
                             <time dateTime={project.updated_at}>
                               {formatDate(project.updated_at)}
                             </time>

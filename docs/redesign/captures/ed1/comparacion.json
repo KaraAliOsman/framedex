@@ -1,0 +1,39 @@
+{
+  "antes": {
+    "views": 192,
+    "findings": {
+      "font-under-11": 8,
+      "touch-target-under-44": 954
+    },
+    "overflow": 0,
+    "http_errors": 0,
+    "console_errors": 8
+  },
+  "despues": {
+    "views": 192,
+    "findings": {},
+    "overflow": 0,
+    "http_errors": 0,
+    "console_errors": 0
+  },
+  "guards": {
+    "baseline_before": {
+      "keys": 257,
+      "occurrences": 716
+    },
+    "actual_before": {
+      "keys": 155,
+      "occurrences": 466
+    },
+    "baseline_after": {
+      "keys": 69,
+      "occurrences": 187
+    }
+  },
+  "lossless": {
+    "files": 441,
+    "bytes_before": 127865871,
+    "bytes_after": 127414581,
+    "pixels_unchanged": true
+  }
+}
