@@ -11,6 +11,9 @@ export type EditorPrice = {
   currency: string;
   reason?: string | null;
   source?: string;
+  modules?: { module_id: string; net: string | null; reason: string | null }[];
+  assembly_adjustment_net?: string | null;
+  breakdown_source?: string;
 };
 
 /** A no-edit simulation reads the same commercial authority as proposals.

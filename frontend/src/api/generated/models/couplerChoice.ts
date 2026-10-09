@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CouplerRule } from "./couplerRule";
 import type { ProfileSection } from "./profileSection";
 
 export interface CouplerChoice {
@@ -13,4 +14,5 @@ export interface CouplerChoice {
   material: string;
   face_width_mm: string;
   section?: ProfileSection | null;
+  coupling_rule?: CouplerRule | null;
 }

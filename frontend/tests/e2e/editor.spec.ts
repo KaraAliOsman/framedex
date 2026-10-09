@@ -219,6 +219,157 @@ async function open(page: Page) {
   await page.locator(".starter-card").first().waitFor();
 }
 
+test("P06 bow is created in seven interactions, survives exact reload and synchronizes both drawings", async ({
+  page,
+}) => {
+  await open(page);
+  const started = Date.now();
+  let interactions = 0;
+  await page.locator(".starter-card").filter({ hasText: "Bow 3 módulos" }).click();
+  interactions++;
+  for (const ordinal of [1, 2, 3]) {
+    if (ordinal !== 1) {
+      await page.getByRole("button", { name: `Módulo ${ordinal} en planta`, exact: true }).click();
+      interactions++;
+    }
+    const simulation = waitForDesignSimulation(page);
+    await page
+      .getByRole("combobox", { name: "Vidrio", exact: true })
+      .selectOption({ label: "4-16-4 Float Incoloro · DEMO" });
+    interactions++;
+    await simulation;
+    await expect(page.getByRole("combobox", { name: "Vidrio", exact: true })).toHaveValue(/.+/);
+  }
+  await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled({
+    timeout: 20000,
+  });
+  const created = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().endsWith(`/projects/${projectId}/positions/`),
+  );
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  interactions++;
+  const response = await created;
+  expect(response.status()).toBe(201);
+  const payload = response.request().postDataJSON(),
+    position = await response.json();
+  expect(interactions).toBeLessThanOrEqual(10);
+  expect(Date.now() - started).toBeLessThan(60000);
+  expect(position.design.parametric_tree).toEqual(payload.design.parametric_tree);
+  const product = position.design.parametric_tree;
+  expect(
+    product.assembly.modules.map((item: { width_mm: string }) => Number(item.width_mm)),
+  ).toEqual([600, 1200, 600]);
+  expect(
+    product.assembly.couplings.map((item: { angle_deg: string }) => Number(item.angle_deg)),
+  ).toEqual([22.5, 22.5]);
+  const evaluation = page.waitForResponse(
+    (candidate) =>
+      candidate.url().endsWith("/engine/assembly/calculate/") &&
+      candidate.request().postDataJSON().product.assembly.modules[0].id ===
+        product.assembly.modules[0].id,
+  );
+  await page.goto(`/projects/${projectId}/positions/${position.id}/edit`);
+  expect((await evaluation).request().postDataJSON().product).toEqual(product);
+  await page.getByRole("button", { name: "Módulo 2 en planta", exact: true }).click();
+  await expect(page.locator(".front-module.is-selected")).toHaveCount(1);
+  expect(await page.locator(".front-module.is-selected").getAttribute("aria-label")).toContain(
+    product.assembly.modules[1].id,
+  );
+  await page.locator(".front-module").first().click();
+  await expect(
+    page.getByRole("button", { name: "Módulo 1 en planta", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  const separator = page.getByRole("separator", { name: "Altura de planta" });
+  await separator.press("ArrowUp");
+  await expect(separator).toHaveAttribute("aria-valuenow", "276");
+  await page.getByRole("combobox", { name: "Elevación del conjunto" }).selectOption("projected");
+  await expect(page.locator(".front-module").first()).toHaveAttribute("transform", /scale/);
+  await page.getByRole("combobox", { name: "Elevación del conjunto" }).selectOption("developed");
+  await page.getByRole("button", { name: "Ángulo de unión 1", exact: true }).press("Enter");
+  const angle = page.getByRole("textbox", { name: "Ángulo de unión 1", exact: true });
+  await angle.fill("89");
+  await angle.press("Enter");
+  await expect(page.getByRole("alert").filter({ hasText: "No se aplicó el cambio" })).toBeVisible({
+    timeout: 20000,
+  });
+  await page.getByRole("button", { name: "Revisar unión", exact: true }).first().click();
+  await expect(page.getByRole("combobox", { name: "Acoplador", exact: true })).toBeFocused();
+});
+
+test("P06 module drag previews engine geometry and sale, snaps at 30 degrees and undoes", async ({
+  page,
+}) => {
+  await open(page);
+  await page.locator(".starter-card").filter({ hasText: "Bow 3 módulos" }).click();
+  for (const ordinal of [1, 2, 3]) {
+    await page.getByRole("button", { name: `Módulo ${ordinal} en planta`, exact: true }).click();
+    const simulation = waitForDesignSimulation(page, "set_glass");
+    await page
+      .getByRole("combobox", { name: "Vidrio", exact: true })
+      .selectOption({ label: "4-16-4 Float Incoloro · DEMO" });
+    await simulation;
+  }
+  const price = page.getByRole("button", { name: "Precio neto indicativo", exact: true });
+  await expect(price).toContainText("$", { timeout: 20000 });
+  const coordinates = await page
+    .getByRole("button", { name: "Módulo 2 en planta", exact: true })
+    .evaluate((element) => {
+      const module = element as SVGPolygonElement;
+      const joint = module
+        .closest(".bow-plan-content")!
+        .querySelector(".plan-coupling") as SVGPolygonElement;
+      const points = Array.from(module.points);
+      const center = new DOMPoint(
+        points.reduce((x, p) => x + p.x / points.length, 0),
+        points.reduce((y, p) => y + p.y / points.length, 0),
+      );
+      const pivot = joint.points[0]!,
+        delta = (-7.5 * Math.PI) / 180;
+      const x = center.x - pivot.x,
+        y = center.y - pivot.y;
+      const next = new DOMPoint(
+        pivot.x + x * Math.cos(delta) - y * Math.sin(delta),
+        pivot.y + x * Math.sin(delta) + y * Math.cos(delta),
+      );
+      const matrix = module.getScreenCTM()!;
+      const from = center.matrixTransform(matrix),
+        to = next.matrixTransform(matrix);
+      return { from: { x: from.x, y: from.y }, to: { x: to.x, y: to.y } };
+    });
+  const preview = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/engine/assembly/calculate/") &&
+      Number(response.request().postDataJSON().product.assembly.couplings[0].angle_deg) === 30,
+  );
+  const sale = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/operations/simulate/") &&
+      response.request().postDataJSON().ops.length === 0 &&
+      Number(response.request().postDataJSON().product.assembly.couplings[0].angle_deg) === 30,
+  );
+  await page.mouse.move(coordinates.from.x, coordinates.from.y);
+  await page.mouse.down();
+  await page.mouse.move(coordinates.to.x, coordinates.to.y);
+  expect((await preview).status()).toBe(200);
+  expect((await sale).status()).toBe(200);
+  await expect(page.getByText("Vista previa de ángulo", { exact: true })).toBeVisible();
+  await expect(page.locator(".assembly-plan-preview-price .editor-price")).toContainText("$", {
+    timeout: 20000,
+  });
+  const commit = waitForDesignSimulation(page, "set_coupling_angle");
+  await page.mouse.up();
+  await commit;
+  await expect(page.getByRole("button", { name: "Ángulo de unión 1", exact: true })).toHaveText(
+    "30°",
+  );
+  await page.keyboard.press("Control+z");
+  await expect(page.getByRole("button", { name: "Ángulo de unión 1", exact: true })).toHaveText(
+    "22,5°",
+  );
+});
+
 // Editing waits for the real engine transaction before checking the UI. Its
 // catalog/pricing work can outlast the default five-second locator assertion.
 async function waitForDesignSimulation(page: Page, operation?: string): Promise<void> {

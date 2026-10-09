@@ -247,6 +247,21 @@ export const schemas: Record<Resource, Group[]> = {
       ],
     },
     {
+      title: "couplingRule",
+      fields: [
+        { ...decimal("coupling_rule.min_angle_deg"), label: "Deflexión mínima de la unión (°)" },
+        { ...decimal("coupling_rule.max_angle_deg"), label: "Deflexión máxima de la unión (°)" },
+        {
+          ...decimal("coupling_rule.development_mm"),
+          label: "Aporte neto del acople al desarrollo (mm)",
+        },
+        {
+          ...text("coupling_rule.source", 1000),
+          label: "Fuente del fabricante o revisión técnica",
+        },
+      ],
+    },
+    {
       title: "reinforcementRule",
       fields: [
         {
@@ -482,13 +497,15 @@ export function groupsFor(resource: Resource, draft: Record<string, string>): Gr
     )
     .filter(
       (group) =>
-        !["cutRule", "reinforcementRule"].includes(group.title) ||
+        !["cutRule", "reinforcementRule", "couplingRule"].includes(group.title) ||
         draft[`${group.title}.enabled`] === "true",
-    );
+    )
+    .filter((group) => group.title !== "couplingRule" || draft.role === "COUPLER");
 }
 
 export const catalogVocabulary: Record<string, string> = {
   "group.cutRule": "Regla de corte",
+  "group.couplingRule": "Compatibilidad angular y desarrollo",
   "group.reinforcementRule": "Regla de refuerzo",
   "option.CASEMENT": "Practicable y oscilobatiente",
   "option.SLIDING": "Corredera",
@@ -547,6 +564,7 @@ export function initialDraft(
       ]),
     ),
     "cutRule.enabled": source.cut_rule ? "true" : "false",
+    "couplingRule.enabled": source.coupling_rule ? "true" : "false",
     "reinforcementRule.enabled": source.reinforcement_rule ? "true" : "false",
   };
 }
@@ -624,6 +642,7 @@ export function writeFromDraft<R extends Resource>(
     values.section = sectionFromDraft(section);
     values.cut_rule ??= null;
     values.reinforcement_rule ??= null;
+    values.coupling_rule ??= null;
   }
   // Only schema-declared writable fields enter the request.
   return values as unknown as Writes[R];

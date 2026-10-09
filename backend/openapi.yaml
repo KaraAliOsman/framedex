@@ -20811,6 +20811,10 @@ components:
           type: boolean
           readOnly: true
           default: false
+        coupling_rule:
+          allOf:
+          - $ref: '#/components/schemas/CouplerRule'
+          nullable: true
         cut_rule:
           allOf:
           - $ref: '#/components/schemas/ProfileCutRule'
@@ -20910,6 +20914,10 @@ components:
     ArticleWriteRequest:
       type: object
       properties:
+        coupling_rule:
+          allOf:
+          - $ref: '#/components/schemas/CouplerRuleRequest'
+          nullable: true
         cut_rule:
           allOf:
           - $ref: '#/components/schemas/ProfileCutRuleRequest'
@@ -21088,6 +21096,58 @@ components:
       description: |-
         * `PROJECT_REVISION` - PROJECT_REVISION
         * `ORDER` - ORDER
+    AssemblyMeasure:
+      type: object
+      properties:
+        developed_width_mm:
+          type: string
+        front_width_mm:
+          type: string
+        projection_mm:
+          type: string
+        height_mm:
+          type: string
+        coupling_width_mm:
+          type: string
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssemblyModuleMeasure'
+        source:
+          type: string
+      required:
+      - coupling_width_mm
+      - developed_width_mm
+      - front_width_mm
+      - height_mm
+      - modules
+      - projection_mm
+      - source
+    AssemblyModuleMeasure:
+      type: object
+      properties:
+        module_id:
+          type: string
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        developed_x_mm:
+          type: string
+        sill_mm:
+          type: string
+        projected_x_mm:
+          type: string
+        projected_width_mm:
+          type: string
+      required:
+      - developed_x_mm
+      - height_mm
+      - module_id
+      - projected_width_mm
+      - projected_x_mm
+      - sill_mm
+      - width_mm
     AuthMeResponse:
       type: object
       properties:
@@ -22605,11 +22665,62 @@ components:
           allOf:
           - $ref: '#/components/schemas/ProfileSection'
           nullable: true
+        coupling_rule:
+          allOf:
+          - $ref: '#/components/schemas/CouplerRule'
+          nullable: true
       required:
       - face_width_mm
       - material
       - name
       - sku
+    CouplerRule:
+      type: object
+      properties:
+        min_angle_deg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        max_angle_deg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        development_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        source:
+          type: string
+          maxLength: 1000
+      required:
+      - development_mm
+      - max_angle_deg
+      - min_angle_deg
+      - source
+    CouplerRuleRequest:
+      type: object
+      properties:
+        min_angle_deg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        max_angle_deg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        development_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        source:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - development_mm
+      - max_angle_deg
+      - min_angle_deg
+      - source
     CoverageEnum:
       enum:
       - DECLARED
@@ -24343,6 +24454,10 @@ components:
     EngineAssemblyCalculateResponse:
       type: object
       properties:
+        measures:
+          allOf:
+          - $ref: '#/components/schemas/AssemblyMeasure'
+          nullable: true
         status:
           $ref: '#/components/schemas/EngineAssemblyCalculateResponseStatusEnum'
         issues:
@@ -31599,6 +31714,10 @@ components:
     PatchedArticleWriteRequest:
       type: object
       properties:
+        coupling_rule:
+          allOf:
+          - $ref: '#/components/schemas/CouplerRuleRequest'
+          nullable: true
         cut_rule:
           allOf:
           - $ref: '#/components/schemas/ProfileCutRuleRequest'
@@ -36407,7 +36526,8 @@ components:
           type: string
         issues:
           type: array
-          items: {}
+          items:
+            $ref: '#/components/schemas/ProductIssue'
         engine: {}
         price: {}
         before: {}

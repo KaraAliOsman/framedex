@@ -18,6 +18,7 @@ from django.utils import timezone
 from dekopen_engine.openings import opening_label
 from dekopen_engine.models import Opening
 from engine_api.finish_serializers import FinishAuthoritySerializer
+from catalogs.serializers import CouplerRuleSerializer
 
 
 class ProfileChoiceSerializer(serializers.Serializer):
@@ -35,6 +36,7 @@ class CouplerChoiceSerializer(serializers.Serializer):
     material = serializers.CharField()
     face_width_mm = serializers.CharField()
     section = ProfileSectionSerializer(required=False, allow_null=True)
+    coupling_rule = CouplerRuleSerializer(required=False, allow_null=True)
 
 
 class GlazingBeadChoiceSerializer(serializers.Serializer):
@@ -280,6 +282,7 @@ class DesignOptionsView(APIView):
                             "material": item.material.value,
                             "face_width_mm": str(item.face_width_mm),
                             "section": _section_json(item.section),
+                            "coupling_rule": item.coupling_rule.model_dump() if item.coupling_rule else None,
                         }
                         for item in sorted(couplers.values(), key=lambda article: article.sku)
                     ],

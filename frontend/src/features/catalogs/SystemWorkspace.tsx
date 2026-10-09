@@ -985,10 +985,8 @@ export function SystemWorkspaceView({
               {centers.map((center) => (
                 <li key={center.id}>
                   <strong>{center.name}</strong>
-                  <small>
-                    {" "}
-                    · <code>{center.code}</code> · {centerKindLabel(center.kind)}
-                  </small>
+                  <small> · {centerKindLabel(center.kind)}</small>
+                  <TechnicalCode value={center.code} />
                   {!center.active && (
                     <>
                       {" "}

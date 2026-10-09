@@ -157,3 +157,30 @@ def test_qr_decodes_from_printed_pixels_and_matches_the_clickable_revision_link(
         decoded = zxingcpp.read_barcodes(Image.frombytes("RGB", (pixels.width, pixels.height), pixels.samples))
         assert [code.text for code in decoded] == [target]
         assert any(link.get("uri") == target for link in acceptance.get_links())
+
+
+def test_doc01_reads_exact_sealed_measures_with_nonzero_coupling_gap():
+    from backend.tests.doc01_cases import proposal_case
+    from documents.renderers import _doc01, render_pdf_document
+    from dekopen_engine.product import evaluate_product
+    from dekopen_engine.assembly_measures import developed_layout
+    from engine.tests.assembly_cases import bow_model, joint_article
+    from engine.tests.catalog import demo_60_params
+    article = joint_article(width='24')
+    product = bow_model()
+    evaluation = evaluate_product(product, demo_60_params(), coupler_articles={article.sku: article})
+    position = proposal_case(1)
+    position['positions'][0].update(parametric_tree=product.model_dump(mode='json'),
+        width_mm='2448.00', height_mm='1200.00',
+        drawing_plan={**evaluation.plan.model_dump(mode='json'),
+                      'assembly_measures': evaluation.measures.model_dump(mode='json')})
+    before = product.model_dump(mode='json')
+    html = _doc01(position)
+    assert 'data-drawing="sealed-plan"' in html
+    pdf, _ = render_pdf_document('DOC-01', position, pdf_identifier='sealed-coupling-measures')
+    with fitz.open(stream=pdf, filetype='pdf') as document:
+        text = ' '.join(' '.join(page.get_text().split()) for page in document)
+        assert 'Ancho desarrollado' in text and 'Frente / cuerda' in text and 'Proyección' in text
+        assert '2 448' in text
+    assert product.model_dump(mode='json') == before
+    assert developed_layout(product.assembly, evaluation.measures).members[1].x_mm == Decimal('624')

@@ -1052,3 +1052,6 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+.catalog .ui-button:disabled {
+  color: var(--text-secondary);
+}

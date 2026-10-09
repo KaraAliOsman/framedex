@@ -18,14 +18,194 @@
   border: none;
   background: var(--bg-app);
 }
-.assembly-view-choices {
+.assembly-elevation {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.assembly-plan-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 144px;
+  max-height: 45%;
+  background: var(--surface-sheet);
+  border: 1px solid var(--border-default);
+  min-width: 0;
+  position: relative;
+}
+.assembly-plan-pane header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.assembly-plan-pane h3 {
+  margin: 0;
+  font-size: var(--type-label);
+  font-weight: 500;
+}
+.assembly-plan-pane header span {
+  flex: 1;
+  font-size: var(--type-micro);
+  color: var(--text-secondary);
+}
+.assembly-plan-pane .bow-plan-svg {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+  background: var(--surface-sheet);
+  padding-block: 28px;
+  box-sizing: border-box;
+}
+.plan-resize {
+  height: var(--space-2);
+  flex: 0 0 var(--space-2);
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-default);
+  cursor: row-resize;
+  touch-action: none;
+}
+.assembly-measures-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  gap: var(--space-1) var(--space-3);
+  justify-content: space-between;
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: var(--r-0);
+  background: var(--surface-panel);
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
+}
+.assembly-measures > .ui-popover-anchor {
+  width: 100%;
+}
+.plan-stacked-modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+.plan-stacked-modules button {
+  font-family: var(--font-mono);
+  font-size: var(--type-micro);
+  font-variant-numeric: tabular-nums;
+}
+.plan-stacked-modules button[aria-pressed="true"] {
+  border-color: var(--border-focus);
+  background: var(--surface-selected);
+}
+.assembly-measures-source span {
+  display: grid;
+  font-size: var(--type-micro);
+  color: var(--text-secondary);
+}
+.assembly-measures-source strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.plan-module-number,
+.plan-angle text {
+  fill: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.plan-angle {
+  cursor: grab;
+  touch-action: none;
+}
+.plan-angle-hit {
+  fill: var(--surface-sheet);
+  stroke: var(--border-default);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.plan-angle-grip {
+  fill: var(--mark);
+  stroke: var(--surface-sheet);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.plan-angle:focus .plan-angle-hit,
+.plan-angle:hover .plan-angle-hit {
+  stroke: var(--border-focus);
+}
+.plan-joint.has-issue .plan-angle-hit {
+  stroke: var(--state-danger);
+}
+.plan-errors {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  list-style: none;
+  max-height: 64px;
+  overflow: auto;
+}
+.plan-errors button {
+  color: var(--state-danger-ink);
+  font-size: var(--type-micro);
+  text-align: left;
+}
+.assembly-plan-preview-price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-2);
+}
+.plan-toggle {
   position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
-  z-index: var(--z-rail);
+  right: var(--space-3);
+  bottom: var(--space-3);
+}
+.editor-module-prices {
+  display: grid;
+  gap: var(--space-2);
+}
+.editor-module-prices > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.editor-module-prices dd {
+  margin: 0;
+}
+.assembly-editor .assembly-view-choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  max-width: 100%;
+  position: relative;
+  top: auto;
+  left: auto;
   background: var(--surface-panel);
   padding: var(--space-1);
   border: 1px solid var(--border-default);
+}
+.assembly-editor .assembly-view-choices select {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
+}
+.assembly-editor .assembly-view-choices .assembly-symbol-legend {
+  position: relative;
+  bottom: auto;
+  right: auto;
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
 }
 .assembly-editor .canvas-viewport {
   min-height: 0;
@@ -33,6 +213,7 @@
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  padding-bottom: calc(var(--control-height) + var(--space-3) * 2);
   background: var(--surface-sheet);
   border-radius: var(--r-0);
   clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
@@ -397,13 +578,6 @@
   padding: 0;
   border: 0;
   font-size: var(--type-micro);
-}
-.plan-inset {
-  width: min(240px, 30%);
-  height: 120px;
-  right: var(--space-3);
-  bottom: 48px;
-  box-shadow: var(--e2);
 }
 .model3d-inset {
   width: min(480px, calc(100% - 32px));

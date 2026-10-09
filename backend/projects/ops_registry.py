@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.views import APIView
+from engine_api.serializers import ProductIssueSerializer
 
 from authentication.errors import ContractAPIException, contract_error
 from authentication.tenancy import MembershipRepository, resolve_tenant_context
@@ -68,7 +69,7 @@ class SimulationSerializer(serializers.Serializer):
     ops = DesignOperationSerializer(many=True)
     valid = serializers.BooleanField()
     status = serializers.CharField()
-    issues = serializers.ListField(child=serializers.JSONField())
+    issues = ProductIssueSerializer(many=True)
     engine = serializers.JSONField()
     price = serializers.JSONField()
     before = serializers.JSONField()
@@ -118,7 +119,6 @@ def calculate_product(org_id, product, system_id, color, catalog=None):
 
 def sale_price(org_id, product, system_id, color, quantity=1):
     """Read-only indicative selling price; no buying costs leave this adapter."""
-    design = design_from_product(product, system_id, color)
     with commercial_backend():
         organizations = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [org_id])
         if not organizations:
@@ -131,7 +131,8 @@ def sale_price(org_id, product, system_id, color, quantity=1):
             return {"net": None, "currency": currency, "reason": "Completa las reglas de precio en Ajustes."}
         rules = rules[0]
         repo = PricingRepository(org_id, datetime.now(ZoneInfo("America/Santiago")).date(), currency, None)
-        try:
+        def quote(value, count):
+            design = design_from_product(value, system_id, color)
             mode = PricingMode(rules["pricing_mode"])
             if mode is PricingMode.TARGET_GROSS_MARGIN_PROJECT:
                 return {"net": None, "currency": currency, "reason": "El margen objetivo requiere calcular el proyecto completo."}
@@ -143,8 +144,28 @@ def sale_price(org_id, product, system_id, color, quantity=1):
             extras = [ExtraLine.model_validate_json(json_text(item)) for item in formation.get("extra_lines", [])]
             net = configured_unit_price(repo, mode, position, cost=cost, area=area, result=result,
                                        margin=rules["default_margin_pct"], context_code="DEFAULT", extras=extras)
-            return {"net": str(indicative_line_net(net, quantity, currency)), "unit_net": str(net), "currency": currency, "reason": None,
+            return {"net": str(indicative_line_net(net, count, currency)), "unit_net": str(net), "currency": currency, "reason": None,
                     "source": "Motor comercial; modo y tarifa predeterminados de Ajustes; precio neto indicativo sin descuento."}
+
+        try:
+            price = quote(product, quantity)
+            modules = product.get("assembly", {}).get("modules", [])
+            if price.get("net") is not None and len(modules) > 1:
+                from dekopen_engine.commercial import assembly_sale_adjustment
+                component_prices = []
+                for module in modules:
+                    single = {"version":"product-v2", "assembly":{"modules":[module], "couplings":[]}}
+                    try:
+                        component = quote(single, 1)
+                    except (PricingError, ContractAPIException, InvalidEngineRequest, UnsupportedEngineContract,
+                            CatalogRuleError, OpeningCapabilityError, MissingFabricationAuthority) as error:
+                        component = {"net": None, "reason": pricing_public_detail(error.code)
+                                     if isinstance(error, PricingError) else "Completa la tarifa y autoridad de este módulo."}
+                    component_prices.append({"module_id":module["id"], "net":component.get("net"), "reason":component.get("reason")})
+                common = assembly_sale_adjustment(Decimal(price["unit_net"]), [Decimal(item["net"]) for item in component_prices], currency) if all(item["net"] is not None for item in component_prices) else None
+                price.update({"modules":component_prices, "assembly_adjustment_net":str(common) if common is not None else None,
+                    "breakdown_source":"Cada módulo se cotiza con sus propias medidas, apertura y vidrio. Acoples y ajustes = precio unitario del conjunto − suma de módulos; incluye las uniones de la BOM, costos comunes y diferencias de tarifa. No es una distribución proporcional."})
+            return price
         except (PricingError, ContractAPIException) as error:
             detail = pricing_public_detail(error.code) if isinstance(error, PricingError) else error.public_detail
             return {"net": None, "currency": currency, "reason": detail}
@@ -192,14 +213,15 @@ def simulate_ops(org_id, product, ops, system_id, color, quantity=1):
     else:
         output = apply_operations(before, ops, params=catalog["params"], catalog=catalog, finish=color)
     engine = calculate_product(org_id, output["product"], system_id, color, catalog)
+    same_design = before == output["product"] and previous_system == system_id and previous_color == color
     try:
-        previous_engine = calculate_product(org_id, before, previous_system, previous_color)
+        previous_engine = engine if same_design else calculate_product(org_id, before, previous_system, previous_color)
     except (ValueError, InvalidEngineRequest, UnsupportedEngineContract, CatalogRuleError, OpeningCapabilityError, MissingFabricationAuthority):
         previous_engine = None
     issues = engine.get("issues", [])
     valid = engine.get("status") in {"VALID", "MANUFACTURING_INCOMPLETE"} and not any(issue.get("severity") == "error" for issue in issues)
     previous = sale_price(org_id, before, previous_system, previous_color, quantity)
-    price = sale_price(org_id, output["product"], system_id, color, quantity) if valid else {"net": None, "currency": previous["currency"], "reason": "Corrige la geometría antes de preciar."}
+    price = (previous if same_design else sale_price(org_id, output["product"], system_id, color, quantity)) if valid else {"net": None, "currency": previous["currency"], "reason": "Corrige la geometría antes de preciar."}
     delta = str(finish_selling_delta(Decimal(previous["net"]), Decimal(price["net"]))) if price.get("net") is not None and previous.get("net") is not None else None
     return {**output, "system_id": str(system_id), "color": color, "valid": valid, "status": engine["status"], "issues": issues, "engine": engine,
             "before": {"product": before, "system_id": str(previous_system), "color": previous_color, "price": previous, "engine": previous_engine}, "price": {**price, "delta_net": delta},

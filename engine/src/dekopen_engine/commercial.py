@@ -185,6 +185,19 @@ def indicative_line_net(unit_price: Decimal, quantity: int, currency: str) -> De
         return quantize_currency(number(unit_price) * quantity, currency)
 
 
+def assembly_sale_adjustment(total: Decimal, module_prices: Sequence[Decimal], currency: str) -> Decimal:
+    """Residual of independent module quotes against the complete assembly.
+
+    Couplers, shared labor/installation and assembly-specific tariffs are
+    never silently dropped or allocated by a guessed proportion. The UI
+    names this explicit common adjustment and its formula.
+    """
+    with localcontext() as context:
+        context.prec = 80
+        return quantize_currency(number(total), currency)-sum(
+            (quantize_currency(number(price), currency) for price in module_prices), ZERO)
+
+
 @dataclass(frozen=True)
 class CommercialResult:
     lines: tuple[tuple[int, Decimal], ...]

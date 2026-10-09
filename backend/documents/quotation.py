@@ -193,7 +193,14 @@ def plan_figure(position: dict) -> str:
         points = " ".join(f'{_pt(_num(p["x_mm"]))},{_pt(-_num(p["y_mm"]))}' for p in item["polygon"])
         polygons.append(f'<polygon points="{points}" fill="#CDD5D6" stroke="#465158" stroke-width="{_pt(width / 400)}"/>')
     svg = f'<svg data-drawing="sealed-plan" viewBox="{_pt(left-pad)} {_pt(-bottom-height-pad)} {_pt(width+2*pad)} {_pt(height+2*pad)}" xmlns="http://www.w3.org/2000/svg">{"".join(polygons)}</svg>'
-    return f'<div class="q-plan"><p>Planta del conjunto · proyección sellada</p>{svg}</div>'
+    measures = plan.get("assembly_measures")
+    dimensions = ""
+    if measures:
+        dimensions = '<p class="q-num">' + ' · '.join(
+            f'{label} {_survey_dim(measures[key])} mm' for label,key in (
+                ("Ancho desarrollado","developed_width_mm"),("Frente / cuerda","front_width_mm"),
+                ("Proyección","projection_mm"),("Altura","height_mm"))) + '</p>'
+    return f'<div class="q-plan"><p>Planta del conjunto · elevación desarrollada · datos sellados del motor</p>{svg}{dimensions}</div>'
 
 
 def sliding_specs(position: dict) -> str:

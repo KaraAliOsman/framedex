@@ -734,6 +734,27 @@ class ProfileReinforcementRule(EngineModel):
     source: str = Field(min_length=1)
 
 
+class CouplerRule(EngineModel):
+    """Sourced joint deflection and front-axis contribution, independent of saw angles.
+
+    Angles are absolute deflections. development_mm is the distance between
+    module front endpoints along the joint bisector (zero for a shared pivot).
+    """
+
+    min_angle_deg: Decimal = Field(ge=0, le=90)
+    max_angle_deg: Decimal = Field(ge=0, le=90)
+    development_mm: Decimal = Field(ge=0)
+    source: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def ordered(self) -> "CouplerRule":
+        if self.min_angle_deg > self.max_angle_deg:
+            raise ValueError("El ángulo mínimo no puede superar el máximo.")
+        if not self.source.strip():
+            raise ValueError("Falta la fuente del acoplador.")
+        return self
+
+
 class EffectiveProfileArticle(EngineModel):
     sku: str
     role: ProfileRole
@@ -754,6 +775,14 @@ class EffectiveProfileArticle(EngineModel):
     commercial_length_mm: Decimal | None = None
     cut_rule: ProfileCutRule | None = None
     reinforcement_rule: ProfileReinforcementRule | None = None
+    coupling_rule: CouplerRule | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_joint_authority(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = handler(self)
+        if self.coupling_rule is None:
+            value.pop("coupling_rule", None)
+        return value
 
 
 class GlazingBeadRule(EngineModel):

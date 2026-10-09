@@ -706,8 +706,8 @@ def _apply(product: dict[str, Any], op: dict[str, Any], params: SystemParams, ca
             if name == "remove_coupling":
                 couplings.remove(coupling)
             elif name == "set_coupling_angle":
-                if not Decimal("-90") < decimal(op["angle_deg"]) < Decimal("90"):
-                    raise OperationError("angulo_invalido", "El ángulo debe quedar dentro de menos y más noventa grados.")
+                if not Decimal("-90") <= decimal(op["angle_deg"]) <= Decimal("90"):
+                    raise OperationError("angulo_invalido", "Usa un ángulo entre −90° y 90°, incluidos los extremos; el catálogo verifica el acoplador.")
                 coupling["angle_deg"] = op["angle_deg"]
             else:
                 lateral = all(edge in {"left", "right"} for edge in coupling.get("edges", ["right", "left"]))

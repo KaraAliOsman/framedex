@@ -1,0 +1,18 @@
+[
+  {
+    "recipe": "Bow 3 módulos",
+    "selectedModules": 3,
+    "findings": [],
+    "overflow": false,
+    "errors": [],
+    "text": "Planta acoplada\nArrastra el módulo o edita la unión\nOcultar planta\nM1 · 600 mm\nM2 · 1 200 mm\nM3 · 600 mm\n22,5°\n22,5°\nAncho desarrollado\n2 400 mm\nFrente / cuerda\n2 308,65 mm\nProyección\n229,61 mm\nAltura\n1 200 mm"
+  },
+  {
+    "recipe": "Bay 3 módulos 45°",
+    "selectedModules": 3,
+    "findings": [],
+    "overflow": false,
+    "errors": [],
+    "text": "Planta acoplada\nArrastra el módulo o edita la unión\nOcultar planta\nM1 · 600 mm\nM2 · 1 200 mm\nM3 · 600 mm\n45°\n45°\nAncho desarrollado\n2 400 mm\nFrente / cuerda\n2 048,53 mm\nProyección\n424,26 mm\nAltura\n1 200 mm"
+  }
+]

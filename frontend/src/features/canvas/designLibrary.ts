@@ -17,6 +17,7 @@ function starterTree(opening: Opening): IntentNode {
     id: crypto.randomUUID(),
     type: "BAY",
     opening_type: opening,
+    ...(opening === "DOOR_ENTRY" ? { door_handedness: "LEFT" as const } : {}),
     ...(layout ? { sliding_layout: declareSlidingTravel(layout) } : {}),
   };
 }
@@ -77,6 +78,31 @@ function splitBay(
   );
 }
 
+function threeModuleBow(widthMm: number, heightMm: number, angle: string): ProductJson {
+  const modules = [starterTree("TURN_LEFT"), starterTree("FIXED"), starterTree("TURN_RIGHT")].map(
+    (tree, index) => ({
+      id: crypto.randomUUID(),
+      width_mm: String(Math.round(widthMm * (index === 1 ? 0.5 : 0.25) * 100) / 100),
+      height_mm: String(heightMm),
+      tree,
+    }),
+  );
+  return {
+    version: "product-v2",
+    assembly: {
+      modules,
+      couplings: [0, 1].map((index) => ({
+        id: crypto.randomUUID(),
+        angle_deg: angle,
+        coupler_profile_sku: null,
+        kind: "INLINE",
+        modules: [modules[index]!.id, modules[index + 1]!.id],
+        edges: ["right", "left"],
+      })),
+    },
+  };
+}
+
 /** Design library: creation recipes that produce a compositional product.
  * They are not product types — everything they build is editable on canvas. */
 export const STARTER_DEFINITIONS: StarterDefinition[] = [
@@ -133,7 +159,7 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     key: "doorSide",
     titleKey: "assembly.starter.doorSide",
     hintKey: "assembly.starter.doorSideHint",
-    build: (w, h) => coupledModules(starterTree("DOOR_ENTRY"), starterTree("FIXED"), 0.4, w, h),
+    build: (w, h) => coupledModules(starterTree("DOOR_ENTRY"), starterTree("FIXED"), 0.65, w, h),
   },
   {
     key: "slidingFixed",
@@ -145,7 +171,58 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     key: "bow3",
     titleKey: "assembly.starter.bow3",
     hintKey: "assembly.starter.bow3Hint",
-    build: (w, h) => makeBowProduct({ moduleCount: 3, widthMm: w, heightMm: h, angleDeg: 15 }),
+    build: (w, h) => threeModuleBow(w, h, "22.5"),
+  },
+  {
+    key: "bay3",
+    titleKey: "assembly.starter.bay3",
+    hintKey: "assembly.starter.bay3Hint",
+    build: (w, h) => threeModuleBow(w, h, "45"),
+  },
+  {
+    key: "windowTransom",
+    titleKey: "assembly.starter.windowTransom",
+    hintKey: "assembly.starter.windowTransomHint",
+    build: (w, h) => {
+      const base = {
+        id: crypto.randomUUID(),
+        width_mm: String(w),
+        height_mm: String(Math.round(h * 0.75 * 100) / 100),
+        tree: starterTree("TILT_TURN_LEFT"),
+      };
+      const top = {
+        id: crypto.randomUUID(),
+        width_mm: String(w),
+        height_mm: String(Math.round(h * 0.25 * 100) / 100),
+        tree: starterTree("FIXED"),
+      };
+      return {
+        version: "product-v2",
+        assembly: {
+          modules: [base, top],
+          couplings: [
+            {
+              id: crypto.randomUUID(),
+              angle_deg: "0",
+              coupler_profile_sku: null,
+              kind: "STACKED",
+              modules: [base.id, top.id],
+              edges: ["top", "bottom"],
+            },
+          ],
+        },
+      };
+    },
+  },
+  {
+    key: "corner90",
+    titleKey: "assembly.starter.corner90",
+    hintKey: "assembly.starter.corner90Hint",
+    build: (w, h) => {
+      const product = coupledModules(starterTree("FIXED"), starterTree("FIXED"), 0.5, w, h);
+      product.assembly.couplings[0]!.angle_deg = "90";
+      return product;
+    },
   },
   {
     key: "bow5",
@@ -215,7 +292,10 @@ export type StarterKey = (typeof STARTER_DEFINITIONS)[number]["key"];
 export function starterNominalSize(key: string): { widthMm: number; heightMm: number } {
   switch (key) {
     case "bow3":
-      return { widthMm: 2400, heightMm: 1400 };
+    case "bay3":
+      return { widthMm: 2400, heightMm: 1200 };
+    case "corner90":
+      return { widthMm: 2400, heightMm: 1200 };
     case "bow5":
       return { widthMm: 3000, heightMm: 1400 };
     case "doorSide":

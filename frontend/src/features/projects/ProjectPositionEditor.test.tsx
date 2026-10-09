@@ -434,7 +434,18 @@ beforeEach(() => {
       ],
       coupler_skus: ["ACOPLE-60"],
       coupler_profiles: [
-        { sku: "ACOPLE-60", name: "Coplana 60", material: "PVC", face_width_mm: "90.00" },
+        {
+          sku: "ACOPLE-60",
+          name: "Coplana 60",
+          material: "PVC",
+          face_width_mm: "90.00",
+          coupling_rule: {
+            min_angle_deg: "0",
+            max_angle_deg: "60",
+            development_mm: "0",
+            source: "Ficha de acople del fixture",
+          },
+        },
       ],
       glazing_beads: [{ glass_thickness_mm: "24.00", bead_width_mm: "18.00", sku: "BEAD-24" }],
       panel_skus: [],
@@ -574,7 +585,7 @@ it("auto-resolves the catalog coupler when only one exists", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
 
-  fireEvent.click(screen.getByRole("button", { name: /Bow ×3/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Bow 3 módulos/ }));
 
   // Starters ship null couplers; the catalog's single coupler fills them in.
   change("projects.system", "system-a");
@@ -648,9 +659,10 @@ it("removes a selected module with Delete and undoes it", async () => {
   change("projects.system", "system-a");
   fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
-  fireEvent.click(screen.getByRole("button", { name: /Bow ×3/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Bow 3 módulos/ }));
 
   const before = useCanvasStore.getState().inputs.product!;
+  const removedId = before.assembly.modules[1]!.id;
   const after: ProductJson = {
     ...before,
     assembly: {
@@ -658,7 +670,7 @@ it("removes a selected module with Delete and undoes it", async () => {
       couplings: [
         {
           ...before.assembly.couplings[0]!,
-          modules: ["m1", "m3"],
+          modules: [before.assembly.modules[0]!.id, before.assembly.modules[2]!.id],
           edges: ["right", "left"],
           kind: "INLINE",
         },
@@ -679,19 +691,24 @@ it("removes a selected module with Delete and undoes it", async () => {
       before: {},
       diff: [],
       ops: [
-        { op: "remove_unit", module: "m2", base_sig: productFingerprint(before), result: after },
+        {
+          op: "remove_unit",
+          module: removedId,
+          base_sig: productFingerprint(before),
+          result: after,
+        },
       ],
     }) as never,
   );
 
-  act(() => useCanvasStore.getState().select("m2"));
+  act(() => useCanvasStore.getState().select(removedId));
   fireEvent.keyDown(window, { key: "Delete" });
 
   await waitFor(() =>
     expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(2),
   );
   expect(designOperationsSimulate).toHaveBeenCalledWith(
-    expect.objectContaining({ product: before, ops: [{ op: "remove_unit", module: "m2" }] }),
+    expect.objectContaining({ product: before, ops: [{ op: "remove_unit", module: removedId }] }),
     expect.anything(),
   );
 
@@ -1019,7 +1036,8 @@ it("renders the design library with rendered starter cards", async () => {
   const list = await screen.findByRole("list", {
     name: t("assembly.starterLibrary"),
   });
-  expect(within(list).getAllByRole("listitem")).toHaveLength(15);
+  expect(within(list).getAllByRole("listitem")).toHaveLength(17);
+  expect(within(list).queryByRole("button", { name: /Esquina 90°/ })).not.toBeInTheDocument();
   // Every card previews through the same front-elevation renderer.
   expect(within(list).getAllByTestId("product-front").length).toBeGreaterThan(0);
 });

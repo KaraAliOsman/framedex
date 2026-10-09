@@ -440,3 +440,21 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   sigue Sin dato; los rótulos nunca completan 90° por presentación.
 - `StatusBadge` centraliza el tono; naranja significa decisión humana.
   No aparecen nuevos defaults comerciales configurables en este pase.
+
+## P06 · conjuntos y fuentes (2026-10-09)
+
+- La elevación inicia desarrollada; el selector permite proyectada sin mutar
+  el producto. La planta se puede ocultar o ajustar entre 144 y 320 px.
+  Estos controles de dibujo son preferencias de la vista, no fabricación.
+- Las recetas nuevas declaran apertura interior. Bow lleva bisagras hacia
+  los extremos; puerta con lateral inicia con bisagras izquierdas, visibles
+  y editables desde Apertura. La compatibilidad proviene del catálogo.
+- El aporte desarrollado se declara como separación de frentes sobre su
+  bisectriz; apilado aumenta la altura. Un pivote compartido puede declarar
+  cero. Catálogo permite editar límites, aporte y fuente antes de bloquear
+  el sistema usado. No se completa autoridad a partir del nombre del SKU.
+- «Acoples y ajustes» es la diferencia exacta del precio unitario del conjunto
+  contra cotizaciones independientes de sus módulos. No implica reparto de
+  costos internos ni un precio independiente del acoplador.
+- El arrastre ajusta a 0°, 10°, 15°, 22,5°, 30°, 45° y 90°, o admite el ángulo
+  numérico declarado entre −90° y 90°. El catálogo decide su viabilidad.

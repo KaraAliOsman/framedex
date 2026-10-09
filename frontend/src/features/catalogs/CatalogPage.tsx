@@ -142,11 +142,16 @@ export function CatalogPage(): JSX.Element {
 function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX.Element {
   const api = useMemo(() => catalogApi(orgId), [orgId]);
   const [data, setData] = useState<CatalogData | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [resource, setResource] = useState<Resource>("systems");
+  const requested = new URLSearchParams(window.location.search);
+  const [selected, setSelected] = useState<string | null>(() => requested.get("system"));
+  const [resource, setResource] = useState<Resource>(() =>
+    requested.get("resource") === "articles" ? "articles" : "systems",
+  );
   // The detail pane's landing view for a selected system: the §06 workspace
   // is the system home; the tabbed records stay one click away for CRUD.
-  const [detailTab, setDetailTab] = useState<"workspace" | "records">("workspace");
+  const [detailTab, setDetailTab] = useState<"workspace" | "records">(() =>
+    requested.get("resource") === "articles" ? "records" : "workspace",
+  );
   const [editor, setEditor] = useState<{ resource: Resource; id?: string } | null>(null);
   const [importExpanded, setImportExpanded] = useState(false);
   const [search, setSearch] = useState("");
@@ -472,9 +477,10 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                         <tr key={row.id}>
                           <th scope="row">{itemName(resource, row, data)}</th>
                           <td>
-                            {resource === "hardware-kits" &&
-                            "class_authority" in row &&
-                            row.class_authority ? (
+                            {currentSystem?.is_demo ||
+                            (resource === "hardware-kits" &&
+                              "class_authority" in row &&
+                              row.class_authority) ? (
                               <details>
                                 <summary>Detalles técnicos</summary>
                                 <code>{itemCode(row)}</code>
@@ -916,7 +922,11 @@ function CatalogEditor({
         <legend className="catalog-sr-only">{ct("fields")}</legend>
         {resource === "articles" && (
           <div className="catalog-rule-toggles">
-            {["cutRule", "reinforcementRule"].map((kind) => (
+            {[
+              "cutRule",
+              "reinforcementRule",
+              ...(draft.role === "COUPLER" ? ["couplingRule"] : []),
+            ].map((kind) => (
               <label key={kind}>
                 <input
                   type="checkbox"

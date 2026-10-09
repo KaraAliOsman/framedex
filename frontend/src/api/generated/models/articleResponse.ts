@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
+import type { CouplerRule } from "./couplerRule";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { MaterialEnum } from "./materialEnum";
 import type { ProfileCutRule } from "./profileCutRule";
@@ -23,6 +24,7 @@ export interface ArticleResponse {
   /** @nullable */
   readonly technical_reviewed_by: string | null;
   readonly review_pending: boolean;
+  coupling_rule?: CouplerRule | null;
   cut_rule?: ProfileCutRule | null;
   reinforcement_rule?: ProfileReinforcementRule | null;
   system_id: string;

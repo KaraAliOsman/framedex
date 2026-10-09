@@ -64,7 +64,7 @@ function normalizeMm(raw: string): string | null {
 
 function normalizeAngle(raw: string): string | null {
   const value = parseLocaleNumber(raw);
-  if (value === null || Math.abs(value) >= 90) return null;
+  if (value === null || Math.abs(value) > 90) return null;
   return value.toFixed(1);
 }
 
