@@ -108,6 +108,17 @@ pruebas + 2 xfail y golden byte check. Backend unitario: 1.364. Frontend: 900.
 El E2E conserva autenticación, navegación, recarga y autoridad emitida;
 los selectores usan Inicio y las migas finales. CI exige 4/4 antes del merge.
 
+La corrida CI `37915677274` detectó una espera insuficiente en el E2E de
+simulación del editor. La reproducción local midió vidrio/ancho/propuesta
+en 7,4–7,9 s: la respuesta HTTP 200 y `valid=true` llegaba después de los
+5 s de la aserción del botón. El recorrido focalizado pasa en 43,5 s al
+esperar la transacción concreta. Ahora comprueba también las respuestas
+del motor y la cota final; conserva Guardar, aplicar, deshacer y rechazo de
+la respuesta tardía. No cambia timeouts globales, retries ni comportamiento
+del producto. La aceptación espera el nuevo CI antes de integrar.
+La suite completa del editor pasa 6/6 en 2,8 min; la espera del precio
+indicativo verifica también el producto y la cantidad de su respuesta real.
+
 ## Decisiones, integraciones y riesgos
 
 Decisiones de navegación, orden y privacidad en

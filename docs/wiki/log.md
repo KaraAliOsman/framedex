@@ -863,3 +863,14 @@ publicado mantenía reservado 8000 aun sin Django y bloqueaba el arranque E2E.
 La prueba focalizada PASA 1/1 tras restablecer su relay local de Supabase;
 el arranque propio ahora lo restaura, conservando el issuer verificado.
 CI y squash se registrarán al integrar.
+
+## 2026-10-09 — P03 · sincronización E2E con el motor
+
+La corrida CI `37915677274` falla en la aserción de Guardar tras cambiar
+ancho. La reproducción local confirma simulaciones aún pendientes al
+agotarse 5 s: vidrio/ancho/propuesta terminan en 7,4–7,9 s con HTTP 200
+y `valid=true`. El test espera esas respuestas concretas y conserva las
+aserciones de evaluación, geometría, aplicar/deshacer y cantidad tardía;
+el focalizado pasa en 43,5 s. No cambia motor, permisos, timeouts globales
+ni retries. El cierre exige CI verde en el nuevo HEAD, sin repetir la
+implementación ni las capturas aceptadas de P03.
