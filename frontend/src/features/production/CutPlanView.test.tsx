@@ -171,7 +171,8 @@ describe("CutPlanView", () => {
 
   it("preserves declared square and fractional angles while keeping an absent end unknown", () => {
     const plan = structuredClone(optimization);
-    const cut = plan.bars!.workshop_cut_plan![0].cuts[0];
+    const cut = plan.bars?.workshop_cut_plan?.[0]?.cuts[0];
+    if (!cut) throw new Error("The fixture must declare a cut");
     cut.angle_left = "22.5000";
     cut.angle_right = "90.0000";
     const { container, rerender } = render(<CutPlanView optimization={plan} />);
