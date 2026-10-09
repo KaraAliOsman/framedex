@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 3c3a78bebf898f668814742f8c94a2144d86fb9f
+verified_ref: e59539d1b282fde9c928fcd9e67f970e51995cdc
 sources:
+  - P12 PR #135, CI run 37938719831 on 98a65474a170eb68c75a6c25d7ed36f332c6897a, squash e59539d1b282fde9c928fcd9e67f970e51995cdc, 2026-10-09
   - P12 implementación 3c3a78bebf898f668814742f8c94a2144d86fb9f, gates locales y evidencia de navegador, 2026-10-09
   - P03 PR #134, CI run 37919211491 on 4eb66fbd72c5b2a4ef13c13b6397982a29eb823e, squash 5b06ceb12457b297a8748580453695714469c6a0, 2026-10-09
   - P03 implementación dacf9f9759e41bea784968d25662e95e7081f6d3, gates locales y 88 vistas oficiales, 2026-10-09
@@ -54,7 +55,9 @@ RM-02 conserva la pieza y su retry devuelve la misma OT.
 Véanse [aceptación P12](../../redesign/P12-ACEPTACION.md) y
 [producción por estación](../product/production-stations.md).
 P13/P14/P15 continúan corte avanzado, CNC y retazos; la aceptación usa autoridad
-DEMO declarada y no certifica un fabricante. CI y squash se registran al integrar.
+DEMO declarada y no certifica un fabricante. Database Gate PASA: 1.218 pgTAP,
+441 integraciones, 17 E2E y diez upgrades PG16. PR #135 pasa cuatro checks
+sobre `98a65474a170eb68c75a6c25d7ed36f332c6897a`; squash `e59539d1b282fde9c928fcd9e67f970e51995cdc` en integración.
 
 ## P03 · integrado y verificado (09-10-2026)
 

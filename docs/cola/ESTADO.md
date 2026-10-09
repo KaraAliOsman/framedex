@@ -19,7 +19,7 @@
 | P09 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/132 | 97aea5dfec6e4dddcb429a48b421c7598e758a0d | CI 4/4 verde; DOC-01 sellado, 100 posiciones en 40–45 páginas, QR revocable y 44 vistas; 1186 pgTAP, 425 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
 | P07 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/133 | d8e4d899a29d9f154f8c7d37b054581132dadbb1 | CI 4/4 verde; cascada/Δ exactos, aprobación y recibos; 1.200 pgTAP, 435 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
 | P03 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/134 | 5b06ceb12457b297a8748580453695714469c6a0 | CI 4/4 verde; Hoy por consecuencia, decisiones humanas, búsqueda y destinos exactos; 1.205 pgTAP, 439 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
-| P12 | 1 | en curso |  |  |  |
+| P12 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/135 | e59539d1b282fde9c928fcd9e67f970e51995cdc | CI 4/4 verde; estación privada, QR físico y QC/remake idempotente; 1.218 pgTAP, 441 integraciones, 17 E2E y diez upgrades PG16; rúbrica PASA. |
 | P17 | 1 | pendiente |  |  |  |
 | ED1 | ED1 | pendiente |  |  |  |
 | P06 | 2 | pendiente |  |  |  |

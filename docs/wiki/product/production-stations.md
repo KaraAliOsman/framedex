@@ -3,7 +3,7 @@ type: synthesis
 status: active
 updated: 2026-10-09
 volatility: medium
-verified_ref: 3c3a78bebf898f668814742f8c94a2144d86fb9f
+verified_ref: e59539d1b282fde9c928fcd9e67f970e51995cdc
 sources:
   - backend/production/stations.py
   - backend/production/quality.py

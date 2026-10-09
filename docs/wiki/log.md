@@ -916,3 +916,10 @@ El gate completo pasa 84 archivos / 1.218 pgTAP, 441 integraciones RLS,
 los checks, la FK real y los datos del fixture de producto. El teardown
 deja 8000/5173 libres. El lint final sobre el bootstrap y las verificaciones
 adicionales también pasa; CI y squash se registrarán al integrar.
+
+## 2026-10-09 — P12 · integrado
+
+PR #135 pasa los cuatro checks sobre `98a65474a170eb68c75a6c25d7ed36f332c6897a` en la corrida
+`37938719831` y se integra con squash `e59539d1b282fde9c928fcd9e67f970e51995cdc` en `integracion/v1`.
+ESTADO y los refs registran la aceptación; procesos locales detenidos y
+fixture intacto. Continúa P17 sobre esta base.

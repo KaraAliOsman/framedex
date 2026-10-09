@@ -119,8 +119,9 @@ con código 0 y deja 8000/5173 libres; no se omite ni debilita ningún check.
 
 Con el stack de `.agents/skills/testing-framedex`, seleccione el tenant DEMO
 mediante `DEKOPEN_FIXTURE_ORG_ID`; el estado de su proyecto/OT está en
-`.run/p12-fixture.json`. Los runners `verify-p12.mjs`, `verify-p12-flow.mjs` y
-`verify-p12-states.mjs` se ejecutan desde la raíz con Node y el entorno del stack.
+`.run/p12-fixture.json`. Los runners `frontend/scripts/verify-p12.mjs`,
+`frontend/scripts/verify-p12-flow.mjs` y `frontend/scripts/verify-p12-states.mjs`
+se ejecutan desde la raíz con Node y el entorno del stack.
 No admiten un Supabase remoto. El capturador oficial se ejecuta con
 `npm --prefix frontend run ux:capture -- --routes produccion --roles WORKSHOP_MANAGER,OPERATOR`.
 
@@ -133,3 +134,7 @@ verifica el lector/input con el QR real. No requiere activar un tercero.
 P13/P14/P15 siguen corte avanzado, CNC y retazos. La autoridad DEMO no certifica
 un fabricante. El remake requiere optimización propia. No se afirma aceptación
 de módulos pendientes ni se altera una revisión emitida para facilitar el fixture.
+
+[CI 37938719831](https://github.com/KaraAliOsman/framedex/actions/runs/37938719831):
+cuatro checks PASA sobre `98a65474a170eb68c75a6c25d7ed36f332c6897a`.
+[PR #135](https://github.com/KaraAliOsman/framedex/pull/135) integrado con squash `e59539d1b282fde9c928fcd9e67f970e51995cdc` en `integracion/v1`.
