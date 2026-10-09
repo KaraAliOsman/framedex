@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { DocumentPreferences } from "./documentPreferences";
 
 /**
  * Org white-label identity rendered on emitted documents.
@@ -34,4 +35,5 @@ export interface OrgBranding {
   portal_attribution: boolean;
   notification_email: string | null;
   internal_mail_enabled: boolean;
+  document_preferences: DocumentPreferences;
 }

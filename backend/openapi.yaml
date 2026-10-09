@@ -18768,6 +18768,16 @@ components:
       description: |-
         * `aal1` - aal1
         * `aal2` - aal2
+    AccentEnum:
+      enum:
+      - TEAL
+      - TEAL_DARK
+      - GRAPHITE
+      type: string
+      description: |-
+        * `TEAL` - TEAL
+        * `TEAL_DARK` - TEAL_DARK
+        * `GRAPHITE` - GRAPHITE
     AccessoryLine:
       type: object
       properties:
@@ -19926,6 +19936,8 @@ components:
       properties:
         id:
           type: string
+        link_source:
+          $ref: '#/components/schemas/LinkSourceEnum'
         status:
           type: string
         revision_code:
@@ -21627,6 +21639,50 @@ components:
       - handle_name
       - options
       - synthetic
+    CommercialTerms:
+      type: object
+      properties:
+        payment_schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMilestone'
+        delivery_text:
+          type: string
+          maxLength: 1000
+        installation_text:
+          type: string
+          maxLength: 1000
+        exclusions:
+          type: string
+          maxLength: 4000
+        warranty:
+          type: string
+          maxLength: 4000
+        jurisdiction:
+          type: string
+          maxLength: 1000
+    CommercialTermsRequest:
+      type: object
+      properties:
+        payment_schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMilestoneRequest'
+        delivery_text:
+          type: string
+          maxLength: 1000
+        installation_text:
+          type: string
+          maxLength: 1000
+        exclusions:
+          type: string
+          maxLength: 4000
+        warranty:
+          type: string
+          maxLength: 4000
+        jurisdiction:
+          type: string
+          maxLength: 1000
     CompositionLine:
       type: object
       properties:
@@ -22918,6 +22974,40 @@ components:
       description: |-
         * `ITEMIZED` - ITEMIZED
         * `GROUPED` - GROUPED
+    DocumentPreferences:
+      type: object
+      properties:
+        paper:
+          $ref: '#/components/schemas/PaperEnum'
+        accent:
+          $ref: '#/components/schemas/AccentEnum'
+        legal_footer:
+          type: string
+          maxLength: 240
+        commercial_terms:
+          $ref: '#/components/schemas/CommercialTerms'
+      required:
+      - accent
+      - commercial_terms
+      - legal_footer
+      - paper
+    DocumentPreferencesRequest:
+      type: object
+      properties:
+        paper:
+          $ref: '#/components/schemas/PaperEnum'
+        accent:
+          $ref: '#/components/schemas/AccentEnum'
+        legal_footer:
+          type: string
+          maxLength: 240
+        commercial_terms:
+          $ref: '#/components/schemas/CommercialTermsRequest'
+      required:
+      - accent
+      - commercial_terms
+      - legal_footer
+      - paper
     DocumentTypeEnum:
       enum:
       - DOC-01
@@ -22948,6 +23038,14 @@ components:
         quotation_valid_until:
           type: string
           format: date
+        commercial_terms:
+          $ref: '#/components/schemas/CommercialTermsRequest'
+        alternative_version_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 3
         positions:
           type: array
           items:
@@ -22992,7 +23090,7 @@ components:
           pattern: ^sha256:[0-9a-f]{64}$
         location_tag:
           type: string
-          maxLength: 100
+          maxLength: 120
         manufacturing_placement_policy_id:
           type: string
           format: uuid
@@ -23100,6 +23198,13 @@ components:
           type: string
           format: date
           nullable: true
+        commercial_terms:
+          $ref: '#/components/schemas/CommercialTerms'
+        alternative_version_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
         positions:
           type: array
           items:
@@ -26283,6 +26388,14 @@ components:
       required:
       - line_net
       - position_index
+    LinkSourceEnum:
+      enum:
+      - SHARE
+      - DOCUMENT
+      type: string
+      description: |-
+        * `SHARE` - SHARE
+        * `DOCUMENT` - DOCUMENT
     LocalOriginEnum:
       enum:
       - TOP_LEFT
@@ -30429,6 +30542,8 @@ components:
             maxLength: 0
         internal_mail_enabled:
           type: boolean
+        document_preferences:
+          $ref: '#/components/schemas/DocumentPreferences'
       required:
       - brand_address
       - brand_color_fallback
@@ -30440,6 +30555,7 @@ components:
       - brand_primary_color
       - commercial_name
       - document_attribution
+      - document_preferences
       - giro
       - internal_mail_enabled
       - name
@@ -30449,6 +30565,8 @@ components:
     OrgBrandingWriteRequest:
       type: object
       properties:
+        document_preferences:
+          $ref: '#/components/schemas/DocumentPreferencesRequest'
         brand_primary_color:
           type: string
           minLength: 1
@@ -30624,6 +30742,16 @@ components:
       - sku
       - weight_kg
       - width_mm
+    PaperEnum:
+      enum:
+      - LETTER
+      - OFICIO
+      - A4
+      type: string
+      description: |-
+        * `LETTER` - LETTER
+        * `OFICIO` - OFICIO
+        * `A4` - A4
     PatchedArticleWriteRequest:
       type: object
       properties:
@@ -31303,6 +31431,33 @@ components:
             $ref: '#/components/schemas/PaymentLink'
       required:
       - links
+    PaymentMilestone:
+      type: object
+      properties:
+        label:
+          type: string
+          maxLength: 120
+        share:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,6})?$
+      required:
+      - label
+      - share
+    PaymentMilestoneRequest:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+        share:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,6})?$
+      required:
+      - label
+      - share
     PaymentReceipt:
       type: object
       properties:
@@ -31965,7 +32120,7 @@ components:
         location_tag:
           type: string
           minLength: 1
-          maxLength: 100
+          maxLength: 120
         manufacturing_placement_policy_id:
           type: string
           format: uuid
@@ -32058,7 +32213,7 @@ components:
       properties:
         location_tag:
           type: string
-          maxLength: 100
+          maxLength: 120
         quantity:
           type: integer
           maximum: 2147483647
@@ -32083,7 +32238,7 @@ components:
       properties:
         location_tag:
           type: string
-          maxLength: 100
+          maxLength: 120
         quantity:
           type: integer
           maximum: 2147483647

@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CommercialTerms } from "./commercialTerms";
 import type { DocumentaryPreparationPosition } from "./documentaryPreparationPosition";
 
 export interface DocumentaryPreparationResponse {
@@ -15,5 +16,7 @@ export interface DocumentaryPreparationResponse {
   payment_terms: string;
   /** @nullable */
   quotation_valid_until: string | null;
+  commercial_terms?: CommercialTerms;
+  alternative_version_ids?: string[];
   positions: DocumentaryPreparationPosition[];
 }

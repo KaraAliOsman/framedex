@@ -5,9 +5,11 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { LinkSourceEnum } from "./linkSourceEnum";
 
 export interface ApprovalRecord {
   id: string;
+  link_source?: LinkSourceEnum;
   status: string;
   revision_code: string;
   /** @nullable */

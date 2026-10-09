@@ -163,8 +163,12 @@ def generate_artifact(
                 if order is None else str(order["order_snapshot_hash"])
             )
             if file_format == "PDF":
+                render_options = {}
+                if document_type == "DOC-01":
+                    from portal.document_links import document_portal_url
+                    render_options["portal_url"] = document_portal_url(org_id=org_id, version=version, actor_id=actor_id)
                 content, media_type = render_pdf_document(
-                    document_type, frozen, pdf_identifier=identifier
+                    document_type, frozen, pdf_identifier=identifier, **render_options
                 )
                 extension = "pdf"
             else:

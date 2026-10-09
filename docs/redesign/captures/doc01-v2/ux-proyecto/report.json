@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-10-09T01:41:02.231Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "reachedPath": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "proyecto-detalle__ESTIMATOR__light__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "reachedPath": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "proyecto-detalle__ESTIMATOR__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "reachedPath": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "proyecto-detalle__ESTIMATOR__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "reachedPath": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "proyecto-detalle__ESTIMATOR__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "reachedPath": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "proyecto-detalle__ESTIMATOR__dark__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "reachedPath": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "proyecto-detalle__ESTIMATOR__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "reachedPath": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "proyecto-detalle__ESTIMATOR__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "proyecto-detalle",
+      "path": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "reachedPath": "/projects/7f738d51-dac3-4156-a7f7-5a8f44a91748",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "proyecto-detalle__ESTIMATOR__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    }
+  ],
+  "topFindings": []
+}

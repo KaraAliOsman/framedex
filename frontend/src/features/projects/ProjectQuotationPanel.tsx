@@ -49,6 +49,8 @@ import {
 } from "./decimal";
 import { runJob } from "../jobs/runJob";
 import { useConfirm, usePrompt } from "../../ui";
+import { CommercialTermsEditor, validCommercialTerms } from "./CommercialTermsEditor";
+import "./document-settings.css";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -590,7 +592,7 @@ function selectedPolicy(
         <option value="">{t("quotation.choosePolicy")}</option>
         {options.map((option) => (
           <option key={option.id} value={option.id}>
-            {option.label} · v{option.version}
+            {option.label.replaceAll("_", " ")} · versión {option.version}
           </option>
         ))}
       </select>
@@ -880,6 +882,12 @@ export function ProjectQuotationPanel({
   async function emit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (!preparation || !confirmed) return;
+    if (preparation.commercial_terms && !validCommercialTerms(preparation.commercial_terms)) {
+      setMessage(
+        "Revisa el calendario de pagos: los porcentajes deben sumar 100 % y cada hito necesita un nombre.",
+      );
+      return;
+    }
     // A silent early-return reads as a dead button (review PM-C3): name the
     // first missing gate instead of swallowing the click.
     if (!project.current_pricing_operation_id) {
@@ -924,6 +932,8 @@ export function ProjectQuotationPanel({
         {
           payment_terms: preparation.payment_terms,
           quotation_valid_until: preparation.quotation_valid_until,
+          commercial_terms: preparation.commercial_terms,
+          alternative_version_ids: preparation.alternative_version_ids,
           positions: preparation.positions.map((position) => ({
             position_id: position.position_id,
             calculation_hash: position.calculation_hash,
@@ -1122,7 +1132,9 @@ export function ProjectQuotationPanel({
     (project.versions?.length ?? 0) > 0;
 
   async function shareQuote(): Promise<void> {
-    const pendingLink = (approvals.data ?? []).find((link) => link.status === "PENDING");
+    const pendingLink = (approvals.data ?? []).find(
+      (link) => link.status === "PENDING" && link.link_source !== "DOCUMENT",
+    );
     if (pendingLink) {
       const ok = await confirm({
         title: t("quotation.shareReplacesLink"),
@@ -1412,6 +1424,48 @@ export function ProjectQuotationPanel({
               setPreparation({ ...preparation, quotation_valid_until: event.target.value });
             }}
           />
+          <CommercialTermsEditor
+            value={preparation.commercial_terms ?? {}}
+            disabled={busy}
+            onChange={(commercial_terms) => {
+              setDirty(true);
+              setPreparation({ ...preparation, commercial_terms });
+            }}
+          />
+          {(project.versions?.length ?? 0) > 0 && (
+            <details>
+              <summary>Comparar revisiones anteriores como alternativas</summary>
+              <p>
+                Se imprimen completas con su precio sellado y no se incluyen en el total. Puedes
+                elegir hasta tres.
+              </p>
+              {project.versions?.map((version) => (
+                <label key={version.id}>
+                  <input
+                    type="checkbox"
+                    checked={(preparation.alternative_version_ids ?? []).includes(version.id)}
+                    disabled={
+                      busy ||
+                      (!preparation.alternative_version_ids?.includes(version.id) &&
+                        (preparation.alternative_version_ids?.length ?? 0) >= 3)
+                    }
+                    onChange={(event) => {
+                      setDirty(true);
+                      setPreparation({
+                        ...preparation,
+                        alternative_version_ids: event.target.checked
+                          ? [...(preparation.alternative_version_ids ?? []), version.id]
+                          : (preparation.alternative_version_ids ?? []).filter(
+                              (id) => id !== version.id,
+                            ),
+                      });
+                    }}
+                  />
+                  Revisión {version.revision_code.replace("REV-", "")}
+                </label>
+              ))}
+            </details>
+          )}
           {preparation.positions.map((position, index) => (
             <fieldset key={position.position_id} disabled={busy}>
               <legend>
@@ -1426,7 +1480,7 @@ export function ProjectQuotationPanel({
               <input
                 id={`position-location-${position.position_id}`}
                 required
-                maxLength={100}
+                maxLength={120}
                 value={position.location_tag}
                 onChange={(event) => updatePosition(index, { location_tag: event.target.value })}
               />
@@ -2078,6 +2132,11 @@ export function ProjectQuotationPanel({
                     {t(approvalStatusKeys[link.status] ?? "quotation.linkPending")}
                   </span>
                   <strong>{formatRevision(link.revision_code)}</strong>
+                  <span>
+                    {link.link_source === "DOCUMENT"
+                      ? "Enlace del QR del PDF"
+                      : "Enlace compartido"}
+                  </span>
                   <time dateTime={link.created_at}>{formatDateTime(link.created_at)}</time>
                   {link.status === "PENDING" && (
                     <span className="quotation-link__meta">

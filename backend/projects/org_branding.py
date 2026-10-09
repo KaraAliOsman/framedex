@@ -15,6 +15,8 @@ from authentication.errors import contract_error
 from documents.repository import DocumentaryError, documentary_backend, one
 from documents.storage import SupabaseDocumentStorage
 from projects.brand_color import effective_color, snapshot_preferences
+from documents.preferences import document_preferences
+from pricing.repository import json_text
 
 
 _MAX_LOGO_BYTES = 512 * 1024
@@ -55,13 +57,14 @@ def _branding(row: dict) -> dict:
         "portal_attribution": row.get("portal_attribution", True),
         "notification_email": row.get("notification_email"),
         "internal_mail_enabled": row.get("internal_mail_enabled", False),
+        "document_preferences": document_preferences(row.get("document_preferences")),
     }
 
 
 _FIELDS = (
     "name, tax_id, commercial_name, giro, brand_address, brand_phone,"
     " brand_email, brand_logo_key, brand_logo_sha256, brand_primary_color,"
-    " document_attribution, portal_attribution, notification_email, internal_mail_enabled"
+    " document_attribution, portal_attribution, notification_email, internal_mail_enabled, document_preferences"
 )
 
 
@@ -97,7 +100,7 @@ def save_branding(*, org_id: UUID, data: dict) -> dict:
 
 
 def _save_branding(*, org_id: UUID, data: dict) -> dict:
-    current = get_branding(org_id=org_id)
+    current = _branding(one("SELECT " + _FIELDS + " FROM public.tenancy_organizations WHERE id=%s FOR UPDATE", [str(org_id)], "organization_not_found"))
     if data.get("internal_mail_enabled", current["internal_mail_enabled"]) and not _blank(
         data.get("notification_email", current["notification_email"])
     ):
@@ -110,19 +113,20 @@ def _save_branding(*, org_id: UUID, data: dict) -> dict:
         "UPDATE public.tenancy_organizations SET "
         "commercial_name=%s, giro=%s, brand_address=%s, brand_phone=%s,"
         " brand_email=%s, brand_primary_color=%s, document_attribution=%s,"
-        " portal_attribution=%s, notification_email=%s, internal_mail_enabled=%s, updated_at=now() "
+        " portal_attribution=%s, notification_email=%s, internal_mail_enabled=%s, document_preferences=%s::jsonb, updated_at=now() "
         "WHERE id=%s RETURNING " + _FIELDS,
         [
-            _blank(data.get("commercial_name")),
-            _blank(data.get("giro")),
-            _blank(data.get("brand_address")),
-            _blank(data.get("brand_phone")),
-            _blank(data.get("brand_email")),
+            _blank(data.get("commercial_name", current["commercial_name"])),
+            _blank(data.get("giro", current["giro"])),
+            _blank(data.get("brand_address", current["brand_address"])),
+            _blank(data.get("brand_phone", current["brand_phone"])),
+            _blank(data.get("brand_email", current["brand_email"])),
             data.get("brand_primary_color", current["brand_primary_color"]).upper(),
             data.get("document_attribution", current["document_attribution"]),
             data.get("portal_attribution", current["portal_attribution"]),
             _blank(data.get("notification_email", current["notification_email"])),
             data.get("internal_mail_enabled", current["internal_mail_enabled"]),
+            json_text(data.get("document_preferences", current["document_preferences"])),
             str(org_id),
         ],
         "organization_not_found",

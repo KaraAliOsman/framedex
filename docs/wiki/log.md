@@ -762,3 +762,20 @@ la identidad de fabricación continúa sellada. ESTADO y los refs de la wiki
 registran el merge. Los proveedores automáticos omitieron revisión por sus
 límites/configuración. La repetición local adicional ya pasó 1.173 pgTAP,
 418 integraciones y E2E; sus upgrades poblados PG16 siguen ejecutándose.
+
+## 2026-10-08 — P05 · cierre local adicional
+
+La corrida local final `p05-db-4.log` completó también los upgrades poblados
+de PG16 y cerró `[PASS] database gate`. Complementa el CI verde ya registrado
+en PR #131; no cambia el alcance ni el SHA de su integración.
+
+## 2026-10-08 — P09 · propuesta y revisión sellada
+
+La rama `codex/P09-doc01-v2`, base `e80e91b8`, reemplaza el DOC-01 anterior,
+agrega preferencias/condiciones selladas, alternativas y QR revocable por
+revisión. Motor Decimal proyecta unitario/descuento/calendario; fixtures
+100 normales/largos tienen 40/45 páginas. Recorrido real A/B conserva bytes
+tras cambios de preferencias/revocación. La matriz de 44 vistas no presenta
+hallazgos ni desbordes. Síntesis en `product/quotation-document.md` y
+aceptación en `docs/redesign/P09-ACEPTACION.md`. Gates finales/CI se registran
+al integrar; catálogo y tarifas DEMO siguen sin certificación.

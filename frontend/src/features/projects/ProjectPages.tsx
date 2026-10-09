@@ -1894,7 +1894,7 @@ function ProjectWorkspace({
                     </span>
                     <span className="position-row__dims">
                       {fmtMm(position.design.nominal_width_mm)} ×{" "}
-                      {fmtMm(position.design.nominal_height_mm)}
+                      {fmtMm(position.design.nominal_height_mm)} mm
                     </span>
                     <span className="position-row__spec">
                       {typologyKeys[position.typology]

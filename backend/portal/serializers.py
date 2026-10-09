@@ -96,6 +96,7 @@ class PortalQuoteSerializer(serializers.Serializer):
 
 class ApprovalRecordSerializer(serializers.Serializer):
     id = serializers.CharField()
+    link_source = serializers.ChoiceField(choices=["SHARE", "DOCUMENT"], required=False)
     status = serializers.CharField()
     revision_code = serializers.CharField()
     decided_by = serializers.CharField(allow_null=True)

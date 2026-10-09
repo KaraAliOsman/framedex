@@ -144,105 +144,7 @@ svg:not(.miter) { max-width: 100%; height: auto; display: block; } svg text { fo
 .po-meta .tb-value { font-size: 9pt; font-weight: 600; }
 .po-meta .tb-value.po-needed { color: #991B1B; font-weight: 700; }
 
-/* ── Commercial proposal language (DOC-01) ───────────────────────────
-   Same type family and tokens, different composition: a real cover, a
-   stat-level summary, product cards instead of a data table, and a
-   dedicated investment block. Nothing here styles workshop docs. */
-.commercial h1 { font-size: 19pt; letter-spacing: -0.3pt; }
-.commercial h2 { font-size: 12.5pt; border-bottom: none; margin: 7mm 0 3mm; break-after: avoid; break-inside: avoid; }
-.commercial h2::after { content: ""; display: block; width: 14mm; height: 1.4mm; background: #E56A32; margin-top: 1.6mm; }
-.kicker { font-size: 7.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 1.6pt; color: #0B7770; margin: 0 0 2mm; }
-.cover { break-after: page; }
-.cover-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5pt solid #075F5A; padding-bottom: 5mm; }
-.cover-top .brand { font-size: 15pt; }
-.cover-top .brand-logo { max-height: 16mm; max-width: 62mm; }
-.cover-doc { text-align: right; font: 8pt 'IBM Plex Mono', monospace; color: #465158; line-height: 1.7; }
-.cover-doc strong { display: block; font: 600 11pt 'IBM Plex Sans', sans-serif; color: #161C1F; letter-spacing: 0.2pt; }
-.cover-main { display: flex; gap: 10mm; align-items: center; margin: 32mm 0 14mm; }
-.cover-left { flex: 1; }
-.cover-client { font-size: 24pt; font-weight: 600; letter-spacing: -0.4pt; margin: 0 0 2.5mm; }
-.cover-project { font-size: 11pt; color: #252D31; margin: 0 0 1mm; }
-.cover-meta { color: #727D82; font-size: 8.5pt; line-height: 1.75; margin-top: 4mm; }
-.cover-figure { width: 82mm; flex: 0 0 82mm; background: #F5F7F7; border: 0.25pt solid #E2E7E7; padding: 4mm 4mm 2mm; }
-.cover-figure svg { max-height: 105mm; display: block; margin: 0 auto; }
-.cover-figure .figcap { font: 7pt 'IBM Plex Sans', sans-serif; color: #727D82; text-align: center; margin-top: 2mm; }
-.cover-invest { display: flex; border: 1pt solid #075F5A; padding: 4mm 0; }
-.inv-cell { flex: 1; padding: 0 5mm; border-left: 0.5pt solid #CDD5D6; }
-.inv-cell:first-child { border-left: none; }
-.inv-cell span { display: block; font-size: 6.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7pt; color: #727D82; margin-bottom: 1.2mm; }
-.inv-cell strong { font-size: 10.5pt; font-weight: 600; color: #161C1F; }
-.inv-cell.inv-total strong { font-size: 15pt; color: #075F5A; }
-.cover-foot { margin-top: 5mm; font-size: 7.5pt; color: #727D82; line-height: 1.6; }
-.dochead { border-bottom: 1.5pt solid #075F5A; padding-bottom: 4mm; margin-bottom: 6mm; }
-.dochead .cover-top { border-bottom: none; padding-bottom: 0; }
-.dochead-client { font-size: 10.5pt; color: #161C1F; margin: 4.5mm 0 0; }
-.dochead-client .kicker { margin: 0 1mm 0 0; }
-.dochead .cover-invest { margin-top: 3.5mm; }
-.dochead .cover-foot { margin-top: 2.5mm; }
-/* Long client/project/typology names wrap inside their column — a width
-   guard, never a truncation. */
-.cover-client, .cover-project, .dochead-client, .pcard-body h3,
-.pcard-specs li, .pcard-dims { overflow-wrap: break-word; }
-.stat-strip { display: flex; border: 0.5pt solid #CDD5D6; border-left: 2pt solid #075F5A; margin: 0 0 5mm; }
-.stat-cell { flex: 1; padding: 2.6mm 4mm; border-left: 0.5pt solid #CDD5D6; }
-.stat-cell:first-child { border-left: none; }
-.stat-cell .stat-n { display: block; font: 600 13pt 'IBM Plex Sans', sans-serif; color: #161C1F; }
-.stat-cell .stat-k { display: block; font-size: 6.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6pt; color: #727D82; margin-top: 0.8mm; }
-.chips { margin: 2mm 0 0; }
-.chips span { display: inline-block; border: 0.5pt solid #CDD5D6; border-radius: 2pt; padding: 0.8mm 2.4mm; margin: 0 1.5mm 1.5mm 0; font-size: 7.5pt; color: #465158; }
-/* block layout (not flex-wrap) so WeasyPrint can paginate between cards */
-.pcards { display: block; margin: 2mm 0 4mm; }
-.pcard { display: flex; width: 100%; border: 0.75pt solid #CDD5D6; margin: 0 0 5mm; break-inside: avoid; }
-.pcard-fig { flex: 0 0 62mm; padding: 5mm 4mm; border-right: 0.5pt solid #CDD5D6; background: #F2F5F4; display: flex; align-items: center; justify-content: center; }
-.pcard-fig svg { max-height: 62mm; max-width: 54mm; }
-.pcard-body { flex: 1; padding: 4mm 5mm; }
-.pcard-body h3 { margin: 0 0 1mm; font-size: 12pt; }
-.pcard-dims { font: 500 10pt 'IBM Plex Mono', monospace; color: #075F5A; margin: 0 0 2.5mm; }
-.pcard-specs { margin: 0; padding: 0; list-style: none; font-size: 8pt; color: #465158; line-height: 1.7; }
-.pcard-specs li { margin: 0; }
-.pcard-with-extras { border:0.75pt solid #CDD5D6; margin:0 0 5mm; break-inside:avoid; }
-.pcard-with-extras .pcard { border:0; margin:0; }
-.pcard-extras { padding:0 5mm 4mm; border-top:0.5pt solid #CDD5D6; }
-.extra-lines { width:100%; margin-top:3mm; font-size:9pt; border-collapse:collapse; break-inside:avoid; }
-.extra-lines th { text-align:left; font-size:8.5pt; color:#465158; }
-.extra-lines td { padding:1.5mm 1mm; border-top:0.5pt solid #CDD5D6; }
-.extra-lines small { font-size:8.5pt; }
-.extra-lines .numeric { text-align:right; font-family:'IBM Plex Mono',monospace; }
-.extra-lines caption { text-align:left; font-weight:600; margin-bottom:1mm; }
-.document-services { break-inside:avoid; }
-.pcard-specs .plabel { color: #727D82; font-size: 6.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; }
-.pcard-price { flex: 0 0 40mm; padding: 4mm 5mm; text-align: right; background: #F5F7F6; }
-.pcard-price .plabel { display: block; font-size: 6.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; color: #727D82; margin: 2mm 0 0.5mm; }
-.pcard-price .plabel:first-child { margin-top: 0; }
-.pcard-price strong { font-size: 10.5pt; }
-.pcard-price strong.line { display: block; font-size: 13pt; color: #075F5A; }
-.pcard-price .off { display: inline-block; background: #E56A32; color: #FCFDFC; font-size: 6.5pt; font-weight: 600; letter-spacing: 0.5pt; padding: 0.6mm 2mm; border-radius: 2pt; }
-.pcards.compact .pcard { margin-bottom: 4mm; }
-.pcards.compact .pcard-fig { flex: 0 0 50mm; padding: 3mm; }
-.pcards.compact .pcard-fig svg { max-height: 34mm; max-width: 44mm; }
-.pcards.compact .pcard-body { padding: 3mm 4mm; }
-.pcards.compact .pcard-body h3 { font-size: 10.5pt; }
-.pcards.compact .pcard-price { flex: 0 0 36mm; padding: 3mm 4mm; }
-.invest { display: flex; gap: 8mm; align-items: stretch; margin: 2mm 0 4mm; }
-.invest-panel { flex: 0 0 74mm; background: #075F5A; color: #FCFDFC; padding: 5mm 6mm; break-inside: avoid; }
-.invest-panel .inv-row { display: flex; justify-content: space-between; font-size: 8.5pt; padding: 1.4mm 0; border-bottom: 0.5pt solid #0B7770; }
-.invest-panel .inv-total-row { font-size: 13pt; font-weight: 600; border-bottom: none; padding-top: 2.5mm; }
-.invest-note { flex: 1; font-size: 8.5pt; color: #465158; line-height: 1.7; }
-.invest-note p { margin: 0 0 1.5mm; }
-.terms { border-left: 2pt solid #CDD5D6; padding-left: 5mm; }
-.terms p { margin: 1.2mm 0; }
-.terms .tlabel { color: #727D82; font-size: 6.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; }
-.doc-col { break-inside: avoid; }
-.doc-duo { display: flex; gap: 9mm; align-items: flex-start; break-inside: avoid; }
-.doc-duo .doc-col { flex: 1; min-width: 0; }
-.doc-duo h2 { margin-top: 4mm; }
-.doc-duo .invest { flex-direction: column; gap: 4mm; margin: 2mm 0 0; }
-.doc-duo .invest-panel { flex: 0 0 auto; }
-.accept { break-inside: avoid; margin-top: 4mm; }
-.accept h2 { margin-top: 0; }
-.sign-col .sign-cell { margin-bottom: 9mm; }
-.sign-col .sign-cell:last-child { margin-bottom: 0; }
-.accept-recap { font-size: 8.5pt; color: #465158; margin-bottom: 3mm; }
+
 """
 
 
@@ -824,7 +726,8 @@ def _contour_svg_path(
 
 
 def _position_svg(
-    position: dict[str, object], *, commercial: bool = False, view: str = "interior"
+    position: dict[str, object], *, commercial: bool = False, view: str = "interior", dimensions: bool = False,
+    dimension_font_divisor: Decimal | None = None, include_sliding_plan: bool = True,
 ) -> str:
     if view not in ("interior", "exterior"):
         raise DocumentaryError("invalid_drawing_view")
@@ -903,10 +806,12 @@ def _position_svg(
         annotation_lane = 0
         bottom_lane = 0
         drawing_font = max(min(width, height) / Decimal("28"), max(width, height) / Decimal("30"))
+        if dimension_font_divisor is not None:
+            drawing_font = max(width, height) / dimension_font_divisor
         for module_index, (module, member, module_width, module_height, member_top, path_d) in enumerate(draws):
             x = member.x_mm - left_edge
             baseline = top_edge - (member.sill_mm + member_top)
-            if not commercial:
+            if not commercial or dimensions:
                 nominal_top = baseline + member_top - module_height
                 annotations, aw, ah, annotation_lane, bottom_lane = drawing_annotations(module.get("tree"), x=x, y=nominal_top,
                     width=module_width, height=module_height,
@@ -915,7 +820,8 @@ def _position_svg(
                     right_edge=width, bottom_edge=height, vertical_offset=annotation_lane,
                     bottom_offset=bottom_lane, font_mm=drawing_font,
                     outer_top=baseline, outer_height=member_top,
-                    assembly_totals=(width, height) if len(draws) > 1 and module_index == len(draws) - 1 else None)
+                    assembly_totals=(width, height) if len(draws) > 1 and module_index == len(draws) - 1 else None,
+                    include_sliding_plan=include_sliding_plan)
                 elements.append(annotations)
                 drawing_width = max(drawing_width, x + aw)
                 drawing_height = max(drawing_height, nominal_top + ah)
@@ -957,7 +863,9 @@ def _position_svg(
             # Module-id labels drop on sliver modules — squeezed text
             # colliding with the next unit's label reads worse than none.
             label = f"Módulo {module_index + 1}"
-            label_size = max(min(module_width, module_height) / Decimal("18"), drawing_font)
+            # Module names use their own lane. Commercial dimensions can be
+            # much larger without suppressing labels on ordinary modules.
+            label_size = max(min(module_width, module_height) / Decimal("18"), min(width, height) / Decimal("28"))
             if len(draws) > 1 and module_width / Decimal("30") + (
                 Decimal(len(label)) * label_size * Decimal("0.65")
             ) < module_width:
@@ -1004,19 +912,23 @@ def _position_svg(
             raise DocumentaryError("svg_dimension_invalid")
         _svg_elements(tree, Decimal("0"), Decimal("0"), width, height, elements,
                       pal=pal, physical=facts_for(), exterior=view == "exterior")
-        if not commercial:
+        if not commercial or dimensions:
             annotations, drawing_width, drawing_height, _, _ = drawing_annotations(tree, x=Decimal("0"), y=Decimal("0"),
                 width=width, height=height, handles=[fact for group in facts_for().values() for fact in group],
-                color=pal["glyph"] or _G_800, exterior=view == "exterior")
+                color=pal["glyph"] or _G_800, exterior=view == "exterior",
+                font_mm=max(width, height) / dimension_font_divisor if dimension_font_divisor is not None else None,
+                include_sliding_plan=include_sliding_plan)
             elements.append(annotations)
     caption_size = max(min(width, height) / Decimal("22"), max(width, height) / Decimal("30"))
+    if dimension_font_divisor is not None:
+        caption_size = max(width, height) / dimension_font_divisor
     title = "Vista exterior" if view == "exterior" else "Vista interior"
     graphic = "".join(elements)
     if view == "exterior":
         graphic = f'<g transform="translate({_pt(width)} 0) scale(-1 1)">{graphic}</g>'
     # Short edge segments can have labels wider than their span. Reserve the
     # same outer margin on either view so mirrored labels cannot be clipped.
-    label_margin = caption_size * 4 if not commercial else Decimal("0")
+    label_margin = caption_size * 4 if not commercial or dimensions else Decimal("0")
     return (
         f'<svg viewBox="{_pt((min(Decimal("0"), width-drawing_width) if view == "exterior" else Decimal("0"))-label_margin)} {-caption_size * 2} {_pt(max(width, drawing_width)+label_margin*2)} {_pt(max(height, drawing_height) + caption_size * 2)}" '
         'xmlns="http://www.w3.org/2000/svg" role="img" '
@@ -1138,552 +1050,9 @@ def _revision_header(
     return f'<main class="{class_name}">{titleblock}{header}', bom_hash
 
 
-def _pricing_extras(snapshot: dict[str, object]) -> list[dict[str, object]]:
-    """Project-level charges (instalación, traslado) frozen inside the
-    applied pricing request — rendered as labeled money rows, never
-    re-derived."""
-    pricing = snapshot.get("pricing")
-    request = pricing.get("request") if isinstance(pricing, dict) else None
-    items = request.get("extras") if isinstance(request, dict) else None
-    legacy = [item for item in items if isinstance(item, dict)] if isinstance(items,list) else []
-    result = pricing.get("result") if isinstance(pricing,dict) else None
-    services = result.get("services") if isinstance(result,dict) else None
-    return legacy+[{**item,"label":item["name"]} for item in services or [] if isinstance(item,dict)]
-
-
-def _extra_table(rows: list[dict[str, object]], currency: object, *, prices: bool, base: object = None,
-                 caption: str = "Extras incluidos") -> str:
-    if not rows:
-        return ""
-    headings = '<th>Extra</th><th class="numeric">Cantidad</th>' + ('<th class="numeric">Precio unitario</th><th class="numeric">Neto</th>' if prices else '')
-    body = ''
-    if prices and base is not None:
-        body += '<tr><td>Base de la posición</td><td></td><td></td><td class="numeric">'+escape(_money(base,currency))+'</td></tr>'
-    for item in rows:
-        unit = {"EA":"un.","M":"m","M2":"m²"}.get(str(item.get("unit")),"Sin dato")
-        precision = 2 if item.get("unit") in ("M", "M2") else 1 if item.get("unit") == "KG" else 0
-        qty = format(_num(item.get("quantity")).quantize(Decimal(1).scaleb(-precision), rounding=ROUND_HALF_UP), 'f').replace('.', ',')
-        name = _value(item.get("name"))+(" · DEMO" if item.get("synthetic") else '')
-        body += '<tr><td>'+escape(name)+'</td><td class="numeric">'+escape(qty+' '+unit)+'</td>'
-        if prices:
-            tariff = _money(item.get('unit_price',item.get('selling_rate')), currency)
-            body += '<td class="numeric">'+escape(tariff)+'</td><td class="numeric">'+escape(_money(item.get("net",item.get("amount")),currency))+'</td>'
-        body += '</tr>'
-        if prices and item.get('rounding') is not None and _num(item['rounding']) != 0:
-            body += '<tr><td colspan="4"><small>Ajuste de redondeo incluido en el neto: '+escape(_dim(item['rounding']).replace('.',','))+' '+escape(_value(currency))+'</small></td></tr>'
-    return '<table class="extra-lines"><caption>'+escape(caption)+'</caption><thead><tr>'+headings+'</tr></thead><tbody>'+body+'</tbody></table>'
-
-
-def _doc01(snapshot: dict[str, object]) -> str:
-    """Commercial proposal (DOC-01): a sales document, not a table dump.
-
-    Structure — cover (brand + client + hero unit + investment strip),
-    project summary, a compact positions overview, product cards with the
-    commercial render beside its spec, the investment block, terms, and
-    the acceptance block. Sections with no data are simply not rendered."""
-    project = _object(snapshot.get("project"), "invalid_frozen_revision_snapshot")
-    currency = project.get("currency")
-    positions = [_object(item, "invalid_frozen_position")
-                 for item in _array(snapshot.get("positions"), "invalid_frozen_revision_snapshot")]
-    org_raw = snapshot.get("organization")
-    organization = org_raw if isinstance(org_raw, dict) else None
-    org = organization if organization is not None else {}
-    pricing = snapshot.get("pricing") or {}
-    priced_result = pricing.get("result") or {}
-    extra_prices = priced_result.get("document_extra_prices","ITEMIZED") == "ITEMIZED"
-    sublines = {str(item["position_index"]):item for item in priced_result.get("line_detail",[]) if item.get("sublines")}
-
-    # Identical openings collapse into one group; the sealed tree signature
-    # keeps mirrored/handedness pairs apart so the rendered figure never
-    # lies about which product the customer is buying.
-    groups: dict[tuple[object, ...], dict[str, object]] = {}
-    for position in positions:
-        specs = ", ".join(_position_glass_specs(position)) or "Panel sándwich"
-        tree_sig = json.dumps(
-            position.get("parametric_tree"), sort_keys=True, default=str
-        )
-        key = (
-            _value(position.get("typology")), _value(position.get("width_mm")),
-            _value(position.get("height_mm")), specs,
-            _value(position.get("color_interior")),
-            _value(position.get("color_exterior")),
-            _value(position.get("price_net")),
-            _value(position.get("discount_pct")), tree_sig,
-            position.get("position_index") if str(position.get("position_index")) in sublines else None,
-            json.dumps(position.get('measurements'),sort_keys=True,default=str) if position.get('measurements') else None,
-        )
-        bucket = groups.setdefault(key, {
-            "indexes": [], "locations": [], "quantity": Decimal("0"),
-            "price_net": Decimal("0"), "specs": specs, "priced": True,
-            "ref_position": position,
-        })
-        bucket["indexes"].append(_value(position.get("position_index")))
-        location = _value(position.get("location_tag"))
-        if location and location not in bucket["locations"]:
-            bucket["locations"].append(location)
-        bucket["quantity"] += _num(position.get("quantity"))
-        if position.get("price_net") is None:
-            bucket["priced"] = False
-        else:
-            bucket["price_net"] += _num(position.get("price_net"))
-
-    def _list(values: list[str]) -> str:
-        if not values:
-            return "—"
-        if len(values) <= 6:
-            return ", ".join(values)
-        return f"{values[0]} … {values[-1]} ({len(values)})"
-
-    # ── Cover ──────────────────────────────────────────────────────────
-    quote_folio = f"COT-{_value(project.get('code'))}-{_value(snapshot.get('revision'))}"
-    titleblock = (
-        '<div class="titleblock">'
-        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
-        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
-        f'<span class="tb-value">{escape(quote_folio)}</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Rev.</span>'
-        f'<span class="tb-value">{escape(_rev_display(snapshot.get("revision")))}</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(_cldate(snapshot.get("sealed_at")))}</span></div>'
-        '<div class="tb-cell"><span class="tb-label">Página</span>'
-        '<span class="tb-value"><span class="pg"></span></span></div>'
-        "</div>"
-    )
-    body = f'<main class="commercial">{titleblock}'
-
-    # Hero: the largest glazed unit — the product the customer actually
-    # bought, generated from its sealed geometry, not stock imagery.
-    hero_bucket = None
-    hero_area = Decimal("-1")
-    for bucket in groups.values():
-        ref = bucket["ref_position"]
-        try:
-            area = _num(ref.get("width_mm")) * _num(ref.get("height_mm"))
-        except DocumentaryError:
-            area = Decimal("0")
-        if area > hero_area:
-            hero_area, hero_bucket = area, bucket
-    hero_figure = ""
-    if hero_bucket is not None:
-        ref = hero_bucket["ref_position"]
-        hero_figure = (
-            '<div class="cover-figure">'
-            + _position_svg(ref, commercial=True)
-            + '<div class="figcap">Vista interior · '
-            + escape(_product_caption(ref))
-            + " · "
-            + escape(_dim(ref.get("width_mm")))
-            + " × "
-            + escape(_dim(ref.get("height_mm")))
-            + " mm</div></div>"
-        )
-
-    client_meta = []
-    for label, field in (("RUT", "client_rut"), ("Giro", "client_giro"),
-                         ("Comuna", "client_comuna"), ("Dirección", "client_address"),
-                         ("Contacto", "client_email"), ("Teléfono", "client_phone"),
-                         ("Entrega", "delivery_address")):
-        value = _value(project.get(field))
-        if value and value != "—":
-            client_meta.append(f"<strong>{escape(label)}</strong> {escape(value)}<br>")
-    valid_until = _value(project.get("quotation_valid_until"))
-    # Pre-pricing snapshots carry no totals — the proposal omits every money
-    # cell rather than printing a phantom zero.
-    totals_priced = project.get("total_price_gross") is not None
-    cover_invest_cells = []
-    if totals_priced:
-        cover_invest_cells.append(
-            '<div class="inv-cell inv-total"><span>Total</span>'
-            f'<strong>{escape(_money(project.get("total_price_gross"), currency))}</strong></div>'
-        )
-    if _value(project.get("payment_terms")) not in ("", "—"):
-        cover_invest_cells.append(
-            '<div class="inv-cell"><span>Pago</span>'
-            f'<strong>{escape(_value(project.get("payment_terms")))}</strong></div>'
-        )
-    if valid_until and valid_until != "—":
-        cover_invest_cells.append(
-            '<div class="inv-cell"><span>Válida hasta</span>'
-            f'<strong>{escape(_cldate(valid_until))}</strong></div>'
-        )
-    issuer_line = " · ".join(
-        part
-        for part in (
-            _value(org.get("name")),
-            f"RUT {_value(org.get('tax_id'))}" if _value(org.get("tax_id")) != "—" else "",
-            _value(org.get("brand_address")),
-            _value(org.get("brand_phone")),
-            _value(org.get("brand_email")),
-        )
-        if part and part != "—"
-    )
-    # Editorial policy (mandate §07): only a large proposal earns a cover
-    # page — it orients the reader across many configurations. Small and
-    # medium quotes open with a compact dochead so the first page already
-    # carries product and price; nobody should print a page for two lines.
-    cover_top = (
-        '<div class="cover-top">'
-        f'{_brand_block(organization)}'
-        '<div class="cover-doc">'
-        "<strong>Propuesta comercial</strong>"
-        f"{escape(quote_folio)}<br>"
-        f"Revisión {escape(_rev_display(snapshot.get('revision')))} · "
-        f"{escape(_cldate(snapshot.get('sealed_at')))}"
-        "</div></div>"
-    )
-    cover_invest = (
-        f'<div class="cover-invest">{"".join(cover_invest_cells)}</div>'
-        if cover_invest_cells
-        else ""
-    )
-    issuer_foot = (
-        f'<div class="cover-foot">{escape(issuer_line)}</div>' if issuer_line else ""
-    )
-    if len(groups) > 8:
-        body += (
-            '<div class="cover">'
-            + cover_top
-            + '<div class="cover-main"><div class="cover-left">'
-            + '<p class="kicker">Preparado para</p>'
-            + f'<h1 class="cover-client">{escape(_value(project.get("client_name")))}</h1>'
-            + f'<p class="cover-project">{escape(_value(project.get("name")))} · '
-            + f'{escape(_value(project.get("code")))}</p>'
-            + f'<p class="cover-meta">{"".join(client_meta)}</p>'
-            + "</div>"
-            + f"{hero_figure}"
-            + "</div>"
-            + cover_invest
-            + issuer_foot
-            + "</div>"
-        )
-    else:
-        body += (
-            '<div class="dochead">'
-            + cover_top
-            + '<p class="dochead-client"><span class="kicker">Preparado para</span> '
-            + f'<strong>{escape(_value(project.get("client_name")))}</strong> · '
-            + escape(_value(project.get("name")))
-            + " · "
-            + escape(_value(project.get("code")))
-            + "</p>"
-            + cover_invest
-            + issuer_foot
-            + "</div>"
-        )
-
-    # ── Project summary — a single-configuration quote goes straight to
-    # its product card; the strip only earns space when there is a real
-    # spread to summarize.
-    if positions and len(groups) > 1:
-        total_units = sum(bucket["quantity"] for bucket in groups.values())
-        doors = sum(
-            bucket["quantity"]
-            for key, bucket in groups.items()
-            if _product_caption(bucket["ref_position"]).startswith("Puerta")
-        )
-        windows = total_units - doors
-        systems = sorted({
-            _value(bucket["ref_position"].get("system_name"))
-            for bucket in groups.values()
-            if _value(bucket["ref_position"].get("system_name")) not in ("", "—")
-        })
-        finishes = sorted({
-            finish_label(key[4], key[5], bucket["ref_position"].get("resolved_finish"))
-            for key, bucket in groups.items() if key[4] or key[5]
-        })
-        glass = sorted({bucket["specs"] for bucket in groups.values()})
-        stat_cells = [
-            f'<div class="stat-cell"><span class="stat-n">{escape(str(total_units))}</span>'
-            '<span class="stat-k">Unidades</span></div>',
-            f'<div class="stat-cell"><span class="stat-n">{escape(str(windows))}</span>'
-            '<span class="stat-k">Ventanas</span></div>',
-            f'<div class="stat-cell"><span class="stat-n">{escape(str(doors))}</span>'
-            '<span class="stat-k">Puertas</span></div>',
-            f'<div class="stat-cell"><span class="stat-n">{len(groups)}</span>'
-            '<span class="stat-k">Configuraciones</span></div>',
-        ]
-        body += '<h2>Resumen del proyecto</h2>' + (
-            f'<div class="stat-strip">{"".join(stat_cells)}</div>'
-        )
-        chip_rows = []
-        if systems:
-            chip_rows.append(
-                '<p><span class="tlabel">Sistemas</span></p><div class="chips">'
-                + "".join(f"<span>{escape(name)}</span>" for name in systems)
-                + "</div>"
-            )
-        if finishes:
-            chip_rows.append(
-                '<p><span class="tlabel">Acabados</span></p><div class="chips">'
-                + "".join(f"<span>{escape(name)}</span>" for name in finishes)
-                + "</div>"
-            )
-        if glass:
-            chip_rows.append(
-                '<p><span class="tlabel">Acristalamiento</span></p><div class="chips">'
-                + "".join(f"<span>{escape(name)}</span>" for name in glass)
-                + "</div>"
-            )
-        body += "".join(chip_rows)
-
-        # Positions overview — the scannable index before the detail.
-        if len(groups) > 1:
-            overview_rows = [
-                [
-                    _list(bucket["indexes"]),
-                    _list(bucket["locations"]),
-                    _product_caption(bucket["ref_position"]),
-                    bucket["quantity"],
-                    _money(bucket["price_net"], currency) if bucket["priced"] else "—",
-                ]
-                for key, bucket in groups.items()
-            ]
-            body += (
-                '<table><colgroup><col style="width:8%"><col style="width:32%">'
-                '<col style="width:28%"><col style="width:10%"><col style="width:22%"></colgroup>'
-                "<thead><tr><th>Pos.</th><th>Ubicación</th><th>Producto</th>"
-                "<th>Cant.</th><th>Neto</th></tr></thead><tbody>"
-                + "".join(
-                    _row(row, ["", "", "", "dimension", "dimension"])
-                    for row in overview_rows
-                )
-                + "</tbody></table>"
-            )
-
-    # ── Products ───────────────────────────────────────────────────────
-    body += "<h2>Productos</h2>"
-    body += f'<div class="pcards{" compact" if len(groups) > 6 else ""}">'
-    for key, bucket in groups.items():
-        typology, width_mm, height_mm, specs, ci, ce = key[:6]
-        discount_pct = key[7]
-        ref = bucket["ref_position"]
-        system_name = _value(ref.get("system_name"))
-        spec_items = [
-            f'<li><span class="plabel">Pos.</span> {escape(_list(bucket["indexes"]))}'
-            + (f' · {escape(_list(bucket["locations"]))}'
-               if bucket["locations"] else "")
-            + "</li>"
-        ]
-        measurement = ref.get('measurements')
-        if isinstance(measurement,dict):
-            for index,item in enumerate(measurement.get('measurements') or []):
-                result=item.get('result') or {}
-                width=result.get('width') or {}
-                height=result.get('height') or {}
-                rule=item.get('rule') or {}
-                spec_items.append(f'<li><span class="plabel">Vano · marco {index+1}</span> '
-                    f'<span class="dimension">{escape(_survey_dim(width.get("opening_mm")))} × '
-                    f'{escape(_survey_dim(height.get("opening_mm")))} mm</span> · {escape(str(rule.get("name") or ""))}'
-                    + (' · DEMO' if rule.get('synthetic') else '') + '</li>')
-        if system_name not in ("", "—"):
-            spec_items.append(
-                f'<li><span class="plabel">Sistema</span> {escape(system_name)}</li>'
-            )
-        openings = _opening_labels(ref.get("parametric_tree") or {})
-        if openings:
-            spec_items.append(
-                f'<li><span class="plabel">Apertura</span> {escape(", ".join(openings))}</li>'
-            )
-        spec_items.append(
-            '<li><span class="plabel">Vista</span> Interior</li>'
-        )
-        spec_items.append(
-            f'<li><span class="plabel">Vidrio / relleno</span> {escape(specs)}</li>'
-        )
-        finish = finish_label(ci, ce, ref.get("resolved_finish"))
-        if finish and finish != "—":
-            spec_items.append(
-                f'<li><span class="plabel">Acabado</span> {escape(finish)}</li>'
-            )
-        resolved = ref.get("resolved_finish")
-        if isinstance(resolved, dict) and any(resolved.get(face, {}).get("approximate") for face in ("interior", "exterior")):
-            spec_items.append('<li><span class="plabel">Representación</span> Color aproximado; revise la muestra del fabricante.</li>')
-        schedule = ref.get("accessory_schedule")
-        hardware_labels = []
-        for hardware in ref.get("commercial_hardware") or []:
-            if not isinstance(hardware, dict):
-                continue
-            label = " · ".join(str(value) for value in (hardware.get("handle_name"), hardware.get("handle_color")) if value)
-            if label:
-                hardware_labels.append("Manilla " + label)
-            hardware_labels.extend(str(value) for value in hardware.get("options") or [])
-        if hardware_labels:
-            spec_items.append(f'<li><span class="plabel">Manilla y opciones</span> {escape("; ".join(dict.fromkeys(hardware_labels)))}</li>')
-        schedule_items = (
-            [item for item in schedule.get("items") or [] if isinstance(item, dict)]
-            if isinstance(schedule, dict)
-            else []
-        )
-        if schedule_items:
-            names = [
-                _value(item.get("description") or item.get("technical_sku"))
-                for item in schedule_items[:4]
-            ]
-            if len(schedule_items) > 4:
-                names.append(f"+{len(schedule_items) - 4}")
-            spec_items.append(
-                f'<li><span class="plabel">Incluye</span> {escape(", ".join(names))}</li>'
-            )
-        price_block = ""
-        if bucket["priced"]:
-            # discount_pct is a fraction (0.10 = 10%) — render percent.
-            discount_badge = (
-                f'<span class="off">-{_discount_label(discount_pct)}</span>'
-                if discount_pct not in ("0", "0.00", "0.0000", "—", "")
-                else ""
-            )
-            price_block = (
-                '<div class="pcard-price">'
-                + discount_badge
-                + '<span class="plabel">Precio unitario</span>'
-                f'<strong>{escape(_money(bucket["price_net"] / bucket["quantity"], currency))}</strong>'
-                '<span class="plabel">Total posición</span>'
-                f'<strong class="line">{escape(_money(bucket["price_net"], currency))}</strong>'
-                "</div>"
-            )
-        extra_html = _extra_table(sublines.get(str(ref.get("position_index")),{}).get("sublines",[]),currency,
-            prices=extra_prices,base=sublines.get(str(ref.get("position_index")),{}).get("base_net"))
-        body += (
-            ('<section class="pcard-with-extras">' if extra_html else '') + '<figure class="pcard">'
-            f'<div class="pcard-fig">{_position_svg(ref, commercial=True)}</div>'
-            '<div class="pcard-body">'
-            f'<h3>{escape(_product_caption(ref))}</h3>'
-            f'<p class="pcard-dims">{"Producto: " if measurement else ""}{escape((_survey_dim if measurement else _dim)(width_mm))} × {escape((_survey_dim if measurement else _dim)(height_mm))} mm</p>'
-            f'<p style="margin:0 0 2mm"><strong>Cantidad:</strong> '
-            f'{escape(_value(bucket["quantity"]))}</p>'
-            f'<ul class="pcard-specs">{"".join(spec_items)}</ul>'
-            "</div>"
-            + price_block + '</figure>' + ('<div class="pcard-extras">'+extra_html+'</div></section>' if extra_html else '')
-        )
-    body += "</div>"
-
-    # ── Investment ─────────────────────────────────────────────────────
-    granted_discounts = sorted(
-        {
-            key[7]
-            for key in groups
-            if key[7] not in ("0", "0.00", "0.0000", "—", "")
-        },
-        key=lambda item: _num(item),
-    )
-    discount_note = (
-        "Precios incluyen descuento del "
-        + " / ".join(_discount_label(pct) for pct in granted_discounts)
-        + "."
-        if granted_discounts
-        else ""
-    )
-    invest_note = [
-        f'<p><span class="tlabel">Moneda</span> {escape(_value(currency))} — '
-        "valores netos más impuesto.</p>",
-    ]
-    if valid_until and valid_until != "—":
-        invest_note.append(
-            f'<p><span class="tlabel">Vigencia</span> Esta propuesta es válida '
-            f'hasta el {escape(_cldate(valid_until))}.</p>'
-        )
-    if discount_note:
-        invest_note.append(f"<p>{escape(discount_note)}</p>")
-    extras = [item for item in _pricing_extras(snapshot) if item.get('scope') != 'PROJECT']
-    service_rows = priced_result.get("services") or []
-    if service_rows:
-        body += '<section class="document-services">'+_extra_table(service_rows,currency,prices=extra_prices,caption="Servicios del proyecto")+'</section>'
-    if extras:
-        # Extras live inside the sealed net — state them as an included
-        # component line, never as an additive row above the totals.
-        invest_note.append(
-            "<p><span class=\"tlabel\">Incluye</span> "
-            + escape(
-                " · ".join(
-                    f"{_value(item.get('label'))} "
-                    + (
-                        f"({_money(item.get('amount'), currency)})"
-                        if _num(item.get("amount")) != 0
-                        else "(sin costo)"
-                    )
-                    for item in extras
-                )
-            )
-            + " — dentro del neto.</p>"
-        )
-    invest_html = ""
-    if totals_priced:
-        invest_html += (
-            '<div class="doc-col"><h2>Inversión</h2>'
-            '<div class="invest"><div class="invest-panel">'
-            + '<div class="inv-row"><span>Neto</span>'
-            f'<strong>{escape(_money(project.get("total_price_net"), currency))}</strong></div>'
-            '<div class="inv-row"><span>Impuesto</span>'
-            f'<strong>{escape(_money(project.get("total_price_tax"), currency))}</strong></div>'
-            '<div class="inv-row inv-total-row"><span>Total</span>'
-            f'<strong>{escape(_money(project.get("total_price_gross"), currency))}</strong></div>'
-            "</div>"
-            f'<div class="invest-note">{"".join(invest_note)}</div>'
-            "</div></div>"
-        )
-
-    # ── Terms ──────────────────────────────────────────────────────────
-    terms = []
-    if _value(project.get("payment_terms")) not in ("", "—"):
-        terms.append(
-            '<p><span class="tlabel">Forma de pago</span><br>'
-            f'{escape(_value(project.get("payment_terms")))}</p>'
-        )
-    if valid_until and valid_until != "—":
-        terms.append(
-            '<p><span class="tlabel">Validez de la oferta</span><br>'
-            f'Hasta el {escape(_cldate(valid_until))}.</p>'
-        )
-    if _value(project.get("delivery_address")) not in ("", "—"):
-        terms.append(
-            '<p><span class="tlabel">Entrega</span><br>'
-            f'{escape(_value(project.get("delivery_address")))}</p>'
-        )
-    notes = _value(project.get("notes_commercial"))
-    if notes and notes != "—":
-        terms.append(
-            '<p><span class="tlabel">Condiciones</span><br>'
-            f"{escape(notes)}</p>"
-        )
-    terms_html = ""
-    if terms:
-        terms_html = (
-            '<div class="doc-col"><h2>Condiciones comerciales</h2>'
-            f'<div class="terms">{"".join(terms)}</div></div>'
-        )
-    # ── Acceptance ─────────────────────────────────────────────────────
-    accept_recap = (
-        f"{escape(quote_folio)} · Revisión "
-        f"{escape(_rev_display(snapshot.get('revision')))}"
-        + (
-            f" · Total {escape(_money(project.get('total_price_gross'), currency))}"
-            if totals_priced
-            else ""
-        )
-        + (
-            f" · válida hasta {escape(_cldate(valid_until))}"
-            if valid_until and valid_until != "—"
-            else ""
-        )
-    )
-    # Closing band: inversión, condiciones and a compact signature share one
-    # row, so acceptance is never orphaned on a near-blank continuation
-    # sheet. A genuinely long conditions column just grows the band — it
-    # still travels with its siblings.
-    closing_cols = invest_html + terms_html + (
-        '<div class="doc-col"><h2>Aceptación</h2>'
-        f'<p class="accept-recap">{accept_recap}</p>'
-        '<div class="sign-col">'
-        '<div class="sign-cell"><span class="sign-label">Nombre y RUT</span></div>'
-        '<div class="sign-cell"><span class="sign-label">Firma</span></div>'
-        '<div class="sign-cell"><span class="sign-label">Fecha</span></div>'
-        "</div></div>"
-    )
-    if closing_cols.strip():
-        body += f'<div class="doc-duo">{closing_cols}</div>'
-    body += "</main>"
-    return body
+def _doc01(snapshot: dict[str, object], *, portal_url: str | None = None) -> str:
+    from documents.quotation import render
+    return render(snapshot, portal_url=portal_url)
 
 
 def _doc03(snapshot: dict[str, object]) -> str:
@@ -2633,12 +2002,12 @@ def _doc08(snapshot: dict[str, object]) -> str:
 
 
 def render_pdf_document(
-    document_type: str, snapshot: dict[str, object], *, pdf_identifier: str
+    document_type: str, snapshot: dict[str, object], *, pdf_identifier: str, portal_url: str | None = None
 ) -> tuple[bytes, str]:
     from weasyprint import HTML
 
     if document_type == "DOC-01":
-        body = _doc01(snapshot)
+        body = _doc01(snapshot, portal_url=portal_url)
     elif document_type == "DOC-02":
         body = _doc02(snapshot)
     elif document_type == "DOC-03":
@@ -2677,12 +2046,9 @@ def render_pdf_document(
         title_code = order_obj.get("project_code") if isinstance(order_obj, dict) else None
     title = escape(f"{document_type} {_value(title_code)}")
     css = _CSS
-    org = snapshot.get("organization")
-    if document_type == "DOC-01" and isinstance(org, dict) and org.get("brand_schema") == 1:
-        from projects.brand_color import effective_color
-
-        color, _ = effective_color(org.get("brand_primary_color"))
-        css = css.replace(_TEAL_800, color).replace(_TEAL_700, color)
+    if document_type == "DOC-01":
+        from documents.quotation import stylesheet
+        css += stylesheet(snapshot)
     html = (
         '<!doctype html><html lang="es-CL"><head><meta charset="utf-8">'
         f"<title>{title}</title>"

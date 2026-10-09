@@ -248,3 +248,21 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
    de publicar. El transporte renderiza las páginas sin texto y acepta visión;
    esa lectura no certifica una autoridad técnica. Puede elegir un modelo de
    visión distinto para catálogo en los mismos ajustes.
+
+## Propuesta DOC-01 y portal (P09)
+
+1. Configure `DEKOPEN_PUBLIC_APP_URL` en servidor/worker con la URL pública
+   HTTPS del frontend. El QR emitido fija ese destino; pruebe un PDF de una
+   nueva revisión antes de entregarlo. No reemita ni modifique PDFs históricos.
+2. Mantenga estable la clave de cifrado de correo `MAIL_ENCRYPTION_KEY` del
+   servidor/worker: también protege la capacidad del QR. Siga su procedimiento
+   de secretos y respaldos, sin enviarla al frontend ni incluirla en git.
+3. En Ajustes › General configure identidad/logo y Documentos: papel, acento,
+   pie, hitos de pago y condiciones reales de la empresa. Obtenga composiciones
+   y Ug de fichas revisadas del proveedor. DEMO no acredita certificación.
+4. Emita con clic humano, abra el PDF y compruebe QR, revisión y total. Cree un
+   enlace compartido y verifique que el QR sigue vigente. Pruebe revocación en
+   una cotización de aceptación y confirme que el portal queda bloqueado.
+5. Configure almacenamiento y jobs según las secciones existentes. No se
+   necesita proveedor nuevo para QR: el portal existente sirve la revisión y
+   el artefacto inmutable conserva sus bytes después de cambios de preferencias.

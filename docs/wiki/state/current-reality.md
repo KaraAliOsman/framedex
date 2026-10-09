@@ -29,6 +29,22 @@ sources:
 
 # Current reality
 
+## P09 · aceptación local (08-10-2026)
+
+Rama `codex/P09-doc01-v2`, base `e80e91b8`: DOC-01 con emisor/cliente,
+resumen/fichas acotadas, condiciones/calendario, alternativas y aceptación QR.
+Las preferencias y autoridades se sellan; el motor proyecta unitario, ajuste,
+descuento y montos. Fixtures 1/12/24/100 tienen 3/7/12/40 páginas y el caso de
+100 nombres largos, 45. El recorrido real A/B verifica QR/revisión, compartir,
+revocar y conservar PDFs byte a byte incluso al cambiar papel/acento/emisor.
+La matriz de 44 vistas y seis recorridos de teclado pasa; los runners oficiales
+de Ajustes/proyecto/portal pasan 24 vistas. Véase
+[aceptación P09](../../redesign/P09-ACEPTACION.md) y
+[documento comercial](../product/quotation-document.md).
+Los gates completos pasan 818 pruebas motor (+2 xfail), 1.350 backend y
+890 frontend. Database Gate y CI se registran al integrar. Artefactos históricos
+no se regeneran y el catálogo DEMO permanece sin certificación.
+
 ## P05 · integrado y verificado (08-10-2026)
 
 Rama `codex/P05-simbologia-cotas`, base `a67bcefa`: gramática

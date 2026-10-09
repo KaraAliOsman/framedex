@@ -726,6 +726,7 @@ def test_list_approvals_exposes_the_view_signal(monkeypatch) -> None:
                     "revoked_at": None,
                     "view_count": 3,
                     "last_viewed_at": viewed_at,
+                    "link_source": "SHARE",
                 }
             ]
         return []
@@ -737,4 +738,5 @@ def test_list_approvals_exposes_the_view_signal(monkeypatch) -> None:
     )
     out = service.list_approvals(org_id=uuid4(), project_id=uuid4())
     assert out[0]["view_count"] == 3
+    assert out[0]["link_source"] == "SHARE"
     assert out[0]["last_viewed_at"] == viewed_at.isoformat()

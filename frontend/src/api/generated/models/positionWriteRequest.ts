@@ -8,7 +8,7 @@
 import type { PositionDesignRequest } from "./positionDesignRequest";
 
 export interface PositionWriteRequest {
-  /** @maxLength 100 */
+  /** @maxLength 120 */
   location_tag: string;
   /**
    * @minimum 1

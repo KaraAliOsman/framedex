@@ -1,0 +1,14 @@
+[
+  {
+    "case": "QR B abre revisión B; compartir no revoca QR impreso",
+    "result": "PASA"
+  },
+  {
+    "case": "Revocar QR B con clic y confirmación; portal bloqueado, PDF A/B idénticos",
+    "result": "PASA"
+  },
+  {
+    "case": "Cambio posterior de emisor, papel y acento conserva documentos A/B sellados",
+    "result": "PASA"
+  }
+]

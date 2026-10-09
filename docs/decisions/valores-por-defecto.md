@@ -321,3 +321,24 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   conjunto. No se modifica una medida manufacturada para hacer legible su cota.
 - Sin acoplador autorizado, los ejemplos DEV de conjuntos son solo gramática
   DEMO del motor. No se agrega un SKU ni se habilita fabricación para capturarlos.
+
+## P09 · documento y condiciones (2026-10-08)
+
+- Carta y Verde técnico siguen como valores iniciales. Ajustes › General ›
+  Documentos permite A4, Oficio, Verde técnico oscuro y Grafito, pie legal y
+  condiciones. El formato se sella por revisión; no reescribe documentos.
+- Para una preparación nueva, los hitos iniciales son 50 % al aprobar y 50 %
+  contra entrega. Se pueden editar o quitar; solo se guardan si suman 100 %.
+  Un texto histórico no adquiere ese calendario por migración ni por parsing.
+  El motor asigna el resto monetario al último hito para conservar el total.
+- Plazo, instalación, exclusiones, garantía y jurisdicción vacíos se omiten
+  del PDF. No se imprime una plantilla incompleta ni se inventa un plazo.
+- La densidad usa fichas completas hasta tres posiciones, compactas hasta 24
+  y densas por encima. Son reglas de presentación: conservan cada campo,
+  precio y cota del motor, sin eliminar posiciones. Los nombres admiten 120
+  caracteres. Las tablas de resumen repiten encabezados cuando continúan.
+- Alternativas: hasta tres revisiones previas del mismo proyecto, selladas y
+  sin recursión. Se presentan fuera del total y se eligen al preparar emisión.
+- El QR impreso tiene su enlace de revisión separado del compartido y la
+  vigencia de acceso de 30 días del portal existente. La vigencia comercial
+  sigue declarada en la cotización. Revocar no cambia los bytes del PDF.
