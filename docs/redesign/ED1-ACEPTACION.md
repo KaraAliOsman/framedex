@@ -12,6 +12,8 @@ La primera ronda mejora los cinco puntos más débiles encontrados:
 
 1. Producción usa densidad de taller también en el shell del jefe. Controles
    y enlaces llegan a 44 px; la densidad refleja la tarea y conserva el rol.
+   Sin preferencia elegida, el tema inicia oscuro y el primer clic de apariencia
+   cambia y guarda la elección; entrar a oficina conserva una preferencia explícita.
 2. La sección del perfil conserva el polígono y los ejes del catálogo, y lleva
    nombres y medidas a una leyenda HTML legible. «Vidrio» y «Alma» reemplazan
    los enums reducidos por la escala del SVG.
@@ -60,6 +62,7 @@ la aceptación de sus flujos posteriores.
 | Vacío, carga, error, sin acceso y movimiento reducido | PASA. Ocho respuestas de transporte controladas, tres Orbs sin animaciones ni IDs repetidos. El bloqueo de revisión y el de taller se recorren con estado real. [Estados](captures/ed1/estados/verificacion.json). |
 | Secciones técnicas, 1440/1280/1024 y ambos temas | PASA. Doce vistas y detectores sin hallazgos. La profundidad fraccional y ausencia de autoridad tienen regresiones. [Técnica](captures/ed1/tecnica/verificacion.json). |
 | Plan de corte, 1440/1280/1024/390 y ambos temas | PASA. Ocho vistas sin hallazgos ni desbordes; la selección abre el origen y resalta la pieza exacta. El texto conserva su tamaño físico y toda pieza ofrece un objetivo HTML de taller. [Plan](captures/ed1/plan/verificacion.json). |
+| Apariencia por tarea, 1440/1280/1024/390 | PASA. Taller abre oscuro sin guardar una preferencia; el primer clic cambia a claro, persiste al recargar y se conserva al volver a Hoy. Ocho vistas y dos regresiones de contexto. [Apariencia](captures/ed1/apariencia/verificacion.json). |
 
 Los datos son DEMO y se presentan como sintéticos. Los precios y dibujos
 proceden del motor y sus snapshots; un ensayo de proveedor no acredita un
@@ -127,7 +130,7 @@ Shell y marca conducen a esos flujos; no presentan una capacidad ornamental.
 
 `make lint typecheck test build`: PASA en la copia nativa aislada del checkout
 final. Motor: 829 pruebas y dos xfail previstos; backend: 1.382; frontend:
-919 en 83 archivos. Golden byte check y assets de marca pasan. No se reduce
+921 en 84 archivos, incluidas dos regresiones de apariencia. Golden byte check y assets de marca pasan. No se reduce
 ningún timeout, assertion, detector ni check. Los cuatro checks de CI se
 comprueban sobre el HEAD publicado antes del squash y se registran al integrar.
 No se modifica motor, backend, API, permisos, migraciones ni contrato de

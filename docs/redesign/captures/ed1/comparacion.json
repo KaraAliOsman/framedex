@@ -31,9 +31,9 @@
     }
   },
   "lossless": {
-    "files": 441,
-    "bytes_before": 127865871,
-    "bytes_after": 127414581,
+    "files": 449,
+    "bytes_before": 128769479,
+    "bytes_after": 128321655,
     "pixels_unchanged": true
   }
 }

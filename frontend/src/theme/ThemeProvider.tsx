@@ -1,8 +1,10 @@
 import {
   createContext,
   type PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from "react";
@@ -17,7 +19,9 @@ type ThemeContextValue = {
   toggleTheme(): void;
 };
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+type ThemeState = ThemeContextValue & { setSurfaceDefault(theme: Theme): void };
+
+const ThemeContext = createContext<ThemeState | null>(null);
 
 function initialTheme(): Theme {
   const stored = window.localStorage.getItem("dekopen.theme");
@@ -29,14 +33,19 @@ function initialTheme(): Theme {
 
 export function ThemeProvider({ children }: PropsWithChildren): JSX.Element {
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  const setSurfaceDefault = useCallback((next: Theme) => {
+    const stored = window.localStorage.getItem("dekopen.theme");
+    if (stored !== "light" && stored !== "dark") setTheme(next);
+  }, []);
   document.documentElement.dataset.theme = theme;
   useEffect(() => {
     if (!window.location.pathname.startsWith("/cotizacion/")) applyAppBrand(theme);
   }, [theme]);
 
-  const value = useMemo<ThemeContextValue>(
+  const value = useMemo<ThemeState>(
     () => ({
       theme,
+      setSurfaceDefault,
       toggleTheme() {
         const next = theme === "light" ? "dark" : "light";
         window.localStorage.setItem("dekopen.theme", next);
@@ -45,15 +54,19 @@ export function ThemeProvider({ children }: PropsWithChildren): JSX.Element {
         setTheme(next);
       },
     }),
-    [theme],
+    [theme, setSurfaceDefault],
   );
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-export function useTheme(): ThemeContextValue {
+export function useTheme(surfaceDefault?: Theme): ThemeContextValue {
   const context = useContext(ThemeContext);
   if (context === null) {
     throw new Error("useTheme must be used within ThemeProvider");
   }
+  const { setSurfaceDefault } = context;
+  useLayoutEffect(() => {
+    if (surfaceDefault) setSurfaceDefault(surfaceDefault);
+  }, [setSurfaceDefault, surfaceDefault]);
   return context;
 }

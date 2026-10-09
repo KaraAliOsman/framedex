@@ -24,7 +24,9 @@ sources:
 **Contexto histórico:** el estudio de identidad y la constitución difieren en la orientación del vértice de apertura. Se sigue la constitución vigente. g-500 tampoco satisface AA para todo texto pequeño; el rol pequeño atenuado tiene una tinta accesible, manteniendo la rampa exacta.
 
 **Verificación editorial ED1:** la densidad sigue la tarea: Producción y su shell
-usan `workshop` también para el jefe. Una primitiva `StatusBadge` concentra
+usan `workshop` también para el jefe, con tema oscuro inicial si no existe
+preferencia elegida. El control de apariencia actualiza el contexto real y guarda
+la elección desde el primer clic. Una primitiva `StatusBadge` concentra
 veintiocho adopciones y el tono de decisión humana. Los inspectores de módulo
 y paño comparten paleta heredada, etiquetas y renderer DIN. Fechas usan los
 formatos canónicos. Las secciones conservan polígonos/ejes y llevan su texto

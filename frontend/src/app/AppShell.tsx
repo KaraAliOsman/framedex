@@ -27,8 +27,15 @@ import { ShortcutHelp } from "./ShortcutHelp";
 
 export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const auth = useAuthSession();
-  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const org = auth.me?.active_organization;
+  const role = org?.role;
+  const workshop =
+    location.pathname.startsWith("/production") || role === "OPERATOR" || role === "INSTALLER";
+  const officeDefault = window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+  const { theme, toggleTheme } = useTheme(workshop ? "dark" : officeDefault);
   const navigate = useNavigate();
   const [leaf, setLeafState] = useState<string | null>(null);
   const setLeaf = useCallback((label: string | null) => setLeafState(label), []);
@@ -103,13 +110,10 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     telemetry.capture("shell_route_viewed", { route_name: location.pathname });
   }, [location.pathname]);
 
-  const org = auth.me?.active_organization;
-  const role = org?.role;
   const canUseAssistant = role === "OWNER" || role === "ESTIMATOR" || role === "WORKSHOP_MANAGER";
   const parts = location.pathname.split("/").filter(Boolean);
   const projectId = parts[0] === "projects" && parts[1] !== undefined ? parts[1] : null;
   const isStudio = parts[0] === "projects" && parts[2] === "positions" && parts.length >= 4;
-  const workshop = parts[0] === "production" || role === "OPERATOR" || role === "INSTALLER";
   const compact = isStudio || collapsed;
   const domainGroups = navigationFor(role);
   const navItems = domainGroups.flatMap((group) => group.items);

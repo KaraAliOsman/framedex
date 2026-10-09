@@ -45,7 +45,9 @@ sources:
 Sobre `81ee66d7`, la rama `codex/ED1-pase-editorial-ola1` unifica estados,
 paleta de aperturas heredadas, formatos y tokens. Producción y su shell
 reflejan la tarea de taller. Secciones y planes conservan geometría real,
-texto legible y medidas solo cuando hay autoridad. La leyenda del plan
+texto legible y medidas solo cuando hay autoridad. El contexto inicia oscuro
+en taller si no hay preferencia; el primer clic de apariencia guarda el tema
+elegido y lo conserva al cambiar de superficie. La leyenda del plan
 conserva selección de piezas estrechas sin alterar la longitud del motor.
 La matriz oficial pasa 192 vistas posteriores con cero hallazgos, HTTP,
 consola y desbordes; se mantienen 192 anteriores para comparación.
