@@ -1,3 +1,6 @@
+import { compatibleCouplers } from "../canvas/couplerAuthority";
+import { sourcedStarter } from "../canvas/starterAuthority";
+import type { DesignOptions } from "../../api/generated/models";
 import { fmtMm } from "../../format";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -147,16 +150,17 @@ function initial(): CanvasDesignInputs {
  * never guessed. */
 function resolveDefaults(
   product: ProductJson,
-  couplerSkus: string[],
+  couplerProfiles: DesignOptions["coupler_profiles"],
   mullionSkus: { SPLIT_V?: string; SPLIT_H?: string },
   glassThicknessMm?: string,
   panelSku?: string,
   glassArticleSku?: string,
 ): ProductJson {
   let next = product;
-  if (couplerSkus.length === 1) {
-    const sku = couplerSkus[0]!;
-    for (const coupling of next.assembly.couplings) {
+  for (const coupling of next.assembly.couplings) {
+    const choices = compatibleCouplers(couplerProfiles ?? [], coupling.angle_deg);
+    if (choices.length === 1) {
+      const sku = choices[0]!.sku;
       if (coupling.coupler_profile_sku === null) {
         next = {
           ...next,
@@ -532,7 +536,7 @@ function PositionWorkspace({
     if (!product || !options.data) return;
     const resolved = resolveDefaults(
       product,
-      options.data.coupler_skus,
+      options.data.coupler_profiles,
       {
         SPLIT_V: options.data.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
         SPLIT_H: options.data.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
@@ -754,9 +758,9 @@ function PositionWorkspace({
     // 1000 mm "Dos hojas" makes two ~440 mm sashes). Floor at nominal so a
     // starter always produces what its thumbnail promised.
     const nominal = starterNominalSize(definition.key);
-    const nextProduct = definition.build(
-      Math.max(widthMm, nominal.widthMm),
-      Math.max(heightMm, nominal.heightMm),
+    const nextProduct = sourcedStarter(
+      definition.build(Math.max(widthMm, nominal.widthMm), Math.max(heightMm, nominal.heightMm)),
+      options.data,
     );
     const store = useCanvasStore.getState();
     store.commitInputs({ ...inputs, product: nextProduct });

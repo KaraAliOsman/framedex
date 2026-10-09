@@ -9,7 +9,7 @@ import {
   type PointerEvent,
 } from "react";
 
-import type { ProductIssue } from "../../api/generated/models";
+import type { AssemblyMeasure, ProductIssue } from "../../api/generated/models";
 import { fmtMm, formatDecimal, parseLocaleNumber } from "../../format";
 import { t } from "../../i18n/es-CL";
 import type { IntentNode } from "./intentEditing";
@@ -1722,7 +1722,11 @@ export interface FrontLayout {
  * top edge), and narrower members centre. Couplers overlay their seam: an
  * INLINE seam draws vertically between columns, a STACKED contact draws
  * horizontally across the hanging member. */
-export function frontLayout(product: ProductJson): FrontLayout {
+export function frontLayout(
+  product: ProductJson,
+  measures?: AssemblyMeasure | null,
+  projected = false,
+): FrontLayout {
   const { pairs, stackParent, stackRoot } = resolveStacks(product);
   const layoutMm = elevationLayoutMm(product);
   const rects: FrontModuleRect[] = layoutMm.members.map((member) => ({
@@ -1733,6 +1737,29 @@ export function frontLayout(product: ProductJson): FrontLayout {
     h: member.h,
   }));
   const columns: FrontColumn[] = layoutMm.columns;
+  if (measures) {
+    for (const rect of rects) {
+      const fact = measures.modules.find((item) => item.module_id === rect.module.id);
+      if (fact) {
+        rect.x = Number(projected ? fact.projected_x_mm : fact.developed_x_mm);
+        rect.w = Number(projected ? fact.projected_width_mm : fact.width_mm);
+        rect.sill = Number(fact.sill_mm);
+      }
+    }
+    for (const column of columns) {
+      const rect = rects.find((item) => item.module.id === column.rootId);
+      if (rect) {
+        column.x = rect.x;
+        column.w = rect.w;
+        column.top = rects
+          .filter(
+            (item) =>
+              item.module.id === column.rootId || stackRoot.get(item.module.id) === column.rootId,
+          )
+          .reduce((maximum, item) => Math.max(maximum, item.sill + item.h), 0);
+      }
+    }
+  }
 
   // A stacked member wider than its column protrudes past the column band —
   // shift the whole layout so the leftmost member edge lands at x=0 and
@@ -1773,7 +1800,7 @@ export function frontLayout(product: ProductJson): FrontLayout {
     joints.push({
       couplingId: coupling?.id ?? null,
       kind: "column",
-      x: left.x + left.w,
+      x: (left.x + left.w + right.x) / 2,
       top: Math.min(left.top, right.top),
       w: Math.min(left.w, right.w),
       y: 0,
@@ -1785,12 +1812,13 @@ export function frontLayout(product: ProductJson): FrontLayout {
   }
   for (const [memberId, couplingId] of memberCoupling) {
     const rect = rectById.get(memberId);
+    const lower = rectById.get(stackParent.get(memberId) ?? "");
     if (rect) {
       joints.push({
         couplingId,
         kind: "stack",
         x: rect.x,
-        y: rect.sill,
+        y: lower ? (rect.sill + lower.sill + lower.h) / 2 : rect.sill,
         w: rect.w,
         top: 0,
         angleDeg: null,
@@ -1933,6 +1961,8 @@ function bayRegions(
 
 export function ProductFrontContent({
   product,
+  assemblyMeasures,
+  projected = false,
   members,
   selectedId,
   selectedBayId = null,
@@ -1962,6 +1992,8 @@ export function ProductFrontContent({
   elevation,
 }: {
   product: ProductJson;
+  assemblyMeasures?: AssemblyMeasure | null;
+  projected?: boolean;
   members: MemberGeometry;
   selectedId: string | null;
   issues: ProductIssue[];
@@ -2015,12 +2047,15 @@ export function ProductFrontContent({
   const frameSurface = memberSurface(members.frame.material, members.frame.faceFinish);
   // Layout derivation runs over every module — memoize so seam/division
   // drags (per-pointermove renders) don't rebuild the whole elevation.
-  const front = useMemo(() => frontLayout(product), [product]);
+  const front = useMemo(
+    () => frontLayout(product, assemblyMeasures, projected),
+    [product, assemblyMeasures, projected],
+  );
   const { rects, columns, joints, totalW, height, lift } = front;
   const technicalLayout = technicalGutters(front, drawingFacts, openingFacts);
   const issueMap = useMemo(() => severityByModule(issues), [issues]);
   const midY = height / 2;
-  const interactive = !preview && !disabled;
+  const interactive = !preview && !disabled && !projected;
   const sheetScale = useViewportScale();
   // ~12px on screen is the smallest usable drag target (W3C pointer
   // guidance); never wider than a third of the smallest affected span.
@@ -2268,9 +2303,15 @@ export function ProductFrontContent({
             <SvgDim
               x={totalW / 2}
               y={-70}
-              value={totalW.toFixed(2)}
+              value={
+                assemblyMeasures
+                  ? projected
+                    ? assemblyMeasures.front_width_mm
+                    : assemblyMeasures.developed_width_mm
+                  : totalW.toFixed(2)
+              }
               label={t("assembly.totalWidth")}
-              disabled={disabled}
+              disabled={disabled || projected}
               onCommit={onCommitTotalWidth}
             />
           </>
@@ -2317,10 +2358,13 @@ export function ProductFrontContent({
                   key={`dim-${column.rootId}`}
                   x={column.x + column.w / 2}
                   y={height + 80}
-                  value={column.w.toFixed(2)}
+                  value={
+                    assemblyMeasures?.modules.find((item) => item.module_id === column.rootId)
+                      ?.width_mm ?? column.w.toFixed(2)
+                  }
                   label={`${t("assembly.module")} ${column.rootId} ${t("assembly.width")}`}
                   active={column.rootId === selectedId}
-                  disabled={disabled}
+                  disabled={disabled || projected}
                   onCommit={(value) => onCommitModuleWidth(column.rootId, value)}
                 />
               ))}
@@ -2368,11 +2412,16 @@ export function ProductFrontContent({
             disabled={disabled}
             onAdd={() => onAddUnit("right")}
           />
-          {rects.map(({ module, x, w, sill, h }) => {
+          {rects.map(({ module, x, w: layoutWidth, sill, h }) => {
+            const w = Number(module.width_mm);
+            const ratio = layoutWidth / w;
             const top = height - sill - h;
             return (
               <g
                 key={module.id}
+                transform={
+                  projected ? `translate(${x} 0) scale(${ratio} 1) translate(${-x} 0)` : undefined
+                }
                 className={`front-module${module.id === selectedId ? " is-selected" : ""}${issueMap.get(module.id) === "error" ? " has-error" : issueMap.get(module.id) === "warning" ? " has-warning" : ""}${divideTool ? " is-divide-target" : ""}`}
                 {...(preview
                   ? { role: "presentation", "aria-hidden": true }

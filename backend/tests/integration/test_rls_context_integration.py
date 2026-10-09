@@ -371,7 +371,7 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
     assert demo == {
         "id": str(real_rows.global_systems["DEMO_60"]),
         "code": "DEMO_60",
-        "name": "PVC practicable 60 mm · extras v6 · DEMO",
+        "name": "PVC practicable 60 mm · acoples v7 · DEMO",
         "is_demo": True,
         "system_family": "CASEMENT",
         "quote_ready": True,

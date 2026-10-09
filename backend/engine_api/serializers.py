@@ -278,7 +278,28 @@ class DrawingEnvelopeSerializer(serializers.Serializer):
     height_mm = serializers.CharField()
 
 
+class AssemblyModuleMeasureSerializer(serializers.Serializer):
+    module_id = serializers.CharField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+    developed_x_mm = serializers.CharField()
+    sill_mm = serializers.CharField()
+    projected_x_mm = serializers.CharField()
+    projected_width_mm = serializers.CharField()
+
+
+class AssemblyMeasureSerializer(serializers.Serializer):
+    developed_width_mm = serializers.CharField()
+    front_width_mm = serializers.CharField()
+    projection_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+    coupling_width_mm = serializers.CharField()
+    modules = AssemblyModuleMeasureSerializer(many=True)
+    source = serializers.CharField()
+
+
 class EngineAssemblyCalculateResponseSerializer(serializers.Serializer):
+    measures = AssemblyMeasureSerializer(required=False, allow_null=True)
     status = serializers.ChoiceField(
         choices=["VALID", "MANUFACTURING_INCOMPLETE", "INVALID"]
     )

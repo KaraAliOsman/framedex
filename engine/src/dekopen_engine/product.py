@@ -84,6 +84,7 @@ from dekopen_engine.technical_facts import (
 )
 from dekopen_engine.trig import cos_degrees, sin_degrees
 from dekopen_engine.drawing import DrawingEnvelope, DrawingFacts, dimension_chains
+from dekopen_engine.assembly_measures import AssemblyMeasure, assembly_measures, developed_layout
 
 QUANTUM_MM = Decimal("0.01")
 _MAX_HEADING_DEG = Decimal("170")
@@ -101,6 +102,7 @@ class Severity(str, Enum):
 
 
 class IssueCode(str, Enum):
+    COUPLER_ANGLE_INCOMPATIBLE = "coupler_angle_incompatible"
     SYSTEM_FAMILY_INCOMPATIBLE = "system_family_incompatible"
     SYSTEM_DIMENSIONAL_LIMIT = "system_dimensional_limit"
     COUPLINGS_COUNT_MISMATCH = "couplings_count_mismatch"
@@ -323,6 +325,14 @@ class ProductEvaluation(EngineModel):
     modules: list[ModuleEvaluation] = Field(default_factory=list)
     bom: EngineResult | None = None
     elevation: DrawingEnvelope | None = None
+    measures: AssemblyMeasure | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_measurements(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = handler(self)
+        if self.measures is None:
+            value.pop("measures", None)
+        return value
 
 
 def _q(value: Decimal) -> Decimal:
@@ -627,13 +637,13 @@ def elevation_envelope(assembly: CoupledAssembly) -> tuple[Decimal, Decimal]:
     return right - left, top - bottom
 
 
-def elevation_drawing_envelope(assembly: CoupledAssembly) -> DrawingEnvelope:
+def elevation_drawing_envelope(assembly: CoupledAssembly, measures: AssemblyMeasure | None = None) -> DrawingEnvelope:
     """The true front silhouette; nominal sizes still locate stacked modules."""
     from .contour import contour_bounds
 
     module_by_id = {module.id: module for module in assembly.modules}
     rectangles = []
-    for member in elevation_layout(assembly).members:
+    for member in developed_layout(assembly, measures).members:
         module = module_by_id[member.module_id]
         left, bottom, right, top = (Decimal("0"), Decimal("0"), member.width_mm, member.height_mm)
         if module.contour is not None:
@@ -648,7 +658,8 @@ def elevation_drawing_envelope(assembly: CoupledAssembly) -> DrawingEnvelope:
 
 
 def _plan_geometry(
-    assembly: CoupledAssembly, depth_mm: Decimal
+    assembly: CoupledAssembly, depth_mm: Decimal,
+    coupler_articles: dict[str, EffectiveProfileArticle] | None = None,
 ) -> tuple[PlanGeometry, list[ProductIssue]]:
     """Project the assembly into a top-view polygon.
 
@@ -779,11 +790,22 @@ def _plan_geometry(
         front_heading[index] = heading
         previous_index = index
 
+    front_segments: list[tuple[PlanPoint, PlanPoint]] = []
     for index, module in enumerate(modules):
         if module.id in stack_root:
             continue
         front_module_ids.append(module.id)
         theta = front_heading[index]
+        position = front_indices.index(index)
+        if position > 0:
+            previous = front_indices[position - 1]
+            incoming = pair_coupling.get(frozenset({modules[previous].id, module.id}))
+            article = (coupler_articles or {}).get(incoming.coupler_profile_sku or "") if incoming else None
+            if article is not None and article.coupling_rule is not None and article.coupling_rule.development_mm > 0:
+                gap = article.coupling_rule.development_mm
+                bisector = (front_heading[previous] + theta) / Decimal("2")
+                front.append(PlanPoint(x_mm=front[-1].x_mm + gap * cos_degrees(bisector),
+                                       y_mm=front[-1].y_mm + gap * sin_degrees(bisector)))
         cos_t = cos_degrees(theta)
         sin_t = sin_degrees(theta)
         end_x = front[-1].x_mm + module.width_mm * cos_t
@@ -793,6 +815,7 @@ def _plan_geometry(
 
         start = front[-2]
         end = front[-1]
+        front_segments.append((start, end))
         back_start = PlanPoint(
             x_mm=start.x_mm - depth_mm * normal.x_mm,
             y_mm=start.y_mm - depth_mm * normal.y_mm,
@@ -823,10 +846,20 @@ def _plan_geometry(
                     x_mm=joint.x_mm - depth_mm * next_normal.x_mm,
                     y_mm=joint.y_mm - depth_mm * next_normal.y_mm,
                 )
+                article = (coupler_articles or {}).get(joint_coupling.coupler_profile_sku or "")
+                gap = article.coupling_rule.development_mm if article is not None and article.coupling_rule is not None else Decimal("0")
+                if gap > 0:
+                    bisector = (theta + next_theta) / Decimal("2")
+                    gap_x, gap_y = gap * cos_degrees(bisector), gap * sin_degrees(bisector)
+                    next_start = PlanPoint(x_mm=joint.x_mm+gap_x, y_mm=joint.y_mm+gap_y)
+                    back_left = PlanPoint(x_mm=back_left.x_mm+gap_x, y_mm=back_left.y_mm+gap_y)
+                    polygon = [joint, back_end, back_left, next_start]
+                else:
+                    polygon = [joint, back_end, back_left]
                 plan_couplings.append(
                     PlanCoupling(
                         coupling_id=joint_coupling.id,
-                        polygon=[joint, back_end, back_left],
+                        polygon=polygon,
                     )
                 )
                 plan_coupling_endpoints.append(
@@ -849,9 +882,9 @@ def _plan_geometry(
     ]
 
     # Non-adjacent front segments must not cross.
-    for i in range(len(front) - 1):
-        for j in range(i + 2, len(front) - 1):
-            if _seg_intersects(front[i], front[i + 1], front[j], front[j + 1]):
+    for i, (start, end) in enumerate(front_segments):
+        for j in range(i + 2, len(front_segments)):
+            if _seg_intersects(start, end, *front_segments[j]):
                 issues.append(
                     ProductIssue(
                         code=IssueCode.PLAN_SELF_INTERSECTION.value,
@@ -1881,7 +1914,7 @@ def evaluate_product(
             )
         )
 
-    plan, plan_issues = _plan_geometry(assembly, params.depth_mm)
+    plan, plan_issues = _plan_geometry(assembly, params.depth_mm, coupler_articles)
     issues.extend(plan_issues)
 
     module_evals: list[ModuleEvaluation] = []
@@ -2111,6 +2144,13 @@ def evaluate_product(
                 )
             )
             continue
+        if article.coupling_rule is not None and not (article.coupling_rule.min_angle_deg <= abs(coupling.angle_deg) <= article.coupling_rule.max_angle_deg):
+            issues.append(ProductIssue(code=IssueCode.COUPLER_ANGLE_INCOMPATIBLE.value,
+                severity=Severity.ERROR, target=target, params={"sku": sku,
+                    "angle_deg": str(coupling.angle_deg), "min_angle_deg": str(article.coupling_rule.min_angle_deg),
+                    "max_angle_deg": str(article.coupling_rule.max_angle_deg), "field": "coupler_profile_sku",
+                    "source": article.coupling_rule.source}))
+            continue
         if coupling.kind is ConnectionKind.INLINE:
             if first.height_mm != second.height_mm:
                 issues.append(
@@ -2267,13 +2307,15 @@ def evaluate_product(
 
     if bom is not None and finish is not None:
         bom = finish_result(bom, params, finish)
+    measures = assembly_measures(assembly, plan, coupler_articles) if status is not ProductStatus.INVALID else None
     return ProductEvaluation(
         status=status,
         issues=issues,
         plan=plan,
         modules=module_evals,
         bom=bom,
-        elevation=elevation_drawing_envelope(product.assembly) if status is not ProductStatus.INVALID else None,
+        elevation=elevation_drawing_envelope(product.assembly, measures) if status is not ProductStatus.INVALID else None,
+        measures=measures,
     )
 
 

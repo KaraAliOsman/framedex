@@ -81,6 +81,7 @@ def reinforcement_rules(record: dict[str, Any], version: int) -> list[dict[str, 
                 "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": True})
             if version >= 3 and record["params"]["system_family"] == "DOOR" and article["role"] == "FRAME":
                 rules.append({**rules[-1], "profile_angle_right": 90})
+    rules = list({(rule['role'],rule['profile_angle_left'],rule['profile_angle_right']):rule for rule in rules}.values())
     return rules or [{"role": "FRAME", "profile_angle_left": 45, "profile_angle_right": 45,
         "reinforcement_angle_left": 90, "reinforcement_angle_right": 90,
         "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": True}]

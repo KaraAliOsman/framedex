@@ -26,6 +26,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Conjuntos y acoples](product/coupled-assemblies.md) — autoridad angular, cotas exactas, planta sincronizada y venta por módulo.
+
 - [Asistente y trabajos](product/assistant-work.md) — presencia privada por contexto, artefactos del motor, decisiones y deshacer auditables.
 
 - [Producción por estación](product/production-stations.md) — cola privada, QR físico, detalle escalable y decisiones de calidad idempotentes.

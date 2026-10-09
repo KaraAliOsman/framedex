@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { DesignOperation } from "./designOperation";
+import type { ProductIssue } from "./productIssue";
 
 export interface Simulation {
   registry_version: string;
@@ -15,7 +16,7 @@ export interface Simulation {
   ops: DesignOperation[];
   valid: boolean;
   status: string;
-  issues: unknown[];
+  issues: ProductIssue[];
   engine: unknown;
   price: unknown;
   before: unknown;

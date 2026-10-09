@@ -7,6 +7,7 @@ import type { MemberGeometry } from "./members";
 import { ProductFrontSvg } from "./ProductFrontSvg";
 import type { ProductJson } from "./productEditing";
 import { intentBays } from "./intentEditing";
+import { compatibleCouplers } from "./couplerAuthority";
 
 function family(product: ProductJson): string {
   if (product.assembly.modules.length > 1) return "Conjuntos";
@@ -78,7 +79,11 @@ export function StarterGallery({
     const needle = query.trim().toLowerCase();
     const compatible = previews.filter(
       ({ product }) =>
-        (!options || !product.assembly.couplings.length || options.coupler_skus.length > 0) &&
+        (!options ||
+          product.assembly.couplings.every(
+            (coupling) =>
+              compatibleCouplers(options.coupler_profiles ?? [], coupling.angle_deg).length > 0,
+          )) &&
         (!options?.system_family ||
           product.assembly.modules.every((module) =>
             options.system_family === "FRAMELESS" ? Boolean(module.frameless) : !module.frameless,

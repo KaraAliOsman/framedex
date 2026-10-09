@@ -15,7 +15,7 @@ from dekopen_engine.models import BayOpeningType, HingedLayout, Opening, Opening
 from dekopen_engine.openings import opening_label, opening_from_legacy
 from dekopen_engine.symbols import opening_symbol_lines
 from documents.drawing import annotations as drawing_annotations
-from dekopen_engine.product import ElevationMember, elevation_layout
+from dekopen_engine.product import ElevationMember
 from documents.repository import DocumentaryError
 from engine_api.adapter import parse_product_model, parse_contour
 
@@ -760,7 +760,10 @@ def _position_svg(
         # and joints are typed (INLINE seams vertical, STACKED contacts
         # horizontal) — never the side-by-side declaration order.
         try:
-            layout = elevation_layout(parse_product_model(tree).assembly)
+            from dekopen_engine.assembly_measures import AssemblyMeasure, developed_layout
+            frozen_measures = (position.get("drawing_plan") or {}).get("assembly_measures")
+            layout = developed_layout(parse_product_model(tree).assembly,
+                AssemblyMeasure.model_validate_json(json.dumps(frozen_measures)) if frozen_measures else None)
         except (ValueError, KeyError, DocumentaryError) as error:
             raise DocumentaryError("invalid_frozen_parametric_tree") from error
         modules_by_id = {str(module.get("id")): module for module in modules}

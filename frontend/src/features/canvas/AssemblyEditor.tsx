@@ -9,6 +9,7 @@ import type {
   GlassSpecChoice,
   PanelChoice,
   ProductIssue,
+  CouplerChoice,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { domainLabel } from "../../i18n/domainLabels";
@@ -30,8 +31,12 @@ import { ApiError } from "../../api/apiMutator";
 import type { DesignOperationRequest } from "../../api/generated/models";
 import type { CommandArgs, CommandSpec } from "../commands/types";
 import { useRegisterDesignOpsBridge } from "../assistant/assistantContext";
+import { Link } from "react-router-dom";
 import type { DesignOperation } from "../../api/generated/models";
-import { BowPlanContent, planBounds } from "./BowPlanSvg";
+import { AssemblyPlanPane } from "./AssemblyPlanPane";
+import { compatibleCouplers } from "./couplerAuthority";
+import { assemblyIssueDestination } from "./assemblyIssueNavigation";
+import { EditorPriceChip } from "./EditorPriceChip";
 import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTreeView";
 import { buildObjectTree } from "./objectTree";
@@ -173,6 +178,10 @@ export function issueText(
   modules: ProductModuleJson[],
   couplings: CouplingJson[],
 ): string {
+  if (issue.code === "coupler_angle_incompatible") {
+    const ordinal = couplings.findIndex((c) => c.id === issue.target.slice("coupling:".length)) + 1;
+    return `Unión ${ordinal}: el acoplador ${issue.params.sku} admite de ${fmtMm(issue.params.min_angle_deg)}° a ${fmtMm(issue.params.max_angle_deg)}°. Con ${fmtMm(issue.params.angle_deg)}°, elige uno compatible o reduce el ángulo. Fuente: ${issue.params.source}.`;
+  }
   const key = ISSUE_KEYS[issue.code];
   // Unmapped engine codes still read as sentences — a chip that shows
   // "R02_LEAF_PROPORTION" asks the user to decode our own identifier.
@@ -229,7 +238,7 @@ function normalizeMm(candidate: string): string | null {
 
 function normalizeAngle(candidate: string): string | null {
   const value = parseLocaleNumber(candidate);
-  if (value === null || Math.abs(value) >= 90) return null;
+  if (value === null || Math.abs(value) > 90) return null;
   return value.toFixed(1);
 }
 
@@ -1898,18 +1907,22 @@ function ModuleInspector({
 function CouplingInspector({
   coupling,
   ordinal,
-  couplerSkus,
+  systemId,
+  couplerProfiles,
   busy,
   commit,
   onAskAssistant,
 }: {
   coupling: CouplingJson;
   ordinal: number;
-  couplerSkus: string[];
+  systemId: string | null;
+  couplerProfiles: CouplerChoice[];
   busy: boolean;
   commit(ops: DesignOperationRequest[]): void;
   onAskAssistant?(): void;
 }): JSX.Element {
+  const compatible = compatibleCouplers(couplerProfiles, coupling.angle_deg);
+  const chosen = couplerProfiles.find((item) => item.sku === coupling.coupler_profile_sku);
   return (
     <section className="assembly-inspector" aria-label={t("assembly.coupling")}>
       <header className="assembly-inspector__header">
@@ -1923,7 +1936,7 @@ function CouplingInspector({
           { label: t("inspector.couplingType"), state: "DECLARED" },
           {
             label: t("assembly.coupler"),
-            state: coupling.coupler_profile_sku ? "VERIFIED" : "UNKNOWN",
+            state: chosen?.coupling_rule ? "VERIFIED" : "UNKNOWN",
           },
         ]}
       />
@@ -1941,6 +1954,7 @@ function CouplingInspector({
       <label className="assembly-field">
         <span>{t("assembly.coupler")}</span>
         <select
+          id="coupling-profile-field"
           aria-label={t("assembly.coupler")}
           disabled={busy}
           value={coupling.coupler_profile_sku ?? ""}
@@ -1951,13 +1965,35 @@ function CouplingInspector({
           }
         >
           <option value="">{t("assembly.noCoupler")}</option>
-          {couplerSkus.map((sku) => (
-            <option key={sku} value={sku}>
-              {sku}
+          {chosen && !compatible.includes(chosen) && (
+            <option value={chosen.sku} disabled>
+              {chosen.name} · incompatible con este ángulo
+            </option>
+          )}
+          {compatible.map((item) => (
+            <option key={item.sku} value={item.sku}>
+              {item.name}
             </option>
           ))}
         </select>
       </label>
+      <p className="assembly-hint">
+        {chosen?.coupling_rule
+          ? `Admite ${fmtMm(chosen.coupling_rule.min_angle_deg)}° a ${fmtMm(chosen.coupling_rule.max_angle_deg)}°; aporte neto ${fmtMm(chosen.coupling_rule.development_mm)} mm.`
+          : "Sin dato · elige un acoplador con autoridad angular del catálogo."}
+      </p>
+      {compatible.length === 0 && (
+        <p role="alert">
+          La serie no declara un acoplador para este ángulo. Reduce el ángulo o revisa su catálogo.
+        </p>
+      )}
+      <details>
+        <summary>Fuente del acoplador</summary>
+        <p>{chosen?.coupling_rule?.source ?? "Sin dato · falta autoridad del proveedor."}</p>
+      </details>
+      <Link data-coupler-catalog to={`/catalogs/systems?system=${systemId}&resource=articles`}>
+        Revisar autoridad en el catálogo
+      </Link>
       <div className="inspector-actions">
         <button
           type="button"
@@ -2124,6 +2160,18 @@ export function AssemblyEditor({
    * selection; complexity stays hidden until the user asks for it. */
   const [detail, setDetail] = useState<DetailLevel>("design");
   const [planOpen, setPlanOpen] = useState(true);
+  const [elevationMode, setElevationMode] = useState<"developed" | "projected">("developed");
+  const [angleDraft, setAngleDraft] = useState<ProductJson | null>(null);
+  const anglePreview = useAssemblyCalculation(
+    organizationId,
+    { ...inputs, product: angleDraft },
+    false,
+  );
+  // Keep the mounted drag surface while the next engine result is pending.
+  const planEvaluation = angleDraft
+    ? (anglePreview.evaluation ?? drawingEvaluation)
+    : drawingEvaluation;
+  const [operationIssues, setOperationIssues] = useState<ProductIssue[]>([]);
   const [view3dOpen, setView3dOpen] = useState(false);
   const [operationBusy, setOperationBusy] = useState(false);
   const [operationMessage, setOperationMessage] = useState("");
@@ -2246,6 +2294,23 @@ export function AssemblyEditor({
     if (!snapshot.product || !snapshot.systemId || disabled || readOnly || operationBusy) return;
     setOperationBusy(true);
     setOperationMessage("");
+    setOperationIssues([]);
+    ops = ops.flatMap((op) => {
+      if (
+        op.op !== "set_coupling_angle" ||
+        typeof op.coupling !== "string" ||
+        typeof op.angle_deg !== "string" ||
+        ops.some((other) => other.op === "set_coupler_sku" && other.coupling === op.coupling)
+      )
+        return [op];
+      const joint = snapshot.product!.assembly.couplings.find((item) => item.id === op.coupling);
+      const choices = compatibleCouplers(options?.coupler_profiles ?? [], op.angle_deg);
+      return joint &&
+        !choices.some((choice) => choice.sku === joint.coupler_profile_sku) &&
+        choices.length === 1
+        ? [op, { op: "set_coupler_sku", coupling: op.coupling, sku: choices[0]!.sku }]
+        : [op];
+    });
     void designOperationsSimulate(
       {
         product: snapshot.product,
@@ -2259,7 +2324,22 @@ export function AssemblyEditor({
       .then((response) => {
         if (response.status !== 200) throw new ApiError(response.status, response.data);
         if (useCanvasStore.getState().inputs !== snapshot) throw Error("stale");
-        if (!response.data.valid) throw Error("invalid");
+        if (!response.data.valid) {
+          setOperationIssues(response.data.issues);
+          setOperationMessage(
+            "No se aplicó el cambio. " +
+              response.data.issues
+                .map((issue) =>
+                  issueText(
+                    issue,
+                    snapshot.product!.assembly.modules,
+                    snapshot.product!.assembly.couplings,
+                  ),
+                )
+                .join(" "),
+          );
+          return;
+        }
         applyRegisteredOps(response.data.ops.map((op) => ({ ...op })));
         if (spec) {
           useCanvasStore.getState().recordMutation(spec.id, args);
@@ -2428,7 +2508,13 @@ export function AssemblyEditor({
 
   // One layout pass per product commit — bounds/selection boxes derive from
   // the memo instead of recomputing the elevation four times per render.
-  const front = useMemo(() => (product ? frontLayout(product) : null), [product]);
+  const front = useMemo(
+    () =>
+      product
+        ? frontLayout(product, planEvaluation?.measures, elevationMode === "projected")
+        : null,
+    [product, planEvaluation?.measures, elevationMode],
+  );
   const frontBox = useMemo(() => {
     if (!front) return null;
     const box = frontBounds(
@@ -2578,7 +2664,7 @@ export function AssemblyEditor({
   // react-query keys on the product so stale results never land on newer
   // state, and save still requires the fresh engine verdict upstream.
   const evaluating = isPending && inputs.systemId !== null;
-  const planBox = couplings.length > 0 && evaluation?.plan ? planBounds(evaluation.plan) : null;
+
   const statusText = drawingEvaluation?.elevation
     ? `${fmtMm(drawingEvaluation.elevation.width_mm)} × ${fmtMm(drawingEvaluation.elevation.height_mm)} mm`
     : `${fmtMm(front.totalW)} × ${fmtMm(front.height)} mm${front.lift > 0 ? " hasta arranque" : ""}`;
@@ -2654,6 +2740,49 @@ export function AssemblyEditor({
     simulateCommand([{ op: "add_unit", side }]);
   }
 
+  function reviewIssue(issue: ProductIssue): void {
+    if (!product) return;
+    const { target, field, label, catalog } = assemblyIssueDestination(issue, product);
+    if (target.startsWith("module:") || target.startsWith("coupling:"))
+      select(target.slice(target.indexOf(":") + 1));
+    setDetail("design");
+    onCloseIssues?.();
+    showInspector(field === "glass" ? "glass" : undefined);
+    requestAnimationFrame(() => {
+      const root = inspectorRef.current;
+      if (catalog) root?.querySelector<HTMLElement>("a[data-coupler-catalog]")?.focus();
+      if (label) root?.querySelector<HTMLElement>(`[aria-label="${label}"]`)?.focus();
+    });
+  }
+  function previewAngle(id: string, angle: string | null): void {
+    if (angle === null) {
+      setAngleDraft(null);
+      return;
+    }
+    const choices = compatibleCouplers(options?.coupler_profiles ?? [], angle);
+    setAngleDraft({
+      ...product!,
+      assembly: {
+        ...product!.assembly,
+        couplings: couplings.map((item) =>
+          item.id !== id
+            ? item
+            : {
+                ...item,
+                angle_deg: angle,
+                coupler_profile_sku: choices.some(
+                  (choice) => choice.sku === item.coupler_profile_sku,
+                )
+                  ? item.coupler_profile_sku
+                  : choices.length === 1
+                    ? choices[0]!.sku
+                    : item.coupler_profile_sku,
+              },
+        ),
+      },
+    });
+  }
+
   const splitReady = { SPLIT_V: mullionSkus.SPLIT_V, SPLIT_H: mullionSkus.SPLIT_H };
   return (
     <div
@@ -2667,7 +2796,12 @@ export function AssemblyEditor({
       )}
       {operationMessage && (
         <output className="editor-operation-message" role="alert">
-          {operationMessage}
+          <p>{operationMessage}</p>
+          {operationIssues.map((issue, index) => (
+            <button key={index} type="button" onClick={() => reviewIssue(issue)}>
+              Revisar {issue.target.startsWith("coupling:") ? "unión" : "marco"}
+            </button>
+          ))}
         </output>
       )}
       <div className="assembly-tools" role="toolbar" aria-label={t("assembly.tools")}>
@@ -2874,16 +3008,7 @@ export function AssemblyEditor({
               {issues.map((issue, index) => (
                 <li key={index}>
                   <p>{issueText(issue, modules, couplings)}</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = issue.target;
-                      if (target.startsWith("module:") || target.startsWith("coupling:"))
-                        select(target.slice(target.indexOf(":") + 1));
-                      onCloseIssues?.();
-                      showInspector();
-                    }}
-                  >
+                  <button type="button" onClick={() => reviewIssue(issue)}>
                     Revisar {issue.target.startsWith("coupling:") ? "unión" : "marco"}
                   </button>
                 </li>
@@ -2943,317 +3068,339 @@ export function AssemblyEditor({
           }
         }}
       >
-        <div className="assembly-view-choices" role="group" aria-label="Cara visible del dibujo">
-          <button
-            type="button"
-            aria-pressed={viewFace === "interior"}
-            className="assembly-face"
-            onClick={() => setViewFace("interior")}
-          >
-            Vista interior
-          </button>
-          <button
-            type="button"
-            aria-pressed={viewFace === "exterior"}
-            className="assembly-face"
-            onClick={() => setViewFace("exterior")}
-          >
-            Vista exterior
-          </button>
-        </div>
-        <details className="assembly-symbol-legend">
-          <summary>Simbología</summary>
-          <p>
-            Vértice hacia la manilla. Continuo: abre hacia usted. Discontinuo: se aleja. Flecha:
-            recorrido de la corredera.
-          </p>
-          <p>
-            Carril 1 al exterior, numeración hacia el interior · convención de dibujo; contraste la
-            sección del fabricante.
-          </p>
-        </details>
-        {openingPreviewProduct && (
-          <span className="opening-preview-label" role="status">
-            {openingPreview.isPending
-              ? "Calculando vista previa…"
-              : previewReady
-                ? "Vista previa · elige para aplicar"
-                : "Esta composición requiere ajustar sus medidas o datos del catálogo"}
-          </span>
-        )}
-        <CanvasViewport
-          contentBox={frontBox}
-          visibleBox={{
-            x: -front.leftOver,
-            y: -front.lift,
-            w: front.totalW + front.leftOver + front.rightOver,
-            h: front.height + front.lift + front.dip,
-          }}
-          selectionBox={selectionBox}
-          status={statusText}
-          contentEpoch={contentEpoch}
-        >
-          <ProductFrontContent
-            elevation={drawingEvaluation?.elevation}
-            drawingFacts={Object.fromEntries(
-              (drawingEvaluation?.modules ?? []).map((item) => [
-                item.module_id,
-                item.drawing ?? null,
-              ]),
-            )}
-            hideOverallWidth={(inputs.mounting?.length ?? 0) > 0}
-            openingFacts={Object.fromEntries(
-              (drawingEvaluation?.modules ?? []).map((item) => [
-                item.module_id,
-                (item.result?.opening_leaves ?? []) as unknown as OpeningLeafFact[],
-              ]),
-            )}
-            product={previewReady ? openingPreviewProduct! : product}
-            members={members}
-            selectedId={selectedModule?.id ?? null}
-            issues={issues}
-            glassNotices={Object.fromEntries(
-              Object.entries(glassChecks.data ?? {})
-                .filter(([, check]) =>
-                  check.findings.some((finding) => finding.code !== "tempered_exact"),
-                )
-                .map(([key, check]) => {
-                  const alternative = options?.glass_specs.find((choice) =>
-                    check.alternative_skus.includes(choice.sku),
-                  );
-                  return [
-                    key,
-                    {
-                      message: check.findings
-                        .filter((finding) => finding.code !== "tempered_exact")
-                        .map((finding) => finding.message)
-                        .join(" · "),
-                      alternativeSku: alternative?.sku,
-                      alternativeName: asGlassProduct(alternative?.product)?.name,
-                    },
-                  ];
-                }),
-            )}
-            onGlassNotice={(moduleId, bayId, alternativeSku) => {
-              select(`${moduleId}/${bayId}`);
-              const choice = options?.glass_specs.find((item) => item.sku === alternativeSku);
-              const module = product.assembly.modules.find((item) => item.id === moduleId);
-              if (choice && module)
-                simulateCommand([
-                  { op: "set_glass", module: moduleId, bay: bayId, sku: choice.sku },
-                ]);
-            }}
-            disabled={busy || viewFace === "exterior"}
-            divideTool={divideToolType}
-            dimLevel={detail}
-            onSelectModule={pickModule}
-            onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
-            onSelectDivision={(moduleId, divisionId) => select(`${moduleId}/${divisionId}`)}
-            onSelectCoupling={(couplingId) => select(couplingId)}
-            selectedBayId={selectedBayModule && selectedBayNode ? selectedBayNode.id : null}
-            selectedDivisionId={
-              selectedDivisionModule && selectedDivisionNode ? selectedDivisionNode.id : null
-            }
-            onContextMenuModule={(moduleId, pos) => {
-              select(moduleId);
-              setContextMenu(pos);
-            }}
-            onAddUnit={coupleUnit}
-            onCommitModuleWidth={(moduleId, widthMm) =>
-              simulateCommand([{ op: "set_module_width", module: moduleId, width_mm: widthMm }])
-            }
-            onCommitTotalWidth={(totalMm) =>
-              simulateCommand([{ op: "set_total_width", width_mm: totalMm }])
-            }
-            onCommitHeight={(heightMm) =>
-              simulateCommand([{ op: "set_height", height_mm: heightMm }])
-            }
-            onCommitDivide={divideModule}
-            onMoveDivision={(moduleId, divisionId, offsetMm) =>
-              simulateCommand([
-                { op: "move_divider", module: moduleId, divider: divisionId, offset_mm: offsetMm },
-              ])
-            }
-            onResizeSeam={(index, deltaMm) => {
-              const left = modules[index],
-                right = modules[index + 1];
-              if (left && right)
-                simulateCommand([
-                  {
-                    op: "resize_seam",
-                    left: left.id,
-                    right: right.id,
-                    delta_mm: deltaMm.toFixed(2),
-                  },
-                ]);
-            }}
-          />
-          {proposal &&
-            proposal.snapshot === inputs &&
-            isProductModel(proposal.simulation.product) && (
-              <g
-                className="command-ghost"
-                aria-label="Propuesta del motor en fantasma"
-                pointerEvents="none"
-              >
-                <ProductFrontContent
-                  product={proposal.simulation.product}
-                  members={members}
-                  selectedId={null}
-                  issues={[]}
-                  disabled
-                  dimLevel="overview"
-                  openingFacts={Object.fromEntries(
-                    (
-                      (proposal.simulation.engine as EngineAssemblyCalculateResponse)?.modules ?? []
-                    ).map((item) => [
-                      item.module_id,
-                      (item.result?.opening_leaves ?? []) as OpeningLeafFact[],
-                    ]),
-                  )}
-                  onSelectModule={() => {}}
-                  onAddUnit={() => {}}
-                  onCommitModuleWidth={() => {}}
-                  onCommitTotalWidth={() => {}}
-                  onCommitHeight={() => {}}
-                />
-              </g>
-            )}
-          {inputs.mounting?.length ? (
-            <MountingDimensions product={product} evidence={inputs.mounting} />
-          ) : null}
-        </CanvasViewport>
-        {proposal && proposal.snapshot === inputs && (
-          <section className="editor-proposal" aria-label="Propuesta por revisar">
-            <h3>Tres paños · centro fijo</h3>
-            <p>
-              Laterales abatibles hacia el centro · simulación del motor
-              {options?.is_demo ? " · DEMO" : ""}
-            </p>
-            <p className="editor-proposal-price">
-              Δ neto de línea ·{" "}
-              {(proposal.simulation.price as EditorPrice).delta_net == null
-                ? "Sin dato"
-                : formatMoney(
-                    (proposal.simulation.price as EditorPrice).delta_net,
-                    (proposal.simulation.price as EditorPrice).currency,
-                  )}
-            </p>
-            <details>
-              <summary>¿De dónde sale?</summary>
-              <p>
-                {(proposal.simulation.price as EditorPrice).reason ??
-                  (proposal.simulation.price as EditorPrice).source}
-              </p>
-              <p>
-                Operaciones del registro sobre el diseño actual; diferencia exacta de ventas
-                calculada por el motor. Se conserva la cantidad de la posición.
-              </p>
-            </details>
-            {!proposal.simulation.valid && (
-              <p role="alert">
-                El motor bloquea la propuesta. Revisa las medidas y la autoridad de la serie antes
-                de aplicar.
-              </p>
-            )}
+        <div className="assembly-elevation">
+          <div className="assembly-view-choices" role="group" aria-label="Cara visible del dibujo">
             <button
               type="button"
-              className="primary-action"
-              disabled={busy || !proposal.simulation.valid}
-              onClick={() => {
-                if (proposal.snapshot !== useCanvasStore.getState().inputs) return;
-                applyRegisteredOps(proposal.simulation.ops.map((op) => ({ ...op })));
-                setProposal(null);
-              }}
+              aria-pressed={viewFace === "interior"}
+              className="assembly-face"
+              onClick={() => setViewFace("interior")}
             >
-              Aplicar propuesta
+              Vista interior
             </button>
-            <button type="button" onClick={() => setProposal(null)}>
-              Descartar
-            </button>
-          </section>
-        )}
-        {couplings.length > 0 && evaluation?.plan && planBox && planOpen && (
-          <div className="plan-inset" role="complementary" aria-label={t("assembly.planView")}>
-            <div className="plan-inset__header">
-              <span>{t("assembly.planView")}</span>
-              <button
-                type="button"
-                aria-label={t("assembly.hidePlan")}
-                onClick={() => setPlanOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-            <svg
-              className="plan-inset__svg"
-              viewBox={`${planBox.x} ${planBox.y} ${planBox.w} ${planBox.h}`}
-              preserveAspectRatio="xMidYMid meet"
-              role="img"
-              aria-label={t("assembly.planView")}
+            <button
+              type="button"
+              aria-pressed={viewFace === "exterior"}
+              className="assembly-face"
+              onClick={() => setViewFace("exterior")}
             >
-              <BowPlanContent
-                plan={evaluation.plan}
-                couplings={couplings}
-                members={members}
-                selectedModuleId={selectedModule?.id ?? null}
-                selectedCouplingId={selectedCoupling?.id ?? null}
-                issues={issues}
-                disabled={busy}
-                onSelectModule={pickModule}
-                onSelectCoupling={select}
-                onContextMenuElement={(elementId, pos) => {
-                  select(elementId);
-                  setContextMenu(pos);
-                }}
-                onCommitAngle={(couplingId, angleDeg) =>
-                  simulateCommand([
-                    { op: "set_coupling_angle", coupling: couplingId, angle_deg: angleDeg },
-                  ])
+              Vista exterior
+            </button>
+            {couplings.length > 0 && (
+              <select
+                aria-label="Elevación del conjunto"
+                value={elevationMode}
+                onChange={(event) =>
+                  setElevationMode(event.target.value as "developed" | "projected")
                 }
-              />
-            </svg>
+              >
+                <option value="developed">Desarrollada</option>
+                <option value="projected" disabled={!planEvaluation?.measures}>
+                  Proyectada
+                </option>
+              </select>
+            )}
+            <details className="assembly-symbol-legend">
+              <summary>Simbología</summary>
+              <p>
+                Vértice hacia la manilla. Continuo: abre hacia usted. Discontinuo: se aleja. Flecha:
+                recorrido de la corredera.
+              </p>
+              <p>
+                Carril 1 al exterior, numeración hacia el interior · convención de dibujo; contraste
+                la sección del fabricante.
+              </p>
+            </details>
           </div>
-        )}
-        {couplings.length > 0 && evaluation?.plan && !planOpen && (
-          <button type="button" className="plan-toggle" onClick={() => setPlanOpen(true)}>
-            {t("assembly.planView")}
-          </button>
-        )}
-        {view3dOpen ? (
-          <div className="model3d-inset" role="complementary" aria-label={t("assembly.view3d")}>
-            <div className="plan-inset__header">
-              <span>{t("assembly.view3d")}</span>
+          {openingPreviewProduct && (
+            <span className="opening-preview-label" role="status">
+              {openingPreview.isPending
+                ? "Calculando vista previa…"
+                : previewReady
+                  ? "Vista previa · elige para aplicar"
+                  : "Esta composición requiere ajustar sus medidas o datos del catálogo"}
+            </span>
+          )}
+          <CanvasViewport
+            contentBox={frontBox}
+            visibleBox={{
+              x: -front.leftOver,
+              y: -front.lift,
+              w: front.totalW + front.leftOver + front.rightOver,
+              h: front.height + front.lift + front.dip,
+            }}
+            selectionBox={selectionBox}
+            status={statusText}
+            contentEpoch={contentEpoch}
+          >
+            <ProductFrontContent
+              assemblyMeasures={planEvaluation?.measures}
+              projected={elevationMode === "projected"}
+              elevation={drawingEvaluation?.elevation}
+              drawingFacts={Object.fromEntries(
+                (drawingEvaluation?.modules ?? []).map((item) => [
+                  item.module_id,
+                  item.drawing ?? null,
+                ]),
+              )}
+              hideOverallWidth={(inputs.mounting?.length ?? 0) > 0}
+              openingFacts={Object.fromEntries(
+                (drawingEvaluation?.modules ?? []).map((item) => [
+                  item.module_id,
+                  (item.result?.opening_leaves ?? []) as unknown as OpeningLeafFact[],
+                ]),
+              )}
+              product={previewReady ? openingPreviewProduct! : product}
+              members={members}
+              selectedId={selectedModule?.id ?? selectedTreeModule?.id ?? null}
+              issues={issues}
+              glassNotices={Object.fromEntries(
+                Object.entries(glassChecks.data ?? {})
+                  .filter(([, check]) =>
+                    check.findings.some((finding) => finding.code !== "tempered_exact"),
+                  )
+                  .map(([key, check]) => {
+                    const alternative = options?.glass_specs.find((choice) =>
+                      check.alternative_skus.includes(choice.sku),
+                    );
+                    return [
+                      key,
+                      {
+                        message: check.findings
+                          .filter((finding) => finding.code !== "tempered_exact")
+                          .map((finding) => finding.message)
+                          .join(" · "),
+                        alternativeSku: alternative?.sku,
+                        alternativeName: asGlassProduct(alternative?.product)?.name,
+                      },
+                    ];
+                  }),
+              )}
+              onGlassNotice={(moduleId, bayId, alternativeSku) => {
+                select(`${moduleId}/${bayId}`);
+                const choice = options?.glass_specs.find((item) => item.sku === alternativeSku);
+                const module = product.assembly.modules.find((item) => item.id === moduleId);
+                if (choice && module)
+                  simulateCommand([
+                    { op: "set_glass", module: moduleId, bay: bayId, sku: choice.sku },
+                  ]);
+              }}
+              disabled={busy || viewFace === "exterior"}
+              divideTool={divideToolType}
+              dimLevel={detail}
+              onSelectModule={pickModule}
+              onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
+              onSelectDivision={(moduleId, divisionId) => select(`${moduleId}/${divisionId}`)}
+              onSelectCoupling={(couplingId) => select(couplingId)}
+              selectedBayId={selectedBayModule && selectedBayNode ? selectedBayNode.id : null}
+              selectedDivisionId={
+                selectedDivisionModule && selectedDivisionNode ? selectedDivisionNode.id : null
+              }
+              onContextMenuModule={(moduleId, pos) => {
+                select(moduleId);
+                setContextMenu(pos);
+              }}
+              onAddUnit={coupleUnit}
+              onCommitModuleWidth={(moduleId, widthMm) =>
+                simulateCommand([{ op: "set_module_width", module: moduleId, width_mm: widthMm }])
+              }
+              onCommitTotalWidth={(totalMm) =>
+                simulateCommand([{ op: "set_total_width", width_mm: totalMm }])
+              }
+              onCommitHeight={(heightMm) =>
+                simulateCommand([{ op: "set_height", height_mm: heightMm }])
+              }
+              onCommitDivide={divideModule}
+              onMoveDivision={(moduleId, divisionId, offsetMm) =>
+                simulateCommand([
+                  {
+                    op: "move_divider",
+                    module: moduleId,
+                    divider: divisionId,
+                    offset_mm: offsetMm,
+                  },
+                ])
+              }
+              onResizeSeam={(index, deltaMm) => {
+                const left = modules[index],
+                  right = modules[index + 1];
+                if (left && right)
+                  simulateCommand([
+                    {
+                      op: "resize_seam",
+                      left: left.id,
+                      right: right.id,
+                      delta_mm: deltaMm.toFixed(2),
+                    },
+                  ]);
+              }}
+            />
+            {proposal &&
+              proposal.snapshot === inputs &&
+              isProductModel(proposal.simulation.product) && (
+                <g
+                  className="command-ghost"
+                  aria-label="Propuesta del motor en fantasma"
+                  pointerEvents="none"
+                >
+                  <ProductFrontContent
+                    product={proposal.simulation.product}
+                    members={members}
+                    selectedId={null}
+                    issues={[]}
+                    disabled
+                    dimLevel="overview"
+                    openingFacts={Object.fromEntries(
+                      (
+                        (proposal.simulation.engine as EngineAssemblyCalculateResponse)?.modules ??
+                        []
+                      ).map((item) => [
+                        item.module_id,
+                        (item.result?.opening_leaves ?? []) as OpeningLeafFact[],
+                      ]),
+                    )}
+                    onSelectModule={() => {}}
+                    onAddUnit={() => {}}
+                    onCommitModuleWidth={() => {}}
+                    onCommitTotalWidth={() => {}}
+                    onCommitHeight={() => {}}
+                  />
+                </g>
+              )}
+            {inputs.mounting?.length ? (
+              <MountingDimensions product={product} evidence={inputs.mounting} />
+            ) : null}
+          </CanvasViewport>
+          {proposal && proposal.snapshot === inputs && (
+            <section className="editor-proposal" aria-label="Propuesta por revisar">
+              <h3>Tres paños · centro fijo</h3>
+              <p>
+                Laterales abatibles hacia el centro · simulación del motor
+                {options?.is_demo ? " · DEMO" : ""}
+              </p>
+              <p className="editor-proposal-price">
+                Δ neto de línea ·{" "}
+                {(proposal.simulation.price as EditorPrice).delta_net == null
+                  ? "Sin dato"
+                  : formatMoney(
+                      (proposal.simulation.price as EditorPrice).delta_net,
+                      (proposal.simulation.price as EditorPrice).currency,
+                    )}
+              </p>
+              <details>
+                <summary>¿De dónde sale?</summary>
+                <p>
+                  {(proposal.simulation.price as EditorPrice).reason ??
+                    (proposal.simulation.price as EditorPrice).source}
+                </p>
+                <p>
+                  Operaciones del registro sobre el diseño actual; diferencia exacta de ventas
+                  calculada por el motor. Se conserva la cantidad de la posición.
+                </p>
+              </details>
+              {!proposal.simulation.valid && (
+                <p role="alert">
+                  El motor bloquea la propuesta. Revisa las medidas y la autoridad de la serie antes
+                  de aplicar.
+                </p>
+              )}
               <button
                 type="button"
-                aria-label={t("assembly.hide3d")}
-                onClick={() => setView3dOpen(false)}
+                className="primary-action"
+                disabled={busy || !proposal.simulation.valid}
+                onClick={() => {
+                  if (proposal.snapshot !== useCanvasStore.getState().inputs) return;
+                  applyRegisteredOps(proposal.simulation.ops.map((op) => ({ ...op })));
+                  setProposal(null);
+                }}
               >
-                ×
+                Aplicar propuesta
               </button>
+              <button type="button" onClick={() => setProposal(null)}>
+                Descartar
+              </button>
+            </section>
+          )}
+          {view3dOpen ? (
+            <div className="model3d-inset" role="complementary" aria-label={t("assembly.view3d")}>
+              <div className="plan-inset__header">
+                <span>{t("assembly.view3d")}</span>
+                <button
+                  type="button"
+                  aria-label={t("assembly.hide3d")}
+                  onClick={() => setView3dOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <Suspense
+                fallback={
+                  <div className="model3d-loading" role="status">
+                    <span className="model3d-loading__bar" aria-hidden="true" />
+                    {t("assembly.loading3d")}
+                  </div>
+                }
+              >
+                <Model3DView
+                  product={product}
+                  members={members}
+                  plan={evaluation?.plan ?? null}
+                  selection={selection}
+                  onSelectModule={pickModule}
+                  onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
+                  onSelectCoupling={select}
+                />
+              </Suspense>
             </div>
-            <Suspense
-              fallback={
-                <div className="model3d-loading" role="status">
-                  <span className="model3d-loading__bar" aria-hidden="true" />
-                  {t("assembly.loading3d")}
-                </div>
-              }
-            >
-              <Model3DView
-                product={product}
-                members={members}
-                plan={evaluation?.plan ?? null}
-                selection={selection}
-                onSelectModule={pickModule}
-                onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
-                onSelectCoupling={select}
-              />
-            </Suspense>
+          ) : (
+            <button type="button" className="model3d-toggle" onClick={() => setView3dOpen(true)}>
+              {t("assembly.view3d")}
+            </button>
+          )}
+        </div>
+        {couplings.length > 0 && planEvaluation?.plan && planOpen && (
+          <AssemblyPlanPane
+            plan={planEvaluation.plan}
+            couplings={angleDraft?.assembly.couplings ?? couplings}
+            modules={modules}
+            measures={planEvaluation.measures}
+            members={members}
+            selectedModuleId={selectedModule?.id ?? selectedTreeModule?.id ?? null}
+            selectedCouplingId={selectedCoupling?.id ?? null}
+            issues={planEvaluation.issues}
+            disabled={busy}
+            preview={angleDraft !== null}
+            pending={anglePreview.isPending}
+            onHide={() => setPlanOpen(false)}
+            onSelectModule={pickModule}
+            onSelectCoupling={select}
+            onReviewIssue={reviewIssue}
+            issueLabel={(issue) => issueText(issue, modules, couplings)}
+            onPreviewAngle={previewAngle}
+            onCommitAngle={(id, value) =>
+              simulateCommand([{ op: "set_coupling_angle", coupling: id, angle_deg: value }])
+            }
+            onContextMenuElement={(elementId, pos) => {
+              select(elementId);
+              setContextMenu(pos);
+            }}
+          />
+        )}
+        {angleDraft && (
+          <div className="assembly-plan-preview-price">
+            <span>Precio de vista previa</span>
+            <EditorPriceChip
+              organizationId={organizationId}
+              inputs={{ ...inputs, product: angleDraft }}
+              quantity={String(quantity)}
+              ready={anglePreview.currentEvaluation?.status === "VALID"}
+              pending={anglePreview.isPending}
+            />
           </div>
-        ) : (
-          <button type="button" className="model3d-toggle" onClick={() => setView3dOpen(true)}>
-            {t("assembly.view3d")}
+        )}
+        {couplings.length > 0 && planOpen === false && (
+          <button className="plan-toggle" type="button" onClick={() => setPlanOpen(true)}>
+            Mostrar planta acoplada
           </button>
         )}
       </div>
@@ -3520,7 +3667,8 @@ export function AssemblyEditor({
           <CouplingInspector
             coupling={selectedCoupling}
             ordinal={couplings.findIndex((item) => item.id === selectedCoupling.id) + 1}
-            couplerSkus={couplerSkus}
+            systemId={inputs.systemId}
+            couplerProfiles={options?.coupler_profiles ?? []}
             busy={busy}
             commit={simulateCommand}
             onAskAssistant={

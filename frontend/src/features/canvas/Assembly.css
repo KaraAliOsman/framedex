@@ -102,14 +102,14 @@
 .bow-plan-svg {
   background: var(--theme-bg-canvas);
   display: block;
-  min-height: 16rem;
+  min-height: 0;
   width: 100%;
 }
 .plan-module {
   cursor: pointer;
   fill: var(--theme-glass-tint);
   stroke: var(--theme-text-primary);
-  stroke-width: 6;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .plan-module.is-selected {
@@ -119,7 +119,7 @@
 .plan-coupling {
   fill: var(--theme-surface-card);
   stroke: var(--theme-text-secondary);
-  stroke-width: 4;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .plan-front-chain {

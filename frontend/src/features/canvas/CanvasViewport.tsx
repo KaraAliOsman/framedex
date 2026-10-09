@@ -93,7 +93,13 @@ export function CanvasViewport({
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    const measure = () => setSize({ w: host.clientWidth, h: host.clientHeight });
+    const measure = () => {
+      const sheet = host.querySelector<SVGSVGElement>(":scope > .canvas-sheet");
+      setSize({
+        w: sheet?.clientWidth || host.clientWidth,
+        h: sheet?.clientHeight || host.clientHeight,
+      });
+    };
     measure();
     if (typeof ResizeObserver !== "undefined") {
       const observer = new ResizeObserver(measure);

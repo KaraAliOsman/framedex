@@ -6,12 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
+import type { CouplerRuleRequest } from "./couplerRuleRequest";
 import type { MaterialEnum } from "./materialEnum";
 import type { ProfileCutRuleRequest } from "./profileCutRuleRequest";
 import type { ProfileReinforcementRuleRequest } from "./profileReinforcementRuleRequest";
 import type { ProfileSectionRequest } from "./profileSectionRequest";
 
 export interface ArticleWriteRequest {
+  coupling_rule?: CouplerRuleRequest | null;
   cut_rule?: ProfileCutRuleRequest | null;
   reinforcement_rule?: ProfileReinforcementRuleRequest | null;
   system_id: string;

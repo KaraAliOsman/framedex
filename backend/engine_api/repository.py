@@ -98,6 +98,7 @@ def _section(value: object) -> ProfileSection | None:
 
 
 def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectiveProfileArticle:
+    from dekopen_engine.models import CouplerRule
     return EffectiveProfileArticle(
         sku=str(row[offset]),
         role=ProfileRole(str(row[offset + 1])),
@@ -116,6 +117,8 @@ def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectivePro
                   if len(row) > offset + 11 and row[offset + 11] is not None else None),
         reinforcement_rule=(ProfileReinforcementRule.model_validate_json(str(row[offset + 12]))
                             if len(row) > offset + 12 and row[offset + 12] is not None else None),
+        coupling_rule=(CouplerRule.model_validate_json(str(row[offset + 13]))
+                       if len(row) > offset + 13 and row[offset + 13] is not None else None),
     )
 
 
@@ -281,7 +284,7 @@ class SystemParamsRepository:
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
                        reinforcement_sku, material::text, section::text,
-                       commercial_length_mm, cut_rule::text, reinforcement_rule::text
+                       commercial_length_mm, cut_rule::text, reinforcement_rule::text, coupling_rule::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                 ORDER BY sku
@@ -317,7 +320,7 @@ class SystemParamsRepository:
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
                        reinforcement_sku, material::text, section::text,
-                       commercial_length_mm, cut_rule::text, reinforcement_rule::text
+                       commercial_length_mm, cut_rule::text, reinforcement_rule::text, coupling_rule::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                   AND role = 'COUPLER'

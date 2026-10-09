@@ -411,7 +411,21 @@ class ProfileSectionSerializer(StrictSerializer):
         return attrs
 
 
+class CouplerRuleSerializer(CompleteAuthoritySerializer):
+    min_angle_deg = decimal_field(6, 2, min_value=Decimal("0"), max_value=Decimal("90"))
+    max_angle_deg = decimal_field(6, 2, min_value=Decimal("0"), max_value=Decimal("90"))
+    development_mm = decimal_field(10, 2, min_value=Decimal("0"))
+    source = serializers.CharField(max_length=1000)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs["min_angle_deg"] > attrs["max_angle_deg"]:
+            raise serializers.ValidationError({"max_angle_deg": "El máximo no puede ser menor que el mínimo."})
+        return attrs
+
+
 class ArticleWriteSerializer(StrictSerializer):
+    coupling_rule = CouplerRuleSerializer(required=False, allow_null=True)
     cut_rule = ProfileCutRuleSerializer(required=False, allow_null=True)
     reinforcement_rule = ProfileReinforcementRuleSerializer(required=False, allow_null=True)
     system_id = serializers.UUIDField()
@@ -445,6 +459,12 @@ class ArticleWriteSerializer(StrictSerializer):
     steel_weight_kg_m = decimal_field(
         8, 4, min_value=Decimal("0.0000"), required=False, allow_null=True
     )
+
+    def validate(self, attrs):
+        effective = {**(self.instance or {}), **attrs}
+        if effective.get("coupling_rule") is not None and effective.get("role") != "COUPLER":
+            raise serializers.ValidationError({"coupling_rule": "La autoridad angular corresponde a un acoplador."})
+        return attrs
 
 
 class BeadWriteSerializer(StrictSerializer):

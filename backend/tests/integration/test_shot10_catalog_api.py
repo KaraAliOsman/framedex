@@ -39,6 +39,32 @@ def client_for(rows, user="A", org="A"):
     return client
 
 
+def test_sourced_joint_bounds_roundtrip_and_remain_private(real_rows):
+    set_role(real_rows, "WORKSHOP_MANAGER")
+    client = client_for(real_rows)
+    system = client.post('/api/v1/catalogs/systems/', {
+        'name':'Acoples tenant','code':'JOINT-PRIVATE','depth_mm':'60','material':'PVC',
+        'system_family':'CASEMENT','chamber_count':3,'version':1,'is_active':False,
+        **{field:'0' for field in ('sash_overlap_mm','glass_clearance_white_mm','glass_clearance_foil_mm',
+            'corner_bracket_loss_mm','hook_depth_mm','door_threshold_mm','door_bottom_clearance_mm','door_leaf_side_clearance_mm')},
+    },format='json')
+    assert system.status_code == 201, system.content
+    authority={'min_angle_deg':'10.00','max_angle_deg':'60.00','development_mm':'24.00','source':'Fabricante de ensayo, página 3'}
+    article=client.post('/api/v1/catalogs/articles/',{
+        'system_id':system.json()['id'],'sku':'JOINT-TENANT','name':'Acoplador propio','role':'COUPLER',
+        'material':'PVC','face_width_mm':'40','welding_loss_mm':'0','weight_kg_m':'0.9',
+        'coupling_rule':authority,
+    },format='json')
+    assert article.status_code == 201, article.content
+    value=article.json()
+    assert value['coupling_rule'] == authority
+    own=client.get(f"/api/v1/catalogs/articles/{value['id']}/")
+    assert own.status_code == 200
+    assert own.json()['coupling_rule'] == authority
+    foreign=client_for(real_rows,user='B',org='B').get(f"/api/v1/catalogs/articles/{value['id']}/")
+    assert foreign.status_code == 404
+
+
 @contextmanager
 def rejected_sql():
     with pytest.raises(DatabaseError):

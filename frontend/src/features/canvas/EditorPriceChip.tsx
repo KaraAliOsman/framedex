@@ -69,6 +69,42 @@ export function EditorPriceChip({
         antes de emitir.
       </p>
       <Link to="/pricing/commercial">Revisar reglas de precio</Link>
+      {!priceLoading && price?.modules && (
+        <>
+          <dl className="editor-module-prices">
+            {price.modules.map((item, index) => (
+              <div key={item.module_id}>
+                <dt>Módulo {index + 1}</dt>
+                <dd>
+                  {item.net !== null ? (
+                    <Money value={item.net} currency={price.currency} />
+                  ) : (
+                    <>Sin dato · {item.reason}</>
+                  )}
+                </dd>
+              </div>
+            ))}
+            <div>
+              <dt>Acoples y ajustes del conjunto</dt>
+              <dd>
+                {price.assembly_adjustment_net !== null &&
+                price.assembly_adjustment_net !== undefined ? (
+                  <Money value={price.assembly_adjustment_net} currency={price.currency} />
+                ) : (
+                  "Sin dato · falta una tarifa por módulo"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Total por conjunto</dt>
+              <dd>
+                <Money value={price.unit_net} currency={price.currency} />
+              </dd>
+            </div>
+          </dl>
+          <p>{price.breakdown_source}</p>
+        </>
+      )}
     </Popover>
   );
 }

@@ -697,6 +697,8 @@ def _position_calculations(
         result = evaluation.bom
         if drawing_plan is not None and evaluation.plan is not None:
             drawing_plan.update(evaluation.plan.model_dump(mode="python"))
+            if evaluation.measures is not None:
+                drawing_plan["assembly_measures"] = evaluation.measures.model_dump(mode="python")
         module_specs = [(module.id, module) for module in product.assembly.modules]
     else:
         result = None

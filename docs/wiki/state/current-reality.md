@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d
+verified_ref: a76cf7af89ed24284bb493f08e214bc1b6d176b4
 sources:
+  - P06 correcciones de regresión a76cf7af89ed24284bb493f08e214bc1b6d176b4, gates locales completos y Database Gate, 2026-10-09
+  - P06 implementación ef55dbd5af0c5863948c06b3ca85d29d2c135861, navegador y gates locales, 2026-10-09
   - ED1 PR https://github.com/KaraAliOsman/framedex/pull/137, CI 4/4 sobre ae9292864ad7d8efb9beba9243451fba49d8c04e, squash 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d, 2026-10-09
   - ED1 autoridad angular 9019282e1ded4b287f4518b09da069bcdee20abc, gate completo y ocho vistas finales, 2026-10-09
   - ED1 corrección de apariencia 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75, gate completo y ocho vistas, 2026-10-09
@@ -42,6 +44,28 @@ sources:
 ---
 
 # Current reality
+
+## P06 · conjuntos y autoridad angular (09-10-2026)
+
+Planta y elevación comparten editor, selección y medidas. Las cinco recetas
+son composiciones del ProductModel: bow, bay, puerta/lateral, sobreluz y
+esquina. Ángulos editables en la unión, arrastre con ajuste, simulación de
+geometría/venta y deshacer conservan el modelo guardado. Una operación
+incompatible mantiene el diseño anterior y enfoca el campo del acople.
+El motor calcula desarrollo, cuerda, salida perpendicular, altura y juntas
+con aporte declarado, incluidos módulos apilados. La regla del catálogo es
+opcional para preservar bytes históricos; DEMO v7 agrega autoridad sintética
+sin reescribir versiones anteriores. Fuente, límites y aporte se revisan
+en Catálogo y en la plantilla oficial, respetando el bloqueo de datos usados.
+Cada módulo se cotiza independientemente; el residual común cierra el precio
+unitario. El recorrido de emisión conserva medidas en el snapshot y muestra
+planta/elevación en DOC-01 real, sin costo interno. La matriz oficial tiene
+24 vistas sin hallazgos; la ficha de acople añade ocho. Se verifican cinco
+estados y cinco recetas. La inspección final reserva el dibujo de controles
+que antes tapaban cotas. [Aceptación](../../redesign/P06-ACEPTACION.md) conserva
+rúbrica, rondas y evidencia. 3D de conjuntos queda en P19; DEMO no certifica.
+Database Gate PASA: 1.231 pgTAP, 445 integraciones, 19 E2E y upgrades
+poblados PG16. CI y squash siguen pendientes.
 
 ## ED1 · coherencia editorial de la ola 1 (09-10-2026)
 

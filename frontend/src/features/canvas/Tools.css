@@ -58,60 +58,6 @@
 .assembly-canvas {
   position: relative;
 }
-.plan-inset {
-  border: 1px solid var(--theme-border-subtle);
-  bottom: 0.75rem;
-  box-shadow: var(--shadow-raise);
-  height: 9rem;
-  position: absolute;
-  right: 0.75rem;
-  width: 13rem;
-  z-index: var(--z-base);
-  pointer-events: none;
-}
-.plan-inset__header,
-.plan-inset .plan-module,
-.plan-inset .plan-coupling,
-.plan-inset .plan-angle,
-.plan-inset .plan-issue-flag {
-  pointer-events: auto;
-}
-.plan-inset__header {
-  align-items: center;
-  border-bottom: 1px solid var(--theme-border-subtle);
-  color: var(--theme-text-muted);
-  display: flex;
-  font-size: var(--type-dense);
-  font-weight: 600;
-  justify-content: space-between;
-  letter-spacing: 0.06em;
-  padding: 0.3rem 0.5rem;
-  text-transform: uppercase;
-}
-.plan-inset__header button {
-  background: transparent;
-  border: none;
-  color: var(--theme-text-muted);
-  font-size: var(--type-title-m);
-  line-height: 1;
-  padding: 0 0.15rem;
-}
-.plan-inset__svg {
-  flex: 1;
-  min-height: 0;
-}
-.plan-toggle {
-  background: var(--theme-surface-panel);
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--radius-sm);
-  bottom: 0.75rem;
-  color: var(--theme-text-secondary);
-  font-size: var(--type-dense);
-  padding: 0.3rem 0.6rem;
-  position: absolute;
-  right: 0.75rem;
-  z-index: var(--z-base);
-}
 .model3d-inset {
   border: 1px solid var(--theme-border-subtle);
   bottom: 0.75rem;
