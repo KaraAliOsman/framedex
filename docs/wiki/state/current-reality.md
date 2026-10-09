@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-08
 volatility: high
-verified_ref: f5dbaa92958b279471bd6adfdbc0fe3693e70538
+verified_ref: 52f3ee8102753727b7ba9e568ec18593b5d269d3
 sources:
+  - P05 PR #131, CI run 37861454814 on 10805d8691adb589d6382c32e612f96a754ff0a4, squash 52f3ee8102753727b7ba9e568ec18593b5d269d3, 2026-10-08
   - P04 PR #130, CI run 37845765629 on dcff50911165817920025c8a24ea5dbfafe6f07d, squash f5dbaa92958b279471bd6adfdbc0fe3693e70538, 2026-10-08
   - P25 PR #129, CI run 37824851379 on 8622ba03, squash 588835689c0324b6f76f0ea474f6460c6c22f0b1, 2026-10-08
   - P02 PR #128, CI run 37789541479 on 839524bb, squash 4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb, 2026-10-08
@@ -28,16 +29,22 @@ sources:
 
 # Current reality
 
-## P05 · verificado localmente, pendiente de CI (08-10-2026)
+## P05 · integrado y verificado (08-10-2026)
 
-Rama `codex/P05-simbologia-cotas`, base `a67bcefa`, aún sin merge: gramática
+Rama `codex/P05-simbologia-cotas`, base `a67bcefa`: gramática
 DIN exportada del motor, 56 fixtures compartidos, viaje explícito/compatibilidad
 histórica, vistas y cotas/extremos exactos. Guardado/recarga/undo/rechazo pasan;
 editor, formas, conjuntos DEV y portal sellado tienen matrices sin colisiones.
 Los runners oficiales pasan 16 vistas editor y ocho portal sin hallazgos.
 PDF de conjuntos conserva texto legible en dos caras; DOM/PDF muestran total
 del arco sin confundir arranque nominal. Véase [aceptación P05](../../redesign/P05-ACEPTACION.md).
-El `verified_ref` general seguirá en P04 hasta integrar P05 y registrar su SHA.
+PR #131 pasa los cuatro checks sobre `10805d8691adb589d6382c32e612f96a754ff0a4`
+en la corrida `37861454814` y se integra con squash
+`52f3ee8102753727b7ba9e568ec18593b5d269d3` en `integracion/v1`.
+Database Gate verifica 1.173 pgTAP, 418 integraciones, E2E y upgrades poblados
+PG16. La aserción del PDF comercial usa ahora rótulos humanos y conserva
+los IDs de fabricación en el snapshot. Las revisiones automáticas se omitieron
+por cuota/configuración/créditos; los estados del proveedor no acreditan revisión.
 Los fixtures sin acoplador autorizado y movimientos reservados son gramática,
 no autoridad fabricable; P06/P07/P09/P13/D08 conservan sus propios alcances.
 

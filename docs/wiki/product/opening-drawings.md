@@ -3,7 +3,9 @@ type: concept
 status: active
 updated: 2026-10-08
 volatility: medium
+verified_ref: 52f3ee8102753727b7ba9e568ec18593b5d269d3
 sources:
+  - P05 PR #131, CI run 37861454814 on 10805d86, squash 52f3ee81, 2026-10-08
   - engine/src/dekopen_engine/symbols.py
   - engine/src/dekopen_engine/drawing.py
   - engine/tests/fixtures/symbols/

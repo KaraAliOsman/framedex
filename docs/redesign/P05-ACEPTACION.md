@@ -86,7 +86,14 @@ Database Gate detectó una aserción histórica que exigía el ID interno `m1`
 en el cuerpo comercial. Se sustituye por la comprobación de los tres rótulos
 «Módulo 1–3», la vista declarada y los dos ángulos de 15°. Las identidades
 de fabricación siguen comprobadas en el snapshot sellado. Los tres casos
-PostgreSQL focalizados pasan; se repite el gate completo antes de integrar.
+PostgreSQL focalizados pasan. El gate completo de CI pasa sobre
+`10805d8691adb589d6382c32e612f96a754ff0a4` en la corrida
+[37861454814](https://github.com/KaraAliOsman/framedex/actions/runs/37861454814):
+los cuatro checks PASA, incluidos 1.173 pgTAP, 418 integraciones, E2E y
+upgrades poblados de PG16. El [PR #131](https://github.com/KaraAliOsman/framedex/pull/131)
+se integra con squash `52f3ee8102753727b7ba9e568ec18593b5d269d3`.
+Copilot, CodeRabbit y Devin omitieron revisión por sus límites/configuración;
+sus estados no se presentan como revisiones del código.
 
 Riesgos: el catálogo DEMO no certifica fabricante; sin orden de carriles físico
 se declara convención. Curvado pendiente mantiene fabricación incompleta.

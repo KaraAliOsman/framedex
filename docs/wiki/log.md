@@ -751,3 +751,14 @@ guardado/recarga/undo/rechazo, dos caras en editor y portal sellado, documentos
 solo lectura y conjuntos DEV sin autoridad fabricable. Se corrigen colisiones
 en 1024, cotas apiladas y dos hallazgos CSS del portal. Síntesis en
 `product/opening-drawings.md`; evidencia en `docs/redesign/P05-ACEPTACION.md`.
+
+## 2026-10-08 — P05 · integrado
+
+El PR #131 pasa los cuatro checks sobre `10805d8691adb589d6382c32e612f96a754ff0a4`
+en la corrida `37861454814` y se integra con squash
+`52f3ee8102753727b7ba9e568ec18593b5d269d3` en `integracion/v1`.
+La regresión comercial verifica tres rótulos humanos y dos ángulos de 15°;
+la identidad de fabricación continúa sellada. ESTADO y los refs de la wiki
+registran el merge. Los proveedores automáticos omitieron revisión por sus
+límites/configuración. La repetición local adicional ya pasó 1.173 pgTAP,
+418 integraciones y E2E; sus upgrades poblados PG16 siguen ejecutándose.
