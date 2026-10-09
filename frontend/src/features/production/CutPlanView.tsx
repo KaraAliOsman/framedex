@@ -199,6 +199,10 @@ function materialClass(material: string | undefined, kind?: string): string {
   }
 }
 
+function cutAngleText(value: string | null | undefined): string {
+  return value == null ? "Sin dato" : `${fmtMm(value)}°`;
+}
+
 /** Keep labels and hit targets in screen pixels while the material geometry
  * stays in the engine's proportional drawing space. Narrow pieces remain
  * selectable through the full-size HTML legend. */
@@ -375,10 +379,11 @@ function CutPlanBarSvg({
           const key = `b${bar.bar_index}-c${index}`;
           const code = `B${bar.bar_index}-${cut.sequence ?? index + 1}`;
           const shopCode = cut.piece_code ?? pieceCodes[cut.piece_id];
-          const angleL =
-            cut.angle_left != null && num(cut.angle_left) !== 90 ? num(cut.angle_left) : null;
-          const angleR =
-            cut.angle_right != null && num(cut.angle_right) !== 90 ? num(cut.angle_right) : null;
+          const showAngles =
+            cut.angle_left == null ||
+            cut.angle_right == null ||
+            num(cut.angle_left) !== 90 ||
+            num(cut.angle_right) !== 90;
           return (
             <li key={key}>
               <button
@@ -388,8 +393,8 @@ function CutPlanBarSvg({
               >
                 {cut.sequence ?? index + 1} · {shopCode ?? pieceLabel(cut, code)} ·{" "}
                 {fmtMm(cut.length_mm)} mm
-                {angleL !== null || angleR !== null
-                  ? ` · ${angleL === null ? "Sin dato" : `${angleL}°`} / ${angleR === null ? "Sin dato" : `${angleR}°`}`
+                {showAngles
+                  ? ` · ${cutAngleText(cut.angle_left)} / ${cutAngleText(cut.angle_right)}`
                   : ""}
               </button>
             </li>
@@ -533,10 +538,9 @@ export function CutPlanView({
     const isCut = selected.kind === "cut";
     const cut = piece as CutPlacement;
     const nest = piece as NestPlacement;
-    const angles =
-      isCut && (cut.angle_left != null || cut.angle_right != null)
-        ? `${fmtMm(cut.angle_left)}° / ${fmtMm(cut.angle_right)}°`
-        : null;
+    const angles = isCut
+      ? `${cutAngleText(cut.angle_left)} / ${cutAngleText(cut.angle_right)}`
+      : null;
     return {
       id: selected.shopCode ?? pieceLabel(piece, selected.code),
       planRef: selected.code,

@@ -168,4 +168,22 @@ describe("CutPlanView", () => {
     expect(aside.textContent).toContain("VID-4MM · S1-2");
     expect(aside.textContent).toContain("1\u2009400 × 1\u2009000");
   });
+
+  it("preserves declared square and fractional angles while keeping an absent end unknown", () => {
+    const plan = structuredClone(optimization);
+    const cut = plan.bars!.workshop_cut_plan![0].cuts[0];
+    cut.angle_left = "22.5000";
+    cut.angle_right = "90.0000";
+    const { container, rerender } = render(<CutPlanView optimization={plan} />);
+    const legend = () => container.querySelector(".cutplan-piece-legend button") as HTMLElement;
+    expect(legend().textContent).toContain("22,5° / 90°");
+    fireEvent.click(legend());
+    expect(container.querySelector(".cutplan-detail")!.textContent).toContain("22,5° / 90°");
+    expect(cut.angle_left).toBe("22.5000");
+    cut.angle_right = null;
+    rerender(<CutPlanView optimization={plan} />);
+    expect(legend().textContent).toContain("22,5° / Sin dato");
+    fireEvent.click(legend());
+    expect(container.querySelector(".cutplan-detail")!.textContent).toContain("22,5° / Sin dato");
+  });
 });
