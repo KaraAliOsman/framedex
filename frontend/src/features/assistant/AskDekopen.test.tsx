@@ -319,10 +319,10 @@ describe("AskDekopen — Agente mode", () => {
     expect(applied).toEqual([[{ op: "set_module_width", module: "m1", width_mm: 1400 }]]);
     expect(await screen.findByRole("button", { name: "Aplicado" })).toBeTruthy();
     const readsBeforeNew = jobMock.mock.calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "Nuevo", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Nuevo" }));
     await act(async () => settleAudit());
     expect(jobMock).toHaveBeenCalledTimes(readsBeforeNew);
-    expect(screen.queryByRole("button", { name: "ver trabajo", exact: true })).toBeNull();
+    expect(screen.queryByRole("button", { name: "ver trabajo" })).toBeNull();
   });
 
   it("refuses to apply ops once the product changed (stale plan)", async () => {
