@@ -32,6 +32,7 @@ Content-oriented map of durable project knowledge.
 - [Human addresses](product/human-addresses.md) — immutable tenant codes, physical label reconciliation, QR and exact presentation.
 - [Brand and sender identity](product/brand-identity.md) — profile-section signature, sealed manufacturer identity, onboarding and human-controlled mail recovery.
 - [Quotation document](product/quotation-document.md) — sealed preferences, exact commercial projections, revision alternatives and revocable PDF QR.
+- [Price workspace](product/price-workspace.md) — exact cascades and frozen replay, private purchase authority, margin approval and requester receipts.
 
 - [Current reality](state/current-reality.md) — volatile map of implementation state; must always carry a verification ref/date.
 

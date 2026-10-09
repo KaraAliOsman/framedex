@@ -120,7 +120,11 @@ def sale_price(org_id, product, system_id, color, quantity=1):
     """Read-only indicative selling price; no buying costs leave this adapter."""
     design = design_from_product(product, system_id, color)
     with commercial_backend():
-        org = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [org_id])[0]
+        organizations = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [org_id])
+        if not organizations:
+            raise contract_error(404, "organization_not_found",
+                                 "La organización ya no está disponible. Selecciona una organización para continuar.")
+        org = organizations[0]
         rules = rows("SELECT * FROM public.pricing_rules WHERE org_id=%s", [org_id])
         currency = org["currency"]
         if not rules:

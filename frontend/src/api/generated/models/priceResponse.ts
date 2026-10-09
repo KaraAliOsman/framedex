@@ -12,9 +12,12 @@ import type { LineResponse } from "./lineResponse";
 import type { PositionBreakdown } from "./positionBreakdown";
 import type { PriceResponseExtrasItem } from "./priceResponseExtrasItem";
 import type { PriceResponseRules } from "./priceResponseRules";
-import type { PriceResponseStateEnum } from "./priceResponseStateEnum";
+import type { PricingOperationStateEnum } from "./pricingOperationStateEnum";
 
 export interface PriceResponse {
+  workspace?: unknown;
+  resulted_in_issue?: boolean;
+  notification_unread?: boolean;
   costs_visible: boolean;
   /** @nullable */
   costs_reason: string | null;
@@ -30,7 +33,7 @@ export interface PriceResponse {
   discount_pct: string;
   pricing_mode: string;
   segment: string;
-  state: PriceResponseStateEnum;
+  state: PricingOperationStateEnum;
   currency: CurrencyEnum;
   lines: LineResponse[];
   cost_lines: CostLineResponse[];

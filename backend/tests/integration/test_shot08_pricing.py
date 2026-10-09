@@ -606,7 +606,7 @@ def test_pricing_http_valid_preview_remains_successful(committed_commercial_rows
                                                  format='json')
     assert response.status_code==200
     body = response.json()
-    assert set(body)=={'id','project_id','revision_code','discount_pct','state','currency','lines',
+    assert set(body)=={'workspace','id','project_id','revision_code','discount_pct','state','currency','lines',
                       'project_net','project_tax','project_gross','cost_lines','total_cost',
                       'project_code','project_name','client_name','pricing_mode','segment',
                       'positions_breakdown','authorities','rules','requested_by_email',
@@ -1178,7 +1178,7 @@ def test_position_cost_preserves_original_database_sqlstate(commercial_rows,monk
         with connection.cursor() as cursor:
             cursor.execute('SELECT * FROM public.missing_shot08_technical_authority')
 
-    monkeypatch.setattr(pricing_service.SystemParamsRepository,'load_visible',failed_technical_read)
+    monkeypatch.setattr('pricing.resolved.SystemParamsRepository.load_visible',failed_technical_read)
     with pytest.raises(DatabaseError) as rejected:
         with as_user(users['OWNER']), commercial_backend():
             repo = PricingRepository(org,date(2026,9,10),'CLP')

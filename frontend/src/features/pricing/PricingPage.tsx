@@ -1,20 +1,20 @@
 import { ValidatedForm } from "../../ui/FormValidation";
-import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
-import { projectsList, projectsRetrieve } from "../../api/generated/dekopen";
-
-import type { PriceResponse, ProjectResponse } from "../../api/generated/models";
-import { formatDateTime } from "../../format";
+import {
+  formatDate,
+  formatDateTime,
+  formatPercent,
+  formatRevision,
+  parseDecimalInput,
+} from "../../format";
 import { formatMoney } from "../money";
 import { apiMutator, ApiError } from "../../api/apiMutator";
-import { actionErrorDetail } from "../errors";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
-import { DeniedState, PageHeader, Tabs } from "../../ui";
-import { PositionThumb } from "../projects/PositionThumb";
-import { ExtraPriceLines } from "../projects/ExtraPriceLines";
+import { DemoBadge, DeniedState, DimLoader, PageHeader, Tabs } from "../../ui";
 import { t } from "../../i18n/es-CL";
-import { useCanvasStore } from "../canvas/canvasStore";
+import { ProjectPrices } from "./ProjectPrices";
 import "./pricing.css";
 
 const modes = [
@@ -56,64 +56,11 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
   REINFORCEMENT: "pricing.coverageKind.reinforcement",
 };
 function optionLabel(value: string): string {
+  if (value === "FIXTURE") return "Insumo DEMO";
   const key = optionLabels[value];
   return key ? t(key) : value;
 }
 
-/** Backend contract codes the estimator can actually act on — the generic
- * "revisa los campos" fallback taught users nothing about what failed. */
-const ERROR_KEYS: Record<string, Parameters<typeof t>[0]> = {
-  missing_cost: "pricing.errMissingCost",
-  ambiguous_cost_list: "pricing.errAmbiguousList",
-  stale_pricing_operation: "pricing.errStale",
-  mfa_required: "pricing.errMfa",
-  invalid_segment_discount: "pricing.errSegment",
-  missing_glass_authority: "pricing.errGlass",
-  commercial_revision_required: "pricing.errRevision",
-  pricing_configuration_not_found: "pricing.errConfig",
-  owner_approval_required: "pricing.errOwner",
-  operation_not_withdrawable: "pricing.errWithdraw",
-  pricing_permission_denied: "pricing.errDenied",
-  negative_margin: "pricing.errNegative",
-  target_margin_already_defines_final_price: "pricing.errTarget",
-};
-
-function pricingError(error: unknown, fallback: Parameters<typeof t>[0]): string {
-  if (error instanceof ApiError) {
-    const payload = error.payload as { error?: { code?: unknown; detail?: unknown } } | null;
-    // The backend detail names the failing position ("P04 · falta precio…")
-    // — keep that context; the mapped copy only serves when the payload
-    // carries a bare code.
-    const detail = payload?.error?.detail;
-    if (typeof detail === "string" && detail.trim() !== "") return detail;
-    const code = payload?.error?.code;
-    if (typeof code === "string" && ERROR_KEYS[code]) return t(ERROR_KEYS[code]);
-  }
-  return actionErrorDetail(error, t(fallback));
-}
-
-/** Contract codes whose fix lives in the pricing admin surface — the
- * blocker links the estimator to the missing data instead of stopping at
- * a red sentence. */
-const FIXABLE_CODES = new Set([
-  "missing_glass_authority",
-  "missing_cost",
-  "ambiguous_cost_list",
-  "ambiguous_authority",
-  "cost_list_not_found",
-  "incompatible_cost_unit",
-  "missing_fx_authority",
-  "pricing_rules_not_found",
-  "pricing_configuration_not_found",
-]);
-function pricingFixCode(error: unknown): string | null {
-  if (!(error instanceof ApiError)) return null;
-  const payload = error.payload as { error?: { code?: unknown } } | null;
-  const code = payload?.error?.code;
-  return typeof code === "string" && FIXABLE_CODES.has(code) ? code : null;
-}
-/** The seeded DEFAULT context is a real value, not a display string — render
- * the operator-facing label everywhere it surfaces (review m2). */
 function contextLabel(value: unknown): string {
   return value === "DEFAULT" ? t("pricing.contextDefault") : String(value);
 }
@@ -122,37 +69,51 @@ const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})/;
 /** Rates store as fractions (0.35); people think in percents. Render the
  * percent value with at most two decimals — never float artifacts. */
 function pctDisplay(value: unknown): string {
-  const pct = Number(value) * 100;
-  if (!Number.isFinite(pct)) return "0";
-  return pct.toFixed(2).replace(/\.?0+$/, "");
+  const decimal = parseDecimalInput(String(value), 8);
+  if (decimal === null) return "";
+  const [whole = "0", tail = ""] = decimal.split(".");
+  const digits = tail.padEnd(2, "0");
+  const integer = BigInt(whole) * 100n + BigInt(digits.slice(0, 2));
+  const fraction = digits.slice(2).replace(/0+$/, "");
+  return `${integer}${fraction ? `.${fraction}` : ""}`;
 }
 /** Stored values are ISO; operators read DD-MM-AAAA everywhere else in the
  * product. Render the business format, keep the raw value for submission. */
 function renderFieldValue(
   field: Field,
   value: unknown,
-  refs?: { costLists?: Row[]; configurations?: Row[] },
+  refs?: { costLists?: Row[]; configurations?: Row[]; item?: Row },
 ): string {
-  if (value === undefined || value === null || value === "") return "—";
+  if (value === undefined || value === null || value === "") return "Sin dato";
   const text = String(value);
   // FK references render the authority's human label, never the raw UUID.
   if (field.name === "cost_list_id") {
     const list = refs?.costLists?.find((row) => String(row.id) === text);
-    return list ? `${list.supplier_name} · ${list.currency}` : "—";
+    return list ? `${list.supplier_name} · ${list.currency}` : "Sin dato";
   }
   if (field.name === "configuration_id") {
     const config = refs?.configurations?.find((row) => String(row.id) === text);
     return config
       ? `${contextLabel(config.context_code)} · ${optionLabel(String(config.typology))}`
-      : "—";
+      : "Sin dato";
   }
   if (field.type === "date") {
     const match = ISO_DAY.exec(text);
     if (match) return `${match[3]}-${match[2]}-${match[1]}`;
   }
-  if (field.type === "percent") return `${pctDisplay(text)} %`;
-  if (field.name === "unit_cost" || field.name === "catalog_price" || field.name === "price")
-    return formatMoney(text, "CLP");
+  if (field.type === "percent") return formatPercent(text, "fraction");
+  if (field.options) return optionLabel(text);
+  if (["unit_cost", "catalog_price", "price", "rate_per_m2"].includes(field.name)) {
+    const authority =
+      field.name === "unit_cost"
+        ? refs?.costLists?.find((row) => row.id === refs.item?.cost_list_id)
+        : field.name === "price"
+          ? refs?.configurations?.find((row) => row.id === refs.item?.configuration_id)
+          : refs?.item;
+    return typeof authority?.currency === "string"
+      ? formatMoney(text, authority.currency)
+      : "Sin dato: moneda de la autoridad";
+  }
   if (field.name === "created_at") return formatDateTime(text);
   if (field.name === "entity") return t(auditEntityLabels[text] ?? "pricing.auditEntity.other");
   if (field.name === "field") return t(auditActionLabels[text] ?? "pricing.auditAction.other");
@@ -188,7 +149,15 @@ const fields: Record<string, Field[]> = {
   ],
   rules: [
     { name: "pricing_mode", label: "pricing.mode", options: modes },
+    { name: "minimum_margin_pct", label: "pricing.minimumMargin", type: "percent", initial: "25" },
     { name: "default_margin_pct", label: "pricing.margin", type: "percent", initial: "35" },
+    { name: "maximum_margin_pct", label: "pricing.maximumMargin", type: "percent", initial: "60" },
+    {
+      name: "discount_approval_pct",
+      label: "pricing.discountApproval",
+      type: "percent",
+      initial: "10",
+    },
     { name: "tax_rate_pct", label: "pricing.tax", type: "percent", initial: "19" },
     { name: "waste_factor_pct", label: "pricing.waste", type: "percent", initial: "8" },
     { name: "labor_rate_per_m2", label: "pricing.labor", initial: "15000" },
@@ -343,8 +312,8 @@ function CommercialWorkspace({
           {t("projects.back")}
         </Link>
       )}
-      <PageHeader title={t("crumb.pricingCommercial")} />
-      <CommercialOperations request={request} owner={owner} boundProjectId={projectId} />
+      <PageHeader title={projectId ? "Precio del proyecto" : "Precios y aprobaciones"} />
+      <ProjectPrices request={request} owner={owner} projectId={projectId} />
     </section>
   );
 }
@@ -357,12 +326,17 @@ export function PricingPage(): JSX.Element {
 }
 
 function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
-  const [resource, setResource] = useState<string>("cost-lists");
+  const [searchParams] = useSearchParams();
+  const [resource, setResource] = useState<string>(() => {
+    const section = searchParams.get("section");
+    return section && sections.some((name) => name === section) ? section : "cost-lists";
+  });
   const [items, setItems] = useState<Row[]>([]);
   const [costLists, setCostLists] = useState<Row[]>([]);
   const [configurations, setConfigurations] = useState<Row[]>([]);
   const [catalogSkus, setCatalogSkus] = useState<Row[]>([]);
   const [editing, setEditing] = useState<Row | null>(null);
+  const coverageSelection = useRef<Row | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [revision, setRevision] = useState(0);
@@ -388,7 +362,8 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
   useEffect(() => {
     let current = true;
     setItems([]);
-    setEditing(null);
+    setEditing(resource === "cost-items" ? coverageSelection.current : null);
+    coverageSelection.current = null;
     setMessage("");
     setBusy(true);
     void request<{ items: Row[] }>(`admin/${resource}/`)
@@ -447,12 +422,18 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
         else values[field.name] = "";
         continue;
       }
-      values[field.name] =
-        field.type === "percent"
-          ? Number(value) / 100
-          : field.type === "number"
-            ? Number(value)
-            : value;
+      if (field.type === "percent" || field.type === "number") {
+        const decimal = parseDecimalInput(value, 8);
+        if (decimal === null) {
+          setMessage("Revisa el número; usa coma o punto decimal.");
+          return;
+        }
+        if (field.type === "percent") {
+          const [whole = "0", tail = ""] = decimal.split(".");
+          const integer = whole.padStart(3, "0");
+          values[field.name] = `${integer.slice(0, -2)}.${integer.slice(-2)}${tail}`;
+        } else values[field.name] = decimal;
+      } else values[field.name] = value;
     }
     if (resource === "cost-lists" || resource === "configurations")
       values.is_active = data.get("is_active") === "on";
@@ -460,7 +441,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
     setMessage("");
     try {
       await request(`admin/${resource}/`, "POST", {
-        ...(editing ? { id: editing.id } : {}),
+        ...(editing?.id ? { id: editing.id } : {}),
         values,
         reason: data.get("reason"),
       });
@@ -497,7 +478,12 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
         value={resource}
       />
       {message && <p role="alert">{message}</p>}
-      {busy && <p role="status">{t("pricing.loading")}</p>}
+      {busy && (
+        <p className="price-loading" role="status">
+          <DimLoader label={t("pricing.loading")} />
+          {t("pricing.loading")}
+        </p>
+      )}
       <div className="pricing-grid">
         <div className="pricing-records">
           <button type="button" disabled={busy} onClick={() => setRevision((value) => value + 1)}>
@@ -507,7 +493,18 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
           {resource === "audits" ? (
             items.map((item) => <AuditCard key={String(item.id)} item={item} />)
           ) : resource === "coverage" ? (
-            <CoverageList items={items} />
+            <CoverageList
+              items={items}
+              onLoad={(item) => {
+                coverageSelection.current = {
+                  sku: item.sku ?? null,
+                  description: item.name ?? null,
+                  unit: item.required_unit ?? null,
+                  item_type: item.kind === "REINFORCEMENT" ? "PROFILE" : (item.kind ?? null),
+                };
+                setResource("cost-items");
+              }}
+            />
           ) : (
             items.map((item) => (
               <article key={String(item.id)}>
@@ -530,7 +527,11 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                     <div key={field.name}>
                       <dt>{t(field.label)}</dt>
                       <dd>
-                        {renderFieldValue(field, item[field.name], { costLists, configurations })}
+                        {renderFieldValue(field, item[field.name], {
+                          costLists,
+                          configurations,
+                          item,
+                        })}
                       </dd>
                     </div>
                   ))}
@@ -550,7 +551,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
             onSubmit={(event) => void save(event)}
             className="pricing-form"
           >
-            <h2>{t(editing ? "pricing.editRecord" : "pricing.newRecord")}</h2>
+            <h2>{t(editing?.id ? "pricing.editRecord" : "pricing.newRecord")}</h2>
             {fields[resource].map((field) => (
               <label key={field.name}>
                 {t(field.label)}
@@ -565,7 +566,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                     {(field.name === "cost_list_id" ? costLists : configurations).map((row) => (
                       <option key={String(row.id)} value={String(row.id)}>
                         {field.name === "cost_list_id"
-                          ? `${row.supplier_name} · ${row.currency} · ${row.valid_from}`
+                          ? `${row.supplier_name} · ${row.currency} · ${formatDate(String(row.valid_from))}`
                           : `${contextLabel(row.context_code)} · ${optionLabel(String(row.typology))} · ${optionLabel(String(row.pricing_mode))}`}
                       </option>
                     ))}
@@ -663,10 +664,18 @@ const coverageKindLabels: Record<string, Parameters<typeof t>[0]> = {
   GLASS: "pricing.coverageKind.glass",
   HARDWARE: "pricing.coverageKind.hardware",
   REINFORCEMENT: "pricing.coverageKind.reinforcement",
+  PANEL: "pricing.panel",
+  FITTING: "pricing.hardware",
 };
 
-function CoverageList({ items }: { items: Row[] }): JSX.Element {
-  const [onlyMissing, setOnlyMissing] = useState(false);
+function CoverageList({
+  items,
+  onLoad,
+}: {
+  items: Row[];
+  onLoad: (item: Row) => void;
+}): JSX.Element {
+  const [onlyMissing, setOnlyMissing] = useState(true);
   const missing = items.filter((item) => Number(item.active_cost_items ?? 0) === 0);
   const shown = onlyMissing ? missing : items;
   return (
@@ -695,8 +704,19 @@ function CoverageList({ items }: { items: Row[] }): JSX.Element {
             <span>{String(item.name)}</span>
             <span className="coverage-card__meta">
               {t(coverageKindLabels[String(item.kind)] ?? "pricing.coverageKind.other")} ·{" "}
-              {String(item.required_unit)}
+              {optionLabel(String(item.required_unit))}
             </span>
+            {item.is_demo === true && (
+              <DemoBadge source="Costo sintético; carga una lista de proveedor para sustituirlo." />
+            )}
+            {uncovered && (
+              <>
+                <p>{String(item.blocker ?? "Falta un costo vigente.")}</p>
+                <button type="button" onClick={() => onLoad(item)}>
+                  Cargar costo de {String(item.sku)}
+                </button>
+              </>
+            )}
             <span className="status-chip" data-status={uncovered ? "declined" : "approved"}>
               {uncovered
                 ? t("pricing.coverageMissing")
@@ -713,6 +733,8 @@ const auditInternalKeys = new Set(["id", "org_id", "updated_at", "created_at"]);
 
 function auditRecordLabel(entity: string, record: Record<string, unknown> | null): string {
   if (!record) return "";
+  if (entity === "pricing_operations")
+    return `${formatRevision(String(record.revision_code ?? "REV-A"))} · ${auditValue(record.state)}`;
   for (const key of [
     "sku",
     "commercial_sku",
@@ -725,17 +747,57 @@ function auditRecordLabel(entity: string, record: Record<string, unknown> | null
     "revision_code",
   ]) {
     const value = record[key];
-    if (typeof value === "string" && value !== "") return value;
+    if (typeof value === "string" && value !== "") return contextLabel(value);
   }
-  const id = record["entity_id"] ?? record["id"];
-  return typeof id === "string" ? `${entity} ${id.slice(0, 8)}` : entity;
+  return t(auditEntityLabels[entity] ?? "pricing.auditEntity.other");
 }
 
 function auditValue(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "object") return JSON.stringify(value);
+  if (value === null || value === undefined || value === "") return "Sin dato";
+  if (typeof value === "object") return "Autoridad registrada";
   const text = String(value);
-  return text.length > 80 ? `${text.slice(0, 80)}…` : text;
+  const states: Record<string, string> = {
+    PREVIEW: "Propuesta sin aplicar",
+    PENDING: "Espera aprobación",
+    APPLIED: "Aplicado",
+    REJECTED: "Rechazado",
+    WITHDRAWN: "Retirado",
+    OWNER: "Dueño",
+    ESTIMATOR: "Estimador",
+    RETAIL: "Particular",
+    ARCHITECT: "Arquitecto",
+    CONSTRUCTION: "Constructora",
+  };
+  if (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(text)) return "Identidad registrada";
+  if (/^\d{4}-\d{2}-\d{2}/.test(text))
+    return text.includes("T") ? formatDateTime(text) : formatDate(text);
+  return states[text] ?? (optionLabels[text] ? optionLabel(text) : contextLabel(text));
+}
+
+const auditFields: Record<string, string> = {
+  state: "Estado",
+  reason: "Motivo",
+  revision_code: "Revisión",
+  approved_at: "Fecha de decisión",
+  requested_by_email: "Solicitante",
+  approved_by: "Decidió",
+  requested_by: "Solicitó",
+  pricing_mode: "Modo de precio",
+  currency: "Moneda",
+  context_code: "Lista comercial",
+  effective_date: "Fecha de costos",
+  discount_pct: "Descuento",
+  target_margin: "Margen solicitado",
+  segment: "Segmento",
+  fx_snapshot_id: "Conversión de moneda",
+  is_active: "Vigente",
+};
+function auditFieldValue(field: string, value: unknown): string {
+  if (["target_margin", "discount_pct"].includes(field) && value !== null && value !== undefined)
+    return formatPercent(String(value), "fraction");
+  if (field === "revision_code") return formatRevision(String(value ?? ""));
+  if (field === "approved_by") return value ? "Dueño · identidad registrada" : "Sin decisión";
+  return auditValue(value);
 }
 
 function auditDiffs(
@@ -744,11 +806,30 @@ function auditDiffs(
 ): [string, string, string][] {
   if (!after) return [];
   const diffs: [string, string, string][] = [];
-  for (const [key, value] of Object.entries(after)) {
-    if (auditInternalKeys.has(key)) continue;
-    const prior = before?.[key];
+  const current = {
+    ...after,
+    ...(typeof after.request === "object" && after.request ? after.request : {}),
+  };
+  const previous = before
+    ? { ...before, ...(typeof before.request === "object" && before.request ? before.request : {}) }
+    : null;
+  for (const [key, value] of Object.entries(current)) {
+    if (
+      auditInternalKeys.has(key) ||
+      key.endsWith("_id") ||
+      ["request", "result", "input_snapshot", "source_revision", "requested_by"].includes(key)
+    )
+      continue;
+    const prior = previous?.[key];
     if (before === null || JSON.stringify(prior) !== JSON.stringify(value)) {
-      diffs.push([key, auditValue(prior), auditValue(value)]);
+      const field = Object.values(fields)
+        .flat()
+        .find((item) => item.name === key);
+      diffs.push([
+        auditFields[key] ?? (field ? t(field.label) : "Condición registrada"),
+        auditFieldValue(key, prior),
+        auditFieldValue(key, value),
+      ]);
     }
   }
   return diffs;
@@ -781,7 +862,7 @@ function AuditCard({ item }: { item: Row }): JSX.Element {
         <ul className="audit-card__diffs">
           {diffs.slice(0, 8).map(([key, oldValue, newValue]) => (
             <li key={key}>
-              <code>{key}</code>: <span>{oldValue}</span> → <strong>{newValue}</strong>
+              {key}: <span>{oldValue}</span> → <strong>{newValue}</strong>
             </li>
           ))}
           {diffs.length > 8 && (
@@ -803,6 +884,13 @@ function AuditCard({ item }: { item: Row }): JSX.Element {
         {item.reason ? <span>{String(item.reason)}</span> : null}
         <time dateTime={String(item.created_at)}>{formatDateTime(String(item.created_at))}</time>
       </footer>
+      <details>
+        <summary>Detalles técnicos</summary>
+        <p>
+          Registro: {String(item.entity_id ?? item.id)} · Actor:{" "}
+          {String(item.actor_user_id ?? "Sin dato")}
+        </p>
+      </details>
     </article>
   );
 }
@@ -818,6 +906,7 @@ function ImportCosts({
   onSaved: () => void;
 }): JSX.Element {
   const [preview, setPreview] = useState<Row[]>([]);
+  const [previewCurrency, setPreviewCurrency] = useState<string | null>(null);
   const [pending, setPending] = useState<FormData | null>(null);
   const [fileName, setFileName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -854,6 +943,7 @@ function ImportCosts({
     activeRequest.current = { id, apply };
     pendingAuthority.current = null;
     setPreview([]);
+    setPreviewCurrency(null);
     setPending(null);
     setError("");
     setBusy(true);
@@ -863,6 +953,8 @@ function ImportCosts({
       const fresh = revision === inputRevision.current;
       if (current && fresh) {
         setPreview(response.items);
+        const currency = costLists.find((row) => row.id === body.get("cost_list_id"))?.currency;
+        setPreviewCurrency(typeof currency === "string" ? currency : null);
         if (!apply) {
           pendingAuthority.current = body;
           setPending(body);
@@ -892,6 +984,7 @@ function ImportCosts({
           pendingAuthority.current = null;
           setPending(null);
           setPreview([]);
+          setPreviewCurrency(null);
           setError("");
         }}
         onSubmit={(event) => {
@@ -917,7 +1010,8 @@ function ImportCosts({
             <option value="">{t("pricing.chooseAuthority")}</option>
             {costLists.map((row) => (
               <option key={String(row.id)} value={String(row.id)}>
-                {String(row.supplier_name)} · {String(row.currency)} · {String(row.valid_from)}
+                {String(row.supplier_name)} · {String(row.currency)} ·{" "}
+                {formatDate(String(row.valid_from))}
               </option>
             ))}
           </select>
@@ -966,7 +1060,9 @@ function ImportCosts({
             <input name="reason" required />
           </label>
         </div>
-        <button disabled={busy}>{t("pricing.previewImport")}</button>
+        <button type="submit" disabled={busy}>
+          {t("pricing.previewImport")}
+        </button>
       </ValidatedForm>
       {error && <p role="alert">{error}</p>}
       {preview.length > 0 && (
@@ -983,7 +1079,11 @@ function ImportCosts({
               <tr key={String(row.sku)}>
                 <td>{String(row.sku)}</td>
                 <td>{String(row.unit)}</td>
-                <td>{formatMoney(String(row.unit_cost), "CLP")}</td>
+                <td>
+                  {previewCurrency
+                    ? formatMoney(String(row.unit_cost), previewCurrency)
+                    : "Sin dato: moneda de la lista"}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -995,1244 +1095,6 @@ function ImportCosts({
         </button>
       )}
     </section>
-  );
-}
-
-type Operation = PriceResponse;
-
-/** One position's technical price formation: what the engine attributed to
- * materials, the waste/labour rates the authority supplied, and how the line
- * net falls out of unit cost × quantity × discount. */
-function CostComposition({
-  entry,
-  currency,
-  discount,
-  lineNet,
-  lineCost,
-}: {
-  entry: NonNullable<PriceResponse["positions_breakdown"]>[number];
-  currency: string;
-  discount: number;
-  lineNet: string;
-  lineCost: string;
-}): JSX.Element {
-  const area = Number(entry.area_m2);
-  const rates = Number(entry.labor_rate_per_m2) + Number(entry.installation_rate_per_m2);
-  const labour = Number.isFinite(area) && Number.isFinite(rates) ? area * rates : null;
-  // BOM cut rows map 1:1 into components — the estimator reads materials,
-  // not cuts, so identical SKUs aggregate into one row.
-  const grouped = new Map<
-    string,
-    { kind: string; sku: string; unit: string; qty: number; cents: bigint }
-  >();
-  for (const component of entry.composition ?? []) {
-    const key = `${component.kind}|${component.sku}|${component.unit}`;
-    const existing = grouped.get(key);
-    const cents = moneyCents(component.cost ?? "0") ?? 0n;
-    if (existing) {
-      existing.qty += Number(component.quantity);
-      existing.cents += cents;
-    } else {
-      grouped.set(key, {
-        kind: component.kind ?? "",
-        sku: component.sku ?? "",
-        unit: component.unit ?? "",
-        qty: Number(component.quantity),
-        cents,
-      });
-    }
-  }
-  const netCents = moneyCents(lineNet);
-  const costCents = moneyCents(lineCost);
-  const marginPct =
-    netCents !== null && costCents !== null && netCents > 0n
-      ? Number(((netCents - costCents) * 10000n) / netCents) / 100
-      : null;
-  return (
-    <div className="cost-composition">
-      <table className="cost-composition__table">
-        <tbody>
-          {[...grouped.values()].map((component, index) => (
-            <tr key={index}>
-              <td>{optionLabel(component.kind)}</td>
-              <td>{component.sku}</td>
-              <td>
-                {component.qty} {optionLabel(component.unit)}
-              </td>
-              <td>
-                {formatMoney(
-                  `${component.cents / 100n}.${`${component.cents % 100n}`.padStart(2, "0")}`,
-                  currency,
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="cost-composition__math">
-        {t("pricing.materials")} {formatMoney(entry.materials_cost ?? "0", currency)} +{" "}
-        {t("pricing.wasteShort")} {pctDisplay(entry.waste_pct)}%
-        {labour !== null &&
-          ` + ${t("pricing.laborShort")} ${formatMoney(String(labour), currency)}`}{" "}
-        → {t("pricing.unitCost")} {formatMoney(entry.unit_cost ?? "0", currency)}
-        {marginPct !== null && ` · ${t("pricing.marginRealized")} ${marginPct.toFixed(1)}%`}
-        {discount > 0 && ` · ${t("pricing.discount")} ${pctDisplay(discount)}%`} →{" "}
-        {formatMoney(lineNet, currency)}
-      </p>
-    </div>
-  );
-}
-
-/** Whole-percent-free margin: (net − cost) / net, both Decimal strings —
- * computed in cents so the display never carries a float artifact. */
-function moneyCents(value: string | null | undefined): bigint | null {
-  if (value == null) return null;
-  const match = value.trim().match(/^(-?)(\d*)(?:\.(\d*))?$/);
-  if (match === null || (match[2] === "" && (match[3] ?? "") === "")) return null;
-  const units = match[2] === "" ? "0" : match[2];
-  const fraction = `${match[3] ?? ""}00`.slice(0, 2);
-  return BigInt(`${match[1]}${units}${fraction}`);
-}
-function marginText(net: string, cost: string | null, currency: string): string {
-  const netCents = moneyCents(net);
-  const costCents = moneyCents(cost);
-  if (netCents === null || costCents === null || netCents <= 0n) return "—";
-  const diffCents = netCents - costCents;
-  const margin = Number((diffCents * 10_000n) / netCents) / 100;
-  const whole = diffCents / 100n;
-  const cents = diffCents % 100n;
-  const signed = diffCents < 0n ? "-" : "";
-  const text = `${signed}${whole < 0n ? -whole : whole}.${`${cents < 0n ? -cents : cents}`.padStart(2, "0")}`;
-  return `${formatMoney(text, currency)} · ${margin.toFixed(1)} %`;
-}
-
-/** §03-D — the pricing decision surface: the estimator and the approver
- * read the SAME frozen numbers — per-position cost vs selling, project
- * margin, the recorded reason and who applied/rejected it. */
-
-/** Nested authority records flatten to `key.sub: value` pairs — String(value)
- * on an object renders '[object Object]', which the audit panel shipped. */
-function flattenAuthority(value: unknown, prefix = ""): string[] {
-  if (Array.isArray(value)) {
-    return [`${prefix}: ${value.length} ítems`];
-  }
-  if (value !== null && typeof value === "object") {
-    return Object.entries(value as Record<string, unknown>).flatMap(([key, sub]) =>
-      flattenAuthority(sub, prefix ? `${prefix}.${key}` : key),
-    );
-  }
-  return [`${prefix}: ${String(value)}`];
-}
-
-function OperationDecision({
-  operation,
-  owner,
-  busy,
-  reasonReady,
-  boundProject,
-  projectLabel,
-  currentUserId,
-  onApply,
-  stale,
-  onReject,
-  onWithdraw,
-}: {
-  operation: Operation;
-  owner: boolean;
-  busy: boolean;
-  reasonReady: boolean;
-  boundProject?: ProjectResponse;
-  projectLabel?: string;
-  currentUserId?: string;
-  stale?: boolean;
-  onApply: () => void;
-  onReject: () => void;
-  onWithdraw?: () => void;
-}): JSX.Element {
-  const costsVisible = owner && operation.costs_visible !== false && operation.total_cost != null;
-  const costs = new Map(
-    (operation.cost_lines ?? []).map((line) => [line.position_index, line.line_cost]),
-  );
-  // Buying composition is available only to the owner. Estimators read the
-  // selling sublines supplied by the same frozen pricing authority.
-  const breakdowns = new Map(
-    (operation.positions_breakdown ?? []).map((entry) => [entry.position_index, entry]),
-  );
-  // Position metadata joins only when the operation targets the live
-  // revision of the project it actually belongs to — a stale operation's
-  // indexes can point at moved/deleted positions, and a project fetched
-  // for another operation must never loan its labels, so both stay empty
-  // rather than mislead.
-  const isBoundProject = boundProject?.id === operation.project_id;
-  const positions = new Map(
-    (isBoundProject && operation.revision_code === boundProject?.current_revision
-      ? (boundProject.positions ?? [])
-      : []
-    ).map((position) => [position.position_index, position]),
-  );
-  // Baseline for the delta: the live priced totals, or — after a successor
-  // revision zeroed them — the latest sealed version's snapshot totals (what
-  // the customer was actually quoted). Without it CURRENT→PROPOSED is
-  // invisible exactly when it matters: the reprice decision.
-  const sealedBaseline = isBoundProject
-    ? [...(boundProject?.versions ?? [])].filter((version) => version.sealed_price_gross).at(-1)
-    : undefined;
-  const baselineGross =
-    boundProject?.pricing_current && boundProject.total_price_gross
-      ? boundProject.total_price_gross
-      : (sealedBaseline?.sealed_price_gross ?? null);
-  const baselineCurrency = boundProject?.pricing_current
-    ? boundProject.currency
-    : (sealedBaseline?.sealed_currency ?? boundProject?.currency);
-  // A delta is only meaningful when both sides share a currency — a
-  // historical operation in another currency shows its own totals instead.
-  const sameCurrency = baselineCurrency === operation.currency;
-  const diff =
-    isBoundProject && baselineGross && Number(baselineGross) > 0 && sameCurrency
-      ? Number(operation.project_gross) - Number(baselineGross)
-      : null;
-  const diffPct =
-    diff !== null && Number(baselineGross) > 0 ? (diff / Number(baselineGross)) * 100 : null;
-  // Per-position delta: the live price_net of the bound revision vs the
-  // proposed line_net — same position index, same currency, never a guess.
-  const canLineDelta = isBoundProject && sameCurrency;
-  const columnCount = 6 + (costsVisible ? 2 : 0) + (canLineDelta ? 1 : 0);
-  // Category rollup: every cost component across all positions aggregated by
-  // kind — the 'why' behind the total, in exact cents (no float artifacts).
-  const kindTotals = new Map<string, bigint>();
-  for (const entry of operation.positions_breakdown ?? []) {
-    for (const component of entry.composition ?? []) {
-      const cents = moneyCents(component.cost ?? "0");
-      if (cents === null) continue;
-      const kind = component.kind ?? "OTHER";
-      kindTotals.set(kind, (kindTotals.get(kind) ?? 0n) + cents);
-    }
-  }
-  const kindRows = [...kindTotals.entries()].sort((a, b) =>
-    a[1] > b[1] ? -1 : a[1] < b[1] ? 1 : 0,
-  );
-  const discount = Number(operation.discount_pct ?? 0);
-  // finish_lines applies the discount per line, so net/(1−d) reproduces the
-  // pre-discount list price exactly — no second authority needed.
-  const listNet =
-    discount > 0 && discount < 1 ? Number(operation.project_net) / (1 - discount) : null;
-  const netCents = moneyCents(operation.project_net);
-  const costCents = moneyCents(operation.total_cost);
-  const realizedPct =
-    netCents !== null && costCents !== null && netCents > 0n
-      ? Number(((netCents - costCents) * 10000n) / netCents) / 100
-      : null;
-  const objective = Number(operation.rules?.default_margin_pct ?? NaN);
-  // Compare at the displayed precision (marginText renders toFixed(1)):
-  // a realized 34.9998% shows as "35.0 %" — flagging it "below objective"
-  // next to that readout would contradict the number on screen.
-  const marginBelow =
-    realizedPct !== null &&
-    Number.isFinite(objective) &&
-    Math.round(realizedPct * 10) / 10 < objective * 100;
-  return (
-    <article className="operation-decision">
-      <header className="operation-decision__head">
-        <span className="status-chip" data-status={operation.state.toLowerCase()}>
-          {t(
-            operation.state === "PENDING"
-              ? "pricing.pending"
-              : operation.state === "APPLIED"
-                ? "pricing.applied"
-                : operation.state === "REJECTED"
-                  ? "pricing.rejected"
-                  : operation.state === "WITHDRAWN"
-                    ? "pricing.withdrawn"
-                    : "pricing.notApplied",
-          )}
-        </span>
-        {projectLabel && (
-          <span className="operation-decision__meta">
-            {t("pricing.projectId")}: {projectLabel}
-          </span>
-        )}
-        <span className="operation-decision__meta">
-          {operation.revision_code} · {t("pricing.discount")} {pctDisplay(operation.discount_pct)}%
-          · <time dateTime={operation.created_at}>{formatDateTime(operation.created_at)}</time>
-        </span>
-        {stale && <p className="operation-decision__stale">{t("pricing.staleHint")}</p>}
-      </header>
-
-      {diff !== null && baselineGross ? (
-        <div className="operation-compare">
-          <div className="operation-compare__cell">
-            <span>
-              {t("pricing.currentTotal")}
-              {sealedBaseline && !boundProject?.pricing_current
-                ? ` · ${sealedBaseline.revision_code}`
-                : ""}
-            </span>
-            <strong>{formatMoney(baselineGross, operation.currency)}</strong>
-          </div>
-          <span className="operation-compare__arrow" aria-hidden>
-            →
-          </span>
-          <div className="operation-compare__cell">
-            <span>{t("pricing.proposedTotal")}</span>
-            <strong>{formatMoney(operation.project_gross, operation.currency)}</strong>
-          </div>
-          <div
-            className="operation-compare__cell operation-compare__delta"
-            data-negative={diff < 0 || undefined}
-          >
-            <span>{t("pricing.deltaLabel")}</span>
-            <strong>
-              {diff > 0 ? "+" : ""}
-              {formatMoney(String(diff), operation.currency)}
-              {diffPct !== null && (
-                <small>
-                  {" "}
-                  ({diffPct > 0 ? "+" : ""}
-                  {diffPct.toFixed(1)}%)
-                </small>
-              )}
-            </strong>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="operation-totals">
-        {costsVisible && (
-          <div className="operation-total">
-            <dt>{t("pricing.totalCost")}</dt>
-            <dd>{formatMoney(operation.total_cost!, operation.currency)}</dd>
-          </div>
-        )}
-        {costsVisible && (
-          <div className="operation-total">
-            <dt>{t("pricing.marginNet")}</dt>
-            <dd>
-              {marginText(operation.project_net, operation.total_cost, operation.currency)}
-              {marginBelow && (
-                <span className="operation-warning">{t("pricing.marginBelowObjective")}</span>
-              )}
-            </dd>
-          </div>
-        )}
-        {listNet !== null && (
-          <div className="operation-total">
-            <dt>{t("pricing.listPrice")}</dt>
-            <dd>{formatMoney(String(listNet), operation.currency)}</dd>
-          </div>
-        )}
-        {(operation.extras ?? []).map((item, index) => (
-          <div className="operation-total" key={`${item.label}-${index}`}>
-            <dt>{String(item.label ?? t("pricing.extras"))}</dt>
-            <dd>{formatMoney(String(item.amount ?? "0"), operation.currency)}</dd>
-          </div>
-        ))}
-        <div className="operation-total">
-          <dt>{t("pricing.net")}</dt>
-          <dd>{formatMoney(operation.project_net, operation.currency)}</dd>
-        </div>
-        <div className="operation-total">
-          <dt>{t("pricing.taxTotal")}</dt>
-          <dd>{formatMoney(operation.project_tax, operation.currency)}</dd>
-        </div>
-        <div className="operation-total operation-total--gross">
-          <dt>{t("pricing.gross")}</dt>
-          <dd>{formatMoney(operation.project_gross, operation.currency)}</dd>
-        </div>
-        {diff !== null && diff !== 0 && (
-          <div className="operation-total">
-            <dt>{t("pricing.vsCurrent")}</dt>
-            <dd data-negative={diff < 0 || undefined}>
-              {diff > 0 ? "+" : ""}
-              {formatMoney(String(diff), operation.currency)}
-            </dd>
-          </div>
-        )}
-      </div>
-
-      {!costsVisible && (
-        <p className="operation-decision__audit">
-          {operation.costs_reason ??
-            "Los costos de compra son confidenciales. El dueño o jefe de taller puede consultarlos."}
-        </p>
-      )}
-      <div className="operation-lines__wrap">
-        <table className="operation-lines">
-          <caption>{t("pricing.perPosition")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">{t("projects.location")}</th>
-              <th scope="col">{t("pricing.quantity")}</th>
-              <th scope="col">{t("pricing.unitPrice")}</th>
-              <th scope="col">{t("pricing.lineDiscount")}</th>
-              {costsVisible && <th scope="col">{t("pricing.lineCost")}</th>}
-              <th scope="col">{t("pricing.net")}</th>
-              {costsVisible && <th scope="col">{t("pricing.marginNet")}</th>}
-              {canLineDelta && <th scope="col">{t("pricing.lineDelta")}</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {(operation.lines ?? []).map((line) => {
-              const position = positions.get(line.position_index);
-              const breakdown = breakdowns.get(line.position_index);
-              const lineDiscount = line.discount_pct ? Number(line.discount_pct) : null;
-              return (
-                <Fragment key={line.position_index}>
-                  <tr>
-                    <td>
-                      <span className="operation-lines__vano">
-                        {position?.design && <PositionThumb design={position.design} />}
-                        {line.position_index}
-                      </span>
-                    </td>
-                    <td>{position?.location_tag || "—"}</td>
-                    <td>{line.quantity ?? position?.quantity ?? "—"}</td>
-                    <td className="operation-lines__money">
-                      {line.unit_price != null
-                        ? formatMoney(line.unit_price, operation.currency)
-                        : "—"}
-                    </td>
-                    <td>
-                      {lineDiscount !== null && lineDiscount > 0
-                        ? `−${pctDisplay(lineDiscount)} %`
-                        : "—"}
-                    </td>
-                    {costsVisible && (
-                      <td className="operation-lines__money">
-                        {formatMoney(costs.get(line.position_index) ?? "0", operation.currency)}
-                      </td>
-                    )}
-                    <td className="operation-lines__money">
-                      {discount > 0 && position?.quantity ? (
-                        <>
-                          {formatMoney(line.line_net, operation.currency)}
-                          <span className="operation-lines__list">
-                            {" "}
-                            (
-                            {formatMoney(
-                              String(Number(line.line_net) / (1 - discount)),
-                              operation.currency,
-                            )}{" "}
-                            −{pctDisplay(discount)}%)
-                          </span>
-                        </>
-                      ) : (
-                        formatMoney(line.line_net, operation.currency)
-                      )}
-                    </td>
-                    {costsVisible && (
-                      <td className="operation-lines__money">
-                        {marginText(
-                          line.line_net,
-                          costs.get(line.position_index) ?? "0",
-                          operation.currency,
-                        )}
-                      </td>
-                    )}
-                    {canLineDelta && (
-                      <td className="operation-lines__delta operation-lines__money">
-                        {position?.price_net != null
-                          ? (() => {
-                              const lineDelta = Number(line.line_net) - Number(position.price_net);
-                              return lineDelta !== 0 ? (
-                                <span data-negative={lineDelta < 0 || undefined}>
-                                  {lineDelta > 0 ? "+" : ""}
-                                  {formatMoney(String(lineDelta), operation.currency)}
-                                </span>
-                              ) : (
-                                "—"
-                              );
-                            })()
-                          : "—"}
-                      </td>
-                    )}
-                  </tr>
-                  {line.sublines && (
-                    <tr>
-                      <td colSpan={columnCount}>
-                        <ExtraPriceLines
-                          lines={line.sublines}
-                          currency={operation.currency}
-                          title={`Extras de la posición ${line.position_index}`}
-                        />
-                      </td>
-                    </tr>
-                  )}
-                  {costsVisible && breakdown && (
-                    <tr className="operation-lines__detail">
-                      <td colSpan={columnCount}>
-                        <details>
-                          <summary>{t("pricing.costComposition")}</summary>
-                          <CostComposition
-                            currency={operation.currency}
-                            discount={discount}
-                            entry={breakdown}
-                            lineNet={line.line_net}
-                            lineCost={costs.get(line.position_index) ?? "0"}
-                          />
-                        </details>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {costsVisible && kindRows.length > 0 && (
-        <details className="operation-authorities">
-          <summary>{t("pricing.costByKind")}</summary>
-          <table className="cost-composition__table">
-            <tbody>
-              {kindRows.map(([kind, cents]) => (
-                <tr key={kind}>
-                  <td>{optionLabel(kind)}</td>
-                  <td>
-                    {formatMoney(
-                      `${cents / 100n}.${`${cents % 100n}`.padStart(2, "0")}`,
-                      operation.currency,
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </details>
-      )}
-
-      <p className="operation-decision__audit">
-        {t("pricing.auditReason")}: {operation.reason || "—"} · {t("pricing.auditBy")}{" "}
-        {operation.requested_by
-          ? operation.requested_by === currentUserId
-            ? t("pricing.auditYou")
-            : (operation.requested_by_email ?? t("pricing.auditOtherUser"))
-          : "—"}
-        {operation.approved_at &&
-          ` · ${t("pricing.auditDecided")} ${formatDateTime(operation.approved_at)}`}
-      </p>
-
-      {costsVisible && (operation.authorities ?? []).length > 0 && (
-        <details className="operation-authorities">
-          <summary>{t("pricing.authorities")}</summary>
-          <ul>
-            {(operation.authorities ?? []).map((authority, index) => (
-              <li key={index}>{flattenAuthority(authority).join(" · ")}</li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      <ExtraPriceLines
-        lines={operation.services}
-        currency={operation.currency}
-        title="Servicios del proyecto"
-      />
-      <div className="operation-decision__actions">
-        {["PREVIEW", "PENDING"].includes(operation.state) &&
-          (owner || operation.state !== "PENDING") && (
-            <button
-              className="ui-button"
-              disabled={busy || !reasonReady || stale}
-              onClick={onApply}
-              type="button"
-            >
-              {t("pricing.apply")}
-            </button>
-          )}
-        {operation.state === "PENDING" &&
-          onWithdraw &&
-          (owner || operation.requested_by === currentUserId) && (
-            <button className="btn" disabled={busy || stale} onClick={onWithdraw} type="button">
-              {t("pricing.withdraw")}
-            </button>
-          )}
-        {owner && operation.state === "PENDING" && (
-          <button
-            className="ui-button ui-button--danger"
-            disabled={busy || !reasonReady}
-            onClick={onReject}
-            type="button"
-          >
-            {t("pricing.reject")}
-          </button>
-        )}
-      </div>
-    </article>
-  );
-}
-function CommercialOperations({
-  request,
-  owner,
-  boundProjectId,
-}: {
-  request: RequestFn;
-  owner: boolean;
-  boundProjectId?: string;
-}): JSX.Element {
-  const [operation, setOperation] = useState<Operation | null>(null);
-  const [error, setError] = useState("");
-  const [fixCode, setFixCode] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [reason, setReason] = useState("");
-  const [confirmed, setConfirmed] = useState(false);
-  const [projectId, setProjectId] = useState(boundProjectId ?? "");
-  const [selectedMode, setSelectedMode] = useState("COST_PLUS_MARGIN");
-  const [history, setHistory] = useState<Operation[]>([]);
-  const [boundProject, setBoundProject] = useState<ProjectResponse | undefined>();
-  // Bumped after a successful apply — the project's live totals changed, so
-  // the vsCurrent comparison must rebind rather than diff against the
-  // pre-apply snapshot.
-  const [boundReload, setBoundReload] = useState(0);
-  // Set when the form moves after a preview — the shown operation no longer
-  // matches the inputs, so it stays visible but stops being applicable.
-  const [stale, setStale] = useState(false);
-  const [stateFilter, setStateFilter] = useState("");
-  const generation = useRef(0);
-
-  const me = useAuthSession().me;
-  const orgId = me?.active_organization?.id;
-  const currentUserId = me?.user?.id;
-
-  const [projectOptions, setProjectOptions] = useState<ProjectResponse[]>([]);
-
-  const [projectsError, setProjectsError] = useState(false);
-
-  const [projectReload, setProjectReload] = useState(0);
-
-  // FX snapshots exist as a managed resource — the quote form offers them as
-  // a picklist instead of asking for a raw UUID nobody can type. Loaded lazily
-  // on first focus: a USD picker is rare, and an unconditional mount fetch
-  // would add a network call to every pricing visit.
-  const [fxOptions, setFxOptions] = useState<Row[] | null>(null);
-  function loadFxOptions(): void {
-    if (fxOptions !== null) return;
-    void request<{ items: Row[] }>("admin/fx/")
-      .then((response) => setFxOptions(Array.isArray(response.items) ? response.items : []))
-      .catch(() => setFxOptions([]));
-  }
-
-  useEffect(() => {
-    let active = true;
-
-    setProjectOptions([]);
-
-    setProjectsError(false);
-
-    if (orgId)
-      void projectsList({ headers: { "X-Organization-ID": orgId } })
-        .then((response) => {
-          if (response.status !== 200) throw new Error("projects unavailable");
-
-          if (active) setProjectOptions(response.data.items);
-        })
-        .catch(() => {
-          if (active) setProjectsError(true);
-        });
-
-    return () => {
-      active = false;
-    };
-  }, [orgId, projectReload]);
-
-  const projectLabel = (project: ProjectResponse) =>
-    [project.code, project.client_name, project.name].filter(Boolean).join(" · ");
-
-  // The decision surface needs position labels and the currently applied
-  // totals — fetch the operation's project once it exists. A new operation
-  // must never see the previous project's labels: clear first, rebind only
-  // when this operation's project answers, and never join across ids.
-  useEffect(() => {
-    let active = true;
-    setBoundProject(undefined);
-    if (!orgId || !operation?.project_id) {
-      return;
-    }
-    void projectsRetrieve(operation.project_id, {
-      headers: { "X-Organization-ID": orgId },
-    })
-      .then((response) => {
-        if (active) setBoundProject(response.status === 200 ? response.data : undefined);
-      })
-      .catch(() => {
-        if (active) setBoundProject(undefined);
-      });
-    return () => {
-      active = false;
-    };
-  }, [orgId, operation?.project_id, boundReload]);
-
-  // The audit requires a reason on every preview; seed the first quote's
-  // reason so the estimator isn't blocked before any price exists — still
-  // editable, still recorded verbatim in the audit trail.
-  useEffect(() => {
-    if (projectId && !reason && history.length === 0) {
-      setReason(t("pricing.firstQuoteReason"));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId, history.length]);
-
-  // The applied operation is the page's primary state — load history on
-  // mount and whenever the active organization changes. The ref survives
-  // StrictMode's simulated remount, so the dedupe is per organization, not
-  // per effect run; the mount load's publish is guarded by the generation
-  // counter like every other request, never by mount bookkeeping.
-  const historyOrg = useRef<string | undefined>();
-  const historyInflight = useRef<string | undefined>();
-  function loadHistory(): Promise<"published" | "stopped" | "retry"> {
-    let aborted = false;
-    return runCurrent(
-      () =>
-        request<Operation[]>("operations/").catch((loadError: unknown) => {
-          if (loadError instanceof DOMException && loadError.name === "AbortError") aborted = true;
-          throw loadError;
-        }),
-      setHistory,
-      "pricing.loadError",
-    ).then((published) => (published ? "published" : aborted ? "retry" : "stopped"));
-  }
-  useEffect(() => {
-    if (!orgId || historyOrg.current === orgId || historyInflight.current === orgId) return;
-    historyInflight.current = orgId;
-    // StrictMode's simulated unmount aborts the first request while the
-    // component stays alive; an abort is retried once. A real failure is
-    // surfaced by runCurrent's error state and a superseding request owns
-    // the newer generation — neither is retried here.
-    const finish = (result: string) => {
-      if (historyInflight.current !== orgId) return;
-      historyInflight.current = undefined;
-      if (result === "published") historyOrg.current = orgId;
-    };
-    void loadHistory().then((result) => {
-      if (result === "retry" && historyInflight.current === orgId) {
-        void loadHistory().then(finish);
-        return;
-      }
-      finish(result);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgId]);
-  function invalidate(): void {
-    generation.current += 1;
-    setBusy(false);
-    setError("");
-    setFixCode(null);
-    setConfirmed(false);
-  }
-  async function runCurrent<T>(
-    action: () => Promise<T>,
-    publish: (value: T) => void,
-    errorKey: Parameters<typeof t>[0],
-  ): Promise<boolean> {
-    const current = ++generation.current;
-    setBusy(true);
-    setError("");
-    setFixCode(null);
-    try {
-      const value = await action();
-      if (generation.current !== current) return false;
-      publish(value);
-      return true;
-    } catch (error) {
-      // An aborted request (unmount, StrictMode remount) is not an error
-      // worth showing — the next load owns the surface.
-      const aborted = error instanceof DOMException && error.name === "AbortError";
-      if (generation.current === current && !aborted) {
-        setError(pricingError(error, errorKey));
-        setFixCode(pricingFixCode(error));
-      }
-      return false;
-    } finally {
-      if (generation.current === current) setBusy(false);
-    }
-  }
-  function reload(): Promise<boolean> {
-    return runCurrent(() => request<Operation[]>("operations/"), setHistory, "pricing.loadError");
-  }
-  function isOperation(value: unknown): value is Operation {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      typeof (value as Operation).id === "string" &&
-      typeof (value as Operation).state === "string" &&
-      Array.isArray((value as Operation).lines)
-    );
-  }
-  function publishOperation(value: Operation): void {
-    if (!isOperation(value)) throw new Error("pricing.malformedOperation");
-    setStale(false);
-    setOperation(value);
-  }
-  function apply(reject = false): Promise<boolean> {
-    if (!operation) return Promise.resolve(false);
-    return runCurrent(
-      () =>
-        request<Operation>(`operations/${operation.id}/apply/`, "POST", {
-          reason,
-          confirmed,
-          ...(reject ? { reject: true } : {}),
-        }),
-      (value) => {
-        publishOperation(value);
-        setHistory((rows) => rows.map((row) => (row.id === value.id ? value : row)));
-        setBoundReload((count) => count + 1);
-      },
-      "pricing.applyError",
-    );
-  }
-  function withdraw(): Promise<boolean> {
-    if (!operation) return Promise.resolve(false);
-    return runCurrent(
-      () =>
-        request<Operation>(`operations/${operation.id}/withdraw/`, "POST", {
-          reason: reason || t("pricing.withdrawReason"),
-        }),
-      (value) => {
-        publishOperation(value);
-        setHistory((rows) => rows.map((row) => (row.id === value.id ? value : row)));
-      },
-      "pricing.applyError",
-    );
-  }
-  return (
-    <section>
-      <h2>{t("pricing.calculate")}</h2>
-
-      {projectsError && (
-        <p role="alert">
-          {t("projects.loadError")}{" "}
-          <button type="button" onClick={() => setProjectReload((value) => value + 1)}>
-            {t("pricing.reload")}
-          </button>
-        </p>
-      )}
-      {!boundProjectId && (
-        <CommercialDraft
-          request={request}
-          onCreated={(id) => {
-            invalidate();
-            setOperation(null);
-            setProjectId(id);
-
-            setProjectReload((value) => value + 1);
-          }}
-        />
-      )}
-      <ValidatedForm
-        className="commercial-form"
-        onChange={(event) => {
-          const target = event.target as HTMLInputElement;
-          if (target.name === "reason" || target.name === "confirmed") return;
-          invalidate();
-          setStale(true);
-        }}
-        onSubmit={(event) => {
-          event.preventDefault();
-          const data = Object.fromEntries(new FormData(event.currentTarget));
-          if (data.fx_snapshot_id === "") delete data.fx_snapshot_id;
-          // The UI collects percents; the authority stores fractions.
-          for (const key of ["discount_pct", "target_margin"] as const) {
-            if (data[key] !== undefined && data[key] !== "")
-              data[key] = String(Number(data[key]) / 100);
-          }
-          void runCurrent(
-            () => request<Operation>("preview/", "POST", { ...data, confirmed }),
-            publishOperation,
-            "pricing.calculateError",
-          );
-        }}
-      >
-        {boundProjectId ? (
-          <input type="hidden" name="project_id" value={boundProjectId} />
-        ) : (
-          <label>
-            {t("pricing.projectId")}
-            <select
-              name="project_id"
-              required
-              value={projectId}
-              onChange={(event) => setProjectId(event.target.value)}
-            >
-              <option value="">{t("projects.chooseProject")}</option>
-
-              {projectOptions.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {projectLabel(project)}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <label>
-          {t("pricing.mode")}
-          <select
-            name="pricing_mode"
-            value={selectedMode}
-            onChange={(event) => setSelectedMode(event.target.value)}
-          >
-            {modes
-              .filter((mode) => owner || mode !== "TARGET_GROSS_MARGIN_PROJECT")
-              .map((mode) => (
-                <option key={mode} value={mode}>
-                  {optionLabel(mode)}
-                </option>
-              ))}
-          </select>
-        </label>
-        {selectedMode === "COST_PLUS_MARGIN" && (
-          <p className="field-hint">{t("pricing.mode1Hint")}</p>
-        )}
-        <label>
-          {t("pricing.context")}
-          <input
-            name="context_code"
-            defaultValue="DEFAULT"
-            disabled={selectedMode === "COST_PLUS_MARGIN"}
-            required={selectedMode !== "COST_PLUS_MARGIN"}
-          />
-        </label>
-        {selectedMode === "COST_PLUS_MARGIN" && (
-          <p className="field-hint">{t("pricing.contextUnusedHint")}</p>
-        )}
-        <label>
-          {t("pricing.currency")}
-          <select name="currency">
-            <option>CLP</option>
-            <option>USD</option>
-          </select>
-        </label>
-        <label>
-          {t("pricing.effectiveDate")}
-          <input
-            name="effective_date"
-            type="date"
-            defaultValue={new Date().toISOString().slice(0, 10)}
-            required
-          />
-        </label>
-        <label>
-          {t("pricing.fxId")}
-          <select name="fx_snapshot_id" defaultValue="" onFocus={loadFxOptions}>
-            <option value="">{t("pricing.fxNone")}</option>
-            {(fxOptions ?? []).map((row) => (
-              <option key={String(row.id)} value={String(row.id)}>
-                {[
-                  `${row.base_currency ?? ""}→${row.quote_currency ?? ""}`,
-                  row.observed_rate,
-                  row.observed_date ?? row.effective_date,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="field-hint">{t("pricing.fxHint")}</p>
-        <label>
-          {t("pricing.discount")}
-          <input
-            name="discount_pct"
-            type="number"
-            step="0.1"
-            min="0"
-            max="100"
-            defaultValue="0"
-            required
-          />
-        </label>
-        {selectedMode === "TARGET_GROSS_MARGIN_PROJECT" && (
-          <label>
-            {t("pricing.margin")}
-            <input
-              name="target_margin"
-              type="number"
-              step="0.1"
-              min="0"
-              max="100"
-              defaultValue="35"
-              required
-            />
-          </label>
-        )}
-        <label>
-          {t("pricing.segment")}
-          <select name="segment">
-            {["RETAIL", "ARCHITECT", "CONSTRUCTION"].map((value) => (
-              <option key={value} value={value}>
-                {optionLabel(value)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="field-hint">{t("pricing.segmentHint")}</p>
-        <p className="field-hint">
-          Los accesorios se calculan en el editor. Revisa instalación, retiro y flete en{" "}
-          <Link
-            className="pricing-services-link"
-            to={boundProjectId ? `/projects/${boundProjectId}` : "/projects"}
-          >
-            Servicios del proyecto
-          </Link>{" "}
-          antes de cotizar.
-        </p>
-        <label>
-          {t("pricing.reason")}
-          <input
-            name="reason"
-            required
-            placeholder={t("pricing.reasonPlaceholder")}
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            onFocus={(event) => {
-              // The seeded first-quote reason is a convenience, not content to
-              // append to — select it on focus so typing replaces it instead
-              // of concatenating ("Cotización inicial…" + typed text).
-              if (reason === t("pricing.firstQuoteReason")) event.target.select();
-            }}
-          />
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            name="confirmed"
-            checked={confirmed}
-            onChange={(event) => setConfirmed(event.target.checked)}
-          />
-          {t("pricing.confirmDiscount")}
-        </label>
-        <button disabled={busy}>{t("pricing.preview")}</button>
-      </ValidatedForm>
-      {error && (
-        <p role="alert">
-          {error}
-          {fixCode &&
-            (owner ? (
-              <>
-                {" "}
-                <Link className="pricing-fix" to="/pricing/cost-lists">
-                  {t("pricing.fixInCostLists")}
-                </Link>
-              </>
-            ) : (
-              <span className="pricing-fix"> {t("pricing.fixAskOwner")}</span>
-            ))}
-        </p>
-      )}
-      {operation && (
-        <OperationDecision
-          boundProject={boundProject}
-          currentUserId={currentUserId}
-          busy={busy}
-          onApply={() => void apply()}
-          onReject={() => void apply(true)}
-          operation={operation}
-          owner={owner}
-          projectLabel={
-            boundProjectId
-              ? undefined
-              : projectOptions.find((p) => p.id === operation.project_id)
-                ? projectLabel(projectOptions.find((p) => p.id === operation.project_id)!)
-                : t("projects.loadError")
-          }
-          onWithdraw={() => void withdraw()}
-          reasonReady={reason.trim().length > 0}
-          stale={stale}
-        />
-      )}
-      <h2>{t("pricing.history")}</h2>
-      <div className="operation-history__filters">
-        <label>
-          {t("pricing.filterState")}
-          <select value={stateFilter} onChange={(event) => setStateFilter(event.target.value)}>
-            <option value="">{t("pricing.filterAll")}</option>
-            {["PENDING", "APPLIED", "REJECTED", "WITHDRAWN", "PREVIEW"].map((state) => (
-              <option key={state} value={state}>
-                {t(`pricing.operationState.${state}` as never)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="button" disabled={busy} onClick={() => void reload()}>
-          {t("pricing.reload")}
-        </button>
-      </div>
-      {Array.isArray(history) &&
-        history
-          .filter((item) => !boundProjectId || item.project_id === boundProjectId)
-          .filter((item) => !stateFilter || item.state === stateFilter)
-          .map((item) => (
-            <article className="operation-history__item" key={item.id}>
-              <p>
-                <strong>{formatMoney(item.project_gross, item.currency)}</strong>{" "}
-                <span className="status-chip" data-status={item.state.toLowerCase()}>
-                  {t(
-                    item.state === "PENDING"
-                      ? "pricing.pending"
-                      : item.state === "APPLIED"
-                        ? "pricing.applied"
-                        : item.state === "REJECTED"
-                          ? "pricing.rejected"
-                          : item.state === "WITHDRAWN"
-                            ? "pricing.withdrawn"
-                            : "pricing.notApplied",
-                  )}
-                </span>
-              </p>
-              <p className="operation-history__meta">
-                {[
-                  item.project_code,
-                  item.client_name,
-                  item.revision_code,
-                  item.requested_by_email,
-                  item.reason,
-                  formatDateTime(item.created_at),
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  invalidate();
-                  setStale(false);
-                  setOperation(item);
-                  setReason(item.reason);
-                  setConfirmed(false);
-                }}
-              >
-                {t("pricing.review")}
-              </button>
-            </article>
-          ))}
-    </section>
-  );
-}
-
-/** Client-side port of backend/projects/typology.py's derive_typology —
- * walks the same parametric tree so a drafted position doesn't claim every
- * product is FIXED. The backend re-derives authoritatively on save. */
-function deriveDraftTypology(tree: unknown): string {
-  const OPENING: Record<string, string> = {
-    FIXED: "FIXED",
-    TURN_LEFT: "TURN",
-    TURN_RIGHT: "TURN",
-    TILT_TURN_LEFT: "TILT_TURN",
-    TILT_TURN_RIGHT: "TILT_TURN",
-    SLIDING_2L: "SLIDING_2L",
-    SLIDING_3L: "SLIDING_3L",
-    SLIDING_4L: "SLIDING_4L",
-    SLIDING: "SLIDING",
-    AWNING: "AWNING",
-    DOOR_ENTRY: "DOOR_ENTRY",
-  };
-  const node = tree as Record<string, unknown> | undefined;
-  if (!node) return "FIXED";
-  if (node.version === "product-v2") {
-    const modules = (node.assembly as { modules?: unknown[] } | undefined)?.modules;
-    if (Array.isArray(modules) && modules.length === 1)
-      return deriveDraftTypology((modules[0] as { tree?: unknown }).tree);
-    return "COMPOSITE";
-  }
-  let current: Record<string, unknown> = node;
-  if (current.type === "ROOT") {
-    const children = current.children;
-    if (!Array.isArray(children) || children.length !== 1) return "FIXED";
-    current = children[0] as Record<string, unknown>;
-  }
-  const children = current.children;
-  if (Array.isArray(children) && children.length) return "COMPOSITE";
-  return OPENING[String(current.opening_type)] ?? "FIXED";
-}
-
-function CommercialDraft({
-  request,
-  onCreated,
-}: {
-  request: RequestFn;
-  onCreated: (id: string) => void;
-}): JSX.Element {
-  const inputs = useCanvasStore((state) => state.inputs);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  if (!inputs.systemId)
-    return (
-      <p>
-        <Link to="/projects">{t("pricing.prepareDesign")}</Link>
-      </p>
-    );
-  return (
-    <details>
-      <summary>{t("pricing.createDraft")}</summary>
-      <p>
-        {inputs.nominalWidthMm} × {inputs.nominalHeightMm} mm
-      </p>
-      <ValidatedForm
-        onSubmit={(event) => {
-          event.preventDefault();
-          const data = Object.fromEntries(new FormData(event.currentTarget));
-          setBusy(true);
-          setError("");
-          void request<{ id: string }>("drafts/", "POST", {
-            code: data.code,
-            name: data.name,
-            client_name: data.client_name,
-            reason: data.reason,
-            positions: [
-              {
-                system_id: inputs.systemId,
-                nominal_width_mm: inputs.nominalWidthMm,
-                nominal_height_mm: inputs.nominalHeightMm,
-                color: inputs.color,
-                parametric_tree: { ...inputs.parametricTree, glass_article_sku: data.glass_sku },
-                position_index: 1,
-                quantity: Number(data.quantity),
-                typology: deriveDraftTypology(inputs.parametricTree),
-              },
-            ],
-          })
-            .then((value) => onCreated(value.id))
-            .catch(() => setError(t("pricing.saveError")))
-            .finally(() => setBusy(false));
-        }}
-      >
-        <label>
-          {t("pricing.projectCode")}
-          <input name="code" required disabled={busy} />
-        </label>
-        <label>
-          {t("pricing.projectName")}
-          <input name="name" required disabled={busy} />
-        </label>
-        <label>
-          {t("pricing.client")}
-          <input name="client_name" required disabled={busy} />
-        </label>
-        <label>
-          {t("pricing.selectedGlass")}
-          <input name="glass_sku" required disabled={busy} />
-        </label>
-        <label>
-          {t("pricing.quantity")}
-          <input
-            name="quantity"
-            type="number"
-            min="1"
-            step="1"
-            defaultValue="1"
-            required
-            disabled={busy}
-          />
-        </label>
-        <label>
-          {t("pricing.reason")}
-          <input name="reason" required disabled={busy} />
-        </label>
-        <button disabled={busy}>{t("pricing.createDraft")}</button>
-      </ValidatedForm>
-      {error && <p role="alert">{error}</p>}
-    </details>
   );
 }
 

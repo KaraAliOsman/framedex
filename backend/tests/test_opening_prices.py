@@ -26,6 +26,7 @@ def test_dual_transport_keeps_complete_price_and_every_cost_line(kind, monkeypat
 
     class Repo:
         org_id = "fixture"
+        currency = "CLP"
 
         def cost(self, sku, unit):
             # An explicit synthetic rate fixture, shared by both transports.
@@ -34,13 +35,12 @@ def test_dual_transport_keeps_complete_price_and_every_cost_line(kind, monkeypat
 
     params = demo_60_params()
     monkeypatch.setattr(service, "connection", SimpleNamespace(needs_rollback=False, cursor=Cursor))
-    monkeypatch.setattr(service, "SystemParamsRepository", lambda: SimpleNamespace(
-        load_visible=lambda *_: params, load_coupler_articles=lambda *_: {}))
     def stock(sku):
         return SimpleNamespace(commercial_sku=sku, stock_length_mm=D("6000"))
-    monkeypatch.setattr(service, "CuttingRepository", lambda: SimpleNamespace(
-        profile_stock=lambda _system, _org, sku, _color: stock(sku),
-        reinforcement_stock=lambda _system, _org, _profile, sku, _color: (stock(sku), None)))
+    class Stocks(dict):
+        def __missing__(self,key):
+            return stock(key.rsplit('|',1)[-1])
+    monkeypatch.setattr('pricing.resolved.safe_technical',lambda *_:(params,{},Stocks(),Stocks()))
     old = node(kind, "1800" if kind.value.startswith("SLIDING") else "1000",
         "2200" if kind is BayOpeningType.DOOR_ENTRY else "900" if kind is BayOpeningType.AWNING else "1400")
     old = old.model_copy(update={"glass_article_sku": "PRICE-GLASS",

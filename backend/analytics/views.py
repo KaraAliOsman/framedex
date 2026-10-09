@@ -23,8 +23,12 @@ class OperationalSummaryView(APIView):
         tags=["analytics"],
     )
     def get(self, request):
-        with documentary_scope(request, _READERS) as (_, _, org_id):
+        with documentary_scope(request, _READERS) as (token, tenant, org_id):
             output = service.operational_summary(org_id=org_id)
+            from pricing.repository import commercial_backend
+            from pricing.workspace import project_price_attention
+            with commercial_backend():
+                output['prep'].update(project_price_attention(org_id,token.user_id,tenant.active_organization.role))
         # job_runs is a service-owned table: the member-facing RLS context has
         # no grant, so the count runs outside it as the connection owner with
         # the verified org filter — the same pattern as the jobs API.

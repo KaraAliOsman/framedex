@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
+  AcknowledgeRequest,
   AdminResponse,
   AdminWriteRequest,
   AiAgentAccepted,
@@ -222,6 +223,7 @@ import type {
   PositionsDestroyParams,
   PriceRequestRequest,
   PriceResponse,
+  PricingOptions,
   ProcessProfileOptionList,
   ProductionGlassOrderParams,
   ProductionOrderDeliveryConfirmationParams,
@@ -301,6 +303,7 @@ import type {
   WorkOrderOptimizeCompare,
   WorkOrderOptimizeCompareRequestRequest,
   WorkOrderOptimizeRequestRequest,
+  WorkspaceResponse,
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
@@ -10098,6 +10101,88 @@ export const measurementRectify = async (
   });
 };
 
+export type pricingAcknowledgeResponse200 = {
+  data: AdminResponse;
+  status: 200;
+};
+
+export type pricingAcknowledgeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingAcknowledgeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingAcknowledgeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingAcknowledgeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingAcknowledgeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingAcknowledgeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingAcknowledgeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingAcknowledgeResponseSuccess = pricingAcknowledgeResponse200 & {
+  headers: Headers;
+};
+export type pricingAcknowledgeResponseError = (
+  | pricingAcknowledgeResponse400
+  | pricingAcknowledgeResponse401
+  | pricingAcknowledgeResponse403
+  | pricingAcknowledgeResponse404
+  | pricingAcknowledgeResponse409
+  | pricingAcknowledgeResponse422
+  | pricingAcknowledgeResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingAcknowledgeResponse =
+  pricingAcknowledgeResponseSuccess | pricingAcknowledgeResponseError;
+
+export const getPricingAcknowledgeUrl = () => {
+  return `/api/v1/pricing/acknowledge/`;
+};
+
+export const pricingAcknowledge = async (
+  acknowledgeRequest: AcknowledgeRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingAcknowledgeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingAcknowledgeResponse>(getPricingAcknowledgeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(acknowledgeRequest),
+  });
+};
+
 export type pricingAdminListResponse200 = {
   data: AdminResponse;
   status: 200;
@@ -10737,6 +10822,76 @@ export const pricingWithdraw = async (
   });
 };
 
+export type pricingOptionsResponse200 = {
+  data: PricingOptions;
+  status: 200;
+};
+
+export type pricingOptionsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingOptionsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingOptionsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingOptionsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingOptionsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingOptionsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingOptionsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingOptionsResponseSuccess = pricingOptionsResponse200 & {
+  headers: Headers;
+};
+export type pricingOptionsResponseError = (
+  | pricingOptionsResponse400
+  | pricingOptionsResponse401
+  | pricingOptionsResponse403
+  | pricingOptionsResponse404
+  | pricingOptionsResponse409
+  | pricingOptionsResponse422
+  | pricingOptionsResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingOptionsResponse = pricingOptionsResponseSuccess | pricingOptionsResponseError;
+
+export const getPricingOptionsUrl = () => {
+  return `/api/v1/pricing/options/`;
+};
+
+export const pricingOptions = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingOptionsResponse> => {
+  return apiMutator<pricingOptionsResponse>(getPricingOptionsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type pricingPreviewResponse200 = {
   data: PriceResponse;
   status: 200;
@@ -10811,6 +10966,88 @@ export const pricingPreview = async (
     return h;
   };
   return apiMutator<pricingPreviewResponse>(getPricingPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(priceRequestRequest),
+  });
+};
+
+export type pricingWorkspaceResponse200 = {
+  data: WorkspaceResponse;
+  status: 200;
+};
+
+export type pricingWorkspaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingWorkspaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingWorkspaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingWorkspaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingWorkspaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingWorkspaceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingWorkspaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingWorkspaceResponseSuccess = pricingWorkspaceResponse200 & {
+  headers: Headers;
+};
+export type pricingWorkspaceResponseError = (
+  | pricingWorkspaceResponse400
+  | pricingWorkspaceResponse401
+  | pricingWorkspaceResponse403
+  | pricingWorkspaceResponse404
+  | pricingWorkspaceResponse409
+  | pricingWorkspaceResponse422
+  | pricingWorkspaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingWorkspaceResponse =
+  pricingWorkspaceResponseSuccess | pricingWorkspaceResponseError;
+
+export const getPricingWorkspaceUrl = () => {
+  return `/api/v1/pricing/workspace/`;
+};
+
+export const pricingWorkspace = async (
+  priceRequestRequest: PriceRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingWorkspaceResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingWorkspaceResponse>(getPricingWorkspaceUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },

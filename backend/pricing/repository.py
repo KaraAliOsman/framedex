@@ -83,6 +83,7 @@ class PricingRepository:
         self.currency = currency
         self.fx_id = fx_id
         self.authorities = []
+        self.technical = {}
 
     def convert(self, value, currency):
         snapshot = None
@@ -151,7 +152,8 @@ ADMIN_TABLES = {
     'cost-lists': ('cost_lists', ('supplier_name','description','currency','valid_from','valid_to','is_active')),
     'cost-items': ('cost_list_items', ('cost_list_id','sku','description','item_type','unit','unit_cost')),
     'rules': ('pricing_rules', ('pricing_mode','default_margin_pct','tax_rate_pct','waste_factor_pct',
-                              'labor_rate_per_m2','installation_rate_per_m2')),
+                              'labor_rate_per_m2','installation_rate_per_m2','minimum_margin_pct',
+                              'maximum_margin_pct','discount_approval_pct')),
     'configurations': ('pricing_configurations', ('context_code','typology','pricing_mode','currency',
                                                 'rate_per_m2','base_glass_sku','catalog_price','is_active')),
     'matrix-cells': ('pricing_matrix_cells', ('configuration_id','width_mm','height_mm','price')),
@@ -171,25 +173,8 @@ def admin_list(resource, org_id):
                     'LEFT JOIN public.projects p ON p.id=l.project_id AND p.org_id=l.org_id '
                     'WHERE l.org_id=%s ORDER BY l.created_at DESC,l.id LIMIT 200', [org_id])
     if resource == 'coverage':
-        return rows("""WITH catalog AS (
-            SELECT sku::text AS sku, name::text AS name, 'PROFILE'::text AS kind, 'M'::text AS required_unit
-              FROM public.profile_articles WHERE org_id=%s OR org_id IS NULL
-            UNION ALL
-            SELECT sku, name, 'GLASS', 'M2' FROM public.infill_articles WHERE org_id=%s OR org_id IS NULL
-            UNION ALL
-            SELECT sku, name, 'HARDWARE', 'KIT' FROM public.hardware_kits WHERE org_id=%s OR org_id IS NULL
-            UNION ALL
-            SELECT sku, name, 'REINFORCEMENT', 'M' FROM public.reinforcement_articles WHERE org_id=%s OR org_id IS NULL
-        )
-        SELECT c.sku, c.name, c.kind, c.required_unit, COUNT(i.id) AS active_cost_items
-        FROM catalog c
-        LEFT JOIN public.cost_list_items i
-          ON i.org_id=%s AND i.sku=c.sku
-         AND EXISTS (SELECT 1 FROM public.cost_lists l
-                     WHERE l.id=i.cost_list_id AND l.org_id=%s AND l.is_active
-                       AND (l.valid_to IS NULL OR l.valid_to>=current_date))
-        GROUP BY c.sku, c.name, c.kind, c.required_unit
-        ORDER BY COUNT(i.id), c.kind, c.sku""", [org_id]*6)
+        from pricing.coverage import catalog_coverage
+        return catalog_coverage(org_id)
     if resource not in ADMIN_TABLES:
         raise PricingError('unknown_pricing_resource')
     table, _ = ADMIN_TABLES[resource]

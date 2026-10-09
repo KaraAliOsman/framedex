@@ -1,0 +1,2534 @@
+{
+  "records": [
+    {
+      "name": "precio-owner-1440-light",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 856,
+            "scrollWidth": 856
+          },
+          {
+            "class": "price-positions",
+            "width": 856,
+            "scrollWidth": 856
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "composicion-1440-light",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 856,
+            "scrollWidth": 856
+          },
+          {
+            "class": "price-positions",
+            "width": 856,
+            "scrollWidth": 856
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "so Costo por unidad de ventana COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.11"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.8"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14."
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-AC"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,0000",
+          "sample": "? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "O_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "0,8100",
+          "sample": "A-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? 2 Piso 1 · Vano 2 Fijo 1 002 × 1 202 mm 1"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "cobertura-1440-light",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 1160,
+            "scrollWidth": 1160
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "auditoria-1440-light",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 1160,
+            "scrollWidth": 1160
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "historial-owner-1440-light",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-estimator-1440-light",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 856,
+            "scrollWidth": 856
+          },
+          {
+            "class": "price-positions",
+            "width": 856,
+            "scrollWidth": 856
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "historial-estimator-1440-light",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-owner-1440-dark",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 856,
+            "scrollWidth": 856
+          },
+          {
+            "class": "price-positions",
+            "width": 856,
+            "scrollWidth": 856
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Revisar servicios del proyecto"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Ajustar banda y autoridades"
+        }
+      ]
+    },
+    {
+      "name": "composicion-1440-dark",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 856,
+            "scrollWidth": 856
+          },
+          {
+            "class": "price-positions",
+            "width": 856,
+            "scrollWidth": 856
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "so Costo por unidad de ventana COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.11"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.8"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14."
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-AC"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,0000",
+          "sample": "? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "O_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "0,8100",
+          "sample": "A-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? 2 Piso 1 · Vano 2 Fijo 1 002 × 1 202 mm 1"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Revisar servicios del proyecto"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Ajustar banda y autoridades"
+        }
+      ]
+    },
+    {
+      "name": "cobertura-1440-dark",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 1160,
+            "scrollWidth": 1160
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "auditoria-1440-dark",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 1160,
+            "scrollWidth": 1160
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "historial-owner-1440-dark",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-estimator-1440-dark",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 856,
+            "scrollWidth": 856
+          },
+          {
+            "class": "price-positions",
+            "width": 856,
+            "scrollWidth": 856
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Revisar servicios del proyecto"
+        }
+      ]
+    },
+    {
+      "name": "historial-estimator-1440-dark",
+      "geometry": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-owner-1280-light",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 1000,
+            "scrollWidth": 1000
+          },
+          {
+            "class": "price-positions",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "composicion-1280-light",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 1000,
+            "scrollWidth": 1000
+          },
+          {
+            "class": "price-positions",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "so Costo por unidad de ventana COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.11"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.8"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14."
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-AC"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,0000",
+          "sample": "? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "O_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "0,8100",
+          "sample": "A-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? 2 Piso 1 · Vano 2 Fijo 1 002 × 1 202 mm 1"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "cobertura-1280-light",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "auditoria-1280-light",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "historial-owner-1280-light",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-estimator-1280-light",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 1000,
+            "scrollWidth": 1000
+          },
+          {
+            "class": "price-positions",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "historial-estimator-1280-light",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-owner-1280-dark",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 1000,
+            "scrollWidth": 1000
+          },
+          {
+            "class": "price-positions",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Revisar servicios del proyecto"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Ajustar banda y autoridades"
+        }
+      ]
+    },
+    {
+      "name": "composicion-1280-dark",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 1000,
+            "scrollWidth": 1000
+          },
+          {
+            "class": "price-positions",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "so Costo por unidad de ventana COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.11"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.8"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14."
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-AC"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,0000",
+          "sample": "? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "O_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "0,8100",
+          "sample": "A-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? 2 Piso 1 · Vano 2 Fijo 1 002 × 1 202 mm 1"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Revisar servicios del proyecto"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Ajustar banda y autoridades"
+        }
+      ]
+    },
+    {
+      "name": "cobertura-1280-dark",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "auditoria-1280-dark",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "historial-owner-1280-dark",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-estimator-1280-dark",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 1000,
+            "scrollWidth": 1000
+          },
+          {
+            "class": "price-positions",
+            "width": 1000,
+            "scrollWidth": 1000
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        },
+        {
+          "kind": "contrast-under-aa",
+          "sample": "a. Revisar servicios del proyecto"
+        }
+      ]
+    },
+    {
+      "name": "historial-estimator-1280-dark",
+      "geometry": {
+        "width": 1280,
+        "scrollWidth": 1280,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-owner-1024-light",
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 976,
+            "scrollWidth": 976
+          },
+          {
+            "class": "price-positions",
+            "width": 976,
+            "scrollWidth": 976
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "composicion-1024-light",
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 976,
+            "scrollWidth": 976
+          },
+          {
+            "class": "price-positions",
+            "width": 976,
+            "scrollWidth": 976
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "so Costo por unidad de ventana COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.11"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "2,0120",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-MARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.8"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "ARCO-WHITE 2,0120 m $8.115 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14."
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,8180",
+          "sample": "-10-WHITE 1,8180 m $14.832 ? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-AC"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,0000",
+          "sample": "? COMPRA-V5-DEMO_60-JQ-10-WHITE 1,8180 m $14.832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "832 ? WHITE 1,0000 unidad $0 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "1,9520",
+          "sample": "O_60-ACERO-MARCO 1,9520 m $33 ? COMPRA-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "0,8100",
+          "sample": "A-DEMO_60-ACERO-MARCO 1,9520 m $33 ? DEMO_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-VIDRIO-4-16-4 0,8100 m² $14.837 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ?"
+        },
+        {
+          "kind": "decimal-precision",
+          "match": "8,0000",
+          "sample": "_60-TORNILLO-REF 8,0000 unidad $528 ? DEMO_60-TORNILLO-REF 8,0000 unidad $528 ? 2 Piso 1 · Vano 2 Fijo 1 002 × 1 202 mm 1"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "cobertura-1024-light",
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 976,
+            "scrollWidth": 976
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "auditoria-1024-light",
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "overflows": [
+          {
+            "class": "pricing-grid",
+            "width": 976,
+            "scrollWidth": 976
+          }
+        ]
+      },
+      "findings": []
+    },
+    {
+      "name": "historial-owner-1024-light",
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    },
+    {
+      "name": "precio-estimator-1024-light",
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "overflows": [
+          {
+            "class": "price-comparison",
+            "width": 976,
+            "scrollWidth": 976
+          },
+          {
+            "class": "price-positions",
+            "width": 976,
+            "scrollWidth": 976
+          }
+        ]
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "HALF_UP",
+          "sample": "to de cada línea usa el precio exacto y se redondea una vez HALF_UP. El IVA se redondea por proyecto. ¿Por qué cambió? Sin da"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 3 unidades"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. Fijo"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "small. 1 unidad"
+        },
+        {
+          "kind": "interactive-without-effect",
+          "sample": "button.ui-button Aplicar"
+        }
+      ]
+    },
+    {
+      "name": "historial-estimator-1024-light",
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "overflows": []
+      },
+      "findings": [
+        {
+          "kind": "raw-enum",
+          "match": "TORRE_BARROS",
+          "sample": "COMPLETA] P-000004 · Obra grande demo — edificio (fixture) [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] His"
+        },
+        {
+          "kind": "raw-enum",
+          "match": "CASA_LOMAS",
+          "sample": ") [TORRE_BARROS] P-000001 · Vivienda demo — casa (fixture) [CASA_LOMAS] Historial por revisión Actualizar historial P-000518 · Rev"
+        }
+      ]
+    }
+  ]
+}

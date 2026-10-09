@@ -1,11 +1,11 @@
 """Server-authoritative BOM costing, reproducible previews and approvals."""
 
 from dataclasses import asdict
-from decimal import Decimal, localcontext
+from decimal import Decimal, ROUND_HALF_UP, localcontext
 from hashlib import sha256
 import json
 
-from django.db import connection, DatabaseError
+from django.db import connection
 
 from authentication.errors import contract_error
 from authentication.rls import tx_aborted
@@ -17,8 +17,6 @@ from dekopen_engine.glass import exact_glass_area_m2
 from dekopen_engine.glass_composition import price_glass, glass_rate_requirements, glass_polygon_perimeter_m
 from engine_api.adapter import parse_parametric_node
 from engine_api.adapter import engine_result_from_api
-from engine_api.cutting_repository import CuttingRepository
-from engine_api.repository import SystemParamsRepository
 from pricing.repository import PricingRepository, audit_reason, json_text, one, rows
 
 D = Decimal
@@ -28,6 +26,9 @@ D = Decimal
 # raised while iterating positions get prefixed with the position label
 # ("Vano 3 · Dormitorio: …") so the blocker names where it lives.
 PRICING_ERROR_DETAILS = {
+    'invalid_margin_band': 'revisa mínimo, objetivo y máximo de la banda de margen',
+    'cascade_does_not_close': 'la composición no coincide con su costo; revisa sus autoridades antes de aplicar',
+    'incomplete_repricing_evidence': 'falta una autoridad técnica o comercial congelada; revisa el catálogo y sus costos',
     'installation_rule_duplicate': 'la instalación está seleccionada por posición y por proyecto; elige una sola regla',
     'ambiguous_authority': 'hay más de una autoridad de costos vigente para la fecha; revisa las listas de costos',
     'ambiguous_cost_list': 'hay más de una lista de costos vigente; revisa las vigencias en Configuración',
@@ -132,56 +133,48 @@ def source_revision(project, positions):
     return sha256(json_text({'project':project,'positions':positions}).encode()).hexdigest()
 
 
-def linear_cost(repo, sku, length, stock_length):
+def linear_cost(repo, sku, length, stock_length, *, with_trace=False):
+    from dekopen_engine.price_workspace import linear_purchase
     try:
-        return repo.cost(sku,'BAR') * length / stock_length
+        result = linear_purchase(repo.cost(sku,'BAR'),'BAR',length,stock_length,repo.currency)
     except PricingError as error:
         if error.code != 'incompatible_cost_unit':
             raise
-        return repo.cost(sku,'M') * length / D('1000')
+        result = linear_purchase(repo.cost(sku,'M'),'M',length,stock_length,repo.currency)
+    return result if with_trace else result['amount']
 
 
 def position_cost(repo, position, rules):
-    # Technical catalog has its existing authenticated policies; commercial raw
-    # costs are read only after returning to the backend calculator role.
-    with connection.cursor() as cursor:
-        cursor.execute('SET LOCAL ROLE authenticated')
-    try:
-        params = SystemParamsRepository().load_visible(position['system_id'],repo.org_id)
-        stock_repo = CuttingRepository()
-        profile_stocks = {}
-        steel_stocks = {}
-        tree = decoded(position['parametric_tree'])
-        from catalogs.glass import validate_design_products, enforce_design_glass
-        validate_design_products(repo.org_id, position['system_id'], tree)
-        from projects.finishes import position_finish_code
-        color = position_finish_code(position)
-        result = engine_result_from_api(
-            tree=tree, color=color, params=params,
-            nominal_width_mm=position['width_mm'],
-            nominal_height_mm=position['height_mm'],
-            coupler_articles=SystemParamsRepository().load_coupler_articles(
-                position['system_id'], repo.org_id),
-        )
-        enforce_design_glass(repo.org_id, tree, result, params)
-        for cut in result.profile_cuts:
-            profile_stocks[cut.sku] = stock_repo.profile_stock(position['system_id'],repo.org_id,cut.sku,color)
-        for steel in result.reinforcements:
-            steel_stocks[(steel.parent_profile_sku,steel.reinforcement_sku)] = stock_repo.reinforcement_stock(
-                position['system_id'],repo.org_id,steel.parent_profile_sku,steel.reinforcement_sku,color)[0]
-    except DatabaseError:
-        raise
-    except BaseException:
-        if not tx_aborted():
-            with connection.cursor() as cursor:
-                cursor.execute('SET LOCAL ROLE pricing_backend')
-        raise
-    else:
-        if not tx_aborted():
-            with connection.cursor() as cursor:
-                cursor.execute('SET LOCAL ROLE pricing_backend')
+    from dekopen_engine.price_workspace import money_trace
+    from pricing.resolved import safe_technical
+    from projects.finishes import position_finish_code
+    params, couplers, stocks, steels = safe_technical(repo,position['system_id'])
     tree = decoded(position['parametric_tree'])
     color = position_finish_code(position)
+    result = engine_result_from_api(tree=tree,color=color,params=params,
+        nominal_width_mm=position['width_mm'],nominal_height_mm=position['height_mm'],
+        coupler_articles=couplers)
+    if not getattr(repo,'frozen',False):
+        from catalogs.glass import validate_design_products, enforce_design_glass
+        with connection.cursor() as cursor:
+            cursor.execute('SET LOCAL ROLE authenticated')
+        try:
+            validate_design_products(repo.org_id,position['system_id'],tree)
+            enforce_design_glass(repo.org_id,tree,result,params)
+        finally:
+            if not tx_aborted():
+                with connection.cursor() as cursor:
+                    cursor.execute('SET LOCAL ROLE pricing_backend')
+    try:
+        profile_stocks = {cut.sku:stocks[f'{color}|{cut.sku}'] for cut in result.profile_cuts if cut.extra_code is None}
+        steel_stocks = {(steel.parent_profile_sku,steel.reinforcement_sku):
+            steels[f'{color}|{steel.parent_profile_sku}|{steel.reinforcement_sku}']
+            for steel in result.reinforcements if steel.extra_code is None}
+    except KeyError as error:
+        if not getattr(repo,'frozen',False):
+            from dekopen_engine.cutting import MissingStockAuthority
+            raise MissingStockAuthority('No existe una compra de barra utilizable para este artículo.') from error
+        raise PricingError('incomplete_repricing_evidence') from error
     materials = []
     composition = []
     glass_extras = []
@@ -189,11 +182,12 @@ def position_cost(repo, position, rules):
         if cut.extra_code is not None:
             continue  # Extra's sourced supply cost includes its physical BOM.
         stock = profile_stocks[cut.sku]
-        cost = linear_cost(repo,stock.commercial_sku,cut.length_mm*cut.qty,stock.stock_length_mm)
+        buying = linear_cost(repo,stock.commercial_sku,cut.length_mm*cut.qty,stock.stock_length_mm,with_trace=True)
+        cost = buying['amount']
         materials.append(cost)
         composition.append({'kind':'PROFILE','sku':stock.commercial_sku,
                             'quantity':str((cut.length_mm*cut.qty/D('1000')).quantize(D('0.001'))),
-                            'unit':'M','cost':str(cost.quantize(D('0.0001')))})
+                            'unit':'M','cost':str(cost),'trace':buying['trace']})
     from dekopen_engine.finishes import finish_surcharge
     if result.finish is not None:
         surcharge_rule = result.finish.combination.surcharge
@@ -203,20 +197,32 @@ def position_cost(repo, position, rules):
                            if surcharge_rule.kind in {"FIXED", "PER_M"} else surcharge_rule.amount),
                 "currency": repo.currency})})})})
         priced_result = priced_result.model_copy(update={"profile_cuts":[cut for cut in priced_result.profile_cuts if cut.extra_code is None]})
-        surcharge = finish_surcharge(priced_result, sum(materials, D('0')), repo.currency)
+        profile_base = sum(materials,D(0))
+        surcharge = finish_surcharge(priced_result, profile_base, repo.currency)
+        resolved_surcharge = priced_result.finish.combination.surcharge
+        surcharge_inputs = [('Tarifa declarada',resolved_surcharge.amount,
+            '%' if resolved_surcharge.kind == 'PERCENT' else repo.currency)]
+        if resolved_surcharge.kind == 'PERCENT':
+            surcharge_inputs.append(('Costo de perfiles',profile_base,repo.currency))
+        elif resolved_surcharge.kind == 'PER_M':
+            surcharge_inputs.append(('Largo de perfiles',sum((cut.length_mm*cut.qty for cut in priced_result.profile_cuts),D(0)),'mm'))
         materials.append(surcharge)
         composition.append({'kind':'FINISH','sku':color,'quantity':'1','unit':'EA',
-            'cost':str(surcharge.quantize(D('0.0001'))), 'source':surcharge_rule.source,
+            'cost':str(surcharge), 'source':surcharge_rule.source,
+            'trace':money_trace({'PERCENT':'Costo de perfiles × porcentaje ÷ 100',
+                'PER_M':'Tarifa por metro × largo en mm ÷ 1 000','FIXED':'Recargo fijo declarado',
+                'NONE':'Sin recargo declarado'}[resolved_surcharge.kind],surcharge,surcharge_inputs),
             'rule':surcharge_rule.model_dump(mode='json')})
     for steel in result.reinforcements:
         if steel.extra_code is not None:
             continue
         stock = steel_stocks[(steel.parent_profile_sku,steel.reinforcement_sku)]
-        cost = linear_cost(repo,stock.commercial_sku,steel.length_mm*steel.qty,stock.stock_length_mm)
+        buying = linear_cost(repo,stock.commercial_sku,steel.length_mm*steel.qty,stock.stock_length_mm,with_trace=True)
+        cost = buying['amount']
         materials.append(cost)
         composition.append({'kind':'REINFORCEMENT','sku':stock.commercial_sku,
                             'quantity':str((steel.length_mm*steel.qty/D('1000')).quantize(D('0.001'))),
-                            'unit':'M','cost':str(cost.quantize(D('0.0001')))})
+                            'unit':'M','cost':str(cost),'trace':buying['trace']})
     for glass in result.glasses:
         # The selected commercial glass SKU is explicit in the persisted tree.
         sku = design_glass_sku(tree,glass.bay_id)
@@ -246,43 +252,58 @@ def position_cost(repo, position, rules):
         materials.append(cost)
         composition.append({'kind':'GLASS','sku':sku,
                             'quantity':str(priced.billable_area_m2.quantize(D('0.0001'))),
-                            'unit':'M2','cost':str(cost.quantize(D('0.0001'))),
+                            'unit':'M2','cost':str(cost),
+                            'trace':money_trace('Suma de cantidades facturables × tarifas por vidrio y tratamiento; palillaje en extras',cost,
+                                [(label,value,unit) for charge in priced.charges if charge.kind not in {'Palillaje por metro','Cruce de palillaje'}
+                                 for label,value,unit in [(charge.kind+' · cantidad',charge.quantity,{'M2':'m²','M':'m','EA':'unidad'}[charge.unit]),
+                                     (charge.kind+' · tarifa',charge.unit_cost,repo.currency),
+                                     (charge.kind+' · aporte',charge.total_cost,repo.currency)]]),
                             'glass_charges':[charge.model_dump(mode='json') for charge in priced.charges]})
     for panel in result.panels:
         panel_area = exact_glass_area_m2(panel.width_mm,panel.height_mm)
-        cost = repo.cost(panel.sku,'M2') * panel_area
+        rate = repo.cost(panel.sku,'M2')
+        cost = rate * panel_area
         materials.append(cost)
         composition.append({'kind':'PANEL','sku':panel.sku,
                             'quantity':str(panel_area.quantize(D('0.0001'))),
-                            'unit':'M2','cost':str(cost.quantize(D('0.0001')))})
+                            'unit':'M2','cost':str(cost),'trace':money_trace('Área × tarifa por m²',cost,
+                                [('Área del panel',panel_area,'m²'),('Tarifa por m²',rate,repo.currency)])})
     from dekopen_engine.hardware_classes import hardware_component_cost
     for kit in result.hardware_items:
         if kit.resolution is not None:
             for component in kit.contents:
-                cost = hardware_component_cost(component, repo.cost(component.sku, component.price_unit)) * kit.qty
+                rate = repo.cost(component.sku,component.price_unit)
+                cost = hardware_component_cost(component,rate) * kit.qty
                 materials.append(cost)
                 composition.append({'kind':'HARDWARE','sku':component.sku,
                     'quantity':str(component.price_quantity * kit.qty), 'unit':component.price_unit,
-                    'cost':str(cost.quantize(D('0.0001'))),
+                    'cost':str(cost),
+                    'trace':money_trace('Cantidad facturable por conjunto × conjuntos × tarifa de compra',cost,
+                        [('Cantidad por conjunto',component.price_quantity,{'M':'m','EA':'unidad','KIT':'kit'}.get(component.price_unit,'unidad')),
+                         ('Conjuntos',D(kit.qty),'unidad'),('Tarifa de compra',rate,repo.currency)]),
                     'hardware_class':kit.resolution.class_name,
                     'cut_length_mm':None if component.cut_length_mm is None else str(component.cut_length_mm),
                     'source':component.source})
             continue
-        cost = repo.cost(kit.kit_sku,'KIT') * kit.qty
+        rate = repo.cost(kit.kit_sku,'KIT')
+        cost = rate * kit.qty
         materials.append(cost)
         composition.append({'kind':'HARDWARE','sku':kit.kit_sku,
                             'quantity':str(kit.qty),'unit':'KIT',
-                            'cost':str(cost.quantize(D('0.0001')))})
+                            'cost':str(cost),'trace':money_trace('Conjuntos × tarifa de compra',cost,
+                                [('Conjuntos',D(kit.qty),'kit'),('Tarifa de compra',rate,repo.currency)])})
     # Frameless supports/fittings are counted pieces: a declared SKU must
     # resolve a unit price or the quote fails — never silently priced at zero.
     for fitting in result.fittings:
         if fitting.extra_code is not None:
             continue
-        cost = repo.cost(fitting.sku,'EA') * fitting.qty
+        rate = repo.cost(fitting.sku,'EA')
+        cost = rate * fitting.qty
         materials.append(cost)
         composition.append({'kind':'FITTING','sku':fitting.sku,
                             'quantity':str(fitting.qty),'unit':'EA',
-                            'cost':str(cost.quantize(D('0.0001')))})
+                            'cost':str(cost),'trace':money_trace('Unidades × tarifa de compra',cost,
+                                [('Unidades',D(fitting.qty),'unidad'),('Tarifa de compra',rate,repo.currency)])})
     area = exact_glass_area_m2(position['width_mm'],position['height_mm'])
     from projects.extras import converted_lines
     from dekopen_engine.extras import price_facts
@@ -292,19 +313,21 @@ def position_cost(repo, position, rules):
     total = direct_cost(materials,area,rules['waste_factor_pct'],rules['labor_rate_per_m2'],
                         installation) + sum((item.total_cost for item in extra_lines),D('0'))
     composition.extend({'kind':'EXTRA','sku':item.code,'quantity':str(item.quantity),'unit':item.unit,
-                        'cost':str(item.total_cost),'source':item.source} for item in extra_lines)
-    formation = {'composition':composition,
+                        'cost':str(item.total_cost),'source':item.source,
+                        'trace':money_trace('Cantidad derivada del extra × tarifa de compra',item.total_cost,
+                            [('Cantidad derivada',item.quantity,item.unit),('Tarifa de compra',item.cost_rate,repo.currency)])} for item in extra_lines)
+    formation = {'composition':composition,'unit_cost_exact':str(total),
                  'extra_authority':params.extra_authority.model_dump(mode='json') if params.extra_authority else None,
                  'extra_lines':[item.model_dump(mode='json') for item in extra_lines],
-                 'materials_cost':str(sum(materials,D('0')).quantize(D('0.0001'))),
+                 'materials_cost':str(sum(materials,D('0'))),
                  'waste_pct':str(rules['waste_factor_pct']),
                  'labor_rate_per_m2':str(rules['labor_rate_per_m2']),
                  'installation_rate_per_m2':str(installation),
-                 'area_m2':str(area.quantize(D('0.0001')))}
+                 'area_m2':str(area)}
     return total, area, result, formation
 
 
-def configured_unit_price(repo, mode, position, *, cost, area, result, margin, context_code, extras=()):
+def configured_unit_price(repo, mode, position, *, cost, area, result, margin, context_code, extras=(), with_trace=False):
     """One selling-price authority for project pricing and indicative finish deltas."""
     if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
         raise PricingError('project_mode_requires_project')
@@ -329,10 +352,18 @@ def configured_unit_price(repo, mode, position, *, cost, area, result, margin, c
     base_price = unit_price(mode, cost=cost-sum((item.total_cost for item in extras),D('0')), margin=margin, area=area,
                       width=position['width_mm'], height=position['height_mm'],
                       foil=position['color_interior'] != 'WHITE' or position['color_exterior'] != 'WHITE', **extra)
-    return position_price(base_price,extras)
+    price = position_price(base_price,extras)
+    if not with_trace:
+        return price
+    from dekopen_engine.price_workspace import unit_price_trace
+    return {'amount':price,'trace':unit_price_trace(mode.value,price,currency=repo.currency,
+        cost=cost-sum((item.total_cost for item in extras),D(0)),margin=margin,area=area,
+        width=position['width_mm'],height=position['height_mm'],
+        foil=position['color_interior'] != 'WHITE' or position['color_exterior'] != 'WHITE',rates=extra,
+        extras=[(item.name,item.total_price) for item in extras])}
 
 
-def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
+def preview(org_id, actor, request, *, simulate=False, proposed_positions=None, workspace=False):
     project = one('SELECT * FROM public.projects WHERE id=%s AND org_id=%s FOR UPDATE',
                   [request['project_id'],org_id],'project_not_found')
     if not simulate and project['status'] != 'DRAFT':
@@ -353,7 +384,9 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
     if not positions:
         raise PricingError('project_has_no_positions')
     rules = one('SELECT * FROM public.pricing_rules WHERE org_id=%s',[org_id],'pricing_rules_not_found')
+    request = {**request,'target_margin':request.get('target_margin',rules['default_margin_pct'])}
     repo = PricingRepository(org_id,request['effective_date'],request['currency'],request.get('fx_snapshot_id'))
+    repo.technical = {}
     mode = PricingMode(request['pricing_mode'])
     if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT and actor.active_organization.role != 'OWNER':
         raise PricingError('pricing_permission_denied')
@@ -370,7 +403,8 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
     project_services = service_lines(org_id,project,positions,repo)
     calculation_rules['explicit_project_installation'] = any(item.installation for item in project_services)
     discount = request['discount_pct']
-    state = discount_state(actor.active_organization.role,discount,request['confirmed'])
+    state = (discount_state('OWNER',discount,request['confirmed'])
+        if actor.active_organization.role == 'OWNER' else 'APPLIED')
     if mode == PricingMode.COMMERCIAL_LIST_WITH_DISCOUNTS:
         # Segment bands only bound the list-with-discounts catalogue: RETAIL
         # requires 0% and ARCHITECT 8–12%, so applying them to the manual
@@ -381,7 +415,7 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
         raise PricingError('target_margin_already_defines_final_price')
     cost_lines, priced_lines, technical, extras_by_index, price_weights = [], [], [], {}, {}
     with localcontext() as context:
-        context.prec = 80
+        context.prec = 256
         for position in positions:
             try:
                 cost, area, result, formation = position_cost(repo,position,calculation_rules)
@@ -393,13 +427,16 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
                 cost_lines.append((index,cost*position['quantity']))
                 technical.append({'position_id':position['id'],
                                   'position_index':index,
-                                  'unit_cost':str(cost.quantize(D('0.0001'))),
+                                  'unit_cost':str(cost),
                                   'bom':result.model_dump(mode='json'),**formation})
                 if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
                     price_weights[index] = cost-sum((item.total_cost for item in position_extras),D('0'))
                     continue
-                exact_price = configured_unit_price(repo, mode, position, cost=cost, area=area,
-                    result=result, margin=rules['default_margin_pct'], context_code=request['context_code'],extras=position_extras)
+                selling = configured_unit_price(repo, mode, position, cost=cost, area=area,
+                    result=result, margin=request.get('target_margin',rules['default_margin_pct']), context_code=request['context_code'],extras=position_extras,with_trace=True)
+                exact_price = selling['amount']
+                formation['price_trace'] = selling['trace']
+                technical[-1]['price_trace'] = selling['trace']
                 price_weights[index] = exact_price-sum((item.total_price for item in position_extras),D('0'))
                 priced_lines.append(CommercialLine(index,position['quantity'],cost,exact_price,discount))
             except PricingError as error:
@@ -428,23 +465,40 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
     if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
         line_detail = [
             {'position_index': index, 'quantity': quantities[index],
-             'unit_price': str((D(str(net)) / quantities[index]).quantize(D('0.0001'))),
+             'unit_price': str((D(str(net)) / quantities[index]).quantize(D('0.0001'),rounding=ROUND_HALF_UP)),
              'discount_pct': '0'}
             for index, net in output.lines]
     else:
         line_detail = [
             {'position_index': line.position_index, 'quantity': quantities[line.position_index],
-             'unit_price': str(line.exact_unit_price.quantize(D('0.0001'))),
+             'unit_price': str(line.exact_unit_price.quantize(D('0.0001'),rounding=ROUND_HALF_UP)),
              'discount_pct': str(line.discount)}
             for line in priced_lines]
     for detail,(index,net) in zip(line_detail,output.lines,strict=True):
         if extras_by_index[index]:
             detail.update(partition_price(net,price_weights[index],[(item,item.total_cost if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT else item.total_price)
                 for item in extras_by_index[index]],quantity=quantities[index],currency=request['currency']))
-    if simulate:
-        # Reuse every project selling rule (discounts, target margin, services,
-        # tax, FX and currency quantum), without creating a pricing operation.
+    evidence = None
+    if not simulate or workspace:
+        from pricing.workspace import workspace_evidence
+        evidence = workspace_evidence(repo,project,positions,request,rules,technical,cost_lines,
+            priced_lines,output,line_detail,project_services,policy_evidence)
+        if evidence['policy']['requires_approval'] and actor.active_organization.role != 'OWNER':
+            state = 'PENDING'
+    if simulate and not workspace:
         return {**asdict(output), 'currency': request['currency'], 'line_detail': line_detail}
+    if workspace:
+        return {'id':None,'state':'PENDING' if state == 'PENDING' else 'PREVIEW',
+            'project_id':str(project['id']),'project_code':project.get('code') or '',
+            'project_name':project.get('name') or '','client_name':project.get('client_name') or '',
+            'revision_code':project['current_revision'],'discount_pct':str(discount),
+            'pricing_mode':request['pricing_mode'],'segment':request['segment'],
+            'currency':request['currency'],**asdict(output),'line_detail':line_detail,
+            'services':service_rows,'workspace':evidence['workspace'],
+            'reason':request['reason'],'requested_by':str(request['_actor_id']),
+            'requested_by_email':request.get('_actor_email'),'approved_by':None,'approved_at':None,
+            'created_at':None,'cost_lines':[],'positions_breakdown':[],
+            'authorities':repo.authorities,'rules':{},'total_cost':str(evidence['workspace']['cascade']['cost'])}
     audit_reason(request['reason'])
     record = one(
         'INSERT INTO public.pricing_operations(org_id,project_id,requested_by,requested_by_email,'
@@ -452,8 +506,8 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
         'VALUES(%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id,created_at',
         [org_id,project['id'],request['_actor_id'],request.get('_actor_email'),
          json_text({key:value for key,value in request.items() if not key.startswith('_')}),
-         json_text({'rules':rules,'authorities':repo.authorities,'positions':technical,'cost_lines':cost_lines,'extra_policy':policy_evidence}),
-         json_text({**asdict(output),'line_detail':line_detail,'services':service_rows,'services_cost':str(sum((item.total_cost for item in project_services),D('0'))),'document_extra_prices':policy_evidence['policy']['document_prices']}),source_revision(project,positions),project['current_revision'],
+         json_text({'rules':rules,'authorities':repo.authorities,'positions':technical,'cost_lines':cost_lines,'extra_policy':policy_evidence,'replay':evidence['replay'],'approval_policy':evidence['policy']}),
+         json_text({**asdict(output),'line_detail':line_detail,'services':service_rows,'services_cost':str(sum((item.total_cost for item in project_services),D('0'))),'document_extra_prices':policy_evidence['policy']['document_prices'],'workspace':evidence['workspace']}),source_revision(project,positions),project['current_revision'],
          'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
     costs = [(index, D(str(cost))) for index, cost in cost_lines]
     breakdown = [{
@@ -478,6 +532,7 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None):
             'segment':request.get('segment') or '',
             'currency':request['currency'],**asdict(output),
             'line_detail':line_detail,
+            'workspace':evidence['workspace'],
             'services':service_rows,
             'document_extra_prices':policy_evidence['policy']['document_prices'],
             'extras':[{'label':item['label'],'kind':item['kind'],
@@ -642,8 +697,11 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
     if operation['state'] not in ('PREVIEW','PENDING'):
         raise PricingError('operation_already_final')
     request = decoded(operation['request'])
-    state = discount_state(role,D(str(request['discount_pct'])),confirmed)
-    if state == 'PENDING' or (reject and role != 'OWNER'):
+    snapshot = decoded(operation['input_snapshot'])
+    state = ('APPLIED' if role == 'ESTIMATOR' and snapshot.get('approval_policy') is not None
+        else discount_state(role,D(str(request['discount_pct'])),confirmed))
+    approval_required = snapshot.get('approval_policy',{}).get('requires_approval',False)
+    if state == 'PENDING' or (role != 'OWNER' and approval_required) or (reject and role != 'OWNER'):
         raise PricingError('owner_approval_required')
     audit_reason(reason)
     if reject:
@@ -661,6 +719,15 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
         raise PricingError('stale_pricing_operation')
     output = decoded(operation['result'])
     snapshot = decoded(operation['input_snapshot'])
+    if role != 'OWNER' and snapshot.get('approval_policy'):
+        from dekopen_engine.price_workspace import policy
+        rows("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",[str(org_id)+':pricing_rules'])
+        live_rules = one('SELECT * FROM public.pricing_rules WHERE org_id=%s',[org_id])
+        live_decision = policy(cost=D(str(output['workspace']['cascade']['cost'])),net=D(str(output['project_net'])),
+            minimum=live_rules['minimum_margin_pct'],maximum=live_rules['maximum_margin_pct'],
+            discount=D(str(request['discount_pct'])),discount_limit=live_rules['discount_approval_pct'])
+        if live_decision['requires_approval']:
+            raise PricingError('owner_approval_required')
     if 'extra_policy' in snapshot:
         from projects.extras import policy_record, lock_policy
         lock_policy(org_id)

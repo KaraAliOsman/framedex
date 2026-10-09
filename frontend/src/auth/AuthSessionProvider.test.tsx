@@ -5,10 +5,10 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "../api/apiMutator";
+import * as pricingTransport from "../api/apiMutator";
 import { authMe } from "../api/generated/dekopen";
 import { CommercialPricingPage } from "../features/pricing/PricingPage";
 import { useCanvasStore } from "../features/canvas/canvasStore";
-import { t } from "../i18n/es-CL";
 import { telemetry } from "../telemetry/telemetry";
 import { AuthSessionProvider, useAuthSession } from "./AuthSessionProvider";
 
@@ -322,11 +322,36 @@ describe("authoritative session and active-organization boundary", () => {
     expect(screen.getByTestId("active-org")).toHaveTextContent("org-A");
   });
 
-  it("cannot expose tenant A design through CommercialDraft after selecting tenant B", async () => {
+  it("cannot expose tenant A prices through the commercial workspace after selecting tenant B", async () => {
+    const request = vi
+      .spyOn(pricingTransport, "apiMutator")
+      .mockImplementation(async <T,>(path: string, init: RequestInit): Promise<T> => {
+        const tenant = new Headers(init.headers).get("X-Organization-ID");
+        if (String(path).endsWith("options/"))
+          return { data: { fx: [], commercial_lists: [], band: null } } as T;
+        return {
+          data:
+            tenant === "org-A"
+              ? [
+                  {
+                    id: "operation-A",
+                    project_id: "project-A",
+                    project_code: "P-000001",
+                    revision_code: "REV-A",
+                    state: "APPLIED",
+                    currency: "CLP",
+                    project_gross: "1444",
+                    reason: "Condiciones privadas de A",
+                    created_at: "2026-10-09T12:00:00Z",
+                  },
+                ]
+              : [],
+        } as T;
+      });
     mount(<DraftSurface />);
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
     seedCanvas();
-    expect(screen.getByText("1444.00 × 1555.00 mm")).toBeInTheDocument();
+    await screen.findByText(/Condiciones privadas de A/);
     let finishB: ((value: Awaited<ReturnType<typeof authMe>>) => void) | undefined;
     vi.mocked(authMe).mockImplementationOnce(
       () =>
@@ -338,10 +363,17 @@ describe("authoritative session and active-organization boundary", () => {
     expectResetCanvas();
     await act(async () => finishB?.(result("org-B")));
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
-    expect(screen.getByText(t("pricing.prepareDesign"))).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText(/Condiciones privadas de A/)).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText("$1.444")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver detalle" })).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: t("pricing.createDraft") }),
-    ).not.toBeInTheDocument();
+      request.mock.calls.some(
+        ([, init]) => new Headers(init.headers).get("X-Organization-ID") === "org-B",
+      ),
+    ).toBe(true);
+    request.mockRestore();
   });
 
   it("does not call async Auth methods from inside onAuthStateChange", async () => {

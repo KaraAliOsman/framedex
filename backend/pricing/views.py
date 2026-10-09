@@ -28,6 +28,7 @@ from pricing.serializers import (
     DraftResponseSerializer, PriceRequestSerializer, PriceResponseSerializer, RESOURCE_SERIALIZERS,
     ImportRequestSerializer, DesignBatchPreviewRequestSerializer,
     DesignBatchPreviewResponseSerializer, WithdrawSerializer,
+    WorkspaceResponseSerializer, PricingOptionsSerializer, AcknowledgeSerializer,
 )
 from pricing.service import (apply_operation, design_batch_preview, operation_public,
                              preview, withdraw_operation, pricing_public_detail)
@@ -186,7 +187,7 @@ class PreviewView(APIView):
         organization_header = request.headers.get('X-Organization-ID')
         with public_pricing_errors():
             output = _preview_with_retry(token,claims,organization_header,data)
-        return Response(price_response(output))
+        return Response(json.loads(json_text(price_response(output))))
 
 
 class DesignBatchPreviewView(APIView):
@@ -203,6 +204,53 @@ class DesignBatchPreviewView(APIView):
         with public_pricing_errors():
             output = _preview_with_retry(token,claims,organization_header,data,design_batch_preview)
         return Response(json.loads(json_text(output)))
+
+
+def workspace_preview(org_id, actor, data):
+    return preview(org_id,actor,data,simulate=True,workspace=True)
+
+
+class WorkspaceView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(operation_id='pricing_workspace',parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=PriceRequestSerializer,responses={200:WorkspaceResponseSerializer,**ERRORS},tags=['pricing'])
+    def post(self,request):
+        data = validate(PriceRequestSerializer,request.data)
+        token = verified_request_token(request)
+        with public_pricing_errors():
+            output = _preview_with_retry(token,dict(token.claims),request.headers.get('X-Organization-ID'),data,workspace_preview)
+        return Response(json.loads(json_text(price_response(output))))
+
+
+class OptionsView(APIView):
+    @extend_schema(operation_id='pricing_options',parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200:PricingOptionsSerializer,**ERRORS},tags=['pricing'])
+    def get(self,request):
+        with scope(request,('OWNER','ESTIMATOR')) as (_,_,org), commercial_backend():
+            fx = rows('SELECT id,base_currency,quote_currency,observed_rate,observed_date,effective_date,source '
+                      'FROM public.pricing_fx_snapshots WHERE org_id=%s ORDER BY effective_date DESC,id',[org])
+            lists = rows('SELECT DISTINCT context_code,pricing_mode FROM public.pricing_configurations '
+                         'WHERE org_id=%s AND is_active ORDER BY context_code,pricing_mode',[org])
+            rules = rows('SELECT minimum_margin_pct,default_margin_pct,maximum_margin_pct,discount_approval_pct '
+                         'FROM public.pricing_rules WHERE org_id=%s',[org])
+        return Response(json.loads(json_text({'fx':fx,'commercial_lists':lists,'band':rules[0] if rules else None})))
+
+
+class AcknowledgeView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(operation_id='pricing_acknowledge',parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=AcknowledgeSerializer,responses={200:AdminResponseSerializer,**ERRORS},tags=['pricing'])
+    def post(self,request):
+        data = validate(AcknowledgeSerializer,request.data)
+        with scope(request,('OWNER','ESTIMATOR')) as (token,_,org), commercial_backend():
+            for operation_id in data['operation_ids']:
+                rows('INSERT INTO public.pricing_attention_receipts(org_id,operation_id,user_id) '
+                     "SELECT org_id,id,%s FROM public.pricing_operations WHERE org_id=%s AND id=%s AND requested_by=%s "
+                     "AND approved_by IS DISTINCT FROM requested_by AND state IN ('APPLIED','REJECTED') "
+                     'ON CONFLICT DO NOTHING RETURNING operation_id',[token.user_id,org,operation_id,token.user_id])
+        return Response({'items':[]})
 
 
 class ApplyView(APIView):
@@ -251,6 +299,17 @@ class OperationsView(APIView):
                               'WHERE operation.org_id=%s'+condition+
                               ' ORDER BY operation.created_at DESC,operation.id LIMIT 100',parameters)
                 output = [price_response(price_visibility(operation_public(item),tenant.active_organization.role)) for item in result]
+                receipts = {str(item['operation_id']) for item in rows('SELECT operation_id FROM public.pricing_attention_receipts '
+                    'WHERE org_id=%s AND user_id=%s',[org,token.user_id])}
+            from documents.repository import documentary_backend
+            with documentary_backend():
+                issued = {str(item['pricing_operation_id']) for item in rows(
+                    'SELECT pricing_operation_id FROM public.project_versions WHERE org_id=%s',[org])}
+            for item in output:
+                item['resulted_in_issue'] = item['id'] in issued
+                item['notification_unread'] = (item['requested_by'] == str(token.user_id)
+                    and item['approved_by'] is not None and item['approved_by'] != item['requested_by']
+                    and item['state'] in ('APPLIED','REJECTED') and item['id'] not in receipts)
         return Response(output)
 
 

@@ -71,7 +71,10 @@ def direct_cost(materials: Sequence[Decimal], area_m2: Decimal, waste: Decimal,
     for value in (*materials, area_m2, waste, labor, installation):
         number(value)
     with localcontext() as context:
-        context.prec = 80
+        # Resolved bar fractions already carry 80 significant digits. Keep
+        # their finite authority intact when regrouping waste and process;
+        # selling division/rounding retains the established currency rules.
+        context.prec = 256
         return sum(materials, ZERO) * (ONE + waste) + area_m2 * (labor + installation)
 
 
