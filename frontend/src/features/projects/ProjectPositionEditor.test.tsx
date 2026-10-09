@@ -530,9 +530,9 @@ it("keeps save disabled only while the product is invalid", async () => {
   evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "INVALID")));
   mount();
   await screen.findByRole("heading", { name: "Cocina" });
+  await waitFor(() => expect(evaluate).toHaveBeenCalled());
   await showBom();
   await screen.findByText("CUT-A");
-  await waitFor(() => expect(evaluate).toHaveBeenCalled());
   expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
   expect(update).not.toHaveBeenCalled();
 });
@@ -543,9 +543,9 @@ it("saves a manufacturing-incomplete assembly as a draft", async () => {
   evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "MANUFACTURING_INCOMPLETE")));
   mount();
   await screen.findByRole("heading", { name: "Cocina" });
+  await waitFor(() => expect(evaluate).toHaveBeenCalled());
   await showBom();
   await screen.findByText("CUT-A");
-  await waitFor(() => expect(evaluate).toHaveBeenCalled());
   const button = screen.getByRole("button", { name: t("projects.save") });
   expect(button).toBeEnabled();
   fireEvent.click(button);
