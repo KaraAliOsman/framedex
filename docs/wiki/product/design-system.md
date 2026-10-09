@@ -3,8 +3,9 @@ type: concept
 status: active
 updated: 2026-10-09
 volatility: medium
-verified_ref: 023b8ba303b680ca50b6e10119ce4ee4514c9c38
+verified_ref: ecf24d2b02184135c60ea64c2691db2a63672ee2
 sources:
+  - ED1 implementación ecf24d2b02184135c60ea64c2691db2a63672ee2, gates locales y navegador, 2026-10-09
   - docs/design/CONSTITUCION.md
   - docs/design/SISTEMA-V2.md
   - frontend/src/ui/

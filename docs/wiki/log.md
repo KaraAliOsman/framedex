@@ -974,3 +974,7 @@ Recorridos estimador/emisión/DOC-01, dueño/aprobación, jefe/remake y operario
 pasan, junto con una nueva propuesta MiMo de Low-E aplicada y deshecha.
 Uw permanece Sin dato y DEMO no certifica. La aceptación y decisiones
 editoriales guían la ola 2; gates finales y squash se registrarán al integrar.
+
+## 2026-10-09 — ED1 · gates y ref de implementación
+
+`ecf24d2b02184135c60ea64c2691db2a63672ee2` pasa lint, tipos, test y build: 829 motor (+2 xfail), 1.382 backend y 919 frontend. La repetición final del plan conserva ocho vistas sin hallazgos. CI y squash siguen pendientes.

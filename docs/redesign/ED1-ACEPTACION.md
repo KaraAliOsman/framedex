@@ -141,3 +141,5 @@ activación productiva continúa en [ACTIVACION](../operations/ACTIVACION.md).
 Catálogos DEMO no son certificados y la autoridad térmica incompleta sigue
 visible. Clientes, compras, inventario, instalación y CNC esperan su encargo
 y ED2; aquí solo comparten la primitiva cuando corresponde.
+
+Implementación verificada: `ecf24d2b02184135c60ea64c2691db2a63672ee2`. CI y squash se registran al integrar.
