@@ -150,3 +150,6 @@ Implementación verificada: `ecf24d2b02184135c60ea64c2691db2a63672ee2`. CI y squ
 Ajuste final de apariencia: `3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75`. Gate completo PASA, 921 pruebas frontend; ocho vistas verifican primer clic y preferencia.
 
 Autoridad angular final: `9019282e1ded4b287f4518b09da069bcdee20abc`. La leyenda y el detalle preservan coma decimal, un extremo de 90° declarado y otro ausente sin completar autoridad. Gate completo PASA y ocho vistas del plan sin hallazgos.
+
+PR https://github.com/KaraAliOsman/framedex/pull/137: Lint & Typecheck, Test Suite, Frontend Build y Database Gate PASA
+sobre `ae9292864ad7d8efb9beba9243451fba49d8c04e`. Squash en integración: `7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d`.

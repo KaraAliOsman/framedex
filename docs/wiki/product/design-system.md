@@ -3,8 +3,9 @@ type: concept
 status: active
 updated: 2026-10-09
 volatility: medium
-verified_ref: 9019282e1ded4b287f4518b09da069bcdee20abc
+verified_ref: 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d
 sources:
+  - ED1 PR https://github.com/KaraAliOsman/framedex/pull/137, CI 4/4 sobre ae9292864ad7d8efb9beba9243451fba49d8c04e, squash 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d, 2026-10-09
   - ED1 autoridad angular 9019282e1ded4b287f4518b09da069bcdee20abc, gate completo y ocho vistas finales, 2026-10-09
   - ED1 corrección de apariencia 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75, gate completo y ocho vistas, 2026-10-09
   - ED1 implementación ecf24d2b02184135c60ea64c2691db2a63672ee2, gates locales y navegador, 2026-10-09

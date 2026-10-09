@@ -21,7 +21,7 @@
 | P03 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/134 | 5b06ceb12457b297a8748580453695714469c6a0 | CI 4/4 verde; Hoy por consecuencia, decisiones humanas, búsqueda y destinos exactos; 1.205 pgTAP, 439 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
 | P12 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/135 | e59539d1b282fde9c928fcd9e67f970e51995cdc | CI 4/4 verde; estación privada, QR físico y QC/remake idempotente; 1.218 pgTAP, 441 integraciones, 17 E2E y diez upgrades PG16; rúbrica PASA. |
 | P17 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/136 | d5500d69bbc843162a9c189805a00d8904d11264 | CI 4/4 verde; presencia privada, dibujos/Δ, aplicar/deshacer y auditoría; 1.218 pgTAP, 444 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
-| ED1 | ED1 | en curso |  |  |  |
+| ED1 | ED1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/137 | 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d | CI 4/4 verde; 192 vistas finales sin hallazgos, cuatro personas y MiMo real; coherencia/guardas y rúbrica por superficie PASA. |
 | P06 | 2 | pendiente |  |  |  |
 | P08 | 2 | pendiente |  |  |  |
 | P13 | 2 | pendiente |  |  |  |
@@ -65,3 +65,9 @@ Direcciones físicas, marca, lienzo DIN, precios, DOC-01, Hoy y estaciones compa
 P17 conserva presencia privada, cambios Low-E exactos, dibujos/Δ y deshacer con auditoría; una edición posterior queda protegida.
 Capturas clave: `docs/redesign/captures/asistente-trabajos-orb/`, `produccion-estaciones/`, `shell-hoy/` y `doc01-v2/`.
 Riesgos: catálogo DEMO sin certificación; Uw Sin dato y superficies posteriores pendientes; ED1 revisa ahora el conjunto.
+
+ED1 cerrado: revisión conjunta de la ola 1 integrada con CI 4/4 verde.
+Estados, formatos, paleta DIN, densidad por tarea y secciones/planes comparten reglas sin ampliar permisos ni autoridad.
+Estimador/emisión/DOC-01, dueño/aprobación, jefe/remake, operario/QR y nuevo lote MiMo aplicado/deshecho pasan.
+Capturas clave: `docs/redesign/captures/ed1/`; 192 antes y después, cero hallazgos finales; baseline 257/716 → 69/187.
+Riesgos: catálogo DEMO sin certificación, Uw Sin dato y superficies de ola 2 pendientes de su propio encargo/ED2.

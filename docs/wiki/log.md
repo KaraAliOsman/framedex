@@ -986,3 +986,9 @@ editoriales guían la ola 2; gates finales y squash se registrarán al integrar.
 ## 2026-10-09 — ED1 · autoridad angular final
 
 `9019282e1ded4b287f4518b09da069bcdee20abc` conserva cada extremo declarado, incluido 90°, y formato fraccional con coma. La ausencia sigue Sin dato. La regresión comprueba leyenda, selección/detalle y bytes del fixture. El gate detectó un acceso posiblemente indefinido del test: se verifica la existencia del corte sin quitar aserciones. Gate completo correctivo: 829 motor (+2 xfail), 1.382 backend y 922 frontend. Las ocho vistas finales del plan pasan. CI y squash siguen pendientes.
+
+## 2026-10-09 — ED1 · integrado
+
+https://github.com/KaraAliOsman/framedex/pull/137 pasa los cuatro checks sobre `ae9292864ad7d8efb9beba9243451fba49d8c04e`
+y se integra con squash `7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d` en `integracion/v1`.
+ESTADO registra su cierre editorial en cinco líneas. Continúa P06.

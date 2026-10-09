@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 9019282e1ded4b287f4518b09da069bcdee20abc
+verified_ref: 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d
 sources:
+  - ED1 PR https://github.com/KaraAliOsman/framedex/pull/137, CI 4/4 sobre ae9292864ad7d8efb9beba9243451fba49d8c04e, squash 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d, 2026-10-09
   - ED1 autoridad angular 9019282e1ded4b287f4518b09da069bcdee20abc, gate completo y ocho vistas finales, 2026-10-09
   - ED1 corrección de apariencia 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75, gate completo y ocho vistas, 2026-10-09
   - ED1 implementación ecf24d2b02184135c60ea64c2691db2a63672ee2, gates locales y navegador, 2026-10-09
@@ -60,7 +61,7 @@ vistas técnicas, ocho planes y estados de transporte/reduced motion.
 Baseline: 257 claves/716 ocurrencias → 69/187; las infracciones reales
 iniciales eran 155/466. No se flexibiliza detector ni check. Véase
 [aceptación](../../redesign/ED1-ACEPTACION.md).
-El cierre local y CI se registran al integrar. DEMO y Uw Sin dato siguen
+Los gates locales y los cuatro checks de CI pasan; ED1 está integrado. DEMO y Uw Sin dato siguen
 explícitos; no se acredita aquí el alcance comercial/planta posterior.
 
 ## P17 · asistente, trabajos y presencia (09-10-2026)
