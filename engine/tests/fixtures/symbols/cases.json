@@ -1,0 +1,6092 @@
+[
+  {
+    "name": "Fijo-interior",
+    "label": "Fijo",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FIXED",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Fijo-exterior",
+    "label": "Fijo",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FIXED",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Abatible izquierda-interior",
+    "label": "Abatible izquierda",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Abatible izquierda-exterior",
+    "label": "Abatible izquierda",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Abatible derecha-interior",
+    "label": "Abatible derecha",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "RIGHT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Abatible derecha-exterior",
+    "label": "Abatible derecha",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "RIGHT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oscilobatiente izquierda-interior",
+    "label": "Oscilobatiente izquierda",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT_TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT_TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "240.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oscilobatiente izquierda-exterior",
+    "label": "Oscilobatiente izquierda",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT_TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT_TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          },
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "960.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oscilobatiente derecha-interior",
+    "label": "Oscilobatiente derecha",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT_TURN",
+                "hinge_side": "RIGHT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT_TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "240.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oscilobatiente derecha-exterior",
+    "label": "Oscilobatiente derecha",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT_TURN",
+                "hinge_side": "RIGHT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT_TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          },
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "960.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Proyectante-interior",
+    "label": "Proyectante",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TOP_HUNG",
+                "hinge_side": "TOP",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TOP_HUNG",
+          "hinge_side": "TOP",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "600",
+          "y_mm": "1360",
+          "height_from_bottom_mm": "40",
+          "side": "BOTTOM"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "awning",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "600.0",
+                "1120.0"
+              ],
+              [
+                "960.0",
+                "280.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "600",
+          "1360"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Proyectante-exterior",
+    "label": "Proyectante",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TOP_HUNG",
+                "hinge_side": "TOP",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TOP_HUNG",
+          "hinge_side": "TOP",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "600",
+          "y_mm": "1360",
+          "height_from_bottom_mm": "40",
+          "side": "BOTTOM"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "awning",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "600.0",
+                "1120.0"
+              ],
+              [
+                "240.0",
+                "280.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "600",
+          "1360"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Solo abatimiento-interior",
+    "label": "Solo abatimiento",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT",
+                "hinge_side": "BOTTOM",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT",
+          "hinge_side": "BOTTOM",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "600",
+          "y_mm": "40",
+          "height_from_bottom_mm": "1360",
+          "side": "TOP"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "240.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "600",
+          "40"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Solo abatimiento-exterior",
+    "label": "Solo abatimiento",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT",
+                "hinge_side": "BOTTOM",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT",
+          "hinge_side": "BOTTOM",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "600",
+          "y_mm": "40",
+          "height_from_bottom_mm": "1360",
+          "side": "TOP"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "960.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "600",
+          "40"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Puerta izquierda-interior",
+    "label": "Puerta izquierda",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "DOOR"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Puerta izquierda-exterior",
+    "label": "Puerta izquierda",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "DOOR"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Puerta derecha-interior",
+    "label": "Puerta derecha",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "RIGHT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "DOOR"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Puerta derecha-exterior",
+    "label": "Puerta derecha",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "RIGHT",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "DOOR"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Corredera 2 hojas-interior",
+    "label": "Corredera 2 hojas",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "LEFT"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "150.00",
+                "700.0"
+              ],
+              [
+                "450.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "390.00",
+                "616.00"
+              ],
+              [
+                "450.00",
+                "700.0"
+              ],
+              [
+                "390.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "1050.00",
+                "700.0"
+              ],
+              [
+                "750.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "810.00",
+                "616.00"
+              ],
+              [
+                "750.00",
+                "700.0"
+              ],
+              [
+                "810.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Corredera 2 hojas-exterior",
+    "label": "Corredera 2 hojas",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "LEFT"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "1050.00",
+                "700.0"
+              ],
+              [
+                "750.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "810.00",
+                "616.00"
+              ],
+              [
+                "750.00",
+                "700.0"
+              ],
+              [
+                "810.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "150.00",
+                "700.0"
+              ],
+              [
+                "450.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "390.00",
+                "616.00"
+              ],
+              [
+                "450.00",
+                "700.0"
+              ],
+              [
+                "390.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Corredera 3 hojas-interior",
+    "label": "Corredera 3 hojas",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S3",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "LEFT"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "400",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "400",
+        "y_mm": "0",
+        "width_mm": "400",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "800",
+        "y_mm": "0",
+        "width_mm": "400",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "100.00",
+                "700.0"
+              ],
+              [
+                "300.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "260.00",
+                "616.00"
+              ],
+              [
+                "300.00",
+                "700.0"
+              ],
+              [
+                "260.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "500.00",
+                "700.0"
+              ],
+              [
+                "700.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "660.00",
+                "616.00"
+              ],
+              [
+                "700.00",
+                "700.0"
+              ],
+              [
+                "660.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "1100.00",
+                "700.0"
+              ],
+              [
+                "900.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "940.00",
+                "616.00"
+              ],
+              [
+                "900.00",
+                "700.0"
+              ],
+              [
+                "940.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Corredera 3 hojas-exterior",
+    "label": "Corredera 3 hojas",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S3",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "LEFT"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "400",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "400",
+        "y_mm": "0",
+        "width_mm": "400",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "800",
+        "y_mm": "0",
+        "width_mm": "400",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "1100.00",
+                "700.0"
+              ],
+              [
+                "900.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "940.00",
+                "616.00"
+              ],
+              [
+                "900.00",
+                "700.0"
+              ],
+              [
+                "940.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "700.00",
+                "700.0"
+              ],
+              [
+                "500.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "540.00",
+                "616.00"
+              ],
+              [
+                "500.00",
+                "700.0"
+              ],
+              [
+                "540.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "100.00",
+                "700.0"
+              ],
+              [
+                "300.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "260.00",
+                "616.00"
+              ],
+              [
+                "300.00",
+                "700.0"
+              ],
+              [
+                "260.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Corredera 4 hojas-interior",
+    "label": "Corredera 4 hojas",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S3",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "LEFT"
+                  },
+                  {
+                    "slot": "S4",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "LEFT"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "300",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "900",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "75.00",
+                "700.0"
+              ],
+              [
+                "225.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "195.00",
+                "616.00"
+              ],
+              [
+                "225.00",
+                "700.0"
+              ],
+              [
+                "195.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "375.00",
+                "700.0"
+              ],
+              [
+                "525.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "495.00",
+                "616.00"
+              ],
+              [
+                "525.00",
+                "700.0"
+              ],
+              [
+                "495.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "825.00",
+                "700.0"
+              ],
+              [
+                "675.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "705.00",
+                "616.00"
+              ],
+              [
+                "675.00",
+                "700.0"
+              ],
+              [
+                "705.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "1125.00",
+                "700.0"
+              ],
+              [
+                "975.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "1005.00",
+                "616.00"
+              ],
+              [
+                "975.00",
+                "700.0"
+              ],
+              [
+                "1005.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Corredera 4 hojas-exterior",
+    "label": "Corredera 4 hojas",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S3",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "LEFT"
+                  },
+                  {
+                    "slot": "S4",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "LEFT"
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "300",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "900",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "1125.00",
+                "700.0"
+              ],
+              [
+                "975.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "1005.00",
+                "616.00"
+              ],
+              [
+                "975.00",
+                "700.0"
+              ],
+              [
+                "1005.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "825.00",
+                "700.0"
+              ],
+              [
+                "675.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "705.00",
+                "616.00"
+              ],
+              [
+                "675.00",
+                "700.0"
+              ],
+              [
+                "705.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "375.00",
+                "700.0"
+              ],
+              [
+                "525.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "495.00",
+                "616.00"
+              ],
+              [
+                "525.00",
+                "700.0"
+              ],
+              [
+                "495.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "75.00",
+                "700.0"
+              ],
+              [
+                "225.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "195.00",
+                "616.00"
+              ],
+              [
+                "225.00",
+                "700.0"
+              ],
+              [
+                "195.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "O X X O · encuentro-interior",
+    "label": "O X X O · encuentro",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FIXED",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "FIXED",
+                    "track": null,
+                    "travel": null
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S3",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "LEFT"
+                  },
+                  {
+                    "slot": "S4",
+                    "kind": "FIXED",
+                    "track": null,
+                    "travel": null
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "300",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "900",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "375.00",
+                "700.0"
+              ],
+              [
+                "525.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "495.00",
+                "616.00"
+              ],
+              [
+                "525.00",
+                "700.0"
+              ],
+              [
+                "495.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "825.00",
+                "700.0"
+              ],
+              [
+                "675.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "705.00",
+                "616.00"
+              ],
+              [
+                "675.00",
+                "700.0"
+              ],
+              [
+                "705.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "O X X O · encuentro-exterior",
+    "label": "O X X O · encuentro",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FIXED",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "FIXED",
+                    "track": null,
+                    "travel": null
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S3",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "LEFT"
+                  },
+                  {
+                    "slot": "S4",
+                    "kind": "FIXED",
+                    "track": null,
+                    "travel": null
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "300",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "900",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "825.00",
+                "700.0"
+              ],
+              [
+                "675.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "705.00",
+                "616.00"
+              ],
+              [
+                "675.00",
+                "700.0"
+              ],
+              [
+                "705.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "375.00",
+                "700.0"
+              ],
+              [
+                "525.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "495.00",
+                "616.00"
+              ],
+              [
+                "525.00",
+                "700.0"
+              ],
+              [
+                "495.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "O X X O · separan-interior",
+    "label": "O X X O · separan",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FIXED",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "FIXED",
+                    "track": null,
+                    "travel": null
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "LEFT"
+                  },
+                  {
+                    "slot": "S3",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S4",
+                    "kind": "FIXED",
+                    "track": null,
+                    "travel": null
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "300",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "900",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "525.00",
+                "700.0"
+              ],
+              [
+                "375.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "405.00",
+                "616.00"
+              ],
+              [
+                "375.00",
+                "700.0"
+              ],
+              [
+                "405.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "675.00",
+                "700.0"
+              ],
+              [
+                "825.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "795.00",
+                "616.00"
+              ],
+              [
+                "825.00",
+                "700.0"
+              ],
+              [
+                "795.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "O X X O · separan-exterior",
+    "label": "O X X O · separan",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FIXED",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "sliding_layout": {
+                "tracks": 2,
+                "panels": [
+                  {
+                    "slot": "S1",
+                    "kind": "FIXED",
+                    "track": null,
+                    "travel": null
+                  },
+                  {
+                    "slot": "S2",
+                    "kind": "MOVING",
+                    "track": 0,
+                    "travel": "LEFT"
+                  },
+                  {
+                    "slot": "S3",
+                    "kind": "MOVING",
+                    "track": 1,
+                    "travel": "RIGHT"
+                  },
+                  {
+                    "slot": "S4",
+                    "kind": "FIXED",
+                    "track": null,
+                    "travel": null
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "300",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "LEFT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      },
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "900",
+        "y_mm": "0",
+        "width_mm": "300",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_left",
+            "points": [
+              [
+                "675.00",
+                "700.0"
+              ],
+              [
+                "825.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_left_head",
+            "points": [
+              [
+                "795.00",
+                "616.00"
+              ],
+              [
+                "825.00",
+                "700.0"
+              ],
+              [
+                "795.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "525.00",
+                "700.0"
+              ],
+              [
+                "375.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "405.00",
+                "616.00"
+              ],
+              [
+                "375.00",
+                "700.0"
+              ],
+              [
+                "405.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      },
+      {
+        "lines": [],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Puerta doble-interior",
+    "label": "Puerta doble",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "ACTIVE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "DOOR",
+              "hinged_layout": {
+                "leaves": [
+                  {
+                    "slot": "LEFT",
+                    "opening": {
+                      "movement": "TURN",
+                      "hinge_side": "LEFT",
+                      "direction": "INWARD",
+                      "leaf_role": "ACTIVE",
+                      "fixed_in_sash": false
+                    }
+                  },
+                  {
+                    "slot": "RIGHT",
+                    "opening": {
+                      "movement": "TURN",
+                      "hinge_side": "RIGHT",
+                      "direction": "INWARD",
+                      "leaf_role": "PASSIVE",
+                      "fixed_in_sash": false
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "ACTIVE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "560",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      },
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "PASSIVE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "120.0",
+                "280.0"
+              ],
+              [
+                "480.0",
+                "700.0"
+              ],
+              [
+                "120.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "560",
+          "600"
+        ]
+      },
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "1080.0",
+                "280.0"
+              ],
+              [
+                "720.0",
+                "700.0"
+              ],
+              [
+                "1080.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Puerta doble-exterior",
+    "label": "Puerta doble",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "ACTIVE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "DOOR",
+              "hinged_layout": {
+                "leaves": [
+                  {
+                    "slot": "LEFT",
+                    "opening": {
+                      "movement": "TURN",
+                      "hinge_side": "LEFT",
+                      "direction": "INWARD",
+                      "leaf_role": "ACTIVE",
+                      "fixed_in_sash": false
+                    }
+                  },
+                  {
+                    "slot": "RIGHT",
+                    "opening": {
+                      "movement": "TURN",
+                      "hinge_side": "RIGHT",
+                      "direction": "INWARD",
+                      "leaf_role": "PASSIVE",
+                      "fixed_in_sash": false
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "ACTIVE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "560",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      },
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "PASSIVE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "1080.0",
+                "280.0"
+              ],
+              [
+                "720.0",
+                "700.0"
+              ],
+              [
+                "1080.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "640",
+          "600"
+        ]
+      },
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "120.0",
+                "280.0"
+              ],
+              [
+                "480.0",
+                "700.0"
+              ],
+              [
+                "120.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Francesa-interior",
+    "label": "Francesa",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "ACTIVE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "hinged_layout": {
+                "leaves": [
+                  {
+                    "slot": "LEFT",
+                    "opening": {
+                      "movement": "TURN",
+                      "hinge_side": "LEFT",
+                      "direction": "INWARD",
+                      "leaf_role": "ACTIVE",
+                      "fixed_in_sash": false
+                    }
+                  },
+                  {
+                    "slot": "RIGHT",
+                    "opening": {
+                      "movement": "TURN",
+                      "hinge_side": "RIGHT",
+                      "direction": "INWARD",
+                      "leaf_role": "PASSIVE",
+                      "fixed_in_sash": false
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "ACTIVE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "560",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      },
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "PASSIVE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "120.0",
+                "280.0"
+              ],
+              [
+                "480.0",
+                "700.0"
+              ],
+              [
+                "120.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "560",
+          "600"
+        ]
+      },
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "1080.0",
+                "280.0"
+              ],
+              [
+                "720.0",
+                "700.0"
+              ],
+              [
+                "1080.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Francesa-exterior",
+    "label": "Francesa",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "INWARD",
+                "leaf_role": "ACTIVE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW",
+              "hinged_layout": {
+                "leaves": [
+                  {
+                    "slot": "LEFT",
+                    "opening": {
+                      "movement": "TURN",
+                      "hinge_side": "LEFT",
+                      "direction": "INWARD",
+                      "leaf_role": "ACTIVE",
+                      "fixed_in_sash": false
+                    }
+                  },
+                  {
+                    "slot": "RIGHT",
+                    "opening": {
+                      "movement": "TURN",
+                      "hinge_side": "RIGHT",
+                      "direction": "INWARD",
+                      "leaf_role": "PASSIVE",
+                      "fixed_in_sash": false
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "INWARD",
+          "leaf_role": "ACTIVE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "560",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      },
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "INWARD",
+          "leaf_role": "PASSIVE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "600",
+        "y_mm": "0",
+        "width_mm": "600",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "1080.0",
+                "280.0"
+              ],
+              [
+                "720.0",
+                "700.0"
+              ],
+              [
+                "1080.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "640",
+          "600"
+        ]
+      },
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "120.0",
+                "280.0"
+              ],
+              [
+                "480.0",
+                "700.0"
+              ],
+              [
+                "120.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Abatible hacia afuera · izquierda-interior",
+    "label": "Abatible hacia afuera · izquierda",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Abatible hacia afuera · izquierda-exterior",
+    "label": "Abatible hacia afuera · izquierda",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "LEFT",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "LEFT",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Abatible hacia afuera · derecha-interior",
+    "label": "Abatible hacia afuera · derecha",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "RIGHT",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Abatible hacia afuera · derecha-exterior",
+    "label": "Abatible hacia afuera · derecha",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TURN",
+                "hinge_side": "RIGHT",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TURN",
+          "hinge_side": "RIGHT",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oscilobatiente hacia afuera · izquierda-interior",
+    "label": "Oscilobatiente hacia afuera · izquierda",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT_TURN",
+                "hinge_side": "LEFT",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT_TURN",
+          "hinge_side": "LEFT",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          },
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "240.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oscilobatiente hacia afuera · izquierda-exterior",
+    "label": "Oscilobatiente hacia afuera · izquierda",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT_TURN",
+                "hinge_side": "LEFT",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT_TURN",
+          "hinge_side": "LEFT",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "1160",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "RIGHT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_left",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "960.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oscilobatiente hacia afuera · derecha-interior",
+    "label": "Oscilobatiente hacia afuera · derecha",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT_TURN",
+                "hinge_side": "RIGHT",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT_TURN",
+          "hinge_side": "RIGHT",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          },
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "240.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": [
+          "40",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Oscilobatiente hacia afuera · derecha-exterior",
+    "label": "Oscilobatiente hacia afuera · derecha",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "TILT_TURN",
+                "hinge_side": "RIGHT",
+                "direction": "OUTWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "TILT_TURN",
+          "hinge_side": "RIGHT",
+          "direction": "OUTWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": {
+          "x_mm": "40",
+          "y_mm": "600",
+          "height_from_bottom_mm": "800",
+          "side": "LEFT"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "turn_right",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "960.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": [
+          "1160",
+          "600"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Fijo en hoja-interior",
+    "label": "Fijo en hoja",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FIXED",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": true
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": true
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Fijo en hoja-exterior",
+    "label": "Fijo en hoja",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FIXED",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": true
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FIXED",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": true
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Banderola hacia afuera-interior",
+    "label": "Diagrama reservado · Banderola hacia afuera",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "BOTTOM_HUNG",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "BOTTOM_HUNG",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "240.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Banderola hacia afuera-exterior",
+    "label": "Diagrama reservado · Banderola hacia afuera",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "BOTTOM_HUNG",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "BOTTOM_HUNG",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "tilt",
+            "points": [
+              [
+                "960.0",
+                "1120.0"
+              ],
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Elevable-interior",
+    "label": "Diagrama reservado · Elevable",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "LIFT_SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "LIFT_SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "300.00",
+                "700.0"
+              ],
+              [
+                "900.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "780.00",
+                "616.00"
+              ],
+              [
+                "900.00",
+                "700.0"
+              ],
+              [
+                "780.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "lift",
+            "points": [
+              [
+                "600.0",
+                "980.0"
+              ],
+              [
+                "600.0",
+                "840.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Elevable-exterior",
+    "label": "Diagrama reservado · Elevable",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "LIFT_SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "LIFT_SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "900.00",
+                "700.0"
+              ],
+              [
+                "300.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "420.00",
+                "616.00"
+              ],
+              [
+                "300.00",
+                "700.0"
+              ],
+              [
+                "420.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "lift",
+            "points": [
+              [
+                "600.0",
+                "980.0"
+              ],
+              [
+                "600.0",
+                "840.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Paralela-interior",
+    "label": "Diagrama reservado · Paralela",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "PARALLEL_SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "PARALLEL_SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "300.00",
+                "700.0"
+              ],
+              [
+                "900.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "780.00",
+                "616.00"
+              ],
+              [
+                "900.00",
+                "700.0"
+              ],
+              [
+                "780.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "parallel",
+            "points": [
+              [
+                "360.0",
+                "910.00"
+              ],
+              [
+                "600.0",
+                "980.0"
+              ],
+              [
+                "840.0",
+                "910.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Paralela-exterior",
+    "label": "Diagrama reservado · Paralela",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "PARALLEL_SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "PARALLEL_SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": "RIGHT",
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "slide_right",
+            "points": [
+              [
+                "900.00",
+                "700.0"
+              ],
+              [
+                "300.00",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "slide_right_head",
+            "points": [
+              [
+                "420.00",
+                "616.00"
+              ],
+              [
+                "300.00",
+                "700.0"
+              ],
+              [
+                "420.00",
+                "784.00"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "parallel",
+            "points": [
+              [
+                "840.0",
+                "910.00"
+              ],
+              [
+                "600.0",
+                "980.0"
+              ],
+              [
+                "360.0",
+                "910.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Plegable-interior",
+    "label": "Diagrama reservado · Plegable",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FOLD",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FOLD",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "fold",
+            "points": [
+              [
+                "240.0",
+                "280.0"
+              ],
+              [
+                "480.0",
+                "1120.0"
+              ],
+              [
+                "720.0",
+                "280.0"
+              ],
+              [
+                "960.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Plegable-exterior",
+    "label": "Diagrama reservado · Plegable",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "FOLD",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "FOLD",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "fold",
+            "points": [
+              [
+                "960.0",
+                "280.0"
+              ],
+              [
+                "720.0",
+                "1120.0"
+              ],
+              [
+                "480.0",
+                "280.0"
+              ],
+              [
+                "240.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Pivotante vertical-interior",
+    "label": "Diagrama reservado · Pivotante vertical",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "PIVOT_V",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "PIVOT_V",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "pivot_v",
+            "points": [
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "600.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Pivotante vertical-exterior",
+    "label": "Diagrama reservado · Pivotante vertical",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "PIVOT_V",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "PIVOT_V",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "pivot_v",
+            "points": [
+              [
+                "600.0",
+                "280.0"
+              ],
+              [
+                "600.0",
+                "1120.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Pivotante horizontal-interior",
+    "label": "Diagrama reservado · Pivotante horizontal",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "PIVOT_H",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "PIVOT_H",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "pivot_h",
+            "points": [
+              [
+                "240.0",
+                "700.0"
+              ],
+              [
+                "960.0",
+                "700.0"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Pivotante horizontal-exterior",
+    "label": "Diagrama reservado · Pivotante horizontal",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "PIVOT_H",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "PIVOT_H",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "pivot_h",
+            "points": [
+              [
+                "960.0",
+                "700.0"
+              ],
+              [
+                "240.0",
+                "700.0"
+              ]
+            ],
+            "dashed": true
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Guillotina-interior",
+    "label": "Diagrama reservado · Guillotina",
+    "view": "interior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "VERTICAL_SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "VERTICAL_SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "vertical_slide",
+            "points": [
+              [
+                "600.0",
+                "1050.00"
+              ],
+              [
+                "600.0",
+                "350.00"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "vertical_slide_head",
+            "points": [
+              [
+                "528.00",
+                "490.00"
+              ],
+              [
+                "600.0",
+                "350.00"
+              ],
+              [
+                "672.00",
+                "490.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  },
+  {
+    "name": "Diagrama reservado · Guillotina-exterior",
+    "label": "Diagrama reservado · Guillotina",
+    "view": "exterior",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1400",
+            "tree": {
+              "id": "b1",
+              "type": "BAY",
+              "opening": {
+                "movement": "VERTICAL_SLIDE",
+                "hinge_side": "NONE",
+                "direction": "INWARD",
+                "leaf_role": "SINGLE",
+                "fixed_in_sash": false
+              },
+              "opening_use": "WINDOW"
+            }
+          }
+        ],
+        "couplings": []
+      }
+    },
+    "leaves": [
+      {
+        "opening": {
+          "movement": "VERTICAL_SLIDE",
+          "hinge_side": "NONE",
+          "direction": "INWARD",
+          "leaf_role": "SINGLE",
+          "fixed_in_sash": false
+        },
+        "x_mm": "0",
+        "y_mm": "0",
+        "width_mm": "1200",
+        "height_mm": "1400",
+        "travel": null,
+        "handle": null
+      }
+    ],
+    "expected": [
+      {
+        "lines": [
+          {
+            "symbol": "vertical_slide",
+            "points": [
+              [
+                "600.0",
+                "1050.00"
+              ],
+              [
+                "600.0",
+                "350.00"
+              ]
+            ],
+            "dashed": false
+          },
+          {
+            "symbol": "vertical_slide_head",
+            "points": [
+              [
+                "672.00",
+                "490.00"
+              ],
+              [
+                "600.0",
+                "350.00"
+              ],
+              [
+                "528.00",
+                "490.00"
+              ]
+            ],
+            "dashed": false
+          }
+        ],
+        "handle": null
+      }
+    ]
+  }
+]

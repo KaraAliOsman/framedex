@@ -65,6 +65,7 @@ from dekopen_engine.models import (
     SlidingLayout,
     SlidingPanel,
     SlidingPanelKind,
+    SlidingTravel,
     SystemParams,
     OpeningMovement, OpeningUse, LeafRole, LeafOpeningFact,
 )
@@ -167,6 +168,13 @@ def rail_count(params: SystemParams) -> int:
     return sliding_parameters(params).rail_count
 
 
+def sliding_travel(panel: SlidingPanel, index: int, count: int) -> SlidingTravel | None:
+    """Read-only legacy adapter. Never writes inferred motion into intent."""
+    if panel.kind is SlidingPanelKind.FIXED:
+        return None
+    return panel.travel or (SlidingTravel.RIGHT if index * 2 < count else SlidingTravel.LEFT)
+
+
 def validate_sliding_layout(layout: SlidingLayout, params: SystemParams) -> None:
     """Structural + track rules of a sliding topology (mandate §12).
 
@@ -193,6 +201,12 @@ def validate_sliding_layout(layout: SlidingLayout, params: SystemParams) -> None
     for index, panel in enumerate(layout.panels):
         if panel.kind is SlidingPanelKind.MOVING:
             moving += 1
+            if ((panel.travel is SlidingTravel.LEFT and index == 0)
+                    or (panel.travel is SlidingTravel.RIGHT and index == len(layout.panels) - 1)):
+                raise SlidingLayoutError(
+                    "sliding_layout_invalid", "La hoja no tiene espacio hacia esa jamba.",
+                    {"slot": panel.slot},
+                )
             if panel.track is None or not (0 <= panel.track < layout.tracks):
                 raise SlidingLayoutError(
                     "sliding_layout_invalid",

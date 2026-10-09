@@ -305,6 +305,14 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
             ),
             "discount_pct": str(value.get("discount_pct") or "0"),
             "parametric_tree": value.get("parametric_tree"),
+            "opening_leaves": [{**{key: leaf.get(key) for key in (
+                "bay_id", "leaf_id", "opening", "use", "x_mm", "y_mm", "width_mm", "height_mm")},
+                "source": "Revisión emitida",
+                "handle": ({**{key: leaf["handle"].get(key) for key in (
+                    "side", "x_mm", "y_mm", "height_from_bottom_mm", "minimum_height_from_bottom_mm",
+                    "maximum_height_from_bottom_mm", "minimum_from_top_mm", "maximum_from_top_mm")},
+                    "source": "Revisión emitida"} if isinstance(leaf.get("handle"), dict) else None)}
+                for leaf in value.get("opening_leaves") or []],
         })
     return positions
 

@@ -98,6 +98,7 @@ describe("live operation effects", () => {
       tracks: 2,
       panels: "XX",
       panel_tracks: [0, 1],
+      panel_travel: ["RIGHT", "LEFT"],
     });
   });
 });

@@ -742,3 +742,12 @@ tienen evidencia real. Los 17 E2E y 418 integraciones de Database Gate pasan;
 42 PNG conservan píxeles tras compresión y el trazo de 1,5 px se verifica en
 pantalla. ESTADO y `verified_ref` registran el squash. P05 continúa símbolos
 y cotas técnicas sobre esta base; DEMO sigue sin certificación.
+
+## [2026-10-08] P05 | dibujo y vista declarada
+
+Gramática Decimal única exportada a TS, 56 fixtures de paridad, viaje explícito
+con compatibilidad histórica, extrema de arco y cotas por niveles. Verificados
+guardado/recarga/undo/rechazo, dos caras en editor y portal sellado, documentos
+solo lectura y conjuntos DEV sin autoridad fabricable. Se corrigen colisiones
+en 1024, cotas apiladas y dos hallazgos CSS del portal. Síntesis en
+`product/opening-drawings.md`; evidencia en `docs/redesign/P05-ACEPTACION.md`.

@@ -59,5 +59,10 @@ export function slidingOperation(
     tracks: layout.tracks,
     panels: layout.panels.map((panel) => (panel.kind === "MOVING" ? "X" : "O")).join(""),
     panel_tracks: layout.panels.map((panel) => panel.track),
+    panel_travel: layout.panels.map((panel, index) =>
+      panel.kind === "FIXED"
+        ? null
+        : (panel.travel ?? (index * 2 < layout.panels.length ? "RIGHT" : "LEFT")),
+    ),
   };
 }

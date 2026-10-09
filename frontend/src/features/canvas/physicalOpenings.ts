@@ -168,8 +168,8 @@ export function choicePatch(choice: OpeningChoice): Partial<IntentNode> {
         ? {
             tracks: 2,
             panels: [
-              { slot: "S1", kind: "MOVING", track: 0 },
-              { slot: "S2", kind: "MOVING", track: 1 },
+              { slot: "S1", kind: "MOVING", track: 0, travel: "RIGHT" },
+              { slot: "S2", kind: "MOVING", track: 1, travel: "LEFT" },
             ],
           }
         : null,

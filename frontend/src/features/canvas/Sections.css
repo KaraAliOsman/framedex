@@ -215,8 +215,8 @@
 .sliding-arrow {
   fill: none;
   stroke: var(--theme-text-primary);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
 }

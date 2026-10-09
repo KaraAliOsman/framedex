@@ -18,6 +18,7 @@ Content-oriented map of durable project knowledge.
 - [Catalog authority by family](product/catalog-authority.md) — exact rules, historical migration, reviewed import and synthetic authority boundaries.
 - [Glass composition](product/glass-composition.md) — structured recipes, sourced safety, exact billing and sealed supplier orders.
 - [Physical openings](product/physical-openings.md) — sourced motion, active/passive compositions, handles and immutable legacy transport.
+- [Opening drawings](product/opening-drawings.md) — single DIN grammar, declared travel/view, exact contours and dimension gutters.
 - [Hardware classes](product/hardware-classes.md) — exact component expansion, handles/options, sealed picking and declared machining gaps.
 - [Color finishes](product/color-finishes.md) — sourced room/street faces, exact surcharges, color-specific stock and sealed rendering.
 - [Accessories and services](product/accessories-services.md) — geometry-derived quantities, real extra BOM/cuts and revision-bound commercial sublines.

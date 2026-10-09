@@ -6,6 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * * `V` - V
+ * * `H` - H
+ */
 export type AxisEnum = (typeof AxisEnum)[keyof typeof AxisEnum];
 
 export const AxisEnum = {

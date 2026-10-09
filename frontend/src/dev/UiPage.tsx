@@ -73,6 +73,8 @@ import {
 } from "../ui";
 import type { ProjectResponse } from "../api/generated/models";
 import "./ui.css";
+import { SymbolTable } from "./SymbolTable";
+import { DrawingTable } from "./DrawingTable";
 
 const openings: readonly OpeningKind[] = [
   "FIXED",
@@ -602,6 +604,8 @@ function Manual(): JSX.Element {
             />
           </Panel>
           <Panel title="05 / Gramática de aperturas">
+            <SymbolTable />
+            <DrawingTable />
             <p>
               Vista {radio === "interior" ? "interior" : "exterior"} · continuo hacia el observador,
               discontinuo alejándose.

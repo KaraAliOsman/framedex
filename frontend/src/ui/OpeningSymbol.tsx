@@ -1,4 +1,5 @@
 import type { PhysicalOpening } from "../features/canvas/physicalOpenings";
+import { openingSymbolLines, symbolPath } from "./openingSymbols";
 
 /** DIN motion lines shared by the palette, technical canvas and documents. */
 export function OpeningSymbol({
@@ -8,6 +9,8 @@ export function OpeningSymbol({
   width,
   height,
   view = "interior",
+  travel,
+  mirror = true,
 }: {
   opening: PhysicalOpening;
   x: number;
@@ -15,15 +18,10 @@ export function OpeningSymbol({
   width: number;
   height: number;
   view?: "interior" | "exterior";
+  travel?: "LEFT" | "RIGHT" | null;
+  mirror?: boolean;
 }): JSX.Element {
-  const left = x + width * 0.2,
-    right = x + width * 0.8;
-  const top = y + height * 0.2,
-    bottom = y + height * 0.8;
-  const middleX = x + width / 2,
-    middleY = y + height / 2;
-  const hingeLeft = (opening.hinge_side === "LEFT") !== (view === "exterior");
-  const away = (opening.direction === "OUTWARD") !== (view === "exterior");
+  const lines = openingSymbolLines(opening, { x, y, width, height }, view, travel, mirror);
   return (
     <g
       className="opening-glyph"
@@ -31,31 +29,18 @@ export function OpeningSymbol({
       data-hinge={opening.hinge_side}
       data-direction={opening.direction}
       data-leaf-role={opening.leaf_role}
-      strokeDasharray={away ? "6 4" : undefined}
       fill="none"
     >
-      {["TURN", "TILT_TURN"].includes(opening.movement) && (
+      {lines.map((line) => (
         <path
-          data-symbol="turn"
-          d={
-            hingeLeft
-              ? `M${left} ${top}L${right} ${middleY}L${left} ${bottom}`
-              : `M${right} ${top}L${left} ${middleY}L${right} ${bottom}`
-          }
+          key={line.symbol}
+          data-symbol={line.symbol.startsWith("turn_") ? "turn" : line.symbol}
+          d={symbolPath(line)}
+          strokeWidth="1.5"
+          vectorEffect="non-scaling-stroke"
+          strokeDasharray={line.dashed ? "6 4" : undefined}
         />
-      )}
-      {["TILT", "TILT_TURN"].includes(opening.movement) && (
-        <path data-symbol="tilt" d={`M${left} ${bottom}L${middleX} ${top}L${right} ${bottom}`} />
-      )}
-      {opening.movement === "TOP_HUNG" && (
-        <path data-symbol="awning" d={`M${left} ${top}L${middleX} ${bottom}L${right} ${top}`} />
-      )}
-      {opening.movement === "SLIDE" && (
-        <path
-          data-symbol="slide"
-          d={`M${left} ${middleY}H${right}M${right - width * 0.1} ${middleY - height * 0.06}L${right} ${middleY}L${right - width * 0.1} ${middleY + height * 0.06}`}
-        />
-      )}
+      ))}
     </g>
   );
 }

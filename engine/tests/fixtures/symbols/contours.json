@@ -1,0 +1,121 @@
+[
+  {
+    "name": "Trapecio",
+    "height_mm": "1000",
+    "width_mm": "1200",
+    "contour": {
+      "vertices": [
+        {
+          "x_mm": "0",
+          "y_mm": "0"
+        },
+        {
+          "x_mm": "1200",
+          "y_mm": "0"
+        },
+        {
+          "x_mm": "1050",
+          "y_mm": "1000"
+        },
+        {
+          "x_mm": "150",
+          "y_mm": "1000"
+        }
+      ],
+      "bulges": [
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "Triángulo",
+    "height_mm": "1000",
+    "width_mm": "1200",
+    "contour": {
+      "vertices": [
+        {
+          "x_mm": "0",
+          "y_mm": "0"
+        },
+        {
+          "x_mm": "1200",
+          "y_mm": "0"
+        },
+        {
+          "x_mm": "600",
+          "y_mm": "1000"
+        }
+      ],
+      "bulges": [
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "Arco rebajado",
+    "height_mm": "1000",
+    "width_mm": "1200",
+    "contour": {
+      "vertices": [
+        {
+          "x_mm": "0",
+          "y_mm": "0"
+        },
+        {
+          "x_mm": "1200",
+          "y_mm": "0"
+        },
+        {
+          "x_mm": "1200",
+          "y_mm": "1000"
+        },
+        {
+          "x_mm": "0",
+          "y_mm": "1000"
+        }
+      ],
+      "bulges": [
+        null,
+        null,
+        "300",
+        null
+      ]
+    }
+  },
+  {
+    "name": "Arco de medio punto",
+    "height_mm": "1000",
+    "width_mm": "1200",
+    "contour": {
+      "vertices": [
+        {
+          "x_mm": "0",
+          "y_mm": "0"
+        },
+        {
+          "x_mm": "1200",
+          "y_mm": "0"
+        },
+        {
+          "x_mm": "1200",
+          "y_mm": "1000"
+        },
+        {
+          "x_mm": "0",
+          "y_mm": "1000"
+        }
+      ],
+      "bulges": [
+        null,
+        null,
+        "600",
+        null
+      ]
+    }
+  }
+]

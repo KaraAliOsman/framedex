@@ -1,0 +1,146 @@
+[
+  {
+    "width": 1440,
+    "theme": "light",
+    "face": "interior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "face": "exterior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "face": "interior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "face": "exterior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "face": "interior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "face": "exterior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "face": "interior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "face": "exterior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "face": "interior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "face": "exterior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "face": "interior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "face": "exterior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "face": "interior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "face": "exterior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "face": "interior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "face": "exterior",
+    "sealed_leaf_symbols": 18,
+    "page_errors": [],
+    "overflow": false,
+    "findings": []
+  }
+]

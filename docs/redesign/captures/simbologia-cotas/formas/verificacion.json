@@ -1,0 +1,314 @@
+[
+  {
+    "width": 1440,
+    "theme": "light",
+    "shape": "Trapecio",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "shape": "Trapecio",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "shape": "Arco",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "shape": "Arco",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "shape": "Trapecio",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "shape": "Trapecio",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "shape": "Arco",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "shape": "Arco",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "shape": "Trapecio",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "shape": "Trapecio",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "shape": "Arco",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "shape": "Arco",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "shape": "Trapecio",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "shape": "Trapecio",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "shape": "Arco",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "shape": "Arco",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "shape": "Trapecio",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "shape": "Trapecio",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "shape": "Arco",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "shape": "Arco",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "shape": "Trapecio",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "shape": "Trapecio",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "2400.00",
+      "height_mm": "1400.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "shape": "Arco",
+    "face": "interior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "shape": "Arco",
+    "face": "exterior",
+    "engine_elevation": {
+      "min_x_mm": "0.00",
+      "min_y_mm": "0.00",
+      "width_mm": "1800.00",
+      "height_mm": "1960.00"
+    },
+    "overflow": false
+  }
+]

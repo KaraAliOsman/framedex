@@ -21,6 +21,12 @@ This page records recurring failure modes. It does **not** assert that every ite
 
 ## Editor/domain semantics
 
+P05 verifies shared DIN primitives, declared travel, exact arch crowns and
+dimension gutters across editor/PDF/portal. Legacy travel stays inferred;
+rail order remains a declared drawing convention. DEV assemblies without
+coupler authority cannot authorize manufacture. See
+[opening drawings](../product/opening-drawings.md).
+
 - sliders rendered as opening outward;
 - slider/casement categories insufficiently separated;
 - opening symbols difficult to understand;

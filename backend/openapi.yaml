@@ -20327,10 +20327,13 @@ components:
         * `profile_systems` - profile_systems
         * `reinforcement_cut_policies` - reinforcement_cut_policies
     AxisEnum:
-      type: string
       enum:
       - V
       - H
+      type: string
+      description: |-
+        * `V` - V
+        * `H` - H
     AxisOffsets:
       type: object
       properties:
@@ -22755,6 +22758,34 @@ components:
       required:
       - bottom_drain_holes_mm
       - opening_width_mm
+    DimensionChain:
+      type: object
+      properties:
+        axis:
+          $ref: '#/components/schemas/AxisEnum'
+        level:
+          type: integer
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionSegment'
+      required:
+      - axis
+      - level
+      - segments
+    DimensionSegment:
+      type: object
+      properties:
+        start_mm:
+          type: string
+        end_mm:
+          type: string
+        value_mm:
+          type: string
+      required:
+      - end_mm
+      - start_mm
+      - value_mm
     DispatchNoteAccess:
       type: object
       properties:
@@ -23220,6 +23251,82 @@ components:
       - ADD_BOTTOM_DRAIN_HOLE
       type: string
       description: '* `ADD_BOTTOM_DRAIN_HOLE` - ADD_BOTTOM_DRAIN_HOLE'
+    DrawingBay:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        x_mm:
+          type: string
+        y_mm:
+          type: string
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+      required:
+      - bay_id
+      - height_mm
+      - width_mm
+      - x_mm
+      - y_mm
+    DrawingEnvelope:
+      type: object
+      properties:
+        min_x_mm:
+          type: string
+        min_y_mm:
+          type: string
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+      required:
+      - height_mm
+      - min_x_mm
+      - min_y_mm
+      - width_mm
+    DrawingFacts:
+      type: object
+      properties:
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        chains:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionChain'
+        bays:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrawingBay'
+        authored_handles:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrawingHandleDatum'
+      required:
+      - authored_handles
+      - bays
+      - chains
+      - height_mm
+      - width_mm
+    DrawingHandleDatum:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        height_from_bottom_mm:
+          type: string
+        y_mm:
+          type: string
+        bottom_mm:
+          type: string
+      required:
+      - bay_id
+      - bottom_mm
+      - height_from_bottom_mm
+      - y_mm
     DxfExport:
       type: object
       properties:
@@ -23347,6 +23454,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ModuleEvaluation'
+        elevation:
+          allOf:
+          - $ref: '#/components/schemas/DrawingEnvelope'
+          nullable: true
         bom:
           allOf:
           - $ref: '#/components/schemas/EngineResultPayload'
@@ -26447,6 +26558,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SlidingLayoutFacts'
+        drawing:
+          allOf:
+          - $ref: '#/components/schemas/DrawingFacts'
+          nullable: true
       required:
       - issues
       - module_id
@@ -29443,6 +29558,12 @@ components:
           items:
             type: integer
             nullable: true
+        panel_travel:
+          type: array
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/SlidingTravelEnum'
+            - $ref: '#/components/schemas/NullEnum'
         travel_mm:
           type: string
           pattern: ^-?\d+(?:\.\d{1,2})?$
@@ -29493,6 +29614,12 @@ components:
           items:
             type: integer
             nullable: true
+        panel_travel:
+          type: array
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/SlidingTravelEnum'
+            - $ref: '#/components/schemas/NullEnum'
         travel_mm:
           type: string
           pattern: ^-?\d+(?:\.\d{1,2})?$
@@ -31570,6 +31697,9 @@ components:
     PortalPosition:
       type: object
       properties:
+        opening_leaves:
+          type: array
+          items: {}
         resolved_finish:
           allOf:
           - $ref: '#/components/schemas/ResolvedFinish'
@@ -35138,6 +35268,11 @@ components:
         leaf_id:
           type: string
           nullable: true
+        travel:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SlidingTravelEnum'
+          - $ref: '#/components/schemas/NullEnum'
       required:
       - kind
       - leaf_id
@@ -35247,6 +35382,10 @@ components:
       - rail_count
       - rail_type
       - separate_rail
+    SlidingTravelEnum:
+      enum:
+      - LEFT
+      - RIGHT
     StepTransition:
       type: object
       properties:

@@ -273,16 +273,23 @@ describe("tables and opening grammar", () => {
   });
   it("draws the vertex toward the handle and mirrors outside view", () => {
     const { container, rerender } = render(<OpeningGlyph type="TURN_LEFT" />);
-    expect(container.querySelector('[data-symbol="turn"]')).toHaveAttribute("d", "M5 5L19 12L5 19");
+    const points = () =>
+      container
+        .querySelector('[data-symbol="turn"]')!
+        .getAttribute("d")!
+        .match(/-?\d+(?:\.\d+)?/g)!
+        .map(Number);
+    [4.8, 4.8, 19.2, 12, 4.8, 19.2].forEach((value, index) =>
+      expect(points()[index]).toBeCloseTo(value, 10),
+    );
     expect(container.querySelector("[data-handle]")).toHaveAttribute("d", "M20 11v3");
     rerender(<OpeningGlyph type="TURN_LEFT" view="exterior" />);
-    expect(container.querySelector('[data-symbol="turn"]')).toHaveAttribute(
-      "d",
-      "M19 5L5 12L19 19",
+    [19.2, 4.8, 4.8, 12, 19.2, 19.2].forEach((value, index) =>
+      expect(points()[index]).toBeCloseTo(value, 10),
     );
     expect(container.querySelector('[data-symbol="turn"]')).toHaveAttribute(
       "stroke-dasharray",
-      "3 2",
+      "6 4",
     );
   });
   it("keeps sliding symbols parallel to the track and declares the view", () => {

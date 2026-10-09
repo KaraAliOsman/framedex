@@ -19,6 +19,7 @@ from dekopen_engine import (
     SlidingLayout,
     SlidingPanel,
     SlidingPanelKind,
+    SlidingTravel,
     SystemParams,
     calculate_geometry,
     evaluate_product,
@@ -199,7 +200,7 @@ def _parse_sliding_layout(payload: object) -> SlidingLayout:
     parsed_panels: list[SlidingPanel] = []
     for index, panel in enumerate(panels):
         panel_raw = _require_dict(panel, f"sliding_layout.panels[{index}]")
-        unexpected_panel = set(panel_raw) - {"slot", "kind", "track"}
+        unexpected_panel = set(panel_raw) - {"slot", "kind", "track", "travel"}
         if unexpected_panel:
             raise InvalidEngineRequest(
                 "sliding_layout.panels contains unsupported fields: "
@@ -218,9 +219,15 @@ def _parse_sliding_layout(payload: object) -> SlidingLayout:
             not isinstance(track, int) or isinstance(track, bool)
         ):
             raise InvalidEngineRequest("sliding_layout.panels[].track must be an integer or null")
-        parsed_panels.append(
-            SlidingPanel(slot=panel_raw["slot"], kind=kind, track=track)
-        )
+        travel_values = {}
+        if "travel" in panel_raw:
+            try:
+                travel_values["travel"] = (None if panel_raw["travel"] is None
+                                           else SlidingTravel(panel_raw["travel"]))
+            except (ValueError, TypeError) as error:
+                raise InvalidEngineRequest("El recorrido debe ser izquierda o derecha.") from error
+        parsed_panels.append(SlidingPanel(slot=panel_raw["slot"], kind=kind, track=track,
+                                        **travel_values))
     return SlidingLayout(tracks=raw["tracks"], panels=parsed_panels)
 
 

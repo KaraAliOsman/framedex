@@ -1,5 +1,6 @@
 import type { TranslationKey } from "../../i18n/es-CL";
 import type { IntentNode, Opening } from "./intentEditing";
+import { declareSlidingTravel, SLIDING_PRESETS } from "./intentEditing";
 import {
   makeArchModule,
   makeBowProduct,
@@ -11,7 +12,13 @@ import {
 } from "./productEditing";
 
 function starterTree(opening: Opening): IntentNode {
-  return { id: crypto.randomUUID(), type: "BAY", opening_type: opening };
+  const layout = SLIDING_PRESETS[opening];
+  return {
+    id: crypto.randomUUID(),
+    type: "BAY",
+    opening_type: opening,
+    ...(layout ? { sliding_layout: declareSlidingTravel(layout) } : {}),
+  };
 }
 
 export interface StarterDefinition {

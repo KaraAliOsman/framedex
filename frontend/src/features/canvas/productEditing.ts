@@ -1,6 +1,6 @@
 import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
 import { visualOpening } from "./physicalOpenings";
-import { SLIDING_PRESETS } from "./intentEditing";
+import { declareSlidingTravel, SLIDING_PRESETS } from "./intentEditing";
 import {
   findNode,
   intentBays,
@@ -1208,7 +1208,8 @@ export function setModuleOpening(
         opening: null,
         opening_use: null,
         hinged_layout: null,
-        sliding_layout: opening === "SLIDING" ? structuredClone(SLIDING_PRESETS.SLIDING_2L!) : null,
+        sliding_layout:
+          opening === "SLIDING" ? declareSlidingTravel(SLIDING_PRESETS.SLIDING_2L!) : null,
       };
     }
     return { ...node, children: node.children?.map(withOpening) };

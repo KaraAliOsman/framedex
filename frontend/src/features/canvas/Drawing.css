@@ -106,11 +106,14 @@
 .opening-glyph line,
 .opening-glyph path {
   stroke: var(--theme-text-secondary);
-  stroke-width: 2.4;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .opening-glyph circle {
   fill: var(--theme-text-secondary);
+}
+.module-bay .opening-glyph {
+  --theme-text-secondary: var(--g-700);
 }
 .canvas-dim {
   fill: var(--theme-text-secondary);
@@ -215,14 +218,56 @@
   color: var(--theme-accent-ink);
   border-color: var(--theme-accent);
 }
-.product-front-svg.is-exterior text {
-  transform: scaleX(-1);
-  transform-box: fill-box;
-  transform-origin: center;
+
+.assembly-symbol-legend {
+  position: absolute;
+  bottom: calc(var(--space-3) + var(--control-height) + var(--space-2));
+  right: var(--space-3);
+  z-index: var(--z-rail);
+  max-width: 320px;
+  padding: var(--space-2);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  font-size: var(--type-dense);
 }
-.product-front-svg.is-exterior .handle-lever {
-  display: none;
+.assembly-symbol-legend summary {
+  cursor: pointer;
 }
-.product-front-svg.is-exterior .module-bay--door .handle-lever {
-  display: initial;
+.assembly-symbol-legend p {
+  margin: var(--space-2) 0 0;
+}
+.technical-dim,
+.plan-label,
+.plan-note {
+  fill: var(--theme-text-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.plan-note {
+  font-family: var(--font-sans);
+}
+.plan-rail {
+  stroke: var(--theme-text-muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 6 4;
+}
+.plan-panel {
+  stroke: var(--theme-text-primary);
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+.sliding-inferred {
+  font-size: var(--type-dense);
+  color: var(--theme-text-secondary);
+}
+.sliding-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.sliding-panel select {
+  min-width: 0;
+  max-width: 100%;
 }

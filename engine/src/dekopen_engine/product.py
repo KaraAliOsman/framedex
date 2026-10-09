@@ -18,9 +18,9 @@ faked.
 
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, SerializerFunctionWrapHandler, model_serializer
 
 from dekopen_engine.contour import (
     Contour,
@@ -74,6 +74,7 @@ from dekopen_engine.models import (
     ProfileRole,
     ReinforcementPiece,
     SlidingPanelKind,
+    SlidingTravel,
     SystemParams,
 )
 from dekopen_engine.technical_facts import (
@@ -82,6 +83,7 @@ from dekopen_engine.technical_facts import (
     OpeningTechnicalFacts,
 )
 from dekopen_engine.trig import cos_degrees, sin_degrees
+from dekopen_engine.drawing import DrawingEnvelope, DrawingFacts, dimension_chains
 
 QUANTUM_MM = Decimal("0.01")
 _MAX_HEADING_DEG = Decimal("170")
@@ -286,6 +288,14 @@ class SlidingPanelFacts(EngineModel):
     kind: SlidingPanelKind
     track: int | None = None
     leaf_id: str | None = None
+    travel: SlidingTravel | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_fields(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = handler(self)
+        if "travel" not in self.model_fields_set:
+            value.pop("travel", None)
+        return value
 
 
 class SlidingLayoutFacts(EngineModel):
@@ -303,6 +313,7 @@ class ModuleEvaluation(EngineModel):
     issues: list[ProductIssue] = Field(default_factory=list)
     result: EngineResult | None = None
     sliding: list[SlidingLayoutFacts] = Field(default_factory=list)
+    drawing: DrawingFacts | None = None
 
 
 class ProductEvaluation(EngineModel):
@@ -311,6 +322,7 @@ class ProductEvaluation(EngineModel):
     plan: PlanGeometry | None = None
     modules: list[ModuleEvaluation] = Field(default_factory=list)
     bom: EngineResult | None = None
+    elevation: DrawingEnvelope | None = None
 
 
 def _q(value: Decimal) -> Decimal:
@@ -613,6 +625,26 @@ def elevation_envelope(assembly: CoupledAssembly) -> tuple[Decimal, Decimal]:
     top = max(member.sill_mm + member.height_mm for member in members)
     bottom = min(member.sill_mm for member in members)
     return right - left, top - bottom
+
+
+def elevation_drawing_envelope(assembly: CoupledAssembly) -> DrawingEnvelope:
+    """The true front silhouette; nominal sizes still locate stacked modules."""
+    from .contour import contour_bounds
+
+    module_by_id = {module.id: module for module in assembly.modules}
+    rectangles = []
+    for member in elevation_layout(assembly).members:
+        module = module_by_id[member.module_id]
+        left, bottom, right, top = (Decimal("0"), Decimal("0"), member.width_mm, member.height_mm)
+        if module.contour is not None:
+            left, bottom, right, top = contour_bounds(module.contour)
+        rectangles.append((member.x_mm + left, member.sill_mm + bottom,
+                           member.x_mm + right, member.sill_mm + top))
+    left = min(rectangle[0] for rectangle in rectangles)
+    bottom = min(rectangle[1] for rectangle in rectangles)
+    return DrawingEnvelope(min_x_mm=left, min_y_mm=bottom,
+        width_mm=max(rectangle[2] for rectangle in rectangles) - left,
+        height_mm=max(rectangle[3] for rectangle in rectangles) - bottom)
 
 
 def _plan_geometry(
@@ -958,6 +990,7 @@ def _sliding_facts(module: ProductModule) -> list[SlidingLayoutFacts]:
                                 slot=panel.slot,
                                 kind=panel.kind,
                                 track=panel.track,
+                                **({"travel": panel.travel} if "travel" in panel.model_fields_set else {}),
                                 leaf_id=(
                                     f"{node.id}:L{index + 1}"
                                     if panel.kind is SlidingPanelKind.MOVING
@@ -1929,6 +1962,7 @@ def evaluate_product(
                 issues=module_issues,
                 result=result,
                 sliding=_sliding_facts(module),
+                drawing=dimension_chains(module.tree, module.width_mm, module.height_mm),
             )
         )
         issues.extend(module_issues)
@@ -2239,6 +2273,7 @@ def evaluate_product(
         plan=plan,
         modules=module_evals,
         bom=bom,
+        elevation=elevation_drawing_envelope(product.assembly) if status is not ProductStatus.INVALID else None,
     )
 
 

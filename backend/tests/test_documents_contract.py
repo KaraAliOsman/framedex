@@ -273,22 +273,27 @@ def test_client_document_escapes_input_and_never_contains_raw_cost() -> None:
 
 def test_client_quote_includes_deterministic_opening_drawings() -> None:
     html = _doc01(revision_snapshot())
-    assert "<svg" in html and 'viewBox="0 0 1000 1200"' in html
+    assert "<svg" in html and "Vista interior" in html
+    from decimal import Decimal
+    import re
+    boxes = re.findall(r'viewBox="([^"]+)"', html)
+    assert any(Decimal(box.split()[2]) == 1000 and Decimal(box.split()[3]) > 1200
+               and Decimal(box.split()[1]) < 0 for box in boxes)
     sliding = revision_snapshot()
     sliding["positions"][0]["parametric_tree"] = {  # type: ignore[index]
         "id": "B1", "type": "BAY", "opening_type": "SLIDING_2L",
         "glass_spec": "4-12-4 Float Incoloro", "children": [],
     }
     sliding_html = _doc01(sliding)
-    # Card-scoped marker ids (the hero re-draws the same position) — each
-    # sliding panel still emits exactly one arrow in its product card.
-    assert sliding_html.count('marker-end="url(#arrow-1-c1)"') == 2
+    # Each leaf declares its own opposing travel, without SVG marker lookup.
+    assert sliding_html.count('data-symbol="slide_left_head"') == 1
+    assert sliding_html.count('data-symbol="slide_right_head"') == 1
     assert _doc01(sliding) == sliding_html
 
 
 def test_client_quote_renders_door_openings() -> None:
-    """DOOR_ENTRY/DOOR_DOUBLE leaves draw a dashed swing arc — a door in the
-    project must never 500 the customer quote."""
+    """Doors use DIN elevation triangles; swing arcs belong in plan only."""
+    import re
     for opening in ("DOOR_ENTRY", "DOOR_DOUBLE"):
         snapshot = revision_snapshot()
         snapshot["positions"][0]["parametric_tree"] = {  # type: ignore[index]
@@ -298,7 +303,9 @@ def test_client_quote_renders_door_openings() -> None:
         }
         html = _doc01(snapshot)
         assert "<svg" in html
-        assert "stroke-dasharray" in html
+        assert 'data-symbol="turn_left"' in html
+        assert 'stroke-dasharray' not in html
+        assert not re.search(r'd="[^"]*A ', html)
 
 
 def test_client_quote_renders_discount_fraction_as_percent() -> None:
@@ -340,7 +347,11 @@ def test_client_quote_draws_stacked_assembly_as_a_column() -> None:
         },
     }
     html = _doc01(snapshot)
-    assert 'viewBox="0 0 1000 2600"' in html
+    from decimal import Decimal
+    import re
+    boxes = re.findall(r'viewBox="([^"]+)"', html)
+    assert any(Decimal(box.split()[2]) == 1000 and Decimal(box.split()[3]) > 2600
+               and Decimal(box.split()[1]) < 0 for box in boxes)
     # The transom sill sits at 2200 mm elevation → svg y = 2600 − 2200 = 400.
     assert 'x1="0" y1="400" x2="1000" y2="400"' in html
 

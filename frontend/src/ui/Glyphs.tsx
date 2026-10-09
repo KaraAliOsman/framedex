@@ -1,3 +1,5 @@
+import { OpeningSymbol } from "./OpeningSymbol";
+import { legacySymbolOpening } from "./openingSymbols";
 import { type SVGProps } from "react";
 import { domainLabel, domainStatus } from "../i18n/domainLabels";
 export type IconKind =
@@ -79,11 +81,14 @@ export function OpeningGlyph({
   view?: "interior" | "exterior";
   direction?: "inward" | "outward";
 }): JSX.Element {
-  const left = type.endsWith("LEFT") !== (view === "exterior");
-  const turn = type.startsWith("TURN") || type.startsWith("TILT_TURN") || type === "DOOR";
-  const tilt = type === "TILT" || type.startsWith("TILT_TURN");
+  const physical = legacySymbolOpening(
+    type === "DOOR" ? "DOOR_ENTRY" : type,
+    type === "DOOR" ? "LEFT" : undefined,
+  );
+  if (type !== "AWNING") physical.direction = direction === "inward" ? "INWARD" : "OUTWARD";
+  const left = (physical.hinge_side === "LEFT") !== (view === "exterior");
   const sliding = type.startsWith("SLIDING");
-  const away = (direction === "inward") === (view === "exterior");
+  const turn = ["TURN", "TILT_TURN"].includes(physical.movement);
   return (
     <svg
       {...props}
@@ -98,38 +103,27 @@ export function OpeningGlyph({
       strokeLinejoin="miter"
     >
       <rect x="2.75" y="2.75" width="18.5" height="18.5" />
+      <rect x="5" y="5" width="14" height="14" />
       {sliding ? (
         <>
-          <path d="M12 3v18M5 10h4m-2-2 2 2-2 2M19 15h-4m2-2-2 2 2 2M3 23h18" />
+          <line x1="12" y1="3" x2="12" y2="21" />
+          {["RIGHT", "LEFT"].map((travel, index) => (
+            <OpeningSymbol
+              key={travel}
+              opening={physical}
+              x={3 + index * 9}
+              y={3}
+              width={9}
+              height={18}
+              travel={travel as "LEFT" | "RIGHT"}
+              view={view}
+            />
+          ))}
         </>
       ) : (
-        <>
-          <rect x="5" y="5" width="14" height="14" />
-          {turn ? (
-            <path
-              data-symbol="turn"
-              d={left ? "M5 5L19 12L5 19" : "M19 5L5 12L19 19"}
-              strokeDasharray={away ? "3 2" : undefined}
-            />
-          ) : null}
-          {tilt ? (
-            <path
-              data-symbol="tilt"
-              d="M5 19L12 5L19 19"
-              strokeDasharray={away ? "3 2" : undefined}
-            />
-          ) : null}
-          {type === "AWNING" ? (
-            <path
-              data-symbol="awning"
-              d="M5 5L12 19L19 5"
-              strokeDasharray={away ? "3 2" : undefined}
-            />
-          ) : null}
-          {turn ? <path data-handle="true" d={left ? "M20 11v3" : "M4 11v3"} /> : null}
-          {tilt && !turn ? <path data-handle="true" d="M11 4h3" /> : null}
-        </>
+        <OpeningSymbol opening={physical} x={0} y={0} width={24} height={24} view={view} />
       )}
+      {turn && <path data-handle="true" d={left ? "M20 11v3" : "M4 11v3"} />}
     </svg>
   );
 }
