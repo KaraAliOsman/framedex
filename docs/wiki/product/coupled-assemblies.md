@@ -3,6 +3,7 @@ type: concept
 status: active
 updated: 2026-10-09
 volatility: medium
+verified_ref: ef55dbd5af0c5863948c06b3ca85d29d2c135861
 sources:
   - docs/redesign/P06-ACEPTACION.md
   - engine/src/dekopen_engine/assembly_measures.py

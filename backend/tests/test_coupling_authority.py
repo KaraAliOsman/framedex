@@ -55,4 +55,3 @@ def test_reviewed_catalog_interchange_keeps_coupling_authority():
     assert not authority['errors']
     restored = parse_structured('CSV', export_csv('Perfiles', [authority]))[0]
     assert restored['values']['coupling_rule'] == rule
-
