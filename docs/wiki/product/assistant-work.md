@@ -3,7 +3,7 @@ type: synthesis
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: c25409c2befe60d1be047ac1e4f8d37a334b20f4
+verified_ref: 7d29a6aa6be776e2409ddc209991cd85680b3f27
 sources:
   - docs/redesign/P17-ACEPTACION.md
   - backend/tests/integration/test_assistant_presence.py

@@ -2,7 +2,7 @@
 
 Base `4d3f220451c7b06562e944b0465d8718314db3a8`, rama
 `codex/P17-asistente-trabajos-orb`. Verificado el 09-10-2026.
-Implementación `c25409c2befe60d1be047ac1e4f8d37a334b20f4`.
+Implementación `7d29a6aa6be776e2409ddc209991cd85680b3f27`.
 La [evidencia](captures/asistente-trabajos-orb/) conserva antes, después,
 recorridos y estados. P17 permanece en curso hasta CI y squash.
 

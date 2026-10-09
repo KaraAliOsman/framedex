@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: c25409c2befe60d1be047ac1e4f8d37a334b20f4
+verified_ref: 7d29a6aa6be776e2409ddc209991cd85680b3f27
 sources:
+  - P17 corrección de tipos de la regresión, 7d29a6aa6be776e2409ddc209991cd85680b3f27, 2026-10-09
   - P17 implementación c25409c2befe60d1be047ac1e4f8d37a334b20f4, verificación local del 2026-10-09
   - P17 rama codex/P17-asistente-trabajos-orb, evidencia local y docs/redesign/P17-ACEPTACION.md, 2026-10-09
   - P12 PR #135, CI run 37938719831 on 98a65474a170eb68c75a6c25d7ed36f332c6897a, squash e59539d1b282fde9c928fcd9e67f970e51995cdc, 2026-10-09
