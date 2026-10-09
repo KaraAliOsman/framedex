@@ -15,6 +15,21 @@ from pricing.xlsx_import import parse_xlsx
 MAPPING = {'sku':'SKU','description':'Description','unit':'Unit','unit_cost':'Cost'}
 
 
+def test_indicative_price_rejects_organization_removed_during_simulation(monkeypatch):
+    from contextlib import nullcontext
+
+    from authentication.errors import ContractAPIException
+    from projects import ops_registry
+
+    monkeypatch.setattr(ops_registry, 'design_from_product', lambda *_: {})
+    monkeypatch.setattr(ops_registry, 'commercial_backend', nullcontext)
+    monkeypatch.setattr(ops_registry, 'rows', lambda *_: [])
+    with pytest.raises(ContractAPIException) as rejected:
+        ops_registry.sale_price('removed-org', {}, 'system', 'WHITE')
+    assert rejected.value.status_code == 404
+    assert rejected.value.contract_code == 'organization_not_found'
+
+
 def workbook_bytes(rows):
     book = Workbook()
     sheet = book.active
@@ -132,6 +147,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_gla
 
     class Repo:
         org_id = "org"
+        currency = "CLP"
 
         def cost(self, sku, unit):
             assert (sku, unit) == ("V4", "M2")
@@ -148,8 +164,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_gla
         load_coupler_articles=lambda *a, **k: {},
     )
     monkeypatch.setattr(service, "connection", Conn())
-    monkeypatch.setattr(service, "SystemParamsRepository", lambda: params_repo)
-    monkeypatch.setattr(service, "CuttingRepository", lambda: SimpleNamespace())
+    monkeypatch.setattr("pricing.resolved.safe_technical", lambda *_: (params_repo.load_visible(),{}, {},{}))
     monkeypatch.setattr(
         service, "engine_result_from_api", lambda **kwargs: result
     )
@@ -201,6 +216,7 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_
 
     class Repo:
         org_id = "org"
+        currency = "CLP"
 
         def cost(self, sku, unit):
             calls.append((sku, unit))
@@ -218,8 +234,7 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_
         load_coupler_articles=lambda *a, **k: {},
     )
     monkeypatch.setattr(service, "connection", Conn())
-    monkeypatch.setattr(service, "SystemParamsRepository", lambda: params_repo)
-    monkeypatch.setattr(service, "CuttingRepository", lambda: SimpleNamespace())
+    monkeypatch.setattr("pricing.resolved.safe_technical", lambda *_: (params_repo.load_visible(),{}, {},{}))
     monkeypatch.setattr(
         service, "engine_result_from_api", lambda **kwargs: result
     )

@@ -22,6 +22,20 @@ export function attentionEntries(ops: OperationalSummary | undefined): Attention
   const projects = (ops?.projects ?? {}) as Record<string, number>;
   const candidates: AttentionEntry[] = [
     {
+      key: "dashboard.pricingPending",
+      action: "attention.action.review",
+      count: Number(prep.pricing_pending ?? 0),
+      to: "/pricing/commercial",
+      warn: false,
+    },
+    {
+      key: "dashboard.pricingDecisions",
+      action: "attention.action.review",
+      count: Number(prep.pricing_decisions ?? 0),
+      to: "/pricing/commercial",
+      warn: false,
+    },
+    {
       key: "dashboard.approvalsPending",
       action: "attention.action.viewApproval",
       count: Number(prep.approvals_pending ?? 0),

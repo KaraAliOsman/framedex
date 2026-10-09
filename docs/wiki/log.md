@@ -799,3 +799,33 @@ ESTADO y los refs de la wiki registran el merge. Los servicios propios están
 detenidos; el fixture sigue intacto. Los proveedores automáticos omiten su
 revisión por configuración/límites; no equivalen a una revisión de código.
 P07 continúa el workspace de precios sobre esta base.
+
+## 2026-10-09 — P07 · precio, autoridad y aprobación
+
+La rama `codex/P07-workspace-precios` sobre `3351066d` añade comparación,
+cascada y repricing de autoridades congeladas. Los goldens históricos no
+cambian semánticamente; la regresión de cantidad tres mantiene `499.8074`.
+La banda es configurable por OWNER y se relee al aplicar bajo bloqueo asesor.
+ESTIMATOR recibe una allowlist de venta y trazas sin compra/beneficio interno.
+El recorrido de 12/100 posiciones solicita, aprueba desde Hoy/campana, notifica
+y marca leído con actor/comentario auditados. Se añade la página
+`product/price-workspace.md` y se registran defaults/redondeo/límites.
+El pase visual corrige controles portados, composición, porcentajes, enlaces
+oscuros y enums administrativos. El runner se invoca por glob, no por lista
+de rutas, para evitar una ejecución sin vistas. El gate local Linux necesitó
+Docker CLI actual: la versión 20.10 no reconoce `volume prune --all` de
+Supabase 2.116. La corrección es solo de entorno; no debilita el gate ni
+modifica stacks ajenos. Database Gate y CI completos se registrarán al merge.
+
+## 2026-10-09 — P07 · gate completo y revisiones
+
+El cierre local pasa 827 pruebas motor (+2 xfail), 1.351 backend y 887 frontend,
+golden de bytes y 58 regresiones focalizadas. Database Gate termina PASA con
+82 archivos / 1.200 pgTAP, 435 integraciones, 17 E2E y upgrades poblados PG16.
+El E2E usa los controles finales en A/B y conserva precios tras recarga,
+actor auditado y emisiones inmutables. Una organización eliminada durante
+una simulación indicativa devuelve 404 explícito, con regresión del contrato.
+Se renuevan los 20 registros de precio/panel con encabezado final y se traduce
+el tipo de cambio registrado. La matriz conserva observaciones de códigos
+SKU sintéticos aparte de sus hallazgos de presentación; no cambia el detector.
+CI y squash se registrarán al integrar.

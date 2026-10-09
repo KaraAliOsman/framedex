@@ -21,6 +21,17 @@ type FixtureUser = {
 
 const createdFixtures: FixtureUser[] = [];
 
+async function prepareProjectPrice(page: Page, date: string, reason: string): Promise<void> {
+  await expect(page.getByRole("heading", { name: "Actual y propuesto" })).toBeVisible();
+  const control = page.getByRole("button", { name: "Ajustar propuesta y decidir" });
+  if (await control.isVisible()) await control.click();
+  await page.getByText("Moneda y autoridades", { exact: true }).click();
+  await page.getByLabel("Fecha de costos", { exact: true }).fill(date);
+  await page.getByRole("textbox", { name: "Motivo", exact: true }).fill(reason);
+  await page.getByLabel("Confirmo las condiciones comerciales").check();
+  await expect(page.getByRole("button", { name: "Aplicar", exact: true })).toBeEnabled();
+}
+
 test.beforeEach(async () => {
   await requireMailpitHealthy(mailpitUrl);
 });
@@ -353,12 +364,11 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.reload();
   await page.getByRole("link", { name: "Cotizar proyecto", exact: true }).click();
   await expect(page.getByLabel("Proyecto", { exact: true })).toHaveCount(0);
-  await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-10");
-  await page.getByLabel("Motivo del cambio", { exact: true }).fill("Apply browser quote");
+  await prepareProjectPrice(page, "2026-09-10", "Aplicar cotización desde el navegador");
   const previewResponse = page.waitForResponse((response) =>
     response.url().endsWith("/api/v1/pricing/preview/"),
   );
-  await page.getByRole("button", { name: "Calcular y revisar", exact: true }).click();
+  await page.getByRole("button", { name: "Aplicar", exact: true }).click();
   const priced = await previewResponse;
   expect(priced.status(), await priced.text()).toBe(200);
   const quote = (await priced.json()) as {
@@ -366,14 +376,17 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
     project_gross: string;
     project_tax: string;
   };
-  await expect(
-    page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }),
-  ).toBeEnabled();
-  await page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }).click();
-  await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Precio aplicado al proyecto.", { exact: true })).toBeVisible();
   await page.reload();
-  await page.getByRole("button", { name: "Recargar", exact: true }).click();
-  await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Actualizar historial", exact: true }).click();
+  await expect(page.locator(".price-history").getByText("Aplicado", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .locator(".price-comparison tbody tr")
+      .filter({ hasText: /^Total/ })
+      .locator("td")
+      .first(),
+  ).toContainText(formatMoney(quote.project_gross, "CLP"));
   await page.goto(`/projects/${draft.id}`);
   await expect(
     page
@@ -460,14 +473,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   // force the backend read that reflects the position just saved.
   await page.reload();
   await page.getByRole("link", { name: "Cotizar proyecto", exact: true }).click();
-  await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-19");
-  await page.getByLabel("Motivo del cambio", { exact: true }).fill("Apply browser REV-B quote");
-  await page.getByRole("button", { name: "Calcular y revisar", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }),
-  ).toBeEnabled();
-  await page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }).click();
-  await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
+  await prepareProjectPrice(page, "2026-09-19", "Aplicar cotización de la revisión B");
+  await page.getByRole("button", { name: "Aplicar", exact: true }).click();
+  await expect(page.getByText("Precio aplicado al proyecto.", { exact: true })).toBeVisible();
   await page.goto(`/projects/${draft.id}`);
   const prepB = page.waitForResponse(
     (response) =>
@@ -589,17 +597,15 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   // force the backend read that reflects the position just saved.
   await page.reload();
   await page.getByRole("link", { name: "Cotizar proyecto", exact: true }).click();
-  await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-19");
-  await page.getByLabel("Motivo del cambio", { exact: true }).fill("Composite browser price");
+  await prepareProjectPrice(page, "2026-09-19", "Precio de la fachada compuesta");
   const compositePreview = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/v1/pricing/preview/",
   );
-  await page.getByRole("button", { name: "Calcular y revisar", exact: true }).click();
+  await page.getByRole("button", { name: "Aplicar", exact: true }).click();
   expect((await compositePreview).status()).toBe(200);
-  await page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }).click();
-  await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Precio aplicado al proyecto.", { exact: true })).toBeVisible();
 });
 
 test("OWNER must complete real TOTP enrollment and challenge after each Magic Link", async ({

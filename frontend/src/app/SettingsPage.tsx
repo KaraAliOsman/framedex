@@ -920,8 +920,8 @@ export function SettingsPage(): JSX.Element {
                 <Link className="ui-backlink" to="/settings/wallet">
                   {t("settings.walletPage")}
                 </Link>
-                <Link className="ui-backlink" to="/pricing/cost-lists">
-                  {t("pricing.lists")}
+                <Link className="ui-backlink" to="/pricing/cost-lists?section=rules">
+                  {t("pricing.bandSettings")}
                 </Link>
               </div>
             </div>

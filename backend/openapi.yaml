@@ -8986,6 +8986,76 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/pricing/acknowledge/:
+    post:
+      operationId: pricing_acknowledge
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgeRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/pricing/admin/{resource}/:
     get:
       operationId: pricing_admin_list
@@ -9557,6 +9627,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/pricing/options/:
+    get:
+      operationId: pricing_options
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingOptions'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/pricing/preview/:
     post:
       operationId: pricing_preview
@@ -9584,6 +9718,76 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PriceResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/workspace/:
+    post:
+      operationId: pricing_workspace
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
           description: ''
         '400':
           content:
@@ -18898,6 +19102,17 @@ components:
       required:
       - coverage
       - items
+    AcknowledgeRequest:
+      type: object
+      properties:
+        operation_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 100
+      required:
+      - operation_ids
     ActiveOrganization:
       type: object
       properties:
@@ -32285,7 +32500,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
-          default: '0.3500'
         segment:
           allOf:
           - $ref: '#/components/schemas/SegmentEnum'
@@ -32311,6 +32525,11 @@ components:
     PriceResponse:
       type: object
       properties:
+        workspace: {}
+        resulted_in_issue:
+          type: boolean
+        notification_unread:
+          type: boolean
         costs_visible:
           type: boolean
         costs_reason:
@@ -32343,7 +32562,7 @@ components:
         segment:
           type: string
         state:
-          $ref: '#/components/schemas/PriceResponseStateEnum'
+          $ref: '#/components/schemas/PricingOperationStateEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
         lines:
@@ -32426,20 +32645,6 @@ components:
       - segment
       - state
       - total_cost
-    PriceResponseStateEnum:
-      enum:
-      - PREVIEW
-      - PENDING
-      - APPLIED
-      - REJECTED
-      - WITHDRAWN
-      type: string
-      description: |-
-        * `PREVIEW` - PREVIEW
-        * `PENDING` - PENDING
-        * `APPLIED` - APPLIED
-        * `REJECTED` - REJECTED
-        * `WITHDRAWN` - WITHDRAWN
     PriceUnitEnum:
       enum:
       - EA
@@ -32462,6 +32667,41 @@ components:
         * `FIXED_PRICE_MATRIX_DIMENSIONAL` - FIXED_PRICE_MATRIX_DIMENSIONAL
         * `TARGET_GROSS_MARGIN_PROJECT` - TARGET_GROSS_MARGIN_PROJECT
         * `COMMERCIAL_LIST_WITH_DISCOUNTS` - COMMERCIAL_LIST_WITH_DISCOUNTS
+    PricingOperationStateEnum:
+      enum:
+      - PREVIEW
+      - PENDING
+      - APPLIED
+      - REJECTED
+      - WITHDRAWN
+      type: string
+      description: |-
+        * `PREVIEW` - PREVIEW
+        * `PENDING` - PENDING
+        * `APPLIED` - APPLIED
+        * `REJECTED` - REJECTED
+        * `WITHDRAWN` - WITHDRAWN
+    PricingOptions:
+      type: object
+      properties:
+        fx:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        commercial_lists:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        band:
+          type: object
+          additionalProperties: {}
+          nullable: true
+      required:
+      - band
+      - commercial_lists
+      - fx
     ProcessProfileOption:
       type: object
       description: Compact option for the system→process-profile binding picker.
@@ -36722,6 +36962,131 @@ components:
       - glass
       - leaves
       - spans
+    WorkspaceResponse:
+      type: object
+      properties:
+        workspace: {}
+        resulted_in_issue:
+          type: boolean
+        notification_unread:
+          type: boolean
+        costs_visible:
+          type: boolean
+        costs_reason:
+          type: string
+          nullable: true
+        services:
+          type: array
+          items: {}
+        document_extra_prices:
+          $ref: '#/components/schemas/DocumentExtraPricesEnum'
+        id:
+          type: string
+          format: uuid
+          nullable: true
+        project_id:
+          type: string
+          format: uuid
+        project_code:
+          type: string
+        project_name:
+          type: string
+        client_name:
+          type: string
+        revision_code:
+          type: string
+          pattern: ^REV-[A-Z]+$
+        discount_pct:
+          type: string
+        pricing_mode:
+          type: string
+        segment:
+          type: string
+        state:
+          $ref: '#/components/schemas/PricingOperationStateEnum'
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineResponse'
+        cost_lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/CostLineResponse'
+        extras:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        extras_net:
+          type: string
+        positions_breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/PositionBreakdown'
+        authorities:
+          type: array
+          items: {}
+        rules:
+          type: object
+          additionalProperties: {}
+        total_cost:
+          type: string
+          nullable: true
+        project_net:
+          type: string
+        project_tax:
+          type: string
+        project_gross:
+          type: string
+        reason:
+          type: string
+        requested_by:
+          type: string
+        requested_by_email:
+          type: string
+          nullable: true
+        approved_by:
+          type: string
+          nullable: true
+        approved_at:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          nullable: true
+      required:
+      - approved_at
+      - approved_by
+      - authorities
+      - client_name
+      - cost_lines
+      - costs_reason
+      - costs_visible
+      - created_at
+      - currency
+      - discount_pct
+      - extras
+      - extras_net
+      - id
+      - lines
+      - positions_breakdown
+      - pricing_mode
+      - project_code
+      - project_gross
+      - project_id
+      - project_name
+      - project_net
+      - project_tax
+      - reason
+      - requested_by
+      - requested_by_email
+      - revision_code
+      - rules
+      - segment
+      - state
+      - total_cost
   securitySchemes:
     SupabaseBearer:
       type: http

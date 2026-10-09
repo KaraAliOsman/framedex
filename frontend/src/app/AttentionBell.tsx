@@ -52,6 +52,15 @@ export function AttentionBell(): JSX.Element | null {
     },
   });
 
+  const refetchAttention = query.refetch;
+  useEffect(() => {
+    const refresh = () => {
+      void refetchAttention();
+    };
+    window.addEventListener("dekopen:pricing-changed", refresh);
+    return () => window.removeEventListener("dekopen:pricing-changed", refresh);
+  }, [refetchAttention]);
+
   // Hydrate the per-org seen snapshot when the org resolves / switches.
   useEffect(() => {
     if (!seenKey) return;

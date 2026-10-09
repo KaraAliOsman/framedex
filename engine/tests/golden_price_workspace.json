@@ -1,0 +1,385 @@
+{
+  "approval": {
+    "causes": [
+      "below_minimum"
+    ],
+    "margin": "0.2",
+    "requires_approval": true
+  },
+  "projects": [
+    {
+      "cascade": {
+        "closes": "True",
+        "cost": "664355.6712000000",
+        "gross": "1155467",
+        "list_net": "1022086",
+        "margin": "0.31578921606087039808193981138662857460650620351994529244135570108992863918037531",
+        "net": "970981",
+        "profit": "306625.3288000000",
+        "tax": "184486"
+      },
+      "count": 12,
+      "currency": "CLP",
+      "line_one_net": "208022",
+      "line_one_quantity": 3,
+      "steps": [
+        {
+          "amount": "129787.1000",
+          "key": "profile"
+        },
+        {
+          "amount": "170357.04000000",
+          "key": "glass"
+        },
+        {
+          "amount": "35000.0000",
+          "key": "hardware"
+        },
+        {
+          "amount": "26811.5312000000",
+          "key": "waste"
+        },
+        {
+          "amount": "302400.00",
+          "key": "labor"
+        },
+        {
+          "amount": "0.00",
+          "key": "installation"
+        },
+        {
+          "amount": "357730.3288000000",
+          "key": "profit_at_list"
+        },
+        {
+          "amount": "-51105",
+          "key": "discount"
+        },
+        {
+          "amount": "0",
+          "key": "project_charges"
+        },
+        {
+          "amount": "184486",
+          "key": "tax"
+        }
+      ]
+    },
+    {
+      "cascade": {
+        "closes": "True",
+        "cost": "664355.6712000000",
+        "gross": "1155467.83",
+        "list_net": "1022085.65",
+        "margin": "0.31578947678470906192566804860529919333055792821236106723654234478257806326397385",
+        "net": "970981.37",
+        "profit": "306625.6988000000",
+        "tax": "184486.46"
+      },
+      "count": 12,
+      "currency": "USD",
+      "line_one_net": "208021.50",
+      "line_one_quantity": 3,
+      "steps": [
+        {
+          "amount": "129787.1000",
+          "key": "profile"
+        },
+        {
+          "amount": "170357.04000000",
+          "key": "glass"
+        },
+        {
+          "amount": "35000.0000",
+          "key": "hardware"
+        },
+        {
+          "amount": "26811.5312000000",
+          "key": "waste"
+        },
+        {
+          "amount": "302400.00",
+          "key": "labor"
+        },
+        {
+          "amount": "0.00",
+          "key": "installation"
+        },
+        {
+          "amount": "357729.9788000000",
+          "key": "profit_at_list"
+        },
+        {
+          "amount": "-51104.28",
+          "key": "discount"
+        },
+        {
+          "amount": "0",
+          "key": "project_charges"
+        },
+        {
+          "amount": "184486.46",
+          "key": "tax"
+        }
+      ]
+    },
+    {
+      "cascade": {
+        "closes": "True",
+        "cost": "4850236.4868000000",
+        "gross": "8435680",
+        "list_net": "7461902",
+        "margin": "0.31578945698479306884783292872834596851063937838905756638599414541826290375799482",
+        "net": "7088807",
+        "profit": "2238570.5132000000",
+        "tax": "1346873"
+      },
+      "count": 100,
+      "currency": "CLP",
+      "line_one_net": "208022",
+      "line_one_quantity": 3,
+      "steps": [
+        {
+          "amount": "954786.9900",
+          "key": "profile"
+        },
+        {
+          "amount": "1241172.72000000",
+          "key": "glass"
+        },
+        {
+          "amount": "255000.0000",
+          "key": "hardware"
+        },
+        {
+          "amount": "196076.7768000000",
+          "key": "waste"
+        },
+        {
+          "amount": "2203200.00",
+          "key": "labor"
+        },
+        {
+          "amount": "0.00",
+          "key": "installation"
+        },
+        {
+          "amount": "2611665.5132000000",
+          "key": "profit_at_list"
+        },
+        {
+          "amount": "-373095",
+          "key": "discount"
+        },
+        {
+          "amount": "0",
+          "key": "project_charges"
+        },
+        {
+          "amount": "1346873",
+          "key": "tax"
+        }
+      ]
+    },
+    {
+      "cascade": {
+        "closes": "True",
+        "cost": "4850236.4868000000",
+        "gross": "8435680.53",
+        "list_net": "7461902.29",
+        "margin": "0.31578947339316608890068031008381908066487863006717955342548836745971184317036515",
+        "net": "7088807.17",
+        "profit": "2238570.6832000000",
+        "tax": "1346873.36"
+      },
+      "count": 100,
+      "currency": "USD",
+      "line_one_net": "208021.50",
+      "line_one_quantity": 3,
+      "steps": [
+        {
+          "amount": "954786.9900",
+          "key": "profile"
+        },
+        {
+          "amount": "1241172.72000000",
+          "key": "glass"
+        },
+        {
+          "amount": "255000.0000",
+          "key": "hardware"
+        },
+        {
+          "amount": "196076.7768000000",
+          "key": "waste"
+        },
+        {
+          "amount": "2203200.00",
+          "key": "labor"
+        },
+        {
+          "amount": "0.00",
+          "key": "installation"
+        },
+        {
+          "amount": "2611665.8032000000",
+          "key": "profit_at_list"
+        },
+        {
+          "amount": "-373095.12",
+          "key": "discount"
+        },
+        {
+          "amount": "0",
+          "key": "project_charges"
+        },
+        {
+          "amount": "1346873.36",
+          "key": "tax"
+        }
+      ]
+    }
+  ],
+  "replay": {
+    "contributions": [
+      {
+        "delta": {
+          "net": "40031",
+          "position_1": "40031",
+          "tax": "7606",
+          "total": "47637"
+        },
+        "driver": "quantity"
+      },
+      {
+        "delta": {
+          "net": "10339",
+          "position_1": "10339",
+          "tax": "1965",
+          "total": "12304"
+        },
+        "driver": "dimensions"
+      },
+      {
+        "delta": {
+          "net": "5076",
+          "position_1": "5076",
+          "tax": "964",
+          "total": "6040"
+        },
+        "driver": "glass"
+      },
+      {
+        "delta": {
+          "net": "4308",
+          "position_1": "4308",
+          "tax": "819",
+          "total": "5127"
+        },
+        "driver": "hardware"
+      },
+      {
+        "delta": {
+          "net": "0",
+          "position_1": "0",
+          "tax": "0",
+          "total": "0"
+        },
+        "driver": "design"
+      },
+      {
+        "delta": {
+          "net": "3077",
+          "position_1": "3077",
+          "tax": "584",
+          "total": "3661"
+        },
+        "driver": "cost_list"
+      },
+      {
+        "delta": {
+          "net": "9146",
+          "position_1": "9146",
+          "tax": "1738",
+          "total": "10884"
+        },
+        "driver": "fx"
+      },
+      {
+        "delta": {
+          "net": "0",
+          "position_1": "0",
+          "tax": "0",
+          "total": "0"
+        },
+        "driver": "commercial_list"
+      },
+      {
+        "delta": {
+          "net": "-8473",
+          "position_1": "-8473",
+          "tax": "-1610",
+          "total": "-10083"
+        },
+        "driver": "margin"
+      },
+      {
+        "delta": {
+          "net": "-9180",
+          "position_1": "-9180",
+          "tax": "-1744",
+          "total": "-10924"
+        },
+        "driver": "discount"
+      },
+      {
+        "delta": {
+          "net": "0",
+          "position_1": "0",
+          "tax": "0",
+          "total": "0"
+        },
+        "driver": "segment"
+      },
+      {
+        "delta": {
+          "net": "0",
+          "position_1": "0",
+          "tax": "0",
+          "total": "0"
+        },
+        "driver": "services"
+      },
+      {
+        "delta": {
+          "net": "0",
+          "position_1": "0",
+          "tax": "0",
+          "total": "0"
+        },
+        "driver": "tax"
+      }
+    ],
+    "delta": {
+      "net": "54324",
+      "position_1": "54324",
+      "tax": "10322",
+      "total": "64646"
+    },
+    "order": [
+      "quantity",
+      "dimensions",
+      "glass",
+      "hardware",
+      "design",
+      "cost_list",
+      "fx",
+      "commercial_list",
+      "margin",
+      "discount",
+      "segment",
+      "services",
+      "tax"
+    ]
+  }
+}

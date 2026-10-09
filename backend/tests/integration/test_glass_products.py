@@ -90,6 +90,7 @@ def test_structured_door_safety_covers_preview_save_and_repricing(real_rows, dir
 
     class Repo:
         org_id = org
+        technical = {}
 
         def cost(self, *_):
             pytest.fail("Safety must block before any price is computed.")

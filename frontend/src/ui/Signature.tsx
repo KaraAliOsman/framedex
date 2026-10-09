@@ -98,13 +98,22 @@ export type ValueTrace = {
 export function TraceButton({
   trace,
   cause,
+  compact = false,
 }: {
   trace: ValueTrace | null | undefined;
   cause?: string;
+  compact?: boolean;
 }): JSX.Element {
   const id = useId();
   return (
-    <Popover label="¿De dónde sale?" trigger={<Button>¿De dónde sale?</Button>}>
+    <Popover
+      label="¿De dónde sale?"
+      trigger={
+        <Button aria-label="¿De dónde sale?" className={compact ? "price-trace" : undefined}>
+          {compact ? <span aria-hidden>?</span> : "¿De dónde sale?"}
+        </Button>
+      }
+    >
       <div id={id} className="ui-trace">
         {trace ? (
           <>

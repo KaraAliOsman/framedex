@@ -1,0 +1,23 @@
+{
+  "projects": [
+    {
+      "positions": 12,
+      "net": "2665721",
+      "tax": "506487",
+      "gross": "3172208",
+      "closes": true
+    },
+    {
+      "positions": 100,
+      "net": "25012625",
+      "tax": "4752399",
+      "gross": "29765024",
+      "closes": true
+    }
+  ],
+  "flow": "PASA",
+  "actorRecorded": true,
+  "receiptRead": true,
+  "auditRecords": 2,
+  "httpErrors": []
+}

@@ -2,6 +2,34 @@
 
 Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguientes deben mantener esta tabla cuando implementen o cambien un valor configurable.
 
+## P07 · precios y aprobación (2026-10-09)
+
+- Banda inicial: mínimo 25 %, objetivo 35 %, máximo 60 %; descuento superior
+  a 10 % también requiere aprobación. Ajustes › Precios abre las reglas para
+  el dueño. La migración conserva objetivos anteriores ampliando la banda
+  inicial cuando corresponde; no sustituye una autoridad histórica.
+- El margen solicitado inicia en el objetivo declarado de la organización.
+  Se recalcula con el motor al moverlo; el margen logrado y la utilidad
+  pertenecen al dueño/jefe de taller. El estimador recibe solo venta mediante
+  allowlist y nunca un costo oculto en una traza o autoridad anidada.
+- CLP es la moneda inicial del formulario. USD y UF requieren un snapshot FX
+  declarado y fechado. Listas, tarifas, IVA y FX se administran por el dueño;
+  no se presume una cotización de cambio ni un costo ausente.
+- El repricing aplica cantidad, medidas, vidrio, herrajes, diseño, lista de
+  costos, FX, lista comercial, margen, descuento, segmento, servicios e
+  impuesto. Una interacción corresponde al impulsor posterior. Son reglas de
+  explicación determinista, no preferencias que cambien el precio.
+- Se conservan los redondeos de venta: unitario indicativo a cuatro decimales
+  HALF_UP, neto redondeado por línea e IVA por proyecto. La compra mantiene el
+  Decimal consumido y la cascada no incluye un ajuste residual. Las trazas
+  muestran el unitario exacto: multiplicar el mostrado puede diferir del neto.
+- Las operaciones históricas sin autoridades congeladas suficientes muestran
+  Sin dato con su causa en la explicación. Permanecen legibles y selladas;
+  no se reconstruyen con el catálogo vigente ni se reparte el Δ estimándolo.
+- Decisiones sin leer: recibo inmutable por organización/operación/solicitante.
+  Marcar leída es idempotente. Hoy/campana conservan la decisión hasta ese clic.
+  La consulta de historial admite las últimas 100 operaciones por organización.
+
 ## P25 · marca, entrada y correo (2026-10-08)
 
 - Dirección B y Plex Sans 600 convertida a contornos; corrección óptica solo en
@@ -38,12 +66,12 @@ Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguient
 | Validez de la cotizacion   | 15 dias corridos                                                                                                | Ajustes > Condiciones comerciales | por defecto | P08                       |
 | Garantia                   | Texto plantilla editable, sin plazo inventado: "[completar plazo]" visible solo en Ajustes, nunca impreso vacio | Ajustes > Condiciones comerciales | por defecto | P08                       |
 | Plazo de entrega           | Calculado desde la carga de produccion si existe; si no, campo obligatorio por cotizacion                       | Cotizacion                        | por defecto | P08                       |
-| Banda de margen            | Objetivo 35 %, minimo 25 %; bajo el minimo requiere aprobacion del dueno                                        | Ajustes > Precios                 | por defecto | P07                       |
+| Banda de margen            | Mínimo 25 %, objetivo 35 %, máximo 60 %; fuera de la banda requiere aprobación del dueño                           | Ajustes > Precios                 | implementado | P07                       |
 | IVA                        | 19 %, precios netos en la app y total con IVA en el documento                                                   | Ajustes > Impuestos               | por defecto | P07                       |
 | Pie "Generado con DEKOPEN" | Oculto en documentos del cliente (white-label); visible solo en el portal, discreto                             | Ajustes > Documentos              | por defecto | P09                       |
 | Nombre del asistente       | "Asistente DEKOPEN" con el Orb. No se usa "STARWIN"                                                             | Ajustes > Marca                   | por defecto | P17                       |
 | Marca de la app            | Direccion B del estudio de identidad (`DEKOPEN` con la O como seccion de perfil)                                | P25                               | por defecto | P25                       |
-| Moneda                     | CLP; USD y UF opcionales                                                                                        | Ajustes > Moneda                  | por defecto | P07                       |
+| Moneda                     | CLP; USD y UF con snapshot FX declarado                                                                         | Precio del proyecto > Moneda y autoridades | implementado | P07                |
 | Catalogo                   | Demo con precios aleatorios de semilla fija, marcado DEMO en todas partes                                       | Catalogo > Importar               | por defecto | D01/P16                   |
 
 ## P01 · contratos de presentación (2026-10-05)

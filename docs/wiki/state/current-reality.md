@@ -1,7 +1,7 @@
 ---
 type: state
 status: active
-updated: 2026-10-08
+updated: 2026-10-09
 volatility: high
 verified_ref: 97aea5dfec6e4dddcb429a48b421c7598e758a0d
 sources:
@@ -29,6 +29,25 @@ sources:
 ---
 
 # Current reality
+
+## P07 · workspace verificado localmente (09-10-2026)
+
+`codex/P07-workspace-precios` sobre `3351066d40a4ad7b19943984efb0cfe8e0893351`
+compara actual/propuesto, compone cascadas exactas y explica el Δ mediante
+reprecio congelado sin I/O. Mover el margen muestra utilidad/banda y conserva
+confidencialidad de compra. El recorrido estimador → Hoy/campana del dueño →
+aprobación comentada → decisión/lectura del estimador → auditoría pasa con
+12/100 posiciones; la integración mantiene el unitario histórico `499.8074`.
+RLS, política concurrente, rechazo, retiro y recibos append-only tienen
+regresiones. Véanse [aceptación](../../redesign/P07-ACEPTACION.md) y
+[workspace de precios](../product/price-workspace.md).
+Los gates locales pasan 827 pruebas motor (+2 xfail), 1.351 backend y
+887 frontend. Las matrices incluyen controles portados y composición
+claro/oscuro; Ajustes abre reglas y muestra modos humanos.
+Database Gate pasa 1.200 pgTAP, 435 integraciones, 17 E2E y upgrades poblados
+PG16. El recorrido conserva precios tras recargar y las emisiones A/B.
+CI se registra al integrar; el ref general de esta página conserva la última
+integración verificada, P09.
 
 ## P09 · integrado y verificado (08-10-2026)
 

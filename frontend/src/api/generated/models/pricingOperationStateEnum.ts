@@ -13,10 +13,10 @@
  * * `REJECTED` - REJECTED
  * * `WITHDRAWN` - WITHDRAWN
  */
-export type PriceResponseStateEnum =
-  (typeof PriceResponseStateEnum)[keyof typeof PriceResponseStateEnum];
+export type PricingOperationStateEnum =
+  (typeof PricingOperationStateEnum)[keyof typeof PricingOperationStateEnum];
 
-export const PriceResponseStateEnum = {
+export const PricingOperationStateEnum = {
   PREVIEW: "PREVIEW",
   PENDING: "PENDING",
   APPLIED: "APPLIED",
