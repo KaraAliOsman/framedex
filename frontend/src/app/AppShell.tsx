@@ -226,7 +226,13 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
             <nav className="app-rail__nav" aria-label={t("shell.navigation")}>
               {context === null ? (
                 domainGroups.map((group) => {
-                  const items = group.items.filter((item) => navigationAllowed(item.to));
+                  const items = group.items
+                    .filter((item) => navigationAllowed(item.to))
+                    .map((item) =>
+                      item.to === "/settings/general" && role === "ESTIMATOR"
+                        ? { ...item, label: "nav.settings" as const }
+                        : item,
+                    );
                   if (items.length === 0) return null;
                   return (
                     <div key={group.id} className="rail-group">

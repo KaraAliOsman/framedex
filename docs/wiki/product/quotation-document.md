@@ -3,6 +3,7 @@ type: concept
 status: active
 updated: 2026-10-08
 volatility: medium
+verified_ref: 430b6e0f9dc4bddb7ea23e95231fb8575db94699
 sources:
   - docs/redesign/P09-ACEPTACION.md
   - backend/documents/quotation.py
@@ -38,3 +39,8 @@ tablas sin intersecciones, 40 páginas normales y 45 con nombres largos,
 calendario/alternativas/QR e inmutabilidad por recorrido real. Es evidencia
 DEMO de comportamiento, sin certificación manufacturera. Los artefactos
 históricos no se regeneran para adoptar un layout nuevo.
+
+El gate completo verifica 1.186 pgTAP, 425 integraciones y 17 E2E reales,
+incluido el acceso documental de ESTIMATOR por Ajustes. Los upgrades poblados
+conservan precios, hashes, emisor y snapshots. La matriz refrescada verifica
+44 vistas y los recorridos oficiales 24, sin hallazgos ni desbordes.

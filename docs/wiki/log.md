@@ -779,3 +779,13 @@ tras cambios de preferencias/revocación. La matriz de 44 vistas no presenta
 hallazgos ni desbordes. Síntesis en `product/quotation-document.md` y
 aceptación en `docs/redesign/P09-ACEPTACION.md`. Gates finales/CI se registran
 al integrar; catálogo y tarifas DEMO siguen sin certificación.
+
+## 2026-10-08 — P09 · gate completo y navegación
+
+El cierre local pasa 818 pruebas motor (+2 xfail), 1.350 backend y 890 frontend.
+Database Gate termina PASA con 81 archivos / 1.186 pgTAP, 425 integraciones,
+17 E2E y upgrades poblados PG16. Los tests del editor esperan la evaluación
+antes del despiece y conservan todas sus aserciones. ESTIMATOR accede a las
+preferencias documentales por Ajustes; Administración permanece oculta según
+la regresión de autenticación. Matriz renovada de 44 vistas y 24 recorridos
+oficiales sin hallazgos ni desbordes. CI y squash se registrarán al integrar.

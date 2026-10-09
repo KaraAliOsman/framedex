@@ -20,6 +20,7 @@ Oficio, acento, pie y condiciones se configuran para emisiones nuevas.
 | Cambiar emisor, papel y acento después de emitir | PASA. Descargas A/B conservan SHA; preferencias restauradas. |
 | Vacío, carga, error/reintento, sin permiso y bloqueado | PASA. Calendario sin hitos, transporte controlado, encargado sin escritura, falta de confirmación. |
 | Teclado → condiciones legales → confirmación | PASA. Foco visible; emisión bloqueada antes del clic. |
+| ESTIMATOR → Ajustes → preferencias de documentos | PASA. Navegación muestra Ajustes; Administración permanece oculta. Guardar documentos disponible según el permiso documental existente. |
 | Renderer o upload fallido | PASA. Rollback sin aprobación, capacidad ni artefacto huérfanos. |
 
 La matriz final tiene 44 vistas sin hallazgos ni desbordes: Ajustes y preparación
@@ -100,9 +101,15 @@ distingue el QR del enlace que sí reemplaza.
 
 OpenAPI/orval regenerados. Golden nuevo de proyección comercial sin modificar
 los resultados históricos. Lint, typecheck, test y build completos pasan;
+818 pruebas del motor (+2 xfail), 1.350 del backend y 890 del frontend. La
+revisión de navegación conserva la aserción de Administración oculta y añade
+acceso a Documentos/Guardar documentos. Los 17 E2E reales pasan, incluidos
+los seis flujos del editor; no se retira ninguna aserción.
 55 casos focalizados, siete integraciones PostgreSQL P09 y las 19 regresiones
-finales de PDF/acabado/conjuntos también pasan. La corrida final y Database Gate
-se registran antes de integrar el PR.
+finales de PDF/acabado/conjuntos también pasan. Database Gate completo termina
+con PASA: 81 archivos / 1.186 pgTAP, 425 integraciones, 17 E2E y upgrades
+poblados PG16. El teardown verifica la limpieza del stack aislado y libera
+sus puertos; el fixture de la evidencia permanece intacto.
 
 Decisiones en [valores por defecto](../decisions/valores-por-defecto.md) y pasos
 de conexión en [ACTIVACION](../operations/ACTIVACION.md). No hay proveedor
