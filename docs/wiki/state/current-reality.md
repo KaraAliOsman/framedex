@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75
+verified_ref: 9019282e1ded4b287f4518b09da069bcdee20abc
 sources:
+  - ED1 autoridad angular 9019282e1ded4b287f4518b09da069bcdee20abc, gate completo y ocho vistas finales, 2026-10-09
   - ED1 corrección de apariencia 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75, gate completo y ocho vistas, 2026-10-09
   - ED1 implementación ecf24d2b02184135c60ea64c2691db2a63672ee2, gates locales y navegador, 2026-10-09
   - P17 PR #136, CI 37958419127 on 7982e4414bdf7c9ee2374846494e81c0f781d11e, squash d5500d69bbc843162a9c189805a00d8904d11264, 2026-10-09

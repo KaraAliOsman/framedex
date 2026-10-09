@@ -130,7 +130,7 @@ Shell y marca conducen a esos flujos; no presentan una capacidad ornamental.
 
 `make lint typecheck test build`: PASA en la copia nativa aislada del checkout
 final. Motor: 829 pruebas y dos xfail previstos; backend: 1.382; frontend:
-921 en 84 archivos, incluidas dos regresiones de apariencia. Golden byte check y assets de marca pasan. No se reduce
+922 en 84 archivos, incluidas dos regresiones de apariencia. Golden byte check y assets de marca pasan. No se reduce
 ningún timeout, assertion, detector ni check. Los cuatro checks de CI se
 comprueban sobre el HEAD publicado antes del squash y se registran al integrar.
 No se modifica motor, backend, API, permisos, migraciones ni contrato de
@@ -148,3 +148,5 @@ y ED2; aquí solo comparten la primitiva cuando corresponde.
 Implementación verificada: `ecf24d2b02184135c60ea64c2691db2a63672ee2`. CI y squash se registran al integrar.
 
 Ajuste final de apariencia: `3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75`. Gate completo PASA, 921 pruebas frontend; ocho vistas verifican primer clic y preferencia.
+
+Autoridad angular final: `9019282e1ded4b287f4518b09da069bcdee20abc`. La leyenda y el detalle preservan coma decimal, un extremo de 90° declarado y otro ausente sin completar autoridad. Gate completo PASA y ocho vistas del plan sin hallazgos.

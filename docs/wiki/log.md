@@ -982,3 +982,7 @@ editoriales guían la ola 2; gates finales y squash se registrarán al integrar.
 ## 2026-10-09 — ED1 · apariencia inicial por tarea
 
 `3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75` completa oscuro inicial de taller sin guardar preferencia. El primer clic modifica el contexto real y persiste; la elección explícita se conserva al recargar y volver a Hoy. Dos regresiones y ocho vistas pasan. Gate completo: 829 motor (+2 xfail), 1.382 backend y 921 frontend. Servicios propios detenidos y fixture conservado. CI y squash siguen pendientes.
+
+## 2026-10-09 — ED1 · autoridad angular final
+
+`9019282e1ded4b287f4518b09da069bcdee20abc` conserva cada extremo declarado, incluido 90°, y formato fraccional con coma. La ausencia sigue Sin dato. La regresión comprueba leyenda, selección/detalle y bytes del fixture. El gate detectó un acceso posiblemente indefinido del test: se verifica la existencia del corte sin quitar aserciones. Gate completo correctivo: 829 motor (+2 xfail), 1.382 backend y 922 frontend. Las ocho vistas finales del plan pasan. CI y squash siguen pendientes.
