@@ -22,7 +22,7 @@
 | P12 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/135 | e59539d1b282fde9c928fcd9e67f970e51995cdc | CI 4/4 verde; estación privada, QR físico y QC/remake idempotente; 1.218 pgTAP, 441 integraciones, 17 E2E y diez upgrades PG16; rúbrica PASA. |
 | P17 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/136 | d5500d69bbc843162a9c189805a00d8904d11264 | CI 4/4 verde; presencia privada, dibujos/Δ, aplicar/deshacer y auditoría; 1.218 pgTAP, 444 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
 | ED1 | ED1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/137 | 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d | CI 4/4 verde; 192 vistas finales sin hallazgos, cuatro personas y MiMo real; coherencia/guardas y rúbrica por superficie PASA. |
-| P06 | 2 | pendiente |  |  |  |
+| P06 | 2 | en curso |  |  |  |
 | P08 | 2 | pendiente |  |  |  |
 | P13 | 2 | pendiente |  |  |  |
 | P15 | 2 | pendiente |  |  |  |
