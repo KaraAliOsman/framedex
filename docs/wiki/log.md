@@ -874,3 +874,11 @@ aserciones de evaluación, geometría, aplicar/deshacer y cantidad tardía;
 el focalizado pasa en 43,5 s. No cambia motor, permisos, timeouts globales
 ni retries. El cierre exige CI verde en el nuevo HEAD, sin repetir la
 implementación ni las capturas aceptadas de P03.
+
+
+## 2026-10-09 — P03 · integrado
+
+PR #134 pasa los cuatro checks sobre `4eb66fbd72c5b2a4ef13c13b6397982a29eb823e` en la corrida `37919211491`
+y se integra con squash `5b06ceb12457b297a8748580453695714469c6a0` en `integracion/v1`. ESTADO y los refs
+de la wiki registran el merge. Los servicios propios están detenidos
+y el fixture permanece intacto. P12 continúa producción sobre esta base.

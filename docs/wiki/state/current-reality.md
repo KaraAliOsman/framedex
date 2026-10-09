@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: dacf9f9759e41bea784968d25662e95e7081f6d3
+verified_ref: 5b06ceb12457b297a8748580453695714469c6a0
 sources:
+  - P03 PR #134, CI run 37919211491 on 4eb66fbd72c5b2a4ef13c13b6397982a29eb823e, squash 5b06ceb12457b297a8748580453695714469c6a0, 2026-10-09
   - P03 implementación dacf9f9759e41bea784968d25662e95e7081f6d3, gates locales y 88 vistas oficiales, 2026-10-09
   - P07 PR #133, CI run 37893278926 on d6db60843adc4c65e2486d8e46cf9832a4244bd3, squash d8e4d899a29d9f154f8c7d37b054581132dadbb1, 2026-10-09
   - P09 PR #132, CI run 37874800254 on ebe60099f85c48107075e6ffd6012ffe1b39704d, squash 97aea5dfec6e4dddcb429a48b421c7598e758a0d, 2026-10-08
@@ -32,7 +33,7 @@ sources:
 
 # Current reality
 
-## P03 · aceptación local (09-10-2026)
+## P03 · integrado y verificado (09-10-2026)
 
 Rama `codex/P03-shell-hoy`, base `096621c9`: navegación por capacidades y flujo,
 Hoy para cinco roles, búsqueda de códigos y cotizaciones/inventario propios.
@@ -44,6 +45,7 @@ La matriz tiene 56 vistas sin hallazgos ni axe serious/critical. El runner
 oficial pasa 88 sin hallazgos, HTTP, consola ni desbordes. Gates de lint,
 tipos, test y build pasan (829 motor +2 xfail, 1.364 backend, 900 frontend).
 Database Gate PASA: 1.205 pgTAP, 439 integraciones, 17 E2E y upgrades poblados PG16.
+PR #134 pasa cuatro checks sobre `4eb66fbd72c5b2a4ef13c13b6397982a29eb823e`; squash `5b06ceb12457b297a8748580453695714469c6a0` en integración.
 Véanse [aceptación P03](../../redesign/P03-ACEPTACION.md) y
 [trabajo de Hoy](../product/today-workflow.md). No se afirma cumplimiento
 de producción/P12 o retazos/P15; el fixture conserva autoridad DEMO.

@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: dacf9f9759e41bea784968d25662e95e7081f6d3
+verified_ref: 5b06ceb12457b297a8748580453695714469c6a0
 sources:
   - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py

@@ -106,7 +106,8 @@ pruebas + 2 xfail y golden byte check. Backend unitario: 1.364. Frontend: 900.
 `make test-db`: PASA en el proyecto local aislado `framedex-cola-native`:
 83 archivos / 1.205 pgTAP, 439 integraciones, 17 E2E y upgrades poblados PG16.
 El E2E conserva autenticación, navegación, recarga y autoridad emitida;
-los selectores usan Inicio y las migas finales. CI exige 4/4 antes del merge.
+los selectores usan Inicio y las migas finales. [CI 37919211491](https://github.com/KaraAliOsman/framedex/actions/runs/37919211491): cuatro checks PASA sobre `4eb66fbd72c5b2a4ef13c13b6397982a29eb823e`.
+[PR #134](https://github.com/KaraAliOsman/framedex/pull/134) integrado con squash `5b06ceb12457b297a8748580453695714469c6a0` en `integracion/v1`.
 
 La corrida CI `37915677274` detectó una espera insuficiente en el E2E de
 simulación del editor. La reproducción local midió vidrio/ancho/propuesta
@@ -115,7 +116,7 @@ en 7,4–7,9 s: la respuesta HTTP 200 y `valid=true` llegaba después de los
 esperar la transacción concreta. Ahora comprueba también las respuestas
 del motor y la cota final; conserva Guardar, aplicar, deshacer y rechazo de
 la respuesta tardía. No cambia timeouts globales, retries ni comportamiento
-del producto. La aceptación espera el nuevo CI antes de integrar.
+del producto. La corrida correctiva `37919211491` pasa los cuatro checks sobre `4eb66fbd72c5b2a4ef13c13b6397982a29eb823e`.
 La suite completa del editor pasa 6/6 en 2,8 min; la espera del precio
 indicativo verifica también el producto y la cantidad de su respuesta real.
 
