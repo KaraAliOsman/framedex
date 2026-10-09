@@ -922,4 +922,28 @@ adicionales también pasa; CI y squash se registrarán al integrar.
 PR #135 pasa los cuatro checks sobre `98a65474a170eb68c75a6c25d7ed36f332c6897a` en la corrida
 `37938719831` y se integra con squash `e59539d1b282fde9c928fcd9e67f970e51995cdc` en `integracion/v1`.
 ESTADO y los refs registran la aceptación; procesos locales detenidos y
-fixture intacto. Continúa P17 sobre esta base.
+ fixture intacto. Continúa P17 sobre esta base.
+
+## 2026-10-09 — P17 · artefactos y presencia privada
+
+P17 verifica presencia exacta por usuario/tenant/contexto, más de treinta trabajos
+intermedios, reintento privado y outcomes aplicados/deshechos deduplicados. El
+dock usa dibujos/precios reales, conserva la edición posterior al deshacer y
+no confunde una propuesta con una aplicación. MiMo real prepara Low-E para
+dos posiciones del segundo piso, conserva la cocina y restaura los diseños;
+su auditoría registra applied y undone del turno exacto. Se corrige duplicación
+de presupuesto entre referencias explícitas/contextuales sin aumentar su límite.
+Las consultas y restricciones largas se pliegan y sus herramientas se traducen.
+La matriz posterior tiene 48 vistas sin hallazgos. Los gates finales pasan
+829 motor + dos xfail, 1.382 backend y 917 frontend; Database Gate y CI siguen
+pendientes. [Aceptación](../redesign/P17-ACEPTACION.md) y
+[síntesis](product/assistant-work.md) conservan fuente, límites y decisiones.
+
+## 2026-10-09 — P17 · Database Gate completo
+
+El stack aislado pasa 84 archivos / 1.218 pgTAP, 444 integraciones PostgreSQL,
+17 E2E y las actualizaciones pobladas PG16, con código 0. El teardown detiene
+sus servicios y deja libres los puertos de aplicación; el fixture persistente
+del programa se conserva. La regresión de auditoría tardía también pasa:
+pulsar Nuevo no permite que la respuesta antigua vuelva a asociar la conversación.
+Implementación `c25409c2befe60d1be047ac1e4f8d37a334b20f4`; CI y squash siguen pendientes.
