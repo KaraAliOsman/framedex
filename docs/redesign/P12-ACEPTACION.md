@@ -105,6 +105,18 @@ texto redundante de organización y aliases CSS muertos. No se ajustan guardas.
 final. Motor: 829 pruebas + 2 xfail; backend: 1.370; frontend: 903 en 81 archivos.
 OpenAPI/orval son reproducibles; golden cases y guardas permanecen intactos.
 
+El gate completo pasó 1.217 pgTAP, 441 integraciones y 17 E2E, y detectó un
+faltante del entorno independiente PG16: no creaba `auth.users`, que Supabase
+proporciona y la nueva clave foránea necesita. El bootstrap se amplía con su
+clave primaria; se mantienen todos los checks y se agregan rechazo de usuario
+inexistente y limpieza de su puesto. El cierre exige repetir el gate completo
+con esa referencia externa disponible, conservando la clave foránea real.
+
+La repetición correctiva termina PASA: 84 archivos / 1.218 pgTAP,
+441 integraciones RLS, 17 E2E y las diez suites de actualización poblada
+en PostgreSQL 16. El focalizado PG16 también pasa. El gate completo cierra
+con código 0 y deja 8000/5173 libres; no se omite ni debilita ningún check.
+
 Con el stack de `.agents/skills/testing-framedex`, seleccione el tenant DEMO
 mediante `DEKOPEN_FIXTURE_ORG_ID`; el estado de su proyecto/OT está en
 `.run/p12-fixture.json`. Los runners `verify-p12.mjs`, `verify-p12-flow.mjs` y

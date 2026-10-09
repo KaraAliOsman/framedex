@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path=public,private,auth,extensions,pg_temp;
-SELECT plan(12);
+SELECT plan(13);
 SELECT has_table('public','production_operator_stations','station is persisted');
 SELECT col_is_pk('public','production_operator_stations',ARRAY['org_id','user_id'],'choice belongs to one user and tenant');
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.production_operator_stations'::regclass),'station keeps RLS');
@@ -28,6 +28,8 @@ SELECT is((SELECT count(*) FROM production_operator_stations),1::bigint,'only ow
 SELECT set_config('request.jwt.claim.sub','12000000-0000-4000-8000-000000000004',true);
 SELECT is((SELECT count(*) FROM production_operator_stations),0::bigint,'colleague cannot read the preference');
 RESET ROLE;
+SELECT throws_ok($$INSERT INTO production_operator_stations(org_id,user_id,station_code)
+ VALUES('12000000-0000-4000-8000-000000000001','12000000-0000-4000-8000-000000000099','CUT')$$,'23503',NULL,'workstation cannot belong to a nonexistent auth user');
 SELECT throws_ok($$UPDATE production_operator_stations SET station_code='UNDECLARED'$$,'23514',NULL,'unknown station remains rejected');
 SELECT * FROM finish();
 ROLLBACK;

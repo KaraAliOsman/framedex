@@ -898,3 +898,21 @@ la decisión corregida RM-02 nombra su pieza y el retry devuelve la misma OT.
 [Aceptación](../redesign/P12-ACEPTACION.md) y
 [síntesis](product/production-stations.md) conservan evidencia y límites.
 CI y squash se registrarán al integrar.
+
+## 2026-10-09 — P12 · contrato externo de autenticación en PG16
+
+El gate completo pasa 1.217 pgTAP, 441 integraciones y 17 E2E antes de encontrar
+que el bootstrap PG16 independiente no crea `auth.users`. La migración P12
+conserva la clave foránea al usuario real de Supabase. Se amplía el bootstrap
+con la clave primaria externa y se agregan aserciones de rechazo de usuario
+inexistente y limpieza de su puesto; no se elimina ni omite ningún check.
+El cierre sigue pendiente del gate completo sobre la corrección.
+
+## 2026-10-09 — P12 · gate correctivo completo
+
+El focalizado PG16 y la repetición completa terminan con código 0.
+El gate completo pasa 84 archivos / 1.218 pgTAP, 441 integraciones RLS,
+17 E2E y diez suites de actualización poblada PG16. Se conservan todos
+los checks, la FK real y los datos del fixture de producto. El teardown
+deja 8000/5173 libres. El lint final sobre el bootstrap y las verificaciones
+adicionales también pasa; CI y squash se registrarán al integrar.

@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 5b06ceb12457b297a8748580453695714469c6a0
+verified_ref: 3c3a78bebf898f668814742f8c94a2144d86fb9f
 sources:
+  - P12 implementación 3c3a78bebf898f668814742f8c94a2144d86fb9f, gates locales y evidencia de navegador, 2026-10-09
   - P03 PR #134, CI run 37919211491 on 4eb66fbd72c5b2a4ef13c13b6397982a29eb823e, squash 5b06ceb12457b297a8748580453695714469c6a0, 2026-10-09
   - P03 implementación dacf9f9759e41bea784968d25662e95e7081f6d3, gates locales y 88 vistas oficiales, 2026-10-09
   - P07 PR #133, CI run 37893278926 on d6db60843adc4c65e2486d8e46cf9832a4244bd3, squash d8e4d899a29d9f154f8c7d37b054581132dadbb1, 2026-10-09

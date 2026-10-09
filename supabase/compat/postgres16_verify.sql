@@ -161,3 +161,31 @@ BEGIN
     END IF;
 END;
 $$;
+
+-- P12: the independent gate also exercises Supabase's user key contract.
+-- Fixture writes are rolled back, preserving all canonical seed checks above.
+BEGIN;
+DO $$
+DECLARE
+    fixture_org UUID := '20400000-0000-4000-8000-000000000001';
+    fixture_user UUID := '20400000-0000-4000-8000-000000000002';
+BEGIN
+    INSERT INTO public.tenancy_organizations(id, name, tax_id)
+    VALUES(fixture_org, 'P12 independent PG16 DEMO', 'P12-PG16');
+    INSERT INTO auth.users(id) VALUES(fixture_user);
+    INSERT INTO public.production_operator_stations(org_id, user_id, station_code)
+    VALUES(fixture_org, fixture_user, 'CUT');
+    BEGIN
+        INSERT INTO public.production_operator_stations(org_id, user_id, station_code)
+        VALUES(fixture_org, '20400000-0000-4000-8000-000000000099', 'QC');
+        RAISE EXCEPTION 'Station accepted a nonexistent auth user';
+    EXCEPTION WHEN foreign_key_violation THEN
+        NULL;
+    END;
+    DELETE FROM auth.users WHERE id = fixture_user;
+    IF EXISTS(SELECT 1 FROM public.production_operator_stations WHERE org_id = fixture_org) THEN
+        RAISE EXCEPTION 'Removing auth user left an orphan workstation';
+    END IF;
+END;
+$$;
+ROLLBACK;

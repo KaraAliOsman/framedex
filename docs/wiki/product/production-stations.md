@@ -3,7 +3,7 @@ type: synthesis
 status: active
 updated: 2026-10-09
 volatility: medium
-verified_ref: codex/P12-produccion-estaciones
+verified_ref: 3c3a78bebf898f668814742f8c94a2144d86fb9f
 sources:
   - backend/production/stations.py
   - backend/production/quality.py
@@ -45,3 +45,8 @@ La intención del dueño es taller táctil y órdenes grandes navegables. La
 evidencia de P12 usa 100 posiciones confirmadas y suministro sintético declarado
 DEMO; no certifica un catálogo ni la autoridad de un proveedor. Corte avanzado,
 CNC y retazos continúan sus encargos P13/P14/P15.
+
+El gate correctivo completo pasa 1.218 pgTAP, 441 integraciones RLS, 17 E2E
+y diez actualizaciones pobladas PG16. Su bootstrap crea la clave de usuario
+que Supabase proporciona; la FK real rechaza usuarios inexistentes y limpia
+su estación al eliminarlos. El fixture de esta verificación se revierte.
