@@ -851,3 +851,15 @@ Una emisión inicial sin confirmar medidas se conserva bloqueada por el dominio;
 la aceptación usa otra organización DEMO con autoridad confirmada antes de emitir.
 Se mantiene [aceptación](../redesign/P03-ACEPTACION.md) y
 [síntesis](product/today-workflow.md). CI/squash se registrarán al integrar.
+
+## 2026-10-09 — P03 · gate completo
+
+El cierre pasa 829 pruebas motor (+2 xfail), 1.364 backend y 900 frontend.
+Database Gate termina PASA: 83 archivos / 1.205 pgTAP, 439 integraciones,
+17 E2E y upgrades poblados PG16. Los selectores E2E se actualizan a Inicio
+y las migas sin quitar aserciones de permisos, persistencia ni autenticación.
+Se detuvo exclusivamente el contenedor propio `dekopen-cola-python`: su puerto
+publicado mantenía reservado 8000 aun sin Django y bloqueaba el arranque E2E.
+La prueba focalizada PASA 1/1 tras restablecer su relay local de Supabase;
+el arranque propio ahora lo restaura, conservando el issuer verificado.
+CI y squash se registrarán al integrar.

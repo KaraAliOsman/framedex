@@ -76,7 +76,11 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   // Query may serve the project from its fresh cache without a fetch, so the
   // reload makes the backend round-trip (and in-memory reset) explicit.
   const back = () => page.getByRole("link", { name: /Volver al proyecto/ }).click();
-  const toProjects = () => page.getByRole("link", { name: /‹ Proyectos/ }).click();
+  const toProjects = () =>
+    page
+      .getByRole("navigation", { name: "Ruta de navegación" })
+      .getByRole("link", { name: "Proyectos", exact: true })
+      .click();
   const freshRead = () => page.reload();
 
   await page.goto("/projects");

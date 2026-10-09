@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: codex/P03-shell-hoy
+verified_ref: dacf9f9759e41bea784968d25662e95e7081f6d3
 sources:
   - docs/redesign/P03-ACEPTACION.md
   - engine/src/dekopen_engine/work_queue.py

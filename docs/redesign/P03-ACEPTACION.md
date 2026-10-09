@@ -103,7 +103,10 @@ canónico. No se debilitaron guardas ni permisos.
 
 `make lint`, `make typecheck`, `make test`, `make build`: PASA. Motor: 829
 pruebas + 2 xfail y golden byte check. Backend unitario: 1.364. Frontend: 900.
-Database Gate y CI se registrarán antes de integrar; el merge exige 4/4.
+`make test-db`: PASA en el proyecto local aislado `framedex-cola-native`:
+83 archivos / 1.205 pgTAP, 439 integraciones, 17 E2E y upgrades poblados PG16.
+El E2E conserva autenticación, navegación, recarga y autoridad emitida;
+los selectores usan Inicio y las migas finales. CI exige 4/4 antes del merge.
 
 ## Decisiones, integraciones y riesgos
 
