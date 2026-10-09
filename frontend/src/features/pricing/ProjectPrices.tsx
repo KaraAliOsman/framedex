@@ -91,7 +91,7 @@ type Evidence = {
   controls?: Controls;
   changes?: { field: string; before: string | null; after: string }[];
 };
-type Operation = Omit<PriceResponse, "workspace" | "id" | "created_at"> & {
+export type Operation = Omit<PriceResponse, "workspace" | "id" | "created_at"> & {
   workspace?: Evidence;
   id: string | null;
   created_at: string | null;
@@ -366,7 +366,13 @@ function controlValue(field: string, value: string | null): string {
   return labels[value] ?? (value === "DEFAULT" ? "Lista principal" : value);
 }
 
-function Projection({ operation, owner }: { operation: Operation; owner: boolean }): JSX.Element {
+export function Projection({
+  operation,
+  owner,
+}: {
+  operation: Operation;
+  owner: boolean;
+}): JSX.Element {
   const value = operation.workspace;
   const currency = operation.currency;
   if (!value)
@@ -859,10 +865,12 @@ export function ProjectPrices({
   request,
   owner,
   projectId: boundProjectId,
+  initialOperationId,
 }: {
   request: Request;
   owner: boolean;
   projectId?: string;
+  initialOperationId?: string;
 }): JSX.Element {
   const auth = useAuthSession();
   const orgId = auth.me?.active_organization?.id;
@@ -890,6 +898,18 @@ export function ProjectPrices({
   const touched = useRef(false);
   const reasonEdited = useRef(false);
 
+  const chooseOperation = useCallback((item: Operation): void => {
+    generation.current += 1;
+    actionGeneration.current += 1;
+    setBusy(false);
+    setCalculating(false);
+    setReview(item);
+    setComment("");
+    setConfirmed(false);
+    setNotice("");
+    setError("");
+  }, []);
+
   const loadHistory = useCallback(async () => {
     const result = await request<Operation[]>("operations/");
     if (!Array.isArray(result)) throw new Error("El historial no devolvió operaciones válidas.");
@@ -901,15 +921,21 @@ export function ProjectPrices({
     setError("");
     void Promise.all([
       request<Options>("options/"),
-      loadHistory(),
+      Promise.all([
+        loadHistory(),
+        initialOperationId
+          ? request<Operation>(`operations/${initialOperationId}/`)
+          : Promise.resolve(null),
+      ]),
       projectsList({ headers: { "X-Organization-ID": orgId! } }),
     ])
-      .then(([available, operations, projectResult]) => {
+      .then(([available, [operations, requestedOperation], projectResult]) => {
         if (!active) return;
         if (!Array.isArray(available.fx) || !Array.isArray(available.commercial_lists))
           throw new Error("Las autoridades comerciales no están disponibles.");
         setOptions(available);
         setHistory(operations);
+        if (requestedOperation) chooseOperation(requestedOperation);
         if (projectResult.status !== 200)
           throw new Error("No se pudo cargar la lista de proyectos.");
         setProjects(projectResult.data.items);
@@ -936,7 +962,7 @@ export function ProjectPrices({
       generation.current += 1;
       actionGeneration.current += 1;
     };
-  }, [request, loadHistory, orgId, reload]);
+  }, [request, loadHistory, orgId, reload, initialOperationId, chooseOperation]);
 
   useEffect(() => {
     const current = ++generation.current;
@@ -1008,17 +1034,6 @@ export function ProjectPrices({
     setNotice("");
     setReview(null);
     setControls((current) => ({ ...current, [key]: value }));
-  }
-  function chooseOperation(item: Operation): void {
-    generation.current += 1;
-    actionGeneration.current += 1;
-    setBusy(false);
-    setCalculating(false);
-    setReview(item);
-    setComment("");
-    setConfirmed(false);
-    setNotice("");
-    setError("");
   }
   async function act(kind: "save" | "approve" | "reject" | "withdraw" | "read"): Promise<void> {
     generation.current += 1;

@@ -46,7 +46,10 @@ export function ProjectSwitcher(): JSX.Element | null {
         className="topbar-button"
         aria-haspopup="menu"
         aria-expanded={open || undefined}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (!open) window.dispatchEvent(new Event("dekopen:shell-overlay"));
+          setOpen((value) => !value);
+        }}
       >
         {t("shell.switchProject")}
         <span aria-hidden className="topbar-button__chevron">

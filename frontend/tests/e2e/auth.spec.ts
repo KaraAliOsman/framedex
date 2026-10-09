@@ -229,18 +229,34 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   await assertRealIdentity(page, request, fixture, "aal1");
 
   const navigation = page.getByRole("navigation", { name: "Navegación principal" });
-  // The rail mirrors the backend role sets: an ESTIMATOR sees the commercial
-  // surfaces but never Catálogo (OWNER/WORKSHOP_MANAGER) nor Administración.
-  await expect(navigation.getByRole("link", { name: "Catálogo", exact: true })).toHaveCount(0);
+  // ESTIMATOR can read technical authority, while publication and organization
+  // administration remain supervisor capabilities enforced by the backend.
+  await expect(navigation.getByRole("link", { name: "Catálogo técnico", exact: true })).toHaveCount(
+    1,
+  );
   await expect(navigation.getByRole("link", { name: "Administración", exact: true })).toHaveCount(
     0,
   );
+  await navigation.getByRole("link", { name: "Catálogo técnico", exact: true }).click();
+  // The real catalog loads its authority families before mounting the workspace.
+  // Wait for that state to finish before inspecting publication controls.
+  await expect(page.getByRole("heading", { name: "Catálogo técnico", exact: true })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.getByRole("button", { name: "Importar catálogo", exact: true }).click();
+  await expect(
+    page.getByText(/Para cargar y publicar datos necesitas el rol de dueño/),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Crear serie", exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Descargar plantilla XLSX", exact: true }),
+  ).toHaveCount(0);
   await navigation.getByRole("link", { name: "Ajustes", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Documentos", exact: true, level: 3 }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar documentos", exact: true })).toBeVisible();
-  for (const route of ["Proyectos", "Clientes", "Panel"]) {
+  for (const route of ["Proyectos", "Clientes", "Inicio"]) {
     await navigation.getByRole("link", { name: route, exact: true }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();
   }

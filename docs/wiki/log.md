@@ -838,3 +838,39 @@ PR #133 pasa los cuatro checks sobre `d6db60843adc4c65e2486d8e46cf9832a4244bd3` 
 Los servicios propios están detenidos y el fixture permanece intacto.
 CodeRabbit/Devin omiten revisión por configuración/límites y Copilot por cuota;
 no equivalen a una revisión de código. P03 continúa el shell y Hoy.
+
+## 2026-10-09 — P03 · cola y direcciones de trabajo
+
+P03 une Hoy/campana en una proyección por tenant, usuario y rol; decisiones
+inline con recibo explícito, saldo y orden deterministas del motor.
+Navegación por capacidades, inventario/cotizaciones propios y búsqueda real
+de los cinco códigos/nombre requeridos. Matriz 56 y oficial 88 sin hallazgos
+ni desbordes; matriz sin axe serious/critical. Se corrigieron UUID de stock,
+contraste oscuro, fuga de foco, vistas entre enlaces y faltantes históricos.
+Una emisión inicial sin confirmar medidas se conserva bloqueada por el dominio;
+la aceptación usa otra organización DEMO con autoridad confirmada antes de emitir.
+Se mantiene [aceptación](../redesign/P03-ACEPTACION.md) y
+[síntesis](product/today-workflow.md). CI/squash se registrarán al integrar.
+
+## 2026-10-09 — P03 · gate completo
+
+El cierre pasa 829 pruebas motor (+2 xfail), 1.364 backend y 900 frontend.
+Database Gate termina PASA: 83 archivos / 1.205 pgTAP, 439 integraciones,
+17 E2E y upgrades poblados PG16. Los selectores E2E se actualizan a Inicio
+y las migas sin quitar aserciones de permisos, persistencia ni autenticación.
+Se detuvo exclusivamente el contenedor propio `dekopen-cola-python`: su puerto
+publicado mantenía reservado 8000 aun sin Django y bloqueaba el arranque E2E.
+La prueba focalizada PASA 1/1 tras restablecer su relay local de Supabase;
+el arranque propio ahora lo restaura, conservando el issuer verificado.
+CI y squash se registrarán al integrar.
+
+## 2026-10-09 — P03 · sincronización E2E con el motor
+
+La corrida CI `37915677274` falla en la aserción de Guardar tras cambiar
+ancho. La reproducción local confirma simulaciones aún pendientes al
+agotarse 5 s: vidrio/ancho/propuesta terminan en 7,4–7,9 s con HTTP 200
+y `valid=true`. El test espera esas respuestas concretas y conserva las
+aserciones de evaluación, geometría, aplicar/deshacer y cantidad tardía;
+el focalizado pasa en 43,5 s. No cambia motor, permisos, timeouts globales
+ni retries. El cierre exige CI verde en el nuevo HEAD, sin repetir la
+implementación ni las capturas aceptadas de P03.

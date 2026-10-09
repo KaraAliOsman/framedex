@@ -504,3 +504,20 @@
   color: var(--theme-danger, #b3261e);
   font-weight: 600;
 }
+.inventory-page {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.inventory-stock-scroll {
+  overflow: auto;
+  max-width: 100%;
+}
+.inventory-page .purchasing-stock label {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 28rem;
+}
+.inventory-page .purchasing-stock td {
+  vertical-align: top;
+}

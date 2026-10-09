@@ -45,7 +45,17 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
   return [
     { id: "inicio", path: "/", roles: ["ESTIMATOR"], public: true },
     { id: "login", path: "/login", roles: ["ESTIMATOR"], public: true },
-    { id: "panel", path: "/dashboard", roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] },
+    {
+      id: "panel",
+      path: "/dashboard",
+      roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "OPERATOR", "INSTALLER"],
+    },
+    { id: "cotizaciones", path: "/quotes", roles: ["OWNER", "ESTIMATOR"] },
+    {
+      id: "inventario",
+      path: "/inventory",
+      roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "OPERATOR"],
+    },
     { id: "proyectos", path: "/projects", roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] },
     {
       id: "proyecto-detalle",

@@ -313,6 +313,38 @@ class OperationsView(APIView):
         return Response(output)
 
 
+class OperationView(APIView):
+    @extend_schema(operation_id='pricing_operation', parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   responses={200: PriceResponseSerializer, **ERRORS}, tags=['pricing'])
+    def get(self, request, operation_id):
+        with scope(request, ('OWNER', 'ESTIMATOR')) as (token, tenant, org):
+            role = tenant.active_organization.role
+            with commercial_backend():
+                condition = '' if role == 'OWNER' else ' AND operation.requested_by=%s'
+                parameters = [org, operation_id] + ([] if role == 'OWNER' else [token.user_id])
+                found = rows('SELECT operation.*,project.code AS project_code,project.name AS project_name,'
+                             'project.client_name AS client_name FROM public.pricing_operations operation '
+                             'JOIN public.projects project ON project.id=operation.project_id '
+                             'AND project.org_id=operation.org_id WHERE operation.org_id=%s '
+                             'AND operation.id=%s' + condition, parameters)
+                if not found:
+                    raise contract_error(404, 'pricing_operation_not_found',
+                                         'La operación no está disponible en esta organización para tu rol.')
+                output = price_response(price_visibility(operation_public(found[0]), role))
+                read = rows('SELECT operation_id FROM public.pricing_attention_receipts '
+                            'WHERE org_id=%s AND operation_id=%s AND user_id=%s',
+                            [org, operation_id, token.user_id])
+            from documents.repository import documentary_backend
+            with documentary_backend():
+                issued = rows('SELECT id FROM public.project_versions '
+                              'WHERE org_id=%s AND pricing_operation_id=%s', [org, operation_id])
+            output['resulted_in_issue'] = bool(issued)
+            output['notification_unread'] = (output['requested_by'] == str(token.user_id)
+                and output['approved_by'] is not None and output['approved_by'] != output['requested_by']
+                and output['state'] in ('APPLIED', 'REJECTED') and not read)
+        return Response(output)
+
+
 class DraftView(APIView):
     parser_classes = [DecimalJSONParser]
 

@@ -8,7 +8,7 @@ quantity; order status advances through PARTIALLY_RECEIVED / FULFILLED."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
 from typing import Any
 from uuid import UUID
@@ -155,8 +155,11 @@ def list_stock(*, org_id: UUID) -> dict[str, object]:
 
 
 def _spec_text(attributes: object) -> str:
-    """Flat searchable text from the stored specification — glass composition,
-    treatments, dims. Searching '4-16-4' or 'Float' must find the item."""
+    """Human specification from declared fields, never internal identities.
+
+    This also remains searchable (composition, finish and exact dimensions).
+    New authority metadata must not accidentally become visible stock copy.
+    """
     if isinstance(attributes, str):
         try:
             attributes = json.loads(attributes)
@@ -164,22 +167,51 @@ def _spec_text(attributes: object) -> str:
             return ""
     if not isinstance(attributes, dict):
         return ""
-    seen: list[str] = []
+    parts: list[str] = []
+    for key in ("name", "title", "composition", "manufacturer_name"):
+        value = attributes.get(key)
+        if isinstance(value, str) and value.strip() and value.strip() not in parts:
+            parts.append(value.strip())
+    color = attributes.get("color")
+    if isinstance(color, str) and color:
+        parts.append({"WHITE": "Blanco", "FOILED": "Foliado"}.get(color, color))
 
-    def walk(value: object) -> None:
-        if isinstance(value, dict):
-            for child in value.values():
-                walk(child)
-        elif isinstance(value, (list, tuple)):
-            for child in value:
-                walk(child)
-        elif value is not None:
-            text = str(value).strip()
-            if text and text not in seen:
-                seen.append(text)
+    def mm(key: str) -> str | None:
+        value = attributes.get(key)
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            number = Decimal(str(value))
+        except InvalidOperation:
+            return None
+        if not number.is_finite():
+            return None
+        integer, _, fraction = format(number, "f").partition(".")
+        fraction = fraction.rstrip("0")
+        grouped = format(int(integer), ",").replace(",", "\u202f")
+        return grouped + ("," + fraction if fraction else "")
 
-    walk(attributes)
-    return " ".join(seen)
+    width = mm("oriented_width_mm") or mm("width_mm")
+    height = mm("oriented_height_mm") or mm("height_mm")
+    if width and height:
+        parts.append(f"{width} × {height} mm")
+    elif width or height:
+        parts.append(f"{'Ancho' if width else 'Alto'} {width or height} mm · Sin dato en la otra medida")
+    for key, label in (("stock_length_mm", "Largo"), ("thickness_mm", "Espesor")):
+        value = mm(key)
+        if value:
+            parts.append(f"{label} {value} mm")
+    polishing = attributes.get("polishing")
+    if isinstance(polishing, dict):
+        edges = [label for key, label in (
+            ("top", "superior"), ("right", "derecho"),
+            ("bottom", "inferior"), ("left", "izquierdo"),
+        ) if polishing.get(key) is True]
+        if edges:
+            parts.append("Cantos pulidos: " + ", ".join(edges))
+        elif all(polishing.get(key) is False for key in ("top", "right", "bottom", "left")):
+            parts.append("Sin pulido")
+    return " · ".join(parts)
 
 
 def list_movements(*, org_id: UUID, item_id: UUID | None, limit: int) -> dict[str, object]:

@@ -18,6 +18,7 @@ import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
 import { consumeReturnTo } from "./auth/returnTo";
 import { LandingPage } from "./features/landing/LandingPage";
 import { AboutPage } from "./brand/AboutPage";
+import { homeFor } from "./app/navigation";
 
 export const DEV_ONLY_ROUTE_PATHS = [
   "/projects/demo/positions/g1/edit",
@@ -87,6 +88,12 @@ const PurchasingPage = lazy(async () => {
   const module = await import("./features/purchasing/PurchasingPage");
   return { default: module.PurchasingPage };
 });
+const InventoryPage = lazy(async () => ({
+  default: (await import("./features/purchasing/InventoryPage")).InventoryPage,
+}));
+const QuotationsPage = lazy(async () => ({
+  default: (await import("./features/quotations/QuotationsPage")).QuotationsPage,
+}));
 
 const ProductionPage = lazy(async () => {
   const module = await import("./features/production/ProductionPage");
@@ -115,10 +122,6 @@ const MailExamplesPage = import.meta.env.DEV
   ? lazy(async () => ({ default: (await import("./dev/MailExamplesPage")).MailExamplesPage }))
   : null;
 
-function isFloorRole(role: string | undefined): boolean {
-  return ["INSTALLER", "OPERATOR"].includes(role ?? "");
-}
-
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
   if (auth.status === "loading" || auth.status === "resolving") {
@@ -129,9 +132,8 @@ function HomeRedirect(): JSX.Element {
     return <Navigate to="/select-organization" replace />;
   }
   if (auth.status === "ready") {
-    // Floor roles live on the production floor — the commercial dashboard
-    // would deny its queries and greet them with errors.
-    const home = isFloorRole(auth.me?.active_organization?.role) ? "/production" : "/dashboard";
+    // The operator starts at the station; other roles start with their work.
+    const home = homeFor(auth.me?.active_organization?.role);
     // A magic link can land on `/` instead of /auth/callback when the site
     // URL differs from the requested origin — still honor the stashed
     // destination rather than dropping it on the dashboard.
@@ -141,14 +143,9 @@ function HomeRedirect(): JSX.Element {
   return <LandingPage />;
 }
 
-/** /dashboard is a commercial surface: its queries are role-gated, so a floor
- * role deep-linking here met a wall of 403s. Redirect them to the floor home
- * instead (review: OPERATOR on /dashboard). */
+/** Hoy authorizes its projection for all five roles. The operator's default
+ * entry still opens the station; an explicit Inicio link opens their queue. */
 function DashboardRoute(): JSX.Element {
-  const auth = useAuthSession();
-  if (isFloorRole(auth.me?.active_organization?.role)) {
-    return <Navigate to="/production" replace />;
-  }
   return (
     <AppShell>
       <DashboardPage />
@@ -439,11 +436,32 @@ export function AppRoutes(): JSX.Element {
             </ReadyGuard>
           }
         />
-        {/* Bare guesses land on their real surface instead of silently
-         * bouncing home — /inventory lives inside Purchasing, /settings
-         * inside General. */}
+        {/* Keep general settings and inventory entry addresses usable. */}
         <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
-        <Route path="/inventory" element={<Navigate to="/purchasing" replace />} />
+        <Route
+          path="/inventory"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<p role="status">Cargando inventario…</p>}>
+                  <InventoryPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
+        <Route
+          path="/quotes"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<p role="status">Cargando cotizaciones…</p>}>
+                  <QuotationsPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
         <Route path="*" element={<RecoveryPage kind="not-found" />} />
       </Routes>
     </RouteErrorBoundary>

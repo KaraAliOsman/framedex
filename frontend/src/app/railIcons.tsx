@@ -1,101 +1,74 @@
-/** Compact 14px stroke icons for the domain rail — one visual anchor per
- * destination; labels stay textual (icons alone are never the affordance). */
-
-const P = {
+/** Shared 24px, 1.5px monoline vocabulary for the workflow navigation. */
+const paths = {
   dashboard: (
     <>
-      <rect x="1.5" y="1.5" width="4.6" height="4.6" rx="0.6" />
-      <rect x="7.9" y="1.5" width="4.6" height="4.6" rx="0.6" />
-      <rect x="1.5" y="7.9" width="4.6" height="4.6" rx="0.6" />
-      <rect x="7.9" y="7.9" width="4.6" height="4.6" rx="0.6" />
+      <path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5" />
     </>
   ),
-  projects: (
-    <>
-      <rect x="2" y="3" width="10" height="8" rx="0.8" />
-      <path d="M7 3v8M2 7h10" />
-    </>
-  ),
+  projects: <path d="M3 5h18v14H3zM12 5v14M3 12h18" />,
   clients: (
     <>
-      <circle cx="7" cy="4.6" r="2.4" />
-      <path d="M2.4 12c.6-2.4 2.4-3.6 4.6-3.6S11 9.6 11.6 12" />
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21v-2c0-3 3-5 8-5s8 2 8 5v2" />
     </>
   ),
-  sales: (
-    <>
-      <path d="M2 4h10v7H2z" />
-      <path d="M2 6h10M4.5 9h3" />
-    </>
-  ),
-  catalog: (
-    <>
-      <path d="M2.5 2.5h3.4v9H2.5zM5.9 2.5h4.6l1 9H7z" />
-    </>
-  ),
+  quotes: <path d="M5 3h11l3 3v15H5zM9 9h6M9 13h6M9 17h4" />,
+  prices: <path d="M3 6h18v14H3zM3 10h18M7 16h5" />,
+  catalog: <path d="M3 3h7v18H3zM10 3h8l3 18h-8z" />,
   purchasing: (
     <>
-      <path d="M1.8 2.6h1.6l1.2 6.2h6.8l1-4.4H4" />
-      <circle cx="5.4" cy="11.4" r="1" />
-      <circle cx="10.6" cy="11.4" r="1" />
+      <path d="M3 4h3l2 12h11l2-8H7" />
+      <circle cx="10" cy="20" r="1" />
+      <circle cx="18" cy="20" r="1" />
     </>
   ),
-  production: (
-    <>
-      <circle cx="7" cy="7" r="2.4" />
-      <path d="M7 1.6v1.8M7 10.6v1.8M1.6 7h1.8M10.6 7h1.8M3.2 3.2l1.3 1.3M9.5 9.5l1.3 1.3M10.8 3.2 9.5 4.5M4.5 9.5 3.2 10.8" />
-    </>
-  ),
+  inventory: <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" />,
+  production: <path d="M3 21V9l6 4V7l6 4V3h6v18zM7 17h2M12 17h2M17 17h2" />,
   assistant: (
     <>
-      <circle cx="7" cy="7" r="5" />
-      <circle cx="5.3" cy="6.6" r="0.75" />
-      <circle cx="8.7" cy="6.6" r="0.75" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 10v3M16 10v3M9 17h6" />
     </>
   ),
-  jobs: (
-    <>
-      <path d="M2.5 3.4h9M2.5 7h9M2.5 10.6h5.5" />
-    </>
-  ),
+  jobs: <path d="M4 5h16M4 12h16M4 19h10" />,
   settings: (
     <>
-      <circle cx="7" cy="7" r="2" />
-      <path d="M7 1.8v1.6M7 10.6v1.6M1.8 7h1.6M10.6 7h1.6M3.3 3.3l1.1 1.1M9.6 9.6l1.1 1.1M10.7 3.3 9.6 4.4M4.4 9.6 3.3 10.7" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
     </>
   ),
 };
-
-const routeIcon: Record<string, keyof typeof P> = {
+const routes: Record<string, keyof typeof paths> = {
   "/dashboard": "dashboard",
   "/projects": "projects",
   "/clients": "clients",
-  "/pricing/commercial": "sales",
+  "/quotes": "quotes",
+  "/pricing/commercial": "prices",
   "/catalogs/systems": "catalog",
   "/purchasing": "purchasing",
+  "/inventory": "inventory",
   "/production": "production",
   "/assistant": "assistant",
   "/jobs": "jobs",
   "/settings/general": "settings",
 };
-
 export function RailIcon({ to }: { to: string }): JSX.Element | null {
-  const key = routeIcon[to];
+  const key = routes[to];
   if (!key) return null;
   return (
     <svg
       aria-hidden="true"
       className="rail-item__icon"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
       fill="none"
-      height="14"
       stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.3"
-      viewBox="0 0 14 14"
-      width="14"
+      strokeWidth="1.5"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
     >
-      {P[key]}
+      {paths[key]}
     </svg>
   );
 }

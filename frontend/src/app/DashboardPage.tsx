@@ -1,302 +1,238 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-
-import { ApiError } from "../api/apiMutator";
-import { analyticsOperationalSummary, projectsList } from "../api/generated/dekopen";
-import type { OperationalSummary, ProjectResponse } from "../api/generated/models";
+import type { TodayAction } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
-import { formatDateTime } from "../format";
-import { formatMoney } from "../features/money";
-import { t, type TranslationKey } from "../i18n/es-CL";
-import { PageHeader } from "../ui";
-import { attentionEntries, attentionLabel } from "./attention";
-
-const WO_STATUSES = [
-  "RELEASED",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "HOLD",
-  "DISPATCHED",
-  "INSTALLED",
-] as const;
-
-const woStatusKey: Record<string, TranslationKey> = {
-  RELEASED: "production.orderReleased",
-  IN_PROGRESS: "production.orderInProgress",
-  COMPLETED: "production.orderCompleted",
-  HOLD: "production.orderHold",
-  DISPATCHED: "production.orderDispatched",
-  INSTALLED: "production.orderInstalled",
-};
-
-const eventLabel: Record<string, TranslationKey> = {
-  STEP_STARTED: "production.eventStepStarted",
-  STEP_COMPLETED: "production.eventStepCompleted",
-  STEP_BLOCKED: "production.eventStepBlocked",
-  STEP_UNBLOCKED: "production.eventStepUnblocked",
-  NOTE: "production.eventNote",
-  WO_HOLD: "production.eventHold",
-  WO_REMADE: "production.eventRemade",
-  WO_RELEASED: "production.eventReleased",
-  WO_COMPLETED: "production.eventCompleted",
-  WO_OPTIMIZED: "production.eventOptimized",
-  QC_FAILED: "production.eventQcFailed",
-  WO_CNC_EXPORTED: "production.eventCncExported",
-  WO_PACKED: "production.eventPacked",
-  WO_DISPATCHED: "production.eventDispatched",
-  WO_INSTALLED: "production.eventInstalled",
-};
-
-type RecentEvent = { event: string; order_code: string; at: string };
-
-const statuses: Record<ProjectResponse["status"], TranslationKey> = {
-  DRAFT: "projects.draft",
-  QUOTED: "projects.quoted",
-  APPROVED: "projects.approved",
-  IN_PRODUCTION: "projects.production",
-  COMPLETED: "projects.completed",
-  CANCELLED: "projects.cancelled",
-};
+import { DateOnly, DeniedState, ErrorState, LoadingState, Money, PageHeader } from "../ui";
+import { PriceDecision } from "../features/pricing/PriceDecision";
+import { useToday } from "./useToday";
+import { consequenceLabels, phaseLabels } from "./todayLabels";
 
 export function DashboardPage(): JSX.Element {
   const auth = useAuthSession();
   const org = auth.me?.active_organization;
-  const query = useQuery<ProjectResponse[]>({
-    queryKey: ["dashboard", "projects", org?.id],
-    enabled: org !== undefined,
-    queryFn: async ({ signal }) => {
-      const response = await projectsList({
-        signal,
-        headers: { "X-Organization-ID": org!.id },
-      });
-      if (response.status !== 200) {
-        throw new ApiError(response.status, response.data);
-      }
-      return response.data.items;
-    },
-  });
+  if (!org) return <DeniedState reason="Selecciona una organización para ver tu trabajo de hoy." />;
+  return <TodayWorkspace key={[org.id, auth.me?.user.id, org.role].join(":")} />;
+}
 
-  // Floor roles land on /production — the operational summary is a
-  // commercial/management feed and its readers exclude them; don't fire a
-  // query that's guaranteed to 403.
-  const opsVisible = ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org?.role ?? "");
-  const opsQuery = useQuery<OperationalSummary>({
-    queryKey: ["dashboard", "ops", org?.id],
-    enabled: org !== undefined && opsVisible,
-    queryFn: async ({ signal }) => {
-      const response = await analyticsOperationalSummary({
-        signal,
-        headers: { "X-Organization-ID": org!.id },
-      });
-      if (response.status !== 200) {
-        throw new ApiError(response.status, response.data);
-      }
-      return response.data;
-    },
-  });
-
-  const items = query.data ?? [];
-  const byActivity = [...items].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
-  const recent = byActivity.slice(0, 8);
-  const next = byActivity.find((item) => item.status === "DRAFT") ?? null;
-  const canWrite = org?.role === "OWNER" || org?.role === "ESTIMATOR";
-
-  // One canonical attention feed — the topbar bell renders the same queue,
-  // so the surfaces can never disagree about what needs a human.
-  const attention = attentionEntries(opsQuery.data);
-
+function TodayWorkspace(): JSX.Element {
+  const org = useAuthSession().me!.active_organization!;
+  const query = useToday();
+  const [decision, setDecision] = useState<TodayAction | null>(null);
+  const [tier, setTier] = useState("");
+  const [page, setPage] = useState(0);
+  const actions = (query.data?.actions ?? []).filter((item) => !tier || item.consequence === tier);
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(actions.length / 50) - 1));
+  const visible = actions.slice(currentPage * 50, (currentPage + 1) * 50);
+  const tiers = [...new Set(query.data?.actions.map((item) => item.consequence) ?? [])];
+  const workshop =
+    org.role === "INSTALLER" || org.role === "OPERATOR" || org.role === "WORKSHOP_MANAGER";
   return (
-    <section className="dashboard" aria-labelledby="page-title">
+    <section className="today-page" aria-labelledby="page-title">
       <PageHeader
-        actions={
-          canWrite ? (
-            <Link className="ui-button ui-button--primary" to="/projects">
-              {t("projects.create")}
-            </Link>
-          ) : undefined
-        }
-        context={org?.name ?? t("org.none")}
+        title="Hoy"
         headingId="page-title"
-        title={t("page.dashboard")}
+        context={org.name}
+        actions={
+          <Link className="ui-button" to={workshop ? "/production" : "/projects"}>
+            {org.role === "INSTALLER"
+              ? "Abrir despachos e instalaciones"
+              : workshop
+                ? "Abrir taller"
+                : "Abrir proyectos"}
+          </Link>
+        }
       />
-
-      {query.isError && <p role="alert">{t("projects.uncertain")}</p>}
-
-      <section className="dashboard-attention" aria-label={t("dashboard.attention")}>
-        <h2 className="eyebrow">{t("dashboard.attention")}</h2>
-        {query.isPending || (opsVisible && opsQuery.isPending) ? (
-          <p className="dashboard-attention-clear">{t("dashboard.attentionLoading")}</p>
-        ) : query.isError || opsQuery.isError ? (
-          <p className="dashboard-attention-clear" role="alert">
-            {t("dashboard.attentionError")}
-          </p>
-        ) : attention.length === 0 ? (
-          <p className="dashboard-attention-clear">{t("dashboard.allClear")}</p>
-        ) : (
-          <ul>
-            {attention.map((entry) => (
-              <li
-                key={entry.key}
-                className={entry.warn ? "attention-item is-warn" : "attention-item"}
-              >
-                <Link to={entry.to}>
-                  <strong>{entry.count}</strong>
-                  <span className="attention-label">{attentionLabel(entry)}</span>
-                  <span className="attention-cta">{t(entry.action)}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {next && (
-        <Link to={`/projects/${next.id}`} className="dashboard-continue">
-          <span className="eyebrow">{t("dashboard.continue")}</span>
-          <span className="dashboard-continue-name">{next.name || next.code}</span>
-          <span className="dashboard-continue-meta">
-            {next.name ? `${next.code} · ` : ""}
-            {next.client_name} ·{" "}
-            <time dateTime={next.updated_at}>{formatDateTime(next.updated_at)}</time>
-          </span>
-          <span className="dashboard-continue-cta">{t("dashboard.resume")}</span>
-        </Link>
-      )}
-
-      {opsQuery.data ? (
-        <section className="dashboard-ops" aria-label={t("dashboard.opsTitle")}>
-          <h2 className="eyebrow">{t("dashboard.opsTitle")}</h2>
-          <div className="dashboard-funnel">
-            {WO_STATUSES.every(
-              (status) =>
-                Number((opsQuery.data.work_orders as Record<string, number>)[status] ?? 0) === 0,
-            ) && <p className="dashboard-funnel-empty">{t("dashboard.noWorkOrders")}</p>}
-            {WO_STATUSES.filter(
-              (status) =>
-                Number((opsQuery.data.work_orders as Record<string, number>)[status] ?? 0) > 0,
-            ).map((status) => {
-              const count = Number(
-                (opsQuery.data.work_orders as Record<string, number>)[status] ?? 0,
-              );
-              return (
-                <span key={status} className="status-chip" data-status={status.toLowerCase()}>
-                  {t(woStatusKey[status] ?? "production.orderReleased")} · {count}
-                </span>
-              );
-            })}
-          </div>
-          <div className="dashboard-cards">
-            <div className="metric-card">
-              <span className="eyebrow">{t("dashboard.dispatched30")}</span>
-              <strong>
-                {Number(
-                  (opsQuery.data.throughput_30d as Record<string, number>).dispatched_30d ?? 0,
-                )}
-              </strong>
-            </div>
-            <div className="metric-card">
-              <span className="eyebrow">{t("dashboard.installed30")}</span>
-              <strong>
-                {Number(
-                  (opsQuery.data.throughput_30d as Record<string, number>).installed_30d ?? 0,
-                )}
-              </strong>
-            </div>
-            <div className="metric-card">
-              <span className="eyebrow">{t("dashboard.leadHours")}</span>
-              <strong>
-                {opsQuery.data.avg_release_to_dispatch_hours !== null
-                  ? `${opsQuery.data.avg_release_to_dispatch_hours} h`
-                  : "—"}
-              </strong>
-            </div>
-          </div>
-          {["OWNER", "ESTIMATOR"].includes(org?.role ?? "") &&
-          opsQuery.data.commercial.length > 0 ? (
-            <div className="dashboard-money">
-              {opsQuery.data.commercial.map((row) => {
-                const outstanding = Math.max(0, Number(row.booked) - Number(row.collected));
-                return (
-                  <div key={row.currency} className="dashboard-money-currency">
-                    <h3 className="eyebrow">{row.currency}</h3>
-                    <div className="dashboard-cards">
-                      <div className="metric-card">
-                        <span className="eyebrow">{t("dashboard.moneyQuoted")}</span>
-                        <strong>{formatMoney(row.quoted, row.currency)}</strong>
-                      </div>
-                      <div className="metric-card">
-                        <span className="eyebrow">{t("dashboard.moneyBooked")}</span>
-                        <strong>{formatMoney(row.booked, row.currency)}</strong>
-                      </div>
-                      <div className="metric-card">
-                        <span className="eyebrow">{t("dashboard.moneyCollected")}</span>
-                        <strong>{formatMoney(row.collected, row.currency)}</strong>
-                      </div>
-                      <div className="metric-card">
-                        <span className="eyebrow">{t("dashboard.moneyOutstanding")}</span>
-                        <strong>{formatMoney(String(outstanding), row.currency)}</strong>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-          {((opsQuery.data.recent_events as RecentEvent[]) ?? []).length > 0 ? (
-            <ul className="dashboard-activity">
-              {(opsQuery.data.recent_events as RecentEvent[]).map((item, i) => (
-                <li key={`${item.order_code}-${item.event}-${i}`}>
-                  <span className="dashboard-activity-event">
-                    {t(eventLabel[item.event] ?? "production.eventStepCompleted")}
-                  </span>
-                  <span className="dashboard-activity-code">{item.order_code}</span>
-                  <time dateTime={item.at}>{formatDateTime(item.at)}</time>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
-
       {query.isPending ? (
-        <p role="status">{t("projects.loading")}</p>
-      ) : items.length === 0 ? (
-        <div className="dashboard-empty">
-          <p>{t("dashboard.empty")}</p>
-          {canWrite && (
-            <div className="dashboard-empty__actions">
-              <Link className="primary-action" to="/projects">
-                {t("dashboard.emptyCta")}
-              </Link>
-              <Link className="ui-button" to="/onboarding">
-                {t("dashboard.onboardingCta")}
-              </Link>
-            </div>
-          )}
-        </div>
+        <LoadingState label="Consultando los compromisos de hoy" />
+      ) : query.isError ? (
+        <ErrorState
+          title="No se pudo consultar tu trabajo"
+          body="Los compromisos se conservan. Reintenta para ver la cola vigente de tu organización."
+          onRetry={() => void query.refetch()}
+        />
       ) : (
-        <div className="dashboard-list">
-          <div className="dashboard-list-head">
-            <h2 className="eyebrow">{t("dashboard.recent")}</h2>
-            <Link className="ui-backlink" to="/projects">
-              {t("dashboard.viewAll")}
-            </Link>
-          </div>
-          <ul>
-            {recent.map((item) => (
-              <li key={item.id}>
-                <Link to={`/projects/${item.id}`} className="dashboard-row">
-                  <span className="dashboard-row-name">{item.name}</span>
-                  <span className="dashboard-row-code">{item.code}</span>
-                  <span className="dashboard-row-client">{item.client_name}</span>
-                  <span className="status-chip" data-status={item.status.toLowerCase()}>
-                    {t(statuses[item.status])}
+        <>
+          <p className="today-date">
+            <DateOnly value={query.data.today} /> ·{" "}
+            {org.role === "INSTALLER"
+              ? "Entregas e instalaciones comprometidas"
+              : "Primero lo vencido y lo que bloquea a otros"}
+          </p>
+          {decision?.operation_id && (
+            <section className="today-decision" aria-label="Decisión de precio">
+              <div className="today-decision__head">
+                <h2>
+                  {decision.entity_code} · {decision.title}
+                </h2>
+                <button type="button" onClick={() => setDecision(null)}>
+                  Cerrar revisión
+                </button>
+              </div>
+              <PriceDecision
+                key={decision.operation_id}
+                operationId={decision.operation_id}
+                owner={org.role === "OWNER"}
+              />
+            </section>
+          )}
+          {query.data.actions.length === 0 ? (
+            <div className="today-clear">
+              <h2>Todo al día</h2>
+              <p>No hay compromisos pendientes para tu rol en esta organización.</p>
+            </div>
+          ) : (
+            <>
+              <nav className="today-filters" aria-label="Filtrar por consecuencia">
+                <button
+                  type="button"
+                  aria-pressed={!tier}
+                  onClick={() => {
+                    setTier("");
+                    setPage(0);
+                  }}
+                >
+                  Todo
+                </button>
+                {tiers.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={tier === value}
+                    onClick={() => {
+                      setTier(value);
+                      setPage(0);
+                    }}
+                  >
+                    {consequenceLabels[value] ?? "Por revisar"}
+                  </button>
+                ))}
+              </nav>
+              {actions.length === 0 ? (
+                <p>
+                  No quedan acciones con este filtro.{" "}
+                  <button type="button" onClick={() => setTier("")}>
+                    Ver toda la cola
+                  </button>
+                </p>
+              ) : (
+                <ol className="today-queue" aria-label="Acciones pendientes">
+                  {visible.map((item) => (
+                    <li key={item.key} className="today-action" data-consequence={item.consequence}>
+                      <div className="today-action__context">
+                        <span className="today-tier">
+                          {consequenceLabels[item.consequence] ?? "Por revisar"}
+                        </span>
+                        <span className="ui-value today-code">{item.entity_code}</span>
+                        {item.due_on && <DateOnly value={item.due_on} />}
+                      </div>
+                      <div className="today-action__body">
+                        <h2>{item.title}</h2>
+                        <p>{item.entity_name}</p>
+                        <p>{item.reason}</p>
+                        {item.amount !== null && item.currency && (
+                          <p className="today-amount">
+                            <Money value={item.amount} currency={item.currency} />
+                          </p>
+                        )}
+                        {item.source && (
+                          <details className="today-source">
+                            <summary>¿De dónde sale?</summary>
+                            <p>{item.source}</p>
+                            {item.balance_total !== null && item.currency && (
+                              <dl>
+                                <dt>Total sellado</dt>
+                                <dd>
+                                  <Money value={item.balance_total} currency={item.currency} />
+                                </dd>
+                                <dt>Pagos vigentes</dt>
+                                <dd>
+                                  <Money value={item.balance_collected} currency={item.currency} />
+                                </dd>
+                              </dl>
+                            )}
+                          </details>
+                        )}
+                      </div>
+                      {item.operation_id ? (
+                        <button
+                          type="button"
+                          className="ui-button today-verb"
+                          onClick={() => setDecision(item)}
+                          aria-expanded={decision?.key === item.key}
+                        >
+                          {item.verb}
+                        </button>
+                      ) : (
+                        <Link className="ui-button today-verb" to={item.href}>
+                          {item.verb}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+              {actions.length > 50 && (
+                <nav className="today-pagination" aria-label="Páginas de acciones">
+                  <button
+                    type="button"
+                    disabled={currentPage === 0}
+                    onClick={() => setPage(currentPage - 1)}
+                  >
+                    Anterior
+                  </button>
+                  <span className="ui-value">
+                    {currentPage * 50 + 1}–{Math.min((currentPage + 1) * 50, actions.length)} de{" "}
+                    {actions.length} acciones
                   </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+                  <button
+                    type="button"
+                    disabled={(currentPage + 1) * 50 >= actions.length}
+                    onClick={() => setPage(currentPage + 1)}
+                  >
+                    Siguiente
+                  </button>
+                </nav>
+              )}
+            </>
+          )}
+          {query.data.pipeline.length > 0 && (
+            <section className="today-pipeline" aria-label="Venta por fase">
+              <h2>Venta por fase</h2>
+              <p>Totales emitidos, separados por moneda.</p>
+              <ul>
+                {query.data.pipeline.map((item) => (
+                  <li key={`${item.phase}:${item.currency}`}>
+                    <Link to={item.href}>
+                      <span>{phaseLabels[item.phase] ?? "Fase sin dato"}</span>
+                      <span className="ui-value">
+                        {item.count} {item.count === 1 ? "proyecto" : "proyectos"}
+                      </span>
+                      {item.currency ? (
+                        <Money
+                          value={item.amount}
+                          currency={item.currency}
+                          cause="Falta el total sellado"
+                        />
+                      ) : (
+                        <span>Sin dato · falta moneda sellada</span>
+                      )}
+                    </Link>
+                    {item.unknown_count > 0 && (
+                      <p>
+                        <span className="ui-value">{item.unknown_count}</span> sin total o moneda
+                        sellada · <Link to={item.href}>Revisar</Link>
+                      </p>
+                    )}
+                    <details className="today-source">
+                      <summary>¿De dónde sale?</summary>
+                      <p>{item.source}</p>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
     </section>
   );

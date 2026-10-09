@@ -28,6 +28,7 @@ def _seed(responses):
     pid, pos, aid = uuid4(), uuid4(), uuid4()
     responses.extend(
         [
+            [],  # current issued quotations
             [{"id": pid, "code": "PRJ-1", "name": "Hotel Sur", "client_name": "Inmobiliaria"}],
             [{"id": uuid4(), "name": "Inmobiliaria Sur", "rut": "76.123.456-7"}],
             [
@@ -82,7 +83,7 @@ def test_every_group_maps_row_to_result(fake_rows):
     assert order["path"] == f"/production?order={order['id']}"
     assert by_group["documents"][0]["title"] == "FAC-3"
     assert by_group["documents"][1]["title"] == "GD-2"
-    assert by_group["inventory"][0]["path"] == "/purchasing"
+    assert by_group["inventory"][0]["path"] == "/inventory?sku=SIL-1"
 
 
 def test_queries_are_org_scoped_and_pattern_safe(fake_rows):

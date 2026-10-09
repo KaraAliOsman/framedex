@@ -305,6 +305,7 @@ function CommercialWorkspace({
   projectId?: string;
 }): JSX.Element {
   const request = usePricingRequest(orgId);
+  const [params] = useSearchParams();
   return (
     <section className="pricing-page">
       {projectId && (
@@ -313,7 +314,12 @@ function CommercialWorkspace({
         </Link>
       )}
       <PageHeader title={projectId ? "Precio del proyecto" : "Precios y aprobaciones"} />
-      <ProjectPrices request={request} owner={owner} projectId={projectId} />
+      <ProjectPrices
+        request={request}
+        owner={owner}
+        projectId={projectId}
+        initialOperationId={params.get("operation") ?? undefined}
+      />
     </section>
   );
 }

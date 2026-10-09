@@ -26,6 +26,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Trabajo de Hoy y flujo](product/today-workflow.md) — cola por consecuencia, decisiones humanas, navegación por rol y búsqueda de entidades.
+
 - [Editor centrado en el lienzo](product/editor-canvas.md) — operaciones, precio indicativo, interacción y límites por tamaño.
 
 - [Design system](product/design-system.md) — constitution tokens, technical primitives, exact presentation and regression guardrails.

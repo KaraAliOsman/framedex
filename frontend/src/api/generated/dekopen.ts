@@ -34,6 +34,7 @@ import type {
   AiUsageWork,
   AllocationRequestRequest,
   AllocationResponse,
+  AnalyticsQuotationsParams,
   ApplyRequest,
   ApprovalRecord,
   ArticleList,
@@ -253,6 +254,7 @@ import type {
   ProjectResponse,
   ProjectWriteRequest,
   PurchasingState,
+  QuotationIndexResponse,
   RectificationRequest,
   RectificationResponse,
   RemakeRequestRequest,
@@ -292,6 +294,7 @@ import type {
   SystemResponse,
   SystemWorkspace,
   SystemWriteRequest,
+  TodayResponse,
   VersionHardwarePicking,
   Wallet,
   WithdrawRequest,
@@ -1607,6 +1610,90 @@ export const aiUsageList = async (
   });
 };
 
+export type analyticsQuotationsResponse200 = {
+  data: QuotationIndexResponse;
+  status: 200;
+};
+
+export type analyticsQuotationsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsQuotationsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsQuotationsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsQuotationsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsQuotationsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsQuotationsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsQuotationsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsQuotationsResponseSuccess = analyticsQuotationsResponse200 & {
+  headers: Headers;
+};
+export type analyticsQuotationsResponseError = (
+  | analyticsQuotationsResponse400
+  | analyticsQuotationsResponse401
+  | analyticsQuotationsResponse403
+  | analyticsQuotationsResponse404
+  | analyticsQuotationsResponse409
+  | analyticsQuotationsResponse422
+  | analyticsQuotationsResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsQuotationsResponse =
+  analyticsQuotationsResponseSuccess | analyticsQuotationsResponseError;
+
+export const getAnalyticsQuotationsUrl = (params?: AnalyticsQuotationsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/analytics/quotations/?${stringifiedParams}`
+    : `/api/v1/analytics/quotations/`;
+};
+
+export const analyticsQuotations = async (
+  params?: AnalyticsQuotationsParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsQuotationsResponse> => {
+  return apiMutator<analyticsQuotationsResponse>(getAnalyticsQuotationsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type analyticsOperationalSummaryResponse200 = {
   data: OperationalSummary;
   status: 200;
@@ -1673,6 +1760,76 @@ export const analyticsOperationalSummary = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<analyticsOperationalSummaryResponse> => {
   return apiMutator<analyticsOperationalSummaryResponse>(getAnalyticsOperationalSummaryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsTodayResponse200 = {
+  data: TodayResponse;
+  status: 200;
+};
+
+export type analyticsTodayResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsTodayResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsTodayResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsTodayResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsTodayResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsTodayResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsTodayResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsTodayResponseSuccess = analyticsTodayResponse200 & {
+  headers: Headers;
+};
+export type analyticsTodayResponseError = (
+  | analyticsTodayResponse400
+  | analyticsTodayResponse401
+  | analyticsTodayResponse403
+  | analyticsTodayResponse404
+  | analyticsTodayResponse409
+  | analyticsTodayResponse422
+  | analyticsTodayResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsTodayResponse = analyticsTodayResponseSuccess | analyticsTodayResponseError;
+
+export const getAnalyticsTodayUrl = () => {
+  return `/api/v1/analytics/today/`;
+};
+
+export const analyticsToday = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsTodayResponse> => {
+  return apiMutator<analyticsTodayResponse>(getAnalyticsTodayUrl(), {
     ...options,
     method: "GET",
   });
@@ -10653,6 +10810,78 @@ export const pricingOperations = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<pricingOperationsResponse> => {
   return apiMutator<pricingOperationsResponse>(getPricingOperationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type pricingOperationResponse200 = {
+  data: PriceResponse;
+  status: 200;
+};
+
+export type pricingOperationResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingOperationResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingOperationResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingOperationResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingOperationResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingOperationResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingOperationResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingOperationResponseSuccess = pricingOperationResponse200 & {
+  headers: Headers;
+};
+export type pricingOperationResponseError = (
+  | pricingOperationResponse400
+  | pricingOperationResponse401
+  | pricingOperationResponse403
+  | pricingOperationResponse404
+  | pricingOperationResponse409
+  | pricingOperationResponse422
+  | pricingOperationResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingOperationResponse =
+  pricingOperationResponseSuccess | pricingOperationResponseError;
+
+export const getPricingOperationUrl = (operationId: string) => {
+  return `/api/v1/pricing/operations/${operationId}/`;
+};
+
+export const pricingOperation = async (
+  operationId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingOperationResponse> => {
+  return apiMutator<pricingOperationResponse>(getPricingOperationUrl(operationId), {
     ...options,
     method: "GET",
   });

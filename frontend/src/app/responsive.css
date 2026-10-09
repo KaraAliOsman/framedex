@@ -1,45 +1,44 @@
-.rail-toggle {
+.rail-toggle,
+.rail-scrim {
   display: none;
 }
 .rail-scrim {
   background: transparent;
   border: none;
   cursor: default;
-  display: none;
   inset: 0;
   padding: 0;
   position: fixed;
   z-index: var(--z-popover);
 }
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .rail-toggle {
     align-items: center;
-    border: none;
-    border-radius: var(--radius-md);
     display: inline-flex;
-    font-size: var(--type-workshop);
-    height: 32px;
+    border: none;
+    border-radius: var(--r-1);
+    height: 44px;
+    width: 44px;
     justify-content: center;
     padding: 0;
-    width: 32px;
+  }
+  .rail-collapse {
+    display: none;
   }
   .rail-scrim {
     display: block;
     visibility: hidden;
   }
   .app-shell.rail-open .rail-scrim {
-    background: rgba(15, 15, 14, 0.45);
+    background: var(--scrim);
     visibility: visible;
   }
   .app-rail {
-    box-shadow: none;
     left: 0;
     position: fixed;
     top: 0;
     transform: translateX(-105%);
-    transition:
-      transform 0.18s ease,
-      visibility 0.18s ease;
+    transition: transform var(--t-spatial) var(--ease-in);
     visibility: hidden;
     z-index: var(--z-drawer);
   }
@@ -49,42 +48,117 @@
     visibility: visible;
   }
 }
-@media (min-width: 1025px) {
-  .app-shell[data-studio] .app-rail {
-    align-items: stretch;
-    padding-inline: 0;
+@media (min-width: 1024px) {
+  .app-shell.rail-collapsed .app-rail {
     width: 4rem;
   }
-  .app-shell[data-studio] .app-rail__brand {
-    padding-inline: 0;
-    text-align: center;
-  }
-  .app-shell[data-studio] .app-rail__brand .brand {
-    font-size: 0;
-    justify-content: center;
-  }
-  .app-shell[data-studio] .org-switcher,
-  .app-shell[data-studio] .rail-group__title,
-  .app-shell[data-studio] .app-rail__identity,
-  .app-shell[data-studio] .rail-item > span {
+  .rail-collapsed .rail-brand-full,
+  .rail-collapsed .rail-group__title,
+  .rail-collapsed .app-rail__identity,
+  .rail-collapsed .rail-item > span,
+  .rail-collapsed .rail-collapse > span {
     display: none;
   }
-  .app-shell[data-studio] .rail-item {
-    border-left-width: 2px;
-    border-radius: var(--radius-md);
-    justify-content: center;
-    margin-inline: auto;
-    padding-inline: 0;
-    width: 2.5rem;
+  .rail-collapsed .rail-brand-compact {
+    display: block;
   }
-  .app-shell[data-studio] .rail-item__icon {
-    height: 18px;
-    width: 18px;
+  .rail-collapsed .app-rail__brand {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .rail-collapsed .rail-item {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .rail-collapsed .app-rail__user {
+    padding-inline: var(--space-1);
   }
 }
-@media (max-width: 640px) {
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .app-rail {
+    width: 4rem;
+  }
+  .rail-brand-full,
+  .rail-group__title,
+  .app-rail__identity,
+  .rail-item > span,
+  .rail-collapse {
+    display: none;
+  }
+  .rail-brand-compact {
+    display: block;
+  }
+  .app-rail__brand {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .rail-item {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .app-rail__user {
+    padding-inline: var(--space-1);
+  }
+}
+@media (max-width: 1279px) {
+  .topbar-search > span,
+  .topbar-search kbd {
+    display: none;
+  }
+  .topbar-search {
+    justify-content: center;
+    width: 32px;
+    padding: 0;
+  }
+}
+@media (max-width: 760px) {
   .app-topbar {
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-2);
+  }
+  .app-topbar > .crumbs {
+    grid-column: 2;
+  }
+  .app-topbar__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: var(--space-2);
+  }
+  .topbar-button,
+  .topbar-search,
+  .org-switcher__current,
+  .rail-icon-button {
+    min-height: 44px;
+  }
+  .topbar-button--icon,
+  .topbar-search {
+    width: 44px;
+  }
+  .app-topbar .org-switcher {
+    max-width: calc(100% - 208px);
+  }
+  .topbar-ai-label {
+    display: none;
+  }
+  .topbar-ai {
+    width: 44px;
+    justify-content: center;
+    padding: 0;
+  }
+  .shell-menu {
+    min-width: min(17rem, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+  }
+  .attention-menu {
+    position: fixed;
+    top: 120px;
+    left: var(--space-3);
+    right: var(--space-3);
+    width: auto;
   }
   .ui-page-header__row {
     flex-direction: column;
@@ -94,52 +168,28 @@
     flex-wrap: wrap;
     width: 100%;
   }
-  .attention-item a {
-    flex-wrap: wrap;
-  }
-  .attention-item .attention-cta {
-    margin-left: 0;
-  }
-  .topbar-search span {
-    display: none;
-  }
   .workspace {
     padding: var(--space-3) var(--space-2);
   }
-  .dashboard-cards {
-    grid-template-columns: 1fr;
-  }
-  .metric-card strong {
-    font-size: var(--text-title);
-  }
-  .dashboard-row {
-    gap: 0.125rem 0.5rem;
-    grid-template-columns: minmax(0, 1fr) auto;
-    padding-block: 0.625rem;
-  }
-  .dashboard-row-name {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .dashboard-row .status-chip {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-  }
-  .dashboard-row-client {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .dashboard-row-code {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: end;
-  }
-  .dashboard-activity li {
-    flex-wrap: wrap;
-    row-gap: 0.125rem;
-  }
   .onboarding {
     padding: var(--space-4) var(--space-2);
+  }
+}
+.app-shell[data-density="workshop"] .rail-item,
+.app-shell[data-density="workshop"] .rail-icon-button,
+.app-shell[data-density="workshop"] .topbar-button,
+.app-shell[data-density="workshop"] .topbar-search,
+.app-shell[data-density="workshop"] .org-switcher__current,
+.app-shell[data-density="workshop"] .shell-menu__item,
+.app-shell[data-density="workshop"] .shell-menu__all,
+.app-shell[data-density="workshop"] .crumbs__link {
+  min-height: 44px;
+}
+.app-shell[data-density="workshop"] .topbar-button--icon {
+  min-width: 44px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-rail {
+    transition: none;
   }
 }

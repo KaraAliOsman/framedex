@@ -219,6 +219,55 @@ async function open(page: Page) {
   await page.locator(".starter-card").first().waitFor();
 }
 
+// Editing waits for the real engine transaction before checking the UI. Its
+// catalog/pricing work can outlast the default five-second locator assertion.
+async function waitForDesignSimulation(page: Page, operation?: string): Promise<void> {
+  const response = await page.waitForResponse((candidate) => {
+    if (
+      !candidate.url().endsWith("/api/v1/projects/operations/simulate/") ||
+      candidate.request().method() !== "POST"
+    )
+      return false;
+    const data = candidate.request().postDataJSON() as { ops: { op: string }[] };
+    return operation ? data.ops.some((op) => op.op === operation) : data.ops.length > 0;
+  });
+  expect(response.status()).toBe(200);
+  const simulation = await response.json();
+  expect(simulation.valid).toBe(true);
+}
+
+async function waitForIndicativePrice(
+  page: Page,
+  quantity: number,
+  width: string,
+  height: string,
+  glassSku?: string,
+): Promise<void> {
+  const response = await page.waitForResponse((candidate) => {
+    if (
+      !candidate.url().endsWith("/api/v1/projects/operations/simulate/") ||
+      candidate.request().method() !== "POST"
+    )
+      return false;
+    const data = candidate.request().postDataJSON() as {
+      ops: unknown[];
+      quantity: number;
+      product: { assembly: { modules: { width_mm: string; height_mm: string; tree: unknown }[] } };
+    };
+    const [module] = data.product.assembly.modules;
+    return (
+      data.ops.length === 0 &&
+      data.quantity === quantity &&
+      module !== undefined &&
+      module.width_mm === width &&
+      module.height_mm === height &&
+      (!glassSku || JSON.stringify(module.tree).includes(glassSku))
+    );
+  });
+  expect(response.status()).toBe(200);
+  expect((await response.json()).valid).toBe(true);
+}
+
 test("two tilt-turn leaves 1500×1200 and 4-16-4 take at most six design interactions", async ({
   page,
 }) => {
@@ -236,7 +285,9 @@ test("two tilt-turn leaves 1500×1200 and 4-16-4 take at most six design interac
   );
   const thermopane = options.find((option) => option.text.includes("4-16-4"));
   expect(thermopane).toBeDefined();
+  const glassSimulation = waitForDesignSimulation(page, "set_glass");
   await glass.selectOption(thermopane!.value);
+  await glassSimulation;
   interactions++;
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   for (const [label, value] of [
@@ -247,7 +298,15 @@ test("two tilt-turn leaves 1500×1200 and 4-16-4 take at most six design interac
     interactions++;
     const field = page.locator(`foreignObject input[aria-label="${label}"]`);
     await field.fill(value!);
+    const simulation = waitForDesignSimulation(
+      page,
+      label === "Alto" ? "set_height" : "set_total_width",
+    );
+    const finalPrice =
+      label === "Alto" ? waitForIndicativePrice(page, 1, "1500.00", "1200.00") : null;
     await field.press("Enter");
+    await simulation;
+    if (finalPrice) await finalPrice;
     interactions++;
     await expect(page.locator(".viewport-status")).toContainText(
       label === "Alto" ? "1\u2009200" : "1\u2009500",
@@ -328,8 +387,14 @@ async function twoLeaves(page: Page) {
   await open(page);
   await page.getByRole("button", { name: /Dos hojas.*Oscilobatiente doble/ }).click();
   const glass = page.getByRole("combobox", { name: "Vidrio", exact: true });
-  await expect(glass.locator("option").filter({ hasText: /4-16-4/ })).toHaveCount(1);
+  const option = glass.locator("option").filter({ hasText: /4-16-4/ });
+  await expect(option).toHaveCount(1);
+  const sku = (await option.getAttribute("value"))!;
+  const simulation = waitForDesignSimulation(page, "set_glass");
+  const price = waitForIndicativePrice(page, 1, "1400.00", "1400.00", sku);
   await glass.selectOption({ label: "4-16-4 Float Incoloro · DEMO" });
+  await simulation;
+  await price;
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
 }
 
@@ -384,7 +449,9 @@ test("price pending and transport failure hide the previous amount and retry the
     page.getByRole("region", { name: "Fuente del precio indicativo", exact: true }),
   ).toContainText("No se pudo consultar el precio");
   await page.unroute(route);
+  const retriedPrice = waitForIndicativePrice(page, 3, "1400.00", "1400.00");
   await page.getByRole("button", { name: "Reintentar precio", exact: true }).click();
+  await retriedPrice;
   await expect(chip).toContainText("$");
 });
 
@@ -393,10 +460,15 @@ test("a simulated proposal applies and undoes, and quantity changes discard a la
 }) => {
   await twoLeaves(page);
   await page.getByLabel("Ancho", { exact: true }).fill("2000");
+  const widthSimulation = waitForDesignSimulation(page, "set_module_width");
   await page.getByLabel("Ancho", { exact: true }).press("Enter");
+  await widthSimulation;
+  await expect(page.locator(".viewport-status")).toHaveText("2\u2009000 × 1\u2009400 mm");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByLabel("Ancho", { exact: true }).blur();
+  const proposalSimulation = waitForDesignSimulation(page);
   await propose(page);
+  await proposalSimulation;
   await expect(page.getByRole("button", { name: "Aplicar propuesta", exact: true })).toBeEnabled();
   await expect(page.locator(".command-ghost")).toHaveCount(1);
   await expect(page.locator(".editor-proposal-price")).toContainText("Δ neto de línea");
