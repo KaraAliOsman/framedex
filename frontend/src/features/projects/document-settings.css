@@ -1,0 +1,73 @@
+.document-settings form,
+.commercial-terms-editor,
+.commercial-terms-editor details {
+  display: grid;
+  gap: var(--space-3);
+}
+.quotation-form .commercial-terms-editor,
+.quotation-form > details {
+  grid-column: 1 / -1;
+}
+.quotation-form .commercial-terms-editor {
+  grid-template-columns: minmax(0, 1fr);
+}
+.document-settings {
+  min-width: 0;
+  grid-column: span 2;
+}
+.document-settings input,
+.document-settings select,
+.document-settings textarea,
+.commercial-terms-editor input,
+.commercial-terms-editor textarea {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  padding: var(--space-2);
+  min-width: 0;
+}
+.document-settings input:focus-visible,
+.document-settings select:focus-visible,
+.document-settings textarea:focus-visible,
+.commercial-terms-editor input:focus-visible,
+.commercial-terms-editor textarea:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+.commercial-milestone input.technical-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.document-settings fieldset,
+.commercial-terms-editor {
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-3);
+  min-width: 0;
+}
+.document-settings label,
+.commercial-terms-editor label {
+  display: grid;
+  gap: var(--space-1);
+}
+.commercial-milestone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px auto;
+  align-items: end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.commercial-milestone input,
+.commercial-terms-editor textarea {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .document-settings {
+    grid-column: 1 / -1;
+  }
+  .commercial-milestone {
+    grid-template-columns: minmax(0, 1fr) 100px;
+  }
+}

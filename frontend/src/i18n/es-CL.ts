@@ -1428,7 +1428,7 @@ export const messages = {
   "quotation.shareSubject": "Cotización {code}",
   "quotation.shareBody": "Hola, te comparto la propuesta del proyecto {name}: {url}",
   "quotation.shareReplacesLink":
-    "Ya hay un enlace activo; compartir uno nuevo lo invalidará. ¿Continuar?",
+    "Ya hay un enlace compartido activo; uno nuevo lo invalidará. El QR del PDF seguirá vigente. ¿Continuar?",
   "quotation.markApproved": "Marcar aprobada",
   "quotation.markApprovedConfirm":
     "¿Registrar que el cliente aprobó esta cotización por otro canal? Los enlaces pendientes quedarán invalidados.",

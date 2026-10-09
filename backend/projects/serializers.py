@@ -5,6 +5,7 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from projects.operation_serializers import DesignOperationSerializer
+from documents.quote_serializers import DocumentPreferencesSerializer
 
 from engine_api.serializers import (
     EngineCalculateRequestSerializer,
@@ -73,7 +74,7 @@ def validate_measurement_input(value, design):
 
 
 class PositionWriteSerializer(StrictSerializer):
-    location_tag = serializers.CharField(max_length=100, allow_blank=True)
+    location_tag = serializers.CharField(max_length=120, allow_blank=True)
     quantity = serializers.IntegerField(min_value=1, max_value=2147483647)
     design = PositionDesignSerializer()
     measurements = serializers.JSONField(required=False)
@@ -527,9 +528,11 @@ class OrgBrandingSerializer(serializers.Serializer):
     portal_attribution = serializers.BooleanField()
     notification_email = serializers.EmailField(allow_null=True, allow_blank=True)
     internal_mail_enabled = serializers.BooleanField()
+    document_preferences = DocumentPreferencesSerializer()
 
 
 class OrgBrandingWriteSerializer(StrictSerializer):
+    document_preferences = DocumentPreferencesSerializer(required=False)
     brand_primary_color = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
     document_attribution = serializers.BooleanField(required=False)
     portal_attribution = serializers.BooleanField(required=False)

@@ -31,6 +31,8 @@
 .settings-row dd {
   margin: 0;
   text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .settings-role {
   color: var(--theme-text-secondary);

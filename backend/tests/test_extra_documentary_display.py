@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from documents.renderers import _extra_table, _money
+from documents.quotation import extras_table as _extra_table
+from documents.renderers import _money
 
 
 def line(**changes):

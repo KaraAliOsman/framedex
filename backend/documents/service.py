@@ -665,6 +665,7 @@ def _position_calculations(
     params: object,
     system_id: UUID,
     org_id: UUID,
+    drawing_plan: dict | None = None,
 ) -> tuple[list[tuple[str | None, GeometryComputation, dict[str, object]]], EngineResult]:
     """Classic per-module geometry+trace for one persisted position.
 
@@ -694,6 +695,8 @@ def _position_calculations(
         if evaluation.status.value != "VALID" or evaluation.bom is None:
             raise DocumentaryError("documentary_geometry_incomplete")
         result = evaluation.bom
+        if drawing_plan is not None and evaluation.plan is not None:
+            drawing_plan.update(evaluation.plan.model_dump(mode="python"))
         module_specs = [(module.id, module) for module in product.assembly.modules]
     else:
         result = None
@@ -1132,6 +1135,7 @@ def freeze_revision_a(
                 params = params.model_copy(update={'extra_authority':ExtraAuthority.model_validate_json(json.dumps(authority)) if authority else None})
                 if authority is None:
                     params.__pydantic_fields_set__.discard('extra_authority')
+            drawing_plan: dict = {}
             calculations, result = _position_calculations(
                 tree=tree,
                 width_mm=D(str(position["width_mm"])),
@@ -1140,6 +1144,7 @@ def freeze_revision_a(
                 params=params,
                 system_id=system_id,
                 org_id=org_id,
+                drawing_plan=drawing_plan,
             )
             current_bom = result.model_dump(mode="json")
             stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
@@ -1438,6 +1443,7 @@ def freeze_revision_a(
                 "price_net": D(str(position["price_net"])),
                 "discount_pct": str(position["discount_pct"]),
                 "parametric_tree": tree,
+                **({"drawing_plan": drawing_plan} if drawing_plan else {}),
                 **({"opening_leaves": current_bom["opening_leaves"]}
                    if current_bom.get("opening_leaves") else {}),
                 **({"commercial_hardware": [{
@@ -1505,7 +1511,7 @@ def freeze_revision_a(
         organization = one(
             "SELECT name, tax_id, commercial_name, giro, brand_address,"
             " brand_phone, brand_email, brand_logo_key, brand_logo_sha256,"
-            " brand_primary_color, document_attribution, portal_attribution"
+            " brand_primary_color, document_attribution, portal_attribution, document_preferences"
             " FROM public.tenancy_organizations WHERE id = %s",
             [str(org_id)],
             "organization_not_found",
@@ -1533,6 +1539,7 @@ def freeze_revision_a(
                 "brand_email": organization["brand_email"],
                 "brand_logo_key": organization["brand_logo_key"],
                 "brand_logo_sha256": organization["brand_logo_sha256"],
+                "document_preferences": decoded(organization["document_preferences"]),
             },
             "revision": revision,
             "sealed_by": actor_id,
@@ -1551,12 +1558,14 @@ def freeze_revision_a(
                 "payment_terms": str(project_input["payment_terms"]),
                 "quotation_valid_until": project_input["quotation_valid_until"],
                 "notes_commercial": project["notes_commercial"],
+                "commercial_terms": decoded(project_input["commercial_terms"]),
                 "currency": request.get("currency"),
                 "total_price_net": D(str(project["total_price_net"])),
                 "total_price_tax": D(str(project["total_price_tax"])),
                 "total_price_gross": D(str(project["total_price_gross"])),
             },
             "positions": position_inputs,
+            "alternatives": _sealed_alternatives(project_input["alternative_version_ids"], project_id, org_id),
             "bom": bom,
             "pricing": {
                 "operation_id": operation["id"],
@@ -1697,6 +1706,30 @@ def freeze_revision_a(
         }
 
 
+def _prepared_commercial_terms(values: dict, org_id: UUID) -> dict:
+    if values:
+        # Historical saved text never becomes a structured 50/50 schedule.
+        return decoded(values.get("commercial_terms", {}))
+    from documents.preferences import document_preferences
+    row = one("SELECT document_preferences FROM public.tenancy_organizations WHERE id=%s", [str(org_id)], "organization_not_found")
+    return document_preferences(row["document_preferences"])["commercial_terms"]
+
+
+def _sealed_alternatives(version_ids: list, project_id: UUID, org_id: UUID) -> list:
+    if len(version_ids) > 3 or len(set(map(str, version_ids))) != len(version_ids):
+        raise DocumentaryError("quote_alternatives_invalid")
+    from documents.artifacts import _revision_snapshot
+    snapshots = []
+    for version_id in version_ids:
+        version, value = _revision_snapshot(UUID(str(version_id)), org_id)
+        if str(version["project_id"]) != str(project_id):
+            raise DocumentaryError("quote_alternative_scope_mismatch")
+        # No recursive copy of prior alternatives. Their own base solution
+        # and commercial totals are exactly the issued proposal's authority.
+        snapshots.append({key: value[key] for key in ("revision", "project", "positions", "pricing")})
+    return snapshots
+
+
 def prepare_documentary_inputs(
     *, org_id: UUID, project_id: UUID
 ) -> dict[str, object]:
@@ -1715,7 +1748,7 @@ def prepare_documentary_inputs(
         [project_id, org_id],
     )
     project_inputs = rows(
-        "SELECT payment_terms,quotation_valid_until FROM public.project_documentary_inputs "
+        "SELECT payment_terms,quotation_valid_until,commercial_terms,alternative_version_ids FROM public.project_documentary_inputs "
         "WHERE project_id=%s AND org_id=%s",
         [project_id, org_id],
     )
@@ -2028,6 +2061,8 @@ def prepare_documentary_inputs(
         "revision_code": project["current_revision"],
         "payment_terms": values.get("payment_terms", ""),
         "quotation_valid_until": values.get("quotation_valid_until"),
+        "commercial_terms": _prepared_commercial_terms(values, org_id),
+        "alternative_version_ids": values.get("alternative_version_ids", []),
         "positions": prepared,
         "missing": missing,
     }
@@ -2059,6 +2094,9 @@ def save_documentary_inputs(
         supplied = {str(item["position_id"]) for item in supplied_values}
         if supplied != expected or len(supplied_values) != len(supplied):
             raise DocumentaryError("documentary_position_coverage_required")
+        if "alternative_version_ids" in data:
+            with documentary_backend():
+                _sealed_alternatives(data["alternative_version_ids"], project_id, org_id)
         positions_by_id = {str(item["id"]): item for item in positions}
 
     for item in supplied_values:
@@ -2120,12 +2158,17 @@ def save_documentary_inputs(
             )
         one(
             "INSERT INTO public.project_documentary_inputs("
-            "project_id,org_id,payment_terms,quotation_valid_until,created_by) "
-            "VALUES(%s,%s,%s,%s,%s) "
+            "project_id,org_id,payment_terms,quotation_valid_until,commercial_terms,alternative_version_ids,created_by) "
+            "VALUES(%s,%s,%s,%s,%s::jsonb,%s::uuid[],%s) "
             "ON CONFLICT(project_id,org_id) DO UPDATE SET "
             "payment_terms=EXCLUDED.payment_terms,"
-            "quotation_valid_until=EXCLUDED.quotation_valid_until,updated_at=now() RETURNING id",
-            [project_id, org_id, data["payment_terms"], data["quotation_valid_until"], actor_id],
+            "quotation_valid_until=EXCLUDED.quotation_valid_until,"
+            "commercial_terms=CASE WHEN %s THEN EXCLUDED.commercial_terms ELSE project_documentary_inputs.commercial_terms END,"
+            "alternative_version_ids=CASE WHEN %s THEN EXCLUDED.alternative_version_ids ELSE project_documentary_inputs.alternative_version_ids END,"
+            "updated_at=now() RETURNING id",
+            [project_id, org_id, data["payment_terms"], data["quotation_valid_until"],
+             json_text(data.get("commercial_terms", {})), data.get("alternative_version_ids", []), actor_id,
+             "commercial_terms" in data, "alternative_version_ids" in data],
         )
         for item in supplied_values:
             position_id = UUID(str(item["position_id"]))

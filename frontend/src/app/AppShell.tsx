@@ -162,7 +162,8 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
         role === "OPERATOR" ||
         role === "ESTIMATOR"
       );
-    if (to === "/settings/general") return role === "OWNER" || role === "WORKSHOP_MANAGER";
+    if (to === "/settings/general")
+      return role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "ESTIMATOR";
     if (to === "/dashboard" || to === "/projects" || to === "/clients")
       return role === "OWNER" || role === "ESTIMATOR" || role === "WORKSHOP_MANAGER";
     return true;
@@ -225,7 +226,13 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
             <nav className="app-rail__nav" aria-label={t("shell.navigation")}>
               {context === null ? (
                 domainGroups.map((group) => {
-                  const items = group.items.filter((item) => navigationAllowed(item.to));
+                  const items = group.items
+                    .filter((item) => navigationAllowed(item.to))
+                    .map((item) =>
+                      item.to === "/settings/general" && role === "ESTIMATOR"
+                        ? { ...item, label: "nav.settings" as const }
+                        : item,
+                    );
                   if (items.length === 0) return null;
                   return (
                     <div key={group.id} className="rail-group">

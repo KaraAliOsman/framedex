@@ -104,7 +104,7 @@ def share_quote(
         rows(
             "UPDATE public.customer_approvals SET status='REVOKED',revoked_at=%s,"
             "revoked_by=%s WHERE org_id=%s AND project_id=%s "
-            "AND project_version_id=%s AND status='PENDING' RETURNING id",
+            "AND project_version_id=%s AND status='PENDING' AND link_source='SHARE' RETURNING id",
             [
                 datetime.now(timezone.utc),
                 str(actor_id),
@@ -165,6 +165,7 @@ def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]
         return [
             {
                 "id": str(row["id"]),
+                "link_source": row["link_source"],
                 "status": str(row["status"]),
                 "revision_code": str(row["revision_code"]),
                 "decided_by": row["decided_by"],
@@ -183,7 +184,7 @@ def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]
                 else None,
             }
             for row in rows(
-                "SELECT a.id,a.status,a.decided_by,a.decided_at,a.decided_note,"
+                "SELECT a.id,a.status,a.link_source,a.decided_by,a.decided_at,a.decided_note,"
                 "a.expires_at,a.created_at,a.revoked_at,a.view_count,a.last_viewed_at,"
                 "v.revision_code "
                 "FROM public.customer_approvals a "

@@ -1,0 +1,38 @@
+{
+  "CLP": {
+    "line": {
+      "adjustment": "-1",
+      "before_discount": "11112",
+      "net": "10001",
+      "quantity": 3,
+      "unit_net": "3334"
+    },
+    "payments": [
+      "5951",
+      "5950"
+    ],
+    "summary": {
+      "before_discount": "11112",
+      "discount": "1111",
+      "net": "10001"
+    }
+  },
+  "USD": {
+    "line": {
+      "adjustment": "-0.01",
+      "before_discount": "111.12",
+      "net": "100.01",
+      "quantity": 3,
+      "unit_net": "33.34"
+    },
+    "payments": [
+      "59.51",
+      "59.50"
+    ],
+    "summary": {
+      "before_discount": "111.12",
+      "discount": "11.11",
+      "net": "100.01"
+    }
+  }
+}

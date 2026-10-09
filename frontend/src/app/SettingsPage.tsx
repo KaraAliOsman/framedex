@@ -41,6 +41,7 @@ import { t, type TranslationKey } from "../i18n/es-CL";
 import { MOD_K_HINT, MOD_KEY_HINT } from "../platform";
 import { useTheme } from "../theme/ThemeProvider";
 import { ExtraPolicyEditor } from "../features/projects/ExtraPolicyEditor";
+import { DocumentSettings } from "../features/projects/DocumentSettings";
 import { MountingRulesSettings } from "../features/projects/MountingRulesSettings";
 import { GlassRulesSettings } from "../features/glass/GlassRulesSettings";
 import { AiSettingsSection } from "../features/assistant/AiSettingsSection";
@@ -857,13 +858,14 @@ export function SettingsPage(): JSX.Element {
         </div>
       </section>
 
-      {canWriteDocs && org !== undefined && (
+      {org != null && (
         <section aria-labelledby="settings-group-docs" className="settings-group">
           <h2 id="settings-group-docs" className="settings-group__title">
             {t("settings.groupDocs")}
           </h2>
           <div className="settings-grid">
-            <OrgBrandingCard key={org.id} orgId={org.id} />
+            {canWriteDocs && <OrgBrandingCard key={org.id} orgId={org.id} />}
+            <DocumentSettings key={`documents-${org.id}`} orgId={org.id} canEdit={canWriteDocs} />
             <Link className="ui-backlink" to="/about">
               Acerca de DEKOPEN
             </Link>

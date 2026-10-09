@@ -3,6 +3,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from html import escape
 
 from dekopen_engine.drawing import dimension_chains
+from dekopen_engine.geometry import resolved_sliding_layout
 from dekopen_engine.models import ParametricNode
 from engine_api.adapter import parse_parametric_node
 
@@ -13,7 +14,8 @@ def annotations(tree: object, *, x: Decimal, y: Decimal, width: Decimal,
                 bottom_edge: Decimal | None = None, vertical_offset: int = 0,
                 bottom_offset: int = 0, font_mm: Decimal | None = None,
                 outer_top: Decimal | None = None, outer_height: Decimal | None = None,
-                assembly_totals: tuple[Decimal, Decimal] | None = None) -> tuple[str, Decimal, Decimal, int, int]:
+                assembly_totals: tuple[Decimal, Decimal] | None = None,
+                include_sliding_plan: bool = True) -> tuple[str, Decimal, Decimal, int, int]:
     node = parse_parametric_node(tree)
     facts = dimension_chains(node, width, height)
     out: list[str] = []
@@ -93,11 +95,15 @@ def annotations(tree: object, *, x: Decimal, y: Decimal, width: Decimal,
         for child in current.children:
             collect(child)
     collect(node)
+    sliding = {
+        bay.bay_id: resolved_sliding_layout(nodes[bay.bay_id]) for bay in facts.bays
+        if include_sliding_plan and (nodes[bay.bay_id].sliding_layout is not None
+        or (nodes[bay.bay_id].opening_type is not None and nodes[bay.bay_id].opening_type.value.startswith("SLIDING")))
+    }
     plan_y = gutter_y + step * (v_levels + 3 + bottom_offset)
     for bay in facts.bays:
-        current = nodes[bay.bay_id]
-        if current.sliding_layout is not None:
-            layout = current.sliding_layout
+        if bay.bay_id in sliding:
+            layout = sliding[bay.bay_id]
             bx, bw = x + bay.x_mm, bay.width_mm
             text(bx, plan_y, "EXTERIOR")
             for track in range(layout.tracks):
@@ -118,11 +124,11 @@ def annotations(tree: object, *, x: Decimal, y: Decimal, width: Decimal,
                     text(bx+bw*(Decimal(index)+Decimal("0.5"))/len(layout.panels), inside+step,
                          "Fijo · plano sin dato", anchor="middle")
             plan_y = inside + step * 3
-    if any(nodes[bay.bay_id].sliding_layout for bay in facts.bays):
+    if sliding:
         text(x, plan_y, "Orden de carriles: convención de dibujo")
     next_vertical = vertical_offset + h_levels + 2 + len(handles) + len(facts.authored_handles)
     next_bottom = (int((plan_y - gutter_y) / step) + 2
-                   if any(nodes[bay.bay_id].sliding_layout for bay in facts.bays)
+                   if sliding
                    else bottom_offset + v_levels + 2)
     if assembly_totals is not None:
         total_width, total_height = assembly_totals

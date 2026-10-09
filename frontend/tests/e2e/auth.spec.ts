@@ -224,6 +224,11 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   await expect(navigation.getByRole("link", { name: "Administración", exact: true })).toHaveCount(
     0,
   );
+  await navigation.getByRole("link", { name: "Ajustes", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Documentos", exact: true, level: 3 }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Guardar documentos", exact: true })).toBeVisible();
   for (const route of ["Proyectos", "Clientes", "Panel"]) {
     await navigation.getByRole("link", { name: route, exact: true }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();

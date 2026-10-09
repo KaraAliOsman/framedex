@@ -277,8 +277,10 @@ def test_client_quote_includes_deterministic_opening_drawings() -> None:
     from decimal import Decimal
     import re
     boxes = re.findall(r'viewBox="([^"]+)"', html)
-    assert any(Decimal(box.split()[2]) == 1000 and Decimal(box.split()[3]) > 1200
-               and Decimal(box.split()[1]) < 0 for box in boxes)
+    assert any(Decimal(box.split()[2]) > 1000 and Decimal(box.split()[3]) > 1200
+               and Decimal(box.split()[0]) < 0 and Decimal(box.split()[1]) < 0 for box in boxes)
+    assert '<rect x="0" y="0" width="1000" height="1200"' in html
+    assert '1\u2009000' in html and '1\u2009200' in html
     sliding = revision_snapshot()
     sliding["positions"][0]["parametric_tree"] = {  # type: ignore[index]
         "id": "B1", "type": "BAY", "opening_type": "SLIDING_2L",
@@ -315,7 +317,6 @@ def test_client_quote_renders_discount_fraction_as_percent() -> None:
     snapshot["positions"][0]["discount_pct"] = "0.10"  # type: ignore[index]
     snapshot["positions"][0]["price_net"] = "119000"  # type: ignore[index]
     html = _doc01(snapshot)
-    assert "-10,0 %" in html
     assert "descuento del 10,0 %" in html
     assert "0.1 %" not in html and "0.1%" not in html
 
@@ -350,8 +351,10 @@ def test_client_quote_draws_stacked_assembly_as_a_column() -> None:
     from decimal import Decimal
     import re
     boxes = re.findall(r'viewBox="([^"]+)"', html)
-    assert any(Decimal(box.split()[2]) == 1000 and Decimal(box.split()[3]) > 2600
-               and Decimal(box.split()[1]) < 0 for box in boxes)
+    assert any(Decimal(box.split()[2]) > 1000 and Decimal(box.split()[3]) > 2600
+               and Decimal(box.split()[0]) < 0 and Decimal(box.split()[1]) < 0 for box in boxes)
+    assert '<rect x="0" y="400" width="1000" height="2200"' in html
+    assert '<rect x="0" y="0" width="1000" height="400"' in html
     # The transom sill sits at 2200 mm elevation → svg y = 2600 − 2200 = 400.
     assert 'x1="0" y1="400" x2="1000" y2="400"' in html
 

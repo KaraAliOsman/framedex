@@ -1,0 +1,398 @@
+[
+  {
+    "id": "documentos",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "documentos-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "calendario-vacio",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "calendario-vacio-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "carga-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "error-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "emitida",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "emitida-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "preparacion-bloqueada",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "preparacion-bloqueada-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "sin-permiso-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "documentos",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "documentos-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "calendario-vacio",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "calendario-vacio-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "carga-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "error-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "emitida",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "emitida-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "preparacion-bloqueada",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "preparacion-bloqueada-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "sin-permiso-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "documentos",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "documentos-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "calendario-vacio",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "calendario-vacio-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "carga-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "error-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "emitida",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "emitida-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "preparacion-bloqueada",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "preparacion-bloqueada-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "sin-permiso-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "documentos",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "documentos-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "calendario-vacio",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "calendario-vacio-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "carga-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "error-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "emitida",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "emitida-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "preparacion-bloqueada",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "preparacion-bloqueada-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "sin-permiso-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "documentos",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "documentos-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "calendario-vacio",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "calendario-vacio-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "carga-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "error-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "emitida",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "emitida-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "preparacion-bloqueada",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "preparacion-bloqueada-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "sin-permiso-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "documentos",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "documentos-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "calendario-vacio",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "calendario-vacio-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "carga-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "error-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "emitida",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "emitida-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "preparacion-bloqueada",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "preparacion-bloqueada-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "sin-permiso-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "portal",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "portal-390-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "portal",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "portal-390-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  }
+]

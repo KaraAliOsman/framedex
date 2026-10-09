@@ -5,8 +5,10 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { DocumentPreferencesRequest } from "./documentPreferencesRequest";
 
 export interface OrgBrandingWriteRequest {
+  document_preferences?: DocumentPreferencesRequest;
   /**
    * @minLength 1
    * @pattern ^#[0-9A-Fa-f]{6}$

@@ -1,5 +1,13 @@
 /** One glossary for API enums. Unknown additions must fail the exhaustiveness gate. */
 export const domainLabels: Readonly<Record<string, string>> = {
+  TEAL: "Verde técnico",
+  TEAL_DARK: "Verde técnico oscuro",
+  GRAPHITE: "Grafito",
+  LETTER: "Carta",
+  OFICIO: "Oficio",
+  A4: "A4",
+  SHARE: "Enlace compartido",
+  DOCUMENT: "Enlace del QR del PDF",
   UNTESTED: "No probado",
   CONNECTED: "Conectado",
   ERROR: "Error",
