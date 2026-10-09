@@ -86,6 +86,11 @@ es `01afcaaba751ab06cfb09e7d8c979ef786593c288c4ea7b923d0530ed178c3dd`.
 La regresión documental también verifica las juntas de un snapshot sellado
 con aporte de 24 mm, sin consultar el catálogo actual.
 
+El gate detecta una carrera en la regresión heredada de importación: esperaba
+el sistema y confirmaba antes de resolver el vidrio. Se espera también la
+selección de vidrio prevista antes del clic, conservando la confirmación,
+su carga útil y todas las aserciones existentes.
+
 La matriz oficial de `ux:capture` conserva 24 vistas posteriores: ocho de
 editor y dieciséis de Catálogo como dueño/jefe, en 1440, 1280, 1024 y 390,
 ambos temas. No hay hallazgos, errores HTTP, consola ni desbordes nuevos.
