@@ -141,5 +141,10 @@ de curvado, de acople ni una tarifa ausente. Las revisiones anteriores,
 sus snapshots y documentos siguen inmutables. P06 no añade integraciones
 externas ni habilita compras, envío o producción sin clic humano.
 
-Gates finales y CI se registran al integrar; esta evidencia no sustituye
-los cuatro checks obligatorios.
+Gates locales completos: lint, tipos, test y build PASA. Se verifican
+846 pruebas del motor (+2 xfail históricos), 1.392 del backend y 944 del
+frontend. Database Gate pasa 85 archivos / 1.231 pgTAP, incluidas las 13
+aserciones nuevas de autoridad de acople; 445 integraciones PostgreSQL,
+19 E2E reales y todas las actualizaciones pobladas en PostgreSQL 16.
+El teardown detiene el stack aislado y conserva el fixture del programa.
+Los cuatro checks de CI y el squash se registran al integrar.

@@ -1004,3 +1004,13 @@ sin apertura física, rótulos apilados y controles que tapaban cotas. Veinticua
 vistas oficiales y ocho de ficha tienen cero hallazgos; dos rondas y R1–R20
 quedan en PASA. Los gates completos pasan 846 motor (+2 xfail), 1.392 backend
 y 944 frontend. Database Gate, CI y squash se registrarán al integrar.
+
+## 2026-10-09 — P06 · Database Gate completo
+
+Implementación `a76cf7af89ed24284bb493f08e214bc1b6d176b4` conserva las aserciones de importación y descubrimiento
+RLS, esperando la carga del vidrio y el nombre de la serie vigente v7.
+Gate local completo: 846 motor (+2 xfail), 1.392 backend y 944 frontend.
+El gate aislado incorpora el archivo nuevo de acoples: 85 archivos / 1.231
+pgTAP, 445 integraciones PostgreSQL, 19 E2E y upgrades poblados PG16 PASA.
+El teardown detiene únicamente el stack de gate y conserva el fixture persistente.
+Treinta y dos vistas finales permanecen sin hallazgos. CI y squash pendientes.
