@@ -789,3 +789,13 @@ antes del despiece y conservan todas sus aserciones. ESTIMATOR accede a las
 preferencias documentales por Ajustes; Administración permanece oculta según
 la regresión de autenticación. Matriz renovada de 44 vistas y 24 recorridos
 oficiales sin hallazgos ni desbordes. CI y squash se registrarán al integrar.
+
+## 2026-10-08 — P09 · integrado
+
+PR #132 pasa los cuatro checks requeridos sobre
+`ebe60099f85c48107075e6ffd6012ffe1b39704d` en la corrida `37874800254` y se
+integra en `integracion/v1` con squash `97aea5dfec6e4dddcb429a48b421c7598e758a0d`.
+ESTADO y los refs de la wiki registran el merge. Los servicios propios están
+detenidos; el fixture sigue intacto. Los proveedores automáticos omiten su
+revisión por configuración/límites; no equivalen a una revisión de código.
+P07 continúa el workspace de precios sobre esta base.

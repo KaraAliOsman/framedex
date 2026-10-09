@@ -3,9 +3,9 @@ type: state
 status: active
 updated: 2026-10-08
 volatility: high
-verified_ref: 230a6c93016bc4126febc85dc8c0bc9290e84cca
+verified_ref: 97aea5dfec6e4dddcb429a48b421c7598e758a0d
 sources:
-  - P09 implementation 230a6c93016bc4126febc85dc8c0bc9290e84cca, complete local gates and PDF/UI verification 2026-10-08
+  - P09 PR #132, CI run 37874800254 on ebe60099f85c48107075e6ffd6012ffe1b39704d, squash 97aea5dfec6e4dddcb429a48b421c7598e758a0d, 2026-10-08
   - P05 PR #131, CI run 37861454814 on 10805d8691adb589d6382c32e612f96a754ff0a4, squash 52f3ee8102753727b7ba9e568ec18593b5d269d3, 2026-10-08
   - P04 PR #130, CI run 37845765629 on dcff50911165817920025c8a24ea5dbfafe6f07d, squash f5dbaa92958b279471bd6adfdbc0fe3693e70538, 2026-10-08
   - P25 PR #129, CI run 37824851379 on 8622ba03, squash 588835689c0324b6f76f0ea474f6460c6c22f0b1, 2026-10-08
@@ -30,7 +30,7 @@ sources:
 
 # Current reality
 
-## P09 · aceptación local (08-10-2026)
+## P09 · integrado y verificado (08-10-2026)
 
 Rama `codex/P09-doc01-v2`, base `e80e91b8`: DOC-01 con emisor/cliente,
 resumen/fichas acotadas, condiciones/calendario, alternativas y aceptación QR.
@@ -43,8 +43,11 @@ de Ajustes/proyecto/portal pasan 24 vistas. Véase
 [aceptación P09](../../redesign/P09-ACEPTACION.md) y
 [documento comercial](../product/quotation-document.md).
 Los gates completos pasan 818 pruebas motor (+2 xfail), 1.350 backend y
-890 frontend. Database Gate y CI se registran al integrar. Artefactos históricos
-no se regeneran y el catálogo DEMO permanece sin certificación.
+890 frontend. Database Gate pasa 1.186 pgTAP, 425 integraciones, 17 E2E y
+upgrades poblados PG16. PR #132 pasa los cuatro checks sobre `ebe60099f85c48107075e6ffd6012ffe1b39704d`
+en la corrida `37874800254` y se integra con squash
+`97aea5dfec6e4dddcb429a48b421c7598e758a0d`. Artefactos históricos no se
+regeneran y el catálogo DEMO permanece sin certificación.
 
 ## P05 · integrado y verificado (08-10-2026)
 

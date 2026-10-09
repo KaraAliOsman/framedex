@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-08
 volatility: medium
-verified_ref: 230a6c93016bc4126febc85dc8c0bc9290e84cca
+verified_ref: 97aea5dfec6e4dddcb429a48b421c7598e758a0d
 sources:
   - docs/redesign/P09-ACEPTACION.md
   - backend/documents/quotation.py
