@@ -3,8 +3,11 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: e59539d1b282fde9c928fcd9e67f970e51995cdc
+verified_ref: 7d29a6aa6be776e2409ddc209991cd85680b3f27
 sources:
+  - P17 corrección de tipos de la regresión, 7d29a6aa6be776e2409ddc209991cd85680b3f27, 2026-10-09
+  - P17 implementación c25409c2befe60d1be047ac1e4f8d37a334b20f4, verificación local del 2026-10-09
+  - P17 rama codex/P17-asistente-trabajos-orb, evidencia local y docs/redesign/P17-ACEPTACION.md, 2026-10-09
   - P12 PR #135, CI run 37938719831 on 98a65474a170eb68c75a6c25d7ed36f332c6897a, squash e59539d1b282fde9c928fcd9e67f970e51995cdc, 2026-10-09
   - P12 implementación 3c3a78bebf898f668814742f8c94a2144d86fb9f, gates locales y evidencia de navegador, 2026-10-09
   - P03 PR #134, CI run 37919211491 on 4eb66fbd72c5b2a4ef13c13b6397982a29eb823e, squash 5b06ceb12457b297a8748580453695714469c6a0, 2026-10-09
@@ -34,6 +37,29 @@ sources:
 ---
 
 # Current reality
+
+## P17 · asistente, trabajos y presencia (09-10-2026)
+
+La presencia es privada por persona/organización y contexto exacto, independiente
+de la página de treinta trabajos. El dock mide 400 px, muestra direcciones
+humanas y usa renderer/operaciones/precios del motor. Propuesta, aplicación y
+deshacer tienen estados distintos; la guarda conserva una edición posterior.
+Trabajos incorpora objeto, actor, duración, resultado y permiso real de retry.
+La IA conserva su endpoint privado de reintento; el genérico del worker rechaza
+conversaciones. `undone` requiere aplicación previa y se deduplica, mientras
+un fallo de aplicación deja la aprobación pendiente.
+MiMo real prepara el cambio Low-E de dos posiciones del segundo piso, conserva
+la cocina y restaura diseños/cantidades con auditoría del turno exacto. El
+proveedor de prueba se limita a un tenant explícito; la ruta primaria sigue
+MiMo. Uw sigue Sin dato cuando falta autoridad térmica; DEMO no certifica.
+La cache unifica referencias implícitas/expresas sin ampliar presupuesto.
+La continuidad y auditoría tardías no reemplazan una conversación nueva.
+La matriz posterior tiene 48 vistas sin hallazgos, más ocho estados con
+transporte controlado, reduced motion y la guarda real ante edición posterior.
+Véanse [aceptación](../../redesign/P17-ACEPTACION.md) y
+[síntesis](../product/assistant-work.md). Database Gate PASA: 1.218 pgTAP,
+444 integraciones, 17 E2E y actualizaciones pobladas PG16. CI y squash siguen
+pendientes; P17 está en curso y no acredita superficies posteriores.
 
 ## P12 · producción por estación (09-10-2026)
 

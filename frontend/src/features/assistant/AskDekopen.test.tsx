@@ -1,8 +1,16 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { aiAgent, aiAsk, aiJobOutcomeCreate, aiJobRetrieve } from "../../api/generated/dekopen";
+import {
+  aiAgent,
+  aiAsk,
+  aiJobOutcomeCreate,
+  aiJobRetrieve,
+  aiPresenceGet,
+} from "../../api/generated/dekopen";
+import type { ReactElement, PropsWithChildren } from "react";
 import { AskDekopen } from "./AskDekopen";
 import {
   AssistantSurfaceProvider,
@@ -12,6 +20,11 @@ import {
 import type { DesignOperation } from "../../api/generated/models";
 
 vi.mock("../../api/generated/dekopen", () => ({
+  aiPresenceGet: vi.fn().mockResolvedValue({
+    status: 200,
+    data: { context_label: "Proyecto P-000001", context_url: null, job: null },
+    headers: new Headers(),
+  }),
   aiAsk: vi.fn(),
   aiAgent: vi.fn(),
   aiJobRetrieve: vi.fn(),
@@ -39,6 +52,14 @@ function successResponse() {
       warnings: [],
     },
   };
+}
+
+function render(ui: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  function Wrapper({ children }: PropsWithChildren) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  }
+  return rtlRender(ui, { wrapper: Wrapper });
 }
 
 function renderDock(initialPath = "/dashboard") {
@@ -183,6 +204,34 @@ describe("AskDekopen — Agente mode", () => {
     jobMock.mockReset();
   });
 
+  it("keeps the submitted job when an older continuity request returns late", async () => {
+    let restore!: (value: unknown) => void;
+    const previous = new Promise((resolve) => (restore = resolve));
+    const presenceMock = vi.mocked(aiPresenceGet);
+    presenceMock.mockReturnValue(previous as never);
+    agentMock.mockResolvedValue(agentJob() as never);
+    jobMock.mockImplementation(
+      async (id) =>
+        finishedJob({ reply: id === "old-job" ? "Trabajo anterior" : "Respuesta actual" }) as never,
+    );
+    renderDock("/projects/race-test");
+    fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Agente" }));
+    fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
+      target: { value: "Revisar el proyecto actual" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
+    expect(await screen.findByText("Respuesta actual")).toBeTruthy();
+    restore({ status: 200, data: { job: { id: "old-job" } } });
+    await waitFor(() => expect(screen.queryByText("Trabajo anterior")).toBeNull());
+    expect(jobMock).not.toHaveBeenCalledWith("old-job", expect.anything());
+    presenceMock.mockResolvedValue({
+      status: 200,
+      data: { context_label: "Proyecto P-000001", context_url: null, job: null },
+      headers: new Headers(),
+    });
+  });
+
   it("runs a goal through the agent endpoint and renders steps + provenance", async () => {
     agentMock.mockResolvedValue(agentResponse() as never);
     renderDock("/projects/abc-1");
@@ -215,7 +264,9 @@ describe("AskDekopen — Agente mode", () => {
     };
     const applied: DesignOperation[][] = [];
     function Bridge() {
-      useRegisterDesignOpsBridge(product, (ops) => applied.push(ops));
+      useRegisterDesignOpsBridge(product, (ops) => {
+        applied.push(ops);
+      });
       return null;
     }
     agentMock.mockResolvedValue(
@@ -257,9 +308,21 @@ describe("AskDekopen — Agente mode", () => {
       },
     });
     const applyButton = await screen.findByRole("button", { name: /Aplicar 1 operaciones/i });
+    let settleAudit!: () => void;
+    vi.mocked(aiJobOutcomeCreate).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          settleAudit = () => resolve({ status: 200, data: {}, headers: new Headers() } as never);
+        }) as never,
+    );
     fireEvent.click(applyButton);
     expect(applied).toEqual([[{ op: "set_module_width", module: "m1", width_mm: 1400 }]]);
     expect(await screen.findByRole("button", { name: "Aplicado" })).toBeTruthy();
+    const readsBeforeNew = jobMock.mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Nuevo" }));
+    await act(async () => settleAudit());
+    expect(jobMock).toHaveBeenCalledTimes(readsBeforeNew);
+    expect(screen.queryByRole("button", { name: "ver trabajo" })).toBeNull();
   });
 
   it("refuses to apply ops once the product changed (stale plan)", async () => {

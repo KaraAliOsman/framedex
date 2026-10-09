@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/apiMutator";
 import { aiMetrics } from "../../api/generated/dekopen";
 import type { AiMetrics } from "../../api/generated/models/aiMetrics";
+import { formatPercent } from "../../format";
+import { jobErrorKey } from "../jobs/jobError";
 import { t } from "../../i18n/es-CL";
 import { SURFACE_LABELS } from "./surfaces";
 
@@ -10,14 +12,14 @@ function pct(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const numeric = Number.parseFloat(value);
   if (!Number.isFinite(numeric)) return null;
-  return `${Math.round(numeric * 100)}%`;
+  return formatPercent(value, "fraction");
 }
 
 function minutes(seconds: number): string {
-  if (seconds < 90) return `${seconds}s`;
+  if (seconds < 90) return `${Math.round(seconds)} s`;
   const value = Math.round(seconds / 60);
-  if (value < 90) return `${value}min`;
-  return `${Math.round(value / 60)}h`;
+  if (value < 90) return `${value} min`;
+  return `${Math.round(value / 60)} h`;
 }
 
 /** §08 measurement — what the AI layer actually did in the trailing window:
@@ -84,7 +86,7 @@ export function AiMetricsCard({
         </div>
         <div>
           <dt>{t("aiws.metrics.completion")}</dt>
-          <dd>{pct(jobs.completion_rate) ?? "—"}</dd>
+          <dd>{pct(jobs.completion_rate) ?? "Sin dato"}</dd>
         </div>
         <div>
           <dt>{t("aiws.metrics.proposed")}</dt>
@@ -113,7 +115,7 @@ export function AiMetricsCard({
         </div>
         <div>
           <dt>{t("aiws.metrics.avgDuration")}</dt>
-          <dd>{Number.isFinite(avgSeconds) ? minutes(avgSeconds) : "—"}</dd>
+          <dd>{Number.isFinite(avgSeconds) ? minutes(avgSeconds) : "Sin dato"}</dd>
         </div>
         <div>
           <dt>{t("aiws.metrics.credits")}</dt>
@@ -134,7 +136,8 @@ export function AiMetricsCard({
       ) : null}
       {topFailure ? (
         <p className="aiws-metrics__failure">
-          {t("aiws.metrics.topFailure").replace("{code}", topFailure.code)} ({topFailure.count})
+          {t("aiws.metrics.topFailure").replace("{code}", t(jobErrorKey(topFailure.code)))} (
+          {topFailure.count})
         </p>
       ) : null}
     </section>

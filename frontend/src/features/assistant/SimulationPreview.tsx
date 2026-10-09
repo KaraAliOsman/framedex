@@ -157,7 +157,10 @@ export function SimulationPreview({
             )}
             {item.product?.assembly.modules.map((module, index) => (
               <p key={module.id} className="operation-preview__dimensions">
-                Marco {index + 1} · {fmtMm(module.width_mm)} × {fmtMm(module.height_mm)} mm
+                <span>Marco {index + 1}</span>
+                <span>
+                  {fmtMm(module.width_mm)} × {fmtMm(module.height_mm)} mm
+                </span>
               </p>
             ))}
           </figure>
@@ -176,7 +179,13 @@ export function SimulationPreview({
         <dd>
           {price.delta_net != null ? formatMoney(price.delta_net, price.currency) : "Sin dato"}
         </dd>
+        <dt>Diferencia de Uw</dt>
+        <dd>Sin dato</dd>
       </dl>
+      <p>
+        Uw pendiente: esta simulación no cuenta con autoridad térmica completa del marco, el vidrio
+        y el borde. Revisa las fichas del sistema en Catálogo antes de declarar un valor.
+      </p>
       {price.reason ? (
         <p>{price.reason}</p>
       ) : (

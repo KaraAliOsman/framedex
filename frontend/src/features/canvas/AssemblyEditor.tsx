@@ -2438,6 +2438,20 @@ export function AssemblyEditor({
     product && !disabled && !readOnly
       ? (ops: DesignOperation[]) => {
           applyRegisteredOps(ops);
+          const applied = useCanvasStore.getState();
+          return () => {
+            const current = useCanvasStore.getState();
+            if (
+              disabled ||
+              readOnly ||
+              current.inputs !== applied.inputs ||
+              current.past !== applied.past
+            )
+              return false;
+            undoHistory();
+            onChanged();
+            return true;
+          };
         }
       : null,
   );

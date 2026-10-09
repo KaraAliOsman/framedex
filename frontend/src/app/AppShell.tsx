@@ -332,6 +332,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                       onClick={() => setAssistantRequest((value) => value + 1)}
                     >
                       <AiPresence
+                        userId={auth.me?.user.id ?? null}
                         organizationId={org?.id ?? null}
                         size={22}
                         onActiveJob={onActiveJob}
@@ -342,6 +343,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                       <button
                         type="button"
                         className="topbar-button topbar-ai-job"
+                        data-state={presenceJob?.state.toLowerCase()}
                         title={t("aiws.presenceOpen")}
                         onClick={() => navigate(`/assistant?job=${presenceJob.id}`)}
                       >

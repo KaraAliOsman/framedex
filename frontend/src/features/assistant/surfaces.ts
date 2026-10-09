@@ -13,6 +13,10 @@ export function assistantText(value: string | undefined): string {
         : part
             .replace(/(?<![\w/.-])dashboard(?![\w/.-])/gi, "panel de inicio")
             .replace(
+              /(?<![\w/.-])(?:calculate_position|validate_position|price_position|price_project|explain_price_delta|list_catalog_options|get_blockers|simulate_ops|preview_project_operations)(?![\w/.-])/g,
+              (word) => SURFACE_LABELS[word] ?? word,
+            )
+            .replace(
               /(?<![\w-])[A-Z]+(?:_[A-Z0-9]+)+(?![\w-])/g,
               (word) => domainLabels[word] ?? word,
             ),

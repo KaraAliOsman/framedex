@@ -67,6 +67,8 @@ export * from "./aiMetricsTimeSaved";
 export * from "./aiMetricsWorkItem";
 export * from "./aiMode";
 export * from "./aiMonthlyUsage";
+export * from "./aiPresence";
+export * from "./aiPresenceGetParams";
 export * from "./aiRouteSettingsRequest";
 export * from "./aiRouteStatus";
 export * from "./aiRouteStatusStateEnum";

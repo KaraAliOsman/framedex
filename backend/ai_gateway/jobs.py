@@ -404,6 +404,8 @@ def list_jobs(
     limit: int = 30,
     before: str | None = None,
     before_id: str | None = None,
+    surface: str | None = None,
+    refs: dict | None = None,
 ) -> list[dict]:
     params: list[object] = [str(org_id), str(user_id)]
     if before_id:
@@ -420,6 +422,12 @@ def list_jobs(
     elif before:
         cursor = " AND created_at < %s"
         params.append(before)
+    if surface is not None:
+        cursor += " AND surface = %s"
+        params.append(surface)
+    if refs is not None:
+        cursor += " AND refs = %s::jsonb"
+        params.append(_dump(refs))
     params.append(limit)
     decoded = [
         _decode(row)
@@ -672,6 +680,13 @@ def record_outcome(
             )
             if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare", "project_ops"):
                 return None
+            if recorded["action"] == "undone" and not any(
+                outcome.get("turn_index") == recorded["turn_index"]
+                and outcome.get("step_index") == recorded["step_index"]
+                and outcome.get("action") == "applied"
+                for outcome in (job.get("outcomes") or [])
+            ):
+                return None
             found = rows(
                 "UPDATE public.ai_jobs SET outcomes = outcomes || %s::jsonb,"
                 " updated_at = NOW()"
@@ -711,8 +726,10 @@ def record_outcome(
                 resolved = {
                     (outcome["turn_index"], outcome["step_index"])
                     for outcome in (job.get("outcomes") or [])
+                    if outcome.get("action") in ("applied", "declined", "undone")
                 }
-                resolved.add((recorded["turn_index"], recorded["step_index"]))
+                if recorded["action"] in ("applied", "declined", "undone"):
+                    resolved.add((recorded["turn_index"], recorded["step_index"]))
                 if pending and all(pair in resolved for pair in pending):
                     write(
                         "UPDATE public.ai_jobs SET state = 'SUCCEEDED',"

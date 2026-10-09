@@ -1,13 +1,14 @@
 import { ValidatedForm } from "../../ui/FormValidation";
 import { AI_PHASES } from "./providerLabels";
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import {
   aiAgent,
   aiJobCancel,
-  aiJobList,
+  aiPresenceGet,
   aiJobMessageCreate,
   aiJobOutcomeCreate,
   aiJobRetrieve,
@@ -26,6 +27,8 @@ import { BotFigure } from "./BotFigure";
 import { ProjectOpsStep } from "./ProjectOpsStep";
 import { SimulationPreview } from "./SimulationPreview";
 import { RejectedOperations } from "./RejectedOperations";
+import { publishAssistantJob, presenceState } from "./useAssistantPresence";
+import { Orb } from "./Orb";
 import { assistantText, SURFACE_LABELS } from "./surfaces";
 
 /** The durable worker can leave the job running far longer than a request
@@ -173,6 +176,7 @@ export { SURFACE_LABELS };
  * sending, and the answer stays evidence-bound either way. */
 const GOAL_CHIPS: Record<string, string[]> = {
   project: [
+    "Cambia todo el 2º piso a termopanel Low-E. Muestra el cambio de precio y la autoridad térmica disponible.",
     "Convierte todas las fijas del proyecto en abatibles.",
     "Copia el vidrio del primer vano a todos los demás.",
     "Redacta el correo para enviar la cotización al cliente.",
@@ -181,7 +185,12 @@ const GOAL_CHIPS: Record<string, string[]> = {
     "Redacta una actualización del estado de producción para el cliente.",
     "Redacta el aviso de entrega programada.",
   ],
+  position: [
+    "Propón una división vertical 1/3–2/3 en la hoja seleccionada.",
+    "Revisa la compatibilidad de herrajes de esta posición.",
+  ],
   quotation: [
+    "Explica por qué subió el total de esta revisión.",
     "Redacta el correo para enviar la cotización al cliente.",
     "Resume los cambios de la última revisión para el cliente.",
     "Redacta un recordatorio de pago pendiente.",
@@ -195,12 +204,14 @@ const GOAL_CHIPS: Record<string, string[]> = {
  * it never executes them itself. */
 export function AgentBody({
   organizationId,
+  userId,
   surface,
   refs,
   onJobState,
   onComposing,
 }: {
   organizationId: string;
+  userId?: string | null;
   surface: string;
   refs: Record<string, string>;
   /** Lifts the bound job's lifecycle up to the dock header orb. */
@@ -210,6 +221,9 @@ export function AgentBody({
 }): JSX.Element {
   const navigate = useNavigate();
   const bridge = useDesignOpsBridge();
+  const queryClient = useQueryClient();
+  const undos = useRef(new Map<string, () => boolean>());
+  const [undone, setUndone] = useState(new Set<string>());
   const [goal, setGoal] = useState("");
   const [busy, setBusy] = useState(false);
   /** The job this dock is bound to — found by continuity on mount, created
@@ -217,7 +231,8 @@ export function AgentBody({
   const [job, setJob] = useState<AiJobDetail | null>(null);
   useEffect(() => {
     onJobState?.(job?.state ?? null);
-  }, [job?.state, onJobState]);
+    if (job) publishAssistantJob(queryClient, { organizationId, userId, surface, refs }, job);
+  }, [job, onJobState, queryClient, organizationId, userId, surface, refs]);
   useEffect(() => {
     onComposing?.(!!goal.trim());
   }, [goal, onComposing]);
@@ -265,6 +280,7 @@ export function AgentBody({
       if (seq !== requestSeq.current) return;
       try {
         const detail = await aiJobRetrieve(jobId, headers);
+        if (seq !== requestSeq.current) return;
         if (detail.status !== 200) {
           // The job vanished or the role lost access — stop watching rather
           // than spin a dead poll.
@@ -299,6 +315,7 @@ export function AgentBody({
           // after this render commits, even if one queued mid-settle.
         }
       } catch {
+        if (seq !== requestSeq.current) return;
         // A transient poll failure is not a job failure — back off
         // exponentially (2× to a 15s cap) and surface the offline state
         // once it is clearly persistent, not a single blip.
@@ -326,24 +343,9 @@ export function AgentBody({
     let cancelled = false;
     void (async () => {
       try {
-        const list = await aiJobList({}, headers);
-        if (cancelled || seq !== requestSeq.current) return;
-        if (list.status !== 200) return;
-        const items = (list.data ?? []) as AiJobDetail[];
-        // Volatile refs (a live canvas selection) never key the durable job —
-        // match on the stable identity refs only.
-        const identity = stableRefs(refs);
-        // Symmetric match: a job stored with extra refs (e.g. the editor's
-        // project_id pair) must not bind to a bare-surface dock — subset
-        // matching re-keys a position job onto every position route.
-        const match = items.find(
-          (item) =>
-            item.surface === surface &&
-            Object.keys(identity).length === Object.keys(item.refs ?? {}).length &&
-            Object.entries(identity).every(
-              ([key, value]) => String(item.refs?.[key] ?? "") === value,
-            ),
-        );
+        const presence = await aiPresenceGet({ surface, refs: refsKey }, headers);
+        if (cancelled || seq !== requestSeq.current || presence.status !== 200) return;
+        const match = presence.data.job;
         if (!match) return;
         const detail = await aiJobRetrieve(match.id, headers);
         if (cancelled || seq !== requestSeq.current) return;
@@ -395,7 +397,8 @@ export function AgentBody({
     if (!operationKey.current || operationKey.current.goal !== trimmed) {
       operationKey.current = { key: crypto.randomUUID(), goal: trimmed };
     }
-    const seq = requestSeq.current;
+    const seq = ++requestSeq.current;
+    clearPoll();
     // The live product rides along only on the position surface — elsewhere
     // ops steps can't be validated and are dropped server-side anyway.
     const product = surface === "position" && bridge ? bridge.product : null;
@@ -448,6 +451,7 @@ export function AgentBody({
         }
         jobId = String(response.data.job_id);
       }
+      if (seq !== requestSeq.current) return;
       // Optimistic user turn — the transcript rebuild replaces it on the
       // first poll, but the goal should be visible immediately.
       setThread((prev) => [
@@ -511,6 +515,7 @@ export function AgentBody({
   }
 
   function startFresh(): void {
+    requestSeq.current += 1;
     clearPoll();
     setJob(null);
     setThread([]);
@@ -532,10 +537,11 @@ export function AgentBody({
   function reportOutcome(
     transcriptIndex: number,
     stepIndex: number,
-    action: "applied" | "declined" | "apply_failed",
+    action: "applied" | "declined" | "apply_failed" | "undone",
     ops: { op?: string }[],
   ): void {
     if (!job) return;
+    const seq = requestSeq.current;
     void aiJobOutcomeCreate(
       job.id,
       {
@@ -545,7 +551,18 @@ export function AgentBody({
         ops: ops.map((op) => op.op ?? "unknown"),
       },
       headers,
-    ).catch(() => undefined);
+    )
+      .then(async () => {
+        if (seq !== requestSeq.current) return;
+        const current = await aiJobRetrieve(job.id, headers);
+        if (seq === requestSeq.current && current.status === 200) setJob(current.data);
+      })
+      .catch(() => {
+        if (seq === requestSeq.current)
+          setMessage(
+            "No pudimos registrar la decisión en la auditoría. Vuelve a abrir el trabajo para verificarla.",
+          );
+      });
   }
 
   function applyOps(turnIndex: number, stepIndex: number, ops: DesignOperation[]): void {
@@ -565,7 +582,8 @@ export function AgentBody({
       return;
     }
     try {
-      bridge.apply(ops);
+      const undo = bridge.apply(ops);
+      if (undo) undos.current.set(`${turn.transcriptIndex}:${stepIndex}`, undo);
     } catch {
       reportOutcome(turn.transcriptIndex, stepIndex, "apply_failed", ops);
       setMessage(
@@ -631,306 +649,422 @@ export function AgentBody({
   return (
     <>
       <div className="ask-dock__thread">
+        {thread.some((turn) => turn.errorCode) ? (
+          <div className="ask-dock__errorTurn">
+            <p>
+              {thread.filter((turn) => turn.errorCode).length} intentos fallidos ·{" "}
+              {t(jobErrorKey(thread.filter((turn) => turn.errorCode).at(-1)?.errorCode ?? ""))}
+            </p>
+            {retryable ? (
+              <button
+                type="button"
+                className="ask-dock__action"
+                disabled={busy}
+                onClick={() => void retryJob()}
+              >
+                Reintentar
+              </button>
+            ) : null}
+            <details className="ui-tech">
+              <summary>Detalles técnicos</summary>
+              <ol>
+                {thread
+                  .filter((turn) => turn.errorCode)
+                  .map((turn, index) => (
+                    <li key={index}>
+                      {turn.goal}
+                      <code>{turn.errorCode}</code>
+                    </li>
+                  ))}
+              </ol>
+            </details>
+          </div>
+        ) : null}
         {thread.length === 0 && !live ? (
           <div className="ask-dock__welcome">
-            <BotFigure size={110} />
+            <BotFigure state={presenceState(job)} size={160} welcome />
             <p className="ask-dock__hint">{t("agent.hint")}</p>
           </div>
         ) : (
-          thread.map((turn, turnIndex) => (
-            <div key={turnIndex} className="ask-dock__turn">
-              {turn.goal ? (
-                <p className="ask-dock__question">
-                  {turn.goal}
-                  {turn.replay ? (
-                    <span className="ask-dock__replay">{t("aiws.replayed")}</span>
+          thread
+            .filter((turn) => turn.errorCode === null)
+            .map((turn) => {
+              const turnIndex = thread.indexOf(turn);
+              return (
+                <div key={turnIndex} className="ask-dock__turn">
+                  {turn.goal ? (
+                    <p className="ask-dock__question">
+                      {turn.goal}
+                      {turn.replay ? (
+                        <span className="ask-dock__replay">{t("aiws.replayed")}</span>
+                      ) : null}
+                    </p>
                   ) : null}
-                </p>
-              ) : null}
-              {turn.errorCode !== null ? (
-                <div className="ask-dock__errorTurn">
-                  <p>
-                    {t(jobErrorKey(turn.errorCode))}
-                    <code>{turn.errorCode}</code>
-                  </p>
-                  {retryable ? (
-                    <button
-                      type="button"
-                      className="ask-dock__action"
-                      title={t("aiws.retryTitle")}
-                      onClick={() => void retryJob()}
-                    >
-                      {t("aiws.retry")}
-                    </button>
-                  ) : null}
-                </div>
-              ) : turn.result === null ? null : (
-                <>
-                  {turn.result.queries?.length ? (
-                    <ul className="ask-dock__queries">
-                      {turn.result.queries.map((query, i) => (
-                        <li key={i}>
-                          {query.status === "ok"
-                            ? t("agent.queried").replace(
-                                "{surface}",
-                                SURFACE_LABELS[query.surface ?? ""] ?? "datos del trabajo",
-                              )
-                            : t("agent.queryFailed").replace(
-                                "{surface}",
-                                SURFACE_LABELS[query.surface ?? ""] ?? "datos del trabajo",
-                              )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {turn.result.reply ? (
-                    <p className="ask-dock__answer">{assistantText(turn.result.reply)}</p>
-                  ) : null}
-                  {turn.result.questions?.some(
-                    (question) => question !== turn.result?.clarify?.question,
-                  ) ? (
-                    <div className="ask-dock__questions">
-                      {turn.result.questions
-                        .filter((question) => question !== turn.result?.clarify?.question)
-                        .map((question, i) => (
-                          <p key={i}>{question}</p>
-                        ))}
-                    </div>
-                  ) : null}
-                  {turn.result.clarify ? (
-                    <div className="ask-dock__questions" aria-label="Aclaración del trabajo">
-                      <p>{turn.result.clarify.question}</p>
-                      <div className="ask-dock__chips">
-                        {turn.result.clarify.options.map((option) => (
-                          <button
-                            type="button"
-                            className="ask-dock__chip"
-                            key={option.value}
-                            disabled={busy || turnIndex !== thread.length - 1}
-                            onClick={() => void send(option.value)}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                  {turn.result.warnings?.length ? (
-                    <ul className="ask-dock__warnings">
-                      {turn.result.warnings.map((warning, i) => (
-                        <li key={i}>{warning}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {turn.result.rejected?.length ? (
-                    <RejectedOperations items={turn.result.rejected} />
-                  ) : null}
-                  {turn.result.steps?.length ? (
-                    <div className="ask-dock__actions">
-                      {turn.result.steps.map((step, stepIndex) => {
-                        if (step.kind === "navigate" && step.path) {
-                          return (
-                            <button
-                              key={stepIndex}
-                              type="button"
-                              className="ask-dock__action"
-                              onClick={() => navigate(step.path as string)}
-                            >
-                              {step.label}
-                            </button>
-                          );
-                        }
-                        if (step.kind === "prepare" && step.path) {
-                          return (
-                            <button
-                              key={stepIndex}
-                              type="button"
-                              className="ask-dock__action ask-dock__action--prepare"
-                              title={t("agent.prepareHint")}
-                              onClick={() => navigate(step.path as string)}
-                            >
-                              {t("agent.prepare")} {step.label}
-                            </button>
-                          );
-                        }
-                        if (step.kind === "batch_ops" && refs.project_id && job) {
-                          const applied = turn.appliedOps.has(stepIndex);
-                          return (
-                            <BatchOpsStep
-                              key={stepIndex}
-                              step={step}
-                              organizationId={organizationId}
-                              projectId={refs.project_id}
-                              settled={applied}
-                              operationKey={`ai:${job.id}:${turn.transcriptIndex}:${stepIndex}`}
-                              declined={(job.outcomes ?? []).some((value) => {
-                                const outcome = value as {
-                                  turn_index?: number;
-                                  step_index?: number;
-                                  action?: string;
-                                };
-                                return (
-                                  outcome.turn_index === turn.transcriptIndex &&
-                                  outcome.step_index === stepIndex &&
-                                  outcome.action === "declined"
-                                );
-                              })}
-                              onSettled={(action, ops) => {
-                                reportOutcome(turn.transcriptIndex, stepIndex, action, ops);
-                                setThread((prev) =>
-                                  prev.map((item, i) =>
-                                    i === turnIndex
-                                      ? {
-                                          ...item,
-                                          appliedOps: new Set(item.appliedOps).add(stepIndex),
-                                        }
-                                      : item,
-                                  ),
-                                );
-                              }}
-                            />
-                          );
-                        }
-                        if (step.kind === "project_ops" && refs.project_id && job) {
-                          return (
-                            <ProjectOpsStep
-                              key={stepIndex}
-                              step={step}
-                              organizationId={organizationId}
-                              projectId={refs.project_id}
-                              operationKey={`ai:${job.id}:${turn.transcriptIndex}:${stepIndex}`}
-                              declined={(job.outcomes ?? []).some((value) => {
-                                const outcome = value as {
-                                  turn_index?: number;
-                                  step_index?: number;
-                                  action?: string;
-                                };
-                                return (
-                                  outcome.turn_index === turn.transcriptIndex &&
-                                  outcome.step_index === stepIndex &&
-                                  outcome.action === "declined"
-                                );
-                              })}
-                              onSettled={(action, ops) =>
-                                reportOutcome(turn.transcriptIndex, stepIndex, action, ops)
-                              }
-                            />
-                          );
-                        }
-                        if (step.kind === "ops") {
-                          const ops = asDesignOps(step);
-                          if (!ops.length) return null;
-                          const applied = turn.appliedOps.has(stepIndex);
-                          const declined = turn.declinedOps.has(stepIndex);
-                          const stale =
-                            !bridge ||
-                            (turn.product !== null
-                              ? turn.product !== bridge.product
-                              : turn.productSig !== null &&
-                                turn.productSig !== productFingerprint(bridge.product));
-                          return (
-                            <div key={stepIndex} className="ask-dock__ops">
-                              {!step.simulation ? (
-                                <ul>
-                                  {ops.map((op, i) => (
-                                    <li key={i}>
-                                      {turn.product
-                                        ? describeDesignOp(
-                                            op,
-                                            turn.product as ProductJson,
-                                            ops.slice(0, i),
-                                          )
-                                        : typeof op.description === "string"
-                                          ? op.description
-                                          : "Cambio de diseño"}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : null}
-                              <SimulationPreview
-                                simulation={step.simulation}
-                                organizationId={organizationId}
-                              />
-                              <div className="ask-dock__ops-actions">
+                  {turn.result === null ? null : (
+                    <>
+                      {turn.result.queries?.length ? (
+                        <details className="ui-tech">
+                          <summary>Fuentes consultadas</summary>
+                          <ul className="ask-dock__queries">
+                            {turn.result.queries.map((query, i) => (
+                              <li key={i}>
+                                {query.status === "ok"
+                                  ? t("agent.queried").replace(
+                                      "{surface}",
+                                      SURFACE_LABELS[query.surface ?? ""] ?? "datos del trabajo",
+                                    )
+                                  : t("agent.queryFailed").replace(
+                                      "{surface}",
+                                      SURFACE_LABELS[query.surface ?? ""] ?? "datos del trabajo",
+                                    )}
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      ) : null}
+                      {turn.result.reply &&
+                      !turn.result.steps?.some((step) =>
+                        ["ops", "batch_ops", "project_ops", "prepare"].includes(step.kind),
+                      ) ? (
+                        <p className="ask-dock__answer">{assistantText(turn.result.reply)}</p>
+                      ) : null}
+                      {turn.result.questions?.some(
+                        (question) => question !== turn.result?.clarify?.question,
+                      ) ? (
+                        <div className="ask-dock__questions">
+                          {turn.result.questions
+                            .filter((question) => question !== turn.result?.clarify?.question)
+                            .map((question, i) => (
+                              <p key={i}>{question}</p>
+                            ))}
+                        </div>
+                      ) : null}
+                      {turn.result.clarify ? (
+                        <div className="ask-dock__questions" aria-label="Aclaración del trabajo">
+                          <p>{turn.result.clarify.question}</p>
+                          <div className="ask-dock__chips">
+                            {turn.result.clarify.options.map((option) => (
+                              <button
+                                type="button"
+                                className="ask-dock__chip"
+                                key={option.value}
+                                disabled={busy || turnIndex !== thread.length - 1}
+                                onClick={() => void send(option.value)}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      {turn.result.warnings?.length ? (
+                        <details className="ui-tech">
+                          <summary>Restricciones de la propuesta</summary>
+                          <ul className="ask-dock__warnings">
+                            {turn.result.warnings.map((warning, i) => (
+                              <li key={i}>{assistantText(warning)}</li>
+                            ))}
+                          </ul>
+                        </details>
+                      ) : null}
+                      {turn.result.rejected?.length ? (
+                        <RejectedOperations items={turn.result.rejected} />
+                      ) : null}
+                      {turn.result.steps?.length ? (
+                        <div className="ask-dock__actions">
+                          {turn.result.steps.map((step, stepIndex) => {
+                            if (step.kind === "navigate" && step.path) {
+                              return (
                                 <button
+                                  key={stepIndex}
                                   type="button"
                                   className="ask-dock__action"
-                                  disabled={
-                                    applied ||
-                                    declined ||
-                                    stale ||
-                                    !bridge ||
-                                    (step.simulation != null &&
-                                      (step.simulation as { valid?: boolean }).valid !== true)
-                                  }
-                                  title={stale && bridge ? t("assistant.stale") : undefined}
-                                  onClick={() => applyOps(turnIndex, stepIndex, ops)}
+                                  onClick={() => navigate(step.path as string)}
                                 >
-                                  {applied
-                                    ? t("agent.applied")
-                                    : t("assistant.apply").replace("{count}", String(ops.length))}
+                                  {step.label}
                                 </button>
-                                {!applied ? (
-                                  <button
-                                    type="button"
-                                    className="ask-dock__action ask-dock__action--ghost"
-                                    disabled={declined}
-                                    onClick={() => declineOps(turnIndex, stepIndex, ops)}
-                                  >
-                                    {declined ? t("agent.declined") : t("agent.decline")}
-                                  </button>
-                                ) : null}
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-                  ) : null}
-                  {turn.result.artifacts?.length ? (
-                    <div className="ask-dock__artifacts">
-                      {turn.result.artifacts.map((item, i) => {
-                        const artifact = item as { kind?: string; title?: string };
-                        // Deep-link by transcript coordinates (turn:item) — the
-                        // flat shelf truncates to the newest entries, so a
-                        // shelf index would drift to the wrong artifact.
-                        const artRef = `${turn.transcriptIndex}:${i}`;
-                        return (
-                          <button
-                            key={i}
-                            type="button"
-                            className="ask-dock__artifact"
-                            title={t("aiws.openWorkspace")}
-                            onClick={() =>
-                              job ? navigate(`/assistant?job=${job.id}&art=${artRef}`) : undefined
+                              );
                             }
-                          >
-                            {artifact.title ?? artifact.kind ?? t("aiws.inspector")}
-                          </button>
-                        );
-                      })}
-                    </div>
+                            if (step.kind === "prepare" && step.path) {
+                              return (
+                                <button
+                                  key={stepIndex}
+                                  type="button"
+                                  className="ask-dock__action ask-dock__action--prepare"
+                                  title={t("agent.prepareHint")}
+                                  onClick={() => navigate(step.path as string)}
+                                >
+                                  {t("agent.prepare")} {step.label}
+                                </button>
+                              );
+                            }
+                            if (step.kind === "batch_ops" && refs.project_id && job) {
+                              const applied = turn.appliedOps.has(stepIndex);
+                              return (
+                                <BatchOpsStep
+                                  key={stepIndex}
+                                  step={step}
+                                  organizationId={organizationId}
+                                  projectId={refs.project_id}
+                                  settled={applied}
+                                  operationKey={`ai:${job.id}:${turn.transcriptIndex}:${stepIndex}`}
+                                  declined={(job.outcomes ?? []).some((value) => {
+                                    const outcome = value as {
+                                      turn_index?: number;
+                                      step_index?: number;
+                                      action?: string;
+                                    };
+                                    return (
+                                      outcome.turn_index === turn.transcriptIndex &&
+                                      outcome.step_index === stepIndex &&
+                                      outcome.action === "declined"
+                                    );
+                                  })}
+                                  onSettled={(action, ops) => {
+                                    reportOutcome(turn.transcriptIndex, stepIndex, action, ops);
+                                    setThread((prev) =>
+                                      prev.map((item, i) =>
+                                        i === turnIndex
+                                          ? {
+                                              ...item,
+                                              appliedOps: new Set(item.appliedOps).add(stepIndex),
+                                            }
+                                          : item,
+                                      ),
+                                    );
+                                  }}
+                                />
+                              );
+                            }
+                            if (step.kind === "project_ops" && refs.project_id && job) {
+                              return (
+                                <ProjectOpsStep
+                                  key={stepIndex}
+                                  step={step}
+                                  organizationId={organizationId}
+                                  projectId={refs.project_id}
+                                  operationKey={`ai:${job.id}:${turn.transcriptIndex}:${stepIndex}`}
+                                  declined={(job.outcomes ?? []).some((value) => {
+                                    const outcome = value as {
+                                      turn_index?: number;
+                                      step_index?: number;
+                                      action?: string;
+                                    };
+                                    return (
+                                      outcome.turn_index === turn.transcriptIndex &&
+                                      outcome.step_index === stepIndex &&
+                                      outcome.action === "declined"
+                                    );
+                                  })}
+                                  onSettled={(action, ops) =>
+                                    reportOutcome(turn.transcriptIndex, stepIndex, action, ops)
+                                  }
+                                />
+                              );
+                            }
+                            if (step.kind === "ops") {
+                              const ops = asDesignOps(step);
+                              if (!ops.length) return null;
+                              const coordinate = `${turn.transcriptIndex}:${stepIndex}`;
+                              const wasUndone =
+                                undone.has(coordinate) ||
+                                (job?.outcomes ?? []).some((value) => {
+                                  const outcome = value as {
+                                    turn_index?: number;
+                                    step_index?: number;
+                                    action?: string;
+                                  };
+                                  return (
+                                    outcome.turn_index === turn.transcriptIndex &&
+                                    outcome.step_index === stepIndex &&
+                                    outcome.action === "undone"
+                                  );
+                                });
+                              const applied =
+                                turn.appliedOps.has(stepIndex) ||
+                                (job?.outcomes ?? []).some((value) => {
+                                  const outcome = value as {
+                                    turn_index?: number;
+                                    step_index?: number;
+                                    action?: string;
+                                  };
+                                  return (
+                                    outcome.turn_index === turn.transcriptIndex &&
+                                    outcome.step_index === stepIndex &&
+                                    outcome.action === "applied"
+                                  );
+                                });
+                              const declined = turn.declinedOps.has(stepIndex);
+                              const stale =
+                                !bridge ||
+                                (turn.product !== null
+                                  ? turn.product !== bridge.product
+                                  : turn.productSig !== null &&
+                                    turn.productSig !== productFingerprint(bridge.product));
+                              return (
+                                <div key={stepIndex} className="ask-dock__ops">
+                                  {!step.simulation ? (
+                                    <ul>
+                                      {ops.map((op, i) => (
+                                        <li key={i}>
+                                          {turn.product
+                                            ? describeDesignOp(
+                                                op,
+                                                turn.product as ProductJson,
+                                                ops.slice(0, i),
+                                              )
+                                            : typeof op.description === "string"
+                                              ? op.description
+                                              : "Cambio de diseño"}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : null}
+                                  <p className="operation-state">
+                                    <Orb
+                                      state={
+                                        wasUndone
+                                          ? "canceled"
+                                          : applied
+                                            ? "success"
+                                            : declined
+                                              ? "canceled"
+                                              : "approval"
+                                      }
+                                      size={20}
+                                    />{" "}
+                                    {wasUndone
+                                      ? "Cambios deshechos"
+                                      : applied
+                                        ? "Cambios aplicados en el editor · guarda la posición"
+                                        : declined
+                                          ? "Propuesta descartada"
+                                          : "Propuesta preparada · revisa antes de aplicar"}
+                                  </p>
+                                  <SimulationPreview
+                                    simulation={step.simulation}
+                                    organizationId={organizationId}
+                                  />
+                                  {job ? (
+                                    <button
+                                      type="button"
+                                      className="ask-dock__action ask-dock__action--ghost"
+                                      onClick={() => navigate(`/assistant?job=${job.id}&audit=1`)}
+                                    >
+                                      Ver auditoría
+                                    </button>
+                                  ) : null}
+                                  <div className="ask-dock__ops-actions">
+                                    <button
+                                      type="button"
+                                      className="ask-dock__action"
+                                      disabled={
+                                        applied ||
+                                        declined ||
+                                        stale ||
+                                        !bridge ||
+                                        (step.simulation != null &&
+                                          (step.simulation as { valid?: boolean }).valid !== true)
+                                      }
+                                      title={stale && bridge ? t("assistant.stale") : undefined}
+                                      onClick={() => applyOps(turnIndex, stepIndex, ops)}
+                                    >
+                                      {applied
+                                        ? t("agent.applied")
+                                        : t("assistant.apply").replace(
+                                            "{count}",
+                                            String(ops.length),
+                                          )}
+                                    </button>
+                                    {applied && !wasUndone && undos.current.has(coordinate) ? (
+                                      <button
+                                        type="button"
+                                        className="ask-dock__action"
+                                        onClick={() => {
+                                          if (!undos.current.get(coordinate)?.()) {
+                                            setMessage(
+                                              "El diseño cambió después de esta propuesta. Usa el historial del editor para revisar los cambios; no deshicimos tus ediciones.",
+                                            );
+                                            return;
+                                          }
+                                          setUndone((previous) =>
+                                            new Set(previous).add(coordinate),
+                                          );
+                                          reportOutcome(
+                                            turn.transcriptIndex,
+                                            stepIndex,
+                                            "undone",
+                                            ops,
+                                          );
+                                        }}
+                                      >
+                                        Deshacer cambios
+                                      </button>
+                                    ) : null}
+                                    {!applied ? (
+                                      <button
+                                        type="button"
+                                        className="ask-dock__action ask-dock__action--ghost"
+                                        disabled={declined}
+                                        onClick={() => declineOps(turnIndex, stepIndex, ops)}
+                                      >
+                                        {declined ? t("agent.declined") : t("agent.decline")}
+                                      </button>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      ) : null}
+                      {turn.result.artifacts?.length ? (
+                        <div className="ask-dock__artifacts">
+                          {turn.result.artifacts.map((item, i) => {
+                            const artifact = item as { kind?: string; title?: string };
+                            // Deep-link by transcript coordinates (turn:item) — the
+                            // flat shelf truncates to the newest entries, so a
+                            // shelf index would drift to the wrong artifact.
+                            const artRef = `${turn.transcriptIndex}:${i}`;
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                className="ask-dock__artifact"
+                                title={t("aiws.openWorkspace")}
+                                onClick={() =>
+                                  job
+                                    ? navigate(`/assistant?job=${job.id}&art=${artRef}`)
+                                    : undefined
+                                }
+                              >
+                                {artifact.title ?? artifact.kind ?? t("aiws.inspector")}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                  {turnIndex === thread.length - 1 && job ? (
+                    <p className="ask-dock__meta">
+                      <button
+                        type="button"
+                        className="ask-dock__meta-link"
+                        onClick={() => navigate(`/assistant?job=${job.id}`)}
+                      >
+                        {t("aiws.openWorkspace")}
+                      </button>
+                      {" · "}
+                      <button type="button" className="ask-dock__meta-link" onClick={startFresh}>
+                        {t("aiws.new")}
+                      </button>
+                    </p>
                   ) : null}
-                </>
-              )}
-              {turnIndex === thread.length - 1 && job ? (
-                <p className="ask-dock__meta">
-                  <button
-                    type="button"
-                    className="ask-dock__meta-link"
-                    onClick={() => navigate(`/assistant?job=${job.id}`)}
-                  >
-                    {t("aiws.openWorkspace")}
-                  </button>
-                  {" · "}
-                  <button type="button" className="ask-dock__meta-link" onClick={startFresh}>
-                    {t("aiws.new")}
-                  </button>
-                </p>
-              ) : null}
-            </div>
-          ))
+                </div>
+              );
+            })
         )}
         {live && job ? (
           <p className="ask-dock__busy">
@@ -962,7 +1096,7 @@ export function AgentBody({
           </button>
         </p>
       ) : null}
-      {!goal.trim() && !terminal && (GOAL_CHIPS[surface] ?? []).length ? (
+      {thread.length === 0 && !goal.trim() && !terminal && (GOAL_CHIPS[surface] ?? []).length ? (
         <div className="ask-dock__chips">
           {(GOAL_CHIPS[surface] ?? []).map((preset) => (
             <button

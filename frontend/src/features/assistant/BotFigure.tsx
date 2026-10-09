@@ -13,16 +13,18 @@ export function BotFigure({
   state = "idle",
   size = 120,
   title,
+  welcome = false,
 }: {
   state?: OrbState;
   /** 96–200 — below 96 the panes stop reading; use Orb instead. */
   size?: number;
   title?: string;
+  welcome?: boolean;
 }): JSX.Element {
   const label = title ?? t("assistant.figureLabel");
   return (
     <svg
-      className={`bot-figure is-${state}`}
+      className={`bot-figure is-${state}${welcome ? " bot-figure--welcome" : ""}`}
       viewBox="0 0 200 200"
       width={size}
       height={size}
@@ -57,6 +59,17 @@ export function BotFigure({
           strokeWidth="1"
         />
       </g>
+      {welcome ? (
+        <g
+          className="bot-figure__window"
+          fill="var(--orb-ribbon-soft)"
+          stroke="var(--orb-ribbon)"
+          strokeWidth="1.4"
+        >
+          <rect x="146" y="26" width="43" height="94" fillOpacity="0.12" />
+          <path d="M168 26 V120 M146 73 H189" fill="none" />
+        </g>
+      ) : null}
 
       {/* Ground shadow — a flat ellipse, no blur. */}
       <ellipse className="bot-figure__shadow" cx="96" cy="176" rx="52" ry="7.5" />

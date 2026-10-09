@@ -222,5 +222,5 @@ it("marks an explicitly enabled test provider", async () => {
     headers: new Headers(),
   } as never);
   mount(<AiModeBadge />);
-  expect(await screen.findByText("Modo de prueba")).toBeVisible();
+  expect(await screen.findByText("Proveedor de prueba")).toBeVisible();
 });

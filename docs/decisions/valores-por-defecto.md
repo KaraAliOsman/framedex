@@ -403,3 +403,22 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - Sin agenda o capacidad declarada se muestra «Sin dato» o se omite capacidad.
   Los filtros de obra, compromiso y bloqueo son controles de lectura, sin
   convertir fechas ni cantidades estimadas en autoridad de fabricación.
+
+## P17 · presencia y decisiones del asistente (2026-10-09)
+
+- El asistente sigue el trabajo de la persona en el contexto exacto, incluyendo
+  posición/proyecto/OT; la selección del lienzo es transitoria y no inicia otro
+  hilo. «Nuevo» es una decisión explícita. El nombre de marca sigue configurable
+  en Ajustes y no cambia el contrato del Orb ni sus estados.
+- Bienvenida opcional solo en el estado vacío. Reduced motion elimina la
+  animación. El Orb es plano: prevalece la constitución sobre degradados y
+  duraciones decorativas de los adjuntos históricos.
+- Propuesta y aplicación son estados distintos. Aplicar y Deshacer requieren
+  clic y conservan las operaciones/auditoría. Si hubo una edición posterior,
+  la IA no la elimina: se revisa el historial del editor.
+- El precio del artefacto es indicativo y procede del motor y las reglas de
+  Ajustes; no reemplaza calcular/aplicar precios antes de emitir. Sin autoridad
+  térmica completa, Uw y su diferencia siguen Sin dato con causa y acción.
+- MOCK exige habilitación explícita en desarrollo y se muestra como «Proveedor
+  de prueba» solo en DEV. La aceptación conserva MiMo en la organización
+  principal y separa el tenant sintético. No se activa fallback silencioso.

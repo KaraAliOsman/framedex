@@ -1389,7 +1389,8 @@ def test_agent_customer_comms_drafts_message(monkeypatch):
     assert artifact["references"] == [str(project_id)]
 
 
-def test_agent_approval_sticky_across_rounds(monkeypatch):
+@pytest.mark.parametrize("outcomes", [[], [{"turn_index": 1, "step_index": 0, "action": "apply_failed"}]])
+def test_agent_approval_sticky_across_rounds(monkeypatch, outcomes):
     """A no-op follow-up must not flip a job whose earlier round still has a
     gated step undecided — approvals are sticky, so the job stays
     WAITING_FOR_APPROVAL until every proposed step has an outcome."""
@@ -1403,7 +1404,7 @@ def test_agent_approval_sticky_across_rounds(monkeypatch):
             {"role": "user", "text": "haz todas 2F"},
             {"role": "agent", "reply": "listo", "steps": [{"kind": "ops"}]},
         ],
-        "outcomes": [],
+        "outcomes": outcomes,
     }
     result = agent.act(
         org_id=uuid4(),

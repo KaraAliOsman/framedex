@@ -353,6 +353,7 @@ export const domainLabels: Readonly<Record<string, string>> = {
   aal2: "Sesión con doble factor",
   agent: "Asistente",
   applied: "Aplicado",
+  undone: "Deshecho",
   apply_failed: "Falló al aplicar",
   auto: "Automático",
   catalog_imports: "Importaciones de catálogo",

@@ -22,6 +22,7 @@ from authentication.tenancy import (
 )
 from authentication.views import verified_request_token
 from jobs import registry, service
+from jobs.presentation import present_job
 from jobs.serializers import (
     JobEnqueueSerializer,
     JobListQuerySerializer,
@@ -114,7 +115,7 @@ class JobListCreateView(APIView):
     def get(self, request):
         query = validate(JobListQuerySerializer, request.query_params)
         with public_job_errors():
-            with job_scope(request, _JOB_READERS) as (_, _, org_id):
+            with job_scope(request, _JOB_READERS) as (token, tenant, org_id):
                 items = service.list_recent(
                     org_id=org_id,
                     job_type=query.get("type"),
@@ -122,6 +123,7 @@ class JobListCreateView(APIView):
                     limit=query.get("limit", 50),
                     offset=query.get("offset", 0),
                 )
+                items = [present_job(item, org_id=org_id, role=tenant.active_organization.role, actor_id=token.user_id) for item in items]
         return Response(JobRunSerializer(items, many=True).data)
 
     @extend_schema(
@@ -168,8 +170,10 @@ class JobDetailView(APIView):
     )
     def get(self, request, job_id: UUID):
         with public_job_errors():
-            with job_scope(request, _JOB_READERS) as (_, _, org_id):
+            with job_scope(request, _JOB_READERS) as (token, tenant, org_id):
                 job = service.get(org_id=org_id, job_id=job_id)
+                if job is not None:
+                    job = present_job(job, org_id=org_id, role=tenant.active_organization.role, actor_id=token.user_id)
         if job is None:
             raise contract_error(404, "job_not_found", "Trabajo no encontrado.")
         return Response(JobRunSerializer(job).data)
@@ -192,4 +196,5 @@ class JobRetryView(APIView):
                     actor_id=token.user_id,
                     role=tenant.active_organization.role,
                 )
+                job = present_job(job, org_id=org_id, role=tenant.active_organization.role, actor_id=token.user_id)
         return Response(JobRunSerializer(job).data)

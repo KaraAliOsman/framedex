@@ -31,6 +31,13 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+.operation-preview__dimensions {
+  font-size: var(--type-dense);
+}
+.operation-preview__dimensions span {
+  display: block;
+  white-space: nowrap;
+}
 .operation-preview__prices {
   display: grid;
   grid-template-columns: 1fr auto;

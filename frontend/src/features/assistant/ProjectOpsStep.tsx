@@ -55,7 +55,10 @@ export function ProjectOpsStep({
   projectId: string;
   operationKey: string;
   declined?: boolean;
-  onSettled(action: "applied" | "declined" | "apply_failed", ops: { op?: string }[]): void;
+  onSettled(
+    action: "applied" | "declined" | "apply_failed" | "undone",
+    ops: { op?: string }[],
+  ): void;
 }): JSX.Element {
   const queryClient = useQueryClient();
   const [preview, setPreview] = useState<ProjectOpsPreviewResponse | null>(null);
@@ -165,6 +168,7 @@ export function ProjectOpsStep({
       });
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setState("undone");
+      onSettled("undone", ops);
       void queryClient.invalidateQueries();
     } catch (error) {
       setMessage(detail(error));

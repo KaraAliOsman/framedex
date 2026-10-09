@@ -26,6 +26,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Asistente y trabajos](product/assistant-work.md) — presencia privada por contexto, artefactos del motor, decisiones y deshacer auditables.
+
 - [Producción por estación](product/production-stations.md) — cola privada, QR físico, detalle escalable y decisiones de calidad idempotentes.
 
 - [Trabajo de Hoy y flujo](product/today-workflow.md) — cola por consecuencia, decisiones humanas, navegación por rol y búsqueda de entidades.

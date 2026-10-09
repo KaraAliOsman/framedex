@@ -948,7 +948,7 @@ def _agent_output(input_payload: dict) -> dict:
     org_name = str(org.get("name") or "la organización")
     reply = (
         f"Revisé el contexto de {org_name} para “{goal[:120]}”. "
-        "Respuesta determinista del proveedor MOCK."
+        "Respuesta del proveedor de prueba."
     )
     evidence = re.findall(
         r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
@@ -975,12 +975,22 @@ def _agent_output(input_payload: dict) -> dict:
     # The service passes the position's product at input_payload top level
     # (not inside context) — the mock must read the same place the prompt does.
     product = context.get("product") or input_payload.get("product")
-    if not observations and surface_name == "position" and product:
+    if surface_name == "position" and product:
         # A mutation-looking goal on the position surface produces a real
         # design-ops proposal — the ops card → apply → Guardar path stays
         # exercisable under mock. The service validates each op through the
         # same contract a live provider hits.
         design = _design_assist_output({"prompt": goal, "product": product})
+        # Explicit test-provider fixture for the proposal/apply/undo contract.
+        # It emits intents only; the shared registry and engine must still
+        # validate the physical design and compute every effect and price.
+        if re.search(r"divid|divide", goal.lower()) and re.search(r"dos|2", goal.lower()) and re.search(r"oscil", goal.lower()):
+            modules = product.get("assembly", {}).get("modules", [])
+            if len(modules) == 1:
+                design = {"ops": [
+                    {"op": "split_bay", "module": modules[0]["id"], "bay": "b1", "axis": "V", "from": "CENTER"},
+                    {"op": "set_opening", "module": modules[0]["id"], "opening": "TILT_TURN_LEFT"},
+                ], "notes": "Propuesta: dos hojas oscilobatientes. Revisa la simulación antes de aplicar."}
         if design["ops"]:
             document["steps"].append(
                 {"kind": "ops", "ops": design["ops"], "label": design["notes"]}

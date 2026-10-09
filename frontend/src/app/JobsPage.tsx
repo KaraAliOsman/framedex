@@ -8,7 +8,7 @@ import type { JobRun } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { jobErrorKey } from "../features/jobs/jobError";
 import { formatDateTime } from "../format";
-import { EmptyState, PageHeader } from "../ui";
+import { EmptyState, PageHeader, StatusChip, LoadingState, ErrorState, DeniedState } from "../ui";
 import { t, tDynamic, type TranslationKey } from "../i18n/es-CL";
 import { AiWorkList } from "../features/assistant/AiWorkList";
 import { AI_CAPABILITIES } from "../features/assistant/providerLabels";
@@ -21,7 +21,11 @@ const STATE_KEYS: Record<string, TranslationKey> = {
   CANCELED: "jobs.state.CANCELED",
 };
 
-const TERMINAL_RETRYABLE = new Set(["FAILED", "CANCELED"]);
+function duration(value: number | null | undefined): string {
+  if (value == null) return "Sin dato: aún no comenzó";
+  const seconds = Math.floor(value / 1000);
+  return seconds >= 60 ? `${Math.floor(seconds / 60)} min ${seconds % 60} s` : `${seconds} s`;
+}
 
 function typeLabel(type: string): string {
   return tDynamic("jobs.type", type);
@@ -46,9 +50,7 @@ function jobFailure(error: JobRun["error"]): JobFailure | null {
 
 /** Background work made visible: what ran, what's running, what failed —
  * with the recovery action (reintentar) next to the failure it fixes.
- * Retry stays available on every terminal job: the endpoint reauthorizes
- * the current actor, so a failure whose cause was fixed (restored access,
- * repaired storage) recovers through it. */
+ * The backend declares retry eligibility and reauthorizes each attempt. */
 const PAGE_SIZE = 100;
 
 export function JobsPage(): JSX.Element {
@@ -177,23 +179,26 @@ export function JobsPage(): JSX.Element {
       {capabilityFilter ? (
         <AiWorkList capability={capabilityFilter} state={stateFilter} />
       ) : query.isPending ? (
-        <p role="status">{t("dashboard.attentionLoading")}</p>
+        <LoadingState label="Cargando trabajos" />
       ) : query.isError ? (
-        <p role="alert">{t("jobs.error")}</p>
+        query.error instanceof ApiError && query.error.status === 403 ? (
+          <DeniedState reason="Pide al dueño, a un estimador o al jefe de taller que revise el trabajo." />
+        ) : (
+          <ErrorState title={t("jobs.error")} onRetry={() => void query.refetch()} />
+        )
       ) : items.length === 0 ? (
         <EmptyState title={t("jobs.empty")} />
       ) : (
         <ul className="jobs-list">
           {items.map((job) => {
+            const queueState = job.state;
             const failure = jobFailure(job.error);
             const failureKey = failure ? jobErrorKey(failure.detail) : null;
             return (
               <li key={job.id} className="job-row" data-state={job.state.toLowerCase()}>
                 <div className="job-row-main">
                   <strong>{typeLabel(job.type)}</strong>
-                  <span className="status-chip" data-status={job.state.toLowerCase()}>
-                    {t(STATE_KEYS[job.state] ?? "jobs.state.QUEUED")}
-                  </span>
+                  <StatusChip status={queueState} />
                   {job.ai_job_id ? (
                     <Link
                       className="ui-button ui-button--small ui-button--ghost"
@@ -203,15 +208,24 @@ export function JobsPage(): JSX.Element {
                     </Link>
                   ) : null}
                 </div>
+                <p className="job-row-object">
+                  {job.context_url ? (
+                    <Link to={job.context_url}>{job.context_label}</Link>
+                  ) : (
+                    (job.context_label ?? "Trabajo de organización")
+                  )}
+                </p>
                 <div className="job-row-meta">
+                  <span>{job.actor_label ?? "Usuario no disponible"}</span>
+                  <span>Duración: {duration(job.duration_ms)}</span>
                   <span>
                     {t("jobs.attempt")
                       .replace("{attempt}", String(job.attempt))
                       .replace("{max}", String(job.max_attempts))}
                   </span>
-                  <span>{t("jobs.progress").replace("{percent}", job.progress)}</span>
                   <time dateTime={job.created_at}>{formatDateTime(job.created_at)}</time>
                 </div>
+                <p>{job.result_label}</p>
                 {job.state === "FAILED" && failure !== null && failureKey !== null && (
                   <p className="job-row-error">{t(failureKey)}</p>
                 )}
@@ -221,7 +235,7 @@ export function JobsPage(): JSX.Element {
                     <code>{failure.detail}</code>
                   </details>
                 )}
-                {TERMINAL_RETRYABLE.has(job.state) && (
+                {job.can_retry === true && (
                   <button
                     type="button"
                     className="ui-button ui-button--small"

@@ -959,6 +959,86 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/ai/presence/:
+    get:
+      operationId: ai_presence_get
+      description: Latest work for this caller and this exact stable context, without
+        a page limit.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: refs
+        schema:
+          type: string
+          minLength: 1
+          default: '{}'
+          maxLength: 8000
+      - in: query
+        name: surface
+        schema:
+          type: string
+          minLength: 2
+          maxLength: 80
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiPresence'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/ai/settings/:
     get:
       operationId: ai_settings_get
@@ -20137,11 +20217,13 @@ components:
       - applied
       - declined
       - apply_failed
+      - undone
       type: string
       description: |-
         * `applied` - applied
         * `declined` - declined
         * `apply_failed` - apply_failed
+        * `undone` - undone
     AiJobOutcomeRequest:
       type: object
       description: 'Client report: what the human did with one proposed step.'
@@ -20264,6 +20346,22 @@ components:
       - tokens_completion
       - tokens_prompt
       - users
+    AiPresence:
+      type: object
+      properties:
+        context_label:
+          type: string
+        context_url:
+          type: string
+          nullable: true
+        job:
+          allOf:
+          - $ref: '#/components/schemas/AiJob'
+          nullable: true
+      required:
+      - context_label
+      - context_url
+      - job
     AiRouteSettingsRequest:
       type: object
       properties:
@@ -26683,6 +26781,20 @@ components:
           type: string
           format: uuid
           nullable: true
+        context_label:
+          type: string
+        context_url:
+          type: string
+          nullable: true
+        actor_label:
+          type: string
+        duration_ms:
+          type: integer
+          nullable: true
+        can_retry:
+          type: boolean
+        result_label:
+          type: string
       required:
       - attempt
       - completed_at

@@ -17,7 +17,10 @@ export function BatchOpsStep({
   operationKey: string;
   declined?: boolean;
   settled: boolean;
-  onSettled(action: "applied" | "declined" | "apply_failed", ops: { op?: string }[]): void;
+  onSettled(
+    action: "applied" | "declined" | "apply_failed" | "undone",
+    ops: { op?: string }[],
+  ): void;
 }): JSX.Element {
   const ops = (step.items ?? []).flatMap((raw) => {
     const item = raw as { position_id?: string; ops?: Record<string, unknown>[] };
@@ -39,7 +42,8 @@ export function BatchOpsStep({
       operationKey={operationKey}
       declined={declined}
       onSettled={(action, intents) => {
-        if (!settled || action === "apply_failed") onSettled(action, intents);
+        if (!settled || action === "apply_failed" || action === "undone")
+          onSettled(action, intents);
       }}
     />
   );

@@ -24,4 +24,12 @@ export interface JobRun {
   completed_at: string | null;
   /** @nullable */
   ai_job_id?: string | null;
+  context_label?: string;
+  /** @nullable */
+  context_url?: string | null;
+  actor_label?: string;
+  /** @nullable */
+  duration_ms?: number | null;
+  can_retry?: boolean;
+  result_label?: string;
 }
