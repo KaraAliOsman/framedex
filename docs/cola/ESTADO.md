@@ -16,7 +16,7 @@
 | P25 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/129 | 588835689c0324b6f76f0ea474f6460c6c22f0b1 | CI 4/4 verde; marca B, primera posición y emisor sellado; PDF revisado, correo idempotente/revocado, 1173 pgTAP, 410 integraciones y 11 E2E; revisión corregida. |
 | P04 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/130 | f5dbaa92958b279471bd6adfdbc0fe3693e70538 | CI 4/4 verde; lienzo/cotas, precio por cantidad y fantasma/aplicar/deshacer; 1173 pgTAP, 418 integraciones y 17 E2E; rúbrica PASA. |
 | P05 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/131 | 52f3ee8102753727b7ba9e568ec18593b5d269d3 | CI 4/4 verde; gramática DIN/vistas/cotas comunes, 56 fixtures de paridad, 1173 pgTAP y 418 integraciones; rúbrica PASA. |
-| P09 | 1 | pendiente |  |  |  |
+| P09 | 1 | en curso |  |  |  |
 | P07 | 1 | pendiente |  |  |  |
 | P03 | 1 | pendiente |  |  |  |
 | P12 | 1 | pendiente |  |  |  |
