@@ -1,0 +1,462 @@
+[
+  {
+    "name": "manager-tablero-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-interactividad-1440-light",
+    "interactiveMs": 889
+  },
+  {
+    "name": "manager-detalle-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "pestanas-1440-light",
+    "tabsTop": 373.96875
+  },
+  {
+    "name": "manager-piezas-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-corte-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-mecanizado-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-vidrios-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-herrajes-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-calidad-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-embalaje-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-trazabilidad-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-tablero-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-interactividad-1440-dark",
+    "interactiveMs": 908
+  },
+  {
+    "name": "manager-detalle-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "pestanas-1440-dark",
+    "tabsTop": 373.96875
+  },
+  {
+    "name": "manager-piezas-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-corte-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-mecanizado-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-vidrios-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-herrajes-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-calidad-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-embalaje-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-trazabilidad-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-tablero-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-interactividad-1280-light",
+    "interactiveMs": 1035
+  },
+  {
+    "name": "manager-detalle-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "pestanas-1280-light",
+    "tabsTop": 373.96875
+  },
+  {
+    "name": "manager-piezas-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-corte-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-mecanizado-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-vidrios-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-herrajes-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-calidad-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-embalaje-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-trazabilidad-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-tablero-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-interactividad-1280-dark",
+    "interactiveMs": 967
+  },
+  {
+    "name": "manager-detalle-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "pestanas-1280-dark",
+    "tabsTop": 373.96875
+  },
+  {
+    "name": "manager-piezas-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-corte-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-mecanizado-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-vidrios-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-herrajes-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-calidad-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-embalaje-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-trazabilidad-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-tablero-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-interactividad-1024-light",
+    "interactiveMs": 822
+  },
+  {
+    "name": "manager-detalle-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "pestanas-1024-light",
+    "tabsTop": 373.96875
+  },
+  {
+    "name": "manager-piezas-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-corte-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-mecanizado-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-vidrios-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-herrajes-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-calidad-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-embalaje-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-trazabilidad-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-tablero-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-interactividad-1024-dark",
+    "interactiveMs": 937
+  },
+  {
+    "name": "manager-detalle-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "pestanas-1024-dark",
+    "tabsTop": 373.96875
+  },
+  {
+    "name": "manager-piezas-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-corte-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-mecanizado-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-vidrios-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-herrajes-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-calidad-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-embalaje-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "manager-trazabilidad-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-interactividad-1440-light",
+    "interactiveMs": 935
+  },
+  {
+    "name": "operator-detalle-1440-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-interactividad-1440-dark",
+    "interactiveMs": 928
+  },
+  {
+    "name": "operator-detalle-1440-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-interactividad-1280-light",
+    "interactiveMs": 922
+  },
+  {
+    "name": "operator-detalle-1280-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-interactividad-1280-dark",
+    "interactiveMs": 891
+  },
+  {
+    "name": "operator-detalle-1280-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-interactividad-1024-light",
+    "interactiveMs": 926
+  },
+  {
+    "name": "operator-detalle-1024-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-interactividad-1024-dark",
+    "interactiveMs": 927
+  },
+  {
+    "name": "operator-detalle-1024-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-390-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-interactividad-390-light",
+    "interactiveMs": 936
+  },
+  {
+    "name": "operator-detalle-390-light",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-390-dark",
+    "findings": [],
+    "overflow": false
+  },
+  {
+    "name": "operator-interactividad-390-dark",
+    "interactiveMs": 934
+  },
+  {
+    "name": "operator-detalle-390-dark",
+    "findings": [],
+    "overflow": false
+  }
+]

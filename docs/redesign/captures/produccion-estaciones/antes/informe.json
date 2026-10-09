@@ -1,0 +1,450 @@
+[
+  {
+    "name": "manager-tablero-1440-light",
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "name": "manager-detalle-1440-light",
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "button.production-remake production-cancel Cancelar orden"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "name": "operator-tablero-1440-light",
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "name": "operator-detalle-1440-light",
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.production-orders Órdenes de trabajo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order active "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.production-order "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.cnc-workspace "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "article.production-detail "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "dl.production-materials "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "li.production-step step-ready "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.operator-card Trabajo del puesto"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "footer.operator-card-actions "
+      }
+    ],
+    "overflow": false
+  }
+]

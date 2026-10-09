@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import {
+  productionQcRemake,
   productionOrderCancel,
   productionOrderCncExport,
   productionOrderMaterialRecheck,
@@ -55,30 +56,34 @@ import type {
 import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { formatDateTime } from "../../format";
-import { DeniedState, EmptyState, PageHeader, usePrompt } from "../../ui";
-import { fmtMm, fmtPct } from "../../format";
+import {
+  DeniedState,
+  BlockedState,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+  Tabs,
+  TechDetails,
+  usePrompt,
+} from "../../ui";
+import { fmtMm } from "../../format";
 import { formatDate } from "../money";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
 import { domainLabels } from "../../i18n/domainLabels";
 import { useAssistantSurface } from "../assistant/assistantContext";
-import { PLAN_REQUIRED_CODES, STEP_STOCK_KINDS, cutRoleLabel, stationCodeLabel } from "./labels";
+import { PLAN_REQUIRED_CODES, STEP_STOCK_KINDS } from "./labels";
 
-/** Narrow view over `production_station_queue` entries — the sidebar renders
- * the server's open dict shape (same pattern as the trace payload). */
-type StationQueueGroup = {
-  code?: string;
-  pending?: number;
-  in_progress?: number;
-  blocked?: number;
-  entries?: Array<{
-    step_id?: string;
-    order_id?: string;
-    order_code?: string;
-    label?: string;
-    status?: string;
-    is_next?: boolean;
-  }>;
-};
+import { ProductionBoard, type StationQueueGroup } from "./ProductionBoard";
+import { OperatorStationPage } from "./OperatorStation";
+import {
+  WorkOrderHistory,
+  WorkOrderPieces,
+  WorkOrderStepper,
+  WorkOrderShortages,
+  orderPieces,
+} from "./WorkOrderParts";
+import { PieceScanner } from "./PieceScanner";
 import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
 import { CncPanel } from "./CncPanel";
 import { CncWorkspace } from "./CncWorkspace";
@@ -86,7 +91,7 @@ import { GlassOrderPanel } from "../glass/GlassOrderPanel";
 import { HardwarePicking } from "./HardwarePicking";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import { OperatorStepCard, type QcCheckInput } from "./OperatorCard";
-import { TracePieceMatches, TracePlan, TraceStock } from "./TraceView";
+import { TracePieceMatches } from "./TraceView";
 import type { PieceMatch } from "./TraceView";
 import "./production.css";
 
@@ -94,13 +99,6 @@ function stockUnitLabel(unit?: string): string {
   if (!unit) return "Sin dato";
   return tOptional(`purchasing.unitValue.${unit}.one`) ?? "Sin dato";
 }
-
-type WorkOrderMaterials = {
-  profile_cuts?: unknown[];
-  glasses?: unknown[];
-  panels?: unknown[];
-  hardware_items?: unknown[];
-};
 
 type StepAction = "START" | "COMPLETE" | "BLOCK" | "UNBLOCK" | "NOTE" | "QC_FAIL";
 
@@ -128,13 +126,6 @@ type WorkOrderPacking = {
   units?: PackingUnit[];
 };
 
-const stepStatusKey: Record<string, Parameters<typeof t>[0]> = {
-  PENDING: "production.stepPending",
-  READY: "production.stepReady",
-  IN_PROGRESS: "production.stepInProgress",
-  DONE: "production.stepDone",
-  BLOCKED: "production.stepBlocked",
-};
 const orderStatusKey: Record<string, Parameters<typeof t>[0]> = {
   RELEASED: "production.orderReleased",
   IN_PROGRESS: "production.orderInProgress",
@@ -153,37 +144,6 @@ const TERMINAL_ORDER_STATUSES: ReadonlySet<string> = new Set([
   "INSTALLED",
   "CANCELLED",
 ]);
-const eventKey: Record<string, Parameters<typeof t>[0]> = {
-  WO_RELEASED: "production.eventReleased",
-  STEP_STARTED: "production.eventStepStarted",
-  STEP_COMPLETED: "production.eventStepCompleted",
-  STEP_BLOCKED: "production.eventStepBlocked",
-  STEP_UNBLOCKED: "production.eventStepUnblocked",
-  NOTE: "production.eventNote",
-  WO_COMPLETED: "production.eventCompleted",
-  WO_HOLD: "production.eventHold",
-  WO_OPTIMIZED: "production.eventOptimized",
-  QC_FAILED: "production.eventQcFailed",
-  QC_CHECK: "production.eventQcCheck",
-  WO_REMADE: "production.eventRemade",
-  WO_CNC_EXPORTED: "production.eventCncExported",
-  WO_DXF_EXPORTED: "production.eventDxfExported",
-  WO_PACKED: "production.eventPacked",
-  WO_DISPATCHED: "production.eventDispatched",
-  WO_DISPATCH_VOIDED: "production.eventDispatchVoided",
-  WO_INSTALLED: "production.eventInstalled",
-  WO_DELIVERY_SCHEDULED: "production.eventDeliveryScheduled",
-  WO_DELIVERY_ON_ROUTE: "production.eventDeliveryOnRoute",
-  WO_DELIVERY_DELIVERED: "production.eventDeliveryDelivered",
-  WO_DELIVERY_CONFIRMED: "production.eventDeliveryConfirmed",
-  WO_DELIVERY_FAILED: "production.eventDeliveryFailed",
-  WO_REMNANTS_SETTLED: "production.eventRemnantsSettled",
-  WO_OPS_EXPORTED: "production.eventOpsExported",
-  WO_CNC_PROGRAM: "production.eventCncProgram",
-  WO_STOCK_CONSUMED: "production.eventStockConsumed",
-  WO_CANCELLED: "production.eventCancelled",
-  WO_MATERIAL_RECHECK: "production.eventMaterialRecheck",
-};
 
 const deliveryStatusKey: Record<string, Parameters<typeof t>[0]> = {
   SCHEDULED: "production.deliveryStatusScheduled",
@@ -277,12 +237,42 @@ const actionLabel: Record<StepAction, Parameters<typeof t>[0]> = {
 };
 
 export function ProductionPage(): JSX.Element {
+  const auth = useAuthSession();
+  const org = auth.me?.active_organization?.id ?? "";
+  return auth.me?.active_organization?.role === "OPERATOR" ? (
+    <OperatorStationPage key={org} />
+  ) : (
+    <ProductionOfficePage key={org} />
+  );
+}
+
+function ProductionOfficePage(): JSX.Element {
   const [glassBatch, setGlassBatch] = useState<string[]>([]);
   const auth = useAuthSession();
   const role = auth.me?.active_organization?.role ?? "";
   const [params, setParams] = useSearchParams();
+  const requestedTab = params.get("section") ?? "resumen";
+  const aliases: Record<string, string> = {
+    "cut-plan": "corte",
+    cut: "corte",
+    machining: "mecanizado",
+    packing: "embalaje",
+    delivery: "embalaje",
+    installation: "embalaje",
+    trace: "trazabilidad",
+    events: "trazabilidad",
+    quality: "calidad",
+  };
+  const activeTab = aliases[requestedTab] ?? requestedTab;
+  const selectTab = (tab: string) => {
+    const next = new URLSearchParams(params);
+    next.set("section", tab);
+    setParams(next);
+  };
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [detail, setDetail] = useState<ProductionOrderDetail | null>(null);
+  const [detailError, setDetailError] = useState("");
   const [prepVersions, setPrepVersions] = useState<ProductionPrepItem[]>([]);
   // While a work order is open, Ask DEKOPEN answers inside that order's
   // typed context — steps, status and shortages — not the generic list.
@@ -350,6 +340,7 @@ export function ProductionPage(): JSX.Element {
       order.order_code.toUpperCase() === selectedParam.trim().toUpperCase(),
   );
   const selectedId = resolvedOrder?.id ?? selectedParam;
+  const canLoadOrder = /^[0-9a-f-]{32,}$/i.test(selectedId) || !ordersLoading;
   selectedIdRef.current = selectedId;
   /** Triage queue — deep-linkable: /production?status=HOLD lands on the held
    * orders (dashboard attention items point here). */
@@ -371,31 +362,29 @@ export function ProductionPage(): JSX.Element {
   const listFiltered = statusFilter !== "" || shortageOnly || dispatchReadyOnly || blockedOnly;
   // QC rejections bind to a physical unit — the piece labels the order's
   // trace already computed are the picker options (review PM-H2).
-  const qcItemOptions = trace
-    ? [...new Set(Object.values(trace.labels ?? {}).map(String))].sort()
+  const qcItemOptions = detail
+    ? [
+        ...new Set(
+          orderPieces(detail)
+            .filter((piece) => !piece.code.startsWith("Sin dato"))
+            .map((piece) => piece.code),
+        ),
+      ].sort()
     : [];
 
-  // A workspace leads with the work — pin the top-priority order into the
-  // detail pane instead of leaving it empty waiting for a click.
-  useEffect(() => {
-    if (selectedId || filteredOrders.length === 0) return;
-    const next = new URLSearchParams(params);
-    next.set("order", filteredOrders[0]!.id);
-    setParams(next, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, filteredOrders[0]?.id]);
-
-  const loadOrders = useCallback(async () => {
+  const loadOrders = useCallback(async (signal?: AbortSignal) => {
     // Independent feeds: a 500 on the station queue (or prep) must not blank
     // the order list — each call settles on its own.
     const [response, prepResponse, queueResponse] = await Promise.all([
-      productionOrders(),
-      productionPrep().catch(() => null),
-      productionStationQueue().catch(() => null),
+      productionOrders({ signal }),
+      productionPrep({ signal }).catch(() => null),
+      productionStationQueue({ signal }).catch(() => null),
     ]);
+    if (signal?.aborted) return;
     if (prepResponse === null || queueResponse === null) {
       setMessage(t("production.loadError"));
     }
+    setOrdersLoading(false);
     if (response.status === 200) setOrders(response.data.orders);
     else setMessage(t("production.loadError"));
     // §8: versions approved for production but not yet released surface here
@@ -412,39 +401,46 @@ export function ProductionPage(): JSX.Element {
 
   const detailGeneration = useRef(0);
 
-  const loadDetail = useCallback(async (orderId: string) => {
+  const loadDetail = useCallback(async (orderId: string, signal?: AbortSignal) => {
     const generation = ++detailGeneration.current;
-    const [response, deliveryResponse] = await Promise.all([
-      productionOrderDetail(orderId),
-      productionOrderDelivery(orderId),
-    ]);
-    if (generation === detailGeneration.current) {
-      if (response.status === 200) {
-        setDetail(response.data);
-        setLabels([]);
-        setPhysicalLabels([]);
-        setPieceLabelsBlockedReason("");
-        const sealedColor = response.data.payload?.color;
-        if (typeof sealedColor === "string" && sealedColor.trim()) {
-          setOptColor(sealedColor);
+    setDetailError("");
+    try {
+      const [response, deliveryResponse] = await Promise.all([
+        productionOrderDetail(orderId, { signal }),
+        productionOrderDelivery(orderId, { signal }),
+      ]);
+      if (!signal?.aborted && generation === detailGeneration.current) {
+        if (response.status !== 200) throw new Error("order_detail_unavailable");
+        if (response.status === 200) {
+          setDetail(response.data);
+          setLabels([]);
+          setPhysicalLabels([]);
+          setPieceLabelsBlockedReason("");
+          const sealedColor = response.data.payload?.color;
+          if (typeof sealedColor === "string" && sealedColor.trim()) {
+            setOptColor(sealedColor);
+          }
         }
+        setDelivery(deliveryResponse.status === 200 ? deliveryResponse.data.delivery : null);
+        setDeliveries(
+          deliveryResponse.status === 200 ? (deliveryResponse.data.deliveries ?? []) : [],
+        );
+        setPendingUnits(
+          deliveryResponse.status === 200 ? (deliveryResponse.data.pending_units ?? []) : [],
+        );
+        setDispatchUnitsSel([]);
+        setDeliveryForm(null);
+        setConfirmOpen(false);
       }
-      setDelivery(deliveryResponse.status === 200 ? deliveryResponse.data.delivery : null);
-      setDeliveries(
-        deliveryResponse.status === 200 ? (deliveryResponse.data.deliveries ?? []) : [],
-      );
-      setPendingUnits(
-        deliveryResponse.status === 200 ? (deliveryResponse.data.pending_units ?? []) : [],
-      );
-      setDispatchUnitsSel([]);
-      setDeliveryForm(null);
-      setConfirmOpen(false);
+    } catch (error) {
+      if (!signal?.aborted && generation === detailGeneration.current)
+        setDetailError(actionErrorDetail(error));
     }
   }, []);
 
   const traceGeneration = useRef(0);
   const loadTrace = useCallback(
-    async (orderId?: string) => {
+    async (orderId?: string, signal?: AbortSignal) => {
       const id = orderId ?? selectedId;
       // Only the selected order's trace belongs in state — a mutating action
       // whose order is no longer selected refreshes nothing (and must not
@@ -453,11 +449,11 @@ export function ProductionPage(): JSX.Element {
       const generation = ++traceGeneration.current;
       setTraceBusy(true);
       try {
-        const response = await productionOrderTrace(id);
+        const response = await productionOrderTrace(id, { signal });
         // A late response is discarded when the selection moved on or a
         // newer request started — the operator card must never render an
         // order it isn't about.
-        if (generation !== traceGeneration.current) return;
+        if (signal?.aborted || generation !== traceGeneration.current) return;
         if (selectedIdRef.current !== id) return;
         // A non-200 response must behave like a failure — leaving the stale
         // trace up lets the operator act on pre-mutation stock/piece data.
@@ -466,7 +462,11 @@ export function ProductionPage(): JSX.Element {
         // On failure drop the stale data instead of leaving it displayed —
         // the reload control reappears and the card can't mislead the
         // operator with pre-mutation stock.
-        if (generation === traceGeneration.current && selectedIdRef.current === id) {
+        if (
+          !signal?.aborted &&
+          generation === traceGeneration.current &&
+          selectedIdRef.current === id
+        ) {
           setTrace(null);
         }
       } finally {
@@ -477,7 +477,13 @@ export function ProductionPage(): JSX.Element {
   );
 
   useEffect(() => {
-    void loadOrders().catch(() => setMessage(t("production.loadError")));
+    const controller = new AbortController();
+    void loadOrders(controller.signal).catch(() => {
+      if (controller.signal.aborted) return;
+      setOrdersLoading(false);
+      setMessage(t("production.loadError"));
+    });
+    return () => controller.abort();
   }, [loadOrders]);
 
   useEffect(() => {
@@ -498,7 +504,7 @@ export function ProductionPage(): JSX.Element {
     // it to the real id — firing now would 404 on the literal code. Once the
     // list has loaded, an unresolved param is bogus: let the fetch fail and
     // surface the honest error.
-    if (!resolvedOrder && orders.length === 0 && !/^[0-9a-f-]{32,}$/i.test(selectedParam)) return;
+    if (!canLoadOrder) return;
     setTrace(null);
     setOperatorStepId(null);
     // Drop the previous order's detail immediately — leaving it rendered
@@ -525,10 +531,12 @@ export function ProductionPage(): JSX.Element {
     // Keep pendingStepCode — it survives the async detail load so a scan
     // lands on the piece's station. It resolves once below.
     setStrategyCompare(null);
-    void loadDetail(selectedId).catch(() => setMessage(t("production.loadError")));
-    void loadTrace();
+    const controller = new AbortController();
+    void loadDetail(selectedId, controller.signal);
+    void loadTrace(selectedId, controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, selectedParam, resolvedOrder, orders.length, loadDetail, loadTrace]);
+  }, [selectedId, selectedParam, canLoadOrder, loadDetail, loadTrace]);
 
   // Resolve a scan deep-link: piece → station code → step id on this order.
   useEffect(() => {
@@ -759,6 +767,43 @@ export function ProductionPage(): JSX.Element {
       .finally(() => {
         if (mounted.current) setBusy(false);
       });
+  }
+
+  const qcOperation = useRef<{ order: string; key: string } | null>(null);
+  async function rejectWithRemake(orderId: string): Promise<void> {
+    const entered = await prompt({
+      title: "Rechazar y crear remake",
+      body: "La OT queda bloqueada y se crea una nueva OT con las mismas piezas selladas. Revisa el motivo antes de confirmar.",
+      input: { label: "Motivo del rechazo" },
+      confirmLabel: "Confirmar rechazo y remake",
+      danger: true,
+    });
+    if (entered === null) return;
+    if (!entered.trim()) {
+      setMessage("Escribe el motivo del rechazo.");
+      return;
+    }
+    if (qcOperation.current?.order !== orderId)
+      qcOperation.current = { order: orderId, key: crypto.randomUUID() };
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await productionQcRemake(orderId, {
+        confirmed: true,
+        operation_key: qcOperation.current.key,
+        note: entered,
+        item_code: qcFailItem,
+      });
+      if (response.status === 201) {
+        qcOperation.current = null;
+        await loadOrders();
+        openOrder(response.data.id);
+      }
+    } catch (error) {
+      setMessage(actionErrorDetail(error));
+    } finally {
+      setBusy(false);
+    }
   }
 
   function remake(orderId: string): void {
@@ -1245,6 +1290,8 @@ export function ProductionPage(): JSX.Element {
   // Field work: _STEP_ACTORS (office + installer) — route/failed/delivery
   // confirmations and the install act. Never drives station steps.
   const canField = canWrite || role === "INSTALLER";
+  const nextOpenStepIsQc = detail?.steps.find((s) => s.status !== "DONE")?.code === "QC";
+  const optimizationReady = resolvedOrder?.optimization_ready === true;
   if (!canAct) {
     return (
       <section className="production-page">
@@ -1263,2023 +1310,1755 @@ export function ProductionPage(): JSX.Element {
         </p>
       ) : null}
       <div className="production-layout">
-        <aside className="production-orders" aria-label={t("production.orders")}>
-          <h2>{t("production.orders")}</h2>
-          {/* Piece in hand → find its order without opening one first
-              (PM-M6). Top of the sidebar: scanning a stick is the most
-              frequent floor gesture, above filters and boards. */}
-          <ValidatedForm
-            className="production-trace-lookup"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void lookupPiece();
-            }}
-          >
-            <label>
-              {t("production.tracePieceLabel")}
-              <input
-                type="text"
-                value={pieceQuery}
-                onChange={(event) => setPieceQuery(event.target.value)}
-                placeholder={t("production.tracePiecePlaceholder")}
-                autoFocus
-              />
-            </label>
-            <button type="submit" disabled={pieceBusy || !pieceQuery.trim()}>
-              {t("production.tracePieceLookup")}
-            </button>
-          </ValidatedForm>
-          {pieceReport ? (
-            <TracePieceMatches
-              report={pieceReport}
-              onSelectOrder={(id, stepCode) => {
-                setPendingStepCode(stepCode ?? null);
-                openOrder(id);
-              }}
+        {!selectedId ? (
+          <div className="production-board-workspace">
+            <PieceScanner
+              value={pieceQuery}
+              onChange={setPieceQuery}
+              onScan={(value) => void lookupPiece(value)}
+              busy={pieceBusy}
             />
-          ) : pieceMiss ? (
-            <p className="production-trace-empty">{t("production.tracePieceNone")}</p>
-          ) : null}
-          {/* Station board first for the floor: the operator's authorized
-              queue — "qué está esperando en mi puesto" — leads the sidebar
-              before release/admin noise. Managers keep the release panel
-              on top; installers never see the station board at all. */}
-          {role === "OPERATOR" ? (
-            <>
-              {stationQueue.length ? (
-                <section className="production-station-queue">
-                  <h3>{t("production.stationQueue")}</h3>
-                  <ul>
-                    {stationQueue.map((group) => (
-                      <li key={group.code}>
-                        <strong>{stationCodeLabel(group.code)}</strong>
-                        <span className="production-station-counts">
-                          {t("production.stationQueueCounts")
-                            .replace("{ready}", String(group.pending ?? 0))
-                            .replace("{active}", String(group.in_progress ?? 0))
-                            .replace("{blocked}", String(group.blocked ?? 0))}
-                        </span>
-                        <ul>
-                          {(group.entries ?? []).map((entry) => (
-                            <li key={entry.step_id}>
-                              <button
-                                type="button"
-                                className="production-order"
-                                onClick={() => entry.order_id && openOrder(entry.order_id)}
-                              >
-                                <span className="production-order-code">
-                                  {entry.order_code ?? "—"}
-                                </span>
-                                <span className="production-order-line">
-                                  {entry.label ?? stationCodeLabel(group.code)}
-                                  {entry.is_next ? ` · ${t("production.stationQueueNext")}` : ""}
-                                </span>
-                                <span
-                                  className={`production-order-status step-${String(
-                                    entry.status ?? "",
-                                  ).toLowerCase()}`}
-                                >
-                                  {t(
-                                    entry.status === "READY" && !entry.is_next
-                                      ? "production.stepPending"
-                                      : (stepStatusKey[entry.status ?? ""] ??
-                                          "production.stepPending"),
-                                  )}
-                                </span>
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ) : orders.some((order) => !TERMINAL_ORDER_STATUSES.has(order.status)) ? (
-                <p className="production-station-empty">
-                  {t("production.stationQueueEmpty")}{" "}
-                  <button type="button" onClick={() => void loadOrders()}>
-                    {t("production.reload")}
-                  </button>
-                </p>
-              ) : null}
-            </>
-          ) : null}
-          {role !== "OPERATOR" && role !== "INSTALLER" && prepVersions.length > 0 ? (
-            <section className="production-prep" aria-label={t("production.prepTitle")}>
-              <h3>{t("production.prepTitle")}</h3>
-              <ul>
-                {prepVersions.map((version) => (
-                  <li key={version.version_id}>
-                    <span>
-                      {version.project_code} · {version.revision_code} · {version.positions}{" "}
-                      {t("production.prepPositions")}
-                    </span>
-                    {/* Non-writers get the same action disabled with a reason —
-                        an invisible gate hides work they should be able to request. */}
-                    <button
-                      type="button"
-                      className="production-prep-release"
-                      disabled={busy || !canWrite}
-                      title={canWrite ? undefined : t("production.writeHint")}
-                      onClick={() => release(version.version_id)}
-                    >
-                      {t("production.prepRelease")}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          <details className="glass-batch">
-            <summary>{t("glass.batch")}</summary>
-            <p>{t("glass.batchHelp")}</p>
-            <button
-              type="button"
-              className="ghost-button"
-              disabled={!glassBatch.length}
-              onClick={() => setGlassBatch([])}
-            >
-              {t("glass.batchClear")}
-            </button>
-            <GlassOrderPanel orderIds={glassBatch} />
-          </details>
-          <div
-            className="production-filters"
-            role="group"
-            aria-label={t("production.statusFilter")}
-          >
-            {[
-              "",
-              "RELEASED",
-              "IN_PROGRESS",
-              "HOLD",
-              "COMPLETED",
-              "DISPATCHED",
-              "INSTALLED",
-              "CANCELLED",
-            ].map((status) => (
-              <button
-                key={status || "all"}
-                type="button"
-                className={`production-filter${statusFilter === status ? " is-active" : ""}`}
-                aria-pressed={statusFilter === status}
-                onClick={() => {
-                  const next = new URLSearchParams(params);
-                  if (status) next.set("status", status);
-                  else next.delete("status");
-                  setParams(next);
+            {pieceReport ? (
+              <TracePieceMatches
+                report={pieceReport}
+                onSelectOrder={(id, code) => {
+                  setPendingStepCode(code ?? null);
+                  openOrder(id);
                 }}
-              >
-                {status === ""
-                  ? t("production.statusAll")
-                  : t(orderStatusKey[status] ?? "production.orderReleased")}
-              </button>
-            ))}
-            <button
-              type="button"
-              className={`production-filter${shortageOnly ? " is-active" : ""}`}
-              aria-pressed={shortageOnly}
-              onClick={() => {
-                const next = new URLSearchParams(params);
-                if (shortageOnly) next.delete("shortage");
-                else next.set("shortage", "1");
-                setParams(next);
-              }}
-            >
-              {t("production.filterShortage")}
-            </button>
-            <button
-              type="button"
-              className={`production-filter${dispatchReadyOnly ? " is-active" : ""}`}
-              aria-pressed={dispatchReadyOnly}
-              onClick={() => {
-                const next = new URLSearchParams(params);
-                if (dispatchReadyOnly) next.delete("dispatch_ready");
-                else next.set("dispatch_ready", "1");
-                setParams(next);
-              }}
-            >
-              {t("production.filterDispatchReady")}
-            </button>
+              />
+            ) : pieceMiss ? (
+              <p>No se encontró esa etiqueta. Revisa el código.</p>
+            ) : null}
+            {role !== "INSTALLER" && prepVersions.length > 0 ? (
+              <section className="production-prep" aria-label={t("production.prepTitle")}>
+                <h3>{t("production.prepTitle")}</h3>
+                <ul>
+                  {prepVersions.map((version) => (
+                    <li key={version.version_id}>
+                      <span>
+                        {version.project_code} · {version.revision_code} · {version.positions}{" "}
+                        {t("production.prepPositions")}
+                      </span>
+                      {/* Non-writers get the same action disabled with a reason —
+                        an invisible gate hides work they should be able to request. */}
+                      <button
+                        type="button"
+                        className="production-prep-release"
+                        disabled={busy || !canWrite}
+                        title={canWrite ? undefined : t("production.writeHint")}
+                        onClick={() => release(version.version_id)}
+                      >
+                        {t("production.prepRelease")}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+            <ProductionBoard
+              orders={filteredOrders}
+              stations={stationQueue}
+              onOpen={openOrder}
+              loading={ordersLoading}
+              error={message === t("production.loadError") ? message : undefined}
+              retry={() => void loadOrders().catch(() => setMessage(t("production.loadError")))}
+            />
             {listFiltered ? (
               <button
-                type="button"
-                className="production-filter production-filter-clear"
                 onClick={() => {
-                  const next = new URLSearchParams(params);
-                  next.delete("status");
-                  next.delete("shortage");
-                  next.delete("dispatch_ready");
-                  setParams(next);
+                  const url = new URLSearchParams(params);
+                  for (const key of ["status", "shortage", "dispatch_ready", "blocked"])
+                    url.delete(key);
+                  setParams(url);
                 }}
               >
-                {t("production.clearFilters")}
+                Limpiar filtros del enlace
               </button>
             ) : null}
-          </div>
-          {/* Station board for oversight roles — the operator already got
-              it at the top; installers work deliveries, not stations. */}
-          {role !== "OPERATOR" && role !== "INSTALLER" && stationQueue.length ? (
-            <section className="production-station-queue">
-              <h3>{t("production.stationQueue")}</h3>
+            <details className="production-glass-batch">
+              <summary>Pedido de vidrios por lote</summary>
               <ul>
-                {stationQueue.map((group) => (
-                  <li key={group.code}>
-                    <strong>{stationCodeLabel(group.code)}</strong>
-                    <span className="production-station-counts">
-                      {t("production.stationQueueCounts")
-                        .replace("{ready}", String(group.pending ?? 0))
-                        .replace("{active}", String(group.in_progress ?? 0))
-                        .replace("{blocked}", String(group.blocked ?? 0))}
-                    </span>
-                    <ul>
-                      {(group.entries ?? []).map((entry) => (
-                        <li key={entry.step_id}>
-                          <button
-                            type="button"
-                            className="production-order"
-                            onClick={() => entry.order_id && openOrder(entry.order_id)}
-                          >
-                            <span className="production-order-code">{entry.order_code ?? "—"}</span>
-                            <span className="production-order-line">
-                              {entry.label ?? stationCodeLabel(group.code)}
-                              {entry.is_next ? ` · ${t("production.stationQueueNext")}` : ""}
-                            </span>
-                            <span
-                              className={`production-order-status step-${String(
-                                entry.status ?? "",
-                              ).toLowerCase()}`}
-                            >
-                              {t(
-                                entry.status === "READY" && !entry.is_next
-                                  ? "production.stepPending"
-                                  : (stepStatusKey[entry.status ?? ""] ?? "production.stepPending"),
-                              )}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                {orders.map((order) => (
+                  <li key={order.id}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={glassBatch.includes(order.id)}
+                        disabled={!glassBatch.includes(order.id) && glassBatch.length >= 100}
+                        onChange={(e) =>
+                          setGlassBatch((ids) =>
+                            e.target.checked
+                              ? [...ids, order.id]
+                              : ids.filter((id) => id !== order.id),
+                          )
+                        }
+                      />
+                      {order.order_code}
+                    </label>
                   </li>
                 ))}
               </ul>
-            </section>
-          ) : null}
-          {orders.length === 0 ? <p>{t("production.empty")}</p> : null}
-          {listFiltered && orders.length > 0 && filteredOrders.length === 0 ? (
-            <p>{t("production.emptyFilter")}</p>
-          ) : null}
-          <ul>
-            {filteredOrders.map((order) => (
-              <li key={order.id}>
-                <label className="glass-batch-choice">
-                  <input
-                    type="checkbox"
-                    checked={glassBatch.includes(order.id)}
-                    disabled={!glassBatch.includes(order.id) && glassBatch.length >= 100}
-                    onChange={(event) =>
-                      setGlassBatch((ids) =>
-                        event.target.checked
-                          ? [...ids, order.id]
-                          : ids.filter((id) => id !== order.id),
-                      )
-                    }
-                  />
-                  {t("glass.batchSelect")} {order.order_code}
-                </label>
+              <GlassOrderPanel orderIds={glassBatch} />
+            </details>
+          </div>
+        ) : null}
+        {selectedId ? (
+          <article className="production-detail">
+            <button
+              className="production-back"
+              type="button"
+              onClick={() => {
+                const url = new URLSearchParams(params);
+                for (const key of ["order", "section", "piece", "identity"]) url.delete(key);
+                setParams(url);
+              }}
+            >
+              Volver al tablero
+            </button>
 
-                <button
-                  type="button"
-                  className={
-                    order.id === selectedId ? "production-order active" : "production-order"
-                  }
-                  onClick={() => openOrder(order.id)}
-                >
-                  <span className="production-order-code">{order.order_code}</span>
-                  <span className={`production-chip status-${order.status.toLowerCase()}`}>
-                    {t(orderStatusKey[order.status] ?? "production.orderReleased")}
+            {detail ? (
+              <>
+                <header className="production-detail-head">
+                  <h2>{detail.order_code}</h2>
+                  <span className={`production-chip status-${detail.status.toLowerCase()}`}>
+                    {t(orderStatusKey[detail.status] ?? "production.orderReleased")}
                   </span>
-                  <span className="production-order-progress">
-                    {order.steps_done}/{order.steps_total} {t("production.stepsShort")}
-                  </span>
-                  {order.next_step ? (
-                    <span className="production-order-next">
-                      {t("production.nextStep") + " · " + order.next_step.label}
+                  {detail.quantity ? (
+                    <span className="production-order-progress">
+                      {detail.quantity}{" "}
+                      {t(detail.quantity === 1 ? "production.unitsOne" : "production.units")}
                     </span>
                   ) : null}
-                  {order.shortage > 0 ? (
+                  {detail.shortage > 0 ? (
                     <span className="production-chip is-warn">
-                      {t("production.shortageChip").replace("{count}", String(order.shortage))}
+                      {t("production.shortageChip").replace("{count}", String(detail.shortage))}
                     </span>
                   ) : null}
-                  {order.version_shortage > order.shortage &&
-                  !TERMINAL_ORDER_STATUSES.has(order.status) ? (
-                    <span
+                  {detail.version_shortage > detail.shortage &&
+                  !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
+                    <button
+                      type="button"
                       className="production-chip is-warn"
                       title={t("production.versionShortageTitle")}
+                      onClick={() => {
+                        const next = new URLSearchParams(params);
+                        next.set("shortage", "1");
+                        setParams(next);
+                      }}
                     >
                       {t("production.versionShortageChip").replace(
                         "{count}",
-                        String(order.version_shortage - order.shortage),
+                        String(detail.version_shortage - detail.shortage),
                       )}
-                    </span>
+                    </button>
                   ) : null}
-                  {order.dispatch_ready ? (
+                  {detail.dispatch_ready ? (
                     <span className="production-chip is-ready">
                       {t("production.dispatchReadyChip")}
                     </span>
                   ) : null}
-                  {(() => {
-                    const reason = order.remake_reason;
-                    if (!reason) return null;
-                    const why = [reason.qc_item, reason.note]
-                      .filter((part): part is string => Boolean(part))
-                      .join(" · ");
-                    return (
-                      <span className="production-chip is-warn" title={why || undefined}>
-                        {t("production.remakeOf")}
-                        {why ? `: ${why}` : ""}
-                      </span>
-                    );
-                  })()}
-                </button>
-              </li>
-            ))}
-          </ul>
-          {/* CNC is a workshop surface — installers never program machines. */}
-          {role !== "INSTALLER" ? <CncWorkspace /> : null}
-        </aside>
-        <article className="production-detail">
-          {detail ? (
-            <>
-              <header className="production-detail-head">
-                <h2>{detail.order_code}</h2>
-                <span className={`production-chip status-${detail.status.toLowerCase()}`}>
-                  {t(orderStatusKey[detail.status] ?? "production.orderReleased")}
-                </span>
-                {detail.quantity ? (
-                  <span className="production-order-progress">
-                    {detail.quantity}{" "}
-                    {t(detail.quantity === 1 ? "production.unitsOne" : "production.units")}
-                  </span>
-                ) : null}
-                {detail.shortage > 0 ? (
-                  <span className="production-chip is-warn">
-                    {t("production.shortageChip").replace("{count}", String(detail.shortage))}
-                  </span>
-                ) : null}
-                {detail.version_shortage > detail.shortage &&
-                !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
-                  <button
-                    type="button"
-                    className="production-chip is-warn"
-                    title={t("production.versionShortageTitle")}
-                    onClick={() => {
-                      const next = new URLSearchParams(params);
-                      next.set("shortage", "1");
-                      setParams(next);
-                    }}
-                  >
-                    {t("production.versionShortageChip").replace(
-                      "{count}",
-                      String(detail.version_shortage - detail.shortage),
-                    )}
-                  </button>
-                ) : null}
-                {detail.dispatch_ready ? (
-                  <span className="production-chip is-ready">
-                    {t("production.dispatchReadyChip")}
-                  </span>
-                ) : null}
-                {canWrite && detail.dispatch_ready ? (
-                  <button
-                    type="button"
-                    className="production-dispatch"
-                    disabled={busy}
-                    onClick={() => dispatch(detail.id)}
-                  >
-                    {t("production.dispatchButton")}
-                  </button>
-                ) : null}
-                {canField &&
-                detail.status === "DISPATCHED" &&
-                (!delivery || delivery.status === "DELIVERED") ? (
-                  <button
-                    type="button"
-                    className="production-dispatch production-install"
-                    disabled={busy}
-                    onClick={() => install(detail.id)}
-                  >
-                    {t("production.installButton")}
-                  </button>
-                ) : null}
-                {(detail.dispatch_notes?.length
-                  ? detail.dispatch_notes
-                  : detail.dispatch_note_code
-                    ? [
-                        {
-                          note_code: detail.dispatch_note_code,
-                          voided: detail.dispatch_note_voided,
-                        },
-                      ]
-                    : []
-                ).map((entry) => {
-                  const code = String(entry.note_code ?? "");
-                  const voided = entry.voided === true;
-                  const noteId = typeof entry.id === "string" ? entry.id : undefined;
-                  const units = Array.isArray(entry.unit_indexes)
-                    ? (entry.unit_indexes as number[])
-                    : null;
-                  return (
+                  {activeTab === "embalaje" ? (
+                    <>
+                      {canWrite && detail.dispatch_ready ? (
+                        <button
+                          type="button"
+                          className="production-dispatch"
+                          disabled={busy}
+                          onClick={() => dispatch(detail.id)}
+                        >
+                          {t("production.dispatchButton")}
+                        </button>
+                      ) : null}
+                      {canField &&
+                      detail.status === "DISPATCHED" &&
+                      (!delivery || delivery.status === "DELIVERED") ? (
+                        <button
+                          type="button"
+                          className="production-dispatch production-install"
+                          disabled={busy}
+                          onClick={() => install(detail.id)}
+                        >
+                          {t("production.installButton")}
+                        </button>
+                      ) : null}
+                      {(detail.dispatch_notes?.length
+                        ? detail.dispatch_notes
+                        : detail.dispatch_note_code
+                          ? [
+                              {
+                                note_code: detail.dispatch_note_code,
+                                voided: detail.dispatch_note_voided,
+                              },
+                            ]
+                          : []
+                      ).map((entry) => {
+                        const code = String(entry.note_code ?? "");
+                        const voided = entry.voided === true;
+                        const noteId = typeof entry.id === "string" ? entry.id : undefined;
+                        const units = Array.isArray(entry.unit_indexes)
+                          ? (entry.unit_indexes as number[])
+                          : null;
+                        return (
+                          <button
+                            key={noteId ?? code}
+                            type="button"
+                            className={`production-dispatch production-note${voided ? " is-voided" : ""}`}
+                            title={voided ? t("production.dispatchNoteVoided") : undefined}
+                            onClick={() => void openDispatchNote(detail.id, noteId)}
+                          >
+                            {code}
+                            {units ? ` · ${unitLabel(units)}` : ""}
+                            {voided ? ` · ${t("production.dispatchNoteVoided")}` : ""}
+                          </button>
+                        );
+                      })}
+                      {canWrite &&
+                      detail.status === "DISPATCHED" &&
+                      !detail.dispatch_note_dte &&
+                      detail.dispatch_note_code &&
+                      !detail.dispatch_note_voided ? (
+                        <button
+                          type="button"
+                          className="production-dispatch production-void"
+                          disabled={busy}
+                          onClick={() => void voidNote(detail.id)}
+                        >
+                          {t("production.voidNoteButton")}
+                        </button>
+                      ) : null}
+                      {detail.dispatch_note_dte ? (
+                        <button
+                          type="button"
+                          className="production-dispatch production-note-dte"
+                          title={`${t("production.dteStatus")} · folio ${detail.dispatch_note_dte.folio}`}
+                          onClick={() => void openDispatchNoteDte(detail.id)}
+                        >
+                          {`${t("production.dteStatus")} · ${detail.dispatch_note_dte.folio}`}
+                        </button>
+                      ) : canWrite && detail.dispatch_note_code ? (
+                        <button
+                          type="button"
+                          className="production-dispatch"
+                          disabled={busy}
+                          onClick={() => void emitDispatchNoteDte(detail.id)}
+                        >
+                          {t("production.dteEmit")}
+                        </button>
+                      ) : null}
+                      {(() => {
+                        const envio = detail.dispatch_note_dte?.envio as
+                          | { status?: string; track_id?: string | null; attempted?: boolean }
+                          | null
+                          | undefined;
+                        if (!detail.dispatch_note_dte) return null;
+                        const resubmit = envio?.attempted === true && !envio?.track_id;
+                        return (
+                          <>
+                            {envio?.status ? (
+                              <button
+                                type="button"
+                                className="production-dispatch production-note-envio"
+                                title={`${t("production.envioStatus")} · ${envio.track_id ?? ""}`}
+                                onClick={() => void openDispatchEnvio(detail.id)}
+                              >
+                                {`${t("production.envioStatus")} · ${envio.status}`}
+                              </button>
+                            ) : canWrite ? (
+                              <button
+                                type="button"
+                                className="production-dispatch"
+                                disabled={busy}
+                                onClick={() => void sendDispatchEnvio(detail.id)}
+                              >
+                                {t("production.envioSend")}
+                              </button>
+                            ) : null}
+                            {canWrite && envio?.status === "PENDING" ? (
+                              <button
+                                type="button"
+                                className="production-dispatch"
+                                disabled={busy}
+                                onClick={() => void sendDispatchEnvio(detail.id, resubmit)}
+                              >
+                                {resubmit
+                                  ? t("production.envioResend")
+                                  : t("production.envioRefresh")}
+                              </button>
+                            ) : null}
+                          </>
+                        );
+                      })()}
+                    </>
+                  ) : null}
+                  {canWrite && detail.status === "HOLD" ? (
                     <button
-                      key={noteId ?? code}
                       type="button"
-                      className={`production-dispatch production-note${voided ? " is-voided" : ""}`}
-                      title={voided ? t("production.dispatchNoteVoided") : undefined}
-                      onClick={() => void openDispatchNote(detail.id, noteId)}
+                      className="production-remake"
+                      disabled={busy}
+                      onClick={() => remake(detail.id)}
                     >
-                      {code}
-                      {units ? ` · ${unitLabel(units)}` : ""}
-                      {voided ? ` · ${t("production.dispatchNoteVoided")}` : ""}
+                      {t("production.remakeButton")}
                     </button>
-                  );
-                })}
-                {canWrite &&
-                detail.status === "DISPATCHED" &&
-                !detail.dispatch_note_dte &&
-                detail.dispatch_note_code &&
-                !detail.dispatch_note_voided ? (
-                  <button
-                    type="button"
-                    className="production-dispatch production-void"
-                    disabled={busy}
-                    onClick={() => void voidNote(detail.id)}
-                  >
-                    {t("production.voidNoteButton")}
-                  </button>
+                  ) : null}
+                  {/* Stock arrived after release → top up open reservations
+                    instead of forcing a re-optimize (review P0-3). */}
+                  {canWrite &&
+                  detail.shortage > 0 &&
+                  !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
+                    <button
+                      type="button"
+                      className="production-remake"
+                      disabled={busy}
+                      onClick={() => recheckMaterials(detail.id)}
+                    >
+                      {t("production.materialRecheck")}
+                    </button>
+                  ) : null}
+                  {/* A cancelled order releases its reservations and freezes
+                    where it stands — terminal for every floor gate. */}
+                  {canWrite && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
+                    <button
+                      type="button"
+                      className="production-remake production-cancel"
+                      disabled={busy}
+                      onClick={() => void cancelOrder(detail.id)}
+                    >
+                      {t("production.cancelButton")}
+                    </button>
+                  ) : null}
+                </header>
+                <p className="production-detail-context ui-value">
+                  {resolvedOrder?.project_code ?? "Sin dato · obra no vinculada"} ·{" "}
+                  {resolvedOrder?.scheduled_date
+                    ? `Compromiso ${formatDate(resolvedOrder.scheduled_date)}`
+                    : "Sin dato · agenda de entrega pendiente"}{" "}
+                  · {detail.steps_done}/{detail.steps_total} pasos
+                </p>
+                <WorkOrderShortages detail={detail} office={canWrite} />
+                {activeTab === "resumen" &&
+                !optimizationReady &&
+                !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
+                  <BlockedState
+                    reason="Falta un plan de corte vigente. El jefe debe optimizar la OT antes de iniciar una estación que consume material."
+                    action={
+                      <button onClick={() => selectTab("corte")}>Preparar plan de corte</button>
+                    }
+                  />
                 ) : null}
-                {detail.dispatch_note_dte ? (
-                  <button
-                    type="button"
-                    className="production-dispatch production-note-dte"
-                    title={`${t("production.dteStatus")} · folio ${detail.dispatch_note_dte.folio}`}
-                    onClick={() => void openDispatchNoteDte(detail.id)}
-                  >
-                    {`${t("production.dteStatus")} · ${detail.dispatch_note_dte.folio}`}
-                  </button>
-                ) : canWrite && detail.dispatch_note_code ? (
-                  <button
-                    type="button"
-                    className="production-dispatch"
-                    disabled={busy}
-                    onClick={() => void emitDispatchNoteDte(detail.id)}
-                  >
-                    {t("production.dteEmit")}
-                  </button>
+                <WorkOrderStepper
+                  steps={detail.steps}
+                  selectedId={
+                    operatorStepId ?? detail.steps.find((s) => s.status !== "DONE")?.id ?? null
+                  }
+                  onSelect={(step) => {
+                    setOperatorStepId(step.id);
+                    selectTab(step.code === "QC" ? "calidad" : "resumen");
+                  }}
+                />
+                <Tabs
+                  label="Detalle de la OT"
+                  value={activeTab}
+                  onChange={selectTab}
+                  items={[
+                    { id: "resumen", label: "Resumen" },
+                    { id: "piezas", label: "Piezas" },
+                    { id: "corte", label: "Corte" },
+                    { id: "mecanizado", label: "Mecanizado" },
+                    { id: "vidrios", label: "Vidrios" },
+                    { id: "herrajes", label: "Herrajes" },
+                    { id: "calidad", label: "Calidad" },
+                    { id: "embalaje", label: "Embalaje" },
+                    { id: "trazabilidad", label: "Trazabilidad" },
+                  ]}
+                />
+                {activeTab === "piezas" ? <WorkOrderPieces pieces={orderPieces(detail)} /> : null}
+                {activeTab === "vidrios" ? <GlassOrderPanel orderIds={[detail.id]} /> : null}
+                {activeTab === "mecanizado" ? (
+                  <>
+                    <CncPanel orderId={detail.id} canWrite={canWrite} />
+                    <details>
+                      <summary>Máquinas y programas de la planta</summary>
+                      <CncWorkspace />
+                    </details>
+                  </>
+                ) : null}
+                {activeTab === "calidad" && canWrite && nextOpenStepIsQc ? (
+                  <div className="production-step-actions">
+                    <label>
+                      Pieza que se rechaza
+                      <select
+                        aria-label="Pieza que se rechaza"
+                        value={qcFailItem}
+                        onChange={(event) => setQcFailItem(event.target.value)}
+                      >
+                        <option value="">Toda la OT</option>
+                        {qcItemOptions.map((code) => (
+                          <option key={code}>{code}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void rejectWithRemake(detail.id)}
+                    >
+                      Rechazar y crear remake
+                    </button>
+                  </div>
                 ) : null}
                 {(() => {
-                  const envio = detail.dispatch_note_dte?.envio as
-                    | { status?: string; track_id?: string | null; attempted?: boolean }
-                    | null
-                    | undefined;
-                  if (!detail.dispatch_note_dte) return null;
-                  const resubmit = envio?.attempted === true && !envio?.track_id;
+                  // §10: the operator's first answer — what physical product
+                  // this order is, from the sealed revision (never CRM text).
+                  const making = detail.making;
+                  if (!making) return null;
+                  const typology = making.typology
+                    ? tDynamic(
+                        "typology",
+                        making.typology
+                          .toLowerCase()
+                          .replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()),
+                      )
+                    : null;
+                  const colors = [
+                    making.color_interior,
+                    making.color_exterior && making.color_exterior !== making.color_interior
+                      ? making.color_exterior
+                      : null,
+                  ]
+                    .filter((color): color is string => Boolean(color))
+                    .map((color) => domainLabels[color] ?? color)
+                    .join(" / ");
+                  const dims =
+                    making.width_mm && making.height_mm
+                      ? `${fmtMm(making.width_mm)} × ${fmtMm(making.height_mm)} mm`
+                      : null;
                   return (
-                    <>
-                      {envio?.status ? (
-                        <button
-                          type="button"
-                          className="production-dispatch production-note-envio"
-                          title={`${t("production.envioStatus")} · ${envio.track_id ?? ""}`}
-                          onClick={() => void openDispatchEnvio(detail.id)}
-                        >
-                          {`${t("production.envioStatus")} · ${envio.status}`}
-                        </button>
-                      ) : canWrite ? (
-                        <button
-                          type="button"
-                          className="production-dispatch"
-                          disabled={busy}
-                          onClick={() => void sendDispatchEnvio(detail.id)}
-                        >
-                          {t("production.envioSend")}
-                        </button>
+                    <p className="production-making" aria-label={t("production.makingTitle")}>
+                      <strong>{making.code ?? `P-${making.position_index ?? "?"}`}</strong>
+                      {typology ? <span>{typology}</span> : null}
+                      {dims ? <span>{dims}</span> : null}
+                      {colors ? <span>{colors}</span> : null}
+                      {making.quantity && making.quantity > 1 ? (
+                        <span>×{making.quantity}</span>
                       ) : null}
-                      {canWrite && envio?.status === "PENDING" ? (
-                        <button
-                          type="button"
-                          className="production-dispatch"
-                          disabled={busy}
-                          onClick={() => void sendDispatchEnvio(detail.id, resubmit)}
-                        >
-                          {resubmit ? t("production.envioResend") : t("production.envioRefresh")}
-                        </button>
+                      {making.location_tag ? (
+                        <span className="production-making-location">{making.location_tag}</span>
                       ) : null}
-                    </>
+                    </p>
                   );
                 })()}
-                {canWrite && detail.status === "HOLD" ? (
-                  <button
-                    type="button"
-                    className="production-remake"
-                    disabled={busy}
-                    onClick={() => remake(detail.id)}
-                  >
-                    {t("production.remakeButton")}
-                  </button>
-                ) : null}
-                {/* Stock arrived after release → top up open reservations
-                    instead of forcing a re-optimize (review P0-3). */}
-                {canWrite && detail.shortage > 0 && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
-                  <button
-                    type="button"
-                    className="production-remake"
-                    disabled={busy}
-                    onClick={() => recheckMaterials(detail.id)}
-                  >
-                    {t("production.materialRecheck")}
-                  </button>
-                ) : null}
-                {/* A cancelled order releases its reservations and freezes
-                    where it stands — terminal for every floor gate. */}
-                {canWrite && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
-                  <button
-                    type="button"
-                    className="production-remake production-cancel"
-                    disabled={busy}
-                    onClick={() => void cancelOrder(detail.id)}
-                  >
-                    {t("production.cancelButton")}
-                  </button>
-                ) : null}
-              </header>
-              {(() => {
-                // §10: the operator's first answer — what physical product
-                // this order is, from the sealed revision (never CRM text).
-                const making = detail.making;
-                if (!making) return null;
-                const typology = making.typology
-                  ? tDynamic(
-                      "typology",
-                      making.typology
-                        .toLowerCase()
-                        .replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()),
-                    )
-                  : null;
-                const colors = [
-                  making.color_interior,
-                  making.color_exterior && making.color_exterior !== making.color_interior
-                    ? making.color_exterior
-                    : null,
-                ]
-                  .filter((color): color is string => Boolean(color))
-                  .map((color) => domainLabels[color] ?? color)
-                  .join(" / ");
-                const dims =
-                  making.width_mm && making.height_mm
-                    ? `${fmtMm(making.width_mm)} × ${fmtMm(making.height_mm)} mm`
-                    : null;
-                return (
-                  <p className="production-making" aria-label={t("production.makingTitle")}>
-                    <strong>{making.code ?? `P-${making.position_index ?? "?"}`}</strong>
-                    {typology ? <span>{typology}</span> : null}
-                    {dims ? <span>{dims}</span> : null}
-                    {colors ? <span>{colors}</span> : null}
-                    {making.quantity && making.quantity > 1 ? (
-                      <span>×{making.quantity}</span>
-                    ) : null}
-                    {making.location_tag ? (
-                      <span className="production-making-location">{making.location_tag}</span>
-                    ) : null}
-                  </p>
-                );
-              })()}
-              {(() => {
-                // Remake provenance, both directions: the remake names the
-                // order it replaces; the replaced order names its remakes.
-                const remakeOf = detail.payload?.remake_of;
-                const source = remakeOf
-                  ? orders.find((order) => order.id === String(remakeOf))
-                  : undefined;
-                const remakes = orders.filter(
-                  (order) => String(order.payload?.remake_of ?? "") === detail.id,
-                );
-                if (!source && !remakes.length) return null;
-                const remakeReason = (detail.payload?.remake_reason ?? null) as {
-                  qc_item?: unknown;
-                  note?: unknown;
-                } | null;
-                const reasonBits = [
-                  remakeReason?.qc_item ? String(remakeReason.qc_item) : "",
-                  remakeReason?.note ? String(remakeReason.note) : "",
-                ].filter(Boolean);
-                return (
-                  <p className="production-remake-provenance">
-                    {source ? (
-                      <>
-                        {t("production.remakeOf")} <strong>{source.order_code}</strong>
-                        {reasonBits.length ? ` — ${reasonBits.join(" · ")}` : ""}
-                        {remakes.length ? " · " : ""}
-                      </>
-                    ) : null}
-                    {remakes.length ? (
-                      <>
-                        {t("production.remadeBy")}{" "}
-                        <strong>{remakes.map((order) => order.order_code).join(", ")}</strong>
-                      </>
-                    ) : null}
-                  </p>
-                );
-              })()}
-              {(() => {
-                const blockers = detail.payload?.blockers;
-                if (!Array.isArray(blockers) || !blockers.length) return null;
-                return (
-                  <ul className="production-blockers" role="alert">
-                    {blockers.map((blocker) => (
-                      <li key={String(blocker)}>
-                        {String(blocker).startsWith("work_center_inactive:")
-                          ? t("production.blockerWorkCenterInactive").replace(
-                              "{kind}",
-                              String(blocker).split(":").at(-1) ?? "",
-                            )
-                          : String(blocker)}
-                      </li>
-                    ))}
-                  </ul>
-                );
-              })()}
-              {(() => {
-                const materials = detail.payload?.materials as WorkOrderMaterials | undefined;
-                if (!materials) return null;
-                return (
-                  <dl className="production-materials">
-                    <div>
-                      <dt>{t("production.materialCuts")}</dt>
-                      <dd>{materials.profile_cuts?.length ?? 0}</dd>
-                    </div>
-                    <div>
-                      <dt>{t("production.materialGlass")}</dt>
-                      <dd>{materials.glasses?.length ?? 0}</dd>
-                    </div>
-                    <div>
-                      <dt>{t("production.materialHardware")}</dt>
-                      <dd>{materials.hardware_items?.length ?? 0}</dd>
-                    </div>
-                  </dl>
-                );
-              })()}
-              <GlassOrderPanel orderIds={[detail.id]} />
-              <HardwarePicking
-                rows={detail.hardware_picking ?? []}
-                gaps={detail.hardware_machining ?? []}
-                versionId={detail.project_version_id ?? null}
-                organizationId={auth.me?.active_organization?.id ?? ""}
-              />
-              {(() => {
-                const optimization = detail.payload?.optimization as
-                  WorkOrderOptimization | undefined;
-                const canOptimize = role === "OWNER" || role === "WORKSHOP_MANAGER";
-                const cutPlan = optimization?.bars?.workshop_cut_plan ?? [];
-                const purchases = optimization?.bars?.purchase_list ?? [];
-                const layouts = optimization?.sheets ?? [];
-                const unnested = optimization?.unnested ?? [];
-                const sheetPurchases = optimization?.sheet_purchases ?? [];
-                // remnant_id → rack tag from the plan's consumed ledger, so a
-                // bar row can name the physical drop it was cut from.
-                const consumedLocations = new Map<string, string>(
-                  (optimization?.remnants?.consumed ?? [])
-                    .filter((entry) => entry.rack_location)
-                    .map((entry) => [String(entry.id), String(entry.rack_location)]),
-                );
-                return (
-                  <section
-                    id="production-cut-plan"
-                    className="production-optimize"
-                    aria-label={t("production.optimizeTitle")}
-                  >
-                    <header className="production-optimize-head">
-                      <h3>{t("production.optimizeTitle")}</h3>
-                      {optimization?.applied_strategy || optimization?.strategy ? (
-                        <span className="production-remnant-tag">
-                          {t("production.optimizeStrategy")}:{" "}
-                          {t(
-                            `production.optimizeVariant.${String(
-                              optimization.applied_strategy ?? optimization.strategy,
-                            )}` as Parameters<typeof t>[0],
-                          ) || String(optimization.applied_strategy ?? optimization.strategy)}
-                        </span>
+                {(() => {
+                  // Remake provenance, both directions: the remake names the
+                  // order it replaces; the replaced order names its remakes.
+                  const remakeOf = detail.payload?.remake_of;
+                  const source = remakeOf
+                    ? orders.find((order) => order.id === String(remakeOf))
+                    : undefined;
+                  const remakes = orders.filter(
+                    (order) => String(order.payload?.remake_of ?? "") === detail.id,
+                  );
+                  if (!source && !remakes.length) return null;
+                  const remakeReason = (detail.payload?.remake_reason ?? null) as {
+                    qc_item?: unknown;
+                    note?: unknown;
+                  } | null;
+                  const reasonBits = [
+                    remakeReason?.qc_item ? String(remakeReason.qc_item) : "",
+                    remakeReason?.note ? String(remakeReason.note) : "",
+                  ].filter(Boolean);
+                  return (
+                    <p className="production-remake-provenance">
+                      {source ? (
+                        <>
+                          {t("production.remakeOf")} <strong>{source.order_code}</strong>
+                          {reasonBits.length ? ` — ${reasonBits.join(" · ")}` : ""}
+                          {remakes.length ? " · " : ""}
+                        </>
                       ) : null}
-                      {optimization?.optimized_at ? (
-                        <time dateTime={optimization.optimized_at}>
-                          {t("production.optimizeRunAt")}:
-                          {formatDateTime(optimization.optimized_at)}
-                        </time>
+                      {remakes.length ? (
+                        <>
+                          {t("production.remadeBy")}{" "}
+                          <strong>{remakes.map((order) => order.order_code).join(", ")}</strong>
+                        </>
                       ) : null}
-                    </header>
-                    {canOptimize && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
-                      <p className="production-optimize-inputs">
-                        {t("production.optimizeInputsHint")}
-                      </p>
-                    ) : null}
-                    {canOptimize && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
-                      <div className="production-optimize-controls">
-                        {(() => {
-                          const sealedColor =
-                            typeof detail.payload?.color === "string"
-                              ? detail.payload.color.trim()
-                              : "";
-                          return (
-                            <input
-                              type="text"
-                              value={optColor}
-                              onChange={(event) => setOptColor(event.target.value)}
-                              placeholder={t("production.optimizeColorPlaceholder")}
-                              aria-label={t("production.optimizeColor")}
-                              readOnly={Boolean(sealedColor)}
-                              title={sealedColor ? t("production.optimizeColorSealed") : undefined}
-                            />
-                          );
-                        })()}
-                        <select
-                          value={optStrategy}
-                          onChange={(event) => setOptStrategy(event.target.value)}
-                          aria-label={t("production.optimizeStrategy")}
-                          title={
-                            tOptional(`production.optimizeStrategyHint.${optStrategy}`) ?? undefined
-                          }
-                        >
-                          <option value="auto" title={t("production.optimizeStrategyHint.auto")}>
-                            {t("production.optimizeStrategyAuto")}
-                          </option>
-                          <option value="fast" title={t("production.optimizeStrategyHint.fast")}>
-                            {t("production.optimizeStrategyFast")}
-                          </option>
-                          <option value="deep" title={t("production.optimizeStrategyHint.deep")}>
-                            {t("production.optimizeStrategyDeep")}
-                          </option>
-                        </select>
-                        <button
-                          type="button"
-                          disabled={busy || !optColor.trim()}
-                          onClick={() => optimize(detail.id)}
-                        >
-                          {t("production.optimizeButton")}
-                        </button>
-                        <button
-                          type="button"
-                          className="production-compare"
-                          disabled={busy || compareBusy}
-                          onClick={() => compareStrategies(detail.id)}
-                        >
-                          {compareBusy
-                            ? t("production.optimizeComparing")
-                            : t("production.optimizeCompare")}
-                        </button>
-                      </div>
-                    ) : null}
-                    {(() => {
-                      const stats = optimization?.stats;
-                      if (!stats || optimization?.invalidated) return null;
-                      return (
-                        <p className="production-optimize-stats">
-                          {t("production.optimizeStatsBars")}:{" "}
-                          <strong>
-                            {stats.bars_total}
-                            {stats.bars_remnant
-                              ? ` (+${stats.bars_remnant} ${t("production.optimizeStatsRemnant")})`
-                              : ""}
-                          </strong>
-                          {" · "}
-                          {t("production.optimizeStatsCuts")}: <strong>{stats.cuts_total}</strong>
-                          {" · "}
-                          {t("production.optimizeStatsUseful")}:{" "}
-                          <strong>{fmtMm(stats.productive_length_mm)} mm</strong>
-                          {" · "}
-                          {t("production.optimizeStatsWaste")}:{" "}
-                          <strong>{fmtMm(stats.process_waste_mm ?? stats.waste_mm)} mm</strong>
-                          {stats.reusable_remnant_mm && stats.reusable_remnant_mm !== "0"
-                            ? ` · ${t("production.optimizeStatsRemnantReusable")}: ${fmtMm(stats.reusable_remnant_mm)} mm`
-                            : ""}
-                          {stats.sheets_total
-                            ? ` · ${t("production.optimizeStatsSheets")}: ${stats.sheets_total}`
-                            : ""}
-                          {stats.unnested_count
-                            ? ` · ${t("production.optimizeStatsUnnested")}: ${stats.unnested_count}`
-                            : ""}
-                          {stats.purchase_bars || stats.purchase_sheets
-                            ? ` · ${t("production.optimizeStatsPurchases")}: ${
-                                stats.purchase_bars + stats.purchase_sheets
-                              }`
-                            : ""}
-                          {canOptimize ? ` · ${stats.runtime_ms} ms` : ""}
+                    </p>
+                  );
+                })()}
+                {(() => {
+                  const blockers = detail.payload?.blockers;
+                  if (!Array.isArray(blockers) || !blockers.length) return null;
+                  return (
+                    <ul className="production-blockers" role="alert">
+                      {blockers.map((blocker) => (
+                        <li key={String(blocker)}>
+                          {String(blocker).startsWith("work_center_inactive:")
+                            ? t("production.blockerWorkCenterInactive").replace(
+                                "{kind}",
+                                String(blocker).split(":").at(-1) ?? "",
+                              )
+                            : String(blocker)}
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+                {activeTab === "herrajes" ? (
+                  <HardwarePicking
+                    rows={detail.hardware_picking ?? []}
+                    gaps={detail.hardware_machining ?? []}
+                    versionId={detail.project_version_id ?? null}
+                    organizationId={auth.me?.active_organization?.id ?? ""}
+                  />
+                ) : null}
+                {(() => {
+                  if (activeTab !== "corte") return null;
+                  const optimization = detail.payload?.optimization as
+                    WorkOrderOptimization | undefined;
+                  const canOptimize = role === "OWNER" || role === "WORKSHOP_MANAGER";
+                  const cutPlan = optimization?.bars?.workshop_cut_plan ?? [];
+                  const purchases = optimization?.bars?.purchase_list ?? [];
+                  const layouts = optimization?.sheets ?? [];
+                  const unnested = optimization?.unnested ?? [];
+                  const sheetPurchases = optimization?.sheet_purchases ?? [];
+                  return (
+                    <section
+                      id="production-cut-plan"
+                      className="production-optimize"
+                      aria-label={t("production.optimizeTitle")}
+                    >
+                      <header className="production-optimize-head">
+                        <h3>{t("production.optimizeTitle")}</h3>
+                        {optimization?.applied_strategy || optimization?.strategy ? (
+                          <span className="production-remnant-tag">
+                            {t("production.optimizeStrategy")}:{" "}
+                            {t(
+                              `production.optimizeVariant.${String(
+                                optimization.applied_strategy ?? optimization.strategy,
+                              )}` as Parameters<typeof t>[0],
+                            ) || String(optimization.applied_strategy ?? optimization.strategy)}
+                          </span>
+                        ) : null}
+                        {optimization?.optimized_at ? (
+                          <time dateTime={optimization.optimized_at}>
+                            {t("production.optimizeRunAt")}:
+                            {formatDateTime(optimization.optimized_at)}
+                          </time>
+                        ) : null}
+                      </header>
+                      {canOptimize && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
+                        <p className="production-optimize-inputs">
+                          {t("production.optimizeInputsHint")}
                         </p>
-                      );
-                    })()}
-                    {strategyCompare
-                      ? (() => {
-                          const bestWaste = Math.min(
-                            ...strategyCompare.strategies.map((row) =>
-                              Number(row.process_waste_mm ?? row.waste_mm),
-                            ),
-                          );
-                          return (
-                            <>
-                              <table className="production-plan production-compare-table">
-                                <thead>
-                                  <tr>
-                                    <th>{t("production.optimizeStrategy")}</th>
-                                    <th>{t("production.optimizeStatsBars")}</th>
-                                    <th>{t("production.optimizeStatsCuts")}</th>
-                                    <th>{t("production.optimizeStatsWaste")}</th>
-                                    <th>{t("production.optimizeStatsPurchases")}</th>
-                                    <th>{t("production.optimizeStatsRemnants")}</th>
-                                    <th>{t("production.optimizeStatsRuntime")}</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {strategyCompare.strategies.map((row) => (
-                                    <tr
-                                      key={row.strategy}
-                                      className={
-                                        Number(row.process_waste_mm ?? row.waste_mm) === bestWaste
-                                          ? "production-compare-best"
-                                          : ""
-                                      }
-                                    >
-                                      <td>
-                                        {row.strategy === "fast"
-                                          ? t("production.optimizeStrategyFast")
-                                          : row.strategy === "deep"
-                                            ? t("production.optimizeStrategyDeep")
-                                            : row.strategy}
-                                      </td>
-                                      <td>
-                                        {row.bars_total}
-                                        {row.bars_remnant
-                                          ? ` (+${row.bars_remnant} ${t("production.optimizeStatsRemnant")})`
-                                          : ""}
-                                      </td>
-                                      <td>{row.cuts_total}</td>
-                                      <td>{fmtMm(row.process_waste_mm ?? row.waste_mm)} mm</td>
-                                      <td>{row.purchase_bars + row.purchase_sheets}</td>
-                                      <td>
-                                        {row.remnants_consumed}↓ {row.remnants_produced}↑
-                                      </td>
-                                      <td>{row.runtime_ms} ms</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                              <p className="production-compare-note">
-                                {t("production.optimizeCompareNote")}
-                              </p>
-                            </>
-                          );
-                        })()
-                      : null}
-                    {(() => {
-                      const cncExport = detail.payload?.cnc_export as CncExport | undefined;
-                      const dxfExport = detail.payload?.dxf_export as DxfExport | undefined;
-                      const opsExport = detail.payload?.operations_export as OpsExport | undefined;
-                      const files = Object.entries(cncExport?.files ?? {});
-                      const dxfFiles = Object.entries(dxfExport?.files ?? {});
-                      const opsFiles = Object.entries(opsExport?.files ?? {});
-                      if (!optimization) return null;
-                      return (
-                        <div className="production-cnc">
+                      ) : null}
+                      {canOptimize && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
+                        <div className="production-optimize-controls">
+                          {(() => {
+                            const sealedColor =
+                              typeof detail.payload?.color === "string"
+                                ? detail.payload.color.trim()
+                                : "";
+                            return (
+                              <input
+                                type="text"
+                                value={
+                                  sealedColor
+                                    ? (domainLabels[sealedColor] ?? sealedColor)
+                                    : optColor
+                                }
+                                onChange={(event) => setOptColor(event.target.value)}
+                                placeholder={t("production.optimizeColorPlaceholder")}
+                                aria-label={t("production.optimizeColor")}
+                                readOnly={Boolean(sealedColor)}
+                                title={
+                                  sealedColor ? t("production.optimizeColorSealed") : undefined
+                                }
+                              />
+                            );
+                          })()}
+                          <select
+                            value={optStrategy}
+                            onChange={(event) => setOptStrategy(event.target.value)}
+                            aria-label={t("production.optimizeStrategy")}
+                            title={
+                              tOptional(`production.optimizeStrategyHint.${optStrategy}`) ??
+                              undefined
+                            }
+                          >
+                            <option value="auto" title={t("production.optimizeStrategyHint.auto")}>
+                              {t("production.optimizeStrategyAuto")}
+                            </option>
+                            <option value="fast" title={t("production.optimizeStrategyHint.fast")}>
+                              {t("production.optimizeStrategyFast")}
+                            </option>
+                            <option value="deep" title={t("production.optimizeStrategyHint.deep")}>
+                              {t("production.optimizeStrategyDeep")}
+                            </option>
+                          </select>
                           <button
                             type="button"
-                            className="production-cutpack"
-                            disabled={busy || Boolean(optimization.invalidated)}
-                            title={
-                              optimization.invalidated
-                                ? t("production.cutPackInvalidated")
-                                : undefined
-                            }
-                            onClick={() => downloadCutPack(detail.id, detail.order_code)}
+                            disabled={busy || !optColor.trim()}
+                            onClick={() => optimize(detail.id)}
                           >
-                            {t("production.cutPackButton")}
+                            {t("production.optimizeButton")}
                           </button>
                           <button
                             type="button"
-                            className="production-cutpack"
-                            disabled={busy || Boolean(optimization.invalidated)}
-                            title={
-                              optimization.invalidated
-                                ? t("production.cutPackInvalidated")
-                                : undefined
-                            }
-                            onClick={() => downloadProductionPack(detail.id, detail.order_code)}
+                            className="production-compare"
+                            disabled={busy || compareBusy}
+                            onClick={() => compareStrategies(detail.id)}
                           >
-                            {t("production.productionPackButton")}
+                            {compareBusy
+                              ? t("production.optimizeComparing")
+                              : t("production.optimizeCompare")}
                           </button>
-                          {canOptimize && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
-                            <>
-                              <button
-                                type="button"
-                                disabled={busy || Boolean(optimization.invalidated)}
-                                title={
-                                  optimization.invalidated
-                                    ? t("production.cutPackInvalidated")
-                                    : undefined
-                                }
-                                onClick={() => exportCnc(detail.id, detail.order_code)}
-                              >
-                                {t("production.cncExportButton")}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={busy || Boolean(optimization.invalidated)}
-                                title={
-                                  optimization.invalidated
-                                    ? t("production.cutPackInvalidated")
-                                    : undefined
-                                }
-                                onClick={() => exportDxf(detail.id, detail.order_code)}
-                              >
-                                {t("production.dxfExportButton")}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={busy || Boolean(optimization.invalidated)}
-                                title={
-                                  optimization.invalidated
-                                    ? t("production.cutPackInvalidated")
-                                    : undefined
-                                }
-                                onClick={() => exportOperations(detail.id, detail.order_code)}
-                              >
-                                {t("production.opsExportButton")}
-                              </button>
-                            </>
-                          ) : null}
-                          {files.map(([filename, content]) => (
-                            <button
-                              key={filename}
-                              type="button"
-                              className="production-cnc-file"
-                              disabled={Boolean(optimization.invalidated)}
-                              title={
-                                optimization.invalidated ? t("production.fileStale") : undefined
-                              }
-                              onClick={() => downloadCnc(detail.order_code, filename, content)}
-                            >
-                              {filename}
-                            </button>
-                          ))}
-                          {dxfFiles.map(([filename, content]) => (
-                            <button
-                              key={filename}
-                              type="button"
-                              className="production-cnc-file"
-                              disabled={Boolean(optimization.invalidated)}
-                              title={
-                                optimization.invalidated ? t("production.fileStale") : undefined
-                              }
-                              onClick={() => downloadCnc(detail.order_code, filename, content)}
-                            >
-                              {filename}
-                            </button>
-                          ))}
-                          {opsExport?.operation_count ? (
-                            <span className="production-ops-count">
-                              {opsExport.operation_count} {t("production.opsOperationsCount")}
-                            </span>
-                          ) : null}
-                          {opsFiles.map(([filename, content]) => (
-                            <button
-                              key={filename}
-                              type="button"
-                              className="production-cnc-file"
-                              disabled={Boolean(optimization.invalidated)}
-                              title={
-                                optimization.invalidated ? t("production.fileStale") : undefined
-                              }
-                              onClick={() => downloadCnc(detail.order_code, filename, content)}
-                            >
-                              {filename}
-                            </button>
-                          ))}
                         </div>
-                      );
-                    })()}
-                    {optimization && !optimization.invalidated ? (
-                      <CncPanel orderId={detail.id} canWrite={canOptimize} />
-                    ) : null}
-                    {!optimization ? (
-                      <EmptyState
-                        kind="cut-plan"
-                        title="Esta orden aún no tiene plan de corte"
-                        body={t("production.optimizeEmpty")}
-                      />
-                    ) : (
-                      <>
-                        {optimization.invalidated ? (
-                          <p className="production-invalidated" role="alert">
-                            {t("production.planInvalidated")}
+                      ) : null}
+                      {(() => {
+                        const stats = optimization?.stats;
+                        if (!stats || optimization?.invalidated) return null;
+                        return (
+                          <p className="production-optimize-stats">
+                            {t("production.optimizeStatsBars")}:{" "}
+                            <strong>
+                              {stats.bars_total}
+                              {stats.bars_remnant
+                                ? ` (+${stats.bars_remnant} ${t("production.optimizeStatsRemnant")})`
+                                : ""}
+                            </strong>
+                            {" · "}
+                            {t("production.optimizeStatsCuts")}: <strong>{stats.cuts_total}</strong>
+                            {" · "}
+                            {t("production.optimizeStatsUseful")}:{" "}
+                            <strong>{fmtMm(stats.productive_length_mm)} mm</strong>
+                            {" · "}
+                            {t("production.optimizeStatsWaste")}:{" "}
+                            <strong>{fmtMm(stats.process_waste_mm ?? stats.waste_mm)} mm</strong>
+                            {stats.reusable_remnant_mm && stats.reusable_remnant_mm !== "0"
+                              ? ` · ${t("production.optimizeStatsRemnantReusable")}: ${fmtMm(stats.reusable_remnant_mm)} mm`
+                              : ""}
+                            {stats.sheets_total
+                              ? ` · ${t("production.optimizeStatsSheets")}: ${stats.sheets_total}`
+                              : ""}
+                            {stats.unnested_count
+                              ? ` · ${t("production.optimizeStatsUnnested")}: ${stats.unnested_count}`
+                              : ""}
+                            {stats.purchase_bars || stats.purchase_sheets
+                              ? ` · ${t("production.optimizeStatsPurchases")}: ${
+                                  stats.purchase_bars + stats.purchase_sheets
+                                }`
+                              : ""}
+                            {canOptimize ? ` · ${stats.runtime_ms} ms` : ""}
                           </p>
-                        ) : null}
-                        {!optimization.invalidated && (cutPlan.length || layouts.length) ? (
-                          <CutPlanView
-                            key={optimization.optimized_at ?? "optimization"}
-                            optimization={optimization}
-                            labels={(trace?.labels as Record<string, string> | undefined) ?? {}}
-                            pieceCodes={pieceCodes}
-                          />
-                        ) : null}
-                        {!optimization.invalidated && cutPlan.length ? (
-                          <table className="production-plan">
-                            <thead>
-                              <tr>
-                                <th>{t("production.optimizeBar")}</th>
-                                <th>{t("production.optimizeSku")}</th>
-                                <th>{t("production.optimizeStock")}</th>
-                                <th>{t("production.optimizeCuts")}</th>
-                                <th>{t("production.optimizeRemainder")}</th>
-                                <th>{t("production.optimizeYield")}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {cutPlan.map((bar) => (
-                                <tr key={bar.bar_index}>
-                                  <td>#{bar.bar_index}</td>
-                                  <td>
-                                    {bar.commercial_sku}
-                                    {bar.source === "REMNANT" ? (
-                                      <span className="production-remnant-tag">
-                                        {" "}
-                                        {t("production.optimizeRemnantBar")}
-                                        {bar.remnant_id
-                                          ? ` · ${bar.remnant_code ?? "Sin dato · falta código del retazo"}`
-                                          : ""}
-                                        {consumedLocations.get(String(bar.remnant_id ?? ""))
-                                          ? ` · ${consumedLocations.get(String(bar.remnant_id ?? ""))}`
-                                          : ""}
-                                      </span>
-                                    ) : null}
-                                  </td>
-                                  <td>{fmtMm(bar.stock_length_mm)} mm</td>
-                                  <td>
-                                    {bar.cuts
-                                      .map(
-                                        (cut) =>
-                                          `${cutRoleLabel(cut.role)} ${fmtMm(cut.length_mm)}mm u${cut.unit_index ?? 1}`,
-                                      )
-                                      .join(" · ")}
-                                  </td>
-                                  <td>
-                                    {fmtMm(bar.remainder_mm)} mm
-                                    {bar.remainder_reusable ? (
-                                      <span className="production-remnant-tag">
-                                        {" "}
-                                        {t("production.optimizeRemnantReusable")}
-                                      </span>
-                                    ) : null}
-                                  </td>
-                                  <td>{fmtPct(bar.yield_pct)} %</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        ) : null}
-                        {purchases.length || sheetPurchases.length ? (
-                          <p className="production-optimize-purchases">
-                            {t("production.optimizeStockNew")}:{" "}
-                            {purchases
-                              .map(
-                                (line) =>
-                                  `${line.qty_bars} ${t("production.optimizePurchaseUnit")} ${line.commercial_sku}`,
-                              )
-                              .concat(
-                                sheetPurchases.map(
-                                  (line) =>
-                                    `${line.qty_sheets} ${t("production.optimizePurchaseSheet")} ${line.purchasing_sku}`,
-                                ),
-                              )
-                              .join(" · ")}
-                          </p>
-                        ) : null}
-                        {(() => {
-                          // Real "what to buy": only the skus whose stock
-                          // reservation came back short, or with no stock
-                          // authority at all — the plan's NEW-bar list is
-                          // consumption, not shortage.
-                          const shortRows = (optimization?.stock_reservations ?? []).filter(
-                            (row) =>
-                              row.short !== undefined &&
-                              row.short !== null &&
-                              row.short !== "0" &&
-                              row.short !== "0.00",
-                          );
-                          const unmapped = optimization?.unmapped_stock_skus ?? [];
-                          if (!shortRows.length && !unmapped.length) return null;
-                          return (
-                            <p className="production-optimize-purchases production-stock-short">
-                              {t("production.optimizeBuy")}:{" "}
-                              {shortRows
-                                .map(
-                                  (row) =>
-                                    `${row.name ?? "Material sin nombre"} × ${fmtMm(row.short)} ${stockUnitLabel(row.unit)}`,
-                                )
-                                .concat(
-                                  unmapped.map(
-                                    (sku) => `${sku} (${t("production.optimizeUnmapped")})`,
-                                  ),
-                                )
-                                .join(" · ")}
-                            </p>
-                          );
-                        })()}
-                        {(() => {
-                          const reservations = optimization?.stock_reservations ?? [];
-                          const unmappedSkus = optimization?.unmapped_stock_skus ?? [];
-                          if (!reservations.length && !unmappedSkus.length) return null;
-                          return (
-                            <section
-                              className="production-stock-reserve"
-                              aria-label={t("production.stockReserveTitle")}
-                            >
-                              <h4>{t("production.stockReserveTitle")}</h4>
-                              {reservations.length ? (
-                                <table className="production-plan">
+                        );
+                      })()}
+                      {strategyCompare
+                        ? (() => {
+                            const bestWaste = Math.min(
+                              ...strategyCompare.strategies.map((row) =>
+                                Number(row.process_waste_mm ?? row.waste_mm),
+                              ),
+                            );
+                            return (
+                              <>
+                                <table className="production-plan production-compare-table">
                                   <thead>
                                     <tr>
-                                      <th>{t("production.stockKind")}</th>
-                                      <th>{t("production.stockSku")}</th>
-                                      <th>{t("production.stockOnHand")}</th>
-                                      <th>{t("production.stockNeeded")}</th>
-                                      <th>{t("production.stockReserved")}</th>
-                                      <th>{t("production.stockShort")}</th>
-                                      <th>{t("production.stockConsumedAt")}</th>
+                                      <th>{t("production.optimizeStrategy")}</th>
+                                      <th>{t("production.optimizeStatsBars")}</th>
+                                      <th>{t("production.optimizeStatsCuts")}</th>
+                                      <th>{t("production.optimizeStatsWaste")}</th>
+                                      <th>{t("production.optimizeStatsPurchases")}</th>
+                                      <th>{t("production.optimizeStatsRemnants")}</th>
+                                      <th>{t("production.optimizeStatsRuntime")}</th>
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {reservations.map((row, index) => (
-                                      <tr key={`${row.kind ?? ""}-${row.sku ?? ""}-${index}`}>
-                                        <td>{row.name ?? row.sku ?? "—"}</td>
+                                    {strategyCompare.strategies.map((row) => (
+                                      <tr
+                                        key={row.strategy}
+                                        className={
+                                          Number(row.process_waste_mm ?? row.waste_mm) === bestWaste
+                                            ? "production-compare-best"
+                                            : ""
+                                        }
+                                      >
                                         <td>
-                                          {stockUnitLabel(row.unit)}
-                                          <details>
-                                            <summary>Detalles técnicos</summary>
-                                            <code>{row.sku ?? "Sin dato"}</code>
-                                          </details>
-                                        </td>
-                                        <td>{row.on_hand ?? "0"}</td>
-                                        <td>{row.needed ?? "0"}</td>
-                                        <td>{row.reserved ?? "0"}</td>
-                                        <td>
-                                          {row.short && row.short !== "0" ? (
-                                            <strong className="production-stock-short">
-                                              {row.short}
-                                            </strong>
-                                          ) : (
-                                            "0"
-                                          )}
+                                          {row.strategy === "fast"
+                                            ? t("production.optimizeStrategyFast")
+                                            : row.strategy === "deep"
+                                              ? t("production.optimizeStrategyDeep")
+                                              : row.strategy}
                                         </td>
                                         <td>
-                                          {row.consumed_at ? formatDate(row.consumed_at) : "—"}
+                                          {row.bars_total}
+                                          {row.bars_remnant
+                                            ? ` (+${row.bars_remnant} ${t("production.optimizeStatsRemnant")})`
+                                            : ""}
                                         </td>
+                                        <td>{row.cuts_total}</td>
+                                        <td>{fmtMm(row.process_waste_mm ?? row.waste_mm)} mm</td>
+                                        <td>{row.purchase_bars + row.purchase_sheets}</td>
+                                        <td>
+                                          {row.remnants_consumed}↓ {row.remnants_produced}↑
+                                        </td>
+                                        <td>{row.runtime_ms} ms</td>
                                       </tr>
                                     ))}
                                   </tbody>
                                 </table>
-                              ) : null}
-                              {unmappedSkus.length ? (
-                                <p className="production-stock-unmapped">
-                                  {t("production.stockUnmapped")}: {unmappedSkus.join(" · ")}
+                                <p className="production-compare-note">
+                                  {t("production.optimizeCompareNote")}
                                 </p>
-                              ) : null}
-                            </section>
-                          );
-                        })()}
-                        {(() => {
-                          const remnantLedger = optimization?.remnants;
-                          const consumed = remnantLedger?.consumed ?? [];
-                          const producedCount =
-                            (remnantLedger?.produced_bars?.length ?? 0) +
-                            (remnantLedger?.produced_sheets?.length ?? 0);
-                          const metrics = optimization?.bars?.metrics;
-                          const comparison = optimization?.bars?.strategy_comparison;
-                          const comparisonEntries = comparison
-                            ? (["fast", "deep"] as const)
-                                .filter((key) => comparison[key])
-                                .map((key) => ({ key, metrics: comparison[key] }))
-                            : [];
-                          const unplaced = optimization?.bars?.unplaced ?? [];
-                          return (
-                            <>
-                              {consumed.length || producedCount ? (
-                                <p className="production-optimize-remnants">
-                                  {consumed.length ? (
-                                    <span>
-                                      {t("production.optimizeRemnantsUsed")}: {consumed.length}
-                                    </span>
-                                  ) : null}
-                                  {producedCount ? (
-                                    <span>
-                                      {t("production.optimizeRemnantsProduced")}: {producedCount}
-                                    </span>
-                                  ) : null}
-                                </p>
-                              ) : null}
-                              {metrics ? (
-                                <p className="production-optimize-metrics">
-                                  {t("production.optimizeMetrics")}:{" "}
-                                  {[
-                                    `${metrics.bars ?? 0} barras`,
-                                    `${metrics.purchased_bars ?? 0} compra`,
-                                    `${metrics.remnant_bars ?? 0} barras retazo`,
-                                    metrics.process_waste_mm == null
-                                      ? "Sin dato · falta merma de proceso"
-                                      : `${fmtMm(metrics.process_waste_mm)} mm merma de proceso`,
-                                    metrics.reusable_remnant_mm == null
-                                      ? "Sin dato · falta retazo reutilizable"
-                                      : `${fmtMm(metrics.reusable_remnant_mm)} mm retazo reutilizable`,
-                                    `${metrics.cuts ?? 0} cortes`,
-                                  ].join(" · ")}
-                                </p>
-                              ) : null}
-                              {comparisonEntries.length > 1 ? (
-                                <p className="production-optimize-metrics">
-                                  {t("production.optimizeComparison")}:{" "}
-                                  {comparisonEntries
-                                    .map(
-                                      ({ key, metrics: m }) =>
-                                        `${
-                                          t(
-                                            `production.optimizeVariant.${key}` as Parameters<
-                                              typeof t
-                                            >[0],
-                                          ) || key
-                                        }${comparison?.chosen === key ? " ← " + t("production.optimizeChosen") : ""}: ${m?.purchased_bars ?? 0} barras · ${fmtMm(m?.process_waste_mm)} mm`,
-                                    )
-                                    .join("  ·  ")}
-                                </p>
-                              ) : null}
-                              {unplaced.length ? (
-                                <p className="production-optimize-unnested" role="alert">
-                                  {t("production.optimizeUnplaced")}:{" "}
-                                  {unplaced
-                                    .map(
-                                      (entry) =>
-                                        `${entry.piece?.piece_id ?? "?"} (${entry.reason ?? ""})`,
-                                    )
-                                    .join(" · ")}
-                                </p>
-                              ) : null}
-                            </>
-                          );
-                        })()}
-                        {layouts.length ? (
-                          <table className="production-plan">
-                            <thead>
-                              <tr>
-                                <th>{t("production.optimizeSheet")}</th>
-                                <th>{t("production.optimizeSku")}</th>
-                                <th>{t("production.optimizeSize")}</th>
-                                <th>{t("production.optimizePieces")}</th>
-                                <th>{t("production.optimizeYield")}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {layouts.map((layout) => (
-                                <tr key={`${layout.purchasing_sku}-${layout.sheet_index}`}>
-                                  <td>#{layout.sheet_index}</td>
-                                  <td>{layout.purchasing_sku}</td>
-                                  <td>
-                                    {fmtMm(layout.sheet_width_mm)}×{fmtMm(layout.sheet_height_mm)}{" "}
-                                    mm
-                                  </td>
-                                  <td>
-                                    {layout.source === "REMNANT" ? (
-                                      <span className="production-remnant-tag">
-                                        {t("production.optimizeRemnantBar")}
-                                        {layout.remnant_id
-                                          ? ` · ${layout.remnant_code ?? "Sin dato · falta código del retazo"}`
-                                          : ""}
-                                        {consumedLocations.get(String(layout.remnant_id ?? ""))
-                                          ? ` · ${consumedLocations.get(String(layout.remnant_id ?? ""))}`
-                                          : ""}{" "}
-                                      </span>
-                                    ) : null}
-                                    {layout.placements
-                                      .map(
-                                        (piece) =>
-                                          `${piece.piece_id}${piece.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
-                                      )
-                                      .join(" · ")}
-                                  </td>
-                                  <td>{fmtPct(layout.yield_pct)} %</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        ) : null}
-                        {unnested.length ? (
-                          <p className="production-optimize-unnested" role="alert">
-                            {t("production.optimizeUnnested")}:{" "}
-                            {unnested
-                              .map(
-                                (piece) =>
-                                  `${tOptional(`production.pieceKind.${piece.kind}`) ?? piece.kind} ${fmtMm(piece.width_mm)}×${fmtMm(piece.height_mm)} mm ×${piece.quantity} (${piece.group})` +
-                                  (piece.reason
-                                    ? ` — ${tOptional(`production.unnestedReason.${piece.reason}`) ?? piece.reason}`
-                                    : ""),
-                              )
-                              .join(" · ")}
-                          </p>
-                        ) : null}
-                      </>
-                    )}
-                  </section>
-                );
-              })()}
-              {(() => {
-                const packing = detail.payload?.packing as WorkOrderPacking | undefined;
-                const units = packing?.units ?? [];
-                return (
-                  <section className="production-packing" aria-label={t("production.packingTitle")}>
-                    <header className="production-optimize-head">
-                      <h3>{t("production.packingTitle")}</h3>
-                      {packing?.generated_at ? (
-                        <time dateTime={packing.generated_at}>
-                          {formatDateTime(packing.generated_at)}
-                        </time>
-                      ) : null}
-                      {canWrite &&
-                      detail.status !== "DISPATCHED" &&
-                      detail.status !== "INSTALLED" &&
-                      detail.status !== "CANCELLED" ? (
-                        <button type="button" disabled={busy} onClick={() => pack(detail.id)}>
-                          {packing
-                            ? t("production.packingRegenerate")
-                            : t("production.packingGenerate")}
-                        </button>
-                      ) : null}
-                      {units.length ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => void showLabels(detail.id)}
-                        >
-                          {t("production.labelsShow")}
-                        </button>
-                      ) : null}
-                      {labels.length ? (
-                        <button type="button" onClick={() => window.print()}>
-                          {t("production.labelsPrint")}
-                        </button>
-                      ) : null}
-                    </header>
-                    {pieceLabelsBlockedReason ? (
-                      <p className="production-label-blocker" role="status">
-                        {pieceLabelsBlockedReason}{" "}
-                        <a href="#production-cut-plan">Revisar plan de corte</a>
-                      </p>
-                    ) : null}
-                    {labels.length ? (
-                      <ul className="production-labels">
-                        {labels.map((label) => (
-                          <li key={label.label_code} className="production-label">
-                            <Wordmark width={72} />
-                            <span className="production-label-code">{label.label_code}</span>
-                            <span
-                              className="production-label-qr"
-                              // Generated server-side by segno from the sealed manifest.
-                              dangerouslySetInnerHTML={{ __html: label.qr_svg }}
-                            />
-                            <span className="production-label-pieces">
-                              {t("production.labelsPieces")}: {label.pieces}
-                            </span>
-                            <span className="production-label-parts">
-                              {
-                                // Non-colliding glyphs — M-xx/V-xx/H-xx mean
-                                // member/bay/leaf everywhere else, so the
-                                // count letters can't reuse them.
-                                (
-                                  [
-                                    ["PER", label.profiles],
-                                    ["REF", label.reinforcements],
-                                    ["VID", label.glasses],
-                                    ["PAN", label.panels],
-                                    ["HER", label.hardware],
-                                  ] as Array<[string, number]>
-                                )
-                                  .filter(([, count]) => count > 0)
-                                  .map(([kind, count]) => `${kind}×${count}`)
-                                  .join(" · ")
-                              }
-                            </span>
-                          </li>
-                        ))}
-                        {physicalLabels.map((piece) => (
-                          <li key={piece.stable_id} className="production-label">
-                            <Wordmark width={72} />
-                            <span className="production-label-code">{piece.code}</span>
-                            <span
-                              className="production-label-qr"
-                              dangerouslySetInnerHTML={{ __html: piece.qr_svg }}
-                            />
-                            <span className="ui-value">
-                              {piece.length_mm
-                                ? `${fmtMm(piece.length_mm)} mm`
-                                : `${fmtMm(piece.width_mm)} × ${fmtMm(piece.height_mm)} mm`}
-                            </span>
-                            <span>{piece.workshop_sku}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    {units.length ? (
-                      <table className="production-plan">
-                        <thead>
-                          <tr>
-                            <th>{t("production.packingLabel")}</th>
-                            <th>{t("production.packingProfiles")}</th>
-                            <th>{t("production.packingReinforcements")}</th>
-                            <th>{t("production.packingGlasses")}</th>
-                            <th>{t("production.packingPanels")}</th>
-                            <th>{t("production.packingHardware")}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {units.map((unit) => (
-                            <tr key={unit.unit_index}>
-                              <td className="production-label-code">{unit.label_code}</td>
-                              <td>{unit.profiles ?? 0}</td>
-                              <td>{unit.reinforcements ?? 0}</td>
-                              <td>{unit.glasses ?? 0}</td>
-                              <td>{unit.panels ?? 0}</td>
-                              <td>{unit.hardware ?? 0}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p className="production-optimize-empty">{t("production.packingEmpty")}</p>
-                    )}
-                    {(() => {
-                      // §14: packing honesty — surface unresolved material
-                      // shortage and unnested pieces instead of letting a
-                      // complete-looking manifest hide them.
-                      const unnestedRaw = (
-                        detail.payload?.optimization as { unnested?: unknown[] } | undefined
-                      )?.unnested;
-                      const unnested = Array.isArray(unnestedRaw) ? unnestedRaw.length : 0;
-                      const missing = (detail.shortage ?? 0) + unnested;
-                      if (!missing) return null;
-                      return (
-                        <p className="production-packing-missing" role="alert">
-                          {t("production.packingMissing")
-                            .replace("{short}", String(detail.shortage ?? 0))
-                            .replace("{unnested}", String(unnested))}
-                        </p>
-                      );
-                    })()}
-                  </section>
-                );
-              })()}
-              {(() => {
-                const canSchedule =
-                  canWrite && (detail.status === "COMPLETED" || detail.status === "DISPATCHED");
-                return (
-                  <section
-                    className="production-delivery"
-                    aria-label={t("production.deliveryTitle")}
-                  >
-                    <header className="production-optimize-head">
-                      <h3>{t("production.deliveryTitle")}</h3>
-                      {delivery ? (
-                        <span
-                          className={`production-chip delivery-${delivery.status.toLowerCase()}`}
-                        >
-                          {t(
-                            deliveryStatusKey[delivery.status] ??
-                              "production.deliveryStatusScheduled",
-                          )}
-                        </span>
-                      ) : null}
-                      {canSchedule &&
-                      deliveryForm === null &&
-                      (!delivery ||
-                        delivery.status === "DELIVERED" ||
-                        delivery.status === "FAILED") &&
-                      (deliveries.length === 0 || pendingUnits.length > 0) ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => openDeliveryForm(null)}
-                        >
-                          {deliveries.length
-                            ? t("production.deliveryScheduleNext")
-                            : t("production.deliverySchedule")}
-                        </button>
-                      ) : null}
-                      {canWrite && delivery && delivery.status !== "DELIVERED" ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => openDeliveryForm(delivery)}
-                        >
-                          {t("production.deliveryReschedule")}
-                        </button>
-                      ) : null}
-                      {canField &&
-                      delivery?.status === "SCHEDULED" &&
-                      detail.status === "DISPATCHED" ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => void transitionDelivery(detail.id, "ON_ROUTE")}
-                        >
-                          {t("production.deliveryOnRoute")}
-                        </button>
-                      ) : null}
-                      {canField && delivery?.status === "ON_ROUTE" && !delivery.confirmation ? (
-                        <button
-                          type="button"
-                          className="production-chip-danger"
-                          disabled={busy}
-                          onClick={() => void transitionDelivery(detail.id, "FAILED")}
-                        >
-                          {t("production.deliveryFailed")}
-                        </button>
-                      ) : null}
-                      {canField &&
-                      delivery &&
-                      (delivery.status === "ON_ROUTE" || delivery.status === "DELIVERED") &&
-                      !delivery.confirmation &&
-                      !confirmOpen ? (
-                        <button type="button" disabled={busy} onClick={openConfirmForm}>
-                          {t("production.deliveryConfirm")}
-                        </button>
-                      ) : null}
-                      {delivery?.confirmation ? (
-                        <button
-                          type="button"
-                          className="production-chip delivery-delivered"
-                          onClick={() => void openConfirmation(detail.id, delivery.id)}
-                        >
-                          {delivery.confirmation.confirmation_code}
-                        </button>
-                      ) : null}
-                    </header>
-                    {delivery ? (
-                      <dl className="production-delivery-facts">
-                        <div>
-                          <dt>{t("production.deliveryDate")}</dt>
-                          <dd>
-                            {delivery.scheduled_date} ·{" "}
-                            {t(
-                              delivery.time_window === "JORNADA"
-                                ? "production.windowAllDay"
-                                : delivery.time_window === "PM"
-                                  ? "production.windowPm"
-                                  : "production.windowAm",
-                            )}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>{t("production.deliveryAddress")}</dt>
-                          <dd>{delivery.address}</dd>
-                        </div>
-                        {delivery.contact_name || delivery.contact_phone ? (
-                          <div>
-                            <dt>{t("production.deliveryContact")}</dt>
-                            <dd>
-                              {[delivery.contact_name, delivery.contact_phone]
-                                .filter(Boolean)
-                                .join(" · ")}
-                            </dd>
-                          </div>
-                        ) : null}
-                        {delivery.installer_name ? (
-                          <div>
-                            <dt>{t("production.deliveryInstaller")}</dt>
-                            <dd>{delivery.installer_name}</dd>
-                          </div>
-                        ) : null}
-                        {delivery.notes ? (
-                          <div>
-                            <dt>{t("production.deliveryNotes")}</dt>
-                            <dd>{delivery.notes}</dd>
-                          </div>
-                        ) : null}
-                      </dl>
-                    ) : null}
-                    {deliveries.length > 1 ? (
-                      <ul className="production-delivery-trips">
-                        {deliveries.map((trip) => (
-                          <li key={trip.id} className="production-delivery-trip">
-                            <span
-                              className={`production-chip delivery-${trip.status.toLowerCase()}`}
-                            >
-                              {t(
-                                deliveryStatusKey[trip.status] ??
-                                  "production.deliveryStatusScheduled",
-                              )}
-                            </span>
-                            <span className="production-delivery-trip-date">
-                              {trip.scheduled_date}
-                            </span>
-                            <span className="production-delivery-trip-units">
-                              {unitLabel(trip.unit_indexes)}
-                            </span>
-                            {trip.confirmation ? (
-                              <button
-                                type="button"
-                                className="production-chip delivery-delivered"
-                                onClick={() => void openConfirmation(detail.id, trip.id)}
-                              >
-                                {trip.confirmation.confirmation_code}
-                              </button>
-                            ) : null}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    {deliveries.length > 0 && pendingUnits.length > 0 ? (
-                      <p className="production-delivery-pending">
-                        {t("production.deliveryUnitsPending")}: {unitLabel(pendingUnits)}
-                      </p>
-                    ) : null}
-                    {canWrite && detail.dispatch_ready && pendingUnits.length > 1 ? (
-                      <fieldset className="production-delivery-units">
-                        <legend>{t("production.dispatchUnits")}</legend>
-                        <div className="production-delivery-unit-chips">
-                          {pendingUnits.map((idx) => {
-                            const current = dispatchUnitsSel.length
-                              ? dispatchUnitsSel
-                              : pendingUnits;
-                            const active = current.includes(idx);
-                            return (
-                              <button
-                                type="button"
-                                key={idx}
-                                className={`chip${active ? " is-active" : ""}`}
-                                aria-pressed={active}
-                                onClick={() => {
-                                  const next = active
-                                    ? current.filter((i) => i !== idx)
-                                    : [...current, idx].sort((a, b) => a - b);
-                                  setDispatchUnitsSel(
-                                    next.length === pendingUnits.length ? [] : next,
-                                  );
-                                }}
-                              >
-                                {unitLabel([idx])}
-                              </button>
+                              </>
                             );
-                          })}
-                        </div>
-                        <p className="production-delivery-units-hint">
-                          {t("production.dispatchUnitsHint")}
-                        </p>
-                      </fieldset>
-                    ) : null}
-                    {confirmOpen && canField && delivery ? (
-                      <ValidatedForm
-                        className="production-delivery-form production-confirm-form"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          void submitConfirmation(detail.id);
-                        }}
-                      >
-                        <label>
-                          {t("production.deliveryReceiver")}
-                          <input
-                            type="text"
-                            required
-                            maxLength={200}
-                            value={confirmName}
-                            onChange={(event) => setConfirmName(event.target.value)}
-                          />
-                        </label>
-                        <label>
-                          {t("production.deliveryReceiverRut")}
-                          <input
-                            type="text"
-                            maxLength={30}
-                            value={confirmRut}
-                            onChange={(event) => setConfirmRut(event.target.value)}
-                          />
-                        </label>
-                        <div className="production-delivery-wide">
-                          {t("production.deliverySignature")}
-                          <div
-                            className="production-signature-mode"
-                            role="group"
-                            aria-label={t("production.deliverySignature")}
-                          >
+                          })()
+                        : null}
+                      {(() => {
+                        const cncExport = detail.payload?.cnc_export as CncExport | undefined;
+                        const dxfExport = detail.payload?.dxf_export as DxfExport | undefined;
+                        const opsExport = detail.payload?.operations_export as
+                          OpsExport | undefined;
+                        const files = Object.entries(cncExport?.files ?? {});
+                        const dxfFiles = Object.entries(dxfExport?.files ?? {});
+                        const opsFiles = Object.entries(opsExport?.files ?? {});
+                        if (!optimization) return null;
+                        return (
+                          <div className="production-cnc">
                             <button
                               type="button"
-                              className={signatureMode === "draw" ? "chip is-active" : "chip"}
-                              aria-pressed={signatureMode === "draw"}
-                              onClick={() => setSignatureMode("draw")}
+                              className="production-cutpack"
+                              disabled={busy || Boolean(optimization.invalidated)}
+                              title={
+                                optimization.invalidated
+                                  ? t("production.cutPackInvalidated")
+                                  : undefined
+                              }
+                              onClick={() => downloadCutPack(detail.id, detail.order_code)}
                             >
-                              {t("production.signatureModeDraw")}
+                              {t("production.cutPackButton")}
                             </button>
                             <button
                               type="button"
-                              className={signatureMode === "typed" ? "chip is-active" : "chip"}
-                              aria-pressed={signatureMode === "typed"}
-                              onClick={() => setSignatureMode("typed")}
+                              className="production-cnc-file"
+                              disabled={busy || Boolean(optimization.invalidated)}
+                              title={
+                                optimization.invalidated
+                                  ? t("production.cutPackInvalidated")
+                                  : undefined
+                              }
+                              onClick={() => downloadProductionPack(detail.id, detail.order_code)}
                             >
-                              {t("production.signatureModeType")}
+                              {t("production.productionPackButton")}
                             </button>
+                            {canOptimize && !TERMINAL_ORDER_STATUSES.has(detail.status) ? (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={busy || Boolean(optimization.invalidated)}
+                                  title={
+                                    optimization.invalidated
+                                      ? t("production.cutPackInvalidated")
+                                      : undefined
+                                  }
+                                  onClick={() => exportCnc(detail.id, detail.order_code)}
+                                >
+                                  {t("production.cncExportButton")}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy || Boolean(optimization.invalidated)}
+                                  title={
+                                    optimization.invalidated
+                                      ? t("production.cutPackInvalidated")
+                                      : undefined
+                                  }
+                                  onClick={() => exportDxf(detail.id, detail.order_code)}
+                                >
+                                  {t("production.dxfExportButton")}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy || Boolean(optimization.invalidated)}
+                                  title={
+                                    optimization.invalidated
+                                      ? t("production.cutPackInvalidated")
+                                      : undefined
+                                  }
+                                  onClick={() => exportOperations(detail.id, detail.order_code)}
+                                >
+                                  {t("production.opsExportButton")}
+                                </button>
+                              </>
+                            ) : null}
+                            {files.map(([filename, content]) => (
+                              <button
+                                key={filename}
+                                type="button"
+                                className="production-cnc-file"
+                                disabled={Boolean(optimization.invalidated)}
+                                title={
+                                  optimization.invalidated ? t("production.fileStale") : undefined
+                                }
+                                onClick={() => downloadCnc(detail.order_code, filename, content)}
+                              >
+                                {filename}
+                              </button>
+                            ))}
+                            {dxfFiles.map(([filename, content]) => (
+                              <button
+                                key={filename}
+                                type="button"
+                                className="production-cnc-file"
+                                disabled={Boolean(optimization.invalidated)}
+                                title={
+                                  optimization.invalidated ? t("production.fileStale") : undefined
+                                }
+                                onClick={() => downloadCnc(detail.order_code, filename, content)}
+                              >
+                                {filename}
+                              </button>
+                            ))}
+                            {opsExport?.operation_count ? (
+                              <span className="production-ops-count">
+                                {opsExport.operation_count} {t("production.opsOperationsCount")}
+                              </span>
+                            ) : null}
+                            {opsFiles.map(([filename, content]) => (
+                              <button
+                                key={filename}
+                                type="button"
+                                className="production-cnc-file"
+                                disabled={Boolean(optimization.invalidated)}
+                                title={
+                                  optimization.invalidated ? t("production.fileStale") : undefined
+                                }
+                                onClick={() => downloadCnc(detail.order_code, filename, content)}
+                              >
+                                {filename}
+                              </button>
+                            ))}
                           </div>
-                          <div hidden={signatureMode !== "draw"}>
-                            <SignaturePad ref={sigRef} onDraw={setSigDrawn} />
-                          </div>
-                          {signatureMode === "typed" ? (
-                            <p className="production-signature-typed">
-                              {t("production.signatureTypedHint")}
+                        );
+                      })()}
+
+                      {!optimization ? (
+                        <EmptyState
+                          kind="cut-plan"
+                          title="Esta orden aún no tiene plan de corte"
+                          body={t("production.optimizeEmpty")}
+                        />
+                      ) : (
+                        <>
+                          {optimization.invalidated ? (
+                            <p className="production-invalidated" role="alert">
+                              {t("production.planInvalidated")}
                             </p>
                           ) : null}
-                        </div>
-                        <label className="production-confirm-collect">
-                          <input
-                            type="checkbox"
-                            checked={collectPayment}
-                            onChange={(event) => setCollectPayment(event.target.checked)}
-                          />
-                          {t("production.deliveryCollect")}
-                        </label>
-                        {collectPayment ? (
-                          <>
-                            <label>
-                              {t("production.deliveryCollectAmount")}
-                              <input
-                                type="number"
-                                min="1"
-                                step="1"
-                                required
-                                value={collectAmount}
-                                onChange={(event) => setCollectAmount(event.target.value)}
-                              />
-                            </label>
-                            <label>
-                              {t("projects.paymentMethod")}
-                              <select
-                                value={collectMethod}
-                                onChange={(event) =>
-                                  setCollectMethod(event.target.value as MethodEnum)
-                                }
-                              >
-                                <option value="CASH">{t("projects.paymentMethodCash")}</option>
-                                <option value="TRANSFER">
-                                  {t("projects.paymentMethodTransfer")}
-                                </option>
-                                <option value="CARD">{t("projects.paymentMethodCard")}</option>
-                                <option value="CHECK">{t("projects.paymentMethodCheck")}</option>
-                                <option value="OTHER">{t("projects.paymentMethodOther")}</option>
-                              </select>
-                            </label>
-                            <label>
-                              {t("projects.paymentKind")}
-                              <select
-                                value={collectKind}
-                                onChange={(event) =>
-                                  setCollectKind(event.target.value as PaymentKindEnum)
-                                }
-                              >
-                                <option value="ANTICIPO">
-                                  {t("projects.paymentKindAnticipo")}
-                                </option>
-                                <option value="PARCIAL">{t("projects.paymentKindParcial")}</option>
-                                <option value="SALDO">{t("projects.paymentKindSaldo")}</option>
-                              </select>
-                            </label>
-                          </>
-                        ) : null}
-                        <div className="production-delivery-actions">
-                          <button
-                            type="submit"
-                            disabled={
-                              busy || !confirmName.trim() || (signatureMode === "draw" && !sigDrawn)
-                            }
-                          >
-                            {t("production.deliveryConfirmSubmit")}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => sigRef.current?.clear()}
-                          >
-                            {t("production.deliverySignatureClear")}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => setConfirmOpen(false)}
-                          >
-                            {t("production.deliveryCancel")}
-                          </button>
-                        </div>
-                      </ValidatedForm>
-                    ) : null}
-                    {!delivery && deliveryForm === null ? (
-                      <p className="production-optimize-empty">{t("production.deliveryEmpty")}</p>
-                    ) : null}
-                    {deliveryForm !== null && canWrite ? (
-                      <ValidatedForm
-                        className="production-delivery-form"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          void saveDelivery(detail.id);
-                        }}
-                      >
-                        <label>
-                          {t("production.deliveryDate")}
-                          <input
-                            type="date"
-                            required
-                            value={deliveryForm.scheduled_date}
-                            onChange={(event) =>
-                              setDeliveryForm({
-                                ...deliveryForm,
-                                scheduled_date: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <label>
-                          {t("production.deliveryWindow")}
-                          <select
-                            value={deliveryForm.time_window ?? "AM"}
-                            onChange={(event) =>
-                              setDeliveryForm({
-                                ...deliveryForm,
-                                time_window: event.target
-                                  .value as DeliveryScheduleRequestRequest["time_window"],
-                              })
-                            }
-                          >
-                            <option value="AM">{t("production.windowAm")}</option>
-                            <option value="PM">{t("production.windowPm")}</option>
-                            <option value="JORNADA">{t("production.windowAllDay")}</option>
-                          </select>
-                        </label>
-                        <label className="production-delivery-wide">
-                          {t("production.deliveryAddress")}
-                          <input
-                            required
-                            value={deliveryForm.address}
-                            onChange={(event) =>
-                              setDeliveryForm({
-                                ...deliveryForm,
-                                address: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <label>
-                          {t("production.deliveryContact")}
-                          <input
-                            value={deliveryForm.contact_name ?? ""}
-                            onChange={(event) =>
-                              setDeliveryForm({
-                                ...deliveryForm,
-                                contact_name: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <label>
-                          {t("production.deliveryPhone")}
-                          <input
-                            value={deliveryForm.contact_phone ?? ""}
-                            onChange={(event) =>
-                              setDeliveryForm({
-                                ...deliveryForm,
-                                contact_phone: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <label>
-                          {t("production.deliveryInstaller")}
-                          <input
-                            value={deliveryForm.installer_name ?? ""}
-                            onChange={(event) =>
-                              setDeliveryForm({
-                                ...deliveryForm,
-                                installer_name: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <label className="production-delivery-wide">
-                          {t("production.deliveryNotes")}
-                          <input
-                            value={deliveryForm.notes ?? ""}
-                            onChange={(event) =>
-                              setDeliveryForm({
-                                ...deliveryForm,
-                                notes: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        {(() => {
-                          // Partial trips: the pickable set is the pending
-                          // balance plus whatever this trip already carries
-                          // (delivered units are sealed and never offered).
-                          const allowed = [
-                            ...new Set([...pendingUnits, ...(deliveryForm.unit_indexes ?? [])]),
-                          ].sort((a, b) => a - b);
-                          if (allowed.length < 2) return null;
-                          const checked = deliveryForm.unit_indexes ?? allowed;
-                          return (
-                            <fieldset className="production-delivery-units production-delivery-wide">
-                              <legend>{t("production.deliveryUnitsTrip")}</legend>
-                              <div className="production-delivery-unit-chips">
-                                {allowed.map((idx) => {
-                                  const active = checked.includes(idx);
-                                  return (
-                                    <button
-                                      type="button"
-                                      key={idx}
-                                      className={`chip${active ? " is-active" : ""}`}
-                                      aria-pressed={active}
-                                      disabled={checked.length === 1 && active}
-                                      onClick={() => {
-                                        const next = active
-                                          ? checked.filter((i) => i !== idx)
-                                          : [...checked, idx].sort((a, b) => a - b);
-                                        setDeliveryForm({
-                                          ...deliveryForm,
-                                          unit_indexes:
-                                            next.length === allowed.length ? null : next,
-                                        });
-                                      }}
-                                    >
-                                      {unitLabel([idx])}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              <p className="production-delivery-units-hint">
-                                {t("production.deliveryUnitsAllHint")}
+                          {!optimization.invalidated && (cutPlan.length || layouts.length) ? (
+                            <CutPlanView
+                              key={optimization.optimized_at ?? "optimization"}
+                              optimization={optimization}
+                              labels={(trace?.labels as Record<string, string> | undefined) ?? {}}
+                              pieceCodes={pieceCodes}
+                            />
+                          ) : null}
+                          {purchases.length || sheetPurchases.length ? (
+                            <p className="production-optimize-purchases">
+                              {t("production.optimizeStockNew")}:{" "}
+                              {purchases
+                                .map(
+                                  (line) =>
+                                    `${line.qty_bars} ${t("production.optimizePurchaseUnit")} ${line.commercial_sku}`,
+                                )
+                                .concat(
+                                  sheetPurchases.map(
+                                    (line) =>
+                                      `${line.qty_sheets} ${t("production.optimizePurchaseSheet")} ${line.purchasing_sku}`,
+                                  ),
+                                )
+                                .join(" · ")}
+                            </p>
+                          ) : null}
+                          {(() => {
+                            // Real "what to buy": only the skus whose stock
+                            // reservation came back short, or with no stock
+                            // authority at all — the plan's NEW-bar list is
+                            // consumption, not shortage.
+                            const shortRows = (optimization?.stock_reservations ?? []).filter(
+                              (row) =>
+                                row.short !== undefined &&
+                                row.short !== null &&
+                                row.short !== "0" &&
+                                row.short !== "0.00",
+                            );
+                            const unmapped = optimization?.unmapped_stock_skus ?? [];
+                            if (!shortRows.length && !unmapped.length) return null;
+                            return (
+                              <p className="production-optimize-purchases production-stock-short">
+                                {t("production.optimizeBuy")}:{" "}
+                                {shortRows
+                                  .map(
+                                    (row) =>
+                                      `${row.name ?? "Material sin nombre"} × ${fmtMm(row.short)} ${stockUnitLabel(row.unit)}`,
+                                  )
+                                  .concat(
+                                    unmapped.map(
+                                      (sku) => `${sku} (${t("production.optimizeUnmapped")})`,
+                                    ),
+                                  )
+                                  .join(" · ")}
                               </p>
-                            </fieldset>
-                          );
-                        })()}
-                        <div className="production-delivery-actions">
-                          <button type="submit" disabled={busy}>
-                            {t("production.deliverySave")}
-                          </button>
-                          <button type="button" onClick={() => setDeliveryForm(null)}>
-                            {t("production.deliveryCancel")}
-                          </button>
-                        </div>
-                      </ValidatedForm>
-                    ) : null}
-                  </section>
-                );
-              })()}
-              {(() => {
-                const nextStep = detail.steps.find(
-                  (step) => step.status !== "DONE" && stepActions(step).length > 0,
-                );
-                if (!nextStep || TERMINAL_ORDER_STATUSES.has(detail.status)) return null;
-                return (
-                  <div
-                    className="production-next"
-                    role="group"
-                    aria-label={t("production.nextStep")}
-                  >
-                    <span className="production-next-label">
-                      {t("production.nextStep")}: <strong>{nextStep.label}</strong>
-                      {(nextStep.work_center_name ?? nextStep.work_center_code)
-                        ? ` · ${nextStep.work_center_name ?? nextStep.work_center_code}`
-                        : ""}
-                    </span>
-                    {canStep ? (
-                      <span className="production-step-actions">
-                        {nextStep.code === "QC" && stepActions(nextStep).includes("QC_FAIL") ? (
-                          <select
-                            className="production-qc-item"
-                            aria-label={t("production.qcItem")}
-                            value={qcFailItem}
-                            onChange={(event) => setQcFailItem(event.target.value)}
-                          >
-                            <option value="">{t("production.qcItemAny")}</option>
-                            {qcItemOptions.map((code) => (
-                              <option key={code} value={code}>
-                                {code}
-                              </option>
-                            ))}
-                          </select>
+                            );
+                          })()}
+                          {(() => {
+                            const reservations = optimization?.stock_reservations ?? [];
+                            const unmappedSkus = optimization?.unmapped_stock_skus ?? [];
+                            if (!reservations.length && !unmappedSkus.length) return null;
+                            return (
+                              <section
+                                className="production-stock-reserve"
+                                aria-label={t("production.stockReserveTitle")}
+                              >
+                                <h4>{t("production.stockReserveTitle")}</h4>
+                                {reservations.length ? (
+                                  <table className="production-plan">
+                                    <thead>
+                                      <tr>
+                                        <th>{t("production.stockKind")}</th>
+                                        <th>{t("production.stockSku")}</th>
+                                        <th>{t("production.stockOnHand")}</th>
+                                        <th>{t("production.stockNeeded")}</th>
+                                        <th>{t("production.stockReserved")}</th>
+                                        <th>{t("production.stockShort")}</th>
+                                        <th>{t("production.stockConsumedAt")}</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {reservations.map((row, index) => (
+                                        <tr key={`${row.kind ?? ""}-${row.sku ?? ""}-${index}`}>
+                                          <td>{row.name ?? row.sku ?? "Sin dato"}</td>
+                                          <td>
+                                            {stockUnitLabel(row.unit)}
+                                            <details>
+                                              <summary>Detalles técnicos</summary>
+                                              <code>{row.sku ?? "Sin dato"}</code>
+                                            </details>
+                                          </td>
+                                          <td>{fmtMm(row.on_hand)}</td>
+                                          <td>{fmtMm(row.needed)}</td>
+                                          <td>{fmtMm(row.reserved)}</td>
+                                          <td>
+                                            {row.short && row.short !== "0" ? (
+                                              <strong className="production-stock-short">
+                                                {fmtMm(row.short)}
+                                              </strong>
+                                            ) : (
+                                              fmtMm(row.short)
+                                            )}
+                                          </td>
+                                          <td>
+                                            {row.consumed_at
+                                              ? formatDate(row.consumed_at)
+                                              : "Sin dato"}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                ) : null}
+                                {unmappedSkus.length ? (
+                                  <p className="production-stock-unmapped">
+                                    {t("production.stockUnmapped")}: {unmappedSkus.join(" · ")}
+                                  </p>
+                                ) : null}
+                              </section>
+                            );
+                          })()}
+                          {(() => {
+                            const remnantLedger = optimization?.remnants;
+                            const consumed = remnantLedger?.consumed ?? [];
+                            const producedCount =
+                              (remnantLedger?.produced_bars?.length ?? 0) +
+                              (remnantLedger?.produced_sheets?.length ?? 0);
+                            const metrics = optimization?.bars?.metrics;
+                            const comparison = optimization?.bars?.strategy_comparison;
+                            const comparisonEntries = comparison
+                              ? (["fast", "deep"] as const)
+                                  .filter((key) => comparison[key])
+                                  .map((key) => ({ key, metrics: comparison[key] }))
+                              : [];
+                            const unplaced = optimization?.bars?.unplaced ?? [];
+                            return (
+                              <>
+                                {consumed.length || producedCount ? (
+                                  <p className="production-optimize-remnants">
+                                    {consumed.length ? (
+                                      <span>
+                                        {t("production.optimizeRemnantsUsed")}: {consumed.length}
+                                      </span>
+                                    ) : null}
+                                    {producedCount ? (
+                                      <span>
+                                        {t("production.optimizeRemnantsProduced")}: {producedCount}
+                                      </span>
+                                    ) : null}
+                                  </p>
+                                ) : null}
+                                {metrics ? (
+                                  <p className="production-optimize-metrics">
+                                    {t("production.optimizeMetrics")}:{" "}
+                                    {[
+                                      `${metrics.bars ?? 0} barras`,
+                                      `${metrics.purchased_bars ?? 0} compra`,
+                                      `${metrics.remnant_bars ?? 0} barras retazo`,
+                                      metrics.process_waste_mm == null
+                                        ? "Sin dato · falta merma de proceso"
+                                        : `${fmtMm(metrics.process_waste_mm)} mm merma de proceso`,
+                                      metrics.reusable_remnant_mm == null
+                                        ? "Sin dato · falta retazo reutilizable"
+                                        : `${fmtMm(metrics.reusable_remnant_mm)} mm retazo reutilizable`,
+                                      `${metrics.cuts ?? 0} cortes`,
+                                    ].join(" · ")}
+                                  </p>
+                                ) : null}
+                                {comparisonEntries.length > 1 ? (
+                                  <p className="production-optimize-metrics">
+                                    {t("production.optimizeComparison")}:{" "}
+                                    {comparisonEntries
+                                      .map(
+                                        ({ key, metrics: m }) =>
+                                          `${
+                                            t(
+                                              `production.optimizeVariant.${key}` as Parameters<
+                                                typeof t
+                                              >[0],
+                                            ) || key
+                                          }${comparison?.chosen === key ? " ← " + t("production.optimizeChosen") : ""}: ${m?.purchased_bars ?? 0} barras · ${fmtMm(m?.process_waste_mm)} mm`,
+                                      )
+                                      .join("  ·  ")}
+                                  </p>
+                                ) : null}
+                                {unplaced.length ? (
+                                  <p className="production-optimize-unnested" role="alert">
+                                    {t("production.optimizeUnplaced")}:{" "}
+                                    {unplaced
+                                      .map(
+                                        (entry) =>
+                                          `${entry.piece?.piece_id ?? "?"} (${entry.reason ?? ""})`,
+                                      )
+                                      .join(" · ")}
+                                  </p>
+                                ) : null}
+                              </>
+                            );
+                          })()}
+                          {unnested.length ? (
+                            <p className="production-optimize-unnested" role="alert">
+                              {t("production.optimizeUnnested")}:{" "}
+                              {unnested
+                                .map(
+                                  (piece) =>
+                                    `${tOptional(`production.pieceKind.${piece.kind}`) ?? piece.kind} ${fmtMm(piece.width_mm)}×${fmtMm(piece.height_mm)} mm ×${piece.quantity} (${piece.group})` +
+                                    (piece.reason
+                                      ? ` — ${tOptional(`production.unnestedReason.${piece.reason}`) ?? piece.reason}`
+                                      : ""),
+                                )
+                                .join(" · ")}
+                            </p>
+                          ) : null}
+                        </>
+                      )}
+                    </section>
+                  );
+                })()}
+                {(() => {
+                  if (activeTab !== "embalaje") return null;
+                  const packing = detail.payload?.packing as WorkOrderPacking | undefined;
+                  const units = packing?.units ?? [];
+                  return (
+                    <section
+                      className="production-packing"
+                      aria-label={t("production.packingTitle")}
+                    >
+                      <header className="production-optimize-head">
+                        <h3>{t("production.packingTitle")}</h3>
+                        {packing?.generated_at ? (
+                          <time dateTime={packing.generated_at}>
+                            {formatDateTime(packing.generated_at)}
+                          </time>
                         ) : null}
-                        {stepActions(nextStep)
-                          // Same supervisor gate as the step list — a blocked
-                          // next step must not offer Desbloquear to operators.
+                        {canWrite &&
+                        detail.status !== "DISPATCHED" &&
+                        detail.status !== "INSTALLED" &&
+                        detail.status !== "CANCELLED" ? (
+                          <button type="button" disabled={busy} onClick={() => pack(detail.id)}>
+                            {packing
+                              ? t("production.packingRegenerate")
+                              : t("production.packingGenerate")}
+                          </button>
+                        ) : null}
+                        {units.length ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void showLabels(detail.id)}
+                          >
+                            {t("production.labelsShow")}
+                          </button>
+                        ) : null}
+                        {labels.length ? (
+                          <button type="button" onClick={() => window.print()}>
+                            {t("production.labelsPrint")}
+                          </button>
+                        ) : null}
+                      </header>
+                      {pieceLabelsBlockedReason ? (
+                        <p className="production-label-blocker" role="status">
+                          {pieceLabelsBlockedReason}{" "}
+                          <a href="#production-cut-plan">Revisar plan de corte</a>
+                        </p>
+                      ) : null}
+                      {labels.length ? (
+                        <ul className="production-labels">
+                          {labels.map((label) => (
+                            <li key={label.label_code} className="production-label">
+                              <Wordmark width={72} />
+                              <span className="production-label-code">{label.label_code}</span>
+                              <span
+                                className="production-label-qr"
+                                // Generated server-side by segno from the sealed manifest.
+                                dangerouslySetInnerHTML={{ __html: label.qr_svg }}
+                              />
+                              <span className="production-label-pieces">
+                                {t("production.labelsPieces")}: {label.pieces}
+                              </span>
+                              <span className="production-label-parts">
+                                {
+                                  // Non-colliding glyphs — M-xx/V-xx/H-xx mean
+                                  // member/bay/leaf everywhere else, so the
+                                  // count letters can't reuse them.
+                                  (
+                                    [
+                                      ["PER", label.profiles],
+                                      ["REF", label.reinforcements],
+                                      ["VID", label.glasses],
+                                      ["PAN", label.panels],
+                                      ["HER", label.hardware],
+                                    ] as Array<[string, number]>
+                                  )
+                                    .filter(([, count]) => count > 0)
+                                    .map(([kind, count]) => `${kind}×${count}`)
+                                    .join(" · ")
+                                }
+                              </span>
+                            </li>
+                          ))}
+                          {physicalLabels.map((piece) => (
+                            <li key={piece.stable_id} className="production-label">
+                              <Wordmark width={72} />
+                              <span className="production-label-code">{piece.code}</span>
+                              <span
+                                className="production-label-qr"
+                                dangerouslySetInnerHTML={{ __html: piece.qr_svg }}
+                              />
+                              <span className="ui-value">
+                                {piece.length_mm
+                                  ? `${fmtMm(piece.length_mm)} mm`
+                                  : `${fmtMm(piece.width_mm)} × ${fmtMm(piece.height_mm)} mm`}
+                              </span>
+                              <span>{piece.workshop_sku}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {units.length ? (
+                        <table className="production-plan">
+                          <thead>
+                            <tr>
+                              <th>{t("production.packingLabel")}</th>
+                              <th>{t("production.packingProfiles")}</th>
+                              <th>{t("production.packingReinforcements")}</th>
+                              <th>{t("production.packingGlasses")}</th>
+                              <th>{t("production.packingPanels")}</th>
+                              <th>{t("production.packingHardware")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {units.map((unit) => (
+                              <tr key={unit.unit_index}>
+                                <td className="production-label-code">{unit.label_code}</td>
+                                <td>{unit.profiles ?? 0}</td>
+                                <td>{unit.reinforcements ?? 0}</td>
+                                <td>{unit.glasses ?? 0}</td>
+                                <td>{unit.panels ?? 0}</td>
+                                <td>{unit.hardware ?? 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <p className="production-optimize-empty">{t("production.packingEmpty")}</p>
+                      )}
+                      {(() => {
+                        // §14: packing honesty — surface unresolved material
+                        // shortage and unnested pieces instead of letting a
+                        // complete-looking manifest hide them.
+                        const unnestedRaw = (
+                          detail.payload?.optimization as { unnested?: unknown[] } | undefined
+                        )?.unnested;
+                        const unnested = Array.isArray(unnestedRaw) ? unnestedRaw.length : 0;
+                        const missing = (detail.shortage ?? 0) + unnested;
+                        if (!missing) return null;
+                        return (
+                          <p className="production-packing-missing" role="alert">
+                            {t("production.packingMissing")
+                              .replace("{short}", String(detail.shortage ?? 0))
+                              .replace("{unnested}", String(unnested))}
+                          </p>
+                        );
+                      })()}
+                    </section>
+                  );
+                })()}
+                {(() => {
+                  if (activeTab !== "embalaje") return null;
+                  const canSchedule =
+                    canWrite && (detail.status === "COMPLETED" || detail.status === "DISPATCHED");
+                  return (
+                    <section
+                      className="production-delivery"
+                      aria-label={t("production.deliveryTitle")}
+                    >
+                      <header className="production-optimize-head">
+                        <h3>{t("production.deliveryTitle")}</h3>
+                        {delivery ? (
+                          <span
+                            className={`production-chip delivery-${delivery.status.toLowerCase()}`}
+                          >
+                            {t(
+                              deliveryStatusKey[delivery.status] ??
+                                "production.deliveryStatusScheduled",
+                            )}
+                          </span>
+                        ) : null}
+                        {canSchedule &&
+                        deliveryForm === null &&
+                        (!delivery ||
+                          delivery.status === "DELIVERED" ||
+                          delivery.status === "FAILED") &&
+                        (deliveries.length === 0 || pendingUnits.length > 0) ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => openDeliveryForm(null)}
+                          >
+                            {deliveries.length
+                              ? t("production.deliveryScheduleNext")
+                              : t("production.deliverySchedule")}
+                          </button>
+                        ) : null}
+                        {canWrite && delivery && delivery.status !== "DELIVERED" ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => openDeliveryForm(delivery)}
+                          >
+                            {t("production.deliveryReschedule")}
+                          </button>
+                        ) : null}
+                        {canField &&
+                        delivery?.status === "SCHEDULED" &&
+                        detail.status === "DISPATCHED" ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void transitionDelivery(detail.id, "ON_ROUTE")}
+                          >
+                            {t("production.deliveryOnRoute")}
+                          </button>
+                        ) : null}
+                        {canField && delivery?.status === "ON_ROUTE" && !delivery.confirmation ? (
+                          <button
+                            type="button"
+                            className="production-chip-danger"
+                            disabled={busy}
+                            onClick={() => void transitionDelivery(detail.id, "FAILED")}
+                          >
+                            {t("production.deliveryFailed")}
+                          </button>
+                        ) : null}
+                        {canField &&
+                        delivery &&
+                        (delivery.status === "ON_ROUTE" || delivery.status === "DELIVERED") &&
+                        !delivery.confirmation &&
+                        !confirmOpen ? (
+                          <button type="button" disabled={busy} onClick={openConfirmForm}>
+                            {t("production.deliveryConfirm")}
+                          </button>
+                        ) : null}
+                        {delivery?.confirmation ? (
+                          <button
+                            type="button"
+                            className="production-chip delivery-delivered"
+                            onClick={() => void openConfirmation(detail.id, delivery.id)}
+                          >
+                            {delivery.confirmation.confirmation_code}
+                          </button>
+                        ) : null}
+                      </header>
+                      {delivery ? (
+                        <dl className="production-delivery-facts">
+                          <div>
+                            <dt>{t("production.deliveryDate")}</dt>
+                            <dd>
+                              {delivery.scheduled_date} ·{" "}
+                              {t(
+                                delivery.time_window === "JORNADA"
+                                  ? "production.windowAllDay"
+                                  : delivery.time_window === "PM"
+                                    ? "production.windowPm"
+                                    : "production.windowAm",
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>{t("production.deliveryAddress")}</dt>
+                            <dd>{delivery.address}</dd>
+                          </div>
+                          {delivery.contact_name || delivery.contact_phone ? (
+                            <div>
+                              <dt>{t("production.deliveryContact")}</dt>
+                              <dd>
+                                {[delivery.contact_name, delivery.contact_phone]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </dd>
+                            </div>
+                          ) : null}
+                          {delivery.installer_name ? (
+                            <div>
+                              <dt>{t("production.deliveryInstaller")}</dt>
+                              <dd>{delivery.installer_name}</dd>
+                            </div>
+                          ) : null}
+                          {delivery.notes ? (
+                            <div>
+                              <dt>{t("production.deliveryNotes")}</dt>
+                              <dd>{delivery.notes}</dd>
+                            </div>
+                          ) : null}
+                        </dl>
+                      ) : null}
+                      {deliveries.length > 1 ? (
+                        <ul className="production-delivery-trips">
+                          {deliveries.map((trip) => (
+                            <li key={trip.id} className="production-delivery-trip">
+                              <span
+                                className={`production-chip delivery-${trip.status.toLowerCase()}`}
+                              >
+                                {t(
+                                  deliveryStatusKey[trip.status] ??
+                                    "production.deliveryStatusScheduled",
+                                )}
+                              </span>
+                              <span className="production-delivery-trip-date">
+                                {trip.scheduled_date}
+                              </span>
+                              <span className="production-delivery-trip-units">
+                                {unitLabel(trip.unit_indexes)}
+                              </span>
+                              {trip.confirmation ? (
+                                <button
+                                  type="button"
+                                  className="production-chip delivery-delivered"
+                                  onClick={() => void openConfirmation(detail.id, trip.id)}
+                                >
+                                  {trip.confirmation.confirmation_code}
+                                </button>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {deliveries.length > 0 && pendingUnits.length > 0 ? (
+                        <p className="production-delivery-pending">
+                          {t("production.deliveryUnitsPending")}: {unitLabel(pendingUnits)}
+                        </p>
+                      ) : null}
+                      {canWrite && detail.dispatch_ready && pendingUnits.length > 1 ? (
+                        <fieldset className="production-delivery-units">
+                          <legend>{t("production.dispatchUnits")}</legend>
+                          <div className="production-delivery-unit-chips">
+                            {pendingUnits.map((idx) => {
+                              const current = dispatchUnitsSel.length
+                                ? dispatchUnitsSel
+                                : pendingUnits;
+                              const active = current.includes(idx);
+                              return (
+                                <button
+                                  type="button"
+                                  key={idx}
+                                  className={`chip${active ? " is-active" : ""}`}
+                                  aria-pressed={active}
+                                  onClick={() => {
+                                    const next = active
+                                      ? current.filter((i) => i !== idx)
+                                      : [...current, idx].sort((a, b) => a - b);
+                                    setDispatchUnitsSel(
+                                      next.length === pendingUnits.length ? [] : next,
+                                    );
+                                  }}
+                                >
+                                  {unitLabel([idx])}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p className="production-delivery-units-hint">
+                            {t("production.dispatchUnitsHint")}
+                          </p>
+                        </fieldset>
+                      ) : null}
+                      {confirmOpen && canField && delivery ? (
+                        <ValidatedForm
+                          className="production-delivery-form production-confirm-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            void submitConfirmation(detail.id);
+                          }}
+                        >
+                          <label>
+                            {t("production.deliveryReceiver")}
+                            <input
+                              type="text"
+                              required
+                              maxLength={200}
+                              value={confirmName}
+                              onChange={(event) => setConfirmName(event.target.value)}
+                            />
+                          </label>
+                          <label>
+                            {t("production.deliveryReceiverRut")}
+                            <input
+                              type="text"
+                              maxLength={30}
+                              value={confirmRut}
+                              onChange={(event) => setConfirmRut(event.target.value)}
+                            />
+                          </label>
+                          <div className="production-delivery-wide">
+                            {t("production.deliverySignature")}
+                            <div
+                              className="production-signature-mode"
+                              role="group"
+                              aria-label={t("production.deliverySignature")}
+                            >
+                              <button
+                                type="button"
+                                className={signatureMode === "draw" ? "chip is-active" : "chip"}
+                                aria-pressed={signatureMode === "draw"}
+                                onClick={() => setSignatureMode("draw")}
+                              >
+                                {t("production.signatureModeDraw")}
+                              </button>
+                              <button
+                                type="button"
+                                className={signatureMode === "typed" ? "chip is-active" : "chip"}
+                                aria-pressed={signatureMode === "typed"}
+                                onClick={() => setSignatureMode("typed")}
+                              >
+                                {t("production.signatureModeType")}
+                              </button>
+                            </div>
+                            <div hidden={signatureMode !== "draw"}>
+                              <SignaturePad ref={sigRef} onDraw={setSigDrawn} />
+                            </div>
+                            {signatureMode === "typed" ? (
+                              <p className="production-signature-typed">
+                                {t("production.signatureTypedHint")}
+                              </p>
+                            ) : null}
+                          </div>
+                          <label className="production-confirm-collect">
+                            <input
+                              type="checkbox"
+                              checked={collectPayment}
+                              onChange={(event) => setCollectPayment(event.target.checked)}
+                            />
+                            {t("production.deliveryCollect")}
+                          </label>
+                          {collectPayment ? (
+                            <>
+                              <label>
+                                {t("production.deliveryCollectAmount")}
+                                <input
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  required
+                                  value={collectAmount}
+                                  onChange={(event) => setCollectAmount(event.target.value)}
+                                />
+                              </label>
+                              <label>
+                                {t("projects.paymentMethod")}
+                                <select
+                                  value={collectMethod}
+                                  onChange={(event) =>
+                                    setCollectMethod(event.target.value as MethodEnum)
+                                  }
+                                >
+                                  <option value="CASH">{t("projects.paymentMethodCash")}</option>
+                                  <option value="TRANSFER">
+                                    {t("projects.paymentMethodTransfer")}
+                                  </option>
+                                  <option value="CARD">{t("projects.paymentMethodCard")}</option>
+                                  <option value="CHECK">{t("projects.paymentMethodCheck")}</option>
+                                  <option value="OTHER">{t("projects.paymentMethodOther")}</option>
+                                </select>
+                              </label>
+                              <label>
+                                {t("projects.paymentKind")}
+                                <select
+                                  value={collectKind}
+                                  onChange={(event) =>
+                                    setCollectKind(event.target.value as PaymentKindEnum)
+                                  }
+                                >
+                                  <option value="ANTICIPO">
+                                    {t("projects.paymentKindAnticipo")}
+                                  </option>
+                                  <option value="PARCIAL">
+                                    {t("projects.paymentKindParcial")}
+                                  </option>
+                                  <option value="SALDO">{t("projects.paymentKindSaldo")}</option>
+                                </select>
+                              </label>
+                            </>
+                          ) : null}
+                          <div className="production-delivery-actions">
+                            <button
+                              type="submit"
+                              disabled={
+                                busy ||
+                                !confirmName.trim() ||
+                                (signatureMode === "draw" && !sigDrawn)
+                              }
+                            >
+                              {t("production.deliveryConfirmSubmit")}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => sigRef.current?.clear()}
+                            >
+                              {t("production.deliverySignatureClear")}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => setConfirmOpen(false)}
+                            >
+                              {t("production.deliveryCancel")}
+                            </button>
+                          </div>
+                        </ValidatedForm>
+                      ) : null}
+                      {!delivery && deliveryForm === null ? (
+                        <p className="production-optimize-empty">{t("production.deliveryEmpty")}</p>
+                      ) : null}
+                      {deliveryForm !== null && canWrite ? (
+                        <ValidatedForm
+                          className="production-delivery-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            void saveDelivery(detail.id);
+                          }}
+                        >
+                          <label>
+                            {t("production.deliveryDate")}
+                            <input
+                              type="date"
+                              required
+                              value={deliveryForm.scheduled_date}
+                              onChange={(event) =>
+                                setDeliveryForm({
+                                  ...deliveryForm,
+                                  scheduled_date: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label>
+                            {t("production.deliveryWindow")}
+                            <select
+                              value={deliveryForm.time_window ?? "AM"}
+                              onChange={(event) =>
+                                setDeliveryForm({
+                                  ...deliveryForm,
+                                  time_window: event.target
+                                    .value as DeliveryScheduleRequestRequest["time_window"],
+                                })
+                              }
+                            >
+                              <option value="AM">{t("production.windowAm")}</option>
+                              <option value="PM">{t("production.windowPm")}</option>
+                              <option value="JORNADA">{t("production.windowAllDay")}</option>
+                            </select>
+                          </label>
+                          <label className="production-delivery-wide">
+                            {t("production.deliveryAddress")}
+                            <input
+                              required
+                              value={deliveryForm.address}
+                              onChange={(event) =>
+                                setDeliveryForm({
+                                  ...deliveryForm,
+                                  address: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label>
+                            {t("production.deliveryContact")}
+                            <input
+                              value={deliveryForm.contact_name ?? ""}
+                              onChange={(event) =>
+                                setDeliveryForm({
+                                  ...deliveryForm,
+                                  contact_name: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label>
+                            {t("production.deliveryPhone")}
+                            <input
+                              value={deliveryForm.contact_phone ?? ""}
+                              onChange={(event) =>
+                                setDeliveryForm({
+                                  ...deliveryForm,
+                                  contact_phone: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label>
+                            {t("production.deliveryInstaller")}
+                            <input
+                              value={deliveryForm.installer_name ?? ""}
+                              onChange={(event) =>
+                                setDeliveryForm({
+                                  ...deliveryForm,
+                                  installer_name: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label className="production-delivery-wide">
+                            {t("production.deliveryNotes")}
+                            <input
+                              value={deliveryForm.notes ?? ""}
+                              onChange={(event) =>
+                                setDeliveryForm({
+                                  ...deliveryForm,
+                                  notes: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          {(() => {
+                            // Partial trips: the pickable set is the pending
+                            // balance plus whatever this trip already carries
+                            // (delivered units are sealed and never offered).
+                            const allowed = [
+                              ...new Set([...pendingUnits, ...(deliveryForm.unit_indexes ?? [])]),
+                            ].sort((a, b) => a - b);
+                            if (allowed.length < 2) return null;
+                            const checked = deliveryForm.unit_indexes ?? allowed;
+                            return (
+                              <fieldset className="production-delivery-units production-delivery-wide">
+                                <legend>{t("production.deliveryUnitsTrip")}</legend>
+                                <div className="production-delivery-unit-chips">
+                                  {allowed.map((idx) => {
+                                    const active = checked.includes(idx);
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={idx}
+                                        className={`chip${active ? " is-active" : ""}`}
+                                        aria-pressed={active}
+                                        disabled={checked.length === 1 && active}
+                                        onClick={() => {
+                                          const next = active
+                                            ? checked.filter((i) => i !== idx)
+                                            : [...checked, idx].sort((a, b) => a - b);
+                                          setDeliveryForm({
+                                            ...deliveryForm,
+                                            unit_indexes:
+                                              next.length === allowed.length ? null : next,
+                                          });
+                                        }}
+                                      >
+                                        {unitLabel([idx])}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <p className="production-delivery-units-hint">
+                                  {t("production.deliveryUnitsAllHint")}
+                                </p>
+                              </fieldset>
+                            );
+                          })()}
+                          <div className="production-delivery-actions">
+                            <button type="submit" disabled={busy}>
+                              {t("production.deliverySave")}
+                            </button>
+                            <button type="button" onClick={() => setDeliveryForm(null)}>
+                              {t("production.deliveryCancel")}
+                            </button>
+                          </div>
+                        </ValidatedForm>
+                      ) : null}
+                    </section>
+                  );
+                })()}
+                {(() => {
+                  if (activeTab !== "resumen" && activeTab !== "calidad") return null;
+                  const nextStep = detail.steps.find(
+                    (step) => step.status !== "DONE" && stepActions(step).length > 0,
+                  );
+                  const operatorStep =
+                    detail.steps.find((step) => step.id === operatorStepId) ??
+                    nextStep ??
+                    detail.steps[detail.steps.length - 1] ??
+                    null;
+                  // Only the first open station is actually workable — every
+                  // later READY step reads "Pendiente", never "Lista".
+
+                  // One builder feeds both the step row and the operator
+                  // card's sticky footer — the primary action (iniciar,
+                  // registrar, completar) stays on screen while the card's
+                  // materials and ops scroll beneath it.
+                  const renderStepActionBar = (step: (typeof detail.steps)[number]) => {
+                    if (!canStep || TERMINAL_ORDER_STATUSES.has(detail.status)) return null;
+                    return (
+                      <div className="production-step-actions">
+                        {stepActions(step)
+                          // START only exists on the earliest open step —
+                          // the backend sequence gate rejects every other
+                          // one with a guaranteed 422.
+                          .filter(
+                            (stepAction) => stepAction !== "START" || step.id === nextStep?.id,
+                          )
+                          // UNBLOCK is a supervisor action — the backend
+                          // refuses it for operators
+                          // (unblock_requires_supervisor), so the button
+                          // would be a guaranteed error toast.
                           .filter((stepAction) => stepAction !== "UNBLOCK" || canWrite)
                           .map((stepAction) =>
-                            stepAction === "START" && stepNeedsPlan(nextStep, detail) ? (
+                            stepAction === "START" && stepNeedsPlan(step, detail) ? (
                               <span className="production-step-hint" key={stepAction}>
                                 {t(
                                   canWrite
@@ -3292,219 +3071,74 @@ export function ProductionPage(): JSX.Element {
                                 key={stepAction}
                                 type="button"
                                 disabled={busy}
-                                onClick={() => void transition(nextStep.id, stepAction, detail.id)}
+                                onClick={() => void transition(step.id, stepAction, detail.id)}
                               >
                                 {t(actionLabel[stepAction])}
                               </button>
                             ),
                           )}
-                      </span>
-                    ) : null}
-                  </div>
-                );
-              })()}
-              {(() => {
-                const nextStep = detail.steps.find(
-                  (step) => step.status !== "DONE" && stepActions(step).length > 0,
-                );
-                const operatorStep =
-                  detail.steps.find((step) => step.id === operatorStepId) ??
-                  nextStep ??
-                  detail.steps[detail.steps.length - 1] ??
-                  null;
-                // Only the first open station is actually workable — every
-                // later READY step reads "Pendiente", never "Lista".
-                const firstOpenStepId =
-                  detail.steps.find((step) => step.status !== "DONE")?.id ?? null;
-                // One builder feeds both the step row and the operator
-                // card's sticky footer — the primary action (iniciar,
-                // registrar, completar) stays on screen while the card's
-                // materials and ops scroll beneath it.
-                const renderStepActionBar = (step: (typeof detail.steps)[number]) => {
-                  if (!canStep || TERMINAL_ORDER_STATUSES.has(detail.status)) return null;
-                  return (
-                    <div className="production-step-actions">
-                      {step.code === "QC" && stepActions(step).includes("QC_FAIL") ? (
-                        <select
-                          className="production-qc-item"
-                          aria-label={t("production.qcItem")}
-                          value={qcFailItem}
-                          onChange={(event) => setQcFailItem(event.target.value)}
-                        >
-                          <option value="">{t("production.qcItemAny")}</option>
-                          {qcItemOptions.map((code) => (
-                            <option key={code} value={code}>
-                              {code}
-                            </option>
-                          ))}
-                        </select>
-                      ) : null}
-                      {stepActions(step)
-                        // START only exists on the earliest open step —
-                        // the backend sequence gate rejects every other
-                        // one with a guaranteed 422.
-                        .filter((stepAction) => stepAction !== "START" || step.id === nextStep?.id)
-                        // UNBLOCK is a supervisor action — the backend
-                        // refuses it for operators
-                        // (unblock_requires_supervisor), so the button
-                        // would be a guaranteed error toast.
-                        .filter((stepAction) => stepAction !== "UNBLOCK" || canWrite)
-                        .map((stepAction) =>
-                          stepAction === "START" && stepNeedsPlan(step, detail) ? (
-                            <span className="production-step-hint" key={stepAction}>
-                              {t(
-                                canWrite
-                                  ? "production.stepNeedsPlan"
-                                  : "production.stepNeedsPlanWait",
-                              )}
-                            </span>
-                          ) : (
-                            <button
-                              key={stepAction}
-                              type="button"
-                              disabled={busy}
-                              onClick={() => void transition(step.id, stepAction, detail.id)}
-                            >
-                              {t(actionLabel[stepAction])}
-                            </button>
-                          ),
-                        )}
-                    </div>
-                  );
-                };
-                return (
-                  <>
-                    <ol className="production-steps">
-                      {detail.steps.map((step) => (
-                        <li
-                          key={step.id}
-                          className={`production-step step-${step.status.toLowerCase()}${
-                            operatorStep?.id === step.id ? " step-operator" : ""
-                          }`}
-                        >
-                          <div className="production-step-head">
-                            <span className="production-step-seq">{step.sequence}</span>
-                            <button
-                              type="button"
-                              className="production-step-operator"
-                              onClick={() =>
-                                setOperatorStepId((current) =>
-                                  current === step.id ? null : step.id,
-                                )
-                              }
-                            >
-                              {step.label}
-                            </button>
-                            {(step.work_center_name ?? step.work_center_code) ? (
-                              <span className="production-step-center">
-                                {step.work_center_name ?? step.work_center_code}
-                              </span>
-                            ) : null}
-                            <span className={`production-chip status-${step.status.toLowerCase()}`}>
-                              {t(
-                                step.status === "READY" && step.id !== firstOpenStepId
-                                  ? "production.stepPending"
-                                  : (stepStatusKey[step.status] ?? "production.stepReady"),
-                              )}
-                            </span>
-                          </div>
-                          {step.note ? <p className="production-step-note">{step.note}</p> : null}
-                          {renderStepActionBar(step)}
-                        </li>
-                      ))}
-                    </ol>
-                    {operatorStep ? (
-                      <OperatorStepCard
-                        step={operatorStep}
-                        trace={trace}
-                        traceBusy={traceBusy}
-                        actionBar={renderStepActionBar(operatorStep)}
-                        onQcCheck={
-                          canStep ? (stepId, check) => qcCheck(stepId, check, detail.id) : undefined
-                        }
-                        opsCheckable={
-                          canStep &&
-                          operatorStep.status === "IN_PROGRESS" &&
-                          PLAN_REQUIRED_CODES.has(operatorStep.code)
-                        }
-                        opsDone={opsDone[operatorStep.id] ?? []}
-                        onOpsDoneChange={(ids) =>
-                          setOpsDone((current) => ({
-                            ...current,
-                            [operatorStep.id]: ids,
-                          }))
-                        }
-                      />
-                    ) : null}
-                  </>
-                );
-              })()}
-              {canStep ? (
-                <label className="production-note">
-                  {t("production.noteLabel")}
-                  <input
-                    type="text"
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    placeholder={t("production.notePlaceholder")}
-                  />
-                </label>
-              ) : null}
-              <section className="production-trace" aria-label={t("production.traceTitle")}>
-                <header className="production-optimize-head">
-                  <h3>{t("production.traceTitle")}</h3>
-                  {!trace ? (
-                    <button type="button" disabled={traceBusy} onClick={() => void loadTrace()}>
-                      {traceBusy ? t("production.traceLoading") : t("production.traceLoad")}
-                    </button>
-                  ) : null}
-                </header>
-                {trace ? (
-                  <div className="production-trace-body">
-                    <p className="production-trace-chain">
-                      {trace.project?.code ? String(trace.project.code) : "—"}
-                      {" → "}
-                      {trace.version?.revision_code ? String(trace.version.revision_code) : "—"}
-                      {" → "}
-                      {String(trace.work_order?.order_code ?? "—")}
-                    </p>
-                    {trace.plan ? <TracePlan plan={trace.plan} /> : null}
-                    {trace.stock ? <TraceStock stock={trace.stock} /> : null}
-                  </div>
-                ) : null}
-              </section>
-              <section className="production-events" aria-label={t("production.events")}>
-                <h3>{t("production.events")}</h3>
-                <ol>
-                  {detail.events.map((event) => {
-                    const eventNote = (event.payload as { note?: unknown } | undefined)?.note;
-                    const eventItem = (event.payload as { qc_item?: unknown } | undefined)?.qc_item;
-                    const eventStep = detail.steps.find((step) => step.id === event.step_id);
-                    const stepName =
-                      eventStep?.label ??
-                      (event.step_code ? stationCodeLabel(event.step_code) : undefined);
-                    return (
-                      <li key={event.id}>
-                        <time dateTime={event.created_at}>{formatDateTime(event.created_at)}</time>
-                        {stepName ? <strong>{stepName} · </strong> : null}
-                        <span>{t(eventKey[event.event] ?? "production.eventNote")}</span>
-                        {typeof eventItem === "string" && eventItem.trim() ? (
-                          <strong className="production-event-item"> · {eventItem}</strong>
-                        ) : null}
-                        {event.actor_label ? <span> · {event.actor_label}</span> : null}
-                        {typeof eventNote === "string" && eventNote.trim() ? (
-                          <em className="production-event-note">{eventNote}</em>
-                        ) : null}
-                      </li>
+                      </div>
                     );
-                  })}
-                </ol>
-              </section>
-            </>
-          ) : (
-            <p className="production-pick">{t("production.pickOrder")}</p>
-          )}
-        </article>
+                  };
+                  return (
+                    <>
+                      {operatorStep ? (
+                        <OperatorStepCard
+                          step={operatorStep}
+                          trace={trace}
+                          traceBusy={traceBusy}
+                          actionBar={renderStepActionBar(operatorStep)}
+                          onQcCheck={
+                            canStep
+                              ? (stepId, check) => qcCheck(stepId, check, detail.id)
+                              : undefined
+                          }
+                          opsCheckable={
+                            canStep &&
+                            operatorStep.status === "IN_PROGRESS" &&
+                            PLAN_REQUIRED_CODES.has(operatorStep.code)
+                          }
+                          opsDone={opsDone[operatorStep.id] ?? []}
+                          onOpsDoneChange={(ids) =>
+                            setOpsDone((current) => ({
+                              ...current,
+                              [operatorStep.id]: ids,
+                            }))
+                          }
+                        />
+                      ) : null}
+                    </>
+                  );
+                })()}
+                {canStep && (activeTab === "resumen" || activeTab === "calidad") ? (
+                  <label className="production-note">
+                    {t("production.noteLabel")}
+                    <input
+                      type="text"
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                      placeholder={t("production.notePlaceholder")}
+                    />
+                  </label>
+                ) : null}
+                {activeTab === "trazabilidad" ? (
+                  <>
+                    <WorkOrderHistory detail={detail} />
+                    <TechDetails diagnostic={JSON.stringify(trace, null, 2)} />
+                  </>
+                ) : null}
+              </>
+            ) : detailError ? (
+              <ErrorState
+                title="No se pudo cargar la OT"
+                body={detailError}
+                onRetry={() => void loadDetail(selectedId)}
+              />
+            ) : (
+              <LoadingState label="Cargando orden de trabajo" />
+            )}
+          </article>
+        ) : null}
       </div>
     </section>
   );

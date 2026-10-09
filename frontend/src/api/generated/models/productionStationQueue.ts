@@ -8,4 +8,6 @@
 
 export interface ProductionStationQueue {
   stations: unknown[];
+  /** @nullable */
+  selected_code?: string | null;
 }

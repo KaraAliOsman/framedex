@@ -33,6 +33,28 @@ sources:
 
 # Current reality
 
+## P12 · producción por estación (09-10-2026)
+
+Rama `codex/P12-produccion-estaciones`, base `62ebcbe9`: tablero de estaciones,
+detalle con stepper y nueve pestañas, piezas virtualizadas y una cola privada
+del operario por puesto persistido por usuario/tenant. El QR conserva dirección
+física y no amplía permisos. La medición QC bloquea solo por elección explícita;
+el rechazo confirmado del jefe crea un remake idempotente con la pieza como
+procedencia. Se conserva el conjunto sellado y el remake requiere su propio plan.
+El índice de mecanizado se limita a las posiciones del plan, conservando códigos
+históricos, bytes y fingerprint. La matriz final tiene 96 observaciones sin
+hallazgos y tiempos de 822–1.035 ms (jefe) y 891–936 ms (operario).
+El capturador oficial pasa 16 vistas sin hallazgos nuevos; operario pasa ocho
+con cero. Jefe conserva 32–50 hallazgos de controles heredados de oficina bajo
+el config histórico de taller, sin cambiar detectores ni sus muestras.
+El recorrido real une QR, Corte, bloqueo, tablero/Hoy, desbloqueo y QC/remake.
+La evidencia del primer ensayo defectuoso se conserva; la decisión corregida
+RM-02 conserva la pieza y su retry devuelve la misma OT.
+Véanse [aceptación P12](../../redesign/P12-ACEPTACION.md) y
+[producción por estación](../product/production-stations.md).
+P13/P14/P15 continúan corte avanzado, CNC y retazos; la aceptación usa autoridad
+DEMO declarada y no certifica un fabricante. CI y squash se registran al integrar.
+
 ## P03 · integrado y verificado (09-10-2026)
 
 Rama `codex/P03-shell-hoy`, base `096621c9`: navegación por capacidades y flujo,

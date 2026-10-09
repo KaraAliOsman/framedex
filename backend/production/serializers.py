@@ -49,6 +49,12 @@ class ProductionOrderSerializer(serializers.Serializer):
     version_shortage = serializers.IntegerField()
     remake_reason = serializers.DictField(allow_null=True, required=False)
     created_at = serializers.DateTimeField()
+    project_code = serializers.CharField(required=False, allow_null=True)
+    project_name = serializers.CharField(required=False, allow_null=True)
+    client_name = serializers.CharField(required=False, allow_null=True)
+    scheduled_date = serializers.DateField(required=False, allow_null=True)
+    optimization_ready = serializers.BooleanField(required=False)
+    qc_failed = serializers.BooleanField(required=False)
     project_version_id = serializers.UUIDField(allow_null=True, required=False)
     payload = serializers.DictField(required=False)
 
@@ -145,6 +151,7 @@ class QcCheckSerializer(StrictSerializer):
 
 
 class StepTransitionRequestSerializer(StrictSerializer):
+    block_on_fail = serializers.BooleanField(required=False, default=False)
     action = serializers.ChoiceField(
         choices=("START", "COMPLETE", "BLOCK", "UNBLOCK", "NOTE", "QC_CHECK")
     )
@@ -180,6 +187,10 @@ class StepTransitionRequestSerializer(StrictSerializer):
             raise serializers.ValidationError(
                 {"ops_done": "Operation evidence only applies to COMPLETE"}
             )
+        if data.get("block_on_fail") and not (
+            data["action"] == "QC_CHECK" and data.get("qc_check", {}).get("result") == "FAIL"
+        ):
+            raise serializers.ValidationError({"block_on_fail": "Requires a failed measurement"})
         return data
 
 
@@ -512,6 +523,28 @@ class ProductionVersionTraceSerializer(serializers.Serializer):
 
 class ProductionStationQueueSerializer(serializers.Serializer):
     stations = serializers.ListField()
+    selected_code = serializers.CharField(allow_null=True, required=False)
+
+
+class OperatorStationItemSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+
+
+class OperatorStationSerializer(serializers.Serializer):
+    selected_code = serializers.CharField(allow_null=True)
+    stations = OperatorStationItemSerializer(many=True)
+
+
+class OperatorStationRequestSerializer(StrictSerializer):
+    station_code = serializers.CharField(max_length=50)
+
+
+class QcRemakeRequestSerializer(StrictSerializer):
+    confirmed = serializers.BooleanField()
+    operation_key = serializers.UUIDField()
+    note = serializers.CharField(max_length=500, allow_blank=False)
+    item_code = serializers.CharField(max_length=50, required=False, default="", allow_blank=True)
 
 
 class CncToolRequestSerializer(StrictSerializer):

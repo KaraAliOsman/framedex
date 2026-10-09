@@ -138,7 +138,7 @@ def _plan_sheets(
     return plan
 
 
-def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
+def trace_work_order(*, org_id: UUID, order_id: UUID, actor_role: str | None = None) -> dict[str, Any]:
     """The full forward chain for one work order."""
     order = one(
         """
@@ -170,6 +170,8 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
                 "work_order_not_found",
             )
 
+    if actor_role == "OPERATOR" and project:
+        project.pop("client_name", None)
     version = None
     version_snapshot: dict[str, Any] = {}
     if order["project_version_id"]:
@@ -257,20 +259,20 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
     labels: dict[str, dict[object, str]] = {}
     cut_map: dict[tuple[str, ...], str] = {}
     infill_map: dict[tuple[str, str, str], str] = {}
+    from production.pieces import addressed_plan, plan_fact_scope
     if version_snapshot:
         try:
             labels = _piece_labels(version_snapshot)
             for group in labels.values():
                 for key, code in group.items():
                     piece_label_map[str(key)] = code
-            cut_map = _cut_member_map(version_snapshot, labels)
-            infill_map = _infill_code_map(version_snapshot, labels)
+            scoped = plan_fact_scope(version_snapshot, optimization)
+            cut_map = _cut_member_map(scoped, labels)
+            infill_map = _infill_code_map(scoped, labels)
         except DocumentaryError:
             piece_label_map = {}
             cut_map = {}
             infill_map = {}
-    from production.pieces import addressed_plan
-
     display_plan = addressed_plan(version_snapshot or {}, optimization, order_id=order_id)
     return {
         "work_order": {
@@ -896,7 +898,7 @@ def trace_piece(*, org_id: UUID, piece_id: str) -> dict[str, Any]:
     return {"piece_id": piece_id, "matches": matches}
 
 
-def trace_version(*, org_id: UUID, version_id: UUID) -> dict[str, Any]:
+def trace_version(*, org_id: UUID, version_id: UUID, actor_role: str | None = None) -> dict[str, Any]:
     """Forward chain from a frozen version to every work order released
     from it — plus, per order, the positions and piece counts its plan cut."""
     # Floor roles are legitimate _READERS of the forward chain, so both
@@ -921,6 +923,8 @@ def trace_version(*, org_id: UUID, version_id: UUID) -> dict[str, Any]:
             [version["project_id"], str(org_id)],
             "version_not_found",
         )
+    if actor_role == "OPERATOR":
+        project.pop("client_name", None)
     orders = rows(
         """
         SELECT id::text, order_code, status::text, order_type::text,

@@ -1015,10 +1015,34 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         }
 
 
-def list_production_orders(*, org_id: UUID) -> dict[str, object]:
-    orders = rows(
+def list_production_orders(*, org_id: UUID, actor_role: str | None = None) -> dict[str, object]:
+    with documentary_backend():
+        orders = rows(
         """
-        SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
+        SELECT o.id, o.order_code, o.order_type::text, o.status::text,
+               jsonb_build_object(
+                   'position_id', o.payload_json->'position_id',
+                   'quantity', o.payload_json->'quantity',
+                   'prep', o.payload_json->'prep',
+                   'packing', o.payload_json ? 'packing',
+                   'remake_reason', o.payload_json->'remake_reason',
+                   'remake_of', o.payload_json->'remake_of',
+                   'optimization', jsonb_build_object(
+                       'stock_reservations', o.payload_json#>'{optimization,stock_reservations}',
+                       'unmapped_stock_skus', o.payload_json#>'{optimization,unmapped_stock_skus}',
+                       'bars', jsonb_build_object('unplaced', o.payload_json#>'{optimization,bars,unplaced}'),
+                       'unnested', o.payload_json#>'{optimization,unnested}'
+                   )
+               ) AS payload_json,
+               p.code AS project_code, p.name AS project_name,
+               CASE WHEN %s = 'OPERATOR' THEN NULL ELSE p.client_name END AS client_name,
+               (SELECT min(d.scheduled_date) FROM public.deliveries d
+                WHERE d.order_id = o.id AND d.org_id = o.org_id
+                  AND d.status <> 'FAILED') AS scheduled_date,
+               (o.payload_json ? 'optimization'
+                AND NOT COALESCE((o.payload_json#>>'{optimization,invalidated}')::boolean, FALSE)) AS optimization_ready,
+               EXISTS(SELECT 1 FROM public.production_step_events ev
+                      WHERE ev.order_id = o.id AND ev.org_id = o.org_id AND ev.event = 'QC_FAILED') AS qc_failed,
                o.project_version_id, o.created_at,
                COUNT(s.id) AS steps_total,
                COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done,
@@ -1030,14 +1054,21 @@ def list_production_orders(*, org_id: UUID) -> dict[str, object]:
                         AND dn.voided_at IS NULL
                      ) AS has_dispatch_note
         FROM public.orders o
+        LEFT JOIN public.projects p ON p.id = o.project_id AND p.org_id = o.org_id
         LEFT JOIN public.production_steps s ON s.order_id = o.id
         WHERE o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
-        GROUP BY o.id ORDER BY o.created_at DESC
+        GROUP BY o.id, p.id ORDER BY o.created_at DESC
         LIMIT 300
         """,
-        [str(org_id)],
+        [actor_role or "", str(org_id)],
     )
-    return {"orders": [_public_order(order) for order in orders]}
+    return {"orders": [{
+        **_public_order(order, include_payload=True),
+        **{key: order.get(key) for key in (
+            "project_code", "project_name", "scheduled_date", "optimization_ready", "qc_failed",
+        )},
+        **({"client_name": order.get("client_name")} if actor_role != "OPERATOR" else {}),
+    } for order in orders]}
 
 
 def production_prep(*, org_id: UUID) -> dict[str, object]:
@@ -1368,7 +1399,7 @@ def recheck_work_order_material(
     }
 
 
-def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
+def get_work_order(*, org_id: UUID, order_id: UUID, actor_role: str | None = None) -> dict[str, object]:
     order = one(
         """
         SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
@@ -1411,7 +1442,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         """,
         [str(order_id), str(org_id)],
     )
-    dispatch_note = rows(
+    dispatch_note = [] if actor_role == "OPERATOR" else rows(
         "SELECT id, note_code, voided_at, voided_reason, unit_indexes, created_at "
         "FROM public.dispatch_notes "
         "WHERE org_id=%s AND work_order_id=%s "
@@ -1481,7 +1512,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         sealed_positions = sealed_snapshot.get("positions") or []
         # The sealed project's delivery address prefills the delivery form —
         # workshop data only; the commercial fields stay out of the payload.
-        output["delivery_address"] = (
+        output["delivery_address"] = None if actor_role == "OPERATOR" else (
             sealed_snapshot.get("project") or {}
         ).get("delivery_address")
         sealed = next(
@@ -1533,6 +1564,14 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         }
         for event in events
     ]
+    if actor_role == "OPERATOR":
+        # Commercial documents stay at the HTTP boundary, including legacy
+        # payloads whose dispatch exports can embed customer contacts.
+        for key in ("dispatch_note_code", "dispatch_note_dte", "delivery_address"):
+            output.pop(key, None)
+        output["dispatch_notes"] = []
+        for key in ("dispatch", "delivery", "dispatch_note", "dispatch_note_dte"):
+            display_payload.pop(key, None)
     return output
 
 
@@ -1611,6 +1650,7 @@ def transition_step(
     qc_item: str | None = None,
     actor_role: str | None = None,
     ops_done: list[str] | None = None,
+    block_on_fail: bool = False,
 ) -> dict[str, object]:
     if action not in _TRANSITIONS:
         raise DocumentaryError("step_action_unknown")
@@ -1637,6 +1677,10 @@ def transition_step(
             "result": qc_check["result"],
         }
     elif qc_check is not None:
+        raise DocumentaryError("step_transition_invalid")
+    if block_on_fail and not (
+        action == "QC_CHECK" and qc_check and qc_check["result"] == "FAIL"
+    ):
         raise DocumentaryError("step_transition_invalid")
     with transaction.atomic(), documentary_backend():
         step_ref = one(
@@ -1737,6 +1781,10 @@ def transition_step(
         new_status, allowed = _TRANSITIONS[action]
         if action == "COMPLETE" and qc_result == "FAIL":
             new_status = "BLOCKED"
+        if block_on_fail:
+            new_status = "BLOCKED"
+            note = note or str(qc_check["check"])
+            qc_item = str(qc_check.get("item_code") or "").strip()[:50] or None
         if str(step["status"]) not in allowed:
             raise DocumentaryError("step_transition_invalid")
         # Routing is sequential: a station may only start once every earlier
@@ -1879,7 +1927,7 @@ def transition_step(
                     ),
                 )
         event_name = "QC_FAILED" if (
-            action == "COMPLETE" and qc_result == "FAIL"
+            action == "COMPLETE" and qc_result == "FAIL" or block_on_fail
         ) else _EVENTS[action]
         now = datetime.now(timezone.utc)
         if new_status is not None:
@@ -1933,8 +1981,8 @@ def transition_step(
             )
         rows(
             """
-            INSERT INTO public.production_step_events(org_id, order_id, step_id, event, actor_id, payload)
-            VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+            INSERT INTO public.production_step_events(org_id, order_id, step_id, event, actor_id, payload, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s)
             RETURNING id
             """,
             [
@@ -1945,7 +1993,7 @@ def transition_step(
                 str(actor_id),
                 json.dumps({
                     **({"note": note.strip()} if note else {}),
-                    **({"qc_result": qc_result} if qc_result else {}),
+                    **({"qc_result": "FAIL" if block_on_fail else qc_result} if qc_result or block_on_fail else {}),
                     **({"qc_check": qc_check} if qc_check else {}),
                     **({"qc_item": qc_item} if qc_item else {}),
                     **(
@@ -1954,6 +2002,7 @@ def transition_step(
                         else {}
                     ),
                 }),
+                now,
             ],
         )
         # §6: completing a bar-cutting station is where the physical drop
@@ -2212,7 +2261,8 @@ def transition_step(
 
 
 def create_remake(
-    *, org_id: UUID, order_id: UUID, actor_id: UUID, note: str | None = None
+    *, org_id: UUID, order_id: UUID, actor_id: UUID, note: str | None = None,
+    operation_key: UUID | None = None,
 ) -> dict[str, object]:
     """Remake work order for a unit that failed QC: copies the sealed material
     projection and routing from a HOLD order into a new ``-RM-`` order. The
@@ -2241,6 +2291,8 @@ def create_remake(
         # clean and re-derives its own (a deactivated center lands below).
         payload.pop("blockers", None)
         payload["remake_of"] = str(source["id"])
+        if operation_key is not None:
+            payload["qc_operation_key"] = str(operation_key)
         # Carry the QC failure forward: the remake order names WHICH unit
         # failed and why, so the floor doesn't re-derive it from the source
         # order's history (review PM-H3).
@@ -2257,7 +2309,8 @@ def create_remake(
         if failure_rows:
             failure_payload = _decoded(failure_rows[0].get("payload"))
             reason = {
-                "qc_item": failure_payload.get("qc_item"),
+                "qc_item": failure_payload.get("qc_item")
+                or (failure_payload.get("qc_check") or {}).get("item_code"),
                 "note": failure_payload.get("note"),
             }
             if reason["qc_item"] or reason["note"]:
@@ -4115,7 +4168,9 @@ def compare_optimization_strategies(
         }
 
 
-def station_queue(*, org_id: UUID) -> dict[str, object]:
+def station_queue(
+    *, org_id: UUID, actor_role: str | None = None, actor_id: UUID | None = None,
+) -> dict[str, object]:
     """Group every live order's open steps by station code: what the saw
     bench, the machining cell and the QC post each have queued right now.
 
@@ -4172,8 +4227,26 @@ def station_queue(*, org_id: UUID) -> dict[str, object]:
         station["blocked"] = sum(
             1 for e in station["entries"] if e["status"] == "BLOCKED"
         )
+    selected_code = None
+    if actor_role == "OPERATOR":
+        from production.stations import operator_station
+
+        if actor_id is None:
+            raise DocumentaryError("actor_membership_missing")
+        selected_code = operator_station(org_id=org_id, actor_id=actor_id)["selected_code"]
+        stations = {
+            code: {**station, "entries": [e for e in station["entries"] if e["is_next"]]}
+            for code, station in stations.items() if code == selected_code
+        }
+        for station in stations.values():
+            for status, key in (("IN_PROGRESS", "in_progress"), ("BLOCKED", "blocked")):
+                station[key] = sum(e["status"] == status for e in station["entries"])
+            station["pending"] = sum(e["status"] in ("READY", "PENDING") for e in station["entries"])
     return {
-        "stations": [station for _, station in sorted(stations.items())]
+        "stations": sorted(stations.values(), key=lambda station: min(
+            (e["sequence"] for e in station["entries"]), default=0,
+        )),
+        "selected_code": selected_code,
     }
 
 

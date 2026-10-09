@@ -10772,6 +10772,145 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/operator-station/:
+    get:
+      operationId: production_operator_station
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorStation'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: production_operator_station_select
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OperatorStationRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OperatorStationRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OperatorStationRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorStation'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/orders/:
     get:
       operationId: production_orders
@@ -13134,6 +13273,88 @@ paths:
             application/pdf:
               schema:
                 type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/orders/{order_id}/qc-remake/:
+    post:
+      operationId: production_qc_remake
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QcRemakeRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QcRemakeRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QcRemakeRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrderDetail'
           description: ''
         '400':
           content:
@@ -30602,6 +30823,38 @@ components:
       required:
       - operations
       - version
+    OperatorStation:
+      type: object
+      properties:
+        selected_code:
+          type: string
+          nullable: true
+        stations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperatorStationItem'
+      required:
+      - selected_code
+      - stations
+    OperatorStationItem:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+      required:
+      - code
+      - label
+    OperatorStationRequestRequest:
+      type: object
+      properties:
+        station_code:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - station_code
     OpsExport:
       type: object
       properties:
@@ -33185,6 +33438,23 @@ components:
         created_at:
           type: string
           format: date-time
+        project_code:
+          type: string
+          nullable: true
+        project_name:
+          type: string
+          nullable: true
+        client_name:
+          type: string
+          nullable: true
+        scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        optimization_ready:
+          type: boolean
+        qc_failed:
+          type: boolean
         project_version_id:
           type: string
           format: uuid
@@ -33245,6 +33515,23 @@ components:
         created_at:
           type: string
           format: date-time
+        project_code:
+          type: string
+          nullable: true
+        project_name:
+          type: string
+          nullable: true
+        client_name:
+          type: string
+          nullable: true
+        scheduled_date:
+          type: string
+          format: date
+          nullable: true
+        optimization_ready:
+          type: boolean
+        qc_failed:
+          type: boolean
         project_version_id:
           type: string
           format: uuid
@@ -33455,6 +33742,9 @@ components:
         stations:
           type: array
           items: {}
+        selected_code:
+          type: string
+          nullable: true
       required:
       - stations
     ProductionStep:
@@ -34680,6 +34970,26 @@ components:
       required:
       - check
       - result
+    QcRemakeRequestRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+        operation_key:
+          type: string
+          format: uuid
+        note:
+          type: string
+          minLength: 1
+          maxLength: 500
+        item_code:
+          type: string
+          default: ''
+          maxLength: 50
+      required:
+      - confirmed
+      - note
+      - operation_key
     QcResultEnum:
       enum:
       - PASS
@@ -36180,6 +36490,9 @@ components:
     StepTransitionRequestRequest:
       type: object
       properties:
+        block_on_fail:
+          type: boolean
+          default: false
         action:
           $ref: '#/components/schemas/StepTransitionRequestActionEnum'
         note:

@@ -53,6 +53,23 @@ def add_remnant_codes(plan: dict, org_id: object) -> dict:
     return plan
 
 
+def plan_fact_scope(snapshot: dict, optimization: dict) -> dict:
+    """Index only the positions named by this plan, preserving legacy fallback.
+
+    Labels still come from the complete snapshot so old sequential addresses
+    remain stable. Sourced plans do not need sibling machining derivations.
+    """
+    placements = [cut for bar in (optimization.get("bars") or {}).get("workshop_cut_plan") or []
+                  for cut in bar.get("cuts") or []]
+    placements.extend(piece for sheet in optimization.get("sheets") or []
+                      for piece in sheet.get("placements") or [])
+    if not placements or any(not piece.get("source_position_id") for piece in placements):
+        return snapshot
+    positions = {str(piece["source_position_id"]) for piece in placements}
+    return {**snapshot, "manufacturing": [fact for fact in snapshot.get("manufacturing") or []
+            if str(fact.get("position_id")) in positions]}
+
+
 def addressed_plan(snapshot: dict, optimization: dict, *, order_id: object = None) -> dict:
     """Allocate repeated equal specs to physical identities in stable plan order.
 
@@ -62,20 +79,21 @@ def addressed_plan(snapshot: dict, optimization: dict, *, order_id: object = Non
     """
     result = deepcopy(optimization)
     labels = _piece_labels({"manufacturing": [], "positions": [], **snapshot})
-    cut_map = _cut_member_map(snapshot, labels)
+    scoped = plan_fact_scope(snapshot, optimization)
+    cut_map = _cut_member_map(scoped, labels)
     pools = {
         key: {str(unit): sorted(ids, key=lambda entity: str(
             labels["member" if key[0] == "PROFILE" else "reinforcement"].get(entity, "")
         )) for unit, ids in units.items()}
-        for key, units in _cut_piece_ids(snapshot).items()
+        for key, units in _cut_piece_ids(scoped).items()
     }
     infill_homes = {
         item.get("infill_id"): str(fact.get("repetition_index"))
-        for fact in snapshot.get("manufacturing") or []
+        for fact in scoped.get("manufacturing") or []
         for item in fact.get("infills") or []
     }
     infill_pools = {}
-    for key, ids in _infill_spec_index(snapshot).items():
+    for key, ids in _infill_spec_index(scoped).items():
         homes = infill_pools.setdefault(key, {})
         for entity in sorted(ids, key=lambda value: str(labels["infill"].get(value, ""))):
             homes.setdefault(infill_homes.get(entity, "None"), []).append(entity)

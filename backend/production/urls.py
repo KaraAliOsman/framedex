@@ -3,6 +3,8 @@ from production.glass_orders import ProductionGlassOrderView
 from production.hardware import VersionHardwarePickingView
 
 from production.views import (
+    OperatorStationView,
+    ProductionQcRemakeView,
     ProductionOrderDeliveryConfirmationView,
     ProductionOrderDeliveryConfirmView,
     ProductionOrderDeliveryTransitionView,
@@ -50,6 +52,8 @@ from production.views import (
 )
 
 urlpatterns = [
+    path("operator-station/", OperatorStationView.as_view(), name="production-operator-station"),
+    path("orders/<uuid:order_id>/qc-remake/", ProductionQcRemakeView.as_view(), name="production-qc-remake"),
     path("versions/<uuid:version_id>/hardware-picking/", VersionHardwarePickingView.as_view()),
     path("glass-orders/", ProductionGlassOrderView.as_view(), name="production-glass-orders"),
     path("prep/", ProductionPrepView.as_view(), name="production-prep"),
