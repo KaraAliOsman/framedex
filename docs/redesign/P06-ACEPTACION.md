@@ -93,6 +93,8 @@ su carga útil y todas las aserciones existentes.
 La integración PostgreSQL actualiza el nombre esperado de la serie vigente
 a acoples v7; conserva la igualdad completa del contrato, la serie histórica
 v1, todos los campos y el aislamiento por tenant.
+La regresión comercial en navegador usa esa misma etiqueta vigente y conserva
+las verificaciones de precio, emisión, comparación e inmutabilidad.
 
 La matriz oficial de `ux:capture` conserva 24 vistas posteriores: ocho de
 editor y dieciséis de Catálogo como dueño/jefe, en 1440, 1280, 1024 y 390,
