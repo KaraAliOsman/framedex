@@ -978,3 +978,7 @@ editoriales guían la ola 2; gates finales y squash se registrarán al integrar.
 ## 2026-10-09 — ED1 · gates y ref de implementación
 
 `ecf24d2b02184135c60ea64c2691db2a63672ee2` pasa lint, tipos, test y build: 829 motor (+2 xfail), 1.382 backend y 919 frontend. La repetición final del plan conserva ocho vistas sin hallazgos. CI y squash siguen pendientes.
+
+## 2026-10-09 — ED1 · apariencia inicial por tarea
+
+`3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75` completa oscuro inicial de taller sin guardar preferencia. El primer clic modifica el contexto real y persiste; la elección explícita se conserva al recargar y volver a Hoy. Dos regresiones y ocho vistas pasan. Gate completo: 829 motor (+2 xfail), 1.382 backend y 921 frontend. Servicios propios detenidos y fixture conservado. CI y squash siguen pendientes.

@@ -3,8 +3,9 @@ type: concept
 status: active
 updated: 2026-10-09
 volatility: medium
-verified_ref: ecf24d2b02184135c60ea64c2691db2a63672ee2
+verified_ref: 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75
 sources:
+  - ED1 corrección de apariencia 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75, gate completo y ocho vistas, 2026-10-09
   - ED1 implementación ecf24d2b02184135c60ea64c2691db2a63672ee2, gates locales y navegador, 2026-10-09
   - docs/design/CONSTITUCION.md
   - docs/design/SISTEMA-V2.md

@@ -146,3 +146,5 @@ visible. Clientes, compras, inventario, instalación y CNC esperan su encargo
 y ED2; aquí solo comparten la primitiva cuando corresponde.
 
 Implementación verificada: `ecf24d2b02184135c60ea64c2691db2a63672ee2`. CI y squash se registran al integrar.
+
+Ajuste final de apariencia: `3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75`. Gate completo PASA, 921 pruebas frontend; ocho vistas verifican primer clic y preferencia.
