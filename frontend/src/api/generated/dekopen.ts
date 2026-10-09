@@ -28,6 +28,8 @@ import type {
   AiMetrics,
   AiMetricsParams,
   AiMode,
+  AiPresence,
+  AiPresenceGetParams,
   AiSettings,
   AiSettingsSaveRequest,
   AiUsageListParams,
@@ -1374,6 +1376,92 @@ export const aiModeGet = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<aiModeGetResponse> => {
   return apiMutator<aiModeGetResponse>(getAiModeGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiPresenceGetResponse200 = {
+  data: AiPresence;
+  status: 200;
+};
+
+export type aiPresenceGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiPresenceGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiPresenceGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiPresenceGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiPresenceGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiPresenceGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiPresenceGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiPresenceGetResponseSuccess = aiPresenceGetResponse200 & {
+  headers: Headers;
+};
+export type aiPresenceGetResponseError = (
+  | aiPresenceGetResponse400
+  | aiPresenceGetResponse401
+  | aiPresenceGetResponse403
+  | aiPresenceGetResponse404
+  | aiPresenceGetResponse409
+  | aiPresenceGetResponse422
+  | aiPresenceGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiPresenceGetResponse = aiPresenceGetResponseSuccess | aiPresenceGetResponseError;
+
+export const getAiPresenceGetUrl = (params: AiPresenceGetParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/presence/?${stringifiedParams}`
+    : `/api/v1/ai/presence/`;
+};
+
+/**
+ * Latest work for this caller and this exact stable context, without a page limit.
+ */
+export const aiPresenceGet = async (
+  params: AiPresenceGetParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiPresenceGetResponse> => {
+  return apiMutator<aiPresenceGetResponse>(getAiPresenceGetUrl(params), {
     ...options,
     method: "GET",
   });

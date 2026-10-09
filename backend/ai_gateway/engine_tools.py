@@ -124,6 +124,16 @@ class EngineTools:
             validate_json(arguments, BY_NAME[name]["parameters"])
         except ValidationError:
             raise OperationError("tool_arguments_invalid", "Revisa los parámetros de la herramienta.") from None
+        # Native calls may spell out the bound entity; artifact validation
+        # uses the same context implicitly. Both must reuse the verified
+        # simulation rather than consume another query or lose its preview.
+        arguments = dict(arguments)
+        if name in {"preview_project_operations", "price_project"}:
+            if "project_id" not in arguments and self.refs.get("project_id"):
+                arguments["project_id"] = self.refs["project_id"]
+        elif name not in {"list_catalog_options", "get_blockers"}:
+            if "position_id" not in arguments and self.refs.get("position_id"):
+                arguments["position_id"] = self.refs["position_id"]
         key = json.dumps({"name": name, "arguments": arguments}, sort_keys=True, default=str)
         if key in self.cache:
             return deepcopy(self.cache[key]), False

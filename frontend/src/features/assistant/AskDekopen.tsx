@@ -8,8 +8,9 @@ import type { AiAskResponse } from "../../api/generated/models/aiAskResponse";
 import { t } from "../../i18n/es-CL";
 import { AgentBody, SURFACE_LABELS } from "./AgentBody";
 import { BotFigure } from "./BotFigure";
-import { Orb, orbStateFor } from "./Orb";
+import { Orb } from "./Orb";
 import { stableRefs, useAssistantContext } from "./assistantContext";
+import { useAssistantPresence } from "./useAssistantPresence";
 import "./assistant.css";
 
 type Thread = { question: string; answer: AiAskResponse }[];
@@ -54,6 +55,7 @@ export function AskDekopen({
 }): JSX.Element | null {
   const { surface, refs } = useAssistantContext();
   const navigate = useNavigate();
+  const presence = useAssistantPresence({ organizationId, userId, surface, refs });
   /* The dock remembers its expanded state across navigation and refresh —
    * closing it for one screen must not re-open on the next, and a running
    * thread shouldn't collapse mid-journey. sessionStorage scopes it to the
@@ -70,7 +72,6 @@ export function AskDekopen({
   const [threads, setThreads] = useState<Map<string, Thread>>(() => new Map(dockThreads));
   /** Agent mode: the bound job's lifecycle drives the header orb so a running
    * job reads alive even while the ask thread sits idle. */
-  const [agentJobState, setAgentJobState] = useState<string | null>(null);
   const [agentComposing, setAgentComposing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   /** One operation key per question — a retried submit replays the committed
@@ -221,26 +222,16 @@ export function AskDekopen({
             <Orb
               state={
                 mode === "agent"
-                  ? agentJobState &&
-                    [
-                      "QUEUED",
-                      "PLANNING",
-                      "RUNNING",
-                      "WAITING_FOR_USER",
-                      "WAITING_FOR_APPROVAL",
-                      "FAILED_RETRYABLE",
-                    ].includes(agentJobState)
-                    ? orbStateFor(agentJobState)
-                    : agentComposing
-                      ? "input"
-                      : orbStateFor(agentJobState ?? undefined)
+                  ? agentComposing && ["idle", "success", "canceled"].includes(presence.orbState)
+                    ? "input"
+                    : presence.orbState
                   : busy
                     ? "thinking"
                     : question.trim()
                       ? "input"
-                      : "idle"
+                      : presence.orbState
               }
-              size={26}
+              size={28}
             />
             <span className="ask-dock__title">{t("assistant.dockTitle")}</span>
             <span className="ask-dock__modes">
@@ -261,9 +252,7 @@ export function AskDekopen({
                 {t("assistant.agentMode")}
               </button>
             </span>
-            <span className="ask-dock__surface" title={t("ask.surfaceHint")}>
-              {SURFACE_LABELS[surface] ?? surface}
-            </span>
+
             <button
               type="button"
               className="ask-dock__close"
@@ -273,13 +262,16 @@ export function AskDekopen({
               ×
             </button>
           </header>
+          <p className="ask-dock__context">
+            {presence.data?.context_label ?? SURFACE_LABELS[surface] ?? "Contexto del trabajo"}
+          </p>
           {mode === "agent" ? (
             <AgentBody
               key={`${surface}:${stableRefsKey}`}
               organizationId={orgId}
+              userId={userId}
               surface={surface}
               refs={refs}
-              onJobState={setAgentJobState}
               onComposing={setAgentComposing}
             />
           ) : (
@@ -287,7 +279,7 @@ export function AskDekopen({
               <div className="ask-dock__thread" aria-live="polite" role="log">
                 {thread.length === 0 ? (
                   <div className="ask-dock__welcome">
-                    <BotFigure size={110} />
+                    <BotFigure state={presence.orbState} size={160} welcome />
                     <p className="ask-dock__hint">{t("ask.hint")}</p>
                   </div>
                 ) : (
@@ -316,9 +308,6 @@ export function AskDekopen({
                           ))}
                         </div>
                       ) : null}
-                      <p className="ask-dock__meta">
-                        {turn.answer.model} · {turn.answer.credits_debited} {t("assistant.credits")}
-                      </p>
                     </div>
                   ))
                 )}
@@ -362,7 +351,7 @@ export function AskDekopen({
           aria-label={t("ask.open")}
           title={t("ask.open")}
         >
-          <Orb state={busy ? "working" : "idle"} size={38} />
+          <Orb state={busy ? "working" : presence.orbState} size={28} />
         </button>
       )}
     </div>

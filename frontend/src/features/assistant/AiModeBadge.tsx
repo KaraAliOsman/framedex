@@ -6,7 +6,8 @@ export function AiModeBadge(): JSX.Element | null {
   const org = useAuthSession().me?.active_organization;
   const query = useQuery({
     queryKey: ["ai", "mode", org?.id],
-    enabled: !!org && ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role),
+    enabled:
+      import.meta.env.DEV && !!org && ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role),
     staleTime: 30000,
     refetchInterval: 30000,
     queryFn: async () => {
@@ -14,12 +15,12 @@ export function AiModeBadge(): JSX.Element | null {
       return response.status === 200 && response.data.test_mode;
     },
   });
-  return query.data ? (
+  return import.meta.env.DEV && query.data ? (
     <span
       className="status-chip"
       title="La IA de esta organización incluye un proveedor de prueba explícito"
     >
-      Modo de prueba
+      Proveedor de prueba
     </span>
   ) : null;
 }

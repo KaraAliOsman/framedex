@@ -29,6 +29,8 @@ from ai_gateway.serializers import (
     AiJobOutcomeSerializer,
     AiJobSerializer,
     AiMetricsSerializer,
+    AiPresenceQuerySerializer,
+    AiPresenceSerializer,
 )
 from ai_gateway.context import REQUIRED_REFS as AGENT_REQUIRED_REFS
 from authentication.errors import ContractAPIException, contract_error
@@ -301,6 +303,30 @@ class AiAgentView(APIView):
                 {"job_id": job["id"], "state": job["state"]},
                 status=status.HTTP_202_ACCEPTED,
             )
+
+
+class AiPresenceView(APIView):
+    """Latest work for this caller and this exact stable context, without a page limit."""
+
+    @extend_schema(
+        operation_id="ai_presence_get",
+        parameters=[ACTIVE_ORGANIZATION_HEADER, AiPresenceQuerySerializer],
+        responses={200: AiPresenceSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def get(self, request):
+        data = validate(AiPresenceQuerySerializer, request.query_params)
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            from jobs.presentation import context_identity
+            refs = stable_refs(data["refs"])
+            recent = jobs.list_jobs(
+                org_id=org_id, user_id=token.user_id, surface=data["surface"],
+                refs=refs, limit=1,
+            )
+            return Response({
+                **context_identity(org_id=org_id, refs=refs, surface=data["surface"]),
+                "job": recent[0] if recent else None,
+            })
 
 
 class AiJobCollectionView(APIView):

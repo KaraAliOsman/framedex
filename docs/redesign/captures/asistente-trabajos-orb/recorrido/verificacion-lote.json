@@ -1,0 +1,33 @@
+[
+  {
+    "flow": "MiMo real: segundo piso Low-E → dos posiciones/filtro exacto/dibujos/Δ → aplicar/recargar/deshacer/auditoría",
+    "result": "PASA",
+    "jobId": "ca6fa42a-8863-43ab-a1dc-777be1b39648",
+    "operationKey": "ai:ca6fa42a-8863-43ab-a1dc-777be1b39648:3:0",
+    "simulations": [
+      {
+        "id": "4383df72-9f63-4152-b3aa-dedf004b4f9d",
+        "price": {
+          "net": "320064",
+          "reason": null,
+          "source": "Motor comercial; modo y tarifa predeterminados de Ajustes; precio neto indicativo sin descuento.",
+          "currency": "CLP",
+          "unit_net": "160031.92763076923076923076923076923076923076923076923076923076923076923076923077",
+          "delta_net": "70479"
+        }
+      },
+      {
+        "id": "54d1e1bf-e67b-4c81-b90c-498c24c7302c",
+        "price": {
+          "net": "160032",
+          "reason": null,
+          "source": "Motor comercial; modo y tarifa predeterminados de Ajustes; precio neto indicativo sin descuento.",
+          "currency": "CLP",
+          "unit_net": "160031.92763076923076923076923076923076923076923076923076923076923076923076923077",
+          "delta_net": "35239"
+        }
+      }
+    ],
+    "uw": "Sin dato: falta autoridad térmica, no se certifica DEMO"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "route": "jobs",
+    "state": "empty",
+    "result": "PASA",
+    "source": "Respuesta de red controlada; no representa un fallo productivo"
+  },
+  {
+    "route": "jobs",
+    "state": "loading",
+    "result": "PASA",
+    "source": "Respuesta de red controlada; no representa un fallo productivo"
+  },
+  {
+    "route": "jobs",
+    "state": "error",
+    "result": "PASA",
+    "source": "Respuesta de red controlada; no representa un fallo productivo"
+  },
+  {
+    "route": "jobs",
+    "state": "denied",
+    "result": "PASA",
+    "source": "Respuesta de red controlada; no representa un fallo productivo"
+  },
+  {
+    "route": "assistant",
+    "state": "empty",
+    "result": "PASA",
+    "source": "Respuesta de red controlada; no representa un fallo productivo"
+  },
+  {
+    "route": "assistant",
+    "state": "loading",
+    "result": "PASA",
+    "source": "Respuesta de red controlada; no representa un fallo productivo"
+  },
+  {
+    "route": "assistant",
+    "state": "error",
+    "result": "PASA",
+    "source": "Respuesta de red controlada; no representa un fallo productivo"
+  },
+  {
+    "route": "assistant",
+    "state": "denied",
+    "result": "PASA",
+    "source": "Respuesta de red controlada; no representa un fallo productivo"
+  },
+  {
+    "flow": "Tres Orbs y reduced motion en Chromium",
+    "result": "PASA",
+    "orbs": 3,
+    "animated": 0
+  }
+]

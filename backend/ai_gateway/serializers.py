@@ -247,7 +247,7 @@ class AiJobOutcomeSerializer(serializers.Serializer):
     turn_index = serializers.IntegerField(min_value=0, max_value=1000)
     step_index = serializers.IntegerField(min_value=0, max_value=1000)
     action = serializers.ChoiceField(
-        choices=["applied", "declined", "apply_failed"]
+        choices=["applied", "declined", "apply_failed", "undone"]
     )
     ops = serializers.ListField(
         child=serializers.CharField(max_length=80),
@@ -274,6 +274,27 @@ class AiMetricsSerializer(serializers.Serializer):
 
 class AiJobDetailSerializer(AiJobSerializer):
     transcript = serializers.ListField()
+
+
+class AiPresenceQuerySerializer(serializers.Serializer):
+    surface = serializers.CharField(min_length=2, max_length=80)
+    refs = serializers.CharField(max_length=8000, required=False, default="{}")
+
+    def validate_refs(self, value):
+        try:
+            decoded = json.loads(value)
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Las referencias no son válidas.") from None
+        refs = _RefsDictField().run_validation(decoded)
+        if len(refs) > 30 or any(len(key) > 80 or not isinstance(value, str) or len(value) > 200 for key, value in refs.items()):
+            raise serializers.ValidationError("Las referencias deben ser identificadores breves.")
+        return refs
+
+
+class AiPresenceSerializer(serializers.Serializer):
+    context_label = serializers.CharField()
+    context_url = serializers.CharField(allow_null=True)
+    job = AiJobSerializer(allow_null=True)
 
 
 class AiAgentResumeRequestSerializer(serializers.Serializer):

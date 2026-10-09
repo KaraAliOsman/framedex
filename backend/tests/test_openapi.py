@@ -150,6 +150,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/ai/invoke/",
         "/api/v1/ai/ask/",
         "/api/v1/ai/agent/",
+        "/api/v1/ai/presence/",
         "/api/v1/ai/jobs/",
         "/api/v1/ai/jobs/{job_id}/",
         "/api/v1/ai/jobs/{job_id}/messages/",

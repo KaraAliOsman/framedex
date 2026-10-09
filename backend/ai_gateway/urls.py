@@ -11,6 +11,7 @@ from ai_gateway.views import (
     AiJobRetryView,
     AiJobView,
     AiMetricsView,
+    AiPresenceView,
 )
 
 urlpatterns = [
@@ -21,6 +22,7 @@ urlpatterns = [
     path("invoke/", AiInvokeView.as_view(), name="ai-invoke"),
     path("ask/", AiAskView.as_view(), name="ai-ask"),
     path("agent/", AiAgentView.as_view(), name="ai-agent"),
+    path("presence/", AiPresenceView.as_view(), name="ai-presence"),
     path("jobs/", AiJobCollectionView.as_view(), name="ai-jobs"),
     path("jobs/<uuid:job_id>/", AiJobView.as_view(), name="ai-job"),
     path(

@@ -1,4 +1,4 @@
-import { domainLabel } from "../../i18n/domainLabels";
+import { domainLabel, domainLabels } from "../../i18n/domainLabels";
 
 const causes: Record<string, string> = {
   measure_ungrounded:
@@ -28,7 +28,7 @@ export function RejectedOperations({
       <ul>
         {items.map((item, index) => (
           <li key={index}>
-            {item.op ? `${domainLabel(item.op)}: ` : "Cambio: "}
+            {item.op && item.op in domainLabels ? `${domainLabel(item.op)}: ` : "Cambio: "}
             {causes[item.reason ?? ""] ??
               "No se aplicó el cambio. Revisa la serie, las medidas y los datos del catálogo; luego vuelve a simular."}
           </li>

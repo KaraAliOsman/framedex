@@ -73,7 +73,7 @@ it("restores applied edits read-only and can undo using their durable identity",
   expect(await screen.findByText("Cambios deshechos")).toBeTruthy();
   expect(projectOperationsUndo).toHaveBeenCalledWith("project", "operation", expect.anything());
   expect(projectOperationsApply).not.toHaveBeenCalled();
-  expect(settled).not.toHaveBeenCalled();
+  expect(settled).toHaveBeenCalledWith("undone", preview.ops);
 });
 
 it("keeps an undone edit settled after reopening", async () => {

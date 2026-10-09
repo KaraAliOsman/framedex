@@ -1409,7 +1409,7 @@ def act(
     resolved = {
         (int(o.get("turn_index", -1)), int(o.get("step_index", -1)))
         for o in (job.get("outcomes") or [])
-        if isinstance(o, dict)
+        if isinstance(o, dict) and o.get("action") in ("applied", "declined", "undone")
     }
     pending_approvals = any(
         step.get("kind") in ("prepare", "ops", "batch_ops", "project_ops")

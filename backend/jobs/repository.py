@@ -15,7 +15,7 @@ from pricing.repository import json_text, rows
 
 STALE_LOCK_SECONDS = 600
 
-_JSON_COLUMNS = frozenset({"payload", "result", "error"})
+_JSON_COLUMNS = frozenset({"payload", "result", "error", "context_refs"})
 
 
 class LockLostError(DatabaseError):
@@ -118,7 +118,10 @@ def requeue_terminal(
 
 def get_job(*, org_id: UUID, job_id: UUID) -> dict[str, object] | None:
     record = rows(
-        "SELECT * FROM public.job_runs WHERE org_id = %s AND id = %s",
+        "SELECT r.*,ai.state AS ai_state,ai.refs AS context_refs,ai.surface "
+        "FROM public.job_runs r LEFT JOIN public.ai_jobs ai "
+        "ON ai.id::text=r.payload->>'ai_job_id' AND ai.org_id=r.org_id "
+        "WHERE r.org_id = %s AND r.id = %s",
         [str(org_id), str(job_id)],
     )
     return _decode(record[0]) if record else None
@@ -156,18 +159,22 @@ def list_jobs(
         _decode(record)
         for record in rows(
             f"""
-            SELECT id, type, state, progress, result, error, attempt,
-                   max_attempts, created_at, started_at, completed_at,
+            SELECT r.id, r.type, r.state, r.progress, r.result, r.error, r.attempt,
+                   r.max_attempts, r.created_at, r.started_at, r.completed_at,
+                   r.payload, r.created_by, ai.refs AS context_refs,
+                   ai.surface, ai.state AS ai_state,
                    /* The AI run's own job id lets the jobs list deep-link to
                     * the assistant workspace — expose just the id, not the
                     * service-owned payload. */
-                   CASE WHEN type = 'ai.agent.run'
-                        THEN payload->>'ai_job_id'
+                   CASE WHEN r.type = 'ai.agent.run'
+                        THEN r.payload->>'ai_job_id'
                         ELSE NULL
                    END AS ai_job_id
-            FROM public.job_runs
-            WHERE {" AND ".join(clauses)}
-            ORDER BY created_at DESC, id DESC
+            FROM public.job_runs r
+            LEFT JOIN public.ai_jobs ai ON ai.id::text=r.payload->>'ai_job_id'
+              AND ai.org_id=r.org_id
+            WHERE {" AND ".join('r.' + clause for clause in clauses)}
+            ORDER BY r.created_at DESC, r.id DESC
             LIMIT %s OFFSET %s
             """,
             parameters,

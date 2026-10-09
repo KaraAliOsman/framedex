@@ -213,13 +213,27 @@
   color: var(--theme-accent-ink);
 }
 .topbar-ai-job {
-  border-color: var(--theme-warning);
-  color: var(--theme-warning);
+  border-color: var(--border-default);
+  color: var(--text-secondary);
   font-size: var(--text-xs);
   font-weight: 600;
 }
 .topbar-ai-job:hover {
-  background: var(--theme-warning-soft);
+  background: var(--surface-hover);
+}
+.topbar-ai-job[data-state="waiting_for_user"],
+.topbar-ai-job[data-state="waiting_for_approval"] {
+  border-color: var(--state-warning);
+  color: var(--state-warning-ink);
+}
+.topbar-ai-job[data-state="succeeded"] {
+  border-color: var(--state-success);
+  color: var(--state-success-ink);
+}
+.topbar-ai-job[data-state="failed"],
+.topbar-ai-job[data-state="failed_retryable"] {
+  border-color: var(--state-danger);
+  color: var(--state-danger-ink);
 }
 .org-switcher,
 .project-switcher,
