@@ -838,3 +838,16 @@ PR #133 pasa los cuatro checks sobre `d6db60843adc4c65e2486d8e46cf9832a4244bd3` 
 Los servicios propios están detenidos y el fixture permanece intacto.
 CodeRabbit/Devin omiten revisión por configuración/límites y Copilot por cuota;
 no equivalen a una revisión de código. P03 continúa el shell y Hoy.
+
+## 2026-10-09 — P03 · cola y direcciones de trabajo
+
+P03 une Hoy/campana en una proyección por tenant, usuario y rol; decisiones
+inline con recibo explícito, saldo y orden deterministas del motor.
+Navegación por capacidades, inventario/cotizaciones propios y búsqueda real
+de los cinco códigos/nombre requeridos. Matriz 56 y oficial 88 sin hallazgos
+ni desbordes; matriz sin axe serious/critical. Se corrigieron UUID de stock,
+contraste oscuro, fuga de foco, vistas entre enlaces y faltantes históricos.
+Una emisión inicial sin confirmar medidas se conserva bloqueada por el dominio;
+la aceptación usa otra organización DEMO con autoridad confirmada antes de emitir.
+Se mantiene [aceptación](../redesign/P03-ACEPTACION.md) y
+[síntesis](product/today-workflow.md). CI/squash se registrarán al integrar.

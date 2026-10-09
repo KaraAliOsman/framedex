@@ -1239,6 +1239,16 @@ function ProjectWorkspace({
 
   useEffect(() => {
     if (params.get("correo") === "cotizacion") setOpenSection("quote");
+    const section = params.get("section");
+    if (
+      section === "quote" ||
+      section === "payments" ||
+      section === "imports" ||
+      section === "compare"
+    ) {
+      setFactsCollapsed(false);
+      setOpenSection(section);
+    }
   }, [params]);
 
   useEffect(() => {

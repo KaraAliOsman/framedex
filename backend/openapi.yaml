@@ -1180,6 +1180,136 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/analytics/quotations/:
+    get:
+      operationId: analytics_quotations
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: attention
+        schema:
+          enum:
+          - ''
+          - expiring
+          - viewed
+          - response
+          - expired
+          - unshared
+          - pending
+          - approved
+          - link_expired
+          type: string
+          default: ''
+          minLength: 1
+        description: "* `` - \n* `expiring` - expiring\n* `viewed` - viewed\n* `response`
+          - response\n* `expired` - expired\n* `unshared` - unshared\n* `pending`
+          - pending\n* `approved` - approved\n* `link_expired` - link_expired"
+      - in: query
+        name: currency
+        schema:
+          enum:
+          - ''
+          - CLP
+          - USD
+          - UF
+          - unknown
+          type: string
+          default: ''
+          minLength: 1
+        description: "* `` - \n* `CLP` - CLP\n* `USD` - USD\n* `UF` - UF\n* `unknown`
+          - unknown"
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - in: query
+        name: phase
+        schema:
+          enum:
+          - ''
+          - QUOTED
+          - APPROVED
+          - IN_PRODUCTION
+          - COMPLETED
+          type: string
+          default: ''
+          minLength: 1
+        description: "* `` - \n* `QUOTED` - QUOTED\n* `APPROVED` - APPROVED\n* `IN_PRODUCTION`
+          - IN_PRODUCTION\n* `COMPLETED` - COMPLETED"
+      - in: query
+        name: q
+        schema:
+          type: string
+          default: ''
+          maxLength: 80
+      tags:
+      - analytics
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationIndexResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/analytics/summary/:
     get:
       operationId: analytics_operational_summary
@@ -1201,6 +1331,70 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OperationalSummary'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/analytics/today/:
+    get:
+      operationId: analytics_today
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - analytics
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodayResponse'
           description: ''
         '400':
           content:
@@ -9432,6 +9626,76 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PriceResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/operations/{operation_id}/:
+    get:
+      operationId: pricing_operation
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: operation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - pricing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
           description: ''
         '400':
           content:
@@ -31872,6 +32136,33 @@ components:
       - stable_id
       - width_mm
       - workshop_sku
+    PipelinePhase:
+      type: object
+      properties:
+        phase:
+          type: string
+        currency:
+          type: string
+          nullable: true
+        amount:
+          type: string
+          nullable: true
+        count:
+          type: integer
+        unknown_count:
+          type: integer
+        href:
+          type: string
+        source:
+          type: string
+      required:
+      - amount
+      - count
+      - currency
+      - href
+      - phase
+      - source
+      - unknown_count
     PlanCoupling:
       type: object
       properties:
@@ -34397,6 +34688,85 @@ components:
       description: |-
         * `PASS` - PASS
         * `FAIL` - FAIL
+    QuotationIndexItem:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        project_code:
+          type: string
+        project_name:
+          type: string
+        client_name:
+          type: string
+        revision_code:
+          type: string
+        state:
+          type: string
+        phase:
+          type: string
+        valid_until:
+          type: string
+          format: date
+          nullable: true
+        view_count:
+          type: integer
+        last_viewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        response_note:
+          type: string
+          nullable: true
+        total:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        source:
+          type: string
+        href:
+          type: string
+      required:
+      - client_name
+      - currency
+      - href
+      - last_viewed_at
+      - phase
+      - project_code
+      - project_id
+      - project_name
+      - response_note
+      - revision_code
+      - source
+      - state
+      - total
+      - valid_until
+      - view_count
+    QuotationIndexResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotationIndexItem'
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        today:
+          type: string
+          format: date
+      required:
+      - items
+      - limit
+      - offset
+      - today
+      - total
     RailTypeEnum:
       enum:
       - dual
@@ -36560,6 +36930,91 @@ components:
         * `AM` - AM
         * `PM` - PM
         * `JORNADA` - JORNADA
+    TodayAction:
+      type: object
+      properties:
+        key:
+          type: string
+        kind:
+          type: string
+        entity_code:
+          type: string
+        entity_name:
+          type: string
+        title:
+          type: string
+        reason:
+          type: string
+        verb:
+          type: string
+        href:
+          type: string
+        due_on:
+          type: string
+          format: date
+          nullable: true
+        blocking:
+          type: boolean
+        consequence:
+          type: string
+        amount:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        balance_total:
+          type: string
+          nullable: true
+        balance_collected:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        operation_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - amount
+      - balance_collected
+      - balance_total
+      - blocking
+      - consequence
+      - currency
+      - due_on
+      - entity_code
+      - entity_name
+      - href
+      - key
+      - kind
+      - operation_id
+      - reason
+      - source
+      - title
+      - verb
+    TodayResponse:
+      type: object
+      properties:
+        today:
+          type: string
+          format: date
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TodayAction'
+        pipeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/PipelinePhase'
+        source:
+          type: string
+      required:
+      - actions
+      - pipeline
+      - source
+      - today
     ToolsModeEnum:
       enum:
       - AUTO

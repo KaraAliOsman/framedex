@@ -1,13 +1,12 @@
-import { type PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
+import { type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AiModeBadge } from "../features/assistant/AiModeBadge";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
-import { t, type TranslationKey } from "../i18n/es-CL";
+import { t } from "../i18n/es-CL";
 import { BrandMark, Wordmark } from "../brand/Brand";
 
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { MOD_K_HINT } from "../platform";
-import { useProject } from "../features/projects/useProject";
 import { telemetry } from "../telemetry/telemetry";
 import { useTheme } from "../theme/ThemeProvider";
 import { CommandPalette } from "../features/commands/CommandPalette";
@@ -22,50 +21,9 @@ import { ProjectSwitcher } from "./ProjectSwitcher";
 import { RailIcon } from "./railIcons";
 import { ShellCrumbs, crumbsFor, useProjectName } from "./ShellCrumbs";
 import { ShellLeafContext } from "./shellLeaf";
-import { contextItemActive, roleLabel, type ContextNavItem } from "./shellUtils";
-
-/** Work domains, not database tables: the job surfaces first, operational
- * records next, account/admin last. AI is a persistent topbar entry, not a
- * route. Context (inside a project or production) replaces the global list —
- * the rail serves where you are, not everywhere you could go. */
-const domainGroups: {
-  id: string;
-  title: TranslationKey;
-  items: { to: string; label: TranslationKey }[];
-}[] = [
-  {
-    id: "work",
-    title: "nav.groupWork",
-    items: [
-      { to: "/dashboard", label: "nav.dashboard" },
-      { to: "/projects", label: "nav.projects" },
-      { to: "/clients", label: "nav.clients" },
-      { to: "/pricing/commercial", label: "nav.sales" },
-    ],
-  },
-  {
-    id: "operations",
-    title: "nav.groupOps",
-    items: [
-      { to: "/catalogs/systems", label: "nav.catalog" },
-      { to: "/purchasing", label: "nav.purchasing" },
-      { to: "/production", label: "nav.production" },
-      { to: "/assistant", label: "nav.assistant" },
-      { to: "/jobs", label: "nav.jobs" },
-    ],
-  },
-  {
-    id: "account",
-    title: "nav.groupAccount",
-    items: [{ to: "/settings/general", label: "nav.admin" }],
-  },
-];
-
-const productionContext: ContextNavItem[] = [
-  { to: "/production", label: "nav.context.queue" },
-  { to: "/production?shortage=1", label: "nav.context.shortage" },
-  { to: "/production?dispatch_ready=1", label: "nav.context.dispatch" },
-];
+import { roleLabel } from "./shellUtils";
+import { navigationFor } from "./navigation";
+import { ShortcutHelp } from "./ShortcutHelp";
 
 export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const auth = useAuthSession();
@@ -86,6 +44,15 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     [],
   );
   const [railOpen, setRailOpen] = useState(false);
+  const railRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("dekopen.rail-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
 
   // Close the drawer nav on route change and on Escape — the drawer only
   // exists below the tablet breakpoint; desktop keeps the rail always.
@@ -99,41 +66,53 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   }, []);
 
   useEffect(() => {
+    if (!railOpen) return;
+    const panel = railRef.current;
+    const focusables = () =>
+      Array.from(
+        panel?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? [],
+      ).filter((node) => node.getClientRects().length > 0);
+    focusables()[0]?.focus();
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const nodes = focusables(),
+        first = nodes[0],
+        last = nodes[nodes.length - 1];
+      if (!first || !last) return;
+      const outside = !panel?.contains(document.activeElement);
+      if (
+        event.shiftKey
+          ? document.activeElement === first || outside
+          : document.activeElement === last || outside
+      ) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+    };
+    const dismiss = () => setRailOpen(false);
+    document.addEventListener("keydown", key);
+    window.addEventListener("dekopen:shell-overlay", dismiss);
+    return () => {
+      document.removeEventListener("keydown", key);
+      window.removeEventListener("dekopen:shell-overlay", dismiss);
+      toggleRef.current?.focus();
+    };
+  }, [railOpen]);
+
+  useEffect(() => {
     telemetry.capture("shell_route_viewed", { route_name: location.pathname });
   }, [location.pathname]);
 
   const org = auth.me?.active_organization;
   const role = org?.role;
-  const canWrite = role === "OWNER" || role === "ESTIMATOR";
-
+  const canUseAssistant = role === "OWNER" || role === "ESTIMATOR" || role === "WORKSHOP_MANAGER";
   const parts = location.pathname.split("/").filter(Boolean);
   const projectId = parts[0] === "projects" && parts[1] !== undefined ? parts[1] : null;
-  // Same queryKey as the position editor's lock check — when the user is
-  // already on the project this is a cache hit; a locked project must not
-  // keep advertising «Nuevo vano» in the rail.
-  const projectLock = useProject(
-    canWrite && projectId !== null && projectId !== "demo" ? projectId : null,
-  );
-  const lockedProject = projectLock.data;
-  const projectUnlocked =
-    !lockedProject ||
-    (lockedProject.status === "DRAFT" &&
-      !lockedProject.versions?.some(
-        (version) => version.revision_code === lockedProject.current_revision,
-      ) &&
-      !lockedProject.current_pricing_operation_id);
-  // Studio (position editor): the project-context rail yields to a compact
-  // 64px global icon strip — the canvas owns the room and the topbar keeps
-  // the where-you-are breadcrumbs (mandate 01: Studio rail may be ~64px).
   const isStudio = parts[0] === "projects" && parts[2] === "positions" && parts.length >= 4;
-  const context: "project" | "production" | null = isStudio
-    ? null
-    : projectId !== null
-      ? "project"
-      : parts[0] === "production"
-        ? "production"
-        : null;
-  const projectName = useProjectName(projectId !== null && projectId !== "demo" ? projectId : null);
+  const compact = isStudio || collapsed;
+  const domainGroups = navigationFor(role);
+  const navItems = domainGroups.flatMap((group) => group.items);
+  const projectName = useProjectName(projectId !== "demo" ? projectId : null);
 
   // Browser tab title tracks the same crumbs the shell renders — tabs and
   // history entries stop all saying "DEKOPEN".
@@ -146,66 +125,14 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     document.title = head ? `${head} · DEKOPEN` : "DEKOPEN";
   }, [location.pathname, projectName, leaf]);
 
-  function navigationAllowed(to: string): boolean {
-    // Mirrors the backend role sets — a nav link must never land on a
-    // 403 wall.
-    if (to === "/pricing/commercial") return role === "OWNER" || role === "ESTIMATOR";
-    if (to === "/assistant") return role !== "INSTALLER";
-    if (to === "/jobs") return role !== "INSTALLER";
-    if (to === "/catalogs/systems" || to === "/purchasing")
-      return role === "OWNER" || role === "WORKSHOP_MANAGER";
-    if (to === "/production")
-      return (
-        role === "OWNER" ||
-        role === "WORKSHOP_MANAGER" ||
-        role === "INSTALLER" ||
-        role === "OPERATOR" ||
-        role === "ESTIMATOR"
-      );
-    if (to === "/settings/general")
-      return role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "ESTIMATOR";
-    if (to === "/dashboard" || to === "/projects" || to === "/clients")
-      return role === "OWNER" || role === "ESTIMATOR" || role === "WORKSHOP_MANAGER";
-    return true;
-  }
-
-  const projectContext: ContextNavItem[] =
-    projectId === null || projectId === "demo"
-      ? []
-      : [
-          { to: `/projects/${projectId}`, label: "nav.context.summary" },
-          // Pricing ops accept O/E only — WM gets the summary but no dead link.
-          ...(canWrite
-            ? [
-                {
-                  to: `/projects/${projectId}/pricing`,
-                  label: "nav.context.quote" as const,
-                },
-              ]
-            : []),
-          ...(canWrite && projectUnlocked
-            ? [
-                {
-                  to: `/projects/${projectId}/positions/new`,
-                  label: "nav.context.newPosition" as const,
-                },
-              ]
-            : []),
-        ];
-
-  const contextItems = context === "project" ? projectContext : productionContext;
-
-  const navItems = domainGroups
-    .flatMap((group) => group.items)
-    .filter((item) => navigationAllowed(item.to))
-    .concat(contextItems);
-
   return (
     <ShellLeafContext.Provider value={leafContext}>
       <AssistantSurfaceProvider>
         <div
-          className={`app-shell${railOpen ? " rail-open" : ""}`}
+          className={`app-shell${railOpen ? " rail-open" : ""}${compact ? " rail-collapsed" : ""}`}
           data-studio={isStudio || undefined}
+          data-density={role === "OPERATOR" || role === "INSTALLER" ? "workshop" : "office"}
+          data-theme={theme}
           data-testid="app-shell"
         >
           <a href="#workspace-main" className="skip-link">
@@ -214,88 +141,74 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
           <button
             type="button"
             className="rail-scrim"
+            aria-label="Cerrar navegación"
             aria-hidden={!railOpen}
             tabIndex={railOpen ? 0 : -1}
             onClick={() => setRailOpen(false)}
           />
-          <aside className="app-rail">
+          <aside
+            className="app-rail"
+            ref={railRef}
+            role={railOpen ? "dialog" : undefined}
+            aria-modal={railOpen || undefined}
+            aria-label="Navegación"
+          >
             <div className="app-rail__brand">
-              {isStudio ? <BrandMark size={24} title="DEKOPEN" /> : <Wordmark width={120} />}
+              <span className="rail-brand-full">
+                <Wordmark width={120} />
+              </span>
+              <span className="rail-brand-compact">
+                <BrandMark size={24} title="DEKOPEN" />
+              </span>
             </div>
-            <OrgSwitcher />
             <nav className="app-rail__nav" aria-label={t("shell.navigation")}>
-              {context === null ? (
-                domainGroups.map((group) => {
-                  const items = group.items
-                    .filter((item) => navigationAllowed(item.to))
-                    .map((item) =>
-                      item.to === "/settings/general" && role === "ESTIMATOR"
-                        ? { ...item, label: "nav.settings" as const }
-                        : item,
-                    );
-                  if (items.length === 0) return null;
-                  return (
-                    <div key={group.id} className="rail-group">
-                      <p className="rail-group__title">{t(group.title)}</p>
-                      {items.map((item) => (
-                        <NavLink
-                          aria-label={isStudio ? t(item.label) : undefined}
-                          className="rail-item"
-                          key={item.to}
-                          title={isStudio ? t(item.label) : undefined}
-                          to={item.to}
-                        >
-                          <RailIcon to={item.to} />
-                          <span aria-hidden={isStudio || undefined}>{t(item.label)}</span>
-                        </NavLink>
-                      ))}
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="rail-context">
-                  {context === "project" ? (
-                    <Link to="/projects" className="rail-context__back">
-                      ‹ {t("nav.projects")}
-                    </Link>
-                  ) : role === "OPERATOR" || role === "INSTALLER" ? (
-                    // Floor roles' home IS production — a «back to panel»
-                    // link would land them on a dashboard their role can't
-                    // read (review: OPERATOR 403 wall).
-                    <p className="rail-context__title">{t("nav.production")}</p>
-                  ) : (
-                    <Link to="/dashboard" className="rail-context__back">
-                      ‹ {t("nav.dashboard")}
-                    </Link>
-                  )}
-                  {context === "project" && (
-                    <p className="rail-context__title">
-                      {projectId === "demo"
-                        ? t("crumb.positionDemo")
-                        : (projectName ?? t("crumb.projectFallback"))}
-                    </p>
-                  )}
-                  {contextItems.map((item) => {
-                    const active = contextItemActive(
-                      item,
-                      contextItems,
-                      location.pathname,
-                      location.search,
-                    );
-                    return (
-                      <Link
-                        key={`${item.to}:${item.label}`}
-                        to={item.to}
-                        className={`rail-item${active ? " active" : ""}`}
-                        aria-current={active ? "page" : undefined}
-                      >
-                        {t(item.label)}
-                      </Link>
-                    );
-                  })}
+              {domainGroups.map((group) => (
+                <div key={group.id} className="rail-group">
+                  {group.title && <p className="rail-group__title">{t(group.title)}</p>}
+                  {group.items.map((item) => (
+                    <NavLink
+                      className="rail-item"
+                      key={item.to}
+                      to={item.to}
+                      title={t(item.label)}
+                      aria-label={t(item.label)}
+                    >
+                      <RailIcon to={item.to} />
+                      <span>{t(item.label)}</span>
+                    </NavLink>
+                  ))}
                 </div>
-              )}
+              ))}
             </nav>
+            <button
+              type="button"
+              className="rail-collapse"
+              aria-label={collapsed ? "Expandir navegación" : "Contraer navegación"}
+              aria-pressed={collapsed}
+              onClick={() =>
+                setCollapsed((value) => {
+                  try {
+                    localStorage.setItem("dekopen.rail-collapsed", String(!value));
+                  } catch {
+                    /* Session preference remains usable. */
+                  }
+                  return !value;
+                })
+              }
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d={collapsed ? "m9 6 6 6-6 6" : "m15 6-6 6 6 6"} />
+              </svg>
+              <span>{collapsed ? "Expandir" : "Contraer"}</span>
+            </button>
             <div className="app-rail__user">
               <div className="app-rail__identity">
                 <span className="app-rail__email" title={auth.me?.user.email ?? undefined}>
@@ -311,7 +224,24 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                   aria-label={t("theme.toggle")}
                   title={t(theme === "light" ? "theme.toDark" : "theme.toLight")}
                 >
-                  {theme === "light" ? "☾" : "☀"}
+                  <svg
+                    aria-hidden="true"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    {theme === "light" ? (
+                      <path d="M19 15a8 8 0 0 1-10-10A8 8 0 1 0 19 15Z" />
+                    ) : (
+                      <>
+                        <circle cx="12" cy="12" r="4" />
+                        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
+                      </>
+                    )}
+                  </svg>
                 </button>
                 <button
                   type="button"
@@ -320,7 +250,17 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                   aria-label={t("auth.signOut")}
                   title={t("auth.signOut")}
                 >
-                  ⎋
+                  <svg
+                    aria-hidden="true"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <path d="M10 3H4v18h6M8 12h12m-5-5 5 5-5 5" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -330,20 +270,37 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
               <button
                 type="button"
                 className="rail-toggle"
+                ref={toggleRef}
                 aria-expanded={railOpen}
                 aria-label={t("shell.menu")}
                 onClick={() => setRailOpen((value) => !value)}
               >
-                ☰
+                <svg
+                  aria-hidden="true"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
               </button>
               <ShellCrumbs leaf={leaf} />
               <div className="app-topbar__actions">
+                <OrgSwitcher />
                 <ProjectSwitcher />
-                <AiModeBadge />
+                {canUseAssistant && <AiModeBadge />}
                 <button
                   type="button"
                   className="topbar-search"
-                  onClick={() => setPaletteRequest((value) => value + 1)}
+                  aria-label="Buscar o ejecutar un comando"
+                  title="Buscar o ejecutar · Ctrl K"
+                  onClick={() => {
+                    window.dispatchEvent(new Event("dekopen:shell-overlay"));
+                    setPaletteRequest((value) => value + 1);
+                  }}
                 >
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
                     <circle cx="5.6" cy="5.6" r="4.1" stroke="currentColor" strokeWidth="1.3" />
@@ -358,10 +315,11 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                   <kbd>{MOD_K_HINT}</kbd>
                   <kbd>/</kbd>
                 </button>
-                <AttentionBell />
+                <AttentionBell key={`${org?.id}:${auth.me?.user.id}:${role}`} />
+                <ShortcutHelp key={org?.id} />
                 {/* INSTALLER has no AI surface — every ai endpoint is gated to
                     _AGENT_CALLERS, so the orb would offer a 403 wall. */}
-                {role !== "INSTALLER" ? (
+                {canUseAssistant ? (
                   <>
                     {/* The orb always opens the dock — a pressing job gets its
                         own chip so an unlucky FAILED_RETRYABLE can never make
@@ -369,6 +327,8 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                     <button
                       type="button"
                       className="topbar-button topbar-ai"
+                      aria-label={t("shell.aiEntry")}
+                      title={t("shell.aiEntry")}
                       onClick={() => setAssistantRequest((value) => value + 1)}
                     >
                       <AiPresence
@@ -376,7 +336,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                         size={22}
                         onActiveJob={onActiveJob}
                       />
-                      {t("shell.aiEntry")}
+                      <span className="topbar-ai-label">{t("shell.aiEntry")}</span>
                     </button>
                     {presenceJob ? (
                       <button
@@ -398,11 +358,12 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
           </div>
           <CommandPalette
             openRequested={paletteRequest}
+            contextKey={`${location.pathname}${location.search}`}
             navItems={navItems.map((item) => ({ to: item.to, label: t(item.label) }))}
             onNavigate={(to) => navigate(to)}
             organizationId={org?.id ?? null}
           />
-          {role !== "INSTALLER" ? (
+          {canUseAssistant ? (
             <AskDekopen
               openRequested={assistantRequest}
               hideTrigger

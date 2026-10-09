@@ -33,12 +33,6 @@ def _where(columns: tuple[str, ...]) -> str:
     )
 
 
-# Groups an installer must never see: the client registry carries fiscal PII
-# (RUT) and the documents group mixes invoices into the result set. Projects
-# still surface (dispatch/installation context) minus the commercial subtitle.
-_INSTALLER_EXCLUDED_GROUPS = {"clients", "documents"}
-
-
 def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
     needle = query.strip().lower()
     if len(needle) < 2 or len(needle) > MAX_QUERY_LEN:
@@ -52,7 +46,7 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
 
     results: list[dict] = []
 
-    if role == "OPERATOR":
+    if role in {"OPERATOR", "INSTALLER"}:
         for row in org(
             "SELECT id, order_code, status::text AS status FROM public.orders"
             " WHERE org_id=%s AND order_type='WORKSHOP_OT' AND (__WHERE__)"
@@ -63,6 +57,22 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
                 "title": row["order_code"], "subtitle": _ORDER_STATUS.get(row["status"], "Sin dato · falta estado"),
                 "path": "/production?" + urlencode({"order": row["id"]})})
         return {"results": results}
+
+    if role in {"OWNER", "ESTIMATOR"}:
+        with documentary_backend():
+            quotes = org(
+                "SELECT v.id,p.id AS project_id,p.code,p.name,p.client_name,v.revision_code"
+                " FROM public.project_versions v JOIN public.projects p"
+                " ON p.id=v.project_id AND p.org_id=v.org_id"
+                " WHERE v.org_id=%s AND v.revision_code=p.current_revision AND (__WHERE__)"
+                f" ORDER BY v.emitted_at DESC,p.code LIMIT {GROUP_LIMIT}",
+                "p.code", "p.name", "p.client_name", "v.revision_code",
+            )
+        for row in quotes:
+            revision = row["revision_code"].removeprefix("REV-")
+            results.append({"group": "quotes", "id": str(row["id"]),
+                "title": f"{row['code']} · Cotización {revision}", "subtitle": row["client_name"],
+                "path": "/quotes?" + urlencode({"q": row["code"]})})
 
     for row in org(
         "SELECT id, code, name, client_name FROM public.projects"
@@ -96,7 +106,7 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
                 "id": str(row["id"]),
                 "title": row["name"],
                 "subtitle": row.get("rut"),
-                "path": "/clients",
+                "path": f"/clients/{row['id']}",
             }
         )
 
@@ -249,7 +259,7 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
                 "id": str(row["id"]),
                 "title": row["sku"],
                 "subtitle": row["name"],
-                "path": "/purchasing",
+                "path": "/inventory?" + urlencode({"sku": row["sku"]}),
             }
         )
 
@@ -285,18 +295,11 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
         ):
             results.append({"group": "inventory", "id": str(row["id"]),
                 "title": row["code"], "subtitle": _REMNANT_STATUS.get(row["status"], "Sin dato · falta estado"),
-                "path": "/purchasing?" + urlencode({"remnant": row["id"], "code": row["code"]})})
+                "path": "/inventory?" + urlencode({"remnant": row["id"], "code": row["code"]})})
         for row in receipt_rows:
             results.append({"group": "inventory", "id": str(row["id"]),
                 "title": row["code"], "subtitle": None,
                 "path": "/purchasing?" + urlencode({"order": row["order_id"],
                     "version": row["project_version_id"], "receipt": row["id"]})})
-
-    if role == "INSTALLER":
-        results = [
-            ({**r, "subtitle": None} if r["group"] == "projects" else r)
-            for r in results
-            if r["group"] not in _INSTALLER_EXCLUDED_GROUPS
-        ]
 
     return {"results": results}

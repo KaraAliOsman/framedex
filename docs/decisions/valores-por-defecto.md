@@ -2,6 +2,20 @@
 
 Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguientes deben mantener esta tabla cuando implementen o cambien un valor configurable.
 
+## P03 · trabajo por rol (2026-10-09)
+
+- Cola: vencidos, bloqueos, trabajo del día y seguimiento, orden determinista
+  del motor. Son hechos del dominio; el filtro visual no cambia consecuencias.
+- Solo el operario entra automáticamente en producción. Los demás entran a
+  Hoy; todos conservan ambas rutas según permisos. El riel puede contraerse
+  desde el shell, con preferencia local; bajo 1024 se vuelve drawer.
+- Venta por fase separada por moneda, sobre totales emitidos vigentes. No se
+  presenta como ingreso contable. Cobranza sin fecha sigue como saldo, no vencida.
+- Leer una notificación es un clic explícito; abrir la campana no la reconoce.
+  Política comercial y banda continúan configurables en Ajustes › Precios.
+- Despacho/instalación se abren en la ruta existente de producción mientras
+  conservan su agenda y evidencia; no se agregan secciones vacías.
+
 ## P07 · precios y aprobación (2026-10-09)
 
 - Banda inicial: mínimo 25 %, objetivo 35 %, máximo 60 %; descuento superior

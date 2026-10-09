@@ -31,6 +31,22 @@ sources:
 
 # Current reality
 
+## P03 · aceptación local (09-10-2026)
+
+Rama `codex/P03-shell-hoy`, base `096621c9`: navegación por capacidades y flujo,
+Hoy para cinco roles, búsqueda de códigos y cotizaciones/inventario propios.
+El motor ordena consecuencias y calcula saldos/venta por fase; backend lee
+RLS, revisiones, recibos, agenda y reservas de cada OT. Decisiones inline
+requieren motivo y confirmación; campana no marca leído. Se conservan vistas
+de los enlaces de una revisión y la confidencialidad del estimador.
+La matriz tiene 56 vistas sin hallazgos ni axe serious/critical. El runner
+oficial pasa 88 sin hallazgos, HTTP, consola ni desbordes. Gates de lint,
+tipos, test y build pasan (829 motor +2 xfail, 1.364 backend, 900 frontend).
+PG16 pasa 1.205 pgTAP y 439 integraciones; el gate completo continúa su E2E.
+Véanse [aceptación P03](../../redesign/P03-ACEPTACION.md) y
+[trabajo de Hoy](../product/today-workflow.md). No se afirma cumplimiento
+de producción/P12 o retazos/P15; el fixture conserva autoridad DEMO.
+
 ## P07 · integrado y verificado (09-10-2026)
 
 `codex/P07-workspace-precios` sobre `3351066d40a4ad7b19943984efb0cfe8e0893351`

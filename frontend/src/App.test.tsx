@@ -9,6 +9,10 @@ import { ThemeProvider } from "./theme/ThemeProvider";
 import { ConfirmProvider } from "./ui";
 vi.mock("./api/generated/dekopen", () => ({
   projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
+  analyticsToday: vi.fn().mockResolvedValue({
+    status: 200,
+    data: { today: "2026-10-09", actions: [], pipeline: [], source: "Compromisos" },
+  }),
 }));
 
 function authValue(status: AuthSessionContextValue["status"]): AuthSessionContextValue {
@@ -82,6 +86,14 @@ describe("SHOT-04 application routes", () => {
     expect(screen.getByRole("link", { name: "Proyectos" })).toHaveAttribute("href", "/projects");
     fireEvent.click(screen.getByRole("link", { name: "Proyectos" }));
     expect(await screen.findByRole("heading", { name: "Todos los proyectos" })).toBeInTheDocument();
+  });
+
+  it("lets an operator explicitly open their role-scoped Today queue", async () => {
+    const auth = authValue("ready");
+    auth.me!.active_organization!.role = "OPERATOR";
+    renderRoute("/dashboard", auth);
+    expect(await screen.findByRole("heading", { name: "Hoy" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Precios" })).not.toBeInTheDocument();
   });
 
   it("routes an OWNER requiring aal2 to the MFA flow", async () => {

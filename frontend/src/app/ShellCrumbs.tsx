@@ -17,8 +17,9 @@ export function useProjectName(id: string | null): string | null {
   const override = useSyncExternalStore(projectNameSubscribe, () =>
     id && orgId ? projectNameCached(orgId, id) : null,
   );
-  const project = useProject(override === null ? id : null);
-  return override ?? project.data?.name ?? null;
+  const project = useProject(id);
+  const name = override ?? project.data?.name;
+  return name ? `${project.data?.code ? project.data.code + " · " : ""}${name}` : null;
 }
 
 /** Rail → entity → leaf. The first crumb is the rail destination the user
@@ -35,6 +36,8 @@ export function crumbsFor(
   if (section === "dashboard") return [{ label: t("crumb.dashboard") }];
   if (section === "production") return [{ label: t("crumb.production") }];
   if (section === "purchasing") return [{ label: t("crumb.purchasing") }];
+  if (section === "inventory") return [{ label: t("nav.inventory") }];
+  if (section === "quotes") return [{ label: t("nav.quotes") }];
   if (section === "clients") {
     const head: Crumb = { label: t("crumb.clients") };
     if (second !== undefined)
@@ -111,11 +114,15 @@ export function ShellCrumbs({ leaf }: { leaf: string | null }): JSX.Element {
                 </span>
               )}
               {crumb.to !== undefined && !last ? (
-                <Link className="crumbs__link" to={crumb.to}>
+                <Link className="crumbs__link" to={crumb.to} title={crumb.label}>
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="crumbs__current" aria-current={last ? "page" : undefined}>
+                <span
+                  className="crumbs__current"
+                  title={crumb.label}
+                  aria-current={last ? "page" : undefined}
+                >
                   {crumb.label}
                 </span>
               )}
