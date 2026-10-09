@@ -3,9 +3,9 @@ type: state
 status: active
 updated: 2026-10-08
 volatility: high
-verified_ref: 430b6e0f9dc4bddb7ea23e95231fb8575db94699
+verified_ref: 230a6c93016bc4126febc85dc8c0bc9290e84cca
 sources:
-  - P09 implementation 430b6e0f9dc4bddb7ea23e95231fb8575db94699, local PDF/UI verification 2026-10-08
+  - P09 implementation 230a6c93016bc4126febc85dc8c0bc9290e84cca, complete local gates and PDF/UI verification 2026-10-08
   - P05 PR #131, CI run 37861454814 on 10805d8691adb589d6382c32e612f96a754ff0a4, squash 52f3ee8102753727b7ba9e568ec18593b5d269d3, 2026-10-08
   - P04 PR #130, CI run 37845765629 on dcff50911165817920025c8a24ea5dbfafe6f07d, squash f5dbaa92958b279471bd6adfdbc0fe3693e70538, 2026-10-08
   - P25 PR #129, CI run 37824851379 on 8622ba03, squash 588835689c0324b6f76f0ea474f6460c6c22f0b1, 2026-10-08
