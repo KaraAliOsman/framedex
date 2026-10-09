@@ -384,3 +384,22 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - El QR impreso tiene su enlace de revisión separado del compartido y la
   vigencia de acceso de 30 días del portal existente. La vigencia comercial
   sigue declarada en la cotización. Revocar no cambia los bytes del PDF.
+
+## P12 · puesto y control de calidad (2026-10-09)
+
+- El operario elige explícitamente su estación. La preferencia se guarda por
+  usuario y organización; cambiar de tenant no adopta el puesto anterior.
+  Los puestos disponibles provienen de los centros activos configurados en
+  Ajustes. Escanear una pieza conserva el puesto, sin asignar permisos.
+- Taller abre oscuro cuando no hay tema elegido. El tema claro/oscuro sigue
+  configurable con el control de apariencia existente y su preferencia local.
+- Registrar una medición fuera de especificación conserva la OT abierta,
+  salvo que la persona marque «Bloquear la OT y avisar al jefe». El control
+  final y el rechazo con remake corresponden al jefe o dueño, con motivo y
+  confirmación. Cada decisión tiene una clave idempotente por operación.
+- El remake conserva el conjunto sellado y la pieza rechazada como motivo;
+  requiere su propio plan. No se recorta automáticamente el BOM de una OT
+  por una medición de una pieza: sería una nueva decisión de dominio.
+- Sin agenda o capacidad declarada se muestra «Sin dato» o se omite capacidad.
+  Los filtros de obra, compromiso y bloqueo son controles de lectura, sin
+  convertir fechas ni cantidades estimadas en autoridad de fabricación.

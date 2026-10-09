@@ -15,6 +15,26 @@ from production.service import _cnc_bars_csv, _cnc_sheets_csv, _optimization_fin
 from production.trace import _plan_bars, _plan_sheets
 
 
+def test_one_order_from_large_revision_keeps_global_addresses_and_legacy_fallback():
+    from unittest.mock import patch
+    from production.pieces import plan_fact_scope
+
+    snapshot, all_plans = twelve_positions()
+    plan = deepcopy(all_plans)
+    plan["bars"]["workshop_cut_plan"] = [bar for bar in plan["bars"]["workshop_cut_plan"]
+        if bar["cuts"][0]["source_position_id"] == "position-12"]
+    plan["sheets"] = [plan["sheets"][-1]]
+    with patch("production.pieces.plan_fact_scope", return_value=snapshot):
+        global_projection = addressed_plan(snapshot, plan, order_id="order-12")
+    assert addressed_plan(snapshot, plan, order_id="order-12") == global_projection
+    assert len(plan_fact_scope(snapshot, plan)["manufacturing"]) == 2
+    assert len(snapshot["manufacturing"]) == 24
+    assert without_addresses(global_projection) == plan
+    legacy = deepcopy(plan)
+    legacy["bars"]["workshop_cut_plan"][0]["cuts"][0].pop("source_position_id")
+    assert plan_fact_scope(snapshot, legacy) is snapshot
+
+
 def twelve_positions():
     snapshot = {"positions": [], "manufacturing": []}
     plan = {"bars": {"workshop_cut_plan": [], "metrics": {}}, "sheets": []}

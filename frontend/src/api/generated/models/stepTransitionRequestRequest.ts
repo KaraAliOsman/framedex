@@ -10,6 +10,7 @@ import type { StepTransitionRequestActionEnum } from "./stepTransitionRequestAct
 import type { StepTransitionRequestRequestQcResult } from "./stepTransitionRequestRequestQcResult";
 
 export interface StepTransitionRequestRequest {
+  block_on_fail?: boolean;
   action: StepTransitionRequestActionEnum;
   /**
    * @minLength 1

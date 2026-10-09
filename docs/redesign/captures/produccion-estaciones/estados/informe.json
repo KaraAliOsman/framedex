@@ -1,0 +1,35 @@
+[
+  {
+    "state": "vacio",
+    "findings": [],
+    "result": "PASA"
+  },
+  {
+    "state": "carga",
+    "findings": [],
+    "result": "PASA"
+  },
+  {
+    "state": "error",
+    "findings": [],
+    "result": "PASA"
+  },
+  {
+    "flow": "error de transporte y reintento real",
+    "result": "PASA"
+  },
+  {
+    "state": "sin-permiso",
+    "findings": [],
+    "result": "PASA"
+  },
+  {
+    "state": "bloqueado",
+    "findings": [],
+    "result": "PASA"
+  },
+  {
+    "flow": "proyecciones privadas y dos permisos reales de API",
+    "result": "PASA"
+  }
+]

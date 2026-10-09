@@ -6,6 +6,10 @@ CREATE ROLE service_role NOLOGIN BYPASSRLS;
 
 CREATE SCHEMA auth;
 
+-- Supabase owns this table. The independent schema gate needs its key
+-- contract so domain foreign keys are exercised rather than removed.
+CREATE TABLE auth.users (id UUID PRIMARY KEY);
+
 CREATE FUNCTION auth.uid()
 RETURNS UUID
 LANGUAGE SQL

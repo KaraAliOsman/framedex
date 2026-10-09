@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 5b06ceb12457b297a8748580453695714469c6a0
+verified_ref: 3c3a78bebf898f668814742f8c94a2144d86fb9f
 sources:
+  - P12 implementación 3c3a78bebf898f668814742f8c94a2144d86fb9f, gates locales y evidencia de navegador, 2026-10-09
   - P03 PR #134, CI run 37919211491 on 4eb66fbd72c5b2a4ef13c13b6397982a29eb823e, squash 5b06ceb12457b297a8748580453695714469c6a0, 2026-10-09
   - P03 implementación dacf9f9759e41bea784968d25662e95e7081f6d3, gates locales y 88 vistas oficiales, 2026-10-09
   - P07 PR #133, CI run 37893278926 on d6db60843adc4c65e2486d8e46cf9832a4244bd3, squash d8e4d899a29d9f154f8c7d37b054581132dadbb1, 2026-10-09
@@ -32,6 +33,28 @@ sources:
 ---
 
 # Current reality
+
+## P12 · producción por estación (09-10-2026)
+
+Rama `codex/P12-produccion-estaciones`, base `62ebcbe9`: tablero de estaciones,
+detalle con stepper y nueve pestañas, piezas virtualizadas y una cola privada
+del operario por puesto persistido por usuario/tenant. El QR conserva dirección
+física y no amplía permisos. La medición QC bloquea solo por elección explícita;
+el rechazo confirmado del jefe crea un remake idempotente con la pieza como
+procedencia. Se conserva el conjunto sellado y el remake requiere su propio plan.
+El índice de mecanizado se limita a las posiciones del plan, conservando códigos
+históricos, bytes y fingerprint. La matriz final tiene 96 observaciones sin
+hallazgos y tiempos de 822–1.035 ms (jefe) y 891–936 ms (operario).
+El capturador oficial pasa 16 vistas sin hallazgos nuevos; operario pasa ocho
+con cero. Jefe conserva 32–50 hallazgos de controles heredados de oficina bajo
+el config histórico de taller, sin cambiar detectores ni sus muestras.
+El recorrido real une QR, Corte, bloqueo, tablero/Hoy, desbloqueo y QC/remake.
+La evidencia del primer ensayo defectuoso se conserva; la decisión corregida
+RM-02 conserva la pieza y su retry devuelve la misma OT.
+Véanse [aceptación P12](../../redesign/P12-ACEPTACION.md) y
+[producción por estación](../product/production-stations.md).
+P13/P14/P15 continúan corte avanzado, CNC y retazos; la aceptación usa autoridad
+DEMO declarada y no certifica un fabricante. CI y squash se registran al integrar.
 
 ## P03 · integrado y verificado (09-10-2026)
 

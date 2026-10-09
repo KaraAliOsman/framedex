@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 
-import { fmtMm, formatDateTime } from "../../format";
+import { fmtMm, formatDateTime, formatDecimal } from "../../format";
 import { t, tOptional } from "../../i18n/es-CL";
 import {
   STEP_STOCK_KINDS,
@@ -21,6 +21,7 @@ import {
   stockKindLabel,
 } from "./labels";
 import type { ProductionOrderTrace, ProductionStep } from "../../api/generated/models";
+import { domainLabels } from "../../i18n/domainLabels";
 import { formatDate } from "../money";
 
 type Reservation = {
@@ -146,7 +147,7 @@ function MemberOpsStrip({
           return (
             <g key={op.operation_id ?? index}>
               <title>
-                {`${index + 1} · ${opLabel(op)} · u=${op.u_mm ?? "—"} · ${opFaceLabel(op.face)}`}
+                {`${index + 1} · ${opLabel(op)} · u=${fmtMm(op.u_mm)} · ${opFaceLabel(op.face)}`}
               </title>
               <line
                 x1={x}
@@ -382,7 +383,8 @@ export function OperatorStepCard({
           {traceBusy ? t("production.traceLoading") : t("production.operatorNoOps")}
         </p>
       ) : (
-        <div className="operator-card-body">
+        <details className="operator-card-body" open={step.code === "QC" || opsCheckable}>
+          <summary>Materiales, piezas y operaciones del paso</summary>
           {blockers.length ||
           (step.code === "CUT" && unmapped.length) ||
           unassignedOps.length ||
@@ -431,20 +433,22 @@ export function OperatorStepCard({
                         className={_isShort(row.short) ? "operator-row-short" : ""}
                       >
                         <td>
-                          {row.name ?? row.sku ?? "—"}
+                          {row.name ?? row.sku ?? "Sin dato"}
                           {row.sku && row.sku !== row.name ? ` · ${row.sku}` : ""}
-                          {row.unit ? ` · ${row.unit}` : ""}
+                          {row.unit
+                            ? ` · ${domainLabels[row.unit] ?? "Sin dato · unidad no declarada"}`
+                            : ""}
                         </td>
-                        <td>{row.needed ?? "0"}</td>
-                        <td>{row.reserved ?? "0"}</td>
+                        <td>{fmtMm(row.needed)}</td>
+                        <td>{fmtMm(row.reserved)}</td>
                         <td>
                           {_isShort(row.short) ? (
-                            <strong className="production-stock-short">{row.short}</strong>
+                            <strong className="production-stock-short">{fmtMm(row.short)}</strong>
                           ) : (
-                            "0"
+                            fmtMm(row.short)
                           )}
                         </td>
-                        <td>{row.consumed_at ? formatDate(row.consumed_at) : "—"}</td>
+                        <td>{row.consumed_at ? formatDate(row.consumed_at) : "Sin dato"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -503,16 +507,16 @@ export function OperatorStepCard({
                         {sawOps.map((op) => (
                           <tr key={op.operation_id}>
                             <td>{String(op.host ?? "").replace("bar:", "")}</td>
-                            <td>{op.x_mm ?? "—"}</td>
+                            <td>{fmtMm(op.x_mm)}</td>
                             <td>
-                              {op.angle_left_deg ?? "—"}° / {op.angle_right_deg ?? "—"}°
+                              {fmtMm(op.angle_left_deg)}° / {fmtMm(op.angle_right_deg)}°
                             </td>
                             <td>
                               {op.detail?.boundary
                                 ? opBoundaryLabel(String(op.detail.boundary))
                                 : op.detail?.sequence
                                   ? `#${String(op.detail.sequence)}`
-                                  : "—"}
+                                  : "Sin dato"}
                             </td>
                           </tr>
                         ))}
@@ -546,11 +550,17 @@ export function OperatorStepCard({
                         ).map(([host, hostOps]) => {
                           const meta = memberMeta[host] ?? {};
                           const code =
-                            labels[host] ?? (meta.role ? cutRoleLabel(meta.role) : String(host));
+                            labels[host] ??
+                            (meta.role ? cutRoleLabel(meta.role) : "Sin dato · pieza sin etiqueta");
                           const locationCode = _loc(labels, meta);
-                          const length =
-                            Number(meta.cut_length_mm ?? 0) ||
-                            Math.max(...hostOps.map((op) => Number(op.u_mm ?? 0)), 1);
+                          const length = Number(meta.cut_length_mm);
+                          if (!Number.isFinite(length) || length <= 0)
+                            return (
+                              <p key={host}>
+                                {code} · Sin dato · falta el largo sellado para ubicar las
+                                operaciones.
+                              </p>
+                            );
                           return (
                             <MemberOpsStrip
                               key={host}
@@ -581,7 +591,7 @@ export function OperatorStepCard({
                           {memberOps.map((op) => {
                             const memberCode =
                               (op.host && labels[op.host]) ??
-                              String(op.detail?.role ?? op.host ?? "—");
+                              cutRoleLabel(String(op.detail?.role ?? ""));
                             const shareCount = memberCode.split("·").length;
                             const opId = op.operation_id ?? "";
                             return (
@@ -609,11 +619,15 @@ export function OperatorStepCard({
                                   {memberCode}
                                   {shareCount > 1 ? ` · ×${shareCount}` : ""}
                                 </td>
-                                <td>{op.u_mm ?? "—"}</td>
+                                <td>{fmtMm(op.u_mm)}</td>
                                 <td>{opReferenceLabel(op.reference)}</td>
                                 <td>{opFaceLabel(op.face)}</td>
-                                <td>{op.depth_mm ?? "—"}</td>
-                                <td title={opBasisLabel(op.basis)}>{op.tool_id ?? "—"}</td>
+                                <td>{fmtMm(op.depth_mm)}</td>
+                                <td title={opBasisLabel(op.basis)}>
+                                  {op.tool_id && !/^[0-9a-f]{8}-/i.test(op.tool_id)
+                                    ? (domainLabels[op.tool_id] ?? op.tool_id)
+                                    : "Sin dato · herramienta sin código"}
+                                </td>
                               </tr>
                             );
                           })}
@@ -634,7 +648,7 @@ export function OperatorStepCard({
                       <th>#</th>
                       <th>{t("production.optimizeSku")}</th>
                       <th>{t("production.operatorRole")}</th>
-                      <th>{t("production.traceLength")}</th>
+                      <th>{t("production.traceLength")} (mm)</th>
                       <th>{t("production.operatorAngles")}</th>
                       <th>{t("production.operatorOrigin")}</th>
                       <th>{t("production.traceBar")}</th>
@@ -647,16 +661,16 @@ export function OperatorStepCard({
                       >
                         <td>
                           {piece.code ? <strong>{piece.code} · </strong> : null}
-                          {piece.sequence ?? "—"}
+                          {formatDecimal(piece.sequence)}
                         </td>
-                        <td>{piece.workshop_sku ?? "—"}</td>
+                        <td>{piece.workshop_sku ?? "Sin dato"}</td>
                         <td>{cutRoleLabel(piece.role)}</td>
                         <td>
-                          {piece.length_mm ?? "—"}
+                          {fmtMm(piece.length_mm)}
                           {piece.sagitta_mm ? ` · f ${fmtMm(piece.sagitta_mm)}` : ""}
                         </td>
                         <td>
-                          {piece.angle_left ?? "—"}° / {piece.angle_right ?? "—"}°
+                          {fmtMm(piece.angle_left)}° / {fmtMm(piece.angle_right)}°
                         </td>
                         <td>{_loc(labels, piece)}</td>
                         <td>
@@ -681,7 +695,7 @@ export function OperatorStepCard({
                   <tr>
                     <th>{t("production.cutplanPiece")}</th>
                     <th>{t("production.operatorRole")}</th>
-                    <th>{t("production.optimizeSize")}</th>
+                    <th>{t("production.optimizeSize")} (mm)</th>
                     <th>{t("production.operatorOrigin")}</th>
                   </tr>
                 </thead>
@@ -689,12 +703,12 @@ export function OperatorStepCard({
                   {sheetPieces.map((piece, index) => (
                     <tr key={`${piece.piece_id ?? "x"}-${index}`}>
                       <td>
-                        {piece.code ?? "—"}
+                        {piece.code ?? "Sin dato"}
                         {piece.workshop_sku ? ` · ${piece.workshop_sku}` : ""}
                       </td>
                       <td>{cutRoleLabel(piece.role)}</td>
                       <td>
-                        {piece.width_mm ?? "—"} × {piece.height_mm ?? "—"}
+                        {fmtMm(piece.width_mm)} × {fmtMm(piece.height_mm)}
                       </td>
                       <td>{_loc(labels, piece)}</td>
                     </tr>
@@ -720,19 +734,22 @@ export function OperatorStepCard({
                   {unnestedPanes.map((pane, index) => (
                     <tr key={index}>
                       <td>
-                        {String(pane.group ?? "—")}
+                        {domainLabels[String(pane.group ?? "")] ??
+                          "Sin dato · material sin etiqueta"}
                         {pane.quantity ? ` ×${pane.quantity}` : ""}
                       </td>
                       <td>
-                        {pane.width_mm ? fmtMm(String(pane.width_mm)) : "—"} ×{" "}
-                        {pane.height_mm ? fmtMm(String(pane.height_mm)) : "—"}
+                        {pane.width_mm ? fmtMm(String(pane.width_mm)) : "Sin dato"} ×{" "}
+                        {pane.height_mm ? fmtMm(String(pane.height_mm)) : "Sin dato"}
                       </td>
-                      <td>{_loc(labels, pane as { bay_id?: string; leaf_id?: string }) || "—"}</td>
+                      <td>
+                        {_loc(labels, pane as { bay_id?: string; leaf_id?: string }) || "Sin dato"}
+                      </td>
                       <td>
                         {pane.reason
                           ? (tOptional(`production.unnestedReason.${pane.reason}`) ??
-                            String(pane.reason))
-                          : "—"}
+                            "Sin dato · revisa el plan sellado")
+                          : "Sin dato"}
                       </td>
                     </tr>
                   ))}
@@ -752,7 +769,7 @@ export function OperatorStepCard({
                 : t("production.operatorNoPlan")}
             </p>
           ) : null}
-        </div>
+        </details>
       )}
       {actionBar ? <footer className="operator-card-actions">{actionBar}</footer> : null}
     </section>
@@ -842,9 +859,9 @@ function QcCheckSection({
             {entries.map((entry) => (
               <tr key={entry.id}>
                 <td>{entry.check}</td>
-                <td>{entry.expected || "—"}</td>
-                <td>{entry.actual || "—"}</td>
-                <td>{entry.item_code ? <strong>{entry.item_code}</strong> : "—"}</td>
+                <td>{entry.expected || "Sin dato"}</td>
+                <td>{entry.actual || "Sin dato"}</td>
+                <td>{entry.item_code ? <strong>{entry.item_code}</strong> : "Sin dato"}</td>
                 <td>
                   <strong className={entry.result === "FAIL" ? "qc-result-fail" : "qc-result-pass"}>
                     {entry.result === "FAIL" ? t("production.qcFail") : t("production.qcPass")}

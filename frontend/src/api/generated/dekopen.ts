@@ -187,6 +187,8 @@ import type {
   MountingPreviewResponse,
   OperationalSummary,
   OperationsRegistry,
+  OperatorStation,
+  OperatorStationRequestRequest,
   OpsExport,
   OrderIndexResponse,
   OrderReceiptRequestRequest,
@@ -254,6 +256,7 @@ import type {
   ProjectResponse,
   ProjectWriteRequest,
   PurchasingState,
+  QcRemakeRequestRequest,
   QuotationIndexResponse,
   RectificationRequest,
   RectificationResponse,
@@ -12011,6 +12014,163 @@ export const productionGlassOrder = async (
   });
 };
 
+export type productionOperatorStationResponse200 = {
+  data: OperatorStation;
+  status: 200;
+};
+
+export type productionOperatorStationResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOperatorStationResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOperatorStationResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOperatorStationResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOperatorStationResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOperatorStationResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOperatorStationResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOperatorStationResponseSuccess = productionOperatorStationResponse200 & {
+  headers: Headers;
+};
+export type productionOperatorStationResponseError = (
+  | productionOperatorStationResponse400
+  | productionOperatorStationResponse401
+  | productionOperatorStationResponse403
+  | productionOperatorStationResponse404
+  | productionOperatorStationResponse409
+  | productionOperatorStationResponse422
+  | productionOperatorStationResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOperatorStationResponse =
+  productionOperatorStationResponseSuccess | productionOperatorStationResponseError;
+
+export const getProductionOperatorStationUrl = () => {
+  return `/api/v1/production/operator-station/`;
+};
+
+export const productionOperatorStation = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOperatorStationResponse> => {
+  return apiMutator<productionOperatorStationResponse>(getProductionOperatorStationUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionOperatorStationSelectResponse200 = {
+  data: OperatorStation;
+  status: 200;
+};
+
+export type productionOperatorStationSelectResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOperatorStationSelectResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOperatorStationSelectResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOperatorStationSelectResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOperatorStationSelectResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOperatorStationSelectResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOperatorStationSelectResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOperatorStationSelectResponseSuccess =
+  productionOperatorStationSelectResponse200 & {
+    headers: Headers;
+  };
+export type productionOperatorStationSelectResponseError = (
+  | productionOperatorStationSelectResponse400
+  | productionOperatorStationSelectResponse401
+  | productionOperatorStationSelectResponse403
+  | productionOperatorStationSelectResponse404
+  | productionOperatorStationSelectResponse409
+  | productionOperatorStationSelectResponse422
+  | productionOperatorStationSelectResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOperatorStationSelectResponse =
+  productionOperatorStationSelectResponseSuccess | productionOperatorStationSelectResponseError;
+
+export const getProductionOperatorStationSelectUrl = () => {
+  return `/api/v1/production/operator-station/`;
+};
+
+export const productionOperatorStationSelect = async (
+  operatorStationRequestRequest: OperatorStationRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOperatorStationSelectResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOperatorStationSelectResponse>(
+    getProductionOperatorStationSelectUrl(),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(operatorStationRequestRequest),
+    },
+  );
+};
+
 export type productionOrdersResponse200 = {
   data: ProductionOrderList;
   status: 200;
@@ -14551,6 +14711,89 @@ export const productionOrderPack = async (
   return apiMutator<productionOrderPackResponse>(getProductionOrderPackUrl(orderId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type productionQcRemakeResponse201 = {
+  data: ProductionOrderDetail;
+  status: 201;
+};
+
+export type productionQcRemakeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionQcRemakeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionQcRemakeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionQcRemakeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionQcRemakeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionQcRemakeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionQcRemakeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionQcRemakeResponseSuccess = productionQcRemakeResponse201 & {
+  headers: Headers;
+};
+export type productionQcRemakeResponseError = (
+  | productionQcRemakeResponse400
+  | productionQcRemakeResponse401
+  | productionQcRemakeResponse403
+  | productionQcRemakeResponse404
+  | productionQcRemakeResponse409
+  | productionQcRemakeResponse422
+  | productionQcRemakeResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionQcRemakeResponse =
+  productionQcRemakeResponseSuccess | productionQcRemakeResponseError;
+
+export const getProductionQcRemakeUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/qc-remake/`;
+};
+
+export const productionQcRemake = async (
+  orderId: string,
+  qcRemakeRequestRequest: QcRemakeRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionQcRemakeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionQcRemakeResponse>(getProductionQcRemakeUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(qcRemakeRequestRequest),
   });
 };
 
