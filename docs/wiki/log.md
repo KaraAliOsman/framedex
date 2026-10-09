@@ -1014,3 +1014,11 @@ El gate aislado incorpora el archivo nuevo de acoples: 85 archivos / 1.231
 pgTAP, 445 integraciones PostgreSQL, 19 E2E y upgrades poblados PG16 PASA.
 El teardown detiene únicamente el stack de gate y conserva el fixture persistente.
 Treinta y dos vistas finales permanecen sin hallazgos. CI y squash pendientes.
+
+## 2026-10-09 — P06 · integrado
+
+PR [#138](https://github.com/KaraAliOsman/framedex/pull/138) pasa los cuatro checks sobre `a77e21927feef91b7f519266ee5955688cc8f579`
+en la corrida `37996633851` y se integra con squash `c01fd3fe720f71ca8acf7ef8d86510d106e73075` en `integracion/v1`.
+CodeRabbit y Devin omitieron revisión; flujos, rúbrica y evidencia propia quedan
+registrados. Servicios propios y del gate detenidos; fixture persistente intacto.
+Continúa P08.

@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: a76cf7af89ed24284bb493f08e214bc1b6d176b4
+verified_ref: c01fd3fe720f71ca8acf7ef8d86510d106e73075
 sources:
+  - P06 PR https://github.com/KaraAliOsman/framedex/pull/138, CI 4/4 sobre a77e21927feef91b7f519266ee5955688cc8f579, squash c01fd3fe720f71ca8acf7ef8d86510d106e73075, 2026-10-09
   - P06 correcciones de regresión a76cf7af89ed24284bb493f08e214bc1b6d176b4, gates locales completos y Database Gate, 2026-10-09
   - P06 implementación ef55dbd5af0c5863948c06b3ca85d29d2c135861, navegador y gates locales, 2026-10-09
   - ED1 PR https://github.com/KaraAliOsman/framedex/pull/137, CI 4/4 sobre ae9292864ad7d8efb9beba9243451fba49d8c04e, squash 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d, 2026-10-09
@@ -65,7 +66,7 @@ estados y cinco recetas. La inspección final reserva el dibujo de controles
 que antes tapaban cotas. [Aceptación](../../redesign/P06-ACEPTACION.md) conserva
 rúbrica, rondas y evidencia. 3D de conjuntos queda en P19; DEMO no certifica.
 Database Gate PASA: 1.231 pgTAP, 445 integraciones, 19 E2E y upgrades
-poblados PG16. CI y squash siguen pendientes.
+poblados PG16. PR #138 integrado con CI 4/4; squash `c01fd3fe720f71ca8acf7ef8d86510d106e73075`.
 
 ## ED1 · coherencia editorial de la ola 1 (09-10-2026)
 

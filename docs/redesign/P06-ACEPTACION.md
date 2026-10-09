@@ -147,4 +147,7 @@ frontend. Database Gate pasa 85 archivos / 1.231 pgTAP, incluidas las 13
 aserciones nuevas de autoridad de acople; 445 integraciones PostgreSQL,
 19 E2E reales y todas las actualizaciones pobladas en PostgreSQL 16.
 El teardown detiene el stack aislado y conserva el fixture del programa.
-Los cuatro checks de CI y el squash se registran al integrar.
+PR [#138](https://github.com/KaraAliOsman/framedex/pull/138) pasa Lint & Typecheck, Test Suite, Frontend Build
+y Database Gate sobre `a77e21927feef91b7f519266ee5955688cc8f579` en la corrida `37996633851`.
+Squash `c01fd3fe720f71ca8acf7ef8d86510d106e73075` integrado en `integracion/v1`.
+CodeRabbit y Devin omitieron su revisión; se conserva la revisión editorial propia.

@@ -3,8 +3,9 @@ type: concept
 status: active
 updated: 2026-10-09
 volatility: medium
-verified_ref: a76cf7af89ed24284bb493f08e214bc1b6d176b4
+verified_ref: c01fd3fe720f71ca8acf7ef8d86510d106e73075
 sources:
+  - P06 PR https://github.com/KaraAliOsman/framedex/pull/138, CI 4/4 sobre a77e21927feef91b7f519266ee5955688cc8f579, squash c01fd3fe720f71ca8acf7ef8d86510d106e73075, 2026-10-09
   - docs/redesign/P06-ACEPTACION.md
   - engine/src/dekopen_engine/assembly_measures.py
   - engine/tests/test_gold_cases_assemblies.py
