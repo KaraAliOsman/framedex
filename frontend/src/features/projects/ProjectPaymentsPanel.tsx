@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
@@ -564,9 +565,12 @@ export function ProjectPaymentsPanel({
       {message && <p className="form-error">{message}</p>}
       {summary && (
         <div className="payments-summary">
-          <span className={`production-chip delivery-${summary.status.toLowerCase()}`}>
+          <StatusBadge
+            showIcon={false}
+            className={`production-chip delivery-${summary.status.toLowerCase()}`}
+          >
             {t(STATUS_LABEL[summary.status] ?? "projects.paymentStatusNoDeal")}
-          </span>
+          </StatusBadge>
           <dl className="payments-summary-facts">
             <div>
               <dt>{t("projects.paymentCollected")}</dt>
@@ -752,7 +756,9 @@ export function ProjectPaymentsPanel({
                           {`${t(invoice.credit_note.partial ? "projects.invoiceStatusCredited" : "projects.invoiceStatusAnnulled")} · ${invoice.credit_note.credit_code}`}
                         </button>
                       ) : (
-                        <span className="production-chip">{t("projects.invoiceStatusIssued")}</span>
+                        <StatusBadge showIcon={false} className="production-chip">
+                          {t("projects.invoiceStatusIssued")}
+                        </StatusBadge>
                       )}
                       {invoice.dte && (
                         <button

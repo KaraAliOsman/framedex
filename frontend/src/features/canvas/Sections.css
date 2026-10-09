@@ -120,10 +120,20 @@
   text-decoration: underline;
 }
 .section-view {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  font-size: var(--type-dense);
+  color: var(--text-secondary);
+}
+.section-view__drawing {
   display: block;
   height: auto;
-  margin-top: 0.5rem;
   width: 100%;
+}
+.section-view figcaption {
+  display: grid;
+  gap: var(--space-1);
 }
 .section-member {
   fill: var(--member-pvc-fill);
@@ -152,18 +162,17 @@
 .section-dim__arrow {
   fill: var(--theme-text-muted);
 }
-.section-dim__text {
-  fill: var(--theme-text-muted);
-  font-size: var(--type-micro);
+.section-depth {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 .section-label {
-  fill: var(--theme-text-muted);
-  font-size: var(--type-micro);
-  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  font-size: var(--type-label);
+  letter-spacing: 0.06em;
 }
 .section-approx {
-  fill: var(--theme-warning);
-  font-size: var(--type-micro);
+  color: var(--state-warning-ink);
 }
 .section-break {
   fill: none;

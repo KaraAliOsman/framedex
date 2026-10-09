@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { DeniedState, ErrorState, LoadingState } from "../../ui";
 import { AI_PHASES } from "./providerLabels";
@@ -225,12 +226,13 @@ function JobRail({
                 <span className="aiws-job__body">
                   <span className="aiws-job__goal">{job.goal}</span>
                   <span className="aiws-job__meta">
-                    <span
+                    <StatusBadge
+                      showIcon={false}
                       className="aiws-state"
                       data-state={job.state.toLowerCase().replace(/_/g, "-")}
                     >
                       {stateLabel(job.state)}
-                    </span>
+                    </StatusBadge>
                     {" · "}
                     {SURFACE_LABELS[job.surface] ?? "Contexto de organización"}
                     {relativeTime(job.updated_at) ? ` · ${relativeTime(job.updated_at)}` : ""}
@@ -928,12 +930,13 @@ export function AssistantWorkspacePage(): JSX.Element {
             <div>
               <h1>{job.goal}</h1>
               <p className="aiws-head__meta">
-                <span
+                <StatusBadge
+                  showIcon={false}
                   className="aiws-state"
                   data-state={job.state.toLowerCase().replace(/_/g, "-")}
                 >
                   {stateLabel(job.state)}
-                </span>
+                </StatusBadge>
                 {" · "}
                 {SURFACE_LABELS[job.surface] ?? "Contexto de organización"}
                 {(job.state === "FAILED" || job.state === "FAILED_RETRYABLE") && job.error_code

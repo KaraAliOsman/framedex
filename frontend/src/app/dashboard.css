@@ -184,16 +184,6 @@
 .dashboard-row-name {
   font-weight: 600;
 }
-.status-chip,
-.production-chip,
-.production-chip-danger {
-  border-radius: var(--r-2);
-  display: inline-block;
-  font-size: var(--type-micro);
-  font-weight: 600;
-  line-height: 1.5;
-  padding: var(--space-2px) var(--space-2);
-}
 @media (max-width: 760px) {
   .today-action {
     grid-template-columns: minmax(0, 1fr);

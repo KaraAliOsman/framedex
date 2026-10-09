@@ -1,3 +1,4 @@
+import { StatusBadge } from "../ui/StatusBadge";
 import { ValidatedForm } from "../ui/FormValidation";
 import {
   useCallback,
@@ -154,11 +155,12 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
       <h3 className="eyebrow">{t("settings.flow")}</h3>
       <p className="settings-hint">{t("settings.flowHint")}</p>
       <p>
-        <span
+        <StatusBadge
+          showIcon={false}
           className={`production-chip ${status?.configured ? "delivery-delivered" : "delivery-scheduled"}`}
         >
           {status?.configured ? t("settings.flowConfigured") : t("settings.flowNotConfigured")}
-        </span>
+        </StatusBadge>
         {status?.api_key_preview && (
           <span className="settings-mono"> · {status.api_key_preview}</span>
         )}

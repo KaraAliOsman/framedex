@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { t } from "../../i18n/es-CL";
 import { Link } from "react-router-dom";
 import type { ProductIssue } from "../../api/generated/models";
@@ -40,10 +41,10 @@ function StatePill({ state }: { state: string }): JSX.Element {
   const tone =
     state === "ready" ? "ok" : state === "missing" || state === "blocked" ? "bad" : "warn";
   return (
-    <span className="art-pill" data-tone={tone}>
+    <StatusBadge showIcon={false} className="art-pill" data-tone={tone}>
       {{ ready: "Listo", missing: "Falta información", blocked: "Bloqueado" }[state] ??
         domainLabel(state)}
-    </span>
+    </StatusBadge>
   );
 }
 

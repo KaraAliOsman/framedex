@@ -114,6 +114,10 @@
   color: var(--state-info-ink);
   background: var(--state-info-soft);
 }
+.ui-badge--person {
+  color: var(--state-person-ink);
+  background: var(--state-person-soft);
+}
 .ui-evidence {
   display: inline-flex;
   padding: var(--space-2px) var(--space-4px);

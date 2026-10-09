@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
@@ -114,14 +115,19 @@ export function AiWorkList({
         <article key={work.id} className="ai-work">
           <header>
             <strong>{AI_CAPABILITIES[work.capability] ?? "Consultar al proveedor"}</strong>
-            <span
+            <StatusBadge
+              showIcon={false}
               className="status-chip"
               data-status={(work.job_state ?? work.status).toLowerCase()}
             >
               {(work.job_state ? STATES[work.job_state] : PROVIDER_STATES[work.status]) ??
                 "Sin dato"}
-            </span>
-            {work.test_mode && <span className="status-chip">Modo de prueba</span>}
+            </StatusBadge>
+            {work.test_mode && (
+              <StatusBadge showIcon={false} className="status-chip">
+                Modo de prueba
+              </StatusBadge>
+            )}
             <time className="ai-number" dateTime={work.created_at}>
               {formatDateTime(work.created_at)}
             </time>

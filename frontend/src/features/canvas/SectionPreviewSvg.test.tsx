@@ -28,7 +28,9 @@ describe("SectionPreviewSvg", () => {
     expect(container.querySelector(".section-preview__shape--approx")).toBeNull();
     expect(container.querySelector("figure")?.getAttribute("data-provenance")).toBe("POLYGON");
     expect(screen.getByText(t("assembly.sectionDeclared"))).toBeTruthy();
-    expect(screen.getByText("GLAZING")).toBeTruthy();
+    expect(screen.getByText("Vidrio")).toBeTruthy();
+    expect(screen.getByText("24 mm")).toBeTruthy();
+    expect(container.querySelector("svg text")).toBeNull();
     expect(screen.getByText("60 × 60 mm")).toBeTruthy();
   });
 

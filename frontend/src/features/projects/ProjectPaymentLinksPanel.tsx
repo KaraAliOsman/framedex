@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -15,6 +16,7 @@ import type {
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { formatMoney } from "../money";
+import { formatDate } from "../../format";
 import { compareDecimal, parseDecimalInput } from "../../decimal";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
@@ -33,10 +35,6 @@ const LINK_STATUS_LABEL: Record<PaymentLinkStatusEnum, TranslationKey> = {
 
 function formatClp(value: string): string {
   return formatMoney(value, "CLP");
-}
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(value));
 }
 
 export function ProjectPaymentLinksPanel({
@@ -282,9 +280,12 @@ export function ProjectPaymentLinksPanel({
                 <td className="num">{formatClp(link.amount)}</td>
                 <td>{link.payer_email}</td>
                 <td>
-                  <span className={`production-chip link-${link.status.toLowerCase()}`}>
+                  <StatusBadge
+                    showIcon={false}
+                    className={`production-chip link-${link.status.toLowerCase()}`}
+                  >
                     {t(LINK_STATUS_LABEL[link.status])}
-                  </span>
+                  </StatusBadge>
                 </td>
                 <td>
                   {link.url ? (

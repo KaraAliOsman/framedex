@@ -1,0 +1,4138 @@
+[
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "produccion__WORKSHOP_MANAGER__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "produccion__WORKSHOP_MANAGER__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inicio"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Clientes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Proyectos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Catálogo técnico"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Compras"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inventario"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Asistente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Trabajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Ajustes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-collapse Contraer navegación"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.org-switcher__current "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search Buscar o ejecutar un comando"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Atención pendiente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Ayuda de atajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "produccion__WORKSHOP_MANAGER__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inicio"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Clientes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Proyectos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Catálogo técnico"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Compras"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inventario"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Asistente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Trabajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Ajustes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.org-switcher__current "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search Buscar o ejecutar un comando"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Atención pendiente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Ayuda de atajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "produccion__WORKSHOP_MANAGER__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inicio"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Clientes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Proyectos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Catálogo técnico"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Compras"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inventario"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Asistente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Trabajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Ajustes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-collapse Contraer navegación"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.org-switcher__current "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search Buscar o ejecutar un comando"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Atención pendiente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Ayuda de atajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "produccion__WORKSHOP_MANAGER__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "produccion__WORKSHOP_MANAGER__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inicio"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Clientes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Proyectos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Catálogo técnico"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Compras"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inventario"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Asistente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Trabajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Ajustes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.org-switcher__current "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search Buscar o ejecutar un comando"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Atención pendiente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Ayuda de atajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "produccion__WORKSHOP_MANAGER__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inicio"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Clientes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Proyectos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Catálogo técnico"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Compras"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inventario"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Asistente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Trabajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Ajustes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-collapse Contraer navegación"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.org-switcher__current "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search Buscar o ejecutar un comando"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Atención pendiente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Ayuda de atajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "produccion__WORKSHOP_MANAGER__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inicio"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Clientes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Proyectos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Catálogo técnico"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Compras"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Inventario"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item active Producción"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Asistente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Trabajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "a.rail-item Ajustes"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-collapse Contraer navegación"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cambiar tema"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.rail-icon-button Cerrar sesión"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.org-switcher__current "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-search Buscar o ejecutar un comando"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Atención pendiente"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-button--icon Ayuda de atajos"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "button.topbar-button topbar-ai IA"
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      },
+      {
+        "kind": "touch-target-under-44",
+        "sample": "input. "
+      }
+    ]
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "OPERATOR",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "produccion__OPERATOR__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "OPERATOR",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "produccion__OPERATOR__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "OPERATOR",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "produccion__OPERATOR__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "OPERATOR",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "produccion__OPERATOR__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "OPERATOR",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "produccion__OPERATOR__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "OPERATOR",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "produccion__OPERATOR__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "OPERATOR",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "produccion__OPERATOR__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "OPERATOR",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "produccion__OPERATOR__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "INSTALLER",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "produccion__INSTALLER__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "INSTALLER",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "produccion__INSTALLER__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "INSTALLER",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "produccion__INSTALLER__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "INSTALLER",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "produccion__INSTALLER__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "INSTALLER",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "produccion__INSTALLER__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "INSTALLER",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "produccion__INSTALLER__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "INSTALLER",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "produccion__INSTALLER__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "produccion",
+    "path": "/production",
+    "reachedPath": "/production",
+    "role": "INSTALLER",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "produccion__INSTALLER__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": []
+  }
+]

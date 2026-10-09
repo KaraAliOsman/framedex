@@ -1,0 +1,20 @@
+[
+  {
+    "flow": "Dueño: Hoy → Precios → revisar solicitud de margen bajo → aprobar por clic → Asistente",
+    "result": "PASA",
+    "projectCode": "P-000543"
+  },
+  {
+    "flow": "Jefe: Hoy → tablero → QC bloqueado con causa → remake existente → plan de corte del motor",
+    "result": "PASA",
+    "original": "OT-P-000538-REV-A-01",
+    "remake": "OT-P-000538-REV-A-01-RM-02",
+    "cuts": 12
+  },
+  {
+    "flow": "Operario 390 oscuro: estación Corte → QR real → pieza → iniciar → bloqueo explícito → supervisor desbloquea",
+    "result": "PASA",
+    "orderCode": "OT-P-000538-REV-A-01-RM-02",
+    "pieceCode": "P01-U01-M01-R"
+  }
+]

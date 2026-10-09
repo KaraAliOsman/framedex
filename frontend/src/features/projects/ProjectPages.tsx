@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
@@ -715,9 +716,13 @@ function ProjectHeader({
           <h1>{project.name || project.code}</h1>
           <p className="project-head__meta">
             {project.name ? <span className="project-head__code">{project.code}</span> : null}
-            <span className="status-chip" data-status={project.status.toLowerCase()}>
+            <StatusBadge
+              showIcon={false}
+              className="status-chip"
+              data-status={project.status.toLowerCase()}
+            >
               {t(statuses[project.status])}
-            </span>
+            </StatusBadge>
             {project.client_name && (
               <>
                 {" · "}
@@ -827,7 +832,11 @@ function ComparePosition({
           </ul>
         )}
       </span>
-      <span className="status-chip compare-chip" data-status={entry.change.toLowerCase()}>
+      <StatusBadge
+        showIcon={false}
+        className="status-chip compare-chip"
+        data-status={entry.change.toLowerCase()}
+      >
         {t(
           entry.change === "ADDED"
             ? "projects.compareChangeAdded"
@@ -835,7 +844,7 @@ function ComparePosition({
               ? "projects.compareChangeRemoved"
               : "projects.compareChangeChanged",
         )}
-      </span>
+      </StatusBadge>
     </li>
   );
 }
@@ -1933,9 +1942,9 @@ function ProjectWorkspace({
                         `×${position.quantity}`
                       )}
                     </span>
-                    <span className="status-chip" data-status={status.tone}>
+                    <StatusBadge showIcon={false} className="status-chip" data-status={status.tone}>
                       {t(status.key)}
-                    </span>
+                    </StatusBadge>
                   </div>
                 );
               })}
@@ -2128,9 +2137,13 @@ function ProjectWorkspace({
                     </td>
                     <td>{item.client_name}</td>
                     <td>
-                      <span className="status-chip" data-status={item.status.toLowerCase()}>
+                      <StatusBadge
+                        showIcon={false}
+                        className="status-chip"
+                        data-status={item.status.toLowerCase()}
+                      >
                         {t(statuses[item.status])}
-                      </span>
+                      </StatusBadge>
                     </td>
                     <td>
                       {item.current_revision ? (

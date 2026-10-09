@@ -482,7 +482,7 @@
 }
 
 .pricing-extras legend {
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
   font-weight: 600;
   letter-spacing: 0.04em;
   padding: 0 0.25rem;
@@ -503,35 +503,15 @@
   }
 }
 
-.status-chip[data-status="pending"] {
-  background: var(--theme-warning-soft, rgba(217, 119, 6, 0.12));
-  color: var(--theme-warning);
-}
-
-.status-chip[data-status="applied"] {
-  background: var(--theme-accent-soft, rgba(37, 99, 235, 0.12));
-  color: var(--theme-accent);
-}
-
-.status-chip[data-status="rejected"] {
-  background: var(--theme-danger-soft);
-  color: var(--theme-danger);
-}
-
-.status-chip[data-status="withdrawn"] {
-  background: var(--theme-surface-alt, rgba(100, 116, 139, 0.12));
-  color: var(--theme-text-secondary);
-}
-
 .field-hint {
   color: var(--theme-text-secondary);
-  font-size: 0.72rem;
+  font-size: var(--type-dense);
   margin: 0.15rem 0 0;
 }
 
 .coverage-summary {
   color: var(--theme-text-secondary);
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
   margin: 0;
 }
 
@@ -560,7 +540,7 @@
 .coverage-card__meta,
 .coverage-card > span {
   color: var(--theme-text-secondary);
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
 }
 
 .coverage-card .status-chip {
@@ -584,17 +564,17 @@
 
 .audit-card__project {
   color: var(--theme-text-secondary);
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
   margin-left: auto;
 }
 
 .audit-card__title {
-  font-size: 0.875rem;
+  font-size: var(--type-title-m);
   margin: 0;
 }
 
 .audit-card__diffs {
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
   margin: 0;
   padding-left: 1rem;
 }
@@ -611,7 +591,7 @@
   color: var(--theme-text-secondary);
   display: flex;
   flex-wrap: wrap;
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
   gap: 0.75rem;
 }
 

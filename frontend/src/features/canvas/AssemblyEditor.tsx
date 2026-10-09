@@ -47,13 +47,7 @@ import { HardwarePanel } from "./HardwarePanel";
 import type { HardwareResolution } from "./hardwareContracts";
 import { SectionView } from "./SectionView";
 import { SectionPreviewSvg } from "./SectionPreviewSvg";
-import {
-  frontBounds,
-  frontLayout,
-  frontModuleBox,
-  OpeningGlyph,
-  ProductFrontContent,
-} from "./ProductFrontSvg";
+import { frontBounds, frontLayout, frontModuleBox, ProductFrontContent } from "./ProductFrontSvg";
 
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
 import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
@@ -86,7 +80,7 @@ import {
   type ProductModuleJson,
 } from "./productEditing";
 import { OPENING_OPTIONS } from "./openings";
-import { OpeningPalette } from "./OpeningPalette";
+import { LegacyOpeningPalette, OpeningPalette } from "./OpeningPalette";
 import {
   openingChoices,
   physicalNodeLabel,
@@ -1142,33 +1136,15 @@ function BayInspector({
             }
           />
         ) : (
-          <>
-            {" "}
-            <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
-              {OPENING_OPTIONS.filter(
-                ([value]) => !options?.system_family || options.compatible_openings.includes(value),
-              ).map(([value, labelKey]) => {
-                const doorBlocked = value === "DOOR_ENTRY" && !isTopBay;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    className={`opening-choice${opening === value ? " is-active" : ""}`}
-                    title={doorBlocked ? t("assembly.doorTopOnly") : t(labelKey)}
-                    aria-label={t(labelKey)}
-                    aria-pressed={opening === value}
-                    disabled={busy || doorBlocked}
-                    onClick={() => pickOpening(value)}
-                  >
-                    <svg viewBox="0 0 100 100" aria-hidden="true">
-                      <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
-                      <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
-                    </svg>
-                  </button>
-                );
-              })}
-            </div>
-          </>
+          <LegacyOpeningPalette
+            options={options}
+            opening={opening}
+            disabled={busy}
+            unavailable={(value) =>
+              value === "DOOR_ENTRY" && !isTopBay ? t("assembly.doorTopOnly") : undefined
+            }
+            onPick={pickOpening}
+          />
         )}
         {isDoor && !bay.opening && (
           <label className="assembly-field">
@@ -1772,30 +1748,12 @@ function ModuleInspector({
             }
           />
         ) : (
-          <>
-            {" "}
-            <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
-              {OPENING_OPTIONS.filter(
-                ([value]) => !options?.system_family || options.compatible_openings.includes(value),
-              ).map(([value, labelKey]) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`opening-choice${opening === value ? " is-active" : ""}`}
-                  title={t(labelKey)}
-                  aria-label={t(labelKey)}
-                  aria-pressed={opening === value}
-                  disabled={busy}
-                  onClick={() => commit([{ op: "set_opening", module: module.id, opening: value }])}
-                >
-                  <svg viewBox="0 0 100 100" aria-hidden="true">
-                    <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
-                    <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
-                  </svg>
-                </button>
-              ))}
-            </div>
-          </>
+          <LegacyOpeningPalette
+            options={options}
+            opening={opening}
+            disabled={busy}
+            onPick={(value) => commit([{ op: "set_opening", module: module.id, opening: value }])}
+          />
         )}
       </details>
       {slidingLayout && slidingBay && (

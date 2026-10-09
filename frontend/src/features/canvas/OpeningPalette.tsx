@@ -7,6 +7,51 @@ import { physicalNodeLabel } from "./physicalOpenings";
 import { OPENING_OPTIONS } from "./openings";
 import { t } from "../../i18n/es-CL";
 import { dismissFloatingLayers } from "../../ui/floatingLayer";
+import type { Opening } from "./intentEditing";
+import { OpeningGlyph } from "./ProductFrontSvg";
+
+/** Historical designs use the same palette in the bay and module inspectors. */
+export function LegacyOpeningPalette({
+  options,
+  opening,
+  disabled,
+  onPick,
+  unavailable,
+}: {
+  options?: DesignOptions;
+  opening: Opening;
+  disabled: boolean;
+  onPick(opening: Opening): void;
+  unavailable?: (opening: Opening) => string | undefined;
+}): JSX.Element {
+  return (
+    <div className="opening-palette" role="group" aria-label={t("assembly.opening")}>
+      {OPENING_OPTIONS.filter(
+        ([value]) => !options?.system_family || options.compatible_openings.includes(value),
+      ).map(([value, labelKey]) => {
+        const reason = unavailable?.(value);
+        return (
+          <button
+            key={value}
+            type="button"
+            className={`opening-choice opening-choice--named${opening === value ? " is-active" : ""}`}
+            title={reason ?? t(labelKey)}
+            aria-label={t(labelKey)}
+            aria-pressed={opening === value}
+            disabled={disabled || !!reason}
+            onClick={() => onPick(value)}
+          >
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
+              <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
+            </svg>
+            <span>{t(labelKey)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export function OpeningPalette({
   options,

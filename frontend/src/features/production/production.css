@@ -47,7 +47,7 @@
   font-weight: 600;
 }
 .production-order-progress {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 .production-detail-head {
@@ -73,13 +73,13 @@
   gap: 0.15rem;
 }
 .production-materials dt {
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 .production-materials dd {
   margin: 0;
   font-family: var(--theme-font-mono);
-  font-size: 1.1rem;
+  font-size: var(--type-title-l);
 }
 .production-step-actions {
   flex-wrap: wrap;
@@ -106,7 +106,7 @@
   align-items: center;
   color: var(--theme-text-secondary);
   display: inline-flex;
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
   font-style: italic;
   padding: 0.4rem 0.2rem;
 }
@@ -131,19 +131,19 @@
   border-radius: var(--r-2);
   background: var(--theme-surface-panel);
   color: var(--theme-text-primary);
-  font-family: var(--theme-font-mono, monospace);
-  font-size: 0.8rem;
+  font-family: var(--theme-font-mono);
+  font-size: var(--type-body);
   cursor: pointer;
 }
 .production-cnc button:hover:not(:disabled) {
-  border-color: var(--theme-accent, #0f817a);
+  border-color: var(--theme-accent);
 }
 .production-cnc button:disabled {
   cursor: wait;
   opacity: 0.6;
 }
 .production-cnc .production-cutpack {
-  border-color: var(--theme-accent, #0f817a);
+  border-color: var(--theme-accent);
   background: var(--theme-accent-soft);
   font-weight: 600;
 }
@@ -191,12 +191,12 @@
 }
 .production-optimize-head h3 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--type-workshop);
 }
 .production-optimize-head time {
   color: var(--theme-text-secondary);
   font-family: var(--theme-font-mono);
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
 }
 .production-optimize-controls {
   display: flex;
@@ -222,7 +222,7 @@
 }
 .production-optimize-empty {
   color: var(--theme-text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   margin: 0.5rem 0 0;
 }
 .production-invalidated {
@@ -230,7 +230,7 @@
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--theme-danger);
   border-radius: var(--r-2);
-  background: var(--theme-danger-soft, #fbe9e7);
+  background: var(--theme-danger-soft);
   color: var(--theme-danger);
   font-weight: 600;
 }
@@ -242,10 +242,10 @@
   list-style: none;
   margin: 0 0 var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-left: 3px solid var(--theme-warning, #b7791f);
-  background: var(--theme-warning-soft, #fdf3e0);
+  border-left: 3px solid var(--theme-warning);
+  background: var(--theme-warning-soft);
   color: var(--theme-text);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .production-blockers li + li {
   margin-top: var(--space-1);
@@ -254,13 +254,13 @@
   display: block;
   color: var(--theme-text-secondary);
   font-style: normal;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   margin-top: 0.125rem;
 }
 .production-remake-provenance {
   margin: 0 0 var(--space-3);
   color: var(--theme-text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .production-remake-provenance strong {
   color: var(--theme-text-primary);
@@ -268,7 +268,7 @@
 .production-plan {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   margin-top: 0.6rem;
 }
 .production-plan th {
@@ -288,33 +288,33 @@
   color: var(--theme-text-secondary);
 }
 .production-optimize-purchases {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
   margin: 0.6rem 0 0;
 }
 .production-optimize-unnested {
-  font-size: 0.85rem;
-  color: var(--theme-warning, #b45309);
+  font-size: var(--type-body);
+  color: var(--theme-warning);
   margin: 0.6rem 0 0;
 }
 .production-dispatch {
-  border: 1px solid var(--accent, #0f817a);
-  background: var(--accent, #0f817a);
+  border: 1px solid var(--accent);
+  background: var(--accent);
   color: var(--theme-surface-panel);
 }
 .production-dispatch.production-void {
   background: transparent;
-  color: var(--theme-danger, #b3261e);
-  border-color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
+  border-color: var(--theme-danger);
 }
 .production-dispatch.is-voided {
   background: transparent;
-  color: var(--theme-text-muted, #7d8794);
-  border-color: var(--theme-border-subtle, #c8ced6);
+  color: var(--theme-text-muted);
+  border-color: var(--theme-border-subtle);
   text-decoration: line-through;
 }
 .production-packing {
-  margin-block: var(--space-4, 16px);
+  margin-block: var(--space-4);
   scroll-margin-block-start: var(--space-64px);
 
   overflow-x: auto;
@@ -340,7 +340,7 @@
 .production-label {
   display: grid;
   gap: 6px;
-  border: 1px solid var(--line-strong, #2e3338);
+  border: 1px solid var(--border-strong);
   padding: 12px;
   text-align: center;
 }
@@ -356,8 +356,8 @@
   font-weight: 600;
 }
 .production-label-parts {
-  font-size: var(--text-s, 12px);
-  color: var(--ink-muted, #6b7280);
+  font-size: var(--text-s);
+  color: var(--ink-muted);
 }
 @media print {
   .app-shell > :not(.app-body),
@@ -414,7 +414,7 @@
 }
 .production-delivery-facts dt {
   color: var(--ink-muted);
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
 }
 .production-delivery-facts dd {
   margin: 0;
@@ -428,7 +428,7 @@
 .production-delivery-form label {
   display: grid;
   gap: 4px;
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
   color: var(--ink-muted);
 }
 .production-delivery-wide {
@@ -452,31 +452,31 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-2);
-  background: var(--paper-2, #faf9f7);
+  background: var(--paper-2);
 }
 .production-delivery-trip-date {
   font-weight: 600;
 }
 .production-delivery-trip-units {
   color: var(--ink-muted);
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
 }
 .production-delivery-pending {
   margin: 8px 0 0;
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
   color: var(--ink-muted);
 }
 .production-delivery-units {
   grid-column: 1 / -1;
   margin: 10px 0 0;
   padding: 8px 10px;
-  border: 1px dashed var(--line);
+  border: 1px dashed var(--border-default);
   border-radius: var(--r-2);
 }
 .production-delivery-units legend {
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
   color: var(--ink-muted);
   padding: 0 4px;
 }
@@ -487,7 +487,7 @@
 }
 .production-delivery-units-hint {
   margin: 6px 0 0;
-  font-size: var(--text-xs, 11px);
+  font-size: var(--text-xs);
   color: var(--ink-muted);
 }
 .signature-pad {
@@ -500,10 +500,10 @@
   width: 100%;
   max-width: 480px;
   height: 160px;
-  border: 1px solid var(--line, #d8dde2);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-2);
 
-  background: #fff;
+  background: var(--paper);
   touch-action: none;
   cursor: crosshair;
 }
@@ -512,8 +512,8 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: var(--text-s, 12px);
-  color: var(--ink-faint, #98a2ab);
+  font-size: var(--text-s);
+  color: var(--ink-faint);
   pointer-events: none;
 }
 .production-confirm-collect {
@@ -541,23 +541,25 @@
 }
 .cutplan-bar-row figcaption,
 .cutplan-sheet-card figcaption {
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
   font-family: "IBM Plex Mono", monospace;
 }
 .cutplan-bar {
   display: block;
   width: 100%;
-  height: auto;
+  height: 96px;
 }
 .cutplan-piece-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: var(--space-1) var(--space-2);
   list-style: none;
   margin: 4px 0 0;
   padding: 0;
-  font-size: 0.75rem;
+  font-size: var(--type-dim);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 .cutplan-piece-legend button {
   background: none;
@@ -595,6 +597,9 @@
 .cutplan-cut rect,
 .cutplan-nest rect {
   stroke-width: 1;
+}
+.cutplan-cut[role="button"] rect,
+.cutplan-nest[role="button"] rect {
   cursor: pointer;
 }
 .cutplan-piece-pvc rect {
@@ -624,15 +629,15 @@
   stroke-width: 2.2;
 }
 .cutplan-cut-id {
-  font-size: 15px;
+  font-size: var(--type-dim);
   font-weight: 600;
-  fill: var(--theme-text-primary);
+  fill: var(--g-950);
   font-family: "IBM Plex Mono", monospace;
 }
 .cutplan-cut-len {
-  font-size: 13px;
+  font-size: var(--type-dim);
   font-weight: 600;
-  fill: var(--theme-text-secondary);
+  fill: var(--g-700);
   font-family: "IBM Plex Mono", monospace;
 }
 .cutplan-miter-notch {
@@ -640,8 +645,8 @@
   opacity: 0.85;
 }
 .cutplan-nest text {
-  font-size: var(--type-micro);
-  fill: var(--theme-text-primary);
+  font-size: var(--type-dim);
+  fill: var(--g-950);
   font-family: "IBM Plex Mono", monospace;
   pointer-events: none;
 }
@@ -670,7 +675,7 @@
   margin: 0;
   display: grid;
   gap: 6px;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
 }
 .cutplan-detail dt {
   color: var(--theme-text-secondary);
@@ -685,7 +690,7 @@
 }
 .cutplan-detail-empty {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 @media (max-width: 860px) {
@@ -706,9 +711,9 @@ div:has(> table.production-plan) {
   border-top: 2px solid var(--theme-border-subtle);
 }
 .production-remnant-tag {
-  color: var(--theme-accent-ink, #1d4e33);
-  background: var(--theme-accent-soft, #e4f0e8);
-  border: 1px solid var(--theme-accent, #2f6f4f);
+  color: var(--theme-accent-ink);
+  background: var(--theme-accent-soft);
+  border: 1px solid var(--theme-accent);
   font-size: var(--type-label);
   font-weight: 600;
   border-radius: var(--r-2);
@@ -720,7 +725,7 @@ div:has(> table.production-plan) {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
   margin: 0.4rem 0 0;
 }
@@ -738,54 +743,54 @@ div:has(> table.production-plan) {
   overflow-x: auto;
 }
 .production-stock-short {
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
 }
 .production-stock-unmapped {
-  color: var(--theme-warning, #b45309);
+  color: var(--theme-warning);
   font-size: 0.9em;
 }
 .production-trace {
   margin-top: 1.25rem;
-  border-top: 1px solid var(--line, #d9dce2);
+  border-top: 1px solid var(--border-default);
   padding-top: 1rem;
 }
 .production-trace-chain {
   margin: 0 0 0.75rem;
   font-variant-numeric: tabular-nums;
-  color: var(--text-dim, #5a6270);
+  color: var(--text-dim);
 }
 .production-trace-plan table,
 .production-trace-stock table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 0.75rem;
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
 }
 .production-trace-plan th,
 .production-trace-stock th {
   text-align: left;
   font-weight: 600;
   padding: 0.25rem 0.5rem;
-  border-bottom: 1px solid var(--line, #d9dce2);
+  border-bottom: 1px solid var(--border-default);
 }
 .production-trace-plan td,
 .production-trace-stock td {
   padding: 0.25rem 0.5rem;
-  border-bottom: 1px solid var(--line-soft, #eceef2);
+  border-bottom: 1px solid var(--line-soft);
   font-variant-numeric: tabular-nums;
 }
 .production-trace-remnants,
 .production-trace-matches {
   margin: 0.5rem 0 0;
   padding-left: 1.25rem;
-  font-size: 0.8125rem;
-  color: var(--text-dim, #5a6270);
+  font-size: var(--type-body);
+  color: var(--text-dim);
 }
 @media (max-width: 480px) {
 }
 .production-trace-empty {
-  font-size: 0.8125rem;
-  color: var(--text-dim, #5a6270);
+  font-size: var(--type-body);
+  color: var(--text-dim);
 }
 .production-trace-match {
   background: none;
@@ -799,16 +804,16 @@ div:has(> table.production-plan) {
 }
 .production-trace-match:hover,
 .production-trace-match:focus-visible {
-  color: var(--ink, #1c2027);
+  color: var(--ink);
   outline: none;
   text-decoration: underline;
 }
 .operator-card {
   margin-top: 1rem;
-  border: 1px solid var(--line, #d9dce2);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-2);
   padding: 1rem;
-  background: var(--surface-raised, #fbfcfe);
+  background: var(--surface-panel);
 }
 .operator-card-head {
   display: flex;
@@ -830,9 +835,9 @@ div:has(> table.production-plan) {
   bottom: 0;
   margin: 0.75rem -1rem -1rem;
   padding: 0.6rem 1rem;
-  border-top: 1px solid var(--line, #d9dce2);
+  border-top: 1px solid var(--border-default);
   border-radius: var(--r-2);
-  background: var(--surface-raised, #fbfcfe);
+  background: var(--surface-panel);
   display: flex;
   justify-content: flex-end;
   z-index: var(--z-sticky);
@@ -844,57 +849,57 @@ div:has(> table.production-plan) {
   min-height: 44px;
   min-width: 110px;
   padding: 0.55rem 1rem;
-  font-size: 0.95rem;
+  font-size: var(--type-workshop);
   font-weight: 600;
 }
 .operator-section h4 {
   margin: 0 0 0.375rem;
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-dim, #5a6270);
+  color: var(--text-dim);
 }
 .operator-blockers {
   margin: 0;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--warning, #b45309);
+  border: 1px solid var(--warning);
   border-left-width: 4px;
   border-radius: var(--r-2);
-  background: var(--warning-soft, #fff7ed);
-  color: var(--warning, #b45309);
+  background: var(--warning-soft);
+  color: var(--warning);
   font-weight: 600;
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
 }
 .operator-remnants {
   margin: 0.5rem 0 0;
   padding-left: 1.25rem;
-  font-size: 0.8125rem;
-  color: var(--text-dim, #5a6270);
+  font-size: var(--type-body);
+  color: var(--text-dim);
 }
 .operator-row-short td {
-  background: var(--warning-soft, #fff7ed);
+  background: var(--warning-soft);
 }
 .operator-ops,
 .operator-pieces {
   margin-bottom: 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
 }
 .operator-summary {
   margin: 0;
-  font-size: 0.8125rem;
-  color: var(--text-dim, #5a6270);
+  font-size: var(--type-body);
+  color: var(--text-dim);
 }
 .production-prep {
   margin-bottom: 0.75rem;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--theme-border-subtle);
   border-radius: var(--r-2);
-  background: var(--theme-surface-raised, transparent);
+  background: var(--surface-card, transparent);
 }
 .production-prep h3 {
   margin: 0 0 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: var(--type-body);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--theme-text-secondary);
@@ -912,7 +917,7 @@ div:has(> table.production-plan) {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .production-prep-release {
   padding: 0.15rem 0.6rem;
@@ -920,7 +925,7 @@ div:has(> table.production-plan) {
   border: 1px solid var(--theme-accent);
   background: transparent;
   color: var(--theme-accent);
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   font-weight: 600;
   cursor: pointer;
 }
@@ -929,13 +934,13 @@ div:has(> table.production-plan) {
   cursor: default;
 }
 .operator-qc-ledger td strong {
-  font-size: 0.78rem;
+  font-size: var(--type-body);
 }
 .qc-result-pass {
-  color: var(--theme-success, #1a7f4b);
+  color: var(--theme-success);
 }
 .qc-result-fail {
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
 }
 .operator-qc-form {
   display: grid;
@@ -948,25 +953,25 @@ div:has(> table.production-plan) {
 .operator-qc-form input {
   min-height: 44px;
   padding: 0.45rem 0.6rem;
-  font-size: 0.9rem;
+  font-size: var(--type-workshop);
 }
 .operator-qc-form button {
   min-height: 44px;
   padding: 0.45rem 1rem;
   border-radius: var(--r-2);
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: var(--type-workshop);
+  font-weight: 600;
   cursor: pointer;
 }
 .qc-submit-pass {
-  border: 1px solid var(--theme-success, #1a7f4b);
-  background: var(--theme-success, #1a7f4b);
+  border: 1px solid var(--theme-success);
+  background: var(--theme-success);
   color: var(--theme-surface-panel);
 }
 .qc-submit-fail {
-  border: 1px solid var(--theme-danger, #b3261e);
+  border: 1px solid var(--theme-danger);
   background: transparent;
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
 }
 .operator-qc-form button:disabled {
   opacity: 0.45;
@@ -987,16 +992,16 @@ div:has(> table.production-plan) {
   flex-wrap: wrap;
   gap: 0.35rem;
   margin: 0.5rem 0;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 .production-optimize-stats strong {
   color: var(--theme-text);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .production-optimize-inputs {
   margin: 0.4rem 0;
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   line-height: 1.45;
   color: var(--theme-text-secondary);
   max-width: 70ch;
@@ -1005,11 +1010,11 @@ div:has(> table.production-plan) {
   margin-top: 0.4rem;
 }
 .production-compare-table .production-compare-best {
-  background: color-mix(in srgb, var(--theme-success, #1a7f4b) 10%, transparent);
+  background: color-mix(in srgb, var(--theme-success) 10%, transparent);
 }
 .production-compare-note {
   margin: 0.3rem 0 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
   color: var(--theme-text-secondary);
 }
 .production-making {
@@ -1017,26 +1022,26 @@ div:has(> table.production-plan) {
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
   align-items: baseline;
-  font-size: 0.95rem;
+  font-size: var(--type-workshop);
   margin: 0.25rem 0 0.5rem;
   color: var(--theme-text-secondary);
 }
 .production-making strong {
   color: var(--theme-text);
-  font-size: 1.05rem;
+  font-size: var(--type-workshop);
 }
 .production-making-location {
   color: var(--theme-accent);
 }
 .production-packing-missing {
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
   font-weight: 600;
 }
 .cnc-panel {
   margin-top: 0.6rem;
-  border: 1px solid var(--theme-border, #d8d4cd);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-2);
-  background: var(--theme-surface, #fff);
+  background: var(--surface-panel);
 }
 .cnc-panel-toggle {
   width: 100%;
@@ -1058,18 +1063,18 @@ div:has(> table.production-plan) {
 }
 .cnc-empty {
   color: var(--theme-text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   margin: 0.25rem 0;
 }
 .cnc-error {
-  color: var(--theme-danger, #b3261e);
-  font-size: 0.85rem;
+  color: var(--theme-danger);
+  font-size: var(--type-body);
   margin: 0.25rem 0;
 }
 .cnc-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   table-layout: auto;
   min-width: 0;
 }
@@ -1082,24 +1087,24 @@ div:has(> table.production-plan) {
   overflow-x: auto;
 }
 .cnc-member-meta {
-  font-size: 0.75rem;
-  color: var(--theme-text-muted, #6b675f);
+  font-size: var(--type-dense);
+  color: var(--theme-text-muted);
 }
 .cnc-hint {
-  font-size: 0.75rem;
-  color: var(--theme-text-muted, #6b675f);
+  font-size: var(--type-dense);
+  color: var(--theme-text-muted);
   margin: 0 0 0.35rem;
 }
 .cnc-required-tools {
-  font-size: 0.8rem;
-  color: var(--theme-text-muted, #6b675f);
+  font-size: var(--type-body);
+  color: var(--theme-text-muted);
   margin: 0.15rem 0 0.4rem;
 }
 .cnc-table th,
 .cnc-table td {
   text-align: left;
   padding: 0.3rem 0.4rem;
-  border-bottom: 1px solid var(--theme-border, #d8d4cd);
+  border-bottom: 1px solid var(--border-default);
   vertical-align: top;
 }
 .cnc-member-label {
@@ -1118,31 +1123,31 @@ div:has(> table.production-plan) {
   display: inline-block;
   padding: 0.1rem 0.45rem;
   border-radius: var(--r-2);
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
   font-weight: 600;
 }
 .cnc-verdict-pass {
-  background: color-mix(in srgb, var(--theme-success, #1a7f4b) 15%, transparent);
-  color: var(--theme-success, #1a7f4b);
+  background: color-mix(in srgb, var(--theme-success) 15%, transparent);
+  color: var(--theme-success);
 }
 .cnc-verdict-warn {
-  background: color-mix(in srgb, var(--theme-warning, #b26a00) 15%, transparent);
-  color: var(--theme-warning, #b26a00);
+  background: color-mix(in srgb, var(--theme-warning) 15%, transparent);
+  color: var(--theme-warning);
 }
 .cnc-verdict-block {
-  background: color-mix(in srgb, var(--theme-danger, #b3261e) 12%, transparent);
-  color: var(--theme-danger, #b3261e);
+  background: color-mix(in srgb, var(--theme-danger) 12%, transparent);
+  color: var(--theme-danger);
 }
 .cnc-verdict-unverified {
-  background: color-mix(in srgb, var(--theme-fg, #444) 10%, transparent);
-  color: var(--theme-fg, #444);
+  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  color: var(--text-primary);
 }
 .cnc-issues {
   margin: 0 0 0.75rem;
   padding: 0.55rem 0.9rem;
-  border-left: 3px solid var(--theme-warning, #b26a00);
-  background: color-mix(in srgb, var(--theme-warning, #b26a00) 8%, transparent);
-  font-size: 0.85rem;
+  border-left: 3px solid var(--theme-warning);
+  background: color-mix(in srgb, var(--theme-warning) 8%, transparent);
+  font-size: var(--type-body);
   line-height: 1.5;
   list-style: none;
 }
@@ -1151,20 +1156,20 @@ div:has(> table.production-plan) {
 }
 .cnc-generate {
   margin-right: 0.4rem;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
 }
 .cnc-member-ops td {
-  background: var(--theme-bg, #faf9f7);
+  background: var(--bg-app);
 }
 .cnc-ops {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
 }
 .cnc-ops th,
 .cnc-ops td {
   padding: 0.2rem 0.4rem;
-  border-bottom: 1px dashed var(--theme-border, #d8d4cd);
+  border-bottom: 1px dashed var(--border-default);
   text-align: left;
 }
 .cnc-programs {
@@ -1172,7 +1177,7 @@ div:has(> table.production-plan) {
 }
 .cnc-programs h4 {
   margin: 0 0 0.35rem;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 .cnc-programs ul {
@@ -1186,23 +1191,23 @@ div:has(> table.production-plan) {
   gap: 0.5rem 0.75rem;
   align-items: center;
   padding: 0.35rem 0;
-  border-bottom: 1px solid var(--theme-border, #d8d4cd);
-  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-default);
+  font-size: var(--type-body);
 }
 .cnc-program-stale {
   opacity: 0.65;
 }
 .cnc-program-no {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono);
   font-weight: 600;
 }
 .cnc-program-meta {
   color: var(--theme-text-secondary);
 }
 .cnc-stale {
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
   font-weight: 600;
-  font-size: 0.78rem;
+  font-size: var(--type-body);
 }
 .cnc-program-actions {
   margin-left: auto;
@@ -1210,14 +1215,14 @@ div:has(> table.production-plan) {
   gap: 0.4rem;
 }
 .cnc-program-file {
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   padding: 0.15rem 0.5rem;
 }
 .cnc-workspace {
   margin-top: 0.75rem;
-  border: 1px solid var(--theme-border, #d8d4cd);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-2);
-  background: var(--theme-surface, #fff);
+  background: var(--surface-panel);
 }
 .cnc-workspace-grid {
   display: grid;
@@ -1231,16 +1236,16 @@ div:has(> table.production-plan) {
 }
 .cnc-section-head h3 {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--type-workshop);
 }
 .cnc-add {
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   padding: 0.2rem 0.6rem;
 }
 .cnc-form {
   margin-top: 0.5rem;
   padding: 0.6rem;
-  border: 1px dashed var(--theme-border, #d8d4cd);
+  border: 1px dashed var(--border-default);
   border-radius: var(--r-2);
   display: grid;
   gap: 0.5rem;
@@ -1254,7 +1259,7 @@ div:has(> table.production-plan) {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 .cnc-form-group {
@@ -1263,7 +1268,7 @@ div:has(> table.production-plan) {
   margin: 0;
 }
 .cnc-form-group legend {
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
   padding: 0;
 }
@@ -1271,7 +1276,7 @@ div:has(> table.production-plan) {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem 0.9rem;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
 }
 .cnc-checks label {
   display: inline-flex;
@@ -1301,8 +1306,8 @@ div:has(> table.production-plan) {
   stroke-width: 1;
 }
 .cnc-diagram-bar {
-  fill: var(--theme-surface-alt, #f1efe9);
-  stroke: var(--theme-border, #d8d4cd);
+  fill: var(--surface-card);
+  stroke: var(--border-default);
   stroke-width: 1.5;
 }
 .cnc-diagram-op {
@@ -1365,7 +1370,7 @@ div:has(> table.production-plan) {
 .cnc-diagram-legend {
   display: flex;
   gap: 1rem;
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
   margin: 0.15rem 0 0;
 }
@@ -1393,7 +1398,7 @@ div:has(> table.production-plan) {
   display: block;
 }
 .operator-member-strip figcaption {
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--theme-text-secondary);
 }
@@ -1408,8 +1413,8 @@ div:has(> table.production-plan) {
   stroke-width: 1;
 }
 .operator-member-bar {
-  fill: var(--theme-surface-alt, #f1efe9);
-  stroke: var(--theme-border, #d8d4cd);
+  fill: var(--surface-card);
+  stroke: var(--border-default);
   stroke-width: 1.5;
 }
 .operator-member-op {

@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/apiMutator";
@@ -8,13 +9,11 @@ import {
   projectImportsCreate,
   projectImportsList,
 } from "../../api/generated/dekopen";
-import type {
-  ConfirmItemRequest,
-  DesignOptions,
-  ImportOpeningTypeEnum,
-  ImportResponse,
-} from "../../api/generated/models";
+import type { ConfirmItemRequest, DesignOptions, ImportResponse } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatDateTime } from "../../format";
+import { ImportOpeningTypeEnum } from "../../api/generated/models";
+import { OPENING_OPTIONS } from "../canvas/openings";
 
 type Candidate = {
   key: string;
@@ -37,17 +36,10 @@ const STATUS_LABEL: Record<string, TranslationKey> = {
   CONFIRMED: "projects.importsStatusConfirmed",
   FAILED: "projects.importsStatusFailed",
 };
-const OPENING_LABEL: Record<string, TranslationKey> = {
-  FIXED: "intent.fixed",
-  TURN_LEFT: "intent.turnLeft",
-  TURN_RIGHT: "intent.turnRight",
-  TILT_TURN_LEFT: "intent.tiltLeft",
-  TILT_TURN_RIGHT: "intent.tiltRight",
-  SLIDING_2L: "intent.sliding",
-  AWNING: "intent.awning",
-  DOOR_ENTRY: "intent.door",
-};
-const OPENING_CHOICES = Object.keys(OPENING_LABEL) as ImportOpeningTypeEnum[];
+const OPENING_LABEL = Object.fromEntries(OPENING_OPTIONS);
+const OPENING_CHOICES = OPENING_OPTIONS.map(([opening]) => opening).filter(
+  (opening): opening is ImportOpeningTypeEnum => opening in ImportOpeningTypeEnum,
+);
 const PENDING_STATUSES = new Set(["UPLOADED", "EXTRACTING"]);
 
 // Import warnings and per-item errors travel as codes — the UI owes the
@@ -70,13 +62,6 @@ const ITEM_ERROR_LABEL: Record<string, TranslationKey> = {
 function codeText(code: string): string {
   if (code.startsWith("import.vision_failed")) return t("projects.importsWarnVisionFailed");
   return t(WARNING_LABEL[code] ?? ITEM_ERROR_LABEL[code] ?? "projects.importsErrorUnknown");
-}
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("es-CL", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 }
 
 function asCandidate(raw: Record<string, unknown>): Candidate {
@@ -415,15 +400,18 @@ export function ProjectImportsPanel({
               <tr key={entry.id}>
                 <td title={entry.file_name}>{entry.file_name}</td>
                 <td>
-                  <span className={`production-chip imports-status-${entry.status.toLowerCase()}`}>
+                  <StatusBadge
+                    showIcon={false}
+                    className={`production-chip imports-status-${entry.status.toLowerCase()}`}
+                  >
                     {t(STATUS_LABEL[entry.status] ?? "projects.importsStatusUploaded")}
-                  </span>
+                  </StatusBadge>
                   {entry.status === "FAILED" && entry.error_code && (
                     <span className="imports-warning">{codeText(entry.error_code)}</span>
                   )}
                 </td>
                 <td>{entry.candidates.length}</td>
-                <td>{formatDate(entry.created_at)}</td>
+                <td>{formatDateTime(entry.created_at)}</td>
                 <td>
                   {entry.status === "REVIEW_READY" && canWrite && (
                     <button
@@ -592,13 +580,14 @@ export function ProjectImportsPanel({
                       </select>
                     </td>
                     <td title={row.source_text}>
-                      <span
+                      <StatusBadge
+                        showIcon={false}
                         className={`production-chip imports-confidence-${row.confidence.toLowerCase()}`}
                       >
                         {row.confidence === "HIGH"
                           ? t("projects.importsConfidenceHigh")
                           : t("projects.importsConfidenceReview")}
-                      </span>
+                      </StatusBadge>
                       {itemError && (
                         <span className="imports-warning">{codeText(itemError.code)}</span>
                       )}
