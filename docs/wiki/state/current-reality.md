@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 7d29a6aa6be776e2409ddc209991cd85680b3f27
+verified_ref: d5500d69bbc843162a9c189805a00d8904d11264
 sources:
+  - P17 PR #136, CI 37958419127 on 7982e4414bdf7c9ee2374846494e81c0f781d11e, squash d5500d69bbc843162a9c189805a00d8904d11264, 2026-10-09
   - P17 corrección de tipos de la regresión, 7d29a6aa6be776e2409ddc209991cd85680b3f27, 2026-10-09
   - P17 implementación c25409c2befe60d1be047ac1e4f8d37a334b20f4, verificación local del 2026-10-09
   - P17 rama codex/P17-asistente-trabajos-orb, evidencia local y docs/redesign/P17-ACEPTACION.md, 2026-10-09
@@ -58,8 +59,9 @@ La matriz posterior tiene 48 vistas sin hallazgos, más ocho estados con
 transporte controlado, reduced motion y la guarda real ante edición posterior.
 Véanse [aceptación](../../redesign/P17-ACEPTACION.md) y
 [síntesis](../product/assistant-work.md). Database Gate PASA: 1.218 pgTAP,
-444 integraciones, 17 E2E y actualizaciones pobladas PG16. CI y squash siguen
-pendientes; P17 está en curso y no acredita superficies posteriores.
+444 integraciones, 17 E2E y actualizaciones pobladas PG16. PR #136 integrado
+con los cuatro checks PASA. Las revisiones externas se omitieron; la aceptación
+propia no acredita superficies posteriores.
 
 ## P12 · producción por estación (09-10-2026)
 

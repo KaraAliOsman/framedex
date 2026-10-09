@@ -4,7 +4,8 @@ Base `4d3f220451c7b06562e944b0465d8718314db3a8`, rama
 `codex/P17-asistente-trabajos-orb`. Verificado el 09-10-2026.
 Implementación `7d29a6aa6be776e2409ddc209991cd85680b3f27`.
 La [evidencia](captures/asistente-trabajos-orb/) conserva antes, después,
-recorridos y estados. P17 permanece en curso hasta CI y squash.
+recorridos y estados. P17 integrado en PR [#136](https://github.com/KaraAliOsman/framedex/pull/136),
+squash `d5500d69bbc843162a9c189805a00d8904d11264` con los cuatro checks PASA sobre el HEAD final.
 
 La presencia se consulta por organización, persona y contexto exacto. Un trabajo
 antiguo sigue visible aunque haya más de treinta trabajos posteriores en otras
@@ -103,7 +104,9 @@ motor y dos xfail conocidos, goldens byte a byte, 1.382 backend y 917 frontend
 en 82 archivos. OpenAPI/orval reproducibles. Database Gate PASA: 84 archivos,
 1.218 pgTAP, 444 integraciones PostgreSQL, 17 E2E y actualizaciones pobladas PG16.
 El gate termina con código 0 y detiene sus servicios aislados. Los cuatro
-checks de GitHub y el squash se registran al integrar.
+checks de GitHub PASA en la corrida `37958419127`, sobre
+`7982e4414bdf7c9ee2374846494e81c0f781d11e`; squash registrado arriba.
+CodeRabbit y Devin omitieron sus revisiones; no se atribuye revisión externa.
 
 Decisiones en [valores por defecto](../decisions/valores-por-defecto.md).
 MiMo real continúa conectado por el entorno local; no se cambia su ruta ni se

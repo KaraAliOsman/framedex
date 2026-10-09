@@ -947,3 +947,11 @@ sus servicios y deja libres los puertos de aplicación; el fixture persistente
 del programa se conserva. La regresión de auditoría tardía también pasa:
 pulsar Nuevo no permite que la respuesta antigua vuelva a asociar la conversación.
 Implementación `c25409c2befe60d1be047ac1e4f8d37a334b20f4`; CI y squash siguen pendientes.
+
+## 2026-10-09 — P17 · integrado y ola 1 cerrada
+
+PR #136 pasa los cuatro checks sobre `7982e4414bdf7c9ee2374846494e81c0f781d11e`
+en la corrida `37958419127` y se integra con squash `d5500d69bbc843162a9c189805a00d8904d11264` en `integracion/v1`.
+CodeRabbit y Devin omitieron revisión; se conserva la evidencia propia de flujos,
+rúbrica, gates y límites. ESTADO registra el cierre de la ola en cinco líneas.
+El stack propio está detenido y el fixture permanece intacto. Continúa ED1.

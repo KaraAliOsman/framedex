@@ -20,7 +20,7 @@
 | P07 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/133 | d8e4d899a29d9f154f8c7d37b054581132dadbb1 | CI 4/4 verde; cascada/Δ exactos, aprobación y recibos; 1.200 pgTAP, 435 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
 | P03 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/134 | 5b06ceb12457b297a8748580453695714469c6a0 | CI 4/4 verde; Hoy por consecuencia, decisiones humanas, búsqueda y destinos exactos; 1.205 pgTAP, 439 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
 | P12 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/135 | e59539d1b282fde9c928fcd9e67f970e51995cdc | CI 4/4 verde; estación privada, QR físico y QC/remake idempotente; 1.218 pgTAP, 441 integraciones, 17 E2E y diez upgrades PG16; rúbrica PASA. |
-| P17 | 1 | en curso |  |  |  |
+| P17 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/136 | d5500d69bbc843162a9c189805a00d8904d11264 | CI 4/4 verde; presencia privada, dibujos/Δ, aplicar/deshacer y auditoría; 1.218 pgTAP, 444 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
 | ED1 | ED1 | pendiente |  |  |  |
 | P06 | 2 | pendiente |  |  |  |
 | P08 | 2 | pendiente |  |  |  |
@@ -59,3 +59,9 @@ Caras, extras y montaje conservan autoridad sellada; IA comparte 50 operaciones 
 IA3 mide MiMo 22/26 y editor/proyecto 19/21; herramientas, visión y PDF literal/mixto/escaneado pasan sus oráculos reales.
 Capturas clave: `colores-acabados/`, `accesorios-extras/`, `vano-fabricacion/`, `operaciones-herramientas/` y `proveedor-real/`; sin hallazgos nuevos en el alcance de cada encargo.
 Riesgos: catálogo DEMO sin certificación, cuatro fallos de negocio de IA conservados y tarifa Sin dato hasta declararla; las superficies P continúan su aceptación.
+
+Ola 1 cerrada: P02, P25, P04, P05, P09, P07, P03, P12 y P17 integrados con CI 4/4 verde.
+Direcciones físicas, marca, lienzo DIN, precios, DOC-01, Hoy y estaciones comparten datos sellados y autoridad del motor.
+P17 conserva presencia privada, cambios Low-E exactos, dibujos/Δ y deshacer con auditoría; una edición posterior queda protegida.
+Capturas clave: `docs/redesign/captures/asistente-trabajos-orb/`, `produccion-estaciones/`, `shell-hoy/` y `doc01-v2/`.
+Riesgos: catálogo DEMO sin certificación; Uw Sin dato y superficies posteriores pendientes; ED1 revisa ahora el conjunto.
