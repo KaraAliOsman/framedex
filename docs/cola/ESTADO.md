@@ -17,7 +17,7 @@
 | P04 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/130 | f5dbaa92958b279471bd6adfdbc0fe3693e70538 | CI 4/4 verde; lienzo/cotas, precio por cantidad y fantasma/aplicar/deshacer; 1173 pgTAP, 418 integraciones y 17 E2E; rúbrica PASA. |
 | P05 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/131 | 52f3ee8102753727b7ba9e568ec18593b5d269d3 | CI 4/4 verde; gramática DIN/vistas/cotas comunes, 56 fixtures de paridad, 1173 pgTAP y 418 integraciones; rúbrica PASA. |
 | P09 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/132 | 97aea5dfec6e4dddcb429a48b421c7598e758a0d | CI 4/4 verde; DOC-01 sellado, 100 posiciones en 40–45 páginas, QR revocable y 44 vistas; 1186 pgTAP, 425 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
-| P07 | 1 | en curso |  |  |  |
+| P07 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/133 | d8e4d899a29d9f154f8c7d37b054581132dadbb1 | CI 4/4 verde; cascada/Δ exactos, aprobación y recibos; 1.200 pgTAP, 435 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
 | P03 | 1 | pendiente |  |  |  |
 | P12 | 1 | pendiente |  |  |  |
 | P17 | 1 | pendiente |  |  |  |

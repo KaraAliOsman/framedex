@@ -100,7 +100,8 @@ y los upgrades poblados PG16. El recorrido E2E comprueba precio persistido,
 actor auditado y emisión inmutable de A/B. Si una organización desaparece
 durante una simulación indicativa, el adaptador rechaza con un 404 explícito
 en vez de un error 500; la regresión del contrato pasa.
-Los cuatro checks de CI y el SHA se registran después de integrar el PR.
+Los cuatro checks de CI pasan sobre `d6db60843adc4c65e2486d8e46cf9832a4244bd3` en la corrida
+`37893278926`; PR #133 integrado con squash `d8e4d899a29d9f154f8c7d37b054581132dadbb1`.
 
 | Rúbrica | Estado | Evidencia |
 | --- | --- | --- |

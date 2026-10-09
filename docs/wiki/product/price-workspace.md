@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: codex/P07-workspace-precios
+verified_ref: d8e4d899a29d9f154f8c7d37b054581132dadbb1
 sources:
   - engine/src/dekopen_engine/price_workspace.py
   - backend/pricing/workspace.py

@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 97aea5dfec6e4dddcb429a48b421c7598e758a0d
+verified_ref: d8e4d899a29d9f154f8c7d37b054581132dadbb1
 sources:
+  - P07 PR #133, CI run 37893278926 on d6db60843adc4c65e2486d8e46cf9832a4244bd3, squash d8e4d899a29d9f154f8c7d37b054581132dadbb1, 2026-10-09
   - P09 PR #132, CI run 37874800254 on ebe60099f85c48107075e6ffd6012ffe1b39704d, squash 97aea5dfec6e4dddcb429a48b421c7598e758a0d, 2026-10-08
   - P05 PR #131, CI run 37861454814 on 10805d8691adb589d6382c32e612f96a754ff0a4, squash 52f3ee8102753727b7ba9e568ec18593b5d269d3, 2026-10-08
   - P04 PR #130, CI run 37845765629 on dcff50911165817920025c8a24ea5dbfafe6f07d, squash f5dbaa92958b279471bd6adfdbc0fe3693e70538, 2026-10-08
@@ -30,7 +31,7 @@ sources:
 
 # Current reality
 
-## P07 · workspace verificado localmente (09-10-2026)
+## P07 · integrado y verificado (09-10-2026)
 
 `codex/P07-workspace-precios` sobre `3351066d40a4ad7b19943984efb0cfe8e0893351`
 compara actual/propuesto, compone cascadas exactas y explica el Δ mediante
@@ -46,8 +47,10 @@ Los gates locales pasan 827 pruebas motor (+2 xfail), 1.351 backend y
 claro/oscuro; Ajustes abre reglas y muestra modos humanos.
 Database Gate pasa 1.200 pgTAP, 435 integraciones, 17 E2E y upgrades poblados
 PG16. El recorrido conserva precios tras recargar y las emisiones A/B.
-CI se registra al integrar; el ref general de esta página conserva la última
-integración verificada, P09.
+PR #133 pasa los cuatro checks sobre `d6db60843adc4c65e2486d8e46cf9832a4244bd3` en la corrida
+`37893278926` y se integra con squash `d8e4d899a29d9f154f8c7d37b054581132dadbb1`.
+Las revisiones automáticas fueron omitidas por configuración/cuota; no
+equivalen a una revisión de código. Los servicios propios están detenidos.
 
 ## P09 · integrado y verificado (08-10-2026)
 

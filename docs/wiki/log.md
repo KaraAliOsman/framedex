@@ -829,3 +829,12 @@ Se renuevan los 20 registros de precio/panel con encabezado final y se traduce
 el tipo de cambio registrado. La matriz conserva observaciones de códigos
 SKU sintéticos aparte de sus hallazgos de presentación; no cambia el detector.
 CI y squash se registrarán al integrar.
+
+## 2026-10-09 — P07 · integrado
+
+PR #133 pasa los cuatro checks sobre `d6db60843adc4c65e2486d8e46cf9832a4244bd3` en la corrida
+`37893278926` y se integra en `integracion/v1` con squash
+`d8e4d899a29d9f154f8c7d37b054581132dadbb1`. ESTADO y los refs de la wiki registran el merge.
+Los servicios propios están detenidos y el fixture permanece intacto.
+CodeRabbit/Devin omiten revisión por configuración/límites y Copilot por cuota;
+no equivalen a una revisión de código. P03 continúa el shell y Hoy.
