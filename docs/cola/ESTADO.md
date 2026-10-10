@@ -30,7 +30,7 @@
 | P14 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/143 | c4eb4159a45caef4bbf88fb770372a5d13993411 | CI 4/4 verde; autoridad física/intercambio y CRUD auditado; 1.299 pgTAP, 486 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P16 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/144 | 5a34db52c78d6a277b17a29267aaf139958655af | CI 4/4 verde; gate compartido/fuentes inmutables, MiMo PDF/foto y undo; 1.315 pgTAP, 493 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | ED2 | ED2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/145 | fa3731843dbfbd75d00024e95f4986a3616a8747 | CI 4/4 verde; 224 vistas finales sin hallazgos/desbordes, cuatro personas y MiMo real; guardas 69/187 → 45/139 y rúbrica por superficie PASA. |
-| P21 | 3 | pendiente |  |  |  |
+| P21 | 3 | en curso |  |  |  |
 | P10 | 3 | pendiente |  |  |  |
 | P22 | 3 | pendiente |  |  |  |
 | P23 | 3 | pendiente |  |  |  |
