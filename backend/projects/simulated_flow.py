@@ -90,7 +90,8 @@ def _capability(link_id, token):
     # token is checked before any project, issuer or ledger data is read.
     with provider_scope():
         found = rows("SELECT * FROM public.project_payment_links WHERE id=%s AND environment='simulated'", [str(link_id)])
-    if not found or not token or not hmac.compare_digest(str(found[0]["flow_token"] or ""), token):
+    if (not found or not isinstance(token, str) or not token
+        or not hmac.compare_digest(str(found[0]["flow_token"] or "").encode("utf-8"), token.encode("utf-8", errors="surrogatepass"))):
         raise contract_error(404, "payment_link_not_found", "El acceso de prueba no está disponible. Pida un enlace vigente.")
     return found[0]
 

@@ -9,7 +9,7 @@ from rest_framework.exceptions import APIException
 from documents.legal import INTERNAL_LEGEND
 from documents.renderers import _invoice_body, _credit_note_body, _receipt_body
 from projects import collection_settings, fiscal_adapter, collection_reminders, invoices, payment_links
-from projects import payments
+from projects import payments, simulated_flow
 
 
 @contextmanager
@@ -109,6 +109,16 @@ def test_payment_link_expiry_is_explicit_without_altering_paid_history():
     assert payment_links._public_link(row)["status"] == "EXPIRED"
     row["status"] = "PAID"
     assert payment_links._public_link(row)["status"] == "PAID"
+
+
+@pytest.mark.parametrize("token", ["wrong", "inválido", "\ud800", "", None])
+def test_invalid_payer_capability_is_unavailable_without_reading_project(monkeypatch, token):
+    monkeypatch.setattr(simulated_flow, "provider_scope", noop)
+    monkeypatch.setattr(simulated_flow, "rows", lambda *a: [{"flow_token": "test-only-capability"}])
+    with pytest.raises(APIException) as error:
+        simulated_flow._capability(uuid4(), token)
+    assert error.value.status_code == 404
+    assert error.value.contract_code == "payment_link_not_found"
 
 
 def test_event_dates_follow_santiago_and_require_complete_delivery(monkeypatch):

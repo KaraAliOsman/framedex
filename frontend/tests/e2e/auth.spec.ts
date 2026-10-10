@@ -485,7 +485,15 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   });
   // The catalog recipe determines thickness; the inspector selects one product.
   const glass = page.getByRole("combobox", { name: "Vidrio", exact: true });
+  const glassSimulation = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/projects/operations/simulate/",
+  );
   await glass.selectOption("DEMO_60-VIDRIO-4");
+  const simulatedGlass = await glassSimulation;
+  expect(simulatedGlass.status()).toBe(200);
+  expect((await simulatedGlass.json()).valid).toBe(true);
   await expect(glass).toHaveValue("DEMO_60-VIDRIO-4");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
