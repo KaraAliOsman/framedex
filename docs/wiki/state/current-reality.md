@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: codex/P16-catalogo-tecnico
+verified_ref: 5a34db52c78d6a277b17a29267aaf139958655af
 sources:
+  - P16 PR https://github.com/KaraAliOsman/framedex/pull/144, CI 4/4 sobre 69ea0913812bc7cd60cf36238e21de730826d60f, squash 5a34db52c78d6a277b17a29267aaf139958655af, 2026-10-10
   - P16 rama codex/P16-catalogo-tecnico, navegador y pruebas focalizadas, 2026-10-10
   - docs/redesign/P16-ACEPTACION.md
   - P14 PR https://github.com/KaraAliOsman/framedex/pull/143, CI 4/4 sobre 970df75643c67b6bec9c3813803b071066627aab, squash c4eb4159a45caef4bbf88fb770372a5d13993411, 2026-10-10
@@ -82,7 +83,7 @@ y deshacer. La auditoría conservó las seis etapas. La ruta de imagen real
 produce candidatos que requieren contraste humano; no certifica el proveedor.
 Cinco estados y matriz de tamaños/temas pasan; capturas generales sin hallazgos.
 
-P16 permanece en curso hasta completar gates locales y CI sobre el PR.
+Gates locales y CI 4/4 PASA; P16 integrado por squash `5a34db52c78d6a277b17a29267aaf139958655af`.
 
 ## P14 · mecanizado con autoridad física (10-10-2026)
 

@@ -130,3 +130,5 @@ No se certifica un fabricante, una norma ni una máquina con el fixture. Los dat
 globales siguen bajo autoridad de plataforma; un tenant no puede revisarlos ni
 publicar evidencia sobre datos de otra organización. Railway, Flow, SII y correo
 conservan los adaptadores y estados existentes; este encargo no activa servicios.
+
+CI 4/4 PASA en [https://github.com/KaraAliOsman/framedex/pull/144](https://github.com/KaraAliOsman/framedex/pull/144) sobre `69ea0913812bc7cd60cf36238e21de730826d60f`. Squash en integración: `5a34db52c78d6a277b17a29267aaf139958655af`.

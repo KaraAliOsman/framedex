@@ -28,7 +28,7 @@
 | P15 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/141 | fc0c685146b330878ed6712a153f995fda22735c | CI 4/4 verde; compra/stock/RT y correo sellados; 1.269 pgTAP, 473 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P11 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/142 | 55d73156ac4981fab821eb279d73399025ac6057 | CI 4/4 verde; cobranza/RC/Flow y documentos internos sellados; 1.285 pgTAP, 483 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P14 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/143 | c4eb4159a45caef4bbf88fb770372a5d13993411 | CI 4/4 verde; autoridad física/intercambio y CRUD auditado; 1.299 pgTAP, 486 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
-| P16 | 2 | en curso |  |  |  |
+| P16 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/144 | 5a34db52c78d6a277b17a29267aaf139958655af | CI 4/4 verde; gate compartido/fuentes inmutables, MiMo PDF/foto y undo; 1.315 pgTAP, 493 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | ED2 | ED2 | pendiente |  |  |  |
 | P21 | 3 | pendiente |  |  |  |
 | P10 | 3 | pendiente |  |  |  |
@@ -71,3 +71,9 @@ Estados, formatos, paleta DIN, densidad por tarea y secciones/planes comparten r
 Estimador/emisión/DOC-01, dueño/aprobación, jefe/remake, operario/QR y nuevo lote MiMo aplicado/deshecho pasan.
 Capturas clave: `docs/redesign/captures/ed1/`; 192 antes y después, cero hallazgos finales; baseline 257/716 → 69/187.
 Riesgos: catálogo DEMO sin certificación, Uw Sin dato y superficies de ola 2 pendientes de su propio encargo/ED2.
+
+Ola 2 cerrada: P06, P08, P13, P15, P11, P14 y P16 integrados con CI 4/4 verde.
+Conjuntos, emisión, corte, compras, cobranza, CNC y catálogo conservan autoridad sellada y decisiones humanas.
+P16 contrasta PDF/foto con MiMo real, conserva fuentes y seis etapas de publicación/deshacer; DEMO no se certifica.
+Capturas clave: `docs/redesign/captures/catalogo-tecnico/`, `compras-inventario/`, `cnc-mecanizado/` y `pack-corte-etiquetas/`.
+Riesgos: catálogo sintético, políticas sin fuente declarada y calibración industrial externa; ED2 revisa ahora el conjunto.

@@ -1215,3 +1215,6 @@ P16 verificación final local: Los cuatro gates locales pasan: 881 pruebas del m
 El gate de base de datos termina con `[PASS] database gate`: 1315 aserciones pgTAP, 493 integraciones, 19 E2E y diez verificaciones de upgrade PG16. El stack aislado termina detenido y el fixture persistente se conserva.
 CI se registra cuando terminen los cuatro checks del PR.
 La cobertura de costos identifica DEMO y las políticas de fabricación tienen destinos individuales con foco. El acceso pgTAP del rol técnico solo existe dentro del ROLLBACK de su prueba.
+
+P16 PR https://github.com/KaraAliOsman/framedex/pull/144, CI 4/4 sobre 69ea0913812bc7cd60cf36238e21de730826d60f, squash 5a34db52c78d6a277b17a29267aaf139958655af, 2026-10-10.
+R1–R20 PASA; procesos propios detenidos y fixture persistente conservado.
