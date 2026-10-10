@@ -101,6 +101,13 @@ La inspección final corrige acabado/pulido, área a dos decimales y huella BOM
 del cajetín; los detalles de paneles/herrajes usan medidas y nombres declarados
 en vez de claves de implementación. Los previews actuales vuelven a verificarse.
 
+El gate de integración detectó dos regresiones y se corrigieron sus causas:
+la caché de autoridad se limita a una propuesta de lectura; el repositorio
+ordinario vuelve a detectar cambios y ambigüedades entre transacciones. La
+historia RT referencia su dirección permanente, conservando la eliminación
+física privilegiada del contrato P02 sin borrar historia ni reutilizar códigos.
+La regresión existente comprueba además la retención e inmutabilidad de esa historia.
+
 Momento de firma: **F6 por cantidad y OT**. Capacidad del §8: **Comprar lo que
 falta** usa el motor, el stock y los retazos; deja OC reales listas para envío
 humano y recepción física.

@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path=public,extensions;
-SELECT plan(15);
+SELECT plan(17);
 SELECT has_column('public','order_receipts','supplier_document','Supplier guide is retained');
 SELECT col_type_is('public','order_receipts','received_on','date','Physical reception has an explicit date');
 SELECT col_type_is('public','inventory_remnants','physical_stock_identity','text','D05 stock identities retain their exact text');
@@ -17,5 +17,9 @@ SELECT has_trigger('public','inventory_remnant_events','inventory_history_immuta
 SELECT has_trigger('public','purchase_need_decisions','purchase_decision_immutable','Human purchase decisions are immutable');
 SELECT has_trigger('public','inventory_remnants','trace_remnant_change','Each physical transition retains its actor and rack');
 SELECT has_trigger('public','inventory_movements','inventory_movement_actor','Production movements inherit the verified actor');
+SELECT ok((SELECT confrelid='public.entity_codes'::regclass AND cardinality(conkey)=3
+  FROM pg_constraint WHERE conrelid='public.inventory_remnant_events'::regclass
+  AND conname='remnant_history_address'),'History references the durable tenant RT address');
+SELECT col_type_is('public','inventory_remnant_events','address_kind','text','History keeps the RT address kind');
 SELECT * FROM finish();
 ROLLBACK;

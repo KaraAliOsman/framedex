@@ -31,6 +31,10 @@ material compatible y la reserva recalcula el plan completo dentro de una
 transacción. La etiqueta lleva a Inventario. La antigüedad es configurable;
 el destino inicial procede de la preferencia de [Corte](cut-documents.md).
 Las identidades textuales de [D05](color-finishes.md) no se reducen a UUID.
+La historia referencia la dirección RT permanente de P02: retirar físicamente
+un retazo por mantenimiento privilegiado conserva sus eventos y código.
+La caché de catálogo solo vive dentro de una propuesta de lectura explícita;
+el repositorio ordinario comprueba de nuevo los cambios entre transacciones.
 
 La OC sella precios declarados y usa el PDF documental. El correo comparte el
 adaptador SMTP/Mailpit y la bandeja existente; requiere clic humano. El jefe de

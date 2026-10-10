@@ -50,7 +50,7 @@ def proposal(*, org_id: UUID) -> dict:
         grouped = defaultdict(list)
         offers, blockers = [], []
         used = set()
-        repository, rules = CuttingRepository(), _sheet_rules(org_id)
+        repository, rules = CuttingRepository(request_cache=True), _sheet_rules(org_id)
         bar_needs = defaultdict(lambda: ZERO)
         for order in orders:
             oid = str(order['id'])
