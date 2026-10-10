@@ -1146,3 +1146,8 @@ respuesta del motor antes de la selección, manteniendo todas las aserciones.
 El bind local de Magic Link se restauró desde la plantilla pública con SHA
 idéntico; fixture intacto. Los 100 PNG conservan píxeles tras compresión.
 CI y squash se registrarán al integrar.
+
+## 2026-10-10 — P11 · integración aceptada
+
+P11 PR https://github.com/KaraAliOsman/framedex/pull/142, CI 4/4 sobre debf64777ee210ff7b750ef06da0795ad573fc81, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38062719629, squash 55d73156ac4981fab821eb279d73399025ac6057, 2026-10-10.
+Las cinco comprobaciones HTTP finales conservan 404/400 sin pagos nuevos. La aceptación incluye saldos, recibos, documentos, simulación y MiMo real; R1–R20 PASA. Servicios propios detenidos y fixture persistente intacto.

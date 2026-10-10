@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: 9838e8bd9af1116e8797299b0b878a042415d6f7
+verified_ref: 55d73156ac4981fab821eb279d73399025ac6057
 sources:
+  - P11 PR https://github.com/KaraAliOsman/framedex/pull/142, CI 4/4 sobre debf64777ee210ff7b750ef06da0795ad573fc81, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38062719629, squash 55d73156ac4981fab821eb279d73399025ac6057, 2026-10-10.
   - P11 gates locales finales sobre 9838e8bd9af1116e8797299b0b878a042415d6f7, 2026-10-10
   - P11 implementación 2c73bf96cc71b30fff7f774ec4b1aaaaaaf5edb2, gates locales y navegador, 2026-10-10
   - docs/redesign/P11-ACEPTACION.md
@@ -75,8 +76,7 @@ La aceptación conserva 41 vistas de matriz y 24 oficiales sin hallazgos,
 15 PDF con SHA verificado y ocho artefactos históricos idénticos.
 Lint/tipos/OpenAPI/orval/build y tests completos pasan: 856 motor (+2 xfail),
 1.464 backend y 965 frontend. Database Gate pasa con 1.285 pgTAP,
-483 integraciones, 19 E2E y upgrades PostgreSQL 16. CI y squash se registran
-al integrar; no se afirma merge antes de esos resultados.
+483 integraciones, 19 E2E y upgrades PostgreSQL 16. CI 4/4 verde; PR #142, squash `55d73156ac4981fab821eb279d73399025ac6057` en `integracion/v1`.
 Véase [cobranza](../product/collections.md) y su aceptación.
 
 ## P15 · compras e inventario integrados y verificados (10-10-2026)

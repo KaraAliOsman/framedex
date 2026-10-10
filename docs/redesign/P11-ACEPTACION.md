@@ -88,7 +88,7 @@ Implementación final `9838e8bd9af1116e8797299b0b878a042415d6f7`. Los cuatro gat
 `make lint`, `make typecheck`, `make test`, `make build`; 856 pruebas de motor
 (+2 xfail), 1.464 backend y 965 frontend. Golden byte check PASA.
 `make test-db` PASA: 1.285 pgTAP, 483 integraciones, 19 E2E y upgrades
-poblados PostgreSQL 16. CI y squash se registran al integrar.
+poblados PostgreSQL 16. CI 4/4 verde; PR [#142](https://github.com/KaraAliOsman/framedex/pull/142), squash `55d73156ac4981fab821eb279d73399025ac6057` en `integracion/v1`.
 
 La revisión de capacidades reproduce el fallo con texto Unicode y lo corrige.
 La comparación interna devuelve 404 para tokens ASCII incorrectos, Unicode,
@@ -158,3 +158,6 @@ la boleta 39 real requiere un proveedor autorizado y no se ofrece como soportada
 P11 no implementa firma ni certificación propias. SMTP productivo, catálogo
 real y datos del contribuyente también requieren activación. El ensayo usa
 Mailpit y proveedores simulados; no envió correos ni cobros a terceros reales.
+
+
+Comprobación HTTP adicional con Django reiniciado sobre el commit de CI: POST ASCII/Unicode incorrectos y GET Unicode devuelven 404; corto/nulo conservan 400. No se escribieron pagos ni enviaron correos.
