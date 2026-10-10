@@ -159,7 +159,7 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
                   )
                 }
               >
-                <option value="">Seleccione el artículo</option>
+                <option value="">Selecciona el artículo</option>
                 {data.options.map((item) => (
                   <option key={`${item.kind}:${item.sku}`} value={`${item.kind}:${item.sku}`}>
                     {item.kind === "GLASS" ? "Vidrio" : "Panel"} · {item.name}
