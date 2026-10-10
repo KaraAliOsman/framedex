@@ -22,6 +22,32 @@ Este indice no contiene secretos. Los valores reales se cargan como variables de
 | Activacion   | Crear comercio sandbox, cargar llaves, configurar URL de retorno/callback, ejecutar pago de prueba y luego repetir con credenciales productivas. |
 | Verificacion | Crear enlace de pago, completar pago sandbox, confirmar idempotencia de callback y estado visible en proyecto/portal.                            |
 
+La cobranza del proyecto usa sus propias credenciales, guardadas por el dueño
+en **Ajustes › Flow** (`org_payment_integrations`). Las variables `FLOW_*`
+del servidor pertenecen a la billetera de la plataforma; no habilitan el cobro
+de una fábrica. Configure en backend `BILLING_CALLBACK_ORIGIN` con HTTPS público
+y `BILLING_FRONTEND_ORIGIN` con el frontend, o declare el retorno del pagador
+en la integración de la organización. La creación entrega a Flow el callback
+`/api/v1/projects/flow/confirm/<enlace>/` y el retorno `/pago/retorno`.
+
+1. Cree un comercio en el sandbox oficial, guarde API key y secret en Ajustes
+   y active la conexión de la organización. Nunca copie llaves al frontend.
+2. Emita una revisión CLP, registre un anticipo y cree el enlace por el saldo.
+   Complete el pago sandbox y compruebe un único movimiento y recibo. Reenvíe
+   el callback y use **Verificar**: la recuperación consulta el pedido y no
+   vuelve a crear el cobro. Compruebe un rechazo y un enlace vencido.
+3. Declare la vigencia en **Ajustes › General › Cobranza e integraciones**
+   (7 días por defecto, 1–90). El timeout enviado a Flow se expresa en segundos,
+   según [la API oficial](https://developers.flow.cl/api#tag/payment/paths/~1payment~1create/post).
+4. Tras aceptar el sandbox, cambie URL y llaves al comercio productivo. Verifique
+   una operación autorizada, webhook HTTPS e idempotencia antes de distribuir
+   enlaces a clientes. Un pago real verificado se registra aunque otra cobranza
+   haya reducido el saldo; el exceso queda explícito para conciliación humana.
+
+Sin conexión, **Crear enlace de prueba** recorre creación, retorno y confirmación
+con una capacidad opaca y caducidad. No contacta Flow; movimientos, recibos y
+saldos conservan la marca simulada. No acredita dinero real.
+
 ## SII / DTE
 
 | Campo        | Detalle                                                                                                                                    |
@@ -31,6 +57,30 @@ Este indice no contiene secretos. Los valores reales se cargan como variables de
 | Variables    | Nombres reservados por proveedor DTE/SII: `SII_ENV`, `SII_CERTIFICATE_PASSWORD`, `SII_PROVIDER_*` cuando se conecte el adaptador final.    |
 | Activacion   | Cargar certificado y CAF autorizados, declarar ambiente certificacion/produccion, emitir DTE de certificacion y validar respuesta del SII. |
 | Verificacion | DTE aceptado en ambiente de certificacion, XML/PDF almacenado como documento emitido e historial inmutable.                                |
+
+El adaptador existente de `backend/projects/sii.py` genera factura 33 y nota
+de crédito 61 con CAF/certificado de la organización; `sii_envio.py` envía y
+consulta el estado oficial. No hay firma ni certificación nuevas en P11.
+
+1. En Ajustes › Certificado digital cargue el PFX vigente con su contraseña;
+   en Ajustes › SII registre los CAF autorizados. No publique estos archivos.
+2. Configure backend/worker con `SII_WS_ENVIO_URL`, `SII_WS_STATUS_URL` y
+   `SII_WS_TOKEN` del transporte oficial autorizado. Las variables genéricas
+   del índice anterior no sustituyen estas interfaces existentes.
+3. Complete la certificación del contribuyente y luego declare certificado y
+   activación en **Cobranza e integraciones**. El estado solo muestra conexión
+   con certificado vigente, declaración de certificación y transporte de envío.
+4. Emita/envíe un DTE de prueba y consulte aceptado, reparos o rechazado. Una
+   respuesta perdida exige revisión humana antes de reenviar. Conserve XML,
+   PDF y estado inmutables; verifique también una nota de crédito.
+
+La boleta tributaria 39 real **no está soportada** por el timbrador existente.
+Conecte un proveedor DTE autorizado que implemente ese contrato antes de usarla
+tributariamente. La boleta interna y el simulador 39 sí permiten revisar el
+flujo; no se ofrecen como una boleta SII. Los documentos internos siempre
+declaran «Documento interno — no válido como documento tributario electrónico».
+Las pruebas `SIM-…` de 33/39/61 viven en una evidencia separada, no consumen CAF,
+no generan TED ni XML tributario y no contactan SII.
 
 ## Correo con dominio propio
 

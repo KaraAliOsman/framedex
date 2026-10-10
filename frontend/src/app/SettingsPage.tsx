@@ -1,4 +1,5 @@
 import { StatusBadge } from "../ui/StatusBadge";
+import { CollectionIntegrations } from "../features/projects/CollectionIntegrations";
 import { ValidatedForm } from "../ui/FormValidation";
 import {
   useCallback,
@@ -881,6 +882,7 @@ export function SettingsPage(): JSX.Element {
             {t("settings.groupCharging")}
           </h2>
           <div className="settings-grid">
+            <CollectionIntegrations orgId={org.id} />
             <FlowIntegrationCard orgId={org.id} />
             <MailIntegrationCard key={`mail-${org.id}`} orgId={org.id} />
             <SiiCafCard orgId={org.id} />

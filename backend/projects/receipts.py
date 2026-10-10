@@ -26,6 +26,8 @@ from documents.renderers import render_payment_receipt
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
 from projects import org_branding
+from dekopen_engine.collections import CollectionPayment, collection_summary
+from datetime import date
 
 SIGNED_URL_TTL_SECONDS = 600
 
@@ -86,18 +88,29 @@ def issue_receipt(
     )
     receipt_code = f"RC-{sequence + 1:04d}"
     collected = _collected(org_id, UUID(project_id_s))
+    includes_simulation = bool(rows(
+        "SELECT id FROM public.project_payments WHERE org_id=%s AND project_id=%s "
+        "AND simulated AND voided_at IS NULL LIMIT 1", [org_id_s, project_id_s],
+    ))
+    summary = collection_summary(total=deal["total"], currency=deal["currency"], milestones=[],
+        payments=[CollectionPayment("ledger", collected, simulated=includes_simulation)] if collected > 0 else [], today=date.today())
+    sealed_project = deal.get("project") or project
     payload = {
         "receipt_code": receipt_code,
         "organization": org_branding.branding_for_snapshot(org_id=org_id),
         "issued_at": timezone.now().isoformat(),
+        "bom_hash": deal.get("bom_hash"),
         "project": {
-            "code": project["code"],
-            "name": project["name"],
-            "client_name": project["client_name"],
-            "client_email": project.get("client_email"),
-            "client_rut": project["client_rut"],
-            "delivery_address": project["delivery_address"],
+            "code": sealed_project["code"],
+            "name": sealed_project["name"],
+            "client_name": sealed_project["client_name"],
+            "client_email": sealed_project.get("client_email"),
+            "client_rut": sealed_project["client_rut"],
+            "client_address": sealed_project.get("client_address"),
+            "client_comuna": sealed_project.get("client_comuna"),
+            "delivery_address": sealed_project["delivery_address"],
             "currency": deal["currency"],
+            "revision_code": deal.get("sealed_revision"),
         },
         "payment": {
             "kind": payment["kind"],
@@ -109,11 +122,14 @@ def issue_receipt(
             if hasattr(payment["recorded_at"], "isoformat")
             else payment["recorded_at"],
             "operation_key": payment["operation_key"],
+            "actor_label": payment.get("actor_label"),
+            "simulated": bool(payment.get("simulated")),
         },
         "balance": {
             "deal_total": str(deal["total"]) if deal["total"] is not None else None,
             "collected": str(collected),
-            "remaining": str(deal["total"] - collected) if deal["total"] is not None else None,
+            "remaining": str(summary.balance) if summary.balance is not None else None,
+            "includes_simulation": summary.includes_simulation,
         },
     }
     identifier = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()

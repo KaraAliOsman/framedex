@@ -13,6 +13,8 @@ from pricing.serializers import StrictSerializer
 class PaymentMilestoneSerializer(StrictSerializer):
     label = serializers.CharField(max_length=120, allow_blank=False)
     share = DecimalStringField(max_digits=7, decimal_places=6, min_value=Decimal("0.000001"), max_value=Decimal("1"))
+    due_on = serializers.DateField(required=False, allow_null=True)
+    due_event = serializers.ChoiceField(choices=("APPROVAL", "DELIVERY"), required=False, allow_null=True)
 
 
 class CommercialTermsSerializer(StrictSerializer):

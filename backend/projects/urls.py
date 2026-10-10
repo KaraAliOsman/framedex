@@ -41,8 +41,14 @@ from projects.hardware import HardwarePreviewView
 from projects.finishes import FinishPreviewView
 from projects.extras import ExtraPolicyView, ProjectServicesView, ExtrasPreviewView
 from projects.mounting import MountingRulesView, MountingPreviewView, MeasurementConfirmView, RectificationView
+from projects.collection_views import CollectionSettingsView, FlowSimulationView, FiscalSimulationView, CollectionReminderView, CollectionReminderSendView
 
 urlpatterns = [
+    path("organization/collections/", CollectionSettingsView.as_view()),
+    path("projects/<uuid:project_id>/collection-reminder/", CollectionReminderView.as_view()),
+    path("projects/<uuid:project_id>/collection-reminder/send/", CollectionReminderSendView.as_view()),
+    path("projects/flow/simulated/<uuid:link_id>/", FlowSimulationView.as_view()),
+    path("projects/<uuid:project_id>/fiscal-simulations/", FiscalSimulationView.as_view()),
     path("projects/<uuid:project_id>/operations/state/", ProjectOpsStateView.as_view()),
     path("projects/<uuid:project_id>/operations/preview/", ProjectOpsPreviewView.as_view()),
     path("projects/<uuid:project_id>/operations/apply/", ProjectOpsApplyView.as_view()),

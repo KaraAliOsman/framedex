@@ -197,6 +197,9 @@ def seal_credit_note(
         },
         "positions": invoice_payload.get("positions") or [],
         "deal": invoice_payload.get("deal") or {},
+        "pricing": invoice_payload.get("pricing") or {},
+        "bom_hash": invoice_payload.get("bom_hash"),
+        "document_kind": invoice_payload.get("document_kind", "FACTURA"),
         "credit_amount_gross": (
             str(credit_amount)
             if credit_amount is not None

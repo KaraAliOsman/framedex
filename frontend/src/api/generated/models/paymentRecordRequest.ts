@@ -23,4 +23,5 @@ export interface PaymentRecordRequest {
   /** @maxLength 2000 */
   note?: string;
   recorded_at?: string;
+  recorded_on?: string;
 }

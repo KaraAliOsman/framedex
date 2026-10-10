@@ -1623,12 +1623,32 @@ function ProjectWorkspace({
         </div>
       ) : null}
       {project ? (
+        <div className="project-collection-workspace" hidden={openSection !== "payments"}>
+          <button
+            type="button"
+            className="ui-backlink ui-backlink--back"
+            onClick={() => setOpenSection(null)}
+          >
+            Volver a posiciones
+          </button>
+          <ProjectPaymentsPanel
+            key={`${orgId}:${project.id}`}
+            projectId={project.id}
+            orgId={orgId}
+            canWrite={canWrite}
+            canSendEnvio={canSendEnvio}
+            isOwner={isOwner}
+            onDirtyChange={setPaymentsDirty}
+          />
+        </div>
+      ) : null}
+      {project ? (
         /* data-facts-open widens the facts column while a workflow section
          * (quote/payments/imports/compare) is open — the emission form is
          * unusable at the idle rail's ~280px (review WM4). */
         <div
           className="project-desk"
-          hidden={openSection === "quote"}
+          hidden={openSection === "quote" || openSection === "payments"}
           data-facts-open={openSection || undefined}
         >
           {/* LEFT — project facts rail: the deal's identity plus the
@@ -1718,24 +1738,13 @@ function ProjectWorkspace({
                 >
                   {t("projects.quoteSection")}
                 </button>
-                <details
+                <button
+                  type="button"
                   className="project-facts__section"
-                  onToggle={(event) => {
-                    if (event.currentTarget.open) setOpenSection("payments");
-                    else if (openSection === "payments") setOpenSection(null);
-                  }}
-                  open={openSection === "payments"}
+                  onClick={() => setOpenSection("payments")}
                 >
-                  <summary>{t("projects.paymentsTitle")}</summary>
-                  <ProjectPaymentsPanel
-                    projectId={project.id}
-                    orgId={orgId}
-                    canWrite={canWrite}
-                    canSendEnvio={canSendEnvio}
-                    isOwner={isOwner}
-                    onDirtyChange={setPaymentsDirty}
-                  />
-                </details>
+                  {t("projects.paymentsTitle")}
+                </button>
                 <details
                   className="project-facts__section"
                   onToggle={(event) => {

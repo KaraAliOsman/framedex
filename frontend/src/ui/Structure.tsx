@@ -141,9 +141,11 @@ export function KeyValue({ label, children }: { label: string; children: ReactNo
 export function Stepper({
   steps,
   current,
+  completed = false,
 }: {
   steps: readonly { id: string; label: string; onSelect?: () => void; disabledReason?: string }[];
   current: string;
+  completed?: boolean;
 }): JSX.Element {
   const index = steps.findIndex((step) => step.id === current);
   return (
@@ -151,8 +153,8 @@ export function Stepper({
       {steps.map((step, position) => (
         <li
           key={step.id}
-          aria-current={step.id === current ? "step" : undefined}
-          data-complete={position < index || undefined}
+          aria-current={!completed && step.id === current ? "step" : undefined}
+          data-complete={completed || position < index || undefined}
         >
           {step.onSelect ? (
             <Button

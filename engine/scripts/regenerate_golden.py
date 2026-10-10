@@ -22,6 +22,7 @@ from engine.tests.ai_cost_cases import ai_cost_cases
 from engine.tests.quotation_cases import quotation_cases
 from engine.tests.workspace_cases import workspace_cases
 from engine.tests.assembly_cases import assembly_cases
+from engine.tests.collection_cases import public_cases as collection_cases
 
 SNAPSHOT = Path(__file__).resolve().parents[1] / "tests" / "golden_example.json"
 FAMILY_SNAPSHOT = SNAPSHOT.with_name("golden_catalog_families.json")
@@ -36,6 +37,11 @@ AI_COST_SNAPSHOT = SNAPSHOT.with_name("golden_ai_cost.json")
 QUOTATION_SNAPSHOT = SNAPSHOT.with_name("golden_quotation.json")
 WORKSPACE_SNAPSHOT = SNAPSHOT.with_name("golden_price_workspace.json")
 ASSEMBLY_SNAPSHOT = SNAPSHOT.with_name("golden_assemblies.json")
+COLLECTION_SNAPSHOT = SNAPSHOT.with_name("golden_collections.json")
+
+
+def generated_collection_bytes() -> bytes:
+    return (json.dumps(collection_cases(), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
 
 def generated_assembly_bytes() -> bytes:
@@ -137,6 +143,8 @@ def main() -> None:
     parser.add_argument("--check", action="store_true", help="Compare bytes; never rewrite")
     args = parser.parse_args()
     if args.check:
+        if not COLLECTION_SNAPSHOT.is_file() or COLLECTION_SNAPSHOT.read_bytes() != generated_collection_bytes():
+            raise SystemExit("Collection golden byte drift: run make goldgen and review the diff")
         if not ASSEMBLY_SNAPSHOT.is_file() or ASSEMBLY_SNAPSHOT.read_bytes()!=generated_assembly_bytes():
             raise SystemExit('Assembly golden byte drift: run make goldgen and review the diff')
         if not WORKSPACE_SNAPSHOT.is_file() or WORKSPACE_SNAPSHOT.read_bytes() != generated_workspace_bytes():
@@ -164,6 +172,7 @@ def main() -> None:
         if not QUOTATION_SNAPSHOT.is_file() or QUOTATION_SNAPSHOT.read_bytes() != generated_quotation_bytes():
             raise SystemExit("Quotation golden byte drift: run make goldgen and review the diff")
     else:
+        COLLECTION_SNAPSHOT.write_bytes(generated_collection_bytes())
         ASSEMBLY_SNAPSHOT.write_bytes(generated_assembly_bytes())
         WORKSPACE_SNAPSHOT.write_bytes(generated_workspace_bytes())
         SNAPSHOT.write_bytes(generated_bytes())

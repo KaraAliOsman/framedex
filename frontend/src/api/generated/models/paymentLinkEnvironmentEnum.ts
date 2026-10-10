@@ -9,10 +9,13 @@
 /**
  * * `sandbox` - sandbox
  * * `production` - production
+ * * `simulated` - simulated
  */
-export type EnvironmentEnum = (typeof EnvironmentEnum)[keyof typeof EnvironmentEnum];
+export type PaymentLinkEnvironmentEnum =
+  (typeof PaymentLinkEnvironmentEnum)[keyof typeof PaymentLinkEnvironmentEnum];
 
-export const EnvironmentEnum = {
+export const PaymentLinkEnvironmentEnum = {
   sandbox: "sandbox",
   production: "production",
+  simulated: "simulated",
 } as const;

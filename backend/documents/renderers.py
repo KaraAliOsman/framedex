@@ -14,6 +14,10 @@ from dekopen_engine.contour import Contour, contour_points, offset_contour
 from dekopen_engine.models import BayOpeningType, HingedLayout, Opening, OpeningUse, PlanPoint, SlidingTravel
 from dekopen_engine.openings import opening_label, opening_from_legacy
 from dekopen_engine.symbols import opening_symbol_lines
+from dekopen_engine.collections import CollectionPayment, collection_summary, credit_split, tax_percent
+from dekopen_engine.quotation import quotation_line, quotation_summary
+from documents.legal import INTERNAL_LEGEND
+from datetime import date
 from documents.drawing import annotations as drawing_annotations
 from dekopen_engine.product import ElevationMember
 from documents.repository import DocumentaryError
@@ -2176,6 +2180,10 @@ def _receipt_body(payload: dict[str, object]) -> str:
         f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
         f'<div class="tb-cell tb-wide"><span class="tb-label">Concepto</span>'
         f'<span class="tb-value">{escape(kind)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Revisión</span>'
+        f'<span class="tb-value">{escape(str(project.get("revision_code") or "Sin dato"))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Huella BOM</span>'
+        f'<span class="tb-value">{escape(str(payload.get("bom_hash") or "Sin dato")[:12])}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
         '<span class="tb-value"><span class="pg"></span></span></div>'
         "</div>"
@@ -2207,10 +2215,15 @@ def _receipt_body(payload: dict[str, object]) -> str:
     body += (
         "<h2>Detalle del cobro</h2>"
         + _table(
-            ["Concepto", "Método", "Referencia", "Fecha de cobro"],
-            [[kind, method, payment.get("reference"), _cldate(payment.get("recorded_at"))]],
+            ["Concepto", "Método", "Referencia", "Fecha de cobro", "Registrado por"],
+            [[kind, method, payment.get("reference") or "Sin dato", _cldate(payment.get("recorded_at")), payment.get("actor_label") or "Sin dato · registro histórico"]],
         )
     )
+    if payment.get("simulated"):
+        body += '<p><strong>Pago simulado — no se movió dinero.</strong> Este recibo es evidencia de una prueba.</p>'
+    elif balance.get("includes_simulation"):
+        body += '<p>El saldo incluye otros pagos simulados; no acredita el cobro de esos movimientos.</p>'
+    body += f'<p>Revisión {escape(_value(project.get("revision_code")))} · saldo al registrar este movimiento.</p>'
     note = _value(payment.get("note"))
     if note != "—":
         body += f"<p><strong>Nota:</strong> {escape(note)}</p>"
@@ -2545,115 +2558,85 @@ def finish_label(color_interior: object, color_exterior: object, resolved: objec
     return _finish(color_interior, color_exterior)
 
 
+def _internal_title(payload, title, code):
+    project = _object(payload.get("project"), "invalid_invoice_project")
+    cells = [("Proyecto", project.get("code")), ("Documento", title), ("Número", code),
+             ("Revisión", payload.get("revision_code")), ("Fecha", _cldate(payload.get("issued_at"))),
+             ("Huella BOM", str(payload.get("bom_hash") or "Sin dato")[:12])]
+    footer = ''.join(f'<div class="tb-cell"><span class="tb-label">{label}</span><span class="tb-value">{escape(_value(value))}</span></div>' for label, value in cells)
+    footer += '<div class="tb-cell"><span class="tb-label">Página</span><span class="tb-value"><span class="pg"></span></span></div>'
+    org = payload.get("organization") or {}
+    issuer = " · ".join(str(org.get(field) or "Sin dato") for field in ("name", "tax_id", "giro", "brand_address", "brand_phone", "brand_email"))
+    receiver = " · ".join(str(project.get(field) or "Sin dato") for field in ("client_name", "client_rut", "client_giro", "client_address", "client_comuna"))
+    return (f'<main><div class="titleblock">{footer}</div><div class="masthead">{_MITER}{_brand_block(org)}'
+            f'<div class="meta"><strong>{escape(code)}</strong><br>{escape(_cldate(payload.get("issued_at")))}</div></div>'
+            f'<div class="rule-stack"></div><h1>{title}</h1><p>{escape(INTERNAL_LEGEND)}</p>'
+            f'<p><strong>Emisor:</strong> {escape(issuer)}</p><p><strong>Receptor:</strong> {escape(receiver)}</p>')
+
+
+def _internal_detail(payload, currency):
+    result = (payload.get("pricing") or {}).get("result") or {}
+    details = {str(item["position_index"]): item for item in result.get("line_detail") or []}
+    lines, values, notes = [], [], []
+    positions = payload.get("positions") or []
+    for position in positions:
+        detail = details.get(str(position.get("position_index")), {})
+        value = None
+        if position.get("price_net") is not None:
+            value = quotation_line(quantity=int(position["quantity"]), net=_num(position["price_net"]), currency=currency,
+                original_unit=_num(detail["unit_price"]) if detail.get("unit_price") is not None else None,
+                discount=_num(position.get("discount_pct") or "0"))
+            values.append(value)
+        description = _product_caption(position)
+        if position.get("width_mm") is not None and position.get("height_mm") is not None:
+            description += f" · {_survey_dim(position['width_mm'])} × {_survey_dim(position['height_mm'])} mm"
+        if position.get("location_tag"):
+            description += " · " + str(position["location_tag"])
+        lines.append([position.get("position_index"), description, position.get("quantity"),
+            _money(value.unit_net, currency) if value else "Sin dato · sin precio sellado",
+            _money(value.net, currency) if value else "Sin dato · sin precio sellado"])
+        if value and value.adjustment:
+            adjustment = _money(value.adjustment, currency).replace("-", "−")
+            notes.append(f'<p>Posición {escape(str(position.get("position_index")))}: cantidad × unitario + ajuste de moneda '
+                         f'<span class="dimension">{escape(adjustment)}</span> = total neto sellado.</p>')
+    html = "<h2>Detalle</h2>" + _table(["Posición", "Descripción", "Cantidad", "Unitario neto", "Total neto"], lines,
+        ["", "", "dimension", "dimension", "dimension"]) if lines else "<p>Sin detalle por posición en esta emisión histórica.</p>"
+    return html + "".join(notes), values if len(values) == len(positions) else None
+
+
+def _internal_totals(deal, currency, lines):
+    rows = []
+    if lines is not None:
+        summary = quotation_summary(lines, _num(deal["total_net"]))
+        if summary.before_discount is not None:
+            rows += [["Neto antes de descuento", _money(summary.before_discount, currency)],
+                     ["Descuento", _money(summary.discount, currency)]]
+        else:
+            rows += [["Descuento", "Sin dato · emisión sin desglose anterior"]]
+    net, tax = _num(deal["total_net"]), _num(deal["total_tax"])
+    rate = tax_percent(net=net, tax=tax)
+    label = "IVA " + _survey_dim(rate) + " %" if rate is not None else "IVA · tasa sin dato"
+    rows += [["Neto", _money(net, currency)], [label, _money(tax, currency)],
+             ["Total · " + currency, _money(deal["total_gross"], currency)]]
+    return "<h2>Totales</h2>" + _table(["Concepto", "Monto"], rows, ["", "dimension"])
+
+
 def _invoice_body(payload: dict[str, object]) -> str:
     project = _object(payload.get("project"), "invalid_invoice_project")
     deal = _object(payload.get("deal"), "invalid_invoice_deal")
     balance = _object(payload.get("balance"), "invalid_invoice_balance")
-    positions = payload.get("positions") or []
-    issued_at = _value(payload.get("issued_at"))
-    invoice_code = _value(payload.get("invoice_code"))
-    revision = _value(payload.get("revision_code"))
-    currency = _value(project.get("currency"))
-    organization = payload.get("organization")
-    titleblock = (
-        '<div class="titleblock">'
-        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
-        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
-        '<span class="tb-value">Factura</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Factura</span>'
-        f'<span class="tb-value">{escape(invoice_code)}</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
-        f'<div class="tb-cell tb-wide"><span class="tb-label">Revisión</span>'
-        f'<span class="tb-value">{escape(revision)}</span></div>'
-        '<div class="tb-cell"><span class="tb-label">Página</span>'
-        '<span class="tb-value"><span class="pg"></span></span></div>'
-        "</div>"
-    )
-    body = (
-        f'<main>{titleblock}'
-        f'<div class="masthead">{_MITER}{_brand_block(organization)}'
-        '<div class="meta">'
-        f"<strong>{escape(invoice_code)}</strong><br>"
-        f"Factura<br>{escape(_cldate(issued_at))}</div></div>"
-        '<div class="rule-stack"></div>'
-        "<h1>Factura</h1>"
-        '<section class="hero"><p>Facturar a</p>'
-        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
-        f"<p>RUT: {escape(_value(project.get('client_rut')))}"
-        + (
-            f" · {escape(_value(project.get('client_giro')))}"
-            if _value(project.get("client_giro")) != "—"
-            else ""
-        )
-        + (
-            f" · {escape(_value(project.get('client_address')))}"
-            if _value(project.get("client_address")) != "—"
-            else (
-                f" · {escape(_value(project.get('client_comuna')))}"
-                if _value(project.get("client_comuna")) != "—"
-                else ""
-            )
-        )
-        + "</p>"
-        f'<p class="total">Total: {escape(_money(deal.get("total_gross"), currency))}</p>'
-        '<p style="font-size:7pt;color:#727D82">Documento comercial interno — '
-        "no constituye documento tributario SII.</p></section>"
-    )
-    if positions:
-        body += (
-            "<h2>Detalle</h2>"
-            + _table(
-                ["Posición", "Tipología", "Medidas (mm)", "Cantidad", "Neto"],
-                [
-                    [
-                        position.get("position_index"),
-                        _TYPOLOGY_ES.get(
-                            _value(position.get("typology")),
-                            _value(position.get("typology")),
-                        ),
-                        f"{_value(position.get('width_mm'))}\u00a0×\u00a0"
-                        f"{_value(position.get('height_mm'))}"
-                        + (
-                            f" · {_value(position.get('location_tag'))}"
-                            if _value(position.get("location_tag")) != "—"
-                            else ""
-                        ),
-                        position.get("quantity"),
-                        (
-                            _money(position.get("price_net"), currency)
-                            if position.get("price_net") not in (None, "")
-                            else "—"
-                        ),
-                    ]
-                    for position in positions
-                ],
-                ["", "", "", "dimension", "dimension"],
-            )
-        )
-    payment_terms = _value(project.get("payment_terms"))
-    if payment_terms != "—":
-        body += f"<p><strong>Condiciones de pago:</strong> {escape(payment_terms)}</p>"
-    body += (
-        "<h2>Totales</h2>"
-        + _table(
-            ["Neto", "IVA", "Total", "Abonado", "Saldo"],
-            [
-                [
-                    _money(deal.get("total_net"), currency),
-                    _money(deal.get("total_tax"), currency),
-                    _money(deal.get("total_gross"), currency),
-                    _money(balance.get("collected"), currency),
-                    _money(balance.get("amount_due"), currency),
-                ]
-            ],
-            ["dimension", "dimension", "dimension", "dimension", "dimension"],
-        )
-        + "<div class=\"signoff\"><div class=\"signature\"></div>"
-        + "<p class=\"muted\">Emitido por / Recibido conforme</p></div></main>"
-    )
-    return body
+    currency = str(project.get("currency") or deal.get("currency") or "CLP")
+    title = "Boleta interna" if payload.get("document_kind") == "BOLETA" else "Factura interna"
+    body = _internal_title(payload, title, _value(payload.get("invoice_code")))
+    detail, lines = _internal_detail(payload, currency)
+    body += detail + _internal_totals(deal, currency, lines)
+    body += _table(["Cobrado al emitir", "Saldo al emitir"], [[_money(balance.get("collected"), currency),
+        _money(balance.get("amount_due"), currency)]], ["dimension", "dimension"])
+    if balance.get("includes_simulation"):
+        body += '<p><strong>El cobrado y saldo incluyen pagos simulados.</strong> Son evidencia de una prueba; no acreditan dinero real.</p>'
+    if project.get("payment_terms"):
+        body += f'<p><strong>Condiciones de pago:</strong> {escape(str(project["payment_terms"]))}</p>'
+    return body + '<div class="signoff"><div class="signature"></div><p class="muted">Emitido por / Recibido conforme</p></div></main>'
 
 
 def render_project_invoice(
@@ -2676,136 +2659,24 @@ def render_project_invoice(
 
 def _credit_note_body(payload: dict[str, object]) -> str:
     invoice = _object(payload.get("invoice"), "invalid_credit_note_invoice")
-    project = _object(payload.get("project"), "invalid_credit_note_project")
     deal = _object(payload.get("deal"), "invalid_credit_note_deal")
-    positions = payload.get("positions") or []
-    issued_at = _value(payload.get("issued_at"))
-    credit_code = _value(payload.get("credit_code"))
-    invoice_code = _value(invoice.get("invoice_code"))
-    revision = _value(payload.get("revision_code"))
-    currency = _value((deal or {}).get("currency")) or _value(project.get("currency"))
-    organization = payload.get("organization")
-    # Sealed credit: an explicit amount stays partial; legacy payloads without
-    # the field credited the full invoice.
-    credited = payload.get("credit_amount_gross")
-    if credited in (None, ""):
-        credited = deal.get("total_gross")
-    partial = payload.get("credit_partial") is True
-    titleblock = (
-        '<div class="titleblock">'
-        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
-        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
-        '<span class="tb-value">Nota de crédito</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">N. de crédito</span>'
-        f'<span class="tb-value">{escape(credit_code)}</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
-        f'<div class="tb-cell tb-wide"><span class="tb-label">Revisión</span>'
-        f'<span class="tb-value">{escape(revision)}</span></div>'
-        '<div class="tb-cell"><span class="tb-label">Página</span>'
-        '<span class="tb-value"><span class="pg"></span></span></div>'
-        "</div>"
-    )
-    body = (
-        f'<main>{titleblock}'
-        f'<div class="masthead">{_MITER}{_brand_block(organization)}'
-        '<div class="meta">'
-        f"<strong>{escape(credit_code)}</strong><br>"
-        f"Nota de crédito<br>{escape(_cldate(issued_at))}</div></div>"
-        '<div class="rule-stack"></div>'
-        "<h1>Nota de crédito</h1>"
-        '<section class="hero"><p>Acreditar a</p>'
-        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
-        f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
-        f'<p class="total">Crédito: {escape(_money(credited, currency))}</p></section>'
-    )
-    reference_verb = "abono parcial de la Factura" if partial else "anula Factura"
-    body += (
-        f"<p><strong>Referencia:</strong> {reference_verb} {escape(invoice_code)}"
-        + (
-            f" emitida el {escape(_cldate(invoice.get('issued_at')))}"
-            if invoice.get("issued_at")
-            else ""
-        )
-        + "</p>"
-    )
-    if partial:
-        body += (
-            "<p><strong>Crédito parcial:</strong> la factura queda vigente por "
-            f"el saldo de {escape(_money(_num(deal.get('total_gross')) - _num(credited), currency))}.</p>"
-        )
-    reason = _value(payload.get("reason"))
-    if reason != "—":
-        body += f"<p><strong>Motivo:</strong> {escape(reason)}</p>"
-    if positions:
-        body += (
-            "<h2>Detalle</h2>"
-            + _table(
-                ["Posición", "Tipología", "Medidas (mm)", "Cantidad", "Neto"],
-                [
-                    [
-                        position.get("position_index"),
-                        _TYPOLOGY_ES.get(
-                            _value(position.get("typology")),
-                            _value(position.get("typology")),
-                        ),
-                        f"{_value(position.get('width_mm'))}\u00a0×\u00a0"
-                        f"{_value(position.get('height_mm'))}"
-                        + (
-                            f" · {_value(position.get('location_tag'))}"
-                            if _value(position.get("location_tag")) != "—"
-                            else ""
-                        ),
-                        position.get("quantity"),
-                        (
-                            _money(position.get("price_net"), currency)
-                            if position.get("price_net") not in (None, "")
-                            else "—"
-                        ),
-                    ]
-                    for position in positions
-                ],
-                ["", "", "", "dimension", "dimension"],
-            )
-        )
-    if partial:
-        # Gross-level truth only — a partial credit's net/IVA split is the
-        # fiscal counter-document's job (DTE-61), not this internal note's.
-        body += (
-            "<h2>Totales acreditados</h2>"
-            + _table(
-                ["Monto acreditado", "Total factura", "Saldo de la factura"],
-                [
-                    [
-                        _money(credited, currency),
-                        _money(deal.get("total_gross"), currency),
-                        _money(_num(deal.get("total_gross")) - _num(credited), currency),
-                    ]
-                ],
-                ["dimension", "dimension", "dimension"],
-            )
-        )
-    else:
-        body += (
-            "<h2>Totales acreditados</h2>"
-            + _table(
-                ["Neto", "IVA", "Total"],
-                [
-                    [
-                        _money(deal.get("total_net"), currency),
-                        _money(deal.get("total_tax"), currency),
-                        _money(deal.get("total_gross"), currency),
-                    ]
-                ],
-                ["dimension", "dimension", "dimension"],
-            )
-        )
-    body += (
-        "<div class=\"signoff\"><div class=\"signature\"></div>"
-        + "<p class=\"muted\">Emitido por / Recibido conforme</p></div></main>"
-    )
-    return body
+    project = _object(payload.get("project"), "invalid_credit_note_project")
+    currency = str(deal.get("currency") or project.get("currency") or "CLP")
+    credited = _num(payload.get("credit_amount_gross") or deal["total_gross"])
+    net, tax = credit_split(gross=_num(deal["total_gross"]), net=_num(deal["total_net"]), credit=credited, currency=currency)
+    balance = collection_summary(total=_num(deal["total_gross"]), currency=currency, milestones=[],
+        payments=[CollectionPayment("credit", credited)], today=date.today()).balance
+    body = _internal_title(payload, "Nota de crédito interna", _value(payload.get("credit_code")))
+    verb = "Abono parcial del documento" if payload.get("credit_partial") else "Anula documento"
+    body += f'<p><strong>Referencia:</strong> {verb} {escape(_value(invoice.get("invoice_code")))} · {escape(_cldate(invoice.get("issued_at")))}</p>'
+    body += f'<p><strong>Motivo:</strong> {escape(str(payload.get("reason") or "Sin dato · motivo no registrado"))}</p>'
+    detail, _ = _internal_detail(payload, currency)
+    body += detail + '<p>El detalle corresponde al documento original; el monto acreditado figura a continuación.</p>'
+    body += _internal_totals({"total_net": net, "total_tax": tax, "total_gross": credited}, currency, None)
+    body += _table(["Monto acreditado", "Total documento original", "Saldo del documento"],
+        [[_money(credited, currency), _money(deal["total_gross"], currency), _money(balance, currency)]],
+        ["dimension", "dimension", "dimension"])
+    return body + '<div class="signoff"><div class="signature"></div><p class="muted">Emitido por / Recibido conforme</p></div></main>'
 
 
 def render_credit_note(

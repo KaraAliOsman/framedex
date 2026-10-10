@@ -163,6 +163,8 @@ SPECTACULAR_SETTINGS = {
         "WhiteColorEnum": ["WHITE"],
         "PaymentStatusEnum": ["NO_DEAL", "PENDING", "PARTIAL", "PAID"],
         "PaymentKindEnum": ["ANTICIPO", "PARCIAL", "SALDO"],
+        "CollectionMilestoneStatusEnum": ["PENDING", "DUE", "OVERDUE", "PAID"],
+        "FiscalSimulationStatusEnum": ["ACCEPTED", "WARNINGS", "REJECTED"],
         "VerticalReferenceEnum": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"],
         "KitOpeningTypeEnum": ["AWNING", "DOOR", "SLIDING", "TILT", "TILT_TURN", "TURN"],
         "ImportOpeningTypeEnum": [

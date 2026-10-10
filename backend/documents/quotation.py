@@ -367,7 +367,11 @@ def render(snapshot: dict, *, portal_url: str | None = None) -> str:
             amounts = payment_amounts(_num(project["total_price_gross"]), [_num(item["share"]) for item in schedule], currency)
             body += '<table><caption>Calendario de pagos</caption><colgroup><col style="width:62%"><col style="width:38%"></colgroup><thead><tr><th>Hito</th><th>Monto</th></tr></thead><tbody>'
             for item, amount in zip(schedule, amounts, strict=True):
-                body += f'<tr><td>{escape(item["label"])} · <span class="q-num">{escape(_discount_label(item["share"]))}</span></td><td class="q-num">{escape(_money(amount, currency))}</td></tr>'
+                due = (_cldate(item["due_on"]) if item.get("due_on") else
+                       "Al aprobar" if item.get("due_event") == "APPROVAL" else
+                       "Contra entrega completa" if item.get("due_event") == "DELIVERY" else
+                       "Sin fecha de vencimiento declarada")
+                body += f'<tr><td>{escape(item["label"])} · <span class="q-num">{escape(_discount_label(item["share"]))}</span><br>{escape(due)}</td><td class="q-num">{escape(_money(amount, currency))}</td></tr>'
             body += '</tbody></table>'
     body += '</div><div class="q-terms">'
     for label, field in [("Plazo de entrega", "delivery_text"), ("Instalación", "installation_text"), ("Exclusiones", "exclusions"), ("Garantía", "warranty"), ("Jurisdicción", "jurisdiction")]:

@@ -3,8 +3,11 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: fc0c685146b330878ed6712a153f995fda22735c
+verified_ref: 9838e8bd9af1116e8797299b0b878a042415d6f7
 sources:
+  - P11 gates locales finales sobre 9838e8bd9af1116e8797299b0b878a042415d6f7, 2026-10-10
+  - P11 implementación 2c73bf96cc71b30fff7f774ec4b1aaaaaaf5edb2, gates locales y navegador, 2026-10-10
+  - docs/redesign/P11-ACEPTACION.md
   - P15 PR https://github.com/KaraAliOsman/framedex/pull/141, CI 4/4 sobre f19fb3b291a6efeb6f49b56e254395900c4422df, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38029036704, squash fc0c685146b330878ed6712a153f995fda22735c, 2026-10-10
   - P15 implementación 56a9032fee741e279579ed532a271bc784a6e6bc, gates locales y aceptación, 2026-10-10
   - docs/redesign/P15-ACEPTACION.md
@@ -57,6 +60,24 @@ sources:
 ---
 
 # Current reality
+
+## P11 · cobranza y evidencia de cobro (10-10-2026)
+
+El acuerdo sellado y sus movimientos alimentan calendario, saldo, exceso y
+vencido del motor. Cobranza ocupa una vista de proyecto; F6 explica el origen
+del saldo. Fecha/actor y recibos se conservan. Flow simulado se distingue de
+dinero real; callbacks verificados se serializan por proyecto y enlace.
+Factura, boleta y NC internas tienen detalle humano y leyenda tributaria;
+folios SIM viven en evidencia separada. MiMo real prepara el recordatorio,
+el dueño confirma y el worker vuelve a comprobar la deuda antes de SMTP.
+
+La aceptación conserva 41 vistas de matriz y 24 oficiales sin hallazgos,
+15 PDF con SHA verificado y ocho artefactos históricos idénticos.
+Lint/tipos/OpenAPI/orval/build y tests completos pasan: 856 motor (+2 xfail),
+1.464 backend y 965 frontend. Database Gate pasa con 1.285 pgTAP,
+483 integraciones, 19 E2E y upgrades PostgreSQL 16. CI y squash se registran
+al integrar; no se afirma merge antes de esos resultados.
+Véase [cobranza](../product/collections.md) y su aceptación.
 
 ## P15 · compras e inventario integrados y verificados (10-10-2026)
 

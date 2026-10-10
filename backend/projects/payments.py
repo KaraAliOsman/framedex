@@ -7,13 +7,16 @@ the ledger keeps the full history.
 """
 
 import json
+from datetime import date, datetime, time
 from decimal import Decimal
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from django.db import transaction
 from django.utils import timezone
 
 from authentication.errors import contract_error
+from dekopen_engine.collections import CollectionPayment, PaymentMilestone, collection_summary
 from documents.repository import documentary_backend
 from pricing.repository import rows
 from projects import sii
@@ -32,6 +35,8 @@ def _payment_public(row, receipt=None):
         "reference": row["reference"],
         "note": row["note"],
         "recorded_by": str(row["recorded_by"]) if row["recorded_by"] else None,
+        "actor_label": row.get("actor_label"),
+        "simulated": bool(row.get("simulated")),
         "recorded_at": row["recorded_at"].isoformat()
         if hasattr(row["recorded_at"], "isoformat")
         else row["recorded_at"],
@@ -51,7 +56,7 @@ def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
     priced. Zero-valued live totals without that authority are not a deal."""
     with documentary_backend():
         versions = rows(
-            "SELECT revision_code,snapshot_json::text AS snapshot_json "
+            "SELECT id,revision_code,snapshot_json::text AS snapshot_json "
             "FROM public.project_versions "
             "WHERE org_id=%s AND project_id=%s ORDER BY emitted_at DESC,id DESC LIMIT 1",
             [str(org_id), str(project_id)],
@@ -67,6 +72,10 @@ def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
                 "total": Decimal(str(gross)),
                 "currency": (sealed_project or {}).get("currency") or "CLP",
                 "sealed_revision": versions[0]["revision_code"],
+                "version_id": str(versions[0]["id"]) if versions[0].get("id") else None,
+                "commercial_terms": (sealed_project or {}).get("commercial_terms") or {},
+                "project": sealed_project,
+                "bom_hash": snapshot.get("bom_hash"),
             }
     with documentary_backend():
         applied = rows(
@@ -85,7 +94,68 @@ def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
     }
 
 
+def collection_projection(*, org_id, project_id, deal, payments, today=None):
+    """Dates come from declarations or the explicitly named business event."""
+    terms = deal.get("commercial_terms", {}) if deal else {}
+    if isinstance(terms, str):
+        terms = json.loads(terms)
+    declared = terms.get("payment_schedule", [])
+    approval_on = delivery_on = None
+    if any(m.get("due_event") == "APPROVAL" and not m.get("due_on") for m in declared):
+        with documentary_backend():
+            approvals = rows("SELECT decided_at FROM public.customer_approvals "
+                             "WHERE org_id=%s AND project_id=%s AND project_version_id=%s "
+                             "AND status='APPROVED' ORDER BY decided_at,id LIMIT 1",
+                             [str(org_id), str(project_id), deal.get("version_id")])
+        if approvals and approvals[0]["decided_at"]:
+            value = approvals[0]["decided_at"]
+            stamp = datetime.fromisoformat(value) if isinstance(value, str) else value
+            approval_on = stamp.astimezone(ZoneInfo("America/Santiago")).date()
+    if any(m.get("due_event") == "DELIVERY" and not m.get("due_on") for m in declared):
+        # Against delivery becomes due only when the complete delivery event
+        # exists. An agenda estimate cannot turn an undelivered sale overdue.
+        with documentary_backend():
+            from production.service import _delivery_unit_set, _manifest_unit_indexes
+
+            orders = rows("SELECT o.id,o.payload_json FROM public.orders o WHERE o.org_id=%s "
+                          "AND o.project_id=%s AND o.project_version_id=%s AND o.order_type='WORKSHOP_OT' "
+                          "AND o.status<>'CANCELLED' AND NOT EXISTS(SELECT 1 FROM public.orders r "
+                          "WHERE r.org_id=o.org_id AND r.payload_json->>'remake_of'=o.id::text)",
+                          [str(org_id), str(project_id), deal.get("version_id")])
+            confirmed = []
+            for order in orders:
+                payload = order["payload_json"]
+                if isinstance(payload, str):
+                    payload = json.loads(payload)
+                manifest = _manifest_unit_indexes(payload)
+                deliveries = rows("SELECT d.unit_indexes,c.created_at FROM public.deliveries d "
+                                  "JOIN public.delivery_confirmations c ON c.delivery_id=d.id AND c.org_id=d.org_id "
+                                  "WHERE d.org_id=%s AND d.order_id=%s AND d.status='DELIVERED'",
+                                  [str(org_id), str(order["id"])])
+                delivered = set()
+                for trip in deliveries:
+                    delivered |= _delivery_unit_set(trip, manifest)
+                if manifest - delivered:
+                    confirmed = []
+                    break
+                confirmed.extend(trip["created_at"] for trip in deliveries)
+        if orders and confirmed:
+            stamps = [datetime.fromisoformat(v) if isinstance(v, str) else v for v in confirmed]
+            delivery_on = max(stamps).astimezone(ZoneInfo("America/Santiago")).date()
+    return collection_summary(
+        total=deal["total"] if deal else None, currency=deal["currency"] if deal else "CLP",
+        milestones=[PaymentMilestone(m["label"], Decimal(str(m["share"])),
+                       date.fromisoformat(str(m["due_on"])) if m.get("due_on") else None, m.get("due_event"))
+                    for m in declared],
+        payments=[CollectionPayment(str(p.get("id", "")), Decimal(str(p["amount"])),
+                       p.get("voided_at") is None, bool(p.get("simulated"))) for p in payments],
+        today=today or timezone.now().astimezone(ZoneInfo("America/Santiago")).date(),
+        approval_on=approval_on, delivery_on=delivery_on)
+
+
 def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
+    from projects.credit_notes import _credit_note_public
+
     with documentary_backend():
         payments = rows(
             "SELECT * FROM public.project_payments "
@@ -101,16 +171,9 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
             )
         }
         credit_notes = {
-            str(note["invoice_id"]): {
-                "id": str(note["id"]),
-                "credit_code": note["credit_code"],
-                "invoice_id": str(note["invoice_id"]),
-                "created_at": note["created_at"].isoformat()
-                if hasattr(note["created_at"], "isoformat")
-                else note["created_at"],
-            }
+            str(note["invoice_id"]): _credit_note_public(note)
             for note in rows(
-                "SELECT id,invoice_id,credit_code,created_at "
+                "SELECT id,invoice_id,project_id,credit_code,payload_json,created_at "
                 "FROM public.project_credit_notes "
                 "WHERE org_id=%s AND project_id=%s",
                 [str(org_id), str(project_id)],
@@ -142,6 +205,10 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
             {
                 "id": str(invoice["id"]),
                 "invoice_code": invoice["invoice_code"],
+                "document_kind": (
+                    invoice["payload_json"] if isinstance(invoice["payload_json"], dict)
+                    else json.loads(invoice["payload_json"])
+                ).get("document_kind", "FACTURA"),
                 "project_id": str(project_id),
                 "revision_code": (
                     invoice["payload_json"]
@@ -172,32 +239,29 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
                 [str(org_id), str(project_id)],
             )
         ]
-    collected = sum(
-        (Decimal(str(p["amount"])) for p in payments if p["voided_at"] is None),
-        Decimal("0"),
-    )
     deal = _deal(org_id, project_id, project)
-    total = deal["total"] if deal else None
-    balance = (total - collected) if total is not None else None
-    if deal is None:
-        status = "NO_DEAL"
-    elif collected <= 0:
-        status = "PENDING"
-    elif balance > 0:
-        status = "PARTIAL"
-    else:
-        status = "PAID"
+    result = collection_projection(org_id=org_id, project_id=project_id, deal=deal, payments=payments)
+    from projects.collection_settings import status as integration_status
     return {
         "payments": [
             _payment_public(p, receipts.get(str(p["id"]))) for p in payments
         ],
         "invoices": invoices,
-        "collected": str(collected),
-        "quote_total_gross": str(total) if total is not None else None,
-        "balance": str(balance) if balance is not None else None,
+        "collected": str(result.collected),
+        "quote_total_gross": str(result.total) if result.total is not None else None,
+        "balance": str(result.balance) if result.balance is not None else None,
         "currency": deal["currency"] if deal else "CLP",
-        "status": status,
+        "status": result.status,
         "sealed_revision": deal["sealed_revision"] if deal else None,
+        "collected_percent": str(result.percent) if result.percent is not None else None,
+        "excess": str(result.excess), "overdue": str(result.overdue),
+        "includes_simulation": result.includes_simulation,
+        "schedule": [{"label": m.label, "share": str(m.share), "amount": str(m.amount),
+                      "collected": str(m.collected), "remaining": str(m.remaining),
+                      "due_on": m.due_on.isoformat() if m.due_on else None,
+                      "due_source": m.due_source, "status": m.status} for m in result.milestones],
+        "source": "Total de la revisión emitida menos pagos vigentes; los recibos anulados no se suman. El motor asigna los cobros en el orden del acuerdo sellado.",
+        "integrations": integration_status(org_id),
     }
 
 
@@ -259,7 +323,11 @@ def resolve_or_insert_payment(
             "payment_fractional_currency",
             "Los montos en CLP no llevan decimales.",
         )
+    if data.get("recorded_at") and data.get("recorded_on"):
+        raise contract_error(400, "payment_date_ambiguous", "Indica una sola fecha de cobro.")
     recorded_at = data.get("recorded_at")
+    if data.get("recorded_on"):
+        recorded_at = datetime.combine(data["recorded_on"], time.min, ZoneInfo("America/Santiago"))
     if recorded_at is not None and recorded_at > timezone.now():
         raise contract_error(
             422,
@@ -274,7 +342,10 @@ def resolve_or_insert_payment(
         "WHERE org_id=%s AND project_id=%s AND voided_at IS NULL",
         [str(org_id), str(project_id)],
     )
-    balance = deal["total"] - Decimal(str(collected_rows[0]["collected"]))
+    collected = Decimal(str(collected_rows[0]["collected"]))
+    balance = collection_summary(total=deal["total"], currency=deal["currency"], milestones=[],
+        payments=[CollectionPayment("ledger", collected)] if collected > 0 else [],
+        today=timezone.localdate()).balance
     if Decimal(str(data["amount"])) > balance:
         raise contract_error(
             422,
@@ -297,7 +368,7 @@ def resolve_or_insert_payment(
             data.get("reference") or None,
             data.get("note") or None,
             str(actor_id),
-            data.get("recorded_at") or timezone.now(),
+            recorded_at or timezone.now(),
         ],
     )
     if not payment:

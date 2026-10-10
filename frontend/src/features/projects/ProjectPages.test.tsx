@@ -275,6 +275,14 @@ async function issueReviewedPdf(): Promise<void> {
 }
 
 beforeEach(() => {
+  // jsdom has no layout observer; browser coverage measures the actual row size.
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
   vi.resetAllMocks();
   window.sessionStorage.clear();
   vi.stubGlobal("crypto", webcrypto);
@@ -311,6 +319,23 @@ beforeEach(() => {
       currency: "CLP",
       status: "NO_DEAL",
       sealed_revision: null,
+      collected_percent: null,
+      excess: "0",
+      overdue: "0",
+      includes_simulation: false,
+      schedule: [],
+      source: "Total sellado menos pagos vigentes",
+      integrations: {
+        simulation_enabled: true,
+        payment_link_days: 7,
+        sii_active: false,
+        sii_certified: false,
+        flow_connected: false,
+        sii_connected: false,
+        flow_environment: null,
+        flow_instructions: "Conecta Flow en Ajustes",
+        sii_instructions: "Conecta SII en Ajustes",
+      },
     }),
   );
   vi.mocked(projectPaymentLinksList).mockResolvedValue(response(200, { links: [] }));
@@ -1607,6 +1632,8 @@ it("lists human timeline events once the activity section opens", async () => {
           reference: null,
           note: null,
           recorded_by: "estimador@taller.cl",
+          actor_label: "Estimador",
+          simulated: false,
           recorded_at: "2026-09-21T09:00:00Z",
           voided_at: null,
           void_reason: null,
@@ -1620,6 +1647,23 @@ it("lists human timeline events once the activity section opens", async () => {
       currency: "CLP",
       status: "PARTIAL",
       sealed_revision: "REV-A",
+      collected_percent: "50.0",
+      excess: "0",
+      overdue: "0",
+      includes_simulation: false,
+      schedule: [],
+      source: "Total sellado menos pagos vigentes",
+      integrations: {
+        simulation_enabled: true,
+        payment_link_days: 7,
+        sii_active: false,
+        sii_certified: false,
+        flow_connected: false,
+        sii_connected: false,
+        flow_environment: null,
+        flow_instructions: "Conecta Flow en Ajustes",
+        sii_instructions: "Conecta SII en Ajustes",
+      },
     }),
   );
 

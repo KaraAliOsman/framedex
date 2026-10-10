@@ -1399,3 +1399,49 @@ p.handle-pending {
   background: var(--theme-warning-soft);
   border: 1px solid var(--theme-warning);
 }
+.collection-calendar dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+.collection-calendar dl > div {
+  border-top: 1px solid var(--theme-border);
+  padding-top: var(--space-2);
+}
+.collection-calendar dt {
+  font-weight: 600;
+}
+.collection-calendar dd {
+  margin: var(--space-1) 0;
+}
+.collection-source,
+.collection-simulations {
+  border-top: 1px solid var(--theme-border);
+  padding: var(--space-2) 0;
+}
+.collection-reminder {
+  border-left: 2px solid var(--theme-border);
+  padding: var(--space-3);
+}
+.collection-reminder__body {
+  white-space: pre-wrap;
+}
+.collection-simulation-warning {
+  border-left: 2px solid var(--theme-border);
+  padding-left: var(--space-2);
+  font-weight: 600;
+}
+.collection-table {
+  max-width: 100%;
+}
+.projects-payments .payments-table td {
+  overflow-wrap: anywhere;
+}
+.projects-payments .payments-table th {
+  white-space: normal;
+}
+.projects-payments .ui-data-table td:first-child,
+.projects-payments .ui-data-table td:nth-child(6) button {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}

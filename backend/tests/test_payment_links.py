@@ -108,6 +108,9 @@ def _payment_row(**over):
 def _patch_env(monkeypatch, rows_impl, client=None):
     monkeypatch.setattr(payment_links, "documentary_backend", _noop)
     monkeypatch.setattr(payment_links.transaction, "atomic", _noop)
+    from projects import collection_settings, provider_scope
+    monkeypatch.setattr(collection_settings, "preferences", lambda _: collection_settings.DEFAULTS)
+    monkeypatch.setattr(provider_scope, "provider_scope", _noop)
 
     def with_collected(sql, params=None):
         if "COALESCE(SUM(amount)" in sql:
@@ -255,7 +258,7 @@ def test_confirm_settles_payment_into_ledger(monkeypatch):
             return [{"org_id": link["org_id"]}]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
-        if "FOR UPDATE" in sql:
+        if "FOR UPDATE" in sql or "SELECT project_id FROM public.project_payment_links" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             inserts.append(sql)
@@ -286,7 +289,7 @@ def test_confirm_seals_frozen_total_when_repriced(monkeypatch):
             return [{"org_id": link["org_id"]}]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
-        if "FOR UPDATE" in sql:
+        if "FOR UPDATE" in sql or "SELECT project_id FROM public.project_payment_links" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return [_payment_row()]
@@ -317,7 +320,7 @@ def test_confirm_settles_on_frozen_deal_when_pricing_reset(monkeypatch):
             return [{"org_id": link["org_id"]}]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
-        if "FOR UPDATE" in sql:
+        if "FOR UPDATE" in sql or "SELECT project_id FROM public.project_payment_links" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return [_payment_row()]
@@ -345,7 +348,7 @@ def test_confirm_settles_on_live_deal_for_legacy_link(monkeypatch):
             return [{"org_id": link["org_id"]}]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
-        if "FOR UPDATE" in sql:
+        if "FOR UPDATE" in sql or "SELECT project_id FROM public.project_payment_links" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return [_payment_row()]
@@ -375,7 +378,7 @@ def test_confirm_settles_without_any_deal(monkeypatch):
             return [{"org_id": link["org_id"]}]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
-        if "FOR UPDATE" in sql:
+        if "FOR UPDATE" in sql or "SELECT project_id FROM public.project_payment_links" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return [_payment_row()]
@@ -400,7 +403,7 @@ def test_confirm_rejects_binding_mismatch(monkeypatch):
             return [{"org_id": link["org_id"]}]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
-        if "FOR UPDATE" in sql:
+        if "FOR UPDATE" in sql or "SELECT project_id FROM public.project_payment_links" in sql:
             return [link]
         return []
 
@@ -424,7 +427,7 @@ def test_confirm_paid_link_is_idempotent(monkeypatch):
             return [{"org_id": link["org_id"]}]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
-        if "FOR UPDATE" in sql:
+        if "FOR UPDATE" in sql or "SELECT project_id FROM public.project_payment_links" in sql:
             return [link]
         return []
 
@@ -442,7 +445,7 @@ def test_confirm_failed_observation_marks_link_failed(monkeypatch):
             return [{"org_id": link["org_id"]}]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
-        if "FOR UPDATE" in sql:
+        if "FOR UPDATE" in sql or "SELECT project_id FROM public.project_payment_links" in sql:
             return [link]
         if "UPDATE public.project_payment_links" in sql:
             return [_link(status="FAILED")]

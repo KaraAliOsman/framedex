@@ -82,6 +82,7 @@ from projects.serializers import (
     ResetPricingSerializer,
     SuccessorRequestSerializer,
 )
+from projects.collection_serializers import InternalDocumentRequestSerializer
 
 READ_ROLES = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
 WRITE_ROLES = ("OWNER", "ESTIMATOR")
@@ -598,16 +599,17 @@ class ProjectInvoicesView(APIView):
 
     @extend_schema(
         operation_id="project_invoice_emit",
-        request=None,
+        request=InternalDocumentRequestSerializer,
         responses={201: ProjectInvoiceSerializer, **ERRORS},
         **SCHEMA,
     )
     def post(self, request, project_id):
+        data = validate(InternalDocumentRequestSerializer, request.data or {})
         with scope(request, WRITE_ROLES) as (token, _, org):
             project = service.project_row(org, project_id)
             return response(
                 invoices.issue_invoice(
-                    org_id=org, project=project, actor_id=token.user_id
+                    org_id=org, project=project, actor_id=token.user_id, document_kind=data["document_kind"]
                 ),
                 status=201,
             )

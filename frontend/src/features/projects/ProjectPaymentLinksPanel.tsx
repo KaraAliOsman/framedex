@@ -1,47 +1,44 @@
-import { StatusBadge } from "../../ui/StatusBadge";
-import { ValidatedForm } from "../../ui/FormValidation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { ApiError } from "../../api/apiMutator";
 import {
-  projectPaymentIntegrationStatus,
   projectPaymentLinkCreate,
   projectPaymentLinkRecover,
   projectPaymentLinksList,
 } from "../../api/generated/dekopen";
 import type {
+  CollectionIntegration,
   PaymentKindEnum,
-  PaymentLink,
   PaymentLinkStatusEnum,
 } from "../../api/generated/models";
-import { t, type TranslationKey } from "../../i18n/es-CL";
-import { formatMoney } from "../money";
-import { formatDate } from "../../format";
-import { compareDecimal, parseDecimalInput } from "../../decimal";
+import { actionErrorDetail } from "../errors";
+import { compareDecimal, decimalInputValue, parseDecimalInput } from "../../decimal";
+import { DateOnly, ErrorState, LoadingState, Money, StatusBadge, MoneyField } from "../../ui";
+import { ValidatedForm } from "../../ui/FormValidation";
 
-const KIND_LABEL: Record<string, TranslationKey> = {
-  ANTICIPO: "projects.paymentKindAnticipo",
-  PARCIAL: "projects.paymentKindParcial",
-  SALDO: "projects.paymentKindSaldo",
+const states: Record<PaymentLinkStatusEnum, string> = {
+  DISPATCHING: "Preparando cobro",
+  PENDING: "Pendiente de pago",
+  PAID: "Pagado",
+  FAILED: "Rechazado",
+  UNCERTAIN: "Resultado por verificar",
+  CANCELLED: "Cancelado",
+  EXPIRED: "Vencido",
 };
-const LINK_STATUS_LABEL: Record<PaymentLinkStatusEnum, TranslationKey> = {
-  DISPATCHING: "projects.paymentLinkStatusDispatching",
-  PENDING: "projects.paymentLinkStatusPending",
-  PAID: "projects.paymentLinkStatusPaid",
-  FAILED: "projects.paymentLinkStatusFailed",
-  UNCERTAIN: "projects.paymentLinkStatusUncertain",
-  CANCELLED: "projects.paymentLinkStatusCancelled",
+const kinds: Record<string, string> = {
+  ANTICIPO: "Anticipo",
+  PARCIAL: "Abono parcial",
+  SALDO: "Saldo",
 };
-
-function formatClp(value: string): string {
-  return formatMoney(value, "CLP");
-}
 
 export function ProjectPaymentLinksPanel({
   projectId,
   orgId,
   canWrite,
   isOwner = false,
+  integration,
+  balance,
   onChanged,
   onDirtyChange,
 }: {
@@ -49,271 +46,252 @@ export function ProjectPaymentLinksPanel({
   orgId: string;
   canWrite: boolean;
   isOwner?: boolean;
+  integration?: CollectionIntegration | null;
+  balance?: string | null;
   onChanged: () => void;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
-  const queryClient = useQueryClient();
-  // Dedupe under react-query: StrictMode double-mounts and the cobranza
-  // summary were each re-firing this list.
-  const linksKey = ["projects", "payment-links", orgId, projectId] as const;
-  const linksQuery = useQuery<PaymentLink[]>({
-    queryKey: linksKey,
+  const options = { headers: { "X-Organization-ID": orgId } };
+  const query = useQuery({
+    queryKey: ["projects", "payment-links", orgId, projectId],
     queryFn: async ({ signal }) => {
-      const response = await projectPaymentLinksList(projectId, {
-        signal,
-        headers: { "X-Organization-ID": orgId },
-      });
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
-      return response.data.links;
+      const result = await projectPaymentLinksList(projectId, { ...options, signal });
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      return result.data.links;
     },
   });
-  const links = linksQuery.data ?? [];
-  const setLinks = (updater: (previous: PaymentLink[]) => PaymentLink[]) =>
-    queryClient.setQueryData(linksKey, updater(linksQuery.data ?? []));
-  // Provider configuration is owner-scoped, independently of ledger access.
-  const integrationQuery = useQuery({
-    queryKey: ["projects", "payment-integration", orgId],
-    enabled: isOwner,
-    queryFn: async ({ signal }) => {
-      const response = await projectPaymentIntegrationStatus({
-        signal,
-        headers: { "X-Organization-ID": orgId },
-      });
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
-      return response.data;
-    },
-    // An absent/unconfigured provider only hides the hint — never fails the list.
-    retry: false,
-  });
-  const integration = integrationQuery.data ?? null;
+  const [showForm, setShowForm] = useState(false);
+  const [simulated, setSimulated] = useState(false);
+  const [kind, setKind] = useState<PaymentKindEnum>("SALDO");
+  const [amount, setAmount] = useState("");
+  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [kind, setKind] = useState<PaymentKindEnum>("ANTICIPO");
-  const [amount, setAmount] = useState("");
-  const [payerEmail, setPayerEmail] = useState("");
-  const [subject, setSubject] = useState("");
-  const [baseline, setBaseline] = useState(kind);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const generation = useRef(0);
-  const requestOptions = { headers: { "X-Organization-ID": orgId } };
-  useEffect(
-    () => () => {
-      generation.current += 1;
-    },
-    [],
+  const operation = useRef("");
+  const live = query.data?.some((link) =>
+    ["PENDING", "UNCERTAIN", "DISPATCHING"].includes(link.status),
   );
-
   useEffect(() => {
-    if (linksQuery.isError) setMessage(t("projects.paymentLinksLoadError"));
-  }, [linksQuery.isError]);
-
-  const formDirty =
-    showForm &&
-    (kind !== baseline ||
-      amount.trim() !== "" ||
-      payerEmail.trim() !== "" ||
-      subject.trim() !== "");
-  useEffect(() => {
-    onDirtyChange?.(formDirty);
-  }, [formDirty, onDirtyChange]);
-
-  async function create(event: FormEvent): Promise<void> {
+    onDirtyChange?.(showForm && (amount !== "" || email !== ""));
+  }, [showForm, amount, email, onDirtyChange]);
+  async function create(event: FormEvent) {
     event.preventDefault();
-    const parsedAmount = parseDecimalInput(amount, 0);
-    if (parsedAmount === null || compareDecimal(parsedAmount, "0") <= 0) {
-      setMessage("Escribe un monto en pesos mayor que cero, sin decimales.");
+    const parsed = parseDecimalInput(amount, 0);
+    if (parsed === null || compareDecimal(parsed, "0") <= 0) {
+      setMessage("Escribe un monto CLP entero mayor que cero.");
       return;
     }
     setBusy(true);
     setMessage("");
     try {
-      const response = await projectPaymentLinkCreate(
+      const result = await projectPaymentLinkCreate(
         projectId,
         {
-          operation_key: crypto.randomUUID(),
+          operation_key: operation.current,
           kind,
-          amount: parsedAmount,
-          payer_email: payerEmail.trim(),
-          ...(subject.trim() ? { subject: subject.trim() } : {}),
+          amount: parsed,
+          payer_email: email.trim(),
+          simulated,
         },
-        requestOptions,
+        options,
       );
-      if (response.status !== 201) throw new ApiError(response.status, response.data);
-      setLinks((previous) => [response.data.link, ...previous]);
+      if (result.status !== 201) throw new ApiError(result.status, result.data);
       setShowForm(false);
-      setAmount("");
-      setPayerEmail("");
-      setSubject("");
-    } catch {
-      setMessage(t("projects.paymentLinkCreateError"));
+      await query.refetch();
+      onChanged();
+    } catch (error) {
+      setMessage(actionErrorDetail(error, "No se preparó el enlace. Revisa el saldo y reintenta."));
     } finally {
       setBusy(false);
     }
   }
-
-  async function copy(link: PaymentLink): Promise<void> {
-    if (!link.url) return;
-    try {
-      await navigator.clipboard.writeText(link.url);
-      setCopiedId(link.id);
-    } catch {
-      setMessage(t("projects.paymentLinkCopyError"));
-    }
+  function open(simulation: boolean) {
+    operation.current = crypto.randomUUID();
+    setAmount(balance ? decimalInputValue(balance).replace(".", ",") : "");
+    setSimulated(simulation);
+    setShowForm(true);
+    setMessage("");
   }
-
-  async function recover(link: PaymentLink): Promise<void> {
+  async function recover(id: string) {
     setBusy(true);
     setMessage("");
     try {
-      const response = await projectPaymentLinkRecover(projectId, link.id, requestOptions);
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
-      setLinks((previous) =>
-        previous.map((item) => (item.id === link.id ? response.data.link : item)),
+      const result = await projectPaymentLinkRecover(projectId, id, options);
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      await query.refetch();
+      onChanged();
+    } catch (error) {
+      setMessage(
+        actionErrorDetail(error, "No se verificó el cobro. Reintenta consultar su estado."),
       );
-      if (response.data.link.status === "PAID") onChanged();
-    } catch {
-      setMessage(t("projects.paymentLinkRecoverError"));
     } finally {
       setBusy(false);
     }
   }
-
-  const configured = integration?.configured === true && integration.enabled === true;
-
   return (
-    <section
-      className="projects-payments payment-links"
-      aria-label={t("projects.paymentLinksTitle")}
-    >
+    <section className="payment-links" aria-labelledby="payment-links-title">
       <div className="projects-actions">
-        <h3>{t("projects.paymentLinksTitle")}</h3>
-        {canWrite && configured && !showForm && (
-          <button
-            type="button"
-            className="primary-action"
-            onClick={() => {
-              setBaseline(kind);
-              setShowForm(true);
-            }}
-            disabled={busy}
-          >
-            {t("projects.paymentLinkCreate")}
-          </button>
+        <h3 id="payment-links-title">Enlaces de pago</h3>
+        {canWrite && !showForm && !live && balance && compareDecimal(balance, "0") > 0 && (
+          <>
+            {integration?.flow_connected && (
+              <button type="button" onClick={() => open(false)} disabled={busy}>
+                Crear enlace Flow
+              </button>
+            )}
+            {integration?.simulation_enabled && (
+              <button type="button" onClick={() => open(true)} disabled={busy}>
+                Crear enlace de prueba
+              </button>
+            )}
+          </>
         )}
       </div>
-      {message && <p className="form-error">{message}</p>}
-      {integration !== null && !configured && (
-        <p className="settings-hint">
-          {isOwner
-            ? t("projects.paymentLinkFlowRequired")
-            : t("projects.paymentLinkFlowRequiredOwner")}
+      {integration && !integration.flow_connected && (
+        <p>
+          Flow: No conectado.{" "}
+          {isOwner ? (
+            <Link to="/settings#cobranza-integraciones">Conectar en Ajustes</Link>
+          ) : (
+            "El dueño puede conectarlo en Ajustes."
+          )}{" "}
+          {integration.simulation_enabled &&
+            "Puedes probar el flujo con un enlace marcado como simulado."}
+        </p>
+      )}
+      {!canWrite && (
+        <p>
+          El dueño o estimador puede crear y verificar cobros. Tu rol permite consultar los enlaces.
+        </p>
+      )}
+      {message && (
+        <p className="form-error" role="status">
+          {message}
         </p>
       )}
       {showForm && (
         <ValidatedForm className="payments-form" onSubmit={create}>
+          <p className="payments-form-wide">
+            {simulated
+              ? "Pago simulado — no se moverá dinero."
+              : integration?.flow_environment === "production"
+                ? "Este enlace cobrará dinero real mediante Flow."
+                : "Flow sandbox — prueba en el entorno del proveedor."}{" "}
+            Vigencia configurada:{" "}
+            <span className="ui-value">{integration?.payment_link_days} días</span>.
+          </p>
           <label>
-            {t("projects.paymentKind")}
+            Concepto
             <select
               value={kind}
               onChange={(event) => setKind(event.target.value as PaymentKindEnum)}
             >
-              <option value="ANTICIPO">{t("projects.paymentKindAnticipo")}</option>
-              <option value="PARCIAL">{t("projects.paymentKindParcial")}</option>
-              <option value="SALDO">{t("projects.paymentKindSaldo")}</option>
+              <option value="ANTICIPO">Anticipo</option>
+              <option value="PARCIAL">Abono parcial</option>
+              <option value="SALDO">Saldo</option>
             </select>
           </label>
           <label>
-            {t("projects.paymentAmount")}
-            <input
-              required
-              inputMode="numeric"
-              data-precision="0"
-              min="1"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-              placeholder="250000"
-            />
+            Monto CLP
+            <MoneyField required min="1" value={amount} onValueChange={setAmount} />
           </label>
           <label>
-            {t("projects.paymentLinkEmail")}
+            Correo del pagador
             <input
-              required
               type="email"
-              value={payerEmail}
-              onChange={(event) => setPayerEmail(event.target.value)}
-              placeholder="cliente@correo.cl"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
             />
-          </label>
-          <label className="payments-form-wide">
-            {t("projects.paymentLinkSubject")}
-            <input value={subject} onChange={(event) => setSubject(event.target.value)} />
           </label>
           <div className="payments-form-actions">
             <button type="submit" className="primary-action" disabled={busy}>
-              {t("projects.paymentLinkCreate")}
+              {simulated ? "Preparar cobro simulado" : "Preparar cobro Flow"}
             </button>
             <button type="button" onClick={() => setShowForm(false)} disabled={busy}>
-              {t("projects.paymentCancel")}
+              Cancelar
             </button>
           </div>
         </ValidatedForm>
       )}
-      {links.length > 0 && (
-        <table className="payments-table">
-          <thead>
-            <tr>
-              <th>{t("projects.paymentDate")}</th>
-              <th>{t("projects.paymentKind")}</th>
-              <th className="num">{t("projects.paymentAmount")}</th>
-              <th>{t("projects.paymentLinkEmail")}</th>
-              <th>{t("projects.paymentLinkStatus")}</th>
-              <th>{t("projects.paymentLinkUrl")}</th>
-              {canWrite && <th />}
-            </tr>
-          </thead>
-          <tbody>
-            {links.map((link) => (
-              <tr key={link.id}>
-                <td>{formatDate(link.created_at)}</td>
-                <td>{t(KIND_LABEL[link.kind] ?? "projects.paymentKindParcial")}</td>
-                <td className="num">{formatClp(link.amount)}</td>
-                <td>{link.payer_email}</td>
-                <td>
-                  <StatusBadge
-                    showIcon={false}
-                    className={`production-chip link-${link.status.toLowerCase()}`}
-                  >
-                    {t(LINK_STATUS_LABEL[link.status])}
-                  </StatusBadge>
-                </td>
-                <td>
-                  {link.url ? (
-                    <button type="button" onClick={() => copy(link)} disabled={busy}>
-                      {copiedId === link.id
-                        ? t("projects.paymentLinkCopied")
-                        : t("projects.paymentLinkCopy")}
-                    </button>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                {canWrite && (
+      {query.isPending ? (
+        <LoadingState label="Consultando los enlaces de pago" />
+      ) : query.isError ? (
+        <ErrorState
+          title="No se cargaron los enlaces de pago"
+          body="Los cobros registrados se conservan. Reintenta la consulta."
+          onRetry={() => void query.refetch()}
+        />
+      ) : query.data.length === 0 ? (
+        <p>No hay enlaces de pago en este proyecto.</p>
+      ) : (
+        <div className="collection-table">
+          <table className="payments-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Concepto</th>
+                <th className="num">Monto CLP</th>
+                <th>Vencimiento</th>
+                <th>Estado</th>
+                <th>Acceso</th>
+              </tr>
+            </thead>
+            <tbody>
+              {query.data.map((link) => (
+                <tr key={link.id}>
                   <td>
-                    {link.status !== "PAID" && link.status !== "DISPATCHING" && (
-                      <button type="button" onClick={() => recover(link)} disabled={busy}>
-                        {t("projects.paymentLinkRecover")}
+                    <DateOnly value={link.created_at} />
+                  </td>
+                  <td>
+                    {kinds[link.kind]}
+                    <p>
+                      {link.environment === "simulated"
+                        ? "Simulado · sin dinero real"
+                        : link.environment === "sandbox"
+                          ? "Flow sandbox"
+                          : "Flow producción"}
+                    </p>
+                  </td>
+                  <td className="num">
+                    <Money value={link.amount} />
+                  </td>
+                  <td>
+                    <DateOnly value={link.expires_at} />
+                  </td>
+                  <td>
+                    <StatusBadge>{states[link.status]}</StatusBadge>
+                  </td>
+                  <td>
+                    {link.url && link.status === "PENDING" && (
+                      <a className="ui-button" href={link.url} target="_blank" rel="noreferrer">
+                        {link.environment === "simulated" ? "Abrir prueba de pago" : "Abrir pago"}
+                      </a>
+                    )}
+                    {link.url && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void navigator.clipboard
+                            .writeText(link.url!)
+                            .then(() => setMessage("Enlace copiado."))
+                            .catch(() => setMessage("No se pudo copiar. Usa Abrir pago."))
+                        }
+                      >
+                        Copiar enlace
+                      </button>
+                    )}
+                    {canWrite && ["PENDING", "UNCERTAIN"].includes(link.status) && (
+                      <button type="button" disabled={busy} onClick={() => void recover(link.id)}>
+                        Verificar pago
                       </button>
                     )}
                   </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      {links.length === 0 && !showForm && !message && (
-        <p className="settings-hint">{t("projects.paymentLinksEmpty")}</p>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

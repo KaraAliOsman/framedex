@@ -485,7 +485,15 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   });
   // The catalog recipe determines thickness; the inspector selects one product.
   const glass = page.getByRole("combobox", { name: "Vidrio", exact: true });
+  const glassSimulation = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/projects/operations/simulate/",
+  );
   await glass.selectOption("DEMO_60-VIDRIO-4");
+  const simulatedGlass = await glassSimulation;
+  expect(simulatedGlass.status()).toBe(200);
+  expect((await simulatedGlass.json()).valid).toBe(true);
   await expect(glass).toHaveValue("DEMO_60-VIDRIO-4");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
@@ -521,12 +529,12 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       .first(),
   ).toContainText(formatMoney(quote.project_gross, "CLP"));
   await page.goto(`/projects/${draft.id}`);
-  await expect(
-    page
-      .locator("dd")
-      .filter({ hasText: formatMoney(quote.project_gross, "CLP") })
-      .first(),
-  ).toBeVisible();
+  const projectGross = page
+    .locator(".project-facts__list dd")
+    .filter({ hasText: formatMoney(quote.project_gross, "CLP") });
+  await expect(projectGross).toHaveCount(1);
+  await expect(projectGross).toBeVisible();
+  await expect(projectGross).toHaveText(formatMoney(quote.project_gross, "CLP"));
   const persisted = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
   expect(persisted.status()).toBe(200);
   const project = await persisted.json();

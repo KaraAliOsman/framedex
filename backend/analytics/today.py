@@ -11,7 +11,7 @@ from decimal import Decimal
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
-from dekopen_engine.work_queue import consequence, money_sum, outstanding, queue_order
+from dekopen_engine.work_queue import consequence, money_sum, queue_order
 from documents.repository import DocumentaryError, documentary_backend, rows
 from pricing.repository import commercial_backend
 from pricing.service import decoded
@@ -37,6 +37,7 @@ def quotation_rows(org_id):
                    v.snapshot_json->'project'->>'quotation_valid_until' AS valid_until,
                    v.snapshot_json->'project'->>'total_price_gross' AS total,
                    v.snapshot_json->'project'->>'currency' AS currency,
+                   v.snapshot_json->'project'->'commercial_terms' AS commercial_terms,
                    a.status AS response_status,a.decided_note,a.decided_at,
                    a.view_count,a.last_viewed_at,a.expires_at,
                    a.created_at AS shared_at
@@ -187,11 +188,11 @@ def commercial_actions(org_id, today, role):
         by_phase = defaultdict(list)
         unknown = defaultdict(int)
         with documentary_backend():
-            receipts = rows("SELECT project_id,amount FROM public.project_payments "
+            receipts = rows("SELECT project_id,amount,id,voided_at,simulated FROM public.project_payments "
                             "WHERE org_id=%s AND voided_at IS NULL", [org_id])
         payments = defaultdict(list)
         for row in receipts:
-            payments[str(row["project_id"])].append(Decimal(str(row["amount"])))
+            payments[str(row["project_id"])].append(row)
         for row in source_rows:
             if row["status"] not in {"QUOTED", "APPROVED", "IN_PRODUCTION", "COMPLETED"}:
                 continue
@@ -202,14 +203,20 @@ def commercial_actions(org_id, today, role):
             total = Decimal(row["total"])
             by_phase[phase].append(total)
             if row["status"] != "QUOTED":
-                collected = money_sum(payments[str(row["id"])])
-                balance = outstanding(total, collected)
+                from projects.payments import collection_projection
+                projection = collection_projection(org_id=org_id, project_id=row["id"], today=today,
+                    deal={"total": total, "currency": row["currency"], "version_id": row.get("version_id"),
+                          "commercial_terms": row.get("commercial_terms") or {}}, payments=payments[str(row["id"])])
+                collected, balance = projection.collected, projection.balance
                 if balance > 0:
-                    result.append(action("receivable", row["id"], row["code"], row["name"],
-                        "Gestiona el saldo por cobrar", "La venta sellada tiene pagos pendientes. "
-                        "Sin fecha de cobro declarada, no se presenta como vencida.",
+                    overdue = projection.overdue > 0 and not projection.includes_simulation
+                    result.append(action("receivable_overdue" if overdue else "receivable", row["id"], row["code"], row["name"],
+                        "Revisa el recordatorio de cobro vencido" if overdue else "Gestiona el saldo por cobrar",
+                        "El calendario sellado tiene cuotas vencidas. Revisa el mensaje preparado por la IA antes de enviarlo." if overdue else
+                        "La venta sellada tiene pagos pendientes. Sin un vencimiento cumplido, no se presenta como vencida.",
                         "Abrir cobranza", f"/projects/{row['id']}?section=payments", amount=balance,
                         currency=row["currency"], balance_total=total, balance_collected=collected,
+                        due_on=projection.oldest_due_on if overdue else None,
                         source="Total sellado de " + row["current_revision"] +
                         " menos pagos vigentes. No incluye recibos anulados."))
         for (status, currency) in sorted(set(by_phase) | set(unknown), key=str):
