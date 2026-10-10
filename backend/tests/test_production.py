@@ -1347,6 +1347,8 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
     seen = {}
 
     def fake_one(query, params=(), code=None):
+        if "document_preferences" in query:
+            return {"document_preferences": {"remnant_destination":"Recepción DEMO"}}
         if "FOR UPDATE" in query:
             return {
                 "id": order_id, "order_code": "OT-P-REV-A-01",
@@ -1469,6 +1471,8 @@ def test_optimize_routes_shaped_glass_to_unnested() -> None:
     }
 
     def fake_one(query, params=(), code=None):
+        if "document_preferences" in query:
+            return {"document_preferences": {"remnant_destination":"Recepción DEMO"}}
         if "FOR UPDATE" in query:
             return {
                 "id": order_id, "order_code": "OT-P-REV-A-01",
@@ -1518,6 +1522,23 @@ def test_optimize_routes_shaped_glass_to_unnested() -> None:
     assert flagged["kind"] == "GLASS"
     assert flagged["reason"] == "shaped_glass_outline"
     assert flagged["shape"] == shape
+
+
+def test_sheet_rule_equal_area_order_is_independent_of_database_rows(monkeypatch) -> None:
+    from decimal import Decimal
+    from production import service
+
+    stock = [{"sku":"IGUAL", "name":"Proveedor", "attributes":{
+        "sheet_width_mm":width, "sheet_height_mm":height, "sheet_edge_trim_mm":"0",
+        "glass_sku":"VIDRIO-BASE",
+    }} for width, height in (("2400", "1800"), ("1800", "2400"))]
+    monkeypatch.setattr(service, "rows", lambda *_: stock)
+    first = service._sheet_rules(uuid4())["by_glass"]["VIDRIO-BASE"]
+    stock.reverse()
+    second = service._sheet_rules(uuid4())["by_glass"]["VIDRIO-BASE"]
+    assert [(r.sheet_width_mm, r.sheet_height_mm) for r in first] == [
+        (r.sheet_width_mm, r.sheet_height_mm) for r in second]
+    assert first[0].sheet_width_mm == Decimal("1800")
 
 
 def test_pick_sheet_rule_prefers_smallest_fitting() -> None:
@@ -2000,6 +2021,8 @@ def test_optimize_sheet_piece_ids_unique_per_unit() -> None:
     }
 
     def fake_one(query, params=(), code=None):
+        if "document_preferences" in query:
+            return {"document_preferences": {"remnant_destination":"Recepción DEMO"}}
         if "FOR UPDATE" in query:
             return {
                 "id": order_id, "order_code": "OT-P-REV-A-01",
@@ -2523,8 +2546,8 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
     assert sorted(out["files"]) == ["bars.dxf", "sheet_1.dxf"]
     sheet = stored["files"]["sheet_1.dxf"]
     assert sheet.startswith("0\nSECTION\n2\nHEADER") and sheet.endswith("0\nEOF\n")
-    # ASCII-only labels (AC1015-era DXF) and AcDb subclass markers.
-    assert "AC1015" in sheet and "V-01-U2 800x600" in sheet
+    # UTF-8 (DXF 2007) and AcDb subclass markers.
+    assert "AC1021" in sheet and "UTF-8" in sheet and "V-01-U2 800x600" in sheet
     assert "100\nAcDbPolyline" in sheet and "100\nAcDbText" in sheet
     bars = stored["files"]["bars.dxf"]
     assert "M-02-U1 1200 45.0/45.0" in bars and "MARCO-60" in bars

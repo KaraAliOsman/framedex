@@ -234,10 +234,12 @@ import type {
   PricingOptions,
   ProcessProfileOptionList,
   ProductionGlassOrderParams,
+  ProductionOrderCutPackParams,
   ProductionOrderDeliveryConfirmationParams,
   ProductionOrderDetail,
   ProductionOrderDispatchNoteParams,
   ProductionOrderList,
+  ProductionOrderPieceLabelsParams,
   ProductionOrderTrace,
   ProductionPieceTrace,
   ProductionPrep,
@@ -285,6 +287,9 @@ import type {
   ServicesResponse,
   ServicesWriteRequest,
   ShareQuoteResponse,
+  SheetFormatCreated,
+  SheetFormatList,
+  SheetFormatRequestRequest,
   SignedAccessResponse,
   SiiCaf,
   SiiCafList,
@@ -8827,6 +8832,166 @@ export const inventoryRemnantScrap = async (
   });
 };
 
+export type inventorySheetFormatsResponse200 = {
+  data: SheetFormatList;
+  status: 200;
+};
+
+export type inventorySheetFormatsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventorySheetFormatsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventorySheetFormatsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventorySheetFormatsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventorySheetFormatsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventorySheetFormatsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventorySheetFormatsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventorySheetFormatsResponseSuccess = inventorySheetFormatsResponse200 & {
+  headers: Headers;
+};
+export type inventorySheetFormatsResponseError = (
+  | inventorySheetFormatsResponse400
+  | inventorySheetFormatsResponse401
+  | inventorySheetFormatsResponse403
+  | inventorySheetFormatsResponse404
+  | inventorySheetFormatsResponse409
+  | inventorySheetFormatsResponse422
+  | inventorySheetFormatsResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventorySheetFormatsResponse =
+  inventorySheetFormatsResponseSuccess | inventorySheetFormatsResponseError;
+
+export const getInventorySheetFormatsUrl = () => {
+  return `/api/v1/inventory/sheet-formats/`;
+};
+
+export const inventorySheetFormats = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventorySheetFormatsResponse> => {
+  return apiMutator<inventorySheetFormatsResponse>(getInventorySheetFormatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type inventorySheetFormatDeclareResponse200 = {
+  data: SheetFormatCreated;
+  status: 200;
+};
+
+export type inventorySheetFormatDeclareResponse201 = {
+  data: SheetFormatCreated;
+  status: 201;
+};
+
+export type inventorySheetFormatDeclareResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventorySheetFormatDeclareResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventorySheetFormatDeclareResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventorySheetFormatDeclareResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventorySheetFormatDeclareResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventorySheetFormatDeclareResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventorySheetFormatDeclareResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventorySheetFormatDeclareResponseSuccess = (
+  inventorySheetFormatDeclareResponse200 | inventorySheetFormatDeclareResponse201
+) & {
+  headers: Headers;
+};
+export type inventorySheetFormatDeclareResponseError = (
+  | inventorySheetFormatDeclareResponse400
+  | inventorySheetFormatDeclareResponse401
+  | inventorySheetFormatDeclareResponse403
+  | inventorySheetFormatDeclareResponse404
+  | inventorySheetFormatDeclareResponse409
+  | inventorySheetFormatDeclareResponse422
+  | inventorySheetFormatDeclareResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventorySheetFormatDeclareResponse =
+  inventorySheetFormatDeclareResponseSuccess | inventorySheetFormatDeclareResponseError;
+
+export const getInventorySheetFormatDeclareUrl = () => {
+  return `/api/v1/inventory/sheet-formats/`;
+};
+
+export const inventorySheetFormatDeclare = async (
+  sheetFormatRequestRequest: SheetFormatRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventorySheetFormatDeclareResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventorySheetFormatDeclareResponse>(getInventorySheetFormatDeclareUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(sheetFormatRequestRequest),
+  });
+};
+
 export type inventoryStockResponse200 = {
   data: InventoryStock;
   status: 200;
@@ -13264,15 +13429,31 @@ export type productionOrderCutPackResponseError = (
 export type productionOrderCutPackResponse =
   productionOrderCutPackResponseSuccess | productionOrderCutPackResponseError;
 
-export const getProductionOrderCutPackUrl = (orderId: string) => {
-  return `/api/v1/production/orders/${orderId}/cut-pack/`;
+export const getProductionOrderCutPackUrl = (
+  orderId: string,
+  params?: ProductionOrderCutPackParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/production/orders/${orderId}/cut-pack/?${stringifiedParams}`
+    : `/api/v1/production/orders/${orderId}/cut-pack/`;
 };
 
 export const productionOrderCutPack = async (
   orderId: string,
+  params?: ProductionOrderCutPackParams,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<productionOrderCutPackResponse> => {
-  return apiMutator<productionOrderCutPackResponse>(getProductionOrderCutPackUrl(orderId), {
+  return apiMutator<productionOrderCutPackResponse>(getProductionOrderCutPackUrl(orderId, params), {
     ...options,
     method: "GET",
   });
@@ -15067,6 +15248,97 @@ export const productionOrderPacking = async (
     ...options,
     method: "POST",
   });
+};
+
+export type productionOrderPieceLabelsResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionOrderPieceLabelsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderPieceLabelsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderPieceLabelsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderPieceLabelsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderPieceLabelsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderPieceLabelsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderPieceLabelsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderPieceLabelsResponseSuccess = productionOrderPieceLabelsResponse200 & {
+  headers: Headers;
+};
+export type productionOrderPieceLabelsResponseError = (
+  | productionOrderPieceLabelsResponse400
+  | productionOrderPieceLabelsResponse401
+  | productionOrderPieceLabelsResponse403
+  | productionOrderPieceLabelsResponse404
+  | productionOrderPieceLabelsResponse409
+  | productionOrderPieceLabelsResponse422
+  | productionOrderPieceLabelsResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderPieceLabelsResponse =
+  productionOrderPieceLabelsResponseSuccess | productionOrderPieceLabelsResponseError;
+
+export const getProductionOrderPieceLabelsUrl = (
+  orderId: string,
+  params?: ProductionOrderPieceLabelsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/production/orders/${orderId}/piece-labels/?${stringifiedParams}`
+    : `/api/v1/production/orders/${orderId}/piece-labels/`;
+};
+
+export const productionOrderPieceLabels = async (
+  orderId: string,
+  params?: ProductionOrderPieceLabelsParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderPieceLabelsResponse> => {
+  return apiMutator<productionOrderPieceLabelsResponse>(
+    getProductionOrderPieceLabelsUrl(orderId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type productionOrderPackResponse200 = {

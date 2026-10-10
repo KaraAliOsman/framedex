@@ -1,4 +1,4 @@
-"""Minimal DXF (AC1015, millimetres) writer for machine handoff geometry.
+"""Generic DEKOPEN DXF (AC1021, UTF-8, millimetres) geometry.
 
 No ezdxf dependency: the nesting layouts are axis-aligned rectangles plus
 labels, so a deterministic hand-rolled writer keeps the export reproducible
@@ -19,21 +19,18 @@ _SHEET_LABEL_HEIGHT = Decimal("60")
 
 
 def _fmt(value: object) -> str:
-    text = format(Decimal(str(value)).quantize(Decimal("0.001")), "f")
-    return text[:-4] if text.endswith(".000") else text
+    number = Decimal(str(value))
+    text = format(number, "f")
+    return text.rstrip("0").rstrip(".") if "." in text else text
 
 
 def _pairs(*items: object) -> str:
     return "\n".join(str(item) for item in items) + "\n"
 
 
-def _ascii(text: str) -> str:
-    """AC1015 predates UTF-8 — labels go out ASCII-only so strict CAM
-    importers never see mojibake (e.g. '·' arriving as 'Â·')."""
-    return (
-        text.replace("·", "-").replace("⟳", "(rot)")
-        .encode("ascii", "replace").decode("ascii")
-    )
+def _label(text: str) -> str:
+    """Keep Unicode literal; a source newline must not create a DXF tag."""
+    return "".join(char if ord(char) >= 32 else " " for char in text)
 
 
 def _lwpoly(layer: str, points: Iterable[tuple[Decimal, Decimal]]) -> str:
@@ -65,14 +62,15 @@ def _text(layer: str, x: Decimal, y: Decimal, height: Decimal, content: str) -> 
     return _pairs(
         "0", "TEXT", "100", "AcDbEntity", "8", layer, "100", "AcDbText",
         "10", _fmt(x), "20", _fmt(y), "30", "0",
-        "40", _fmt(height), "1", _ascii(content), "7", "STANDARD",
+        "40", _fmt(height), "1", _label(content), "7", "STANDARD",
     )
 
 
 def _dxf(entities: str, extmax_x: Decimal, extmax_y: Decimal) -> str:
     header = _pairs(
         "0", "SECTION", "2", "HEADER",
-        "9", "$ACADVER", "1", "AC1015",
+        "9", "$ACADVER", "1", "AC1021",
+        "9", "$DWGCODEPAGE", "3", "UTF-8",
         "9", "$INSUNITS", "70", "4",
         "9", "$EXTMIN", "10", "0", "20", "0", "30", "0",
         "9", "$EXTMAX", "10", _fmt(extmax_x), "20", _fmt(extmax_y), "30", "0",
@@ -125,7 +123,9 @@ def _sheet_entities(
     width = Decimal(str(sheet.get("sheet_width_mm") or 0))
     height = Decimal(str(sheet.get("sheet_height_mm") or 0))
     entities = _rect("OUTLINE", Decimal(0), Decimal(0), width, height)
-    for placement in sheet.get("placements") or []:
+    for placement in sorted(sheet.get("placements") or [], key=lambda item: (
+        Decimal(str(item.get("y_mm") or 0)), Decimal(str(item.get("x_mm") or 0)),
+    )):
         x = Decimal(str(placement.get("x_mm") or 0))
         y = Decimal(str(placement.get("y_mm") or 0))
         w = Decimal(str(placement.get("width_mm") or 0))
@@ -153,7 +153,7 @@ def _bars_entities(
         entities += _text(
             "LABEL", Decimal(0), base_y - _LABEL_HEIGHT - Decimal(4),
             _LABEL_HEIGHT,
-            f"{bar.get('commercial_sku') or ''} stock {stock}",
+            f"{bar.get('commercial_sku') or ''} · barra {stock} mm",
         )
         if stock > max_x:
             max_x = stock
@@ -180,6 +180,10 @@ def _bars_entities(
             label = f"{piece} {length}"
             if angles:
                 label += f" {angles}"
+            from documents.renderers import _ROLE_ES, _role_name
+
+            role = _ROLE_ES.get(_role_name(cut.get("role")), "Sin dato")
+            label += f" · {role} · {cut.get('workshop_sku') or ''}"
             entities += _text(
                 "LABEL", mid - _LABEL_HEIGHT, base_y + Decimal(10),
                 _LABEL_HEIGHT, label,

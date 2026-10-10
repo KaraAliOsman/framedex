@@ -19,4 +19,20 @@ export interface PhysicalPieceLabel {
   height_mm: string | null;
   /** @nullable */
   workshop_sku: string | null;
+  order_code?: string;
+  /** @nullable */
+  position?: string | null;
+  /** @nullable */
+  unit_index?: number | null;
+  role_label?: string;
+  /** @nullable */
+  parent_code?: string | null;
+  /** @nullable */
+  angle_left?: string | null;
+  /** @nullable */
+  angle_right?: string | null;
+  /** @nullable */
+  color?: string | null;
+  fingerprint?: string;
+  next_station?: string;
 }

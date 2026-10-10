@@ -8,8 +8,12 @@
 import type { AccentEnum } from "./accentEnum";
 import type { CommercialTerms } from "./commercialTerms";
 import type { PaperEnum } from "./paperEnum";
+import type { PieceLabelPaperEnum } from "./pieceLabelPaperEnum";
 
 export interface DocumentPreferences {
+  piece_label_paper?: PieceLabelPaperEnum;
+  /** @maxLength 80 */
+  remnant_destination?: string;
   /**
    * @minimum 5
    * @maximum 60

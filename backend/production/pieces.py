@@ -24,13 +24,16 @@ def entity_address(path: str, **identity: object) -> str:
 def without_addresses(plan: dict) -> dict:
     """Recover strict engine facts from the presentation copy, without coercion."""
     result = deepcopy(plan)
+    result.pop("cut_groups", None)
     for bar in (result.get("bars") or {}).get("workshop_cut_plan") or []:
         bar.pop("remnant_code", None)
+        bar.pop("produced_remnant", None)
         for cut in bar.get("cuts") or []:
             for field in ("piece_code", "piece_stable_id", "piece_qr"):
                 cut.pop(field, None)
     for sheet in result.get("sheets") or []:
         sheet.pop("remnant_code", None)
+        sheet.pop("produced_remnant_labels", None)
         for piece in sheet.get("placements") or []:
             for field in ("piece_code", "piece_stable_id", "piece_qr"):
                 piece.pop(field, None)
@@ -50,6 +53,17 @@ def add_remnant_codes(plan: dict, org_id: object) -> dict:
         for entry in entries:
             if entry.get("remnant_id"):
                 entry["remnant_code"] = codes.get(str(entry["remnant_id"]))
+    produced = plan.get("remnants") or {}
+    planned_bars = {entry.get("bar_index"): entry for entry in produced.get("produced_bars") or []}
+    for bar in (plan.get("bars") or {}).get("workshop_cut_plan") or []:
+        if bar.get("remainder_reusable"):
+            destination = planned_bars.get(bar.get("bar_index"))
+            if destination and destination.get("id"):
+                bar["produced_remnant"] = destination
+    planned_sheets = produced.get("produced_sheets") or []
+    for sheet in plan.get("sheets") or []:
+        sheet["produced_remnant_labels"] = [entry for entry in planned_sheets
+            if entry.get("sheet_index") == sheet.get("sheet_index") and entry.get("id")]
     return plan
 
 
@@ -121,15 +135,23 @@ def addressed_plan(snapshot: dict, optimization: dict, *, order_id: object = Non
     return result
 
 
-def physical_labels(plan: dict) -> list[dict]:
+def physical_labels(plan: dict, *, snapshot: dict | None = None,
+                    order_code: str = "", fingerprint: str = "",
+                    route: list[dict] | None = None,
+                    next_station: str = "Sin dato · consulta la ruta de la OT") -> list[dict]:
     import segno
+    from production.cut_manifest import next_piece_station, ordered_pieces, piece_context
 
-    pieces = [cut for bar in (plan.get("bars") or {}).get("workshop_cut_plan") or []
-              for cut in bar.get("cuts") or []]
-    pieces.extend(piece for sheet in plan.get("sheets") or [] for piece in sheet.get("placements") or [])
+    context = piece_context(snapshot) if snapshot else {}
+    pieces = ordered_pieces(plan)
     return [{"code": piece["piece_code"], "stable_id": piece["piece_stable_id"],
         "qr_payload": piece["piece_qr"],
         "qr_svg": segno.make(piece["piece_qr"], error="m").svg_inline(border=4, scale=4, omitsize=True),
         "length_mm": piece.get("length_mm"), "width_mm": piece.get("width_mm"),
-        "height_mm": piece.get("height_mm"), "workshop_sku": piece.get("workshop_sku")}
+        "height_mm": piece.get("height_mm"), "workshop_sku": piece.get("workshop_sku"),
+        **context.get(piece["piece_stable_id"], {}),
+        "angle_left": piece.get("angle_left"), "angle_right": piece.get("angle_right"),
+        "color": piece.get("color") or plan.get("color"),
+        "order_code": order_code, "fingerprint": fingerprint[:16],
+        "next_station": next_piece_station(piece, route) if route is not None else next_station}
         for piece in pieces if piece.get("piece_code") and piece.get("piece_qr")]

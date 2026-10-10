@@ -82,6 +82,11 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
     { id: "clientes", path: "/clients", roles: ["OWNER", "ESTIMATOR"] },
     { id: "cliente-detalle", path: `/clients/${refs.clientId}`, roles: ["OWNER", "ESTIMATOR"] },
     { id: "catalogo", path: "/catalogs/systems", roles: ["OWNER", "WORKSHOP_MANAGER"] },
+    {
+      id: "formatos-lamina",
+      path: "/catalogs/sheet-formats",
+      roles: ["WORKSHOP_MANAGER", "OPERATOR"],
+    },
     { id: "asistente", path: "/assistant", roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] },
     { id: "trabajos", path: "/jobs", roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] },
     { id: "ajustes", path: "/settings/general", roles: ["OWNER"] },

@@ -1060,3 +1060,31 @@ sobre `2ebc5165767236a557417cfb1b4e64b7190002f8`, corrida `38011547655`,
 y se integra con squash `9329e9e3378c58bc2bef3bd9c23d80f613379397` en `integracion/v1`.
 La evidencia local conserva MIME/SMTP, PDF A/B y R1–R20 en PASA.
 Servicios propios detenidos; fixture persistente intacto. Continúa P13.
+
+## 2026-10-09 — P13 · papel compacto y dirección física común
+
+Implementación `7ac18654c3987d9b1d7c4d2422fec164c2a76b5b`: secuencia única
+en PDF/CSV/DXF/etiquetas/QR, pack de tres barras por hoja, callouts, padres y
+estación por material. Carta/A4/rollo y destino RT son configurables. Las
+láminas se declaran con proveedor/fuente y sin movimiento de stock; imprimir
+no asigna códigos ni material. El flujo DEMO completa Corte mediante QR en
+390 oscuro: cinco RT conservan sus códigos/dimensiones/destinos y dos RT de
+entrada quedan consumidos. La escala recorre 113 OT sin cambiar el contrato
+de una OT por posición. La regresión focal pasa 169 tests, y se decodifican
+dieciocho QR desde píxeles de etiquetas. Matriz/oficial sin hallazgos finales;
+la revisión visual corrige una tabla internamente recortada en móvil.
+Se conservan como límites la autoridad DEMO y la reoptimización explícita de
+planes históricos sin dirección RT prevista. P13 y gates completos siguen
+en curso; no se declara merge ni CI aceptados antes de esos resultados.
+
+## 2026-10-09 — P13 · gates finales y validación de suministro
+
+Ref `dbe2423e90d36d68d190eb45705baf58904b393a`: lint/tipos/OpenAPI/orval/build y tests completos PASA,
+848 motor (+2 xfail), 1.443 backend y 956 frontend. Database Gate completo
+PASA: 1.249 pgTAP en 86 archivos, 467 integraciones, 19 E2E y PostgreSQL 16
+con diez upgrades poblados. Dos validaciones que fallaban con error interno
+se corrigieron al contrato DocumentaryError y se ejercitaron en navegador:
+sustrato desconocido, despunte sin medida útil y suministro incompatible
+devuelven 422 accionable sin escritura. Un mismo código de suministro no
+mezcla formatos físicos; los candidatos de área igual tienen orden estable.
+P13 conserva R1–R20 PASA. CI y squash quedan pendientes de integración.

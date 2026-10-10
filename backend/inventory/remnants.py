@@ -501,37 +501,67 @@ def record_produced_remnants(
     cut plan that made them."""
     inserted = 0
     for bar in produced_bars:
-        rows(
+        created = rows(
             """
             INSERT INTO public.inventory_remnants(
                 org_id, kind, stock_authority_id, length_mm,
-                origin, origin_order_id
-            ) VALUES (%s, 'BAR', %s::uuid, %s, 'PRODUCTION', %s)
+                origin, origin_order_id, id, rack_location
+            ) VALUES (%s, 'BAR', %s::uuid, %s, 'PRODUCTION', %s,
+                      coalesce(%s::uuid, gen_random_uuid()), %s)
+            ON CONFLICT (id) DO NOTHING
             RETURNING id
             """,
             [
                 str(org_id), str(bar["stock_authority_id"]),
-                str(bar["remainder_mm"]), str(order_id),
+                str(bar["remainder_mm"]), str(order_id), bar.get("id"), bar.get("rack_location"),
             ],
         )
-        inserted += 1
+        inserted += len(created)
     for sheet in produced_sheets:
-        rows(
+        created = rows(
             """
             INSERT INTO public.inventory_remnants(
                 org_id, kind, sheet_workshop_sku, width_mm, height_mm,
-                origin, origin_order_id
-            ) VALUES (%s, 'SHEET', %s, %s, %s, 'PRODUCTION', %s)
+                origin, origin_order_id, id, rack_location
+            ) VALUES (%s, 'SHEET', %s, %s, %s, 'PRODUCTION', %s,
+                      coalesce(%s::uuid, gen_random_uuid()), %s)
+            ON CONFLICT (id) DO NOTHING
             RETURNING id
             """,
             [
                 str(org_id), sheet["workshop_sku"],
                 str(sheet["width_mm"]), str(sheet["height_mm"]),
-                str(order_id),
+                str(order_id), sheet.get("id"), sheet.get("rack_location"),
             ],
         )
-        inserted += 1
+        inserted += len(created)
     return inserted
+
+
+def plan_remnant_addresses(*, org_id: UUID, order_id: UUID, plan: dict,
+                           rack_location: str) -> None:
+    """Reserve addresses at the human optimize click, without creating stock.
+
+    Equal plans reuse their addresses. Changed plans retain historical codes;
+    only CUT completion creates a physical AVAILABLE row with this identity.
+    """
+    from uuid import uuid5
+    from dekopen_engine.documentary_canonical import documentary_sha256_v1
+
+    bars = {bar["bar_index"]: bar for bar in plan["bars"].get("workshop_cut_plan") or []}
+    sheets = {sheet["sheet_index"]: sheet for sheet in plan.get("sheets") or []}
+    for kind, entries, homes, field in (
+        ("BAR", plan.get("produced_bars") or [], bars, "bar_index"),
+        ("SHEET", plan.get("produced_sheets") or [], sheets, "sheet_index"),
+    ):
+        for index, entry in enumerate(entries):
+            identity = str(uuid5(UUID(str(order_id)), "cut-remnant:" + documentary_sha256_v1({
+                "kind": kind, "index": index, "source": homes[entry[field]],
+                "remnant": {key: value for key, value in entry.items() if key not in {"id", "code", "rack_location"}},
+            })))
+            code = one("SELECT private.assign_entity_code(%s::uuid,'RT',%s::uuid) AS code",
+                       [str(org_id), identity], "remnant_code_failed")["code"]
+            entry.update(id=identity, code=code, rack_location=rack_location)
 
 
 def remnant_label(*, org_id: UUID, remnant_id: UUID) -> dict[str, object]:

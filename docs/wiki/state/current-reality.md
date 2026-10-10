@@ -3,8 +3,11 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 9329e9e3378c58bc2bef3bd9c23d80f613379397
+verified_ref: dbe2423e90d36d68d190eb45705baf58904b393a
 sources:
+  - P13 cierre dbe2423e90d36d68d190eb45705baf58904b393a, gates locales completos y PostgreSQL aislado, 2026-10-09
+  - P13 implementación 7ac18654c3987d9b1d7c4d2422fec164c2a76b5b, 169 regresiones focales, navegador y PDF/QR, 2026-10-09
+  - docs/redesign/P13-ACEPTACION.md
   - P08 PR https://github.com/KaraAliOsman/framedex/pull/139, CI 4/4 sobre 2ebc5165767236a557417cfb1b4e64b7190002f8, corrida 38011547655, squash 9329e9e3378c58bc2bef3bd9c23d80f613379397, 2026-10-09
   - P08 E2E focal SHOT-10 e841ae29, aceptación SMTP, MIME y PDF A/B byte a byte, 2026-10-09
   - P08 RUT histórico fb5b82d11c18e50fe9856e3b5e8b63023a27eef6, 27 requisitos de emisión y gates completos, 2026-10-09
@@ -50,6 +53,29 @@ sources:
 ---
 
 # Current reality
+
+## P13 · corte y etiquetas verificadas; CI pendiente (09-10-2026)
+
+El pack apaisado coloca tres barras por página con cierre exacto y callouts;
+PDF/CSV/DXF/etiquetas/QR conservan dirección y secuencia. UTF-8 y precisión
+del DXF se verifican con ezdxf. Carta/A4/rollo y destino de RT se guardan por
+organización; el rollo tiene una etiqueta por página.
+
+Declarar lámina conserva proveedor/fuente en una variante sin dar de alta
+stock. Optimizar reserva direcciones RT; imprimir solo lee; completar Corte
+registra las mismas identidades/destinos sin duplicación. El recorrido DEMO
+completa Corte por QR a 390 px oscuro y verifica cinco RT y dos originales
+consumidos. Las 113 OT de 1/12/100 posiciones respetan una OT por posición.
+
+Dos rondas editoriales y R1–R20 PASA constan en P13-ACEPTACION; dieciséis
+vistas de superficie, ocho agrupadas y dieciséis oficiales sin hallazgos.
+La revisión visual corrigió además un recorte interno de tabla móvil que el
+control de desborde de página no detectaba. Los gates completos locales y
+PostgreSQL pasan: 848 motor (+2 xfail), 1.443 backend, 956 frontend, 1.249 pgTAP,
+467 integraciones y 19 E2E, más diez upgrades PG16. El código de suministro
+rechaza formatos incompatibles sin escritura. P13 continúa en curso hasta CI
+4/4 y squash.
+Ver [corte y etiquetas](../product/cut-documents.md).
 
 ## P08 · cotización guiada y emisión del PDF revisado (09-10-2026)
 

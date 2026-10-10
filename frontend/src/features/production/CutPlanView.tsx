@@ -46,6 +46,7 @@ export type CutBar = {
   source?: "NEW" | "REMNANT";
   remnant_id?: string | null;
   remnant_code?: string | null;
+  produced_remnant?: { code: string; rack_location?: string | null };
 };
 export type PurchaseLine = {
   commercial_sku: string;
@@ -125,6 +126,17 @@ export type RemnantLedger = {
   produced_sheets?: { workshop_sku: string; width_mm: string; height_mm: string }[];
 };
 export type WorkOrderOptimization = {
+  cut_groups?: {
+    sku: string;
+    color: string;
+    role: string;
+    source_kind: string;
+    length_mm: string;
+    angle_left?: string | null;
+    angle_right?: string | null;
+    quantity: number;
+    pieces: { code: string; stable_id: string; bar_index: number; sequence: number }[];
+  }[];
   schema?: string;
   color?: string;
   units?: number;
@@ -527,6 +539,7 @@ export function CutPlanView({
   pieceCodes?: Record<string, string>;
 }) {
   const [selected, setSelected] = useState<PieceRef | null>(null);
+  const [grouped, setGrouped] = useState(false);
   const bars = optimization.bars?.workshop_cut_plan ?? [];
   const sheets = optimization.sheets ?? [];
   const unnested = optimization.unnested ?? [];
@@ -582,25 +595,87 @@ export function CutPlanView({
   return (
     <div className="cutplan">
       <div className="cutplan-canvas">
-        {bars.map((bar) => (
-          <figure key={bar.bar_index} className="cutplan-bar-row">
-            <figcaption>
-              <strong>
-                {t("production.optimizeBar")} #{bar.bar_index}
-              </strong>{" "}
-              {bar.commercial_sku} · {fmtMm(bar.stock_length_mm)} mm ·{" "}
-              {t("production.cutplanYield")} {fmtPct(bar.yield_pct)} % ·{" "}
-              {t("production.cutplanRemainder")} {fmtMm(bar.remainder_mm)} mm
-            </figcaption>
-            <CutPlanBarSvg
-              bar={bar}
-              selectedMember={selectedMember}
-              selectedKey={selected?.key ?? null}
-              pieceCodes={pieceCodes}
-              onSelect={setSelected}
-            />
-          </figure>
-        ))}
+        {optimization.cut_groups?.length ? (
+          <div className="cutplan-mode" role="group" aria-label="Lectura del corte">
+            <button type="button" aria-pressed={!grouped} onClick={() => setGrouped(false)}>
+              Secuencia de barras
+            </button>
+            <button type="button" aria-pressed={grouped} onClick={() => setGrouped(true)}>
+              Cortes idénticos · sierra manual
+            </button>
+          </div>
+        ) : null}
+        {grouped
+          ? optimization.cut_groups?.map((group, groupIndex) => (
+              <section key={groupIndex} className="cutplan-cut-group">
+                <h4>
+                  {group.sku} · {domainLabels[group.color] ?? group.color} ·{" "}
+                  {group.source_kind === "REINFORCEMENT" ? "Refuerzo · " : ""}
+                  {cutRoleLabel(group.role)}
+                </h4>
+                <p className="ui-value">
+                  {fmtMm(group.length_mm)} mm · {cutAngleText(group.angle_left)} /{" "}
+                  {cutAngleText(group.angle_right)} · {group.quantity} piezas
+                </p>
+                <ol className="cutplan-piece-legend">
+                  {group.pieces.map((ref) => {
+                    const bar = bars.find((entry) => entry.bar_index === ref.bar_index);
+                    const index = bar?.cuts.findIndex((cut) => cut.sequence === ref.sequence) ?? -1;
+                    const cut = bar?.cuts[index];
+                    if (!cut) return null;
+                    const key = `b${ref.bar_index}-c${index}`;
+                    return (
+                      <li key={ref.stable_id}>
+                        <button
+                          type="button"
+                          className={selected?.key === key ? "is-selected" : ""}
+                          onClick={() =>
+                            setSelected({
+                              kind: "cut",
+                              key,
+                              code: `B${ref.bar_index}-${ref.sequence}`,
+                              shopCode: ref.code,
+                              piece: cut,
+                            })
+                          }
+                        >
+                          B{ref.bar_index}/{ref.sequence} → {ref.code}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ))
+          : bars.map((bar) => (
+              <figure key={bar.bar_index} className="cutplan-bar-row">
+                <figcaption>
+                  <strong>
+                    {t("production.optimizeBar")} #{bar.bar_index}
+                  </strong>{" "}
+                  {bar.commercial_sku} · {fmtMm(bar.stock_length_mm)} mm ·{" "}
+                  {t("production.cutplanYield")} {fmtPct(bar.yield_pct)} % ·{" "}
+                  {t("production.cutplanRemainder")} {fmtMm(bar.remainder_mm)} mm
+                  {bar.source === "REMNANT"
+                    ? ` · origen ${bar.remnant_code ?? "Sin dato · falta código de retazo"}`
+                    : " · barra nueva"}
+                </figcaption>
+                <CutPlanBarSvg
+                  bar={bar}
+                  selectedMember={selectedMember}
+                  selectedKey={selected?.key ?? null}
+                  pieceCodes={pieceCodes}
+                  onSelect={setSelected}
+                />
+                <p className="cutplan-destination ui-value">
+                  {bar.remainder_reusable
+                    ? bar.produced_remnant
+                      ? `${fmtMm(bar.remainder_mm)} mm → ${bar.produced_remnant.code} · ${bar.produced_remnant.rack_location ?? "Sin dato · declara destino"} · alta al completar corte`
+                      : `${fmtMm(bar.remainder_mm)} mm → Sin dato · plan histórico sin dirección; reoptimiza antes de cortar`
+                    : `${fmtMm(bar.remainder_mm)} mm → desecho`}
+                </p>
+              </figure>
+            ))}
         {sheets.length ? (
           <div className="cutplan-sheets">
             {sheets.map((layout) => (
@@ -648,6 +723,16 @@ export function CutPlanView({
                     <td>
                       {tOptional(`production.unnestedReason.${pane.reason}`) ??
                         "Sin dato · revisa la autoridad del vidrio en Catálogo."}
+                      <p>
+                        {pane.reason === "shaped_glass_outline" ? (
+                          "Prepara la plantilla del contorno sellado para el vidriero."
+                        ) : (
+                          <a href="/catalogs/sheet-formats">
+                            Catálogo › Vidrios › Formatos: declara un suministro compatible y vuelve
+                            a optimizar.
+                          </a>
+                        )}
+                      </p>
                     </td>
                   </tr>
                 ))}

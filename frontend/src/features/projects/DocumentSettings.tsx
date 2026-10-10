@@ -134,6 +134,40 @@ export function DocumentSettings({
               </select>
             </label>
             <label>
+              Papel de etiquetas de piezas
+              <select
+                aria-label="Papel de etiquetas de piezas"
+                value={value.piece_label_paper ?? "LETTER"}
+                onChange={(event) =>
+                  setValue({
+                    ...value,
+                    piece_label_paper: event.target
+                      .value as DocumentPreferences["piece_label_paper"],
+                  })
+                }
+              >
+                <option value="LETTER">Carta · grilla de etiquetas</option>
+                <option value="A4">A4 · grilla de etiquetas</option>
+                <option value="ROLL_100_50">Rollo térmico · 100 × 50 mm</option>
+              </select>
+            </label>
+            <label>
+              Destino de retazos recuperables
+              <input
+                aria-label="Destino de retazos recuperables"
+                maxLength={80}
+                required
+                value={value.remnant_destination ?? "Recepción de retazos"}
+                onChange={(event) =>
+                  setValue({ ...value, remnant_destination: event.target.value })
+                }
+              />
+              <small>
+                Se fija al optimizar. Los códigos se reservan antes del corte y entran al stock
+                cuando lo completas.
+              </small>
+            </label>
+            <label>
               Acento de impresión
               <select
                 aria-label="Acento de impresión"

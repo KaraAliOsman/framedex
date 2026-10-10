@@ -14,6 +14,47 @@ class StrictSerializer(serializers.Serializer):
         return super().to_internal_value(data)
 
 
+class SheetFormatRequestSerializer(StrictSerializer):
+    kind = serializers.ChoiceField(choices=["GLASS", "PANEL"])
+    technical_sku = serializers.CharField(max_length=100)
+    sku = serializers.CharField(max_length=100)
+    width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"))
+    height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"))
+    edge_trim_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0"))
+    supplier = serializers.CharField(max_length=255)
+    source = serializers.CharField(max_length=500)
+
+
+class SheetFormatOptionSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    kind = serializers.CharField()
+    name = serializers.CharField()
+    is_demo = serializers.BooleanField()
+
+
+class SheetFormatSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    kind = serializers.CharField()
+    technical_sku = serializers.CharField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+    edge_trim_mm = serializers.CharField()
+    supplier = serializers.CharField(allow_null=True)
+    source = serializers.CharField(allow_null=True)
+    is_demo = serializers.BooleanField()
+
+
+class SheetFormatListSerializer(serializers.Serializer):
+    options = SheetFormatOptionSerializer(many=True)
+    items = SheetFormatSerializer(many=True)
+
+
+class SheetFormatCreatedSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+
+
 class InventoryStockItemSerializer(serializers.Serializer):
     item_id = serializers.UUIDField()
     sku = serializers.CharField()
