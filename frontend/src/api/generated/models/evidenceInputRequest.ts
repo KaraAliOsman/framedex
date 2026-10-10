@@ -22,7 +22,7 @@ export interface EvidenceInputRequest {
    */
   field_name: string;
   /**
-   * @maxLength 120
+   * @maxLength 10000
    * @nullable
    */
   value_text?: string | null;
@@ -48,4 +48,16 @@ export interface EvidenceInputRequest {
    * @nullable
    */
   source_url?: string | null;
+  /**
+   * @minLength 1
+   * @maxLength 500
+   * @nullable
+   */
+  source_ref?: string | null;
+  /**
+   * @minLength 1
+   * @maxLength 10000
+   * @nullable
+   */
+  source_quote?: string | null;
 }

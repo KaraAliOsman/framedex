@@ -94,7 +94,7 @@ def test_declare_inserts_under_backend_role_with_server_actor(backend, monkeypat
     query, params = backend.calls[-1]
     assert "INSERT INTO public.catalog_parameter_evidence" in query
     assert params[0] == str(org)  # org-scoped even on global authorities
-    assert params[-1] == str(actor)
+    assert params[11] == str(actor)  # Review/source additions do not replace the actor.
     assert result["review_state"] == "PENDING"
     assert result["declared_by"] == str(actor)
 

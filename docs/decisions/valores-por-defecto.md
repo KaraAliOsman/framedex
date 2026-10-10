@@ -556,3 +556,17 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   nueva revisión; un montaje vincula esa sección, orientación y fuente.
 - Restaurar prepara los datos anteriores para comparación y confirmación.
   No elimina la declaración posterior ni los archivos de programas emitidos.
+
+## P16 · fuente y revisión de catálogo (2026-10-10)
+
+- LOW y REVIEW_REQUIRED comienzan desmarcados. UNKNOWN no recibe un valor
+  silencioso; una corrección conserva el candidato y literal originales.
+- «Revisado por técnico» exige revisión humana vigente. «Verificado con
+  evidencia» exige soporte vigente para cada autoridad técnica presente;
+  una corrección humana no se atribuye al fabricante. DEMO prevalece siempre.
+- El catálogo declara cobertura de la serie; emisión comprueba y sella los
+  artículos consumidos. Liberar usa esa decisión histórica. No se usa la
+  cobertura de un artículo ajeno para reescribir una cotización emitida.
+- El archivo original puede contener costos: acceso de dueño/jefe de taller,
+  con RLS y sin caché pública. Los otros roles consultan únicamente las
+  proyecciones técnicas que su permiso permite.

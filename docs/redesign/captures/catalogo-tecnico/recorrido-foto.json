@@ -1,0 +1,181 @@
+{
+  "provider": "MIMO",
+  "source": "Raster sintético de página 2; sin certificación",
+  "status": "REVIEW_READY",
+  "candidates": [
+    {
+      "key": "ai0",
+      "row": 1,
+      "sheet": "Perfiles",
+      "errors": [
+        {
+          "field": "system_code",
+          "column": "Código de sistema",
+          "message": "Fila 1, columna ‘Código de sistema’: Sin dato: completa este campo con su fuente."
+        },
+        {
+          "field": "sku",
+          "column": "SKU",
+          "message": "Fila 1, columna ‘SKU’: Sin dato: completa este campo con su fuente."
+        },
+        {
+          "field": "name",
+          "column": "Nombre",
+          "message": "Fila 1, columna ‘Nombre’: Sin dato: completa este campo con su fuente."
+        },
+        {
+          "field": "role",
+          "column": "Rol",
+          "message": "Fila 1, columna ‘Rol’: Sin dato: completa este campo con su fuente."
+        },
+        {
+          "field": "material",
+          "column": "Material",
+          "message": "Fila 1, columna ‘Material’: Sin dato: completa este campo con su fuente."
+        },
+        {
+          "field": "face_width_mm",
+          "column": "Ancho de cara (mm)",
+          "message": "Fila 1, columna ‘Ancho de cara (mm)’: Sin dato: completa este campo con su fuente."
+        }
+      ],
+      "fields": {
+        "sku": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "sku: P16-MARCO",
+          "method": "AI",
+          "literal": "P16-MARCO",
+          "proposed": "P16-MARCO",
+          "confidence": "LOW"
+        },
+        "name": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "name: Marco de revision P16",
+          "method": "AI",
+          "literal": "Marco de revision P16",
+          "proposed": "Marco de revision P16",
+          "confidence": "LOW"
+        },
+        "role": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "role: FRAME",
+          "method": "AI",
+          "literal": "FRAME",
+          "proposed": "FRAME",
+          "confidence": "LOW"
+        },
+        "source": {
+          "ref": "p16-foto-proveedor.png",
+          "quote": "p16-foto-proveedor.png",
+          "method": "AI",
+          "confidence": "HIGH"
+        },
+        "section": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "section: {\"source\":\"POLYGON\",\"depth_mm\":\"60.00\",\"orientation\":\"EXTERIOR_DOWN\",\"local_origin\":\"TOP_LEFT\",\"polygon\":[{\"x_mm\":\"0\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"60.00\"},{\"x_mm\":\"0\",\"y_mm\":\"60.00\"}],\"axes\":[{\"name\":\"GLAZING\",\"y_mm\":\"30.00\"}]}",
+          "method": "AI",
+          "literal": "{\"source\":\"POLYGON\",\"depth_mm\":\"60.00\",\"orientation\":\"EXTERIOR_DOWN\",\"local_origin\":\"TOP_LEFT\",\"polygon\":[{\"x_mm\":\"0\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"60.00\"},{\"x_mm\":\"0\",\"y_mm\":\"60.00\"}],\"axes\":[{\"name\":\"GLAZING\",\"y_mm\":\"30.00\"}]}",
+          "proposed": "{\"source\":\"POLYGON\",\"depth_mm\":\"60.00\",\"orientation\":\"EXTERIOR_DOWN\",\"local_origin\":\"TOP_LEFT\",\"polygon\":[{\"x_mm\":\"0\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"60.00\"},{\"x_mm\":\"0\",\"y_mm\":\"60.00\"}],\"axes\":[{\"name\":\"GLAZING\",\"y_mm\":\"30.00\"}]}",
+          "confidence": "LOW"
+        },
+        "material": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "material: PVC",
+          "method": "AI",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "LOW"
+        },
+        "system_code": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "system_code: P16-193532",
+          "method": "AI",
+          "literal": "P16-193532",
+          "proposed": "P16-193532",
+          "confidence": "LOW"
+        },
+        "weight_kg_m": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "weight_kg_m: 1.1535",
+          "method": "AI",
+          "literal": "1.1535",
+          "proposed": "1.1535",
+          "confidence": "LOW"
+        },
+        "coupling_rule": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "AI",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "face_width_mm": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "face_width_mm: 60.00",
+          "method": "AI",
+          "literal": "60.00",
+          "proposed": "60.00",
+          "confidence": "LOW"
+        },
+        "welding_loss_mm": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "welding_loss_mm: 6.00",
+          "method": "AI",
+          "literal": "6.00",
+          "proposed": "6.00",
+          "confidence": "LOW"
+        },
+        "steel_weight_kg_m": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "steel_weight_kg_m: 1.7000",
+          "method": "AI",
+          "literal": "1.7000",
+          "proposed": "1.7000",
+          "confidence": "LOW"
+        },
+        "commercial_length_mm": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "commercial_length_mm: 6000.00",
+          "method": "AI",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "LOW"
+        },
+        "reinforcement_gap_mm": {
+          "ref": "p16-foto-proveedor.png, p.1",
+          "quote": "reinforcement_gap_mm: 20.00",
+          "method": "AI",
+          "literal": "20.00",
+          "proposed": "20.00",
+          "confidence": "LOW"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": null,
+        "name": null,
+        "role": null,
+        "source": "p16-foto-proveedor.png",
+        "section": null,
+        "material": null,
+        "system_code": null,
+        "weight_kg_m": null,
+        "coupling_rule": null,
+        "face_width_mm": null,
+        "welding_loss_mm": null,
+        "steel_weight_kg_m": null,
+        "commercial_length_mm": null,
+        "reinforcement_gap_mm": null
+      },
+      "evidence": {
+        "document_id": "3e7b79d7-1e5a-47d2-b6e5-cffbf367867b"
+      },
+      "confidence": "REVIEW_REQUIRED"
+    }
+  ],
+  "warnings": [
+    "La fuente no tiene texto verificable. Revisa cada valor en la imagen o sube un PDF con texto."
+  ],
+  "published": false
+}

@@ -2988,6 +2988,147 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalog-imports/{import_id}/source/:
+    get:
+      operationId: catalog_import_source
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalog-imports/{import_id}/timeline/:
+    get:
+      operationId: catalog_import_timeline
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogImportTimeline'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalog-imports/{import_id}/undo/:
     post:
       operationId: catalog_import_undo
@@ -22663,6 +22804,10 @@ components:
           type: boolean
           readOnly: true
           default: false
+        authority_provenance:
+          allOf:
+          - $ref: '#/components/schemas/AuthorityProvenance'
+          readOnly: true
         coupling_rule:
           allOf:
           - $ref: '#/components/schemas/CouplerRule'
@@ -22746,7 +22891,12 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        section_facts:
+          allOf:
+          - $ref: '#/components/schemas/SectionFacts'
+          readOnly: true
       required:
+      - authority_provenance
       - data_provenance
       - face_width_mm
       - id
@@ -22756,6 +22906,7 @@ components:
       - review_pending
       - revision
       - role
+      - section_facts
       - section_revised_at
       - section_revised_by
       - section_revision
@@ -23020,6 +23171,36 @@ components:
       - active_organization
       - memberships
       - user
+    AuthorityProvenance:
+      type: object
+      properties:
+        state:
+          type: string
+        evidence_count:
+          type: integer
+        current_evidence_count:
+          type: integer
+        missing_fields:
+          type: array
+          items:
+            type: string
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        reviewer:
+          type: string
+          nullable: true
+        reason:
+          type: string
+      required:
+      - current_evidence_count
+      - evidence_count
+      - missing_fields
+      - reason
+      - reviewed_at
+      - reviewer
+      - state
     AuthorityTableEnum:
       enum:
       - catalog_color_skus
@@ -23141,6 +23322,10 @@ components:
           type: boolean
           readOnly: true
           default: false
+        authority_provenance:
+          allOf:
+          - $ref: '#/components/schemas/AuthorityProvenance'
+          readOnly: true
         system_id:
           type: string
           format: uuid
@@ -23178,6 +23363,7 @@ components:
           type: string
           format: uuid
       required:
+      - authority_provenance
       - bead_article_id
       - bead_width_mm
       - cut_add_mm
@@ -23394,6 +23580,32 @@ components:
           $ref: '#/components/schemas/CatalogImportResponse'
       required:
       - import
+    CatalogImportEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        actor_id:
+          type: string
+          format: uuid
+        actor:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: {}
+      required:
+      - action
+      - actor
+      - actor_id
+      - created_at
+      - details
+      - id
     CatalogImportListResponse:
       type: object
       properties:
@@ -23454,6 +23666,15 @@ components:
       - system_id
       - updated_at
       - warnings
+    CatalogImportTimeline:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogImportEvent'
+      required:
+      - items
     CatalogItemRequest:
       type: object
       properties:
@@ -23564,6 +23785,10 @@ components:
     CatalogReadiness:
       type: object
       properties:
+        state:
+          type: string
+        authority_gate:
+          nullable: true
         quote_ready:
           type: boolean
         scope:
@@ -26992,7 +27217,7 @@ components:
         value_text:
           type: string
           nullable: true
-          maxLength: 120
+          maxLength: 10000
         unit:
           nullable: true
           oneOf:
@@ -27019,6 +27244,16 @@ components:
           format: uri
           nullable: true
           minLength: 1
+        source_ref:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 500
+        source_quote:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 10000
       required:
       - authority_table
       - field_name
@@ -27127,6 +27362,29 @@ components:
           nullable: true
         reviewed_at:
           type: string
+          nullable: true
+        source_import_id:
+          type: string
+          format: uuid
+          nullable: true
+        source_ref:
+          type: string
+          nullable: true
+        source_quote:
+          type: string
+          nullable: true
+        source_literal:
+          type: string
+          nullable: true
+        extraction_confidence:
+          type: string
+          nullable: true
+        extraction_method:
+          type: string
+          nullable: true
+        canonical_value:
+          nullable: true
+        original_value:
           nullable: true
       required:
       - applicability
@@ -29373,6 +29631,10 @@ components:
           type: boolean
           readOnly: true
           default: false
+        authority_provenance:
+          allOf:
+          - $ref: '#/components/schemas/AuthorityProvenance'
+          readOnly: true
         system_id:
           type: string
           format: uuid
@@ -29442,6 +29704,7 @@ components:
           type: string
           format: uuid
       required:
+      - authority_provenance
       - carriages_qty
       - contents
       - data_provenance
@@ -38332,6 +38595,10 @@ components:
           type: string
         action:
           type: string
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReadinessTarget'
       required:
       - action
       - affected
@@ -38354,6 +38621,26 @@ components:
       required:
       - blockers
       - level
+    ReadinessTarget:
+      type: object
+      properties:
+        resource:
+          type: string
+        row_id:
+          type: string
+          format: uuid
+        field:
+          type: string
+        label:
+          type: string
+        href:
+          type: string
+      required:
+      - field
+      - href
+      - label
+      - resource
+      - row_id
     ReceiptLineRequestRequest:
       type: object
       properties:
@@ -39135,6 +39422,59 @@ components:
       required:
       - name
       - y_mm
+    SectionBounds:
+      type: object
+      properties:
+        min_x_mm:
+          type: string
+        max_x_mm:
+          type: string
+        min_y_mm:
+          type: string
+        max_y_mm:
+          type: string
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+      required:
+      - height_mm
+      - max_x_mm
+      - max_y_mm
+      - min_x_mm
+      - min_y_mm
+      - width_mm
+    SectionFacts:
+      type: object
+      properties:
+        state:
+          type: string
+        valid:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            type: string
+        bounds:
+          allOf:
+          - $ref: '#/components/schemas/SectionBounds'
+          nullable: true
+        orientation:
+          type: string
+          nullable: true
+        local_origin:
+          type: string
+          nullable: true
+        interpretation_declared:
+          type: boolean
+      required:
+      - bounds
+      - interpretation_declared
+      - local_origin
+      - orientation
+      - reasons
+      - state
+      - valid
     SectionImportCandidate:
       type: object
       properties:
@@ -40246,6 +40586,10 @@ components:
           type: boolean
           readOnly: true
           default: false
+        authority_provenance:
+          allOf:
+          - $ref: '#/components/schemas/AuthorityProvenance'
+          readOnly: true
         extra_authority:
           nullable: true
         system_family:
@@ -40412,6 +40756,7 @@ components:
         is_demo:
           type: boolean
       required:
+      - authority_provenance
       - chamber_count
       - code
       - corner_bracket_loss_mm
@@ -40470,9 +40815,18 @@ components:
           allOf:
           - $ref: '#/components/schemas/ProcessProfileRow'
           nullable: true
+        glasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceGlass'
+        manufacturing_policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceManufacturingPolicy'
       required:
       - articles
       - beads
+      - glasses
       - kits
       - process_profile
       - purchase_mappings
@@ -41143,6 +41497,62 @@ components:
       - glass
       - leaves
       - spans
+    WorkspaceGlass:
+      type: object
+      properties:
+        mapping_id:
+          type: string
+          format: uuid
+        technical_sku:
+          type: string
+        name:
+          type: string
+        notation:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        synthetic:
+          type: boolean
+        product:
+          nullable: true
+      required:
+      - mapping_id
+      - name
+      - notation
+      - product
+      - source
+      - synthetic
+      - technical_sku
+    WorkspaceManufacturingPolicy:
+      type: object
+      properties:
+        kind:
+          type: string
+        authority_table:
+          type: string
+        label:
+          type: string
+        id:
+          type: string
+          format: uuid
+          nullable: true
+        version:
+          type: integer
+          nullable: true
+        valid:
+          type: boolean
+        global_authority:
+          type: boolean
+      required:
+      - authority_table
+      - global_authority
+      - id
+      - kind
+      - label
+      - valid
+      - version
     WorkspaceResponse:
       type: object
       properties:

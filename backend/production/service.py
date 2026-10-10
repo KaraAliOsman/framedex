@@ -657,11 +657,14 @@ def process_facts_snapshot(
     profile content AND its routing inputs. Release reads this verbatim so a
     later catalog/profile edit can never re-route sealed evidence."""
     profile, via = _resolve_process_profile(org_id, engine_result, system_facts)
-    return {
+    from dekopen_engine.catalog_authority import process_authority_gate
+    facts = {
         "system": dict(system_facts or {}),
         "profile": _frozen_profile(profile),
         "resolved_via": via,
     }
+    facts["authority_gate"] = process_authority_gate(facts)
+    return facts
 
 
 def _public_step(step: dict[str, object]) -> dict[str, object]:
@@ -765,6 +768,9 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             raise DocumentaryError('production_measurements_unconfirmed')
         if not version["production_allowed"]:
             raise DocumentaryError("version_not_releasable")
+        if any(pos.get("catalog_authority_gate", {}).get("ok") is False
+               for pos in frozen_measurements.get("positions", [])):
+            raise DocumentaryError("version_not_releasable")
         # A sealed version stays valid only while it is the newest one —
         # once a later revision froze, releasing the superseded quote would
         # build the wrong product (review WM2).
@@ -811,12 +817,12 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         # position resolved to GENERIC_LEGACY means no bound/material process
         # profile exists — the routing would be invented. Re-seal on a
         # catalog with real process authority instead of shipping it.
+        from dekopen_engine.catalog_authority import process_authority_gate
         unresolved = sorted(
             str(pos.get("code") or pos.get("position_index") or pid)
             for pos in (snapshot.get("positions") or [])
             for pid in (str(pos.get("id")),)
-            if not isinstance(pos.get("process_facts"), dict)
-            or pos["process_facts"].get("resolved_via") == "generic_fallback"
+            if not process_authority_gate(pos.get("process_facts"))["ok"]
         )
         if unresolved:
             raise DocumentaryError("production_process_unresolved")

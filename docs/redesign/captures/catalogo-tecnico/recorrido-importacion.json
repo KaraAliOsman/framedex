@@ -1,0 +1,711 @@
+{
+  "provider": "MIMO",
+  "model": "primalabs-ai/MiMo-V2.6-Pro",
+  "source": "PDF sintético de tres páginas; sin certificación",
+  "candidates": [
+    {
+      "sheet": "Sistemas",
+      "confidence": "REVIEW_REQUIRED",
+      "unknown": [
+        "extra_authority",
+        "finish_authority",
+        "paired_leaf_rule",
+        "sliding.rail_type",
+        "sliding.end_add_mm",
+        "sliding.rail_count",
+        "chamber_clearance_mm",
+        "opening_capabilities",
+        "sliding.separate_rail",
+        "sliding.pulley_height_mm",
+        "sliding.central_overlap_mm",
+        "sliding.interlock_required",
+        "sliding.lateral_clearance_mm",
+        "sliding.glazing_deduction_width_mm",
+        "sliding.glazing_deduction_height_mm"
+      ]
+    },
+    {
+      "sheet": "Perfiles",
+      "confidence": "LOW",
+      "unknown": [
+        "coupling_rule"
+      ]
+    },
+    {
+      "sheet": "Roles y reglas de corte",
+      "confidence": "HIGH_CANDIDATE",
+      "unknown": []
+    }
+  ],
+  "reviewed": [
+    {
+      "key": "ai0",
+      "row": 1,
+      "sheet": "Sistemas",
+      "errors": [],
+      "fields": {
+        "name": {
+          "ref": "página 1",
+          "quote": "name: Serie de revision P16",
+          "method": "MANUAL",
+          "literal": "Serie de revision P16",
+          "proposed": "Serie de revision P16",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "p16-proveedor.pdf",
+          "quote": "p16-proveedor.pdf",
+          "method": "MANUAL",
+          "confidence": "HIGH"
+        },
+        "version": {
+          "ref": "página 1",
+          "quote": "version: 1",
+          "method": "MANUAL",
+          "literal": "1",
+          "proposed": 1,
+          "confidence": "HIGH"
+        },
+        "depth_mm": {
+          "ref": "página 1",
+          "quote": "depth_mm: 60.00",
+          "method": "MANUAL",
+          "literal": "60.00",
+          "proposed": "60.00",
+          "confidence": "HIGH"
+        },
+        "finishes": {
+          "ref": "página 1",
+          "quote": "finishes: [\"WHITE\",\"FOILED\"]",
+          "method": "HUMAN_CORRECTION",
+          "literal": "[\"WHITE\",\"FOILED\"]",
+          "original": null,
+          "proposed": "WHITE|FOILED",
+          "confidence": "HUMAN_REVIEWED"
+        },
+        "material": {
+          "ref": "página 1",
+          "quote": "material: PVC",
+          "method": "MANUAL",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "is_active": {
+          "ref": "página 1",
+          "quote": "is_active: true",
+          "method": "MANUAL",
+          "literal": "true",
+          "proposed": true,
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 1",
+          "quote": "system_code: P16-193532",
+          "method": "MANUAL",
+          "literal": "P16-193532",
+          "proposed": "P16-193532",
+          "confidence": "HIGH"
+        },
+        "manufacturer": {
+          "ref": "página 1",
+          "quote": "manufacturer: Proveedor sintetico de prueba",
+          "method": "MANUAL",
+          "literal": "Proveedor sintetico de prueba",
+          "proposed": "Proveedor sintetico de prueba",
+          "confidence": "HIGH"
+        },
+        "chamber_count": {
+          "ref": "página 1",
+          "quote": "chamber_count: 5",
+          "method": "MANUAL",
+          "literal": "5",
+          "proposed": 5,
+          "confidence": "HIGH"
+        },
+        "hook_depth_mm": {
+          "ref": "página 1",
+          "quote": "hook_depth_mm: 0.00",
+          "method": "MANUAL",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "system_family": {
+          "ref": "página 1",
+          "quote": "system_family: CASEMENT",
+          "method": "MANUAL",
+          "literal": "CASEMENT",
+          "proposed": "CASEMENT",
+          "confidence": "HIGH"
+        },
+        "extra_authority": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "rebate_depth_mm": {
+          "ref": "página 1",
+          "quote": "rebate_depth_mm: 15.00",
+          "method": "MANUAL",
+          "literal": "15.00",
+          "proposed": "15.00",
+          "confidence": "HIGH"
+        },
+        "sash_overlap_mm": {
+          "ref": "página 1",
+          "quote": "sash_overlap_mm: 8.00",
+          "method": "MANUAL",
+          "literal": "8.00",
+          "proposed": "8.00",
+          "confidence": "HIGH"
+        },
+        "finish_authority": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "paired_leaf_rule": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "door_threshold_mm": {
+          "ref": "página 1",
+          "quote": "door_threshold_mm: 30.00",
+          "method": "MANUAL",
+          "literal": "30.00",
+          "proposed": "30.00",
+          "confidence": "HIGH"
+        },
+        "sliding.rail_type": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "sliding.end_add_mm": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "sliding.rail_count": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "chamber_clearance_mm": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "opening_capabilities": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "sliding.separate_rail": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "corner_bracket_loss_mm": {
+          "ref": "página 1",
+          "quote": "corner_bracket_loss_mm: 0.00",
+          "method": "MANUAL",
+          "literal": "0.00",
+          "proposed": "0.00",
+          "confidence": "HIGH"
+        },
+        "end_milling_overlap_mm": {
+          "ref": "página 1",
+          "quote": "end_milling_overlap_mm: 4.00",
+          "method": "MANUAL",
+          "literal": "4.00",
+          "proposed": "4.00",
+          "confidence": "HIGH"
+        },
+        "glass_clearance_foil_mm": {
+          "ref": "página 1",
+          "quote": "glass_clearance_foil_mm: 5.00",
+          "method": "MANUAL",
+          "literal": "5.00",
+          "proposed": "5.00",
+          "confidence": "HIGH"
+        },
+        "door_bottom_clearance_mm": {
+          "ref": "página 1",
+          "quote": "door_bottom_clearance_mm: 20.00",
+          "method": "MANUAL",
+          "literal": "20.00",
+          "proposed": "20.00",
+          "confidence": "HIGH"
+        },
+        "glass_clearance_white_mm": {
+          "ref": "página 1",
+          "quote": "glass_clearance_white_mm: 3.00",
+          "method": "MANUAL",
+          "literal": "3.00",
+          "proposed": "3.00",
+          "confidence": "HIGH"
+        },
+        "sliding.pulley_height_mm": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "sliding.central_overlap_mm": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "sliding.interlock_required": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "door_leaf_side_clearance_mm": {
+          "ref": "página 1",
+          "quote": "door_leaf_side_clearance_mm: 7.00",
+          "method": "MANUAL",
+          "literal": "7.00",
+          "proposed": "7.00",
+          "confidence": "HIGH"
+        },
+        "sliding.lateral_clearance_mm": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "sliding.glazing_deduction_width_mm": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "sliding.glazing_deduction_height_mm": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "name": "Serie de revision P16",
+        "source": "p16-proveedor.pdf",
+        "version": 1,
+        "depth_mm": "60.00",
+        "finishes": [
+          "WHITE",
+          "FOILED"
+        ],
+        "material": "PVC",
+        "is_active": true,
+        "system_code": "P16-193532",
+        "manufacturer": "Proveedor sintetico de prueba",
+        "chamber_count": 5,
+        "hook_depth_mm": "0.00",
+        "system_family": "CASEMENT",
+        "extra_authority": null,
+        "rebate_depth_mm": "15.00",
+        "sash_overlap_mm": "8.00",
+        "finish_authority": null,
+        "paired_leaf_rule": null,
+        "door_threshold_mm": "30.00",
+        "sliding.rail_type": null,
+        "sliding.end_add_mm": null,
+        "sliding.rail_count": null,
+        "chamber_clearance_mm": null,
+        "opening_capabilities": null,
+        "sliding.separate_rail": null,
+        "corner_bracket_loss_mm": "0.00",
+        "end_milling_overlap_mm": "4.00",
+        "glass_clearance_foil_mm": "5.00",
+        "door_bottom_clearance_mm": "20.00",
+        "glass_clearance_white_mm": "3.00",
+        "sliding.pulley_height_mm": null,
+        "sliding.central_overlap_mm": null,
+        "sliding.interlock_required": null,
+        "door_leaf_side_clearance_mm": "7.00",
+        "sliding.lateral_clearance_mm": null,
+        "sliding.glazing_deduction_width_mm": null,
+        "sliding.glazing_deduction_height_mm": null
+      },
+      "confidence": "LOW"
+    },
+    {
+      "key": "ai1",
+      "row": 2,
+      "sheet": "Perfiles",
+      "errors": [],
+      "fields": {
+        "sku": {
+          "ref": "página 2",
+          "quote": "sku: P16-MARCO",
+          "method": "MANUAL",
+          "literal": "P16-MARCO",
+          "proposed": "P16-MARCO",
+          "confidence": "HIGH"
+        },
+        "name": {
+          "ref": "página 2",
+          "quote": "name: Marco de revision P16",
+          "method": "MANUAL",
+          "literal": "Marco de revision P16",
+          "proposed": "Marco de revision P16",
+          "confidence": "HIGH"
+        },
+        "role": {
+          "ref": "página 2",
+          "quote": "role: FRAME",
+          "method": "MANUAL",
+          "literal": "FRAME",
+          "proposed": "FRAME",
+          "confidence": "HIGH"
+        },
+        "source": {
+          "ref": "p16-proveedor.pdf",
+          "quote": "p16-proveedor.pdf",
+          "method": "MANUAL",
+          "confidence": "HIGH"
+        },
+        "section": {
+          "ref": "página 2",
+          "quote": "section: {\"source\":\"POLYGON\",\"depth_mm\":\"60.00\",\"orientation\":\"EXTERIOR_DOWN\",\"local_origi\nn\":\"TOP_LEFT\",\"polygon\":[{\"x_mm\":\"0\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"0\"},{\"x_mm\":\"55.0\n1\",\"y_mm\":\"60.00\"},{\"x_mm\":\"0\",\"y_mm\":\"60.00\"}],\"axes\":[{\"name\":\"GLAZING\",\"y_mm\":\"30.00\"}]\n}",
+          "method": "HUMAN_CORRECTION",
+          "literal": "{\"source\":\"POLYGON\",\"depth_mm\":\"60.00\",\"orientation\":\"EXTERIOR_DOWN\",\"local_origin\":\"TOP_LEFT\",\"polygon\":[{\"x_mm\":\"0\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"60.00\"},{\"x_mm\":\"0\",\"y_mm\":\"60.00\"}],\"axes\":[{\"name\":\"GLAZING\",\"y_mm\":\"30.00\"}]}",
+          "original": null,
+          "proposed": "{\"source\":\"POLYGON\",\"depth_mm\":\"60.00\",\"orientation\":\"EXTERIOR_DOWN\",\"local_origin\":\"TOP_LEFT\",\"polygon\":[{\"x_mm\":\"0\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"0\"},{\"x_mm\":\"55.01\",\"y_mm\":\"60.00\"},{\"x_mm\":\"0\",\"y_mm\":\"60.00\"}],\"axes\":[{\"name\":\"GLAZING\",\"y_mm\":\"30.00\"}]}",
+          "confidence": "HUMAN_REVIEWED"
+        },
+        "material": {
+          "ref": "página 2",
+          "quote": "material: PVC",
+          "method": "MANUAL",
+          "literal": "PVC",
+          "proposed": "PVC",
+          "confidence": "HIGH"
+        },
+        "system_code": {
+          "ref": "página 2",
+          "quote": "system_code: P16-193532",
+          "method": "MANUAL",
+          "literal": "P16-193532",
+          "proposed": "P16-193532",
+          "confidence": "HIGH"
+        },
+        "weight_kg_m": {
+          "ref": "página 2",
+          "quote": "weight_kg_m: 1.1535",
+          "method": "MANUAL",
+          "literal": "1.1535",
+          "proposed": "1.1535",
+          "confidence": "HIGH"
+        },
+        "coupling_rule": {
+          "ref": "Sin referencia",
+          "quote": "",
+          "method": "MANUAL",
+          "literal": "",
+          "proposed": null,
+          "confidence": "UNKNOWN"
+        },
+        "face_width_mm": {
+          "ref": "página 2",
+          "quote": "face_width_mm: 60.00",
+          "method": "MANUAL",
+          "literal": "60.00",
+          "proposed": "60.00",
+          "confidence": "HIGH"
+        },
+        "welding_loss_mm": {
+          "ref": "página 2",
+          "quote": "welding_loss_mm: 6.00",
+          "method": "MANUAL",
+          "literal": "6.00",
+          "proposed": "6.00",
+          "confidence": "HIGH"
+        },
+        "steel_weight_kg_m": {
+          "ref": "página 2",
+          "quote": "steel_weight_kg_m: 1.7000",
+          "method": "MANUAL",
+          "literal": "1.7000",
+          "proposed": "1.7000",
+          "confidence": "HIGH"
+        },
+        "commercial_length_mm": {
+          "ref": "página 2",
+          "quote": "commercial_length_mm: 6000.00",
+          "method": "MANUAL",
+          "literal": "6000.00",
+          "proposed": "6000.00",
+          "confidence": "HIGH"
+        },
+        "reinforcement_gap_mm": {
+          "ref": "página 2",
+          "quote": "reinforcement_gap_mm: 20.00",
+          "method": "MANUAL",
+          "literal": "20.00",
+          "proposed": "20.00",
+          "confidence": "HIGH"
+        }
+      },
+      "method": "AI",
+      "values": {
+        "sku": "P16-MARCO",
+        "name": "Marco de revision P16",
+        "role": "FRAME",
+        "source": "p16-proveedor.pdf",
+        "section": {
+          "axes": [],
+          "source": "POLYGON",
+          "polygon": [
+            {
+              "x_mm": "0",
+              "y_mm": "0"
+            },
+            {
+              "x_mm": "55.01",
+              "y_mm": "0"
+            },
+            {
+              "x_mm": "55.01",
+              "y_mm": "60.00"
+            },
+            {
+              "x_mm": "0",
+              "y_mm": "60.00"
+            }
+          ],
+          "depth_mm": "60.00",
+          "orientation": "EXTERIOR_DOWN",
+          "local_origin": "TOP_LEFT"
+        },
+        "material": "PVC",
+        "system_code": "P16-193532",
+        "weight_kg_m": "1.1535",
+        "coupling_rule": null,
+        "face_width_mm": "60.00",
+        "welding_loss_mm": "6.00",
+        "steel_weight_kg_m": "1.7000",
+        "commercial_length_mm": "6000.00",
+        "reinforcement_gap_mm": "20.00"
+      },
+      "confidence": "LOW"
+    }
+  ],
+  "actionsVerified": [
+    "Descarga original idéntica",
+    "Corrección de colores y sección desde la fuente",
+    "Regla desmarcada",
+    "Diff sin errores",
+    "Publicación completa",
+    "Procedencia REVIEWED, sección válida",
+    "Deep link de sección con foco",
+    "Deshacer por clic"
+  ],
+  "timeline": [
+    {
+      "id": "77075168-ed32-4835-967b-c407d053bb63",
+      "action": "UPLOADED",
+      "actor_id": "657fe3ca-c620-46e2-8694-bdca6015575a",
+      "actor": "Encargado de taller",
+      "created_at": "2026-10-10T19:36:06.943551+00:00",
+      "details": {
+        "status": "UPLOADED",
+        "error_code": null,
+        "candidate_count": 0
+      }
+    },
+    {
+      "id": "437eb277-8079-40e4-a8fd-10dc0dccaea1",
+      "action": "EXTRACTING",
+      "actor_id": "657fe3ca-c620-46e2-8694-bdca6015575a",
+      "actor": "Encargado de taller",
+      "created_at": "2026-10-10T19:36:08.397288+00:00",
+      "details": {
+        "status": "EXTRACTING",
+        "error_code": null,
+        "candidate_count": 0
+      }
+    },
+    {
+      "id": "64c8ad60-1ab7-46db-849b-000d9a3ac3dc",
+      "action": "REVIEW_READY",
+      "actor_id": "657fe3ca-c620-46e2-8694-bdca6015575a",
+      "actor": "Encargado de taller",
+      "created_at": "2026-10-10T19:36:21.694414+00:00",
+      "details": {
+        "status": "REVIEW_READY",
+        "error_code": null,
+        "candidate_count": 3
+      }
+    },
+    {
+      "id": "14a6a206-e8a8-45ae-8f31-87665ff32103",
+      "action": "REVIEW",
+      "actor_id": "657fe3ca-c620-46e2-8694-bdca6015575a",
+      "actor": "Encargado de taller",
+      "created_at": "2026-10-10T19:39:08.944775+00:00",
+      "details": {
+        "items": [
+          {
+            "key": "ai0",
+            "values": {
+              "name": "Serie de revision P16",
+              "source": "p16-proveedor.pdf",
+              "version": 1,
+              "depth_mm": "60.00",
+              "finishes": "WHITE | FOILED",
+              "material": "PVC",
+              "is_active": true,
+              "system_code": "P16-193532",
+              "manufacturer": "Proveedor sintetico de prueba",
+              "chamber_count": 5,
+              "hook_depth_mm": "0.00",
+              "system_family": "CASEMENT",
+              "extra_authority": null,
+              "rebate_depth_mm": "15.00",
+              "sash_overlap_mm": "8.00",
+              "finish_authority": null,
+              "paired_leaf_rule": null,
+              "door_threshold_mm": "30.00",
+              "sliding.rail_type": null,
+              "sliding.end_add_mm": null,
+              "sliding.rail_count": null,
+              "chamber_clearance_mm": null,
+              "opening_capabilities": null,
+              "sliding.separate_rail": null,
+              "corner_bracket_loss_mm": "0.00",
+              "end_milling_overlap_mm": "4.00",
+              "glass_clearance_foil_mm": "5.00",
+              "door_bottom_clearance_mm": "20.00",
+              "glass_clearance_white_mm": "3.00",
+              "sliding.pulley_height_mm": null,
+              "sliding.central_overlap_mm": null,
+              "sliding.interlock_required": null,
+              "door_leaf_side_clearance_mm": "7.00",
+              "sliding.lateral_clearance_mm": null,
+              "sliding.glazing_deduction_width_mm": null,
+              "sliding.glazing_deduction_height_mm": null
+            }
+          },
+          {
+            "key": "ai1",
+            "values": {
+              "sku": "P16-MARCO",
+              "name": "Marco de revision P16",
+              "role": "FRAME",
+              "source": "p16-proveedor.pdf",
+              "section": {
+                "axes": [],
+                "source": "POLYGON",
+                "polygon": [
+                  {
+                    "x_mm": "0",
+                    "y_mm": "0"
+                  },
+                  {
+                    "x_mm": "55.01",
+                    "y_mm": "0"
+                  },
+                  {
+                    "x_mm": "55.01",
+                    "y_mm": "60.00"
+                  },
+                  {
+                    "x_mm": "0",
+                    "y_mm": "60.00"
+                  }
+                ],
+                "depth_mm": "60.00",
+                "orientation": "EXTERIOR_DOWN",
+                "local_origin": "TOP_LEFT"
+              },
+              "material": "PVC",
+              "system_code": "P16-193532",
+              "weight_kg_m": "1.1535",
+              "coupling_rule": null,
+              "face_width_mm": "60.00",
+              "welding_loss_mm": "6.00",
+              "steel_weight_kg_m": "1.7000",
+              "commercial_length_mm": "6000.00",
+              "reinforcement_gap_mm": "20.00"
+            }
+          }
+        ],
+        "errors": [],
+        "review_token": "sha256:8c4e0261ca6788cc87ad962cbdef6593ca7e4f2d05b28d2ec9e9d2c8ae8e6d24"
+      }
+    },
+    {
+      "id": "1f5b0142-5214-41c3-b4cc-0a2b919bfe1f",
+      "action": "PUBLISH",
+      "actor_id": "657fe3ca-c620-46e2-8694-bdca6015575a",
+      "actor": "Encargado de taller",
+      "created_at": "2026-10-10T19:39:10.406841+00:00",
+      "details": {
+        "status": "CONFIRMED",
+        "error_code": null,
+        "candidate_count": 3
+      }
+    },
+    {
+      "id": "8738d786-ec1a-46e4-9ce3-494e61697452",
+      "action": "UNDO",
+      "actor_id": "657fe3ca-c620-46e2-8694-bdca6015575a",
+      "actor": "Encargado de taller",
+      "created_at": "2026-10-10T19:41:33.667393+00:00",
+      "details": {
+        "status": "UNDONE",
+        "error_code": null,
+        "candidate_count": 3
+      }
+    }
+  ],
+  "status": "UNDONE"
+}

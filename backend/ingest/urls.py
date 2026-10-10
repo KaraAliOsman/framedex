@@ -17,6 +17,8 @@ urlpatterns = [
     path("catalog-imports/<uuid:import_id>/publish/", catalog_views.CatalogImportPublishView.as_view(), name="catalog-import-publish"),
     path("catalog-imports/<uuid:import_id>/undo/", catalog_views.CatalogImportUndoView.as_view(), name="catalog-import-undo"),
     path("catalog-imports/<uuid:import_id>/export/", catalog_views.CatalogImportExportView.as_view(), name="catalog-import-export"),
+    path("catalog-imports/<uuid:import_id>/source/", catalog_views.CatalogImportSourceView.as_view(), name="catalog-import-source"),
+    path("catalog-imports/<uuid:import_id>/timeline/", catalog_views.CatalogImportTimelineView.as_view(), name="catalog-import-timeline"),
     path(
         "projects/<uuid:project_id>/imports/",
         ProjectImportsView.as_view(),
