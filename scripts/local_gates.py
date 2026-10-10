@@ -33,25 +33,39 @@ def executable(name: str) -> str:
 
 
 def redact(output: str) -> str:
-    output = re.sub(r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "[local JWT redacted]", output)
+    output = re.sub(
+        r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "[local JWT redacted]", output
+    )
     output = re.sub(r"sb_secret_[A-Za-z0-9_-]+", "[local secret redacted]", output)
     output = re.sub(r"(postgres(?:ql)?://[^:\s]+:)[^@\s]+@", r"\1[redacted]@", output)
     return re.sub(
         r"((?:JWT_SECRET|SECRET_KEY|S3_PROTOCOL_ACCESS_KEY_SECRET|secret[\s_]+key|access[\s_]+key)[\"']?\s*[:=|│]\s*[\"']?)[^\s,\"'}|│]+",
-        r"\1[redacted]", output, flags=re.IGNORECASE,
+        r"\1[redacted]",
+        output,
+        flags=re.IGNORECASE,
     )
 
 
 def run(
-    command: Sequence[str], *, cwd: Path = ROOT,
-    env: Mapping[str, str] | None = None, input_text: str | None = None,
+    command: Sequence[str],
+    *,
+    cwd: Path = ROOT,
+    env: Mapping[str, str] | None = None,
+    input_text: str | None = None,
     capture: bool = False,
 ) -> str:
     print(f"  $ {shlex.join(command)}", flush=True)
     result = subprocess.run(
-        command, cwd=cwd, env=env, input=input_text,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        text=True, encoding="utf-8", errors="replace", check=False,
+        command,
+        cwd=cwd,
+        env=env,
+        input=input_text,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
     )
     if result.stderr.strip():
         print(redact(result.stderr.rstrip()), flush=True)
@@ -60,7 +74,9 @@ def run(
     if result.returncode != 0:
         if capture:
             print(redact(result.stdout.rstrip()), flush=True)
-        raise RuntimeError(f"Gate command exited with code {result.returncode}: {shlex.join(command)}")
+        raise RuntimeError(
+            f"Gate command exited with code {result.returncode}: {shlex.join(command)}"
+        )
     print("  EXIT CODE 0", flush=True)
     return result.stdout
 
@@ -73,24 +89,28 @@ def running_environment() -> dict[str, str]:
     status = json.loads(run([supabase, "status", "-o", "json"], capture=True))
     required = ("API_URL", "ANON_KEY", "SERVICE_ROLE_KEY", "DB_URL", "MAILPIT_URL")
     if any(not isinstance(status.get(key), str) or not status[key] for key in required):
-        raise RuntimeError("Running Supabase stack did not report every required local endpoint/key")
+        raise RuntimeError(
+            "Running Supabase stack did not report every required local endpoint/key"
+        )
     for key in ("API_URL", "DB_URL", "MAILPIT_URL"):
         if urlparse(status[key]).hostname not in {"127.0.0.1", "localhost", "::1"}:
             raise RuntimeError(f"Real gate fixtures may only target localhost: {key}")
     result = dict(os.environ)
-    result.update({
-        "PYTHONUTF8": "1",
-        "SUPABASE_URL": status["API_URL"],
-        "SUPABASE_ANON_KEY": status["ANON_KEY"],
-        "SUPABASE_SERVICE_ROLE_KEY": status["SERVICE_ROLE_KEY"],
-        "DATABASE_URL": status["DB_URL"],
-        "MAILPIT_URL": status["MAILPIT_URL"],
-        "SUPABASE_JWT_VERIFY_MODE": "auth_server",
-        "CORS_ALLOWED_ORIGINS": "http://127.0.0.1:5173",
-        "DJANGO_URL": "http://127.0.0.1:8000",
-        "VITE_SUPABASE_URL": status["API_URL"],
-        "VITE_SUPABASE_ANON_KEY": status["ANON_KEY"],
-    })
+    result.update(
+        {
+            "PYTHONUTF8": "1",
+            "SUPABASE_URL": status["API_URL"],
+            "SUPABASE_ANON_KEY": status["ANON_KEY"],
+            "SUPABASE_SERVICE_ROLE_KEY": status["SERVICE_ROLE_KEY"],
+            "DATABASE_URL": status["DB_URL"],
+            "MAILPIT_URL": status["MAILPIT_URL"],
+            "SUPABASE_JWT_VERIFY_MODE": "auth_server",
+            "CORS_ALLOWED_ORIGINS": "http://127.0.0.1:5173",
+            "DJANGO_URL": "http://127.0.0.1:8000",
+            "VITE_SUPABASE_URL": status["API_URL"],
+            "VITE_SUPABASE_ANON_KEY": status["ANON_KEY"],
+        }
+    )
     # Real auth gates never send telemetry to an external account.
     result.pop("VITE_POSTHOG_KEY", None)
     result.pop("VITE_POSTHOG_HOST", None)
@@ -180,20 +200,47 @@ def _wait_for_server(process: subprocess.Popen[str], url: str) -> None:
     raise RuntimeError(f"Gate server readiness timed out: {url}")
 
 
+def gate_mail_environment(env: Mapping[str, str]) -> dict[str, str]:
+    """Sandbox delivery belongs to this gate's configured Supabase project."""
+    config = tomllib.loads((ROOT / "supabase/config.toml").read_text(encoding="utf-8"))
+    port = config.get("local_smtp", {}).get("smtp_port")
+    host = urlparse(env["MAILPIT_URL"]).hostname
+    if (
+        host not in {"127.0.0.1", "localhost", "::1"}
+        or type(port) is not int
+        or not 1 <= port <= 65535
+    ):
+        raise RuntimeError("Real mail gate requires this project's declared localhost SMTP port")
+    result = {key: value for key, value in env.items() if not key.startswith("MAIL_")}
+    result.update(
+        {"MAIL_PROVIDER": "sandbox", "MAIL_SANDBOX_HOST": host, "MAIL_SANDBOX_PORT": str(port)}
+    )
+    return result
+
+
 def run_auth_e2e(env: Mapping[str, str], *test_args: str) -> None:
     require_mailpit(env)
     _free_port(8000)
     _free_port(5173)
     node = executable("node")
-    backend_env = dict(env)
+    backend_env = gate_mail_environment(env)
     frontend_env = {
-        key: value for key, value in env.items()
-        if not key.startswith("AI_GATEWAY_")
+        key: value
+        for key, value in env.items()
+        if not key.startswith(("AI_GATEWAY_", "MAIL_"))
         and key not in {"DATABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SECRET_KEY", "JWT_SECRET"}
     }
     commands = [
-        ([sys.executable, "backend/manage.py", "runserver", "127.0.0.1:8000", "--noreload"], ROOT, backend_env),
-        ([node, "node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--strictPort"], FRONTEND, frontend_env),
+        (
+            [sys.executable, "backend/manage.py", "runserver", "127.0.0.1:8000", "--noreload"],
+            ROOT,
+            backend_env,
+        ),
+        (
+            [node, "node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--strictPort"],
+            FRONTEND,
+            frontend_env,
+        ),
         # Durable-job worker — app flows that enqueue jobs (document
         # generation, optimization) deadlock in e2e without it.
         ([sys.executable, "backend/manage.py", "runjobs", "--poll", "0.5"], ROOT, backend_env),
@@ -205,8 +252,14 @@ def run_auth_e2e(env: Mapping[str, str], *test_args: str) -> None:
     try:
         for command, cwd, process_env in commands:
             process = subprocess.Popen(
-                command, cwd=cwd, env=process_env, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
+                command,
+                cwd=cwd,
+                env=process_env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
                 creationflags=flags,
             )
             processes.append(process)
@@ -220,7 +273,8 @@ def run_auth_e2e(env: Mapping[str, str], *test_args: str) -> None:
         _wait_for_server(processes[1], "http://127.0.0.1:5173/login")
         run(
             [node, "node_modules/@playwright/test/cli.js", "test", *test_args],
-            cwd=FRONTEND, env=env,
+            cwd=FRONTEND,
+            env=env,
         )
     except BaseException:
         for lines in logs:
@@ -244,7 +298,10 @@ def run_auth_e2e(env: Mapping[str, str], *test_args: str) -> None:
                 process.stdout.close()
         _free_port(8000)
         _free_port(5173)
-        print("  E2E teardown: backend/frontend stopped, logs closed, ports 8000/5173 free", flush=True)
+        print(
+            "  E2E teardown: backend/frontend stopped, logs closed, ports 8000/5173 free",
+            flush=True,
+        )
 
 
 def verify_postgres16() -> None:
@@ -253,10 +310,18 @@ def verify_postgres16() -> None:
     owned = container is None
     if owned:
         container = f"dekopen-pg16-{uuid4().hex}"
-        run([
-            docker, "run", "--detach", "--name", container,
-            "--env", "POSTGRES_PASSWORD=postgres", "postgres:16-alpine",
-        ])
+        run(
+            [
+                docker,
+                "run",
+                "--detach",
+                "--name",
+                container,
+                "--env",
+                "POSTGRES_PASSWORD=postgres",
+                "postgres:16-alpine",
+            ]
+        )
     assert container is not None
     try:
         deadline = time.monotonic() + 60
@@ -265,13 +330,17 @@ def verify_postgres16() -> None:
             if owned:
                 server = subprocess.run(
                     [docker, "exec", container, "cat", "/proc/1/comm"],
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    check=False,
                     text=True,
                 )
                 server_ready = server.returncode == 0 and server.stdout.strip() == "postgres"
             result = subprocess.run(
                 [docker, "exec", container, "pg_isready", "-U", "postgres", "-d", "postgres"],
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
             )
             if server_ready and result.returncode == 0:
                 break
@@ -287,7 +356,19 @@ def verify_postgres16() -> None:
         for path in paths:
             print(f"  PostgreSQL 16 applies {path.relative_to(ROOT).as_posix()}", flush=True)
             run(
-                [docker, "exec", "-i", container, "psql", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", "postgres"],
+                [
+                    docker,
+                    "exec",
+                    "-i",
+                    container,
+                    "psql",
+                    "-v",
+                    "ON_ERROR_STOP=1",
+                    "-U",
+                    "postgres",
+                    "-d",
+                    "postgres",
+                ],
                 input_text=path.read_text(encoding="utf-8"),
             )
         import check_documentary_upgrade

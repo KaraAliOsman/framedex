@@ -123,8 +123,8 @@
 /* Approval and decline must not look identical — success tints teal,
    decline stays neutral-warm so the states are legible at a glance. */
 .portal-decided[data-state="declined"] {
-  background: color-mix(in srgb, var(--theme-danger) 8%, var(--theme-surface-panel));
-  color: var(--theme-text);
+  background: var(--theme-danger-soft);
+  color: var(--theme-text-primary);
 }
 
 .portal-decided__contact {

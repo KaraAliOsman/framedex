@@ -34,6 +34,8 @@ class CommercialTermsSerializer(StrictSerializer):
 
 
 class DocumentPreferencesSerializer(StrictSerializer):
+    quotation_preview_minutes = serializers.IntegerField(required=False, min_value=5, max_value=60)
+    quotation_valid_days = serializers.IntegerField(required=False, min_value=1, max_value=365)
     paper = serializers.ChoiceField(choices=["LETTER", "OFICIO", "A4"])
     accent = serializers.ChoiceField(choices=["TEAL", "TEAL_DARK", "GRAPHITE"])
     legal_footer = serializers.CharField(max_length=240, allow_blank=True)

@@ -165,6 +165,8 @@ def _install_fakes(monkeypatch, approval, version=None, live=None, calls=None):
     def fake_one(sql_text, params, code="not_found"):
         lowered = " ".join(sql_text.lower().split())
         calls.append(lowered)
+        if "private.quote_link_expires_at" in lowered:
+            return {"expires_at": params[2]}
         if "project_versions" in lowered:
             return version or _version()
         if "public.projects" in lowered:
@@ -183,7 +185,7 @@ def test_portal_quote_unknown_and_expired_tokens(monkeypatch) -> None:
     with pytest.raises(DocumentaryError, match="quote_not_found"):
         service.portal_quote("bogus")
 
-    monkeypatch.setattr("portal.service.rows", lambda *a, **k: [_approval(expired=True)])
+    _install_fakes(monkeypatch, _approval(expired=True))
     with pytest.raises(DocumentaryError, match="quote_expired"):
         service.portal_quote("expired-token")
 
@@ -267,6 +269,8 @@ def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) ->
 
     def fake_one(sql_text, params, code="not_found"):
         lowered = " ".join(sql_text.lower().split())
+        if "private.quote_link_expires_at" in lowered:
+            return {"expires_at": params[2]}
         if "project_versions" in lowered:
             return _version(snapshot=sealed)
         if "public.projects" in lowered:
@@ -498,11 +502,10 @@ def test_decide_replay_keeps_sealed_state(monkeypatch) -> None:
     assert out["approval_status"] == "APPROVED"
 
 
-def test_revoked_token_is_dead(monkeypatch) -> None:
+@pytest.mark.parametrize("expired", [False, True])
+def test_revoked_token_is_dead(monkeypatch, expired) -> None:
     _roles(monkeypatch)
-    monkeypatch.setattr(
-        "portal.service.rows", lambda *a, **k: [_approval(status="REVOKED")]
-    )
+    _install_fakes(monkeypatch, _approval(status="REVOKED", expired=expired))
     with pytest.raises(DocumentaryError, match="quote_revoked"):
         service.portal_quote("revoked-token")
     with pytest.raises(DocumentaryError, match="quote_revoked"):
@@ -722,6 +725,8 @@ def test_list_approvals_exposes_the_view_signal(monkeypatch) -> None:
                     "decided_at": None,
                     "decided_note": None,
                     "expires_at": datetime.now(timezone.utc) + timedelta(days=30),
+                    "original_expires_at": datetime.now(timezone.utc) + timedelta(days=30),
+                    "valid_until": "2999-01-01",
                     "created_at": datetime.now(timezone.utc),
                     "revoked_at": None,
                     "view_count": 3,
@@ -734,9 +739,11 @@ def test_list_approvals_exposes_the_view_signal(monkeypatch) -> None:
     monkeypatch.setattr("portal.service.rows", fake_rows)
     monkeypatch.setattr(
         "portal.service.one",
-        lambda *a, **k: {"id": uuid4()},
+        lambda *a, **k: {"id": uuid4(), "current_revision": "REV-A"},
     )
     out = service.list_approvals(org_id=uuid4(), project_id=uuid4())
     assert out[0]["view_count"] == 3
     assert out[0]["link_source"] == "SHARE"
     assert out[0]["last_viewed_at"] == viewed_at.isoformat()
+
+    assert out[0]["link_state"] == "VIEWED"

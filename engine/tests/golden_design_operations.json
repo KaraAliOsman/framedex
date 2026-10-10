@@ -4781,6 +4781,950 @@
       "schema_version": 1
     }
   },
+  "FRENCH_COMMON_HANDLE": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1400",
+            "id": "m1",
+            "tree": {
+              "children": [],
+              "door_handedness": null,
+              "glass_article_sku": "DEMO-GLASS",
+              "glass_processing": null,
+              "glass_product": null,
+              "glass_spec": "4-16-4 Float Incoloro",
+              "glass_thickness_mm": "24",
+              "handle_height_mm": "600.00",
+              "hardware_set_sku": null,
+              "height_mm": "1400",
+              "hinged_layout": {
+                "leaves": [
+                  {
+                    "hardware_set_sku": null,
+                    "opening": {
+                      "direction": "INWARD",
+                      "fixed_in_sash": false,
+                      "hinge_side": "LEFT",
+                      "leaf_role": "ACTIVE",
+                      "movement": "TURN"
+                    },
+                    "slot": "LEFT"
+                  },
+                  {
+                    "hardware_set_sku": null,
+                    "opening": {
+                      "direction": "INWARD",
+                      "fixed_in_sash": false,
+                      "hinge_side": "RIGHT",
+                      "leaf_role": "PASSIVE",
+                      "movement": "TURN"
+                    },
+                    "slot": "RIGHT"
+                  }
+                ]
+              },
+              "id": "bay",
+              "is_sidelight": false,
+              "mullion_profile_sku": null,
+              "opening": {
+                "direction": "INWARD",
+                "fixed_in_sash": false,
+                "hinge_side": "LEFT",
+                "leaf_role": "ACTIVE",
+                "movement": "TURN"
+              },
+              "opening_type": null,
+              "opening_use": "WINDOW",
+              "panel_article_sku": null,
+              "sill_height_mm": null,
+              "sliding_layout": null,
+              "split_offset_mm": null,
+              "type": "BAY",
+              "width_mm": "1600"
+            },
+            "width_mm": "1600"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "1400",
+            "id": "m1",
+            "tree": {
+              "children": [],
+              "door_handedness": null,
+              "glass_article_sku": "DEMO-GLASS",
+              "glass_processing": null,
+              "glass_product": null,
+              "glass_spec": "4-16-4 Float Incoloro",
+              "glass_thickness_mm": "24",
+              "handle_height_mm": null,
+              "hardware_set_sku": null,
+              "height_mm": "1400",
+              "hinged_layout": {
+                "leaves": [
+                  {
+                    "hardware_set_sku": null,
+                    "opening": {
+                      "direction": "INWARD",
+                      "fixed_in_sash": false,
+                      "hinge_side": "LEFT",
+                      "leaf_role": "ACTIVE",
+                      "movement": "TURN"
+                    },
+                    "slot": "LEFT"
+                  },
+                  {
+                    "hardware_set_sku": null,
+                    "opening": {
+                      "direction": "INWARD",
+                      "fixed_in_sash": false,
+                      "hinge_side": "RIGHT",
+                      "leaf_role": "PASSIVE",
+                      "movement": "TURN"
+                    },
+                    "slot": "RIGHT"
+                  }
+                ]
+              },
+              "id": "bay",
+              "is_sidelight": false,
+              "mullion_profile_sku": null,
+              "opening": {
+                "direction": "INWARD",
+                "fixed_in_sash": false,
+                "hinge_side": "LEFT",
+                "leaf_role": "ACTIVE",
+                "movement": "TURN"
+              },
+              "opening_type": null,
+              "opening_use": "WINDOW",
+              "panel_article_sku": null,
+              "sill_height_mm": null,
+              "sliding_layout": null,
+              "split_offset_mm": null,
+              "type": "BAY",
+              "width_mm": "1600"
+            },
+            "width_mm": "1600"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "hardware": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TURN",
+        "leaf_id": "LEFT",
+        "name": "Kit PVC practicable 60 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          },
+          {
+            "category": "LOCK",
+            "name": "Falleba pasiva DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-FALLEBA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-PASSIVE",
+        "leaf_id": "RIGHT",
+        "name": "Herraje pasivo con falleba · DEMO",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "trace": {
+      "infills": [
+        {
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "bay_id": "bay",
+          "composition": "4-16-4 Float Incoloro",
+          "direct_rect": {
+            "height_mm": "1170.00",
+            "width_mm": "632.00",
+            "x_mm": "115.00",
+            "y_mm": "115.00"
+          },
+          "height_mm": "1170.00",
+          "kind": "GLASS",
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "parent_leaf_id": "root/bay/leaf/LEFT",
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/bay/leaf/LEFT/infill",
+          "shape": null,
+          "technical_sku": "DEMO-GLASS",
+          "topology_path": "root/bay",
+          "width_mm": "632.00"
+        },
+        {
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "bay_id": "bay",
+          "composition": "4-16-4 Float Incoloro",
+          "direct_rect": {
+            "height_mm": "1170.00",
+            "width_mm": "632.00",
+            "x_mm": "853.00",
+            "y_mm": "115.00"
+          },
+          "height_mm": "1170.00",
+          "kind": "GLASS",
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "parent_leaf_id": "root/bay/leaf/RIGHT",
+          "placement_domain": "DIRECT",
+          "semantic_infill_id": "root/bay/leaf/RIGHT/infill",
+          "shape": null,
+          "technical_sku": "DEMO-GLASS",
+          "topology_path": "root/bay",
+          "width_mm": "632.00"
+        }
+      ],
+      "leaves": [
+        {
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "bay_id": "bay",
+          "direct_rect": {
+            "height_mm": "1296.00",
+            "width_mm": "758.00",
+            "x_mm": "52.00",
+            "y_mm": "52.00"
+          },
+          "door_handedness": null,
+          "finished_height_mm": "1296.00",
+          "finished_width_mm": "758.00",
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "opening": {
+            "direction": "INWARD",
+            "fixed_in_sash": false,
+            "hinge_side": "LEFT",
+            "leaf_role": "ACTIVE",
+            "movement": "TURN"
+          },
+          "opening_handle": {
+            "height_from_bottom_mm": "600.00",
+            "maximum_from_top_mm": "1196.00",
+            "maximum_height_from_bottom_mm": "1196.00",
+            "minimum_from_top_mm": "100.00",
+            "minimum_height_from_bottom_mm": "100.00",
+            "side": "RIGHT",
+            "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+            "x_mm": "720.50",
+            "y_mm": "696.00"
+          },
+          "opening_type": "TURN_LEFT",
+          "placement_domain": "DIRECT",
+          "reference_rect": {
+            "height_mm": "1280.00",
+            "width_mm": "1480.00",
+            "x_mm": "60.00",
+            "y_mm": "60.00"
+          },
+          "semantic_leaf_id": "root/bay/leaf/LEFT",
+          "slot_pitch_mm": null,
+          "topology_path": "root/bay"
+        },
+        {
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "bay_id": "bay",
+          "direct_rect": {
+            "height_mm": "1296.00",
+            "width_mm": "758.00",
+            "x_mm": "790.00",
+            "y_mm": "52.00"
+          },
+          "door_handedness": null,
+          "finished_height_mm": "1296.00",
+          "finished_width_mm": "758.00",
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "opening": {
+            "direction": "INWARD",
+            "fixed_in_sash": false,
+            "hinge_side": "RIGHT",
+            "leaf_role": "PASSIVE",
+            "movement": "TURN"
+          },
+          "opening_handle": null,
+          "opening_type": "TURN_RIGHT",
+          "placement_domain": "DIRECT",
+          "reference_rect": {
+            "height_mm": "1280.00",
+            "width_mm": "1480.00",
+            "x_mm": "60.00",
+            "y_mm": "60.00"
+          },
+          "semantic_leaf_id": "root/bay/leaf/RIGHT",
+          "slot_pitch_mm": null,
+          "topology_path": "root/bay"
+        }
+      ],
+      "members": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1606.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1600",
+              "y_mm": "0"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1576.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/TOP",
+          "topology_path": "outer-frame",
+          "workshop_sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "1606.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1600",
+              "y_mm": "1400"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "1400"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1576.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/BOTTOM",
+          "topology_path": "outer-frame",
+          "workshop_sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1406.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "0",
+              "y_mm": "1400"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1376.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/LEFT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "1406.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1600",
+              "y_mm": "1400"
+            },
+            "start": {
+              "x_mm": "1600",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1376.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/RIGHT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "axis": "HORIZONTAL",
+          "bay_id": "bay",
+          "cut_length_mm": "764.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "810.00",
+              "y_mm": "52.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/LEFT",
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/LEFT/TOP",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "axis": "HORIZONTAL",
+          "bay_id": "bay",
+          "cut_length_mm": "764.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "810.00",
+              "y_mm": "1348.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "1348.00"
+            }
+          },
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/LEFT",
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/LEFT/BOTTOM",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1302.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "52.00",
+              "y_mm": "1348.00"
+            },
+            "start": {
+              "x_mm": "52.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/LEFT",
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1272.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/LEFT/LEFT",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1302.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "810.00",
+              "y_mm": "1348.00"
+            },
+            "start": {
+              "x_mm": "810.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/LEFT",
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1272.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/LEFT/RIGHT",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "axis": "HORIZONTAL",
+          "bay_id": "bay",
+          "cut_length_mm": "641.00",
+          "direct_segment": null,
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "material": "PVC",
+          "parent_infill_id": "root/bay/leaf/LEFT/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/LEFT/infill/bead-set/TOP",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "axis": "HORIZONTAL",
+          "bay_id": "bay",
+          "cut_length_mm": "641.00",
+          "direct_segment": null,
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "material": "PVC",
+          "parent_infill_id": "root/bay/leaf/LEFT/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/LEFT/infill/bead-set/BOTTOM",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1179.00",
+          "direct_segment": null,
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "material": "PVC",
+          "parent_infill_id": "root/bay/leaf/LEFT/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/LEFT/infill/bead-set/LEFT",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:LEFT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1179.00",
+          "direct_segment": null,
+          "leaf_id": "LEFT",
+          "leaf_slot": "LEFT",
+          "material": "PVC",
+          "parent_infill_id": "root/bay/leaf/LEFT/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/LEFT/infill/bead-set/RIGHT",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "HORIZONTAL",
+          "bay_id": "bay",
+          "cut_length_mm": "764.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1548.00",
+              "y_mm": "52.00"
+            },
+            "start": {
+              "x_mm": "790.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/RIGHT",
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/TOP",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "HORIZONTAL",
+          "bay_id": "bay",
+          "cut_length_mm": "764.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1548.00",
+              "y_mm": "1348.00"
+            },
+            "start": {
+              "x_mm": "790.00",
+              "y_mm": "1348.00"
+            }
+          },
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/RIGHT",
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/BOTTOM",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1302.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "790.00",
+              "y_mm": "1348.00"
+            },
+            "start": {
+              "x_mm": "790.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/RIGHT",
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1272.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/LEFT",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1302.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "1548.00",
+              "y_mm": "1348.00"
+            },
+            "start": {
+              "x_mm": "1548.00",
+              "y_mm": "52.00"
+            }
+          },
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/RIGHT",
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1272.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/RIGHT",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1292.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "790.00",
+              "y_mm": "1346.00"
+            },
+            "start": {
+              "x_mm": "790.00",
+              "y_mm": "54.00"
+            }
+          },
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/bay/leaf/RIGHT",
+          "physical_member_slot": "INVERSOR",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "1282.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_60-ACERO-INVERSOR",
+          "role": "INVERSOR",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/INVERSOR",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-INVERSOR"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "HORIZONTAL",
+          "bay_id": "bay",
+          "cut_length_mm": "641.00",
+          "direct_segment": null,
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": "root/bay/leaf/RIGHT/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/infill/bead-set/TOP",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "HORIZONTAL",
+          "bay_id": "bay",
+          "cut_length_mm": "641.00",
+          "direct_segment": null,
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": "root/bay/leaf/RIGHT/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/infill/bead-set/BOTTOM",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1179.00",
+          "direct_segment": null,
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": "root/bay/leaf/RIGHT/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/infill/bead-set/LEFT",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:bay:LEAF:RIGHT",
+          "axis": "VERTICAL",
+          "bay_id": "bay",
+          "cut_length_mm": "1179.00",
+          "direct_segment": null,
+          "leaf_id": "RIGHT",
+          "leaf_slot": "RIGHT",
+          "material": "PVC",
+          "parent_infill_id": "root/bay/leaf/RIGHT/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/bay/leaf/RIGHT/infill/bead-set/RIGHT",
+          "topology_path": "root/bay",
+          "workshop_sku": "DEMO_60-JQ-10"
+        }
+      ],
+      "nominal_height_mm": "1400",
+      "nominal_width_mm": "1600",
+      "schema_version": 1
+    }
+  },
   "INDICATIVE_QUANTITY_NET": {
     "ABSENT": "0",
     "CLP": "371",
@@ -5245,6 +6189,1049 @@
       ],
       "nominal_height_mm": "1200.00",
       "nominal_width_mm": "1700.00",
+      "schema_version": 1
+    }
+  },
+  "SLIDING_COMMON_HANDLE": {
+    "after": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "2400",
+            "id": "m1",
+            "tree": {
+              "children": [],
+              "door_handedness": null,
+              "glass_article_sku": "DEMO_CORREDERA_60-GLASS",
+              "glass_processing": null,
+              "glass_product": null,
+              "glass_spec": "6-12-6",
+              "glass_thickness_mm": "24",
+              "handle_height_mm": "600.00",
+              "hardware_set_sku": null,
+              "height_mm": "2400",
+              "id": "vano",
+              "is_sidelight": false,
+              "mullion_profile_sku": null,
+              "opening": {
+                "direction": "INWARD",
+                "fixed_in_sash": false,
+                "hinge_side": "NONE",
+                "leaf_role": "SINGLE",
+                "movement": "SLIDE"
+              },
+              "opening_type": null,
+              "opening_use": "WINDOW",
+              "panel_article_sku": null,
+              "sill_height_mm": null,
+              "sliding_layout": {
+                "panels": [
+                  {
+                    "kind": "MOVING",
+                    "slot": "L1",
+                    "track": 0
+                  },
+                  {
+                    "kind": "MOVING",
+                    "slot": "L2",
+                    "track": 1
+                  }
+                ],
+                "tracks": 2
+              },
+              "split_offset_mm": null,
+              "type": "BAY",
+              "width_mm": "3000"
+            },
+            "width_mm": "3000"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "before": {
+      "assembly": {
+        "couplings": [],
+        "modules": [
+          {
+            "height_mm": "2400",
+            "id": "m1",
+            "tree": {
+              "children": [],
+              "door_handedness": null,
+              "glass_article_sku": "DEMO_CORREDERA_60-GLASS",
+              "glass_processing": null,
+              "glass_product": null,
+              "glass_spec": "6-12-6",
+              "glass_thickness_mm": "24",
+              "handle_height_mm": null,
+              "hardware_set_sku": null,
+              "height_mm": "2400",
+              "id": "vano",
+              "is_sidelight": false,
+              "mullion_profile_sku": null,
+              "opening": {
+                "direction": "INWARD",
+                "fixed_in_sash": false,
+                "hinge_side": "NONE",
+                "leaf_role": "SINGLE",
+                "movement": "SLIDE"
+              },
+              "opening_type": null,
+              "opening_use": "WINDOW",
+              "panel_article_sku": null,
+              "sill_height_mm": null,
+              "sliding_layout": {
+                "panels": [
+                  {
+                    "kind": "MOVING",
+                    "slot": "L1",
+                    "track": 0
+                  },
+                  {
+                    "kind": "MOVING",
+                    "slot": "L2",
+                    "track": 1
+                  }
+                ],
+                "tracks": 2
+              },
+              "split_offset_mm": null,
+              "type": "BAY",
+              "width_mm": "3000"
+            },
+            "width_mm": "3000"
+          }
+        ]
+      },
+      "version": "product-v2"
+    },
+    "hardware": [
+      {
+        "bay_id": "vano",
+        "contents": [
+          {
+            "category": "ROLLER",
+            "cut_length_mm": null,
+            "machining": [],
+            "manufacturer_name": "Fabricante sintético · DEMO",
+            "name": "Carro reforzado · DEMO",
+            "price_quantity": "4",
+            "price_unit": "EA",
+            "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+            "qty": "4",
+            "reason": "4 unidades declaradas",
+            "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "unit": "unidad",
+            "weight_kg": "1.4000"
+          },
+          {
+            "category": "LOCK",
+            "cut_length_mm": null,
+            "machining": [
+              {
+                "code": "CIERRE-PREP",
+                "covered_quantity": null,
+                "depth_mm": null,
+                "face": null,
+                "host_scope": null,
+                "host_side": "CLOSING",
+                "kind": "LOCK_PREP",
+                "name": "Alojamiento de cierre de corredera",
+                "positions_mm": [],
+                "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                "tool_id": null
+              }
+            ],
+            "manufacturer_name": "Fabricante sintético · DEMO",
+            "name": "Cierre de corredera · DEMO",
+            "price_quantity": "1",
+            "price_unit": "EA",
+            "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+            "qty": "1",
+            "reason": "1 unidades declaradas",
+            "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "unit": "unidad",
+            "weight_kg": "0.1000"
+          },
+          {
+            "category": "HANDLE",
+            "cut_length_mm": null,
+            "machining": [],
+            "manufacturer_name": "Fabricante sintético · DEMO",
+            "name": "Manilla estándar blanca · DEMO",
+            "price_quantity": "1",
+            "price_unit": "EA",
+            "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+            "qty": "1",
+            "reason": "1 unidades declaradas",
+            "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "unit": "unidad",
+            "weight_kg": "0.2500"
+          }
+        ],
+        "kit_sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY",
+        "leaf_id": "vano:L1",
+        "name": "Kit PVC corredera 60 mm · corredera · Pesada · DEMO",
+        "qty": 1,
+        "resolution": {
+          "class_code": "HEAVY",
+          "class_name": "Pesada · DEMO",
+          "exact_leaf_weight_kg": "115.8952624",
+          "family_name": "Kit PVC corredera 60 mm · corredera",
+          "handle_code": "STANDARD",
+          "handle_color": "Blanca",
+          "handle_color_code": "WHITE",
+          "handle_height_mm": "600.00",
+          "handle_maximum_mm": "2156.00",
+          "handle_minimum_mm": "100",
+          "handle_name": "Estándar",
+          "height_mm": "2256.00",
+          "max_leaf_height_mm": "2500.00",
+          "max_leaf_weight_kg": "150.00",
+          "max_leaf_width_mm": "1600.00",
+          "min_leaf_height_mm": "200.00",
+          "min_leaf_width_mm": "200.00",
+          "option_codes": [],
+          "options": [],
+          "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+          "synthetic": true,
+          "width_mm": "1466.00"
+        },
+        "unit": "kit"
+      },
+      {
+        "bay_id": "vano",
+        "contents": [
+          {
+            "category": "ROLLER",
+            "cut_length_mm": null,
+            "machining": [],
+            "manufacturer_name": "Fabricante sintético · DEMO",
+            "name": "Carro reforzado · DEMO",
+            "price_quantity": "4",
+            "price_unit": "EA",
+            "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+            "qty": "4",
+            "reason": "4 unidades declaradas",
+            "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "unit": "unidad",
+            "weight_kg": "1.4000"
+          },
+          {
+            "category": "LOCK",
+            "cut_length_mm": null,
+            "machining": [
+              {
+                "code": "CIERRE-PREP",
+                "covered_quantity": null,
+                "depth_mm": null,
+                "face": null,
+                "host_scope": null,
+                "host_side": "CLOSING",
+                "kind": "LOCK_PREP",
+                "name": "Alojamiento de cierre de corredera",
+                "positions_mm": [],
+                "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                "tool_id": null
+              }
+            ],
+            "manufacturer_name": "Fabricante sintético · DEMO",
+            "name": "Cierre de corredera · DEMO",
+            "price_quantity": "1",
+            "price_unit": "EA",
+            "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+            "qty": "1",
+            "reason": "1 unidades declaradas",
+            "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "unit": "unidad",
+            "weight_kg": "0.1000"
+          },
+          {
+            "category": "HANDLE",
+            "cut_length_mm": null,
+            "machining": [],
+            "manufacturer_name": "Fabricante sintético · DEMO",
+            "name": "Manilla estándar blanca · DEMO",
+            "price_quantity": "1",
+            "price_unit": "EA",
+            "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+            "qty": "1",
+            "reason": "1 unidades declaradas",
+            "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "unit": "unidad",
+            "weight_kg": "0.2500"
+          }
+        ],
+        "kit_sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY",
+        "leaf_id": "vano:L2",
+        "name": "Kit PVC corredera 60 mm · corredera · Pesada · DEMO",
+        "qty": 1,
+        "resolution": {
+          "class_code": "HEAVY",
+          "class_name": "Pesada · DEMO",
+          "exact_leaf_weight_kg": "115.8952624",
+          "family_name": "Kit PVC corredera 60 mm · corredera",
+          "handle_code": "STANDARD",
+          "handle_color": "Blanca",
+          "handle_color_code": "WHITE",
+          "handle_height_mm": "600.00",
+          "handle_maximum_mm": "2156.00",
+          "handle_minimum_mm": "100",
+          "handle_name": "Estándar",
+          "height_mm": "2256.00",
+          "max_leaf_height_mm": "2500.00",
+          "max_leaf_weight_kg": "150.00",
+          "max_leaf_width_mm": "1600.00",
+          "min_leaf_height_mm": "200.00",
+          "min_leaf_width_mm": "200.00",
+          "option_codes": [],
+          "options": [],
+          "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+          "synthetic": true,
+          "width_mm": "1466.00"
+        },
+        "unit": "kit"
+      }
+    ],
+    "trace": {
+      "infills": [
+        {
+          "assembly": "BAY:vano:LEAF:L1",
+          "bay_id": "vano",
+          "composition": "6-12-6",
+          "direct_rect": null,
+          "height_mm": "2120.00",
+          "kind": "GLASS",
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "parent_leaf_id": "root/vano/leaf/L1",
+          "placement_domain": "SLIDING_INFILL",
+          "semantic_infill_id": "root/vano/leaf/L1/infill",
+          "shape": null,
+          "technical_sku": "DEMO_CORREDERA_60-GLASS",
+          "topology_path": "root/vano",
+          "width_mm": "1330.00"
+        },
+        {
+          "assembly": "BAY:vano:LEAF:L2",
+          "bay_id": "vano",
+          "composition": "6-12-6",
+          "direct_rect": null,
+          "height_mm": "2120.00",
+          "kind": "GLASS",
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "parent_leaf_id": "root/vano/leaf/L2",
+          "placement_domain": "SLIDING_INFILL",
+          "semantic_infill_id": "root/vano/leaf/L2/infill",
+          "shape": null,
+          "technical_sku": "DEMO_CORREDERA_60-GLASS",
+          "topology_path": "root/vano",
+          "width_mm": "1330.00"
+        }
+      ],
+      "leaves": [
+        {
+          "assembly": "BAY:vano:LEAF:L1",
+          "bay_id": "vano",
+          "direct_rect": null,
+          "door_handedness": null,
+          "finished_height_mm": "2256.00",
+          "finished_width_mm": "1466.00",
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "opening": {
+            "direction": "INWARD",
+            "fixed_in_sash": false,
+            "hinge_side": "NONE",
+            "leaf_role": "SINGLE",
+            "movement": "SLIDE"
+          },
+          "opening_handle": null,
+          "opening_type": "SLIDING",
+          "placement_domain": "SLIDING_LEAF",
+          "reference_rect": {
+            "height_mm": "2280.00",
+            "width_mm": "2880.00",
+            "x_mm": "60.00",
+            "y_mm": "60.00"
+          },
+          "semantic_leaf_id": "root/vano/leaf/L1",
+          "slot_pitch_mm": "1420.00",
+          "topology_path": "root/vano"
+        },
+        {
+          "assembly": "BAY:vano:LEAF:L2",
+          "bay_id": "vano",
+          "direct_rect": null,
+          "door_handedness": null,
+          "finished_height_mm": "2256.00",
+          "finished_width_mm": "1466.00",
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "opening": {
+            "direction": "INWARD",
+            "fixed_in_sash": false,
+            "hinge_side": "NONE",
+            "leaf_role": "SINGLE",
+            "movement": "SLIDE"
+          },
+          "opening_handle": null,
+          "opening_type": "SLIDING",
+          "placement_domain": "SLIDING_LEAF",
+          "reference_rect": {
+            "height_mm": "2280.00",
+            "width_mm": "2880.00",
+            "x_mm": "60.00",
+            "y_mm": "60.00"
+          },
+          "semantic_leaf_id": "root/vano/leaf/L2",
+          "slot_pitch_mm": "1420.00",
+          "topology_path": "root/vano"
+        }
+      ],
+      "members": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "3006.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "3000",
+              "y_mm": "0"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "2976.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/TOP",
+          "topology_path": "outer-frame",
+          "workshop_sku": "DEMO_CORREDERA_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "HORIZONTAL",
+          "bay_id": null,
+          "cut_length_mm": "3006.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "3000",
+              "y_mm": "2400"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "2400"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "2976.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/BOTTOM",
+          "topology_path": "outer-frame",
+          "workshop_sku": "DEMO_CORREDERA_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "2406.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "0",
+              "y_mm": "2400"
+            },
+            "start": {
+              "x_mm": "0",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "2376.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/LEFT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "DEMO_CORREDERA_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "assembly": "OUTER_FRAME",
+          "axis": "VERTICAL",
+          "bay_id": null,
+          "cut_length_mm": "2406.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "3000",
+              "y_mm": "2400"
+            },
+            "start": {
+              "x_mm": "3000",
+              "y_mm": "0"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": "2376.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "semantic_member_id": "outer-frame/RIGHT",
+          "topology_path": "outer-frame",
+          "workshop_sku": "DEMO_CORREDERA_60-MARCO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2880.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "2940.00",
+              "y_mm": "2340.00"
+            },
+            "start": {
+              "x_mm": "60.00",
+              "y_mm": "2340.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "RAIL-1",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "RAIL",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/RAIL-1",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-RIEL"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2880.00",
+          "direct_segment": {
+            "end": {
+              "x_mm": "2940.00",
+              "y_mm": "2340.00"
+            },
+            "start": {
+              "x_mm": "60.00",
+              "y_mm": "2340.00"
+            }
+          },
+          "leaf_id": null,
+          "leaf_slot": null,
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": null,
+          "physical_member_slot": "RAIL-2",
+          "placement_domain": "DIRECT",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "RAIL",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/RAIL-2",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-RIEL"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "1466.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L1",
+          "physical_member_slot": "TOP",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "1456.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/TOP",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "1466.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L1",
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "1456.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/BOTTOM",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2256.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L1",
+          "physical_member_slot": "LEFT",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "2246.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/LEFT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2256.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L1",
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "2246.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/RIGHT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2256.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L1",
+          "physical_member_slot": "INTERLOCK-RIGHT",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "2246.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-ENCUENTRO",
+          "role": "INTERLOCK",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/INTERLOCK-RIGHT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-ENCUENTRO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "1339.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": "root/vano/leaf/L1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/infill/bead-set/TOP",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "1339.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": "root/vano/leaf/L1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/infill/bead-set/BOTTOM",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2129.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": "root/vano/leaf/L1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/infill/bead-set/LEFT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L1",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2129.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L1",
+          "leaf_slot": "L1",
+          "material": "PVC",
+          "parent_infill_id": "root/vano/leaf/L1/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L1/infill/bead-set/RIGHT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "1466.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L2",
+          "physical_member_slot": "TOP",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "1456.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/TOP",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "1466.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L2",
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "1456.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/BOTTOM",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2256.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L2",
+          "physical_member_slot": "LEFT",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "2246.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/LEFT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2256.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L2",
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "2246.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/RIGHT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2256.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": null,
+          "parent_leaf_id": "root/vano/leaf/L2",
+          "physical_member_slot": "INTERLOCK-LEFT",
+          "placement_domain": "SLIDING_LEAF",
+          "reinforcement_length_mm": "2246.00",
+          "reinforcement_required": true,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-ENCUENTRO",
+          "role": "INTERLOCK",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/INTERLOCK-LEFT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-ENCUENTRO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "1339.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": "root/vano/leaf/L2/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "TOP",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/infill/bead-set/TOP",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "HORIZONTAL",
+          "bay_id": "vano",
+          "cut_length_mm": "1339.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": "root/vano/leaf/L2/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "BOTTOM",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/infill/bead-set/BOTTOM",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2129.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": "root/vano/leaf/L2/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "LEFT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/infill/bead-set/LEFT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "assembly": "BAY:vano:LEAF:L2",
+          "axis": "VERTICAL",
+          "bay_id": "vano",
+          "cut_length_mm": "2129.00",
+          "direct_segment": null,
+          "leaf_id": "vano:L2",
+          "leaf_slot": "L2",
+          "material": "PVC",
+          "parent_infill_id": "root/vano/leaf/L2/infill",
+          "parent_leaf_id": null,
+          "physical_member_slot": "RIGHT",
+          "placement_domain": "BEAD_SET",
+          "reinforcement_length_mm": null,
+          "reinforcement_required": false,
+          "reinforcement_sku": null,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "semantic_member_id": "root/vano/leaf/L2/infill/bead-set/RIGHT",
+          "topology_path": "root/vano",
+          "workshop_sku": "DEMO_CORREDERA_60-JQ-10"
+        }
+      ],
+      "nominal_height_mm": "2400",
+      "nominal_width_mm": "3000",
       "schema_version": 1
     }
   },

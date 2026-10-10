@@ -162,11 +162,12 @@ def public_documentary_errors():
             "supplier_eligibility_not_found",
             "purchase_projection_not_found",
             "version_not_found",
+            "quotation_preview_not_found",
         ):
             status_code = 404
         elif error.code == "document_access_denied":
             status_code = 403
-        elif error.code == "documentary_freeze_confirmation_required":
+        elif error.code in ("documentary_freeze_confirmation_required", "quotation_preview_stale", "quotation_preview_expired"):
             status_code = 409
         else:
             status_code = 422

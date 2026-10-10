@@ -1,3 +1,4 @@
+import { webcrypto, createHash } from "node:crypto";
 // frontend/src/features/projects/ProjectPages.test.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -7,6 +8,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ApiError, apiMutator } from "../../api/apiMutator";
 import {
   documentaryListArtifacts,
+  mailList,
+  engineSystems,
   positionsDestroy,
   projectPaymentIntegrationStatus,
   projectPaymentLinksList,
@@ -68,6 +71,8 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     documentaryListArtifacts: vi.fn(),
     documentsCompareVersions: vi.fn(),
     projectExtraServices: vi.fn(),
+    mailList: vi.fn(),
+    engineSystems: vi.fn(),
   };
 });
 
@@ -137,6 +142,13 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
     position_count: 0,
     positions: [],
     versions: [],
+    ...(overrides.pricing_current || overrides.status === "QUOTED"
+      ? {
+          client_rut: "12.345.678-5",
+          client_email: "cliente@example.invalid",
+          delivery_address: "Obra Norte",
+        }
+      : {}),
     ...overrides,
   };
 }
@@ -218,8 +230,62 @@ function expectTenant(options: RequestInit | undefined): void {
   expect(options?.signal).toBeInstanceOf(AbortSignal);
 }
 
+const quotationTerms = {
+  payment_schedule: [
+    { label: "Al aprobar", share: "0.5" },
+    { label: "Contra entrega", share: "0.5" },
+  ],
+  delivery_text: "Plazo declarado por el fabricante",
+  installation_text: "Sin instalación",
+  exclusions: "Obra civil a cargo del cliente",
+  warranty: "Garantía declarada por el fabricante",
+  jurisdiction: "",
+};
+const quotationPdf = new TextEncoder().encode("%PDF-1.7\nReviewed fixture\n%%EOF");
+const quotationPreview = {
+  id: "preview-a",
+  revision_code: "REV-A",
+  snapshot_sha256: "b".repeat(64),
+  bom_hash: "a".repeat(64),
+  file_sha256: createHash("sha256").update(quotationPdf).digest("hex"),
+  byte_size: quotationPdf.byteLength,
+  document_date: "2026-10-09T12:00:00Z",
+  expires_at: "2999-01-01T00:00:00Z",
+  recipient: "cliente@example.invalid",
+  client_name: "Cliente original",
+  currency: "CLP",
+  total_price_gross: "1190",
+  valid_until: "2026-10-19",
+  production_allowed: false,
+  documentary_complete: false,
+  pdf_url: "https://example.invalid/reviewed.pdf",
+};
+
+async function issueReviewedPdf(): Promise<void> {
+  fireEvent.click(screen.getByRole("button", { name: "Preparar PDF para revisar" }));
+  const frame = await screen.findByTitle("Vista previa del PDF real");
+  const confirmation = screen.getByLabelText(
+    "Revisé este PDF, el destinatario y las condiciones de emisión",
+  );
+  expect(confirmation).toBeDisabled();
+  fireEvent.load(frame);
+  await waitFor(() => expect(confirmation).toBeEnabled());
+  fireEvent.click(confirmation);
+  fireEvent.click(screen.getByRole("button", { name: "Emitir y enviar al cliente" }));
+}
+
 beforeEach(() => {
   vi.resetAllMocks();
+  window.sessionStorage.clear();
+  vi.stubGlobal("crypto", webcrypto);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ ok: true, arrayBuffer: async () => quotationPdf.buffer }),
+  );
+  URL.createObjectURL = vi.fn().mockReturnValue("blob:quotation-review");
+  URL.revokeObjectURL = vi.fn();
+  vi.mocked(mailList).mockResolvedValue(response(200, []));
+  vi.mocked(engineSystems).mockResolvedValue(response(200, { systems: [] }));
   // Browser dialog only; router, guard, query client and BOM remain real.
   vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(projectsList).mockResolvedValue(response(200, { items: [] }));
@@ -262,6 +328,7 @@ afterEach(() => {
     client.clear();
   }
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 it("creates a project, navigates to the server ID and renders persisted metadata", async () => {
@@ -534,6 +601,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
   });
   vi.mocked(projectsRetrieve)
     .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValueOnce(response(200, priced))
     .mockResolvedValue(response(200, quoted));
   vi.mocked(apiMutator).mockImplementation(async (url, options) => {
     if (url.endsWith("/inputs/") && options.method === "GET")
@@ -542,6 +610,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
         revision_code: "REV-A",
         payment_terms: "",
         quotation_valid_until: null,
+        commercial_terms: quotationTerms,
         positions: [
           {
             position_id: position.id,
@@ -566,22 +635,37 @@ it("prepares and explicitly emits the current priced revision", async () => {
       }) as never;
     if (url.endsWith("/inputs/") && options.method === "PUT")
       return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
-    if (url.endsWith("/freeze/") && options.method === "POST")
-      return response(201, { revision_code: "REV-A" }) as never;
+    if (url.endsWith("/quotation-preview/") && options.method === "POST")
+      return response(201, quotationPreview) as never;
+    if (url.endsWith("/issue/") && options.method === "POST")
+      return response(201, {
+        id: "version-a",
+        revision_code: "REV-A",
+        artifact_id: "artifact-a",
+        approval_id: "approval-a",
+        path: "/cotizacion/fixture-capability",
+        mail: { id: "mail-a", state: "QUEUED" },
+        created: true,
+      }) as never;
     throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
   });
 
-  mount();
+  mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.paymentTerms", "50% anticipo");
   change("quotation.validUntil", "2026-10-19");
-  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
-  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+  await issueReviewedPdf();
 
   await screen.findAllByText(t("projects.quoted"));
   expect(screen.getAllByText("Revisión A")).toHaveLength(2);
-  expect(apiMutator).toHaveBeenCalledTimes(3);
+  expect(apiMutator).toHaveBeenCalledTimes(4);
+  expect(vi.mocked(apiMutator).mock.calls.map(([url]) => url)).toEqual([
+    "/api/v1/documents/projects/project-a/inputs/",
+    "/api/v1/documents/projects/project-a/inputs/",
+    "/api/v1/documents/projects/project-a/quotation-preview/",
+    "/api/v1/documents/projects/project-a/issue/",
+  ]);
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   expect(JSON.parse(String((saveRequest[1] as RequestInit).body))).toMatchObject({
     payment_terms: "50% anticipo",
@@ -607,6 +691,7 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
         revision_code: "REV-A",
         payment_terms: "",
         quotation_valid_until: null,
+        commercial_terms: quotationTerms,
         positions: [
           {
             position_id: position.id,
@@ -632,7 +717,7 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
     throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
   });
 
-  const router = mount();
+  const router = mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.paymentTerms", "50% anticipo");
@@ -697,6 +782,7 @@ it("saves handle placement intents for operable leaves before emitting", async (
   });
   vi.mocked(projectsRetrieve)
     .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValueOnce(response(200, priced))
     .mockResolvedValue(response(200, quoted));
   vi.mocked(apiMutator).mockImplementation(async (url, options) => {
     if (url.endsWith("/inputs/") && options.method === "GET")
@@ -705,6 +791,7 @@ it("saves handle placement intents for operable leaves before emitting", async (
         revision_code: "REV-A",
         payment_terms: "",
         quotation_valid_until: null,
+        commercial_terms: quotationTerms,
         positions: [
           {
             position_id: position.id,
@@ -754,12 +841,22 @@ it("saves handle placement intents for operable leaves before emitting", async (
       }) as never;
     if (url.endsWith("/inputs/") && options.method === "PUT")
       return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
-    if (url.endsWith("/freeze/") && options.method === "POST")
-      return response(201, { revision_code: "REV-A" }) as never;
+    if (url.endsWith("/quotation-preview/") && options.method === "POST")
+      return response(201, quotationPreview) as never;
+    if (url.endsWith("/issue/") && options.method === "POST")
+      return response(201, {
+        id: "version-a",
+        revision_code: "REV-A",
+        artifact_id: "artifact-a",
+        approval_id: "approval-a",
+        path: "/cotizacion/fixture-capability",
+        mail: { id: "mail-a", state: "QUEUED" },
+        created: true,
+      }) as never;
     throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
   });
 
-  mount();
+  mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
   // Missing intents are seeded with the displayed midpoint — the visible
@@ -782,8 +879,7 @@ it("saves handle placement intents for operable leaves before emitting", async (
   expect(screen.queryByText(t("quotation.handleOutOfBounds"))).toBeNull();
   change("quotation.paymentTerms", "50% anticipo");
   change("quotation.validUntil", "2026-10-19");
-  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
-  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+  await issueReviewedPdf();
 
   await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
@@ -826,6 +922,7 @@ it("reconciles handle intents when the handle policy changes", async () => {
   });
   vi.mocked(projectsRetrieve)
     .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValueOnce(response(200, priced))
     .mockResolvedValue(response(200, quoted));
   vi.mocked(apiMutator).mockImplementation(async (url, options) => {
     if (url.endsWith("/inputs/") && options.method === "GET")
@@ -834,6 +931,7 @@ it("reconciles handle intents when the handle policy changes", async () => {
         revision_code: "REV-A",
         payment_terms: "",
         quotation_valid_until: null,
+        commercial_terms: quotationTerms,
         positions: [
           {
             position_id: position.id,
@@ -932,19 +1030,28 @@ it("reconciles handle intents when the handle policy changes", async () => {
       }) as never;
     if (url.endsWith("/inputs/") && options.method === "PUT")
       return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
-    if (url.endsWith("/freeze/") && options.method === "POST")
-      return response(201, { revision_code: "REV-A" }) as never;
+    if (url.endsWith("/quotation-preview/") && options.method === "POST")
+      return response(201, quotationPreview) as never;
+    if (url.endsWith("/issue/") && options.method === "POST")
+      return response(201, {
+        id: "version-a",
+        revision_code: "REV-A",
+        artifact_id: "artifact-a",
+        approval_id: "approval-a",
+        path: "/cotizacion/fixture-capability",
+        mail: { id: "mail-a", state: "QUEUED" },
+        created: true,
+      }) as never;
     throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
   });
 
-  mount();
+  mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   const policySelect = await screen.findByLabelText(t("quotation.handlePolicy"));
   fireEvent.change(policySelect, { target: { value: "handle-b" } });
   change("quotation.paymentTerms", "50% anticipo");
   change("quotation.validUntil", "2026-10-19");
-  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
-  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+  await issueReviewedPdf();
 
   await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
@@ -989,6 +1096,7 @@ it("keeps a manually edited height when the handle policy changes", async () => 
   });
   vi.mocked(projectsRetrieve)
     .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValueOnce(response(200, priced))
     .mockResolvedValue(response(200, quoted));
   const requirement = (policyId: string, minMm: string, maxMm: string) => ({
     policy_id: policyId,
@@ -1021,6 +1129,7 @@ it("keeps a manually edited height when the handle policy changes", async () => 
         revision_code: "REV-A",
         payment_terms: "",
         quotation_valid_until: null,
+        commercial_terms: quotationTerms,
         positions: [
           {
             position_id: position.id,
@@ -1055,12 +1164,22 @@ it("keeps a manually edited height when the handle policy changes", async () => 
       }) as never;
     if (url.endsWith("/inputs/") && options.method === "PUT")
       return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
-    if (url.endsWith("/freeze/") && options.method === "POST")
-      return response(201, { revision_code: "REV-A" }) as never;
+    if (url.endsWith("/quotation-preview/") && options.method === "POST")
+      return response(201, quotationPreview) as never;
+    if (url.endsWith("/issue/") && options.method === "POST")
+      return response(201, {
+        id: "version-a",
+        revision_code: "REV-A",
+        artifact_id: "artifact-a",
+        approval_id: "approval-a",
+        path: "/cotizacion/fixture-capability",
+        mail: { id: "mail-a", state: "QUEUED" },
+        created: true,
+      }) as never;
     throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
   });
 
-  mount();
+  mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
   expect(heightInput).toHaveValue("1000");
@@ -1069,8 +1188,7 @@ it("keeps a manually edited height when the handle policy changes", async () => 
   fireEvent.change(policySelect, { target: { value: "handle-b" } });
   change("quotation.paymentTerms", "50% anticipo");
   change("quotation.validUntil", "2026-10-19");
-  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
-  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+  await issueReviewedPdf();
 
   await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
@@ -1115,6 +1233,7 @@ it("seals suggested heights only after the estimator confirms them", async () =>
   });
   vi.mocked(projectsRetrieve)
     .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValueOnce(response(200, priced))
     .mockResolvedValue(response(200, quoted));
   vi.mocked(apiMutator).mockImplementation(async (url, options) => {
     if (url.endsWith("/inputs/") && options.method === "GET")
@@ -1123,6 +1242,7 @@ it("seals suggested heights only after the estimator confirms them", async () =>
         revision_code: "REV-A",
         payment_terms: "",
         quotation_valid_until: null,
+        commercial_terms: quotationTerms,
         positions: [
           {
             position_id: position.id,
@@ -1201,12 +1321,22 @@ it("seals suggested heights only after the estimator confirms them", async () =>
       }) as never;
     if (url.endsWith("/inputs/") && options.method === "PUT")
       return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
-    if (url.endsWith("/freeze/") && options.method === "POST")
-      return response(201, { revision_code: "REV-A" }) as never;
+    if (url.endsWith("/quotation-preview/") && options.method === "POST")
+      return response(201, quotationPreview) as never;
+    if (url.endsWith("/issue/") && options.method === "POST")
+      return response(201, {
+        id: "version-a",
+        revision_code: "REV-A",
+        artifact_id: "artifact-a",
+        approval_id: "approval-a",
+        path: "/cotizacion/fixture-capability",
+        mail: { id: "mail-a", state: "QUEUED" },
+        created: true,
+      }) as never;
     throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
   });
 
-  mount();
+  mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
   // The generated midpoint is visible but flagged as a suggestion — not yet
@@ -1215,11 +1345,10 @@ it("seals suggested heights only after the estimator confirms them", async () =>
   expect(screen.getByText(t("quotation.handleSuggested"))).toBeTruthy();
   change("quotation.paymentTerms", "50% anticipo");
   change("quotation.validUntil", "2026-10-19");
-  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
-  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+  fireEvent.click(screen.getByRole("button", { name: "Preparar PDF para revisar" }));
 
   // Unconfirmed suggestions block the seal — nothing is persisted.
-  await screen.findByText(t("quotation.seedsUnconfirmed"));
+  await screen.findByText("Completa los faltantes indicados antes de preparar el PDF.");
   expect(
     vi
       .mocked(apiMutator)
@@ -1236,7 +1365,7 @@ it("seals suggested heights only after the estimator confirms them", async () =>
 
   fireEvent.click(screen.getByRole("button", { name: t("quotation.confirmSuggested") }));
   expect(screen.queryByText(t("quotation.handleSuggested"))).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+  await issueReviewedPdf();
 
   await screen.findByText(t("projects.quoted"));
   const saveRequest = vi
@@ -1278,6 +1407,7 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
         revision_code: "REV-A",
         payment_terms: "",
         quotation_valid_until: null,
+        commercial_terms: quotationTerms,
         positions: [
           {
             position_id: position.id,
@@ -1303,7 +1433,7 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
     throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
   });
 
-  const router = mount();
+  const router = mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.paymentTerms", "50% anticipo");
@@ -1333,7 +1463,7 @@ it("opens one idempotent editable successor from a quoted revision", async () =>
     response(201, { ...successor, successor_created: true }) as never,
   );
 
-  mount();
+  mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.editQuoted") }));
 
   const dialog = await screen.findByRole("dialog");
@@ -1357,7 +1487,7 @@ it("explicitly retires current draft pricing with an audit reason before editing
       response(200, makeProject({ position_count: 1, positions: [makePosition()] })),
     );
   vi.mocked(apiMutator).mockResolvedValue(response(200, {}) as never);
-  mount();
+  mount("/projects/project-a?section=quote");
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.resetPricing") }));
   const dialog = await screen.findByRole("dialog");
   expect(dialog).toHaveTextContent(t("quotation.resetReason"));
@@ -1378,6 +1508,7 @@ it("explicitly retires current draft pricing with an audit reason before editing
       }),
     ),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Volver a posiciones" }));
   expect(await screen.findByRole("link", { name: t("projects.addPosition") })).toBeInTheDocument();
 });
 

@@ -12,6 +12,12 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
         "/api/v1/analytics/today/",
+        "/api/v1/documents/projects/{project_id}/quotation-customer/",
+        "/api/v1/documents/projects/{project_id}/quotation-preview/",
+        "/api/v1/documents/projects/{project_id}/quotation-previews/{preview_id}/",
+        "/api/v1/documents/projects/{project_id}/issue/",
+        "/api/v1/projects/{project_id}/quote-links/{approval_id}/deadline/",
+        "/api/v1/projects/{project_id}/quote-links/{approval_id}/regenerate/",
         "/api/v1/analytics/quotations/",
         "/api/v1/pricing/operations/{operation_id}/",
         "/api/v1/pricing/workspace/",
@@ -272,6 +278,12 @@ def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     for path, method in (
         ("/api/v1/auth/me/", "get"),
+        ("/api/v1/documents/projects/{project_id}/quotation-customer/", "patch"),
+        ("/api/v1/documents/projects/{project_id}/quotation-preview/", "post"),
+        ("/api/v1/documents/projects/{project_id}/quotation-previews/{preview_id}/", "get"),
+        ("/api/v1/documents/projects/{project_id}/issue/", "post"),
+        ("/api/v1/projects/{project_id}/quote-links/{approval_id}/deadline/", "put"),
+        ("/api/v1/projects/{project_id}/quote-links/{approval_id}/regenerate/", "post"),
         ("/api/v1/engine/calculate/", "post"),
         ("/api/v1/engine/layout/", "post"),
         ("/api/v1/engine/systems/", "get"),

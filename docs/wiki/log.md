@@ -1022,3 +1022,33 @@ en la corrida `37996633851` y se integra con squash `c01fd3fe720f71ca8acf7ef8d86
 CodeRabbit y Devin omitieron revisión; flujos, rúbrica y evidencia propia quedan
 registrados. Servicios propios y del gate detenidos; fixture persistente intacto.
 Continúa P08.
+
+## 2026-10-09 — P08 · PDF revisado, emisión y acceso
+
+Implementación `d6bf84f4f9b4aa6ecdef3dfe16b86f39ec86bcbe` verifica cliente/obra,
+checklist, PDF privado y emisión canónica con recibo/outbox. El recorrido de
+doce posiciones pasa A → cambios → Hoy/campana → Low-E global con undo → B
+→ aprobación; A conserva sus bytes. El historial de acceso es append-only y
+preserva identidad/QR P09; las respuestas públicas no cachean estados.
+Guardar/recargar ambas vigencias configurables y rechazar valores inválidos
+sin escritura pasan. Los nueve goldens anteriores permanecen iguales y se
+añaden dos casos de altura común física. Las 98 vistas de matriz/oficial no
+presentan hallazgos ni desbordes; 126 PNG comprimidos conservan sus píxeles.
+Dos rondas editoriales y R1–R20 PASA quedan en P08-ACEPTACION. Gate completo:
+848 motor (+2 xfail), 1.432 backend, 954 frontend, lint/tipos/build PASA.
+Database Gate, CI y squash se registrarán al integrar; no se declara el
+encargo mergeado antes de esos resultados.
+
+## 2026-10-09 — P08 · RUT histórico, MIME y Database Gate
+
+La regresión `fb5b82d11c18e50fe9856e3b5e8b63023a27eef6` conserva el cuerpo
+de cinco a ocho dígitos del contrato tributario y rechaza cuerpo nulo o
+verificador inválido. Gate completo: 848 motor (+2 xfail), 1.434 backend,
+954 frontend, lint/tipos/OpenAPI/orval/build y golden byte check PASA.
+`e841ae294f2a9fc849b4f9d0847beceecf1fb07c` verifica SENT como aceptación SMTP,
+un correo por Message-ID/asunto/destinatario en Mailpit y SHA/bytes exactos
+de su adjunto contra el preview. A permanece idéntico tras B. Database Gate
+completo PASA: 86 archivos / 1.249 pgTAP, 455 integraciones, 19 E2E y
+PostgreSQL 16 con diez verificadores de upgrade. No se alteran los nueve
+goldens históricos ni se usa entrega SMTP como prueba de lectura humana.
+La fila P08 queda en curso hasta recibir CI 4/4 e integrar el PR.

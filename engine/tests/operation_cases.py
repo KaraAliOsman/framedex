@@ -55,4 +55,23 @@ def operation_cases() -> dict[str, Any]:
         output = apply_operations(before, [{"op": "set_glass", "module": "m1", "sku": "NEW"}],
             params=params, finish="WHITE", catalog={"glass_skus": {"NEW"}, "glass_specs": {"NEW": recipe}})
         result[f"LEGACY_GLASS_{label}"] = {"before": before, "recipe": recipe, "after": output["product"]}
+    from engine.tests.opening_cases import opening_params, typologies
+    from engine.tests.hardware_cases import hardware_case_inputs
+    french_code, french = typologies()["FRENCH-LEFT"]
+    sliding = hardware_case_inputs()[2]
+    for label, source, authority in [("FRENCH_COMMON_HANDLE", french, opening_params(french_code)),
+                                      ("SLIDING_COMMON_HANDLE", sliding[2], sliding[1])]:
+        initial = {"version": "product-v2", "assembly": {"couplings": [], "modules": [{
+            "id": "m1", "width_mm": str(source.width_mm), "height_mm": str(source.height_mm),
+            "tree": source.model_dump(mode="json")} ]}}
+        changed = apply_operations(initial, [{"op": "set_handle_height", "module": "m1", "bay": source.id,
+            "height_mm": "600", "reference": "LEAF_BOTTOM", "all_handles": True}],
+            params=authority, finish="WHITE", catalog={})["product"]
+        module = changed["assembly"]["modules"][0]
+        calculation = compute_geometry(ParametricNode.model_validate_json(json.dumps({**module["tree"],
+            "width_mm": module["width_mm"], "height_mm": module["height_mm"]})), authority, finish="WHITE")
+        assert calculation.manufacturing_trace is not None
+        assert calculation.result is not None
+        result[label] = {"before": initial, "after": changed, "trace": calculation.manufacturing_trace.model_dump(mode="json"),
+                         "hardware": [item.model_dump(mode="json") for item in calculation.result.hardware_items]}
     return result

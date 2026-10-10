@@ -8,6 +8,44 @@ import pytest
 from scripts import check_generated_api, local_gates
 
 
+def test_mail_gate_uses_its_project_and_never_inherited_external_provider(monkeypatch, tmp_path):
+    (tmp_path / "supabase").mkdir()
+    (tmp_path / "supabase/config.toml").write_text(
+        "[local_smtp]\nsmtp_port=25445\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(local_gates, "ROOT", tmp_path)
+    result = local_gates.gate_mail_environment(
+        {
+            "MAILPIT_URL": "http://127.0.0.1:25444",
+            "MAIL_PROVIDER": "smtp",
+            "MAIL_SMTP_PASSWORD": "external-test-secret",
+            "MAIL_SANDBOX_PORT": "25325",
+            "DATABASE_URL": "preserved-test-database",
+        }
+    )
+    assert result == {
+        "MAILPIT_URL": "http://127.0.0.1:25444",
+        "MAIL_PROVIDER": "sandbox",
+        "MAIL_SANDBOX_HOST": "127.0.0.1",
+        "MAIL_SANDBOX_PORT": "25445",
+        "DATABASE_URL": "preserved-test-database",
+    }
+
+
+@pytest.mark.parametrize("port", [None, 0, 65536, True, "25325"])
+def test_mail_gate_rejects_missing_or_invalid_smtp_authority(monkeypatch, tmp_path, port):
+    (tmp_path / "supabase").mkdir()
+    content = "[local_smtp]\n" + (
+        f"smtp_port={str(port).lower() if isinstance(port, bool) else repr(port)}\n"
+        if port is not None
+        else ""
+    )
+    (tmp_path / "supabase/config.toml").write_text(content, encoding="utf-8")
+    monkeypatch.setattr(local_gates, "ROOT", tmp_path)
+    with pytest.raises(RuntimeError, match="declared localhost SMTP port"):
+        local_gates.gate_mail_environment({"MAILPIT_URL": "http://127.0.0.1:25444"})
+
+
 def test_generated_api_drift_rejects_an_altered_artifact(monkeypatch: pytest.MonkeyPatch) -> None:
     versions = iter(({"client.ts": b"old"}, {"client.ts": b"changed"}))
     monkeypatch.setattr(check_generated_api, "snapshot", lambda: next(versions))
@@ -25,7 +63,8 @@ def test_missing_tool_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_failed_command_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        local_gates.subprocess, "run",
+        local_gates.subprocess,
+        "run",
         lambda *args, **kwargs: SimpleNamespace(returncode=1, stdout="real failure", stderr=""),
     )
     with pytest.raises(RuntimeError, match="exited with code 1"):
@@ -37,21 +76,29 @@ def test_gate_logs_redact_secret_values_in_json_and_text() -> None:
     assert "fixture-s3-access" not in local_gates.redact("│ Access Key │ fixture-s3-access │")
     assert '"JWT_SECRET":"[redacted]"' in local_gates.redact('{"JWT_SECRET":"fixture-secret"}')
     assert "JWT_SECRET=[redacted]" in local_gates.redact("JWT_SECRET=fixture-secret")
-    assert "fixture-password" not in local_gates.redact("postgresql://postgres:fixture-password@localhost/db")
+    assert "fixture-password" not in local_gates.redact(
+        "postgresql://postgres:fixture-password@localhost/db"
+    )
 
 
 def test_mailpit_health_failure_cannot_pass(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(local_gates.httpx, "get", lambda *args, **kwargs: SimpleNamespace(status_code=503))
+    monkeypatch.setattr(
+        local_gates.httpx, "get", lambda *args, **kwargs: SimpleNamespace(status_code=503)
+    )
     with pytest.raises(RuntimeError, match="Mailpit /readyz failed"):
         local_gates.require_mailpit({"MAILPIT_URL": "http://127.0.0.1:54324"})
 
 
 @pytest.mark.parametrize("existing", ("labelled-container", "volume", "legacy-container"))
 def test_clean_gate_never_mutates_an_existing_stack(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, existing: str,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    existing: str,
 ) -> None:
     (tmp_path / "supabase").mkdir()
-    (tmp_path / "supabase/config.toml").write_text('project_id = "guard-fixture"\n', encoding="utf-8")
+    (tmp_path / "supabase/config.toml").write_text(
+        'project_id = "guard-fixture"\n', encoding="utf-8"
+    )
     monkeypatch.setattr(local_gates, "ROOT", tmp_path)
     monkeypatch.setattr(local_gates, "executable", lambda name: name)
     commands = []
@@ -72,15 +119,20 @@ def test_clean_gate_never_mutates_an_existing_stack(
     monkeypatch.setattr(local_gates, "run", fake_run)
     with pytest.raises(RuntimeError, match="refuses existing Supabase"):
         local_gates.start_clean_stack()
-    assert [command for command in commands if command[0] == "supabase"] == [["supabase", "--version"]]
+    assert [command for command in commands if command[0] == "supabase"] == [
+        ["supabase", "--version"]
+    ]
     assert all("guard-fixture" in command[-1] for command in commands if "--filter" in command)
 
 
 def test_clean_gate_preflight_accepts_only_absent_project_resources(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     (tmp_path / "supabase").mkdir()
-    (tmp_path / "supabase/config.toml").write_text('project_id = "empty-fixture"\n', encoding="utf-8")
+    (tmp_path / "supabase/config.toml").write_text(
+        'project_id = "empty-fixture"\n', encoding="utf-8"
+    )
     monkeypatch.setattr(local_gates, "ROOT", tmp_path)
     commands = []
 

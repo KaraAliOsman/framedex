@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { LinkSourceEnum } from "./linkSourceEnum";
+import type { LinkStateEnum } from "./linkStateEnum";
 
 export interface ApprovalRecord {
   id: string;
@@ -20,6 +21,8 @@ export interface ApprovalRecord {
   decided_note: string | null;
   expires_at: string;
   created_at: string;
+  original_expires_at?: string;
+  link_state?: LinkStateEnum;
   /** @nullable */
   revoked_at: string | null;
   view_count: number;

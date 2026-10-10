@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { createHash } from "node:crypto";
 import * as OTPAuth from "otpauth";
 
 import { formatMoney } from "../../src/features/money";
@@ -20,6 +21,122 @@ type FixtureUser = {
 };
 
 const createdFixtures: FixtureUser[] = [];
+
+async function reviewAndIssueQuotation(
+  page: Page,
+  request: APIRequestContext,
+  projectId: string,
+  headers: Record<string, string>,
+): Promise<{ bytes: Buffer; artifactId: string; fileHash: string }> {
+  const prepared = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname ===
+        `/api/v1/documents/projects/${projectId}/quotation-preview/`,
+  );
+  await page.getByRole("button", { name: "Preparar PDF para revisar", exact: true }).click();
+  const response = await prepared;
+  expect(response.status(), await response.text()).toBe(201);
+  const preview = (await response.json()) as {
+    pdf_url: string;
+    file_sha256: string;
+    byte_size: number;
+    recipient: string;
+  };
+  const pdf = await request.get(preview.pdf_url);
+  expect(pdf.status()).toBe(200);
+  const bytes = await pdf.body();
+  expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
+  expect(bytes.length).toBe(preview.byte_size);
+  expect(createHash("sha256").update(bytes).digest("hex")).toBe(preview.file_sha256);
+  const confirmed = page.getByLabel(
+    "Revisé este PDF, el destinatario y las condiciones de emisión",
+  );
+  const emit = page.getByRole("button", { name: "Emitir y enviar al cliente", exact: true });
+  await expect(emit).toBeDisabled();
+  await expect(confirmed).toBeEnabled();
+  await expect(page.locator(".quotation-confirmation")).toContainText(preview.recipient);
+  await confirmed.check();
+  const issued = page.waitForResponse(
+    (item) =>
+      item.request().method() === "POST" &&
+      new URL(item.url()).pathname === `/api/v1/documents/projects/${projectId}/issue/`,
+  );
+  await emit.click();
+  const sealed = await issued;
+  expect(sealed.status(), await sealed.text()).toBe(201);
+  const result = (await sealed.json()) as {
+    artifact_id: string;
+    file_sha256: string;
+    mail: { id: string; recipient: string; subject: string };
+  };
+  expect(result.file_sha256).toBe(preview.file_sha256);
+  expect(result.mail.recipient).toBe(preview.recipient);
+  await expect
+    .poll(
+      async () => {
+        const mail = await request.get(`${djangoUrl}/api/v1/mail/?project_id=${projectId}`, {
+          headers,
+        });
+        expect(mail.status()).toBe(200);
+        const records = (await mail.json()) as { id: string; state: string }[];
+        return records.find((item) => item.id === result.mail.id)?.state;
+      },
+      { timeout: 30_000 },
+    )
+    .toBe("SENT");
+  // SENT means SMTP accepted it. Prove the same message and exact PDF reached
+  // this gate's Mailpit, rather than infer delivery from the database state.
+  type MailpitMessage = {
+    ID: string;
+    MessageID: string;
+    Subject: string;
+    To: { Address: string }[];
+  };
+  let receivedId = "";
+  await expect
+    .poll(
+      async () => {
+        const listing = await request.get(`${mailpitUrl}/api/v1/messages`, {
+          params: { limit: 200 },
+        });
+        expect(listing.status()).toBe(200);
+        const mailbox = (await listing.json()) as { messages: MailpitMessage[] };
+        const matches = mailbox.messages.filter(
+          (message) =>
+            message.MessageID.replace(/^<|>$/g, "").startsWith(`${result.mail.id}@`) &&
+            message.Subject === result.mail.subject &&
+            message.To.some((address) => address.Address === preview.recipient),
+        );
+        receivedId = matches[0]?.ID ?? "";
+        return matches.length;
+      },
+      { timeout: 30_000 },
+    )
+    .toBe(1);
+  const message = await request.get(
+    `${mailpitUrl}/api/v1/message/${encodeURIComponent(receivedId)}`,
+  );
+  expect(message.status()).toBe(200);
+  const received = (await message.json()) as MailpitMessage & {
+    Attachments: { PartID: string; ContentType: string }[];
+  };
+  expect(received.MessageID.replace(/^<|>$/g, "").startsWith(`${result.mail.id}@`)).toBe(true);
+  expect(received.To.map((address) => address.Address)).toContain(preview.recipient);
+  const attachments = received.Attachments.filter(
+    (attachment) => attachment.ContentType === "application/pdf",
+  );
+  expect(attachments).toHaveLength(1);
+  const attachment = attachments[0]!;
+  const delivered = await request.get(
+    `${mailpitUrl}/api/v1/message/${encodeURIComponent(receivedId)}/part/${encodeURIComponent(attachment.PartID)}`,
+  );
+  expect(delivered.status()).toBe(200);
+  const deliveredBytes = await delivered.body();
+  expect(createHash("sha256").update(deliveredBytes).digest("hex")).toBe(preview.file_sha256);
+  expect(deliveredBytes).toEqual(bytes);
+  return { bytes, artifactId: result.artifact_id, fileHash: result.file_sha256 };
+}
 
 async function prepareProjectPrice(page: Page, date: string, reason: string): Promise<void> {
   await expect(page.getByRole("heading", { name: "Actual y propuesto" })).toBeVisible();
@@ -431,29 +548,39 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       response.request().method() === "GET" &&
       response.url().includes(`/api/v1/documents/projects/${draft.id}/inputs/`),
   );
-  // The quotation panel lives inside the facts rail's collapsed "Cotización"
-  // section — expand it once; it stays open for the whole emission flow.
+  await page.goto(`/projects/${draft.id}?section=quote`);
+  await page.getByLabel("RUT del cliente", { exact: true }).fill("12.345.678-5");
   await page
-    .locator("details.project-facts__section")
-    .filter({ hasText: "Cotización" })
-    .locator("summary")
-    .click();
+    .getByLabel("Correo del cliente", { exact: true })
+    .fill(`quote-${fixture.userId}@example.test`);
+  await page
+    .getByLabel("Dirección de obra", { exact: true })
+    .fill("Obra comercial DEMO, Concepción");
+  const customer = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PATCH" &&
+      new URL(response.url()).pathname ===
+        `/api/v1/documents/projects/${draft.id}/quotation-customer/`,
+  );
+  await page.getByRole("button", { name: "Guardar cliente y obra", exact: true }).click();
+  expect((await customer).status()).toBe(200);
   await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
   await prepA;
   await page.getByLabel("Condiciones de pago", { exact: true }).fill("50% anticipo, 50% entrega");
   await page.getByLabel("Cotización válida hasta", { exact: true }).fill("2026-10-19");
+  await page
+    .locator(".quotation-checklist")
+    .getByRole("button", { name: /Plazo de entrega/ })
+    .click();
+  await expect(page.locator("#quotation-terms-delivery_text")).toBeFocused();
+  await page.locator("#quotation-terms-delivery_text").fill("20 días hábiles desde el anticipo");
+  await page.locator("#quotation-terms-installation_text").fill("Instalación incluida");
+  await page.locator("#quotation-terms-exclusions").fill("Albañilería y pintura");
+  await page.locator("#quotation-terms-warranty").fill("12 meses sobre montaje y funcionamiento");
   await expect(page.getByLabel("Criterio de fabricación", { exact: true })).not.toHaveValue("");
   await expect(page.getByLabel("Criterio de manillas", { exact: true })).not.toHaveValue("");
   await expect(page.getByLabel("Criterio de refuerzos", { exact: true })).not.toHaveValue("");
-  await page.getByLabel(/Confirmo la emisión: esta revisión/).check();
-  const freezeA = page.waitForResponse(
-    (response) =>
-      response.request().method() === "POST" &&
-      new URL(response.url()).pathname === `/api/v1/documents/projects/${draft.id}/freeze/`,
-  );
-  await page.getByRole("button", { name: "Emitir cotización", exact: true }).click();
-  const frozenA = await freezeA;
-  expect(frozenA.status(), await frozenA.text()).toBe(201);
+  const reviewedA = await reviewAndIssueQuotation(page, request, draft.id, headers);
   await expect(page.getByText("Cotizado", { exact: true })).toBeVisible();
   await expect(
     page.locator(".quotation-history strong").filter({ hasText: "Revisión A" }),
@@ -473,6 +600,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
   await expect(page.getByText("Revisión B", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Volver a posiciones", exact: true }).click();
   // The desk grid is select-then-act: pick the vano row so the side pane
   // offers Abrir diseño.
   await page
@@ -498,46 +626,36 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       response.request().method() === "GET" &&
       response.url().includes(`/api/v1/documents/projects/${draft.id}/inputs/`),
   );
-  await page
-    .locator("details.project-facts__section")
-    .filter({ hasText: "Cotización" })
-    .locator("summary")
-    .click();
+  await page.goto(`/projects/${draft.id}?section=quote`);
   await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
   await prepB;
   await expect(page.getByLabel("Condiciones de pago", { exact: true })).toHaveValue(
     "50% anticipo, 50% entrega",
   );
-  await page.getByLabel(/Confirmo la emisión: esta revisión/).check();
-  const freezeB = page.waitForResponse(
-    (response) =>
-      response.request().method() === "POST" &&
-      new URL(response.url()).pathname === `/api/v1/documents/projects/${draft.id}/freeze/`,
-  );
-  await page.getByRole("button", { name: "Emitir cotización", exact: true }).click();
-  const frozenB = await freezeB;
-  expect(frozenB.status(), await frozenB.text()).toBe(201);
+  await reviewAndIssueQuotation(page, request, draft.id, headers);
   await expect(page.getByText("Cotizado", { exact: true })).toBeVisible();
   const history = page.locator(".quotation-history");
   await expect(history.getByText("Revisión A", { exact: true })).toBeVisible();
   await expect(history.getByText("Revisión B", { exact: true })).toBeVisible();
 
   const revA = history.locator("li").filter({ has: page.getByText("Revisión A", { exact: true }) });
-  // Emitted evidence is generated by the durable job system, not a direct
-  // artifact POST: enqueue → poll → access → blob download.
-  const artifact = page.waitForResponse(
-    (response) =>
-      response.request().method() === "POST" &&
-      new URL(response.url()).pathname === "/api/v1/jobs/",
-  );
+  // Canonical issuance has already stored the exact reviewed artifact.
+  // Opening REV-A after REV-B must reuse it and preserve all its bytes.
   const access = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname.endsWith("/access/"),
   );
   await revA.getByRole("button", { name: "Abrir cotización emitida", exact: true }).click();
-  expect((await artifact).status()).toBeLessThan(300);
-  expect((await access).status()).toBe(200);
+  const accessed = await access;
+  expect(accessed.status()).toBe(200);
+  const authority = (await accessed.json()) as { signed_url: string; artifact_id: string };
+  expect(authority.artifact_id).toBe(reviewedA.artifactId);
+  const originalPdf = await request.get(authority.signed_url);
+  expect(originalPdf.status()).toBe(200);
+  const preservedBytes = await originalPdf.body();
+  expect(createHash("sha256").update(preservedBytes).digest("hex")).toBe(reviewedA.fileHash);
+  expect(preservedBytes).toEqual(reviewedA.bytes);
 
   const finalProject = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
   expect(finalProject.status()).toBe(200);

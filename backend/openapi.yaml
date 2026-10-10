@@ -6327,6 +6327,333 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/documents/projects/{project_id}/issue/:
+    post:
+      operationId: quotation_issue
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuotationIssueRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuotationIssueRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuotationIssueRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationIssue'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationIssue'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/documents/projects/{project_id}/quotation-customer/:
+    patch:
+      operationId: quotation_save_customer
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedQuotationCustomerRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedQuotationCustomerRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedQuotationCustomerRequestRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationCustomer'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/documents/projects/{project_id}/quotation-preview/:
+    post:
+      operationId: quotation_prepare_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuotationPreviewRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuotationPreviewRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuotationPreviewRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationPreview'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/documents/projects/{project_id}/quotation-previews/{preview_id}/:
+    get:
+      operationId: quotation_preview_access
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: preview_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationPreview'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/documents/projects/{project_id}/versions/compare/:
     get:
       operationId: documents_compare_versions
@@ -17192,6 +17519,184 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/quote-links/{approval_id}/deadline/:
+    put:
+      operationId: project_quote_link_deadline
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: approval_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkDeadlineRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LinkDeadlineRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LinkDeadlineRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApprovalRecord'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/quote-links/{approval_id}/regenerate/:
+    post:
+      operationId: project_quote_link_regenerate
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: approval_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkRegenerateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LinkRegenerateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LinkRegenerateRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareQuoteResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/quote-links/{approval_id}/revoke/:
     post:
       operationId: project_quote_link_revoke
@@ -20756,6 +21261,11 @@ components:
         created_at:
           type: string
           format: date-time
+        original_expires_at:
+          type: string
+          format: date-time
+        link_state:
+          $ref: '#/components/schemas/LinkStateEnum'
         revoked_at:
           type: string
           format: date-time
@@ -23886,6 +24396,14 @@ components:
     DocumentPreferences:
       type: object
       properties:
+        quotation_preview_minutes:
+          type: integer
+          maximum: 60
+          minimum: 5
+        quotation_valid_days:
+          type: integer
+          maximum: 365
+          minimum: 1
         paper:
           $ref: '#/components/schemas/PaperEnum'
         accent:
@@ -23903,6 +24421,14 @@ components:
     DocumentPreferencesRequest:
       type: object
       properties:
+        quotation_preview_minutes:
+          type: integer
+          maximum: 60
+          minimum: 5
+        quotation_valid_days:
+          type: integer
+          maximum: 365
+          minimum: 1
         paper:
           $ref: '#/components/schemas/PaperEnum'
         accent:
@@ -27315,6 +27841,28 @@ components:
       required:
       - line_net
       - position_index
+    LinkDeadlineRequest:
+      type: object
+      properties:
+        expected_expires_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - expected_expires_at
+      - expires_at
+    LinkRegenerateRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
     LinkSourceEnum:
       enum:
       - SHARE
@@ -27323,6 +27871,24 @@ components:
       description: |-
         * `SHARE` - SHARE
         * `DOCUMENT` - DOCUMENT
+    LinkStateEnum:
+      enum:
+      - ACTIVE
+      - VIEWED
+      - SUPERSEDED
+      - EXPIRED
+      - REVOKED
+      - APPROVED
+      - DECLINED
+      type: string
+      description: |-
+        * `ACTIVE` - ACTIVE
+        * `VIEWED` - VIEWED
+        * `SUPERSEDED` - SUPERSEDED
+        * `EXPIRED` - EXPIRED
+        * `REVOKED` - REVOKED
+        * `APPROVED` - APPROVED
+        * `DECLINED` - DECLINED
     LocalOriginEnum:
       enum:
       - TOP_LEFT
@@ -30083,6 +30649,8 @@ components:
           type: string
           pattern: ^-?\d+(?:\.\d{1,2})?$
           description: Milímetros decimales exactos; sin separador de miles.
+        all_handles:
+          type: boolean
         base_sig:
           type: string
         description:
@@ -30127,6 +30695,8 @@ components:
           type: string
           pattern: ^-?\d+(?:\.\d{1,2})?$
           description: Milímetros decimales exactos; sin separador de miles.
+        all_handles:
+          type: boolean
       required:
       - op
       - bay
@@ -32055,6 +32625,28 @@ components:
         expected_updated_at:
           type: string
           format: date-time
+    PatchedQuotationCustomerRequestRequest:
+      type: object
+      properties:
+        expected_updated_at:
+          type: string
+          format: date-time
+        client_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        client_rut:
+          type: string
+          minLength: 1
+          maxLength: 50
+        client_email:
+          type: string
+          format: email
+          minLength: 1
+        delivery_address:
+          type: string
+          minLength: 1
+          maxLength: 2000
     PatchedSystemWriteRequest:
       type: object
       properties:
@@ -35229,6 +35821,14 @@ components:
       description: |-
         * `PASS` - PASS
         * `FAIL` - FAIL
+    QuotationCustomer:
+      type: object
+      properties:
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - updated_at
     QuotationIndexItem:
       type: object
       properties:
@@ -35308,6 +35908,156 @@ components:
       - offset
       - today
       - total
+    QuotationIssue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pricing_operation_id:
+          type: string
+          format: uuid
+        created:
+          type: boolean
+        revision_code:
+          type: string
+          pattern: ^REV-[A-Z]+$
+        bom_hash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        snapshot_sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        production_allowed:
+          type: boolean
+        documentary_complete:
+          type: boolean
+        emitted_at:
+          type: string
+          format: date-time
+        purchase_projection_hash:
+          type: string
+          nullable: true
+          pattern: ^[0-9a-f]{64}$
+        artifact_id:
+          type: string
+          format: uuid
+        approval_id:
+          type: string
+          format: uuid
+        path:
+          type: string
+        file_sha256:
+          type: string
+        mail:
+          $ref: '#/components/schemas/MailRecord'
+      required:
+      - approval_id
+      - artifact_id
+      - bom_hash
+      - created
+      - documentary_complete
+      - emitted_at
+      - file_sha256
+      - id
+      - mail
+      - path
+      - pricing_operation_id
+      - production_allowed
+      - revision_code
+      - snapshot_sha256
+    QuotationIssueRequestRequest:
+      type: object
+      properties:
+        preview_id:
+          type: string
+          format: uuid
+        expected_snapshot_sha256:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-f]{64}$
+        expected_document_sha256:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-f]{64}$
+        expected_recipient:
+          type: string
+          format: email
+          minLength: 1
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - expected_document_sha256
+      - expected_recipient
+      - expected_snapshot_sha256
+      - preview_id
+    QuotationPreview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        revision_code:
+          type: string
+        snapshot_sha256:
+          type: string
+        bom_hash:
+          type: string
+        file_sha256:
+          type: string
+        byte_size:
+          type: integer
+        document_date:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        recipient:
+          type: string
+          format: email
+        client_name:
+          type: string
+        currency:
+          type: string
+        total_price_gross:
+          type: string
+        production_allowed:
+          type: boolean
+        documentary_complete:
+          type: boolean
+        valid_until:
+          type: string
+          format: date
+        pdf_url:
+          type: string
+          format: uri
+      required:
+      - bom_hash
+      - byte_size
+      - client_name
+      - currency
+      - document_date
+      - documentary_complete
+      - expires_at
+      - file_sha256
+      - id
+      - pdf_url
+      - production_allowed
+      - recipient
+      - revision_code
+      - snapshot_sha256
+      - total_price_gross
+      - valid_until
+    QuotationPreviewRequestRequest:
+      type: object
+      properties:
+        pricing_operation_id:
+          type: string
+          format: uuid
+      required:
+      - pricing_operation_id
     RailTypeEnum:
       enum:
       - dual

@@ -5,10 +5,14 @@ export function CommercialTermsEditor({
   value,
   onChange,
   disabled = false,
+  idPrefix,
+  required = false,
 }: {
   value: CommercialTerms;
   onChange: (value: CommercialTerms) => void;
   disabled?: boolean;
+  idPrefix?: string;
+  required?: boolean;
 }): JSX.Element {
   const schedule = value.payment_schedule ?? [];
   return (
@@ -39,6 +43,7 @@ export function CommercialTermsEditor({
               <label>
                 Hito {index + 1}
                 <input
+                  id={idPrefix ? `${idPrefix}-payment_schedule-${index}` : undefined}
                   value={milestone.label}
                   maxLength={120}
                   required
@@ -102,6 +107,8 @@ export function CommercialTermsEditor({
           <label key={field}>
             {label}
             <textarea
+              id={idPrefix ? `${idPrefix}-${field}` : undefined}
+              required={required && field !== "jurisdiction"}
               value={value[field] ?? ""}
               maxLength={length}
               onChange={(event) => onChange({ ...value, [field]: event.target.value })}
@@ -109,8 +116,9 @@ export function CommercialTermsEditor({
           </label>
         ))}
         <p>
-          Una condición vacía se omite del documento. Declara los plazos y alcances acordados, sin
-          valores supuestos.
+          {required
+            ? "Completa plazo, instalación, exclusiones y garantía antes de revisar el PDF. La jurisdicción es opcional."
+            : "Una condición vacía se omite del documento. Declara los plazos y alcances acordados, sin valores supuestos."}
         </p>
       </details>
     </fieldset>

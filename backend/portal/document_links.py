@@ -16,7 +16,17 @@ def _cipher():
     return AESGCM(hashlib.sha256(("document-link:v1:" + settings.MAIL_ENCRYPTION_KEY).encode()).digest())
 
 
-def document_portal_url(*, org_id: UUID, version: dict, actor_id: UUID) -> str:
+def portal_url(token: str) -> str:
+    from urllib.parse import urlparse
+    base = settings.DEKOPEN_PUBLIC_APP_URL.rstrip("/")
+    parsed = urlparse(base)
+    if parsed.scheme not in ("https", "http") or not parsed.netloc:
+        raise DocumentaryError("document_portal_url_invalid")
+    return f"{base}/cotizacion/{token}"
+
+
+def document_portal_url(*, org_id: UUID, version: dict, actor_id: UUID,
+                       prepared_token: str | None = None) -> str:
     """Caller holds the documentary role, transaction and artifact-slot lock.
 
     A failed artifact upload rolls this creation back. Existing artifact slots
@@ -29,8 +39,10 @@ def document_portal_url(*, org_id: UUID, version: dict, actor_id: UUID) -> str:
         raw = base64.b64decode(row["token_ciphertext"], validate=True)
         aad = f"document-link:v1:{org_id}:{version_id}:{row['id']}".encode()
         token = _cipher().decrypt(raw[:12], raw[12:], aad).decode()
+        if prepared_token is not None and prepared_token != token:
+            raise DocumentaryError("quotation_preview_stale")
     else:
-        token = secrets.token_urlsafe(32)
+        token = prepared_token or secrets.token_urlsafe(32)
         approval = one(
             "INSERT INTO public.customer_approvals(org_id,project_id,project_version_id,token_hash,expires_at,created_by,link_source) "
             "VALUES(%s,%s,%s,%s,%s,%s,'DOCUMENT') RETURNING id",
@@ -43,9 +55,4 @@ def document_portal_url(*, org_id: UUID, version: dict, actor_id: UUID) -> str:
         ciphertext = base64.b64encode(nonce + _cipher().encrypt(nonce, token.encode(), aad)).decode()
         one("INSERT INTO public.document_portal_links(id,org_id,project_version_id,approval_id,token_ciphertext) VALUES(%s,%s,%s,%s,%s) RETURNING id",
             [str(row_id), str(org_id), version_id, str(approval["id"]), ciphertext])
-    from urllib.parse import urlparse
-    base = settings.DEKOPEN_PUBLIC_APP_URL.rstrip("/")
-    parsed = urlparse(base)
-    if parsed.scheme not in ("https", "http") or not parsed.netloc:
-        raise DocumentaryError("document_portal_url_invalid")
-    return f"{base}/cotizacion/{token}"
+    return portal_url(token)

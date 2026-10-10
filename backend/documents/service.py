@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from math import ceil
 import json
@@ -51,6 +52,7 @@ from dekopen_engine.purchasing import (
     fitting_selections_v1,
     HardwareSelectionV1,
     PositionPurchaseInputV1,
+    PurchaseRequirementsV1,
     project_purchase_requirements_v1,
 )
 from dekopen_engine.snapshot import calculation_hash, calculation_response, result_payload
@@ -1003,17 +1005,14 @@ def _collect_purchase_authorities(
     )
 
 
-def freeze_revision_a(
-    *,
-    org_id: UUID,
-    actor_id: UUID,
-    project_id: UUID,
-    pricing_operation_id: UUID,
-    confirmed: bool,
-    allow_incomplete_workshop: bool = False,
-) -> dict[str, object]:
-    if not confirmed:
-        raise DocumentaryError("documentary_freeze_confirmation_required")
+@dataclass(frozen=True)
+class PreparedRevision:
+    snapshot: dict[str, object]
+    purchase: PurchaseRequirementsV1 | None
+    position_system_ids: list[str]
+
+
+def lock_revision_inputs(*, org_id: UUID, project_id: UUID, pricing_operation_id: UUID) -> None:
     with commercial_backend():
         with connection.cursor() as cursor:
             cursor.execute(
@@ -1030,6 +1029,14 @@ def freeze_revision_a(
                 "WHERE project_id=%s AND org_id=%s ORDER BY position_index FOR UPDATE",
                 [project_id, org_id],
             )
+
+
+def compose_revision(
+    *, org_id: UUID, actor_id: UUID, project_id: UUID,
+    pricing_operation_id: UUID, sealed_at: datetime,
+    allow_incomplete_workshop: bool = False,
+) -> PreparedRevision:
+    """Compose the same authority for preview and seal, without issuing a revision."""
     with documentary_backend():
         project = one(
             "SELECT * FROM public.projects WHERE org_id=%s AND id=%s",
@@ -1037,24 +1044,6 @@ def freeze_revision_a(
             "project_not_found",
         )
         revision = str(project["current_revision"])
-        existing = rows(
-            "SELECT id,pricing_operation_id,revision_code,bom_hash,snapshot_sha256,"
-            "production_allowed,documentary_complete,emitted_at "
-            "FROM public.project_versions WHERE project_id=%s AND org_id=%s "
-            "AND revision_code=%s",
-            [project_id, org_id, revision],
-        )
-        if existing:
-            if len(existing) != 1 or str(existing[0]["pricing_operation_id"]) != str(
-                pricing_operation_id
-            ):
-                raise DocumentaryError("revision_already_sealed")
-            return {
-                **{key: (str(value) if isinstance(value, UUID) else value)
-                   for key, value in existing[0].items()},
-                "pricing_operation_id": str(pricing_operation_id),
-                "created": False,
-            }
         if project["status"] != "DRAFT":
             raise DocumentaryError("revision_not_available")
         operation = one(
@@ -1518,7 +1507,6 @@ def freeze_revision_a(
             [str(org_id)],
             "organization_not_found",
         )
-        sealed_at = datetime.now(timezone.utc)
         snapshot = {
             "measurements_required": True,
             "is_demo": any(item.get("is_demo") for item in position_inputs),
@@ -1605,7 +1593,21 @@ def freeze_revision_a(
             "realized_waste": {"status": "NOT_RECORDED", "value": None},
             "bom_hash": bom_hash,
         }
-        snapshot_sha256 = snapshot_sha256_v1(snapshot)
+        return PreparedRevision(snapshot, purchase, position_system_ids)
+
+
+def persist_revision(*, prepared: PreparedRevision) -> dict[str, object]:
+    """Persist only a composed and verified revision while the caller holds its locks."""
+    snapshot = prepared.snapshot
+    project_id, org_id = snapshot["project_id"], snapshot["org_id"]
+    actor_id, sealed_at = snapshot["sealed_by"], snapshot["sealed_at"]
+    revision, bom_hash = snapshot["revision"], snapshot["bom_hash"]
+    pricing_operation_id = snapshot["pricing"]["operation_id"]
+    production_allowed = snapshot["production_allowed"]
+    documentary_complete = snapshot["documentary_complete"]
+    snapshot_sha256 = snapshot_sha256_v1(snapshot)
+    purchase, position_system_ids = prepared.purchase, prepared.position_system_ids
+    with documentary_backend():
         version = one(
             "INSERT INTO public.project_versions("
             "project_id,org_id,revision_code,snapshot_json,pdf_storage_path,emitted_by,emitted_at,"
@@ -1708,6 +1710,45 @@ def freeze_revision_a(
         }
 
 
+
+def freeze_revision_a(
+    *, org_id: UUID, actor_id: UUID, project_id: UUID,
+    pricing_operation_id: UUID, confirmed: bool,
+    allow_incomplete_workshop: bool = False,
+) -> dict[str, object]:
+    """Historical idempotent entry point; composition is shared with guided issuance."""
+    if not confirmed:
+        raise DocumentaryError("documentary_freeze_confirmation_required")
+    lock_revision_inputs(org_id=org_id, project_id=project_id, pricing_operation_id=pricing_operation_id)
+    with documentary_backend():
+        project = one("SELECT current_revision FROM public.projects WHERE org_id=%s AND id=%s",
+                      [org_id, project_id], "project_not_found")
+        revision = str(project["current_revision"])
+        existing = rows(
+            "SELECT id,pricing_operation_id,revision_code,bom_hash,snapshot_sha256,"
+            "production_allowed,documentary_complete,emitted_at "
+            "FROM public.project_versions WHERE project_id=%s AND org_id=%s "
+            "AND revision_code=%s",
+            [project_id, org_id, revision],
+        )
+        if existing:
+            if len(existing) != 1 or str(existing[0]["pricing_operation_id"]) != str(
+                pricing_operation_id
+            ):
+                raise DocumentaryError("revision_already_sealed")
+            return {
+                **{key: (str(value) if isinstance(value, UUID) else value)
+                   for key, value in existing[0].items()},
+                "pricing_operation_id": str(pricing_operation_id),
+                "created": False,
+            }
+    prepared = compose_revision(org_id=org_id, actor_id=actor_id, project_id=project_id,
+                                pricing_operation_id=pricing_operation_id,
+                                sealed_at=datetime.now(timezone.utc),
+                                allow_incomplete_workshop=allow_incomplete_workshop)
+    return persist_revision(prepared=prepared)
+
+
 def _prepared_commercial_terms(values: dict, org_id: UUID) -> dict:
     if values:
         # Historical saved text never becomes a structured 50/50 schedule.
@@ -1715,6 +1756,18 @@ def _prepared_commercial_terms(values: dict, org_id: UUID) -> dict:
     from documents.preferences import document_preferences
     row = one("SELECT document_preferences FROM public.tenancy_organizations WHERE id=%s", [str(org_id)], "organization_not_found")
     return document_preferences(row["document_preferences"])["commercial_terms"]
+
+
+def _prepared_valid_until(values: dict, org_id: UUID):
+    if values:
+        # Historical declarations retain their date, including a missing date.
+        return values.get("quotation_valid_until")
+    from zoneinfo import ZoneInfo
+    from documents.preferences import document_preferences
+    row = one("SELECT document_preferences FROM public.tenancy_organizations WHERE id=%s",
+              [str(org_id)], "organization_not_found")
+    days = document_preferences(row["document_preferences"])["quotation_valid_days"]
+    return datetime.now(ZoneInfo("America/Santiago")).date() + timedelta(days=days)
 
 
 def _sealed_alternatives(version_ids: list, project_id: UUID, org_id: UUID) -> list:
@@ -2062,7 +2115,7 @@ def prepare_documentary_inputs(
         "project_id": project["id"],
         "revision_code": project["current_revision"],
         "payment_terms": values.get("payment_terms", ""),
-        "quotation_valid_until": values.get("quotation_valid_until"),
+        "quotation_valid_until": _prepared_valid_until(values, org_id),
         "commercial_terms": _prepared_commercial_terms(values, org_id),
         "alternative_version_ids": values.get("alternative_version_ids", []),
         "positions": prepared,

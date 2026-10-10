@@ -13,6 +13,7 @@ import json
 from typing import Any, cast
 
 from .geometry import compute_geometry, validate_sliding_layout, resolved_sliding_layout, sliding_travel
+from .technical_facts import GeometryComputation
 from .catalog_rules import CatalogRuleError, FAMILY_OPENINGS, validate_family
 from .models import BayOpeningType, OpeningMovement, LeafRole, ParametricNode, ProfileRole, SystemParams, HardwareSelection
 from .glass_composition import GlassProcessing
@@ -27,6 +28,17 @@ MM = {"type": "string", "pattern": r"^-?\d+(?:\.\d{1,2})?$", "description": "Mil
 REF = {"type": "string", "minLength": 1, "maxLength": 160}
 TEXT = {"type": "string", "minLength": 1, "maxLength": 100}
 COUNT = {"type": "integer", "minimum": 1, "maximum": 100}
+
+
+def handled_leaf_keys(computation: GeometryComputation) -> set[tuple[str, str | None]]:
+    """Physical opening handles or declared HANDLE articles, including sliding kits."""
+    trace = computation.manufacturing_trace
+    keys = {(leaf.bay_id, leaf.leaf_id) for leaf in trace.leaves
+            if leaf.opening_handle is not None} if trace else set()
+    if computation.result is not None:
+        keys.update((item.bay_id, item.leaf_id) for item in computation.result.hardware_items
+                    if any(component.category == "HANDLE" for component in item.contents))
+    return keys
 
 
 def model_schema(model: Any) -> dict[str, Any]:
@@ -100,7 +112,8 @@ REGISTRY = [
          {"module": "m1", "bay": "b2", "opening": "TILT_TURN_LEFT"}),
     spec("flip_handing", "Invierte bisagras y cierre conservando movimiento y dirección.", TARGET, ["bay"], {"bay": "b1"}),
     spec("set_handle_height", "Declara la altura local de manilla; FLOOR exige antepecho explícito.",
-         {**TARGET, "height_mm": MM, "reference": choice("LEAF_TOP", "LEAF_BOTTOM", "FLOOR"), "sill_height_mm": MM},
+         {**TARGET, "height_mm": MM, "reference": choice("LEAF_TOP", "LEAF_BOTTOM", "FLOOR"), "sill_height_mm": MM,
+          "all_handles": {"type": "boolean"}},
          ["bay", "height_mm", "reference"], {"bay": "b1", "height_mm": "400", "reference": "LEAF_TOP"}),
     spec("set_sliding_layout", "Define corredera: X móvil, O fijo; cada móvil declara carril.",
          {**TARGET, "panels": {"type": "string", "pattern": "^[XO]{2,4}$"}, "tracks": {"type": "integer", "minimum": 2, "maximum": 4},
@@ -639,18 +652,30 @@ def _apply(product: dict[str, Any], op: dict[str, Any], params: SystemParams, ca
         computation = compute_geometry(ParametricNode.model_validate_json(json.dumps(root)), params,
                                        finish=finish, diagnostic=True, diagnose_catalog_limits=True)
         technical_leaves = [item for item in computation.leaves if item.bay_id == node["id"]]
-        if len(technical_leaves) != 1:
+        if op.get("all_handles"):
+            handled = handled_leaf_keys(computation)
+            technical_leaves = [item for item in technical_leaves if (item.bay_id, item.leaf_id) in handled]
+        if not technical_leaves or (not op.get("all_handles") and len(technical_leaves) != 1):
             raise OperationError("handle_leaf_required", "Elige una hoja móvil con manilla individual.")
+        if len({item.finished_height_mm for item in technical_leaves}) > 1:
+            raise OperationError("handle_common_datum_missing", "Las hojas con manilla tienen alturas distintas. Declara la altura por hoja; el motor no autoriza una cota común.")
         leaf_height = technical_leaves[0].finished_height_mm
         if reference == "FLOOR":
             trace = computation.manufacturing_trace
-            physical_leaf = next((item for item in trace.leaves if item.bay_id == node["id"]), None) if trace else None
-            if physical_leaf is None or physical_leaf.direct_rect is None:
+            physical_leaves = [item for item in trace.leaves
+                               if (item.bay_id, item.leaf_id) in
+                               {(leaf.bay_id, leaf.leaf_id) for leaf in technical_leaves}] if trace else []
+            if not physical_leaves or any(item.direct_rect is None for item in physical_leaves):
                 raise OperationError("handle_datum_missing", "El motor no declara el origen de esa hoja respecto del marco.")
-            bottom_above_frame = decimal(module["height_mm"]) - physical_leaf.direct_rect.y_mm - physical_leaf.direct_rect.height_mm
+            rects = [item.direct_rect for item in physical_leaves if item.direct_rect is not None]
+            if len({item.y_mm for item in rects}) > 1:
+                raise OperationError("handle_common_datum_missing", "Las hojas con manilla tienen orígenes distintos. Declara la altura por hoja; el motor no autoriza una cota común.")
+            rect = rects[0]
+            bottom_above_frame = decimal(module["height_mm"]) - rect.y_mm - rect.height_mm
             height -= decimal(op["sill_height_mm"]) + bottom_above_frame
         if height <= 0 or height >= leaf_height:
-            raise OperationError("handle_height_invalid", "La manilla queda fuera de la hoja.")
+            limit = format(leaf_height, ".2f").replace(".", ",")
+            raise OperationError("handle_height_invalid", f"La manilla queda fuera de la hoja: debe estar entre 0 y {limit} mm, sin incluir los bordes. Fuente: geometría de fabricación del motor para esta serie.")
         if reference == "LEAF_TOP":
             height = leaf_height - height
         node["handle_height_mm"] = mm(height)

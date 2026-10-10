@@ -426,6 +426,10 @@ export const domainLabels: Readonly<Record<string, string>> = {
   CASEMENT: "Practicable y oscilobatiente",
   LIFT_SLIDE: "Corredera elevable",
   FACADE_FIXED: "Fijo de gran formato",
+  VIEWED: "Visto",
+  SUPERSEDED: "Reemplazado",
+  EXPIRED: "Vencido",
+  REVOKED: "Revocado",
 };
 
 export function domainLabel(value: string | null | undefined): string {

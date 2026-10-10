@@ -3,8 +3,12 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: c01fd3fe720f71ca8acf7ef8d86510d106e73075
+verified_ref: e841ae294f2a9fc849b4f9d0847beceecf1fb07c
 sources:
+  - P08 E2E focal SHOT-10 e841ae29, aceptación SMTP, MIME y PDF A/B byte a byte, 2026-10-09
+  - P08 RUT histórico fb5b82d11c18e50fe9856e3b5e8b63023a27eef6, 27 requisitos de emisión y gates completos, 2026-10-09
+  - P08 implementación d6bf84f4f9b4aa6ecdef3dfe16b86f39ec86bcbe, stack local, 98 vistas sin hallazgos y gates completos, 2026-10-09
+  - docs/redesign/P08-ACEPTACION.md
   - P06 PR https://github.com/KaraAliOsman/framedex/pull/138, CI 4/4 sobre a77e21927feef91b7f519266ee5955688cc8f579, squash c01fd3fe720f71ca8acf7ef8d86510d106e73075, 2026-10-09
   - P06 correcciones de regresión a76cf7af89ed24284bb493f08e214bc1b6d176b4, gates locales completos y Database Gate, 2026-10-09
   - P06 implementación ef55dbd5af0c5863948c06b3ca85d29d2c135861, navegador y gates locales, 2026-10-09
@@ -45,6 +49,35 @@ sources:
 ---
 
 # Current reality
+
+## P08 · cotización guiada y emisión del PDF revisado (09-10-2026)
+
+El checklist lleva al antecedente exacto y se cumple al completar cliente,
+RUT, dirección, precios y condiciones. La vista privada verifica los bytes
+del PDF real; la confirmación fija destinatario, huellas y consecuencia.
+Una transacción sella esos mismos bytes, activa DOCUMENT y crea el outbox P25.
+El recibo recupera una respuesta perdida sin otra revisión ni otro correo.
+Las nuevas tablas están separadas por org_id/RLS y son append-only. Modificar
+vencimiento o regenerar acceso conserva la identidad/QR/PDF sellado de P09.
+Portal no cachea ni éxito ni errores; una decisión anterior permanece intacta.
+
+Doce posiciones pasan A → solicitud de cambios → Hoy/campana → Low-E global
+con diff, aplicar/deshacer → B → aprobación. A conserva su PDF byte a byte.
+Cambios globales comparten apply_to_positions IA2; altura común se resuelve
+contra destinos físicos sin asignar manilla a fijos. Los nueve goldens previos
+conservan valores, con dos casos comunes nuevos. Hay una sola emisión en UI.
+Las vigencias configurables (15 días / 30 minutos) pasan rechazo sin escritura,
+guardar, recargar y restaurar. La matriz específica tiene 74 vistas; la oficial,
+24. Ambas tienen cero hallazgos/desbordes; teclado y densidad a 1024 pasan.
+La aceptación registra dos rondas editoriales, R1–R20 y límites del sandbox.
+
+Lint, tipos, 848 motor (+2 xfail), 1.434 backend, 954 frontend y build pasan.
+Database Gate PASA: 1.249 pgTAP, 455 integraciones, 19 E2E y PostgreSQL 16
+con diez verificadores de upgrade. SHOT-10 comprueba aceptación SMTP, un
+Message-ID y adjunto idéntico al preview, además de A intacto después de B.
+CI y squash se incorporan al completar la integración.
+DEMO no certifica fabricación; la cotización no libera OT incompleta. P10
+y P11 continúan sus respectivos alcances de portal y cobranza.
 
 ## P06 · conjuntos y autoridad angular (09-10-2026)
 

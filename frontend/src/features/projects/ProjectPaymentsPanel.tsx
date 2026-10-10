@@ -35,7 +35,7 @@ import { formatDate, formatMoney, parseMoneyInput } from "../money";
 import { formatRevision } from "../../format";
 import { compareDecimal, decimalInputValue } from "../../decimal";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
-import { MailComposer } from "../notifications/MailPanels";
+import { PaymentMailComposer } from "../notifications/MailPanels";
 import { useConfirm, usePrompt } from "../../ui";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
@@ -695,7 +695,7 @@ export function ProjectPaymentsPanel({
                 {canWrite && (
                   <td>
                     {!payment.voided_at && (
-                      <MailComposer
+                      <PaymentMailComposer
                         key={`${orgId}-${payment.id}`}
                         orgId={orgId}
                         projectId={projectId}

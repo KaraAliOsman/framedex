@@ -64,6 +64,30 @@ export function DocumentSettings({
               setError(true);
               return;
             }
+            if (
+              typeof value.quotation_valid_days !== "number" ||
+              !Number.isInteger(value.quotation_valid_days) ||
+              value.quotation_valid_days < 1 ||
+              value.quotation_valid_days > 365
+            ) {
+              setStatus(
+                "La vigencia comercial debe ser de 1 a 365 días. Revisa ese campo antes de guardar.",
+              );
+              setError(true);
+              return;
+            }
+            if (
+              typeof value.quotation_preview_minutes !== "number" ||
+              !Number.isInteger(value.quotation_preview_minutes) ||
+              value.quotation_preview_minutes < 5 ||
+              value.quotation_preview_minutes > 60
+            ) {
+              setStatus(
+                "La revisión del PDF debe durar entre 5 y 60 minutos. Revisa ese campo antes de guardar.",
+              );
+              setError(true);
+              return;
+            }
             setBusy(true);
             setStatus("");
             setError(false);
@@ -133,6 +157,40 @@ export function DocumentSettings({
                 value={value.legal_footer}
                 onChange={(event) => setValue({ ...value, legal_footer: event.target.value })}
               />
+            </label>
+            <label>
+              Vigencia comercial para cotizaciones nuevas (días)
+              <input
+                type="number"
+                min={1}
+                max={365}
+                step={1}
+                value={value.quotation_valid_days}
+                onChange={(event) =>
+                  setValue({ ...value, quotation_valid_days: event.target.valueAsNumber })
+                }
+              />
+              <small>
+                Se propone desde la fecha local de Chile. Puedes cambiarla antes de emitir; las
+                revisiones selladas conservan su fecha.
+              </small>
+            </label>
+            <label>
+              Vigencia de la revisión del PDF (minutos)
+              <input
+                type="number"
+                min={5}
+                max={60}
+                step={1}
+                value={value.quotation_preview_minutes}
+                onChange={(event) =>
+                  setValue({ ...value, quotation_preview_minutes: event.target.valueAsNumber })
+                }
+              />
+              <small>
+                Entre 5 y 60 minutos. Al vencer debes preparar y revisar otro PDF; la vigencia
+                comercial se declara por cotización.
+              </small>
             </label>
           </fieldset>
           <CommercialTermsEditor

@@ -50,7 +50,8 @@ def quotation_rows(org_id):
                   (array_agg(decided_note ORDER BY (status='APPROVED') DESC,
                     (status='DECLINED') DESC,decided_at DESC NULLS LAST,id DESC))[1] AS decided_note,
                   max(decided_at) AS decided_at,sum(view_count) AS view_count,
-                  max(last_viewed_at) AS last_viewed_at,max(expires_at) AS expires_at,
+                  max(last_viewed_at) AS last_viewed_at,
+                  max(private.quote_link_expires_at(ca.id,ca.org_id,ca.expires_at)) AS expires_at,
                   max(created_at) AS created_at
                 FROM public.customer_approvals ca
                 WHERE ca.org_id=p.org_id AND ca.project_id=p.id
@@ -79,7 +80,7 @@ def quote_public(row, today):
         "response_note": row["decided_note"],
         "total": row["total"], "currency": row["currency"],
         "source": "Total y vigencia de la revisión emitida; vistas y respuesta de sus enlaces vigentes.",
-        "href": f"/projects/{row['id']}",
+        "href": f"/projects/{row['id']}?section=quote",
     }
 
 

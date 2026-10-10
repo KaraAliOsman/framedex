@@ -104,6 +104,8 @@ class ApprovalRecordSerializer(serializers.Serializer):
     decided_note = serializers.CharField(allow_null=True)
     expires_at = serializers.DateTimeField()
     created_at = serializers.DateTimeField()
+    original_expires_at = serializers.DateTimeField(required=False)
+    link_state = serializers.ChoiceField(choices=["ACTIVE","VIEWED","SUPERSEDED","EXPIRED","REVOKED","APPROVED","DECLINED"], required=False)
     revoked_at = serializers.DateTimeField(allow_null=True)
     view_count = serializers.IntegerField()
     last_viewed_at = serializers.DateTimeField(allow_null=True)

@@ -709,6 +709,11 @@ export function PortalQuotePage(): JSX.Element {
           </li>
         </ol>
 
+        {quote.superseded && (
+          <p className="portal-decided" role="status">
+            {t("portal.superseded")}
+          </p>
+        )}
         {decided ? (
           <div
             className="portal-decided"
@@ -727,11 +732,7 @@ export function PortalQuotePage(): JSX.Element {
             </p>
             {issuerContact ? <p className="portal-decided__contact">{issuerContact}</p> : null}
           </div>
-        ) : quote.superseded ? (
-          <p className="portal-decided" role="status">
-            {t("portal.superseded")}
-          </p>
-        ) : quote.validity_expired ? (
+        ) : quote.superseded ? null : quote.validity_expired ? (
           <p className="portal-decided" role="status">
             {t("portal.validityExpired")}
           </p>

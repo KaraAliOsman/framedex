@@ -31,4 +31,5 @@ export interface OperationSetHandleHeightRequest {
    * @pattern ^-?\d+(?:\.\d{1,2})?$
    */
   sill_height_mm?: string;
+  all_handles?: boolean;
 }

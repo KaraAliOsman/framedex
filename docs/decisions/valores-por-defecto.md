@@ -2,6 +2,33 @@
 
 Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguientes deben mantener esta tabla cuando implementen o cambien un valor configurable.
 
+## P08 · preparación, emisión y vigencias (2026-10-09)
+
+- Cotizaciones nuevas: 15 días corridos desde la fecha de America/Santiago,
+  configurables de 1 a 365 en Ajustes > General > Documentos. Cada cotización
+  puede cambiar la fecha antes de emitir. Preparaciones históricas conservan
+  su fecha o su ausencia; un PDF emitido nunca consulta el default actual.
+- Revisión privada del PDF: 30 minutos, configurable de 5 a 60 en la misma
+  pantalla. Da tiempo para revisar doce posiciones y limita autorizaciones
+  antiguas. La caducidad y cualquier cambio de snapshot exigen otra vista.
+- Anticipo inicial: 50 % al aprobar y 50 % contra entrega; calendario editable
+  por organización y cotización. El motor valida las participaciones y calcula
+  los montos. Plazo, instalación, exclusiones y garantía son declaraciones
+  obligatorias. No se inventa plazo de producción ni plazo de garantía.
+- Vencimiento del enlace separado de la vigencia comercial del documento.
+  El estimador o dueño puede declarar una fecha futura hasta 365 días desde
+  ahora, con comparación y confirmación. Se agrega historial; la identidad
+  DOCUMENT de P09 permanece intacta. La hora del control es la del navegador,
+  declarada en la ayuda; el historial presenta America/Santiago.
+- Regenerar revoca el enlace seleccionado y crea un acceso nuevo a la misma
+  revisión. No reenvía correo ni reemplaza el QR impreso automáticamente.
+  Su reintento conserva el mismo recibo. Una respuesta comercial anterior no
+  se borra; otro acuerdo exige una sucesora y nueva emisión/confirmación.
+- La confirmación exige PDF verificado y cargado, destinatario y consecuencia
+  concretos. La emisión usa el outbox existente. No se agrega un proveedor
+  alternativo ni se presume entrega SMTP única; sandbox Mailpit sigue activo.
+
+
 ## P03 · trabajo por rol (2026-10-09)
 
 - Cola: vencidos, bloqueos, trabajo del día y seguimiento, orden determinista
@@ -76,10 +103,11 @@ Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguient
 | Decision                   | Valor por defecto                                                                                               | Donde se cambia                   | Estado      | Encargo que la implementa |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------- | ------------------------- |
 | Papel de los documentos    | Carta                                                                                                           | Ajustes > Documentos              | por defecto | P09                       |
-| Anticipo                   | 50 % al aprobar, saldo contra entrega                                                                           | Ajustes > Condiciones comerciales | por defecto | P08                       |
-| Validez de la cotizacion   | 15 dias corridos                                                                                                | Ajustes > Condiciones comerciales | por defecto | P08                       |
-| Garantia                   | Texto plantilla editable, sin plazo inventado: "[completar plazo]" visible solo en Ajustes, nunca impreso vacio | Ajustes > Condiciones comerciales | por defecto | P08                       |
-| Plazo de entrega           | Calculado desde la carga de produccion si existe; si no, campo obligatorio por cotizacion                       | Cotizacion                        | por defecto | P08                       |
+| Anticipo                   | 50 % al aprobar, saldo contra entrega; calendario editable y montos derivados por el motor | Ajustes > General > Documentos | implementado | P08 |
+| Validez de la cotizacion   | 15 días corridos; configurable de 1 a 365, editable antes de emitir | Ajustes > General > Documentos | implementado | P08 |
+| Garantia                   | Plantilla editable sin plazo inventado; obligatoria antes de preparar el PDF | Ajustes > General > Documentos / Cotización | implementado | P08 |
+| Plazo de entrega           | Declaración obligatoria por cotización cuando no existe autoridad de producción | Cotización | implementado | P08 |
+| Revisión privada del PDF   | 30 minutos; configurable de 5 a 60, sin alterar revisiones previas | Ajustes > General > Documentos | implementado | P08 |
 | Banda de margen            | Mínimo 25 %, objetivo 35 %, máximo 60 %; fuera de la banda requiere aprobación del dueño                           | Ajustes > Precios                 | implementado | P07                       |
 | IVA                        | 19 %, precios netos en la app y total con IVA en el documento                                                   | Ajustes > Impuestos               | por defecto | P07                       |
 | Pie "Generado con DEKOPEN" | Oculto en documentos del cliente (white-label); visible solo en el portal, discreto                             | Ajustes > Documentos              | por defecto | P09                       |
