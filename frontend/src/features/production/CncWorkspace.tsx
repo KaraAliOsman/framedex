@@ -9,7 +9,7 @@ import {
 } from "../../api/generated/dekopen";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { decimalInputValue, parseDecimalInput } from "../../decimal";
-import { fmtMm, formatDateTime } from "../../format";
+import { formatMillimeters as mm, formatDateTime } from "../../format";
 import { Button, Field, TextInput } from "../../ui/Controls";
 import { DataTable, type TableColumn } from "../../ui/DataTable";
 import { ErrorState, LoadingState } from "../../ui/States";
@@ -106,8 +106,6 @@ const labels: Record<string, string> = {
   encoding: "Codificación",
   active: "Disponibilidad",
 };
-const mm = (value: string | null) =>
-  value == null || value === "" ? "Sin dato" : fmtMm(value) + " mm";
 function Choices({
   label,
   options,

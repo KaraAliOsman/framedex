@@ -5,7 +5,7 @@ import {
   productionOrderCncProgramGenerate,
 } from "../../api/generated/dekopen";
 import { apiFetchBlob } from "../../api/apiMutator";
-import { fmtMm, formatDateTime } from "../../format";
+import { formatMillimeters as mm, formatDateTime } from "../../format";
 import { tOptional } from "../../i18n/es-CL";
 import { Button, Field, TextInput } from "../../ui/Controls";
 import { EmptyState, ErrorState, LoadingState } from "../../ui/States";
@@ -36,8 +36,6 @@ type Readiness = {
   identity: Record<string, string>;
   plan_fingerprint: string;
 };
-const mm = (value: string | null | undefined) =>
-  value == null || value === "" ? "Sin dato" : `${fmtMm(value)} mm`;
 export function VerdictBadge({ value }: { value: Verdict }) {
   return (
     <StatusBadge tone={value === "BLOCK" ? "blocked" : value === "WARN" ? "person" : "success"}>

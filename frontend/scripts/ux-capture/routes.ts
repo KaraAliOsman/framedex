@@ -70,6 +70,11 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
       roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"],
     },
     {
+      id: "cotizacion-emision",
+      path: `/projects/${refs.projectId}?section=quote`,
+      roles: ["OWNER", "ESTIMATOR"],
+    },
+    {
       id: "posicion-nueva",
       path: `/projects/${refs.projectId}/positions/new`,
       roles: ["ESTIMATOR"],
@@ -102,6 +107,12 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
     { id: "compras", path: "/purchasing", roles: ["OWNER", "WORKSHOP_MANAGER"] },
     ...(refs.orderId
       ? [
+          {
+            id: "corte-barras",
+            path: `/production?order=${refs.orderId}&section=corte`,
+            roles: ["WORKSHOP_MANAGER"] as UxRole[],
+            workshop: true,
+          },
           {
             id: "cnc-piezas",
             path: `/production?order=${refs.orderId}&section=mecanizado`,

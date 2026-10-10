@@ -59,7 +59,7 @@ describe("SectionImportPanel", () => {
     fireEvent.change(screen.getByLabelText(t("catalog.sectionImport.scale") as never), {
       target: { value: "2" },
     });
-    await waitFor(() => expect(screen.getByText(/40\.0 × 40\.0 mm/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/40 × 40 mm/)).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: t("catalog.sectionImport.apply") }));
 
     expect(onApply).toHaveBeenCalledWith({
@@ -90,5 +90,40 @@ describe("SectionImportPanel", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: t("catalog.sectionImport.apply") })).toBeDisabled(),
     );
+  });
+
+  it("shows the exact applied envelope after scaling without truncating hundredths", async () => {
+    const api = {
+      sectionImport: vi.fn(async () => ({
+        ...RESULT,
+        candidates: [
+          {
+            ...RESULT.candidates[0]!,
+            points: [
+              ["-10.02", "-5.01"],
+              ["49.99", "-5.01"],
+              ["49.99", "65.01"],
+              ["-10.02", "65.01"],
+            ],
+          },
+        ],
+      })),
+    };
+    const onApply = vi.fn();
+    const { container } = render(
+      <SectionImportPanel api={api as never} onApply={onApply} onClose={() => {}} />,
+    );
+    fireEvent.change(fileInput(container), { target: { files: [new File(["x"], "frame.svg")] } });
+    await waitFor(() => expect(screen.getByText(/60,01 × 70,02 mm/)).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: t("catalog.sectionImport.apply") }));
+    expect(onApply).toHaveBeenCalledWith({
+      drawingRef: RESULT.document_path,
+      vertices: [
+        { x_mm: "-10.02", y_mm: "-5.01" },
+        { x_mm: "49.99", y_mm: "-5.01" },
+        { x_mm: "49.99", y_mm: "65.01" },
+        { x_mm: "-10.02", y_mm: "65.01" },
+      ],
+    });
   });
 });

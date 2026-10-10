@@ -1936,7 +1936,7 @@ def prepare_documentary_inputs(
 
         trace_leaves: list[dict[str, object]] = []
         leaf_counts: dict[str | None, int] = {}
-        for module_id, computation, _module_tree in calculations:
+        for module_index, (module_id, computation, _module_tree) in enumerate(calculations, 1):
             trace = computation.manufacturing_trace
             if trace is None:
                 continue
@@ -1956,7 +1956,7 @@ def prepare_documentary_inputs(
                             else leaf.leaf_id
                         ),
                         "leaf_label": (
-                            f"Unidad {module_id} · hoja {number}"
+                            f"Unidad {module_index} · hoja {number}"
                             if module_id
                             else f"Hoja {number}"
                         ),
