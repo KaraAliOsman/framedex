@@ -138,7 +138,18 @@ producción/inventario/OpenAPI pasa 169 tests; la regresión de orden independie
 de filas se añade durante el cierre. No cambia ninguna fórmula del
 motor ni se regeneran goldens.
 
-Los resultados finales de los gates locales y CI se incorporan antes del merge.
+- `make lint`, `make typecheck`, `make test`, `make build`: PASA en el
+  checkout Linux aislado; OpenAPI/orval reproducibles, guardas y goldens sin
+  cambios. Motor: 848 PASA + dos xfail existentes; backend: 1.443 PASA;
+  frontend: 956 PASA en 88 archivos.
+- `make test-db`: PASA completo, proyecto aislado `framedex-cola-native`:
+  1249 pgTAP en 86 archivos, 467 integraciones PostgreSQL, 19 E2E Chromium
+  y PostgreSQL 16 con diez verificadores de upgrade poblado. Teardown propio
+  comprobado; fixture persistente intacto.
+- La regresión focal de Producción pasa 124 tests tras proteger el orden
+  independiente de filas. La validación real de servidor/navegador rechaza
+  entradas incompatibles con 422, mensaje accionable y cero escritura.
+- CI 4/4 y squash se registran al integrar; la fila sigue en curso hasta entonces.
 
 ## Decisiones y límites
 

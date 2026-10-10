@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-09
 volatility: medium
-verified_ref: 7ac18654c3987d9b1d7c4d2422fec164c2a76b5b
+verified_ref: dbe2423e90d36d68d190eb45705baf58904b393a
 sources:
   - backend/production/cut_manifest.py
   - backend/production/cut_documents.py
@@ -48,7 +48,7 @@ la declaración real en Catálogo › Formatos de lámina.
 La revisión de cierre protege el código comercial de suministro usado por el
 ledger: un formato físicamente incompatible requiere otro código; variantes
 con igual área se ordenan por dimensiones y autoridad de manera determinista.
-Su verificación PostgreSQL final se registra antes de integrar P13.
+Su verificación PostgreSQL final pasa junto con los 467 tests de integración.
 
 CSV y DXF son formatos genéricos. DXF AC1021 usa UTF-8 y conserva precisión de
 origen; el parser fijado comprueba español y coordenadas. Ver

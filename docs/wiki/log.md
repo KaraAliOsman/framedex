@@ -1076,3 +1076,15 @@ la revisión visual corrige una tabla internamente recortada en móvil.
 Se conservan como límites la autoridad DEMO y la reoptimización explícita de
 planes históricos sin dirección RT prevista. P13 y gates completos siguen
 en curso; no se declara merge ni CI aceptados antes de esos resultados.
+
+## 2026-10-09 — P13 · gates finales y validación de suministro
+
+Ref `dbe2423e90d36d68d190eb45705baf58904b393a`: lint/tipos/OpenAPI/orval/build y tests completos PASA,
+848 motor (+2 xfail), 1.443 backend y 956 frontend. Database Gate completo
+PASA: 1.249 pgTAP en 86 archivos, 467 integraciones, 19 E2E y PostgreSQL 16
+con diez upgrades poblados. Dos validaciones que fallaban con error interno
+se corrigieron al contrato DocumentaryError y se ejercitaron en navegador:
+sustrato desconocido, despunte sin medida útil y suministro incompatible
+devuelven 422 accionable sin escritura. Un mismo código de suministro no
+mezcla formatos físicos; los candidatos de área igual tienen orden estable.
+P13 conserva R1–R20 PASA. CI y squash quedan pendientes de integración.

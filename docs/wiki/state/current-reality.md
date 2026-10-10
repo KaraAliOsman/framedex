@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: 7ac18654c3987d9b1d7c4d2422fec164c2a76b5b
+verified_ref: dbe2423e90d36d68d190eb45705baf58904b393a
 sources:
+  - P13 cierre dbe2423e90d36d68d190eb45705baf58904b393a, gates locales completos y PostgreSQL aislado, 2026-10-09
   - P13 implementación 7ac18654c3987d9b1d7c4d2422fec164c2a76b5b, 169 regresiones focales, navegador y PDF/QR, 2026-10-09
   - docs/redesign/P13-ACEPTACION.md
   - P08 PR https://github.com/KaraAliOsman/framedex/pull/139, CI 4/4 sobre 2ebc5165767236a557417cfb1b4e64b7190002f8, corrida 38011547655, squash 9329e9e3378c58bc2bef3bd9c23d80f613379397, 2026-10-09
@@ -53,7 +54,7 @@ sources:
 
 # Current reality
 
-## P13 · corte y etiquetas verificadas; gates en curso (09-10-2026)
+## P13 · corte y etiquetas verificadas; CI pendiente (09-10-2026)
 
 El pack apaisado coloca tres barras por página con cierre exacto y callouts;
 PDF/CSV/DXF/etiquetas/QR conservan dirección y secuencia. UTF-8 y precisión
@@ -70,7 +71,10 @@ Dos rondas editoriales y R1–R20 PASA constan en P13-ACEPTACION; dieciséis
 vistas de superficie, ocho agrupadas y dieciséis oficiales sin hallazgos.
 La revisión visual corrigió además un recorte interno de tabla móvil que el
 control de desborde de página no detectaba. Los gates completos locales y
-PostgreSQL están en curso; P13 continúa en curso hasta CI 4/4 y squash.
+PostgreSQL pasan: 848 motor (+2 xfail), 1.443 backend, 956 frontend, 1.249 pgTAP,
+467 integraciones y 19 E2E, más diez upgrades PG16. El código de suministro
+rechaza formatos incompatibles sin escritura. P13 continúa en curso hasta CI
+4/4 y squash.
 Ver [corte y etiquetas](../product/cut-documents.md).
 
 ## P08 · cotización guiada y emisión del PDF revisado (09-10-2026)

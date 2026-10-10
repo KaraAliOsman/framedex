@@ -1,0 +1,17 @@
+{
+  "ref": "dbe2423e90d36d68d190eb45705baf58904b393a",
+  "lint": "PASA",
+  "typecheck": "PASA",
+  "test": "PASA",
+  "build": "PASA",
+  "test-db": "PASA",
+  "engine": 848,
+  "engine_existing_xfail": 2,
+  "backend": 1443,
+  "frontend": 956,
+  "pgtap": 1249,
+  "pgtap_files": 86,
+  "postgres_integration": 467,
+  "chromium_e2e": 19,
+  "pg16_upgrades": 10
+}
