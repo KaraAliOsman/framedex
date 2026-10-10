@@ -12133,6 +12133,89 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/orders/{order_id}/cnc/preview/:
+    post:
+      operationId: production_order_cnc_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      - cnc
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CncPreviewRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CncPreviewRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CncPreviewRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CncPreview'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/orders/{order_id}/cnc/programs/:
     get:
       operationId: production_order_cnc_programs
@@ -23882,6 +23965,12 @@ components:
     CncGenerateRequestRequest:
       type: object
       properties:
+        expected_preview:
+          type: string
+          minLength: 1
+          maxLength: 64
+        confirmed:
+          type: boolean
         machine_id:
           type: string
           minLength: 1
@@ -23890,11 +23979,28 @@ components:
           minLength: 1
           maxLength: 200
       required:
+      - confirmed
+      - expected_preview
       - machine_id
       - member_id
     CncMachine:
       type: object
       properties:
+        authority_revision:
+          type: string
+        machine_type:
+          type: string
+        profile_setups:
+          type: array
+          items: {}
+        axes:
+          type: array
+          items: {}
+          nullable: true
+        clamps_declared:
+          type: boolean
+        authority_source:
+          type: string
         id:
           type: string
         code:
@@ -23942,18 +24048,24 @@ components:
           type: boolean
       required:
       - active
+      - authority_revision
+      - authority_source
+      - axes
       - clamp_zones
+      - clamps_declared
       - code
       - controller_family
       - coordinate_systems
       - encoding
       - id
+      - machine_type
       - manufacturer
       - max_member_length_mm
       - model
       - name
       - postprocessor_id
       - postprocessor_version
+      - profile_setups
       - safe_margin_mm
       - supported_faces
       - supported_kinds
@@ -23971,6 +24083,25 @@ components:
     CncMachineRequestRequest:
       type: object
       properties:
+        machine_type:
+          type: string
+          maxLength: 40
+        profile_setups:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        axes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          nullable: true
+        clamps_declared:
+          type: boolean
+        authority_source:
+          type: string
+          maxLength: 500
         code:
           type: string
           minLength: 1
@@ -23987,7 +24118,6 @@ components:
           maxLength: 120
         controller_family:
           type: string
-          minLength: 1
           maxLength: 80
         coordinate_systems:
           type: array
@@ -24024,11 +24154,9 @@ components:
             minLength: 1
         postprocessor_id:
           type: string
-          minLength: 1
           maxLength: 80
         postprocessor_version:
           type: string
-          minLength: 1
           maxLength: 40
         units:
           type: string
@@ -24043,6 +24171,66 @@ components:
       required:
       - code
       - name
+    CncPreview:
+      type: object
+      properties:
+        review_fingerprint:
+          type: string
+        verdict:
+          type: string
+        blockers:
+          type: array
+          items: {}
+        member_label:
+          type: string
+        machine_code:
+          type: string
+        preview:
+          type: object
+          additionalProperties: {}
+        document:
+          type: object
+          additionalProperties: {}
+        diff:
+          type: object
+          additionalProperties: {}
+        declared_unemitted:
+          type: array
+          items: {}
+        previous_id:
+          type: string
+          nullable: true
+        previous_no:
+          type: string
+          nullable: true
+        output_kind:
+          type: string
+      required:
+      - blockers
+      - declared_unemitted
+      - diff
+      - document
+      - machine_code
+      - member_label
+      - output_kind
+      - preview
+      - previous_id
+      - previous_no
+      - review_fingerprint
+      - verdict
+    CncPreviewRequestRequest:
+      type: object
+      properties:
+        machine_id:
+          type: string
+          format: uuid
+        member_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+      required:
+      - machine_id
+      - member_id
     CncProgram:
       type: object
       properties:
@@ -24085,6 +24273,17 @@ components:
     CncReadiness:
       type: object
       properties:
+        declared_unemitted:
+          type: array
+          items: {}
+        identity:
+          type: object
+          additionalProperties: {}
+        plan_fingerprint:
+          type: string
+        required_tool_ids:
+          type: array
+          items: {}
         order_id:
           type: string
         order_code:
@@ -24103,14 +24302,22 @@ components:
           type: array
           items: {}
       required:
+      - declared_unemitted
+      - identity
       - machines
       - members
       - order_code
       - order_id
+      - plan_fingerprint
       - programs
+      - required_tool_ids
     CncTool:
       type: object
       properties:
+        authority_revision:
+          type: string
+        authority_source:
+          type: string
         id:
           type: string
         code:
@@ -24136,6 +24343,8 @@ components:
           type: boolean
       required:
       - active
+      - authority_revision
+      - authority_source
       - code
       - diameter_mm
       - id
@@ -24155,6 +24364,9 @@ components:
     CncToolRequestRequest:
       type: object
       properties:
+        authority_source:
+          type: string
+          maxLength: 500
         code:
           type: string
           minLength: 1
@@ -24202,7 +24414,11 @@ components:
         orders:
           type: array
           items: {}
+        history:
+          type: array
+          items: {}
       required:
+      - history
       - machines
       - orders
       - tools
@@ -34039,6 +34255,29 @@ components:
     PatchedCncMachinePatchRequest:
       type: object
       properties:
+        expected_revision:
+          type: string
+          minLength: 64
+          maxLength: 64
+        machine_type:
+          type: string
+          maxLength: 40
+        profile_setups:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        axes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          nullable: true
+        clamps_declared:
+          type: boolean
+        authority_source:
+          type: string
+          maxLength: 500
         code:
           type: string
           minLength: 1
@@ -34055,7 +34294,6 @@ components:
           maxLength: 120
         controller_family:
           type: string
-          minLength: 1
           maxLength: 80
         coordinate_systems:
           type: array
@@ -34092,11 +34330,9 @@ components:
             minLength: 1
         postprocessor_id:
           type: string
-          minLength: 1
           maxLength: 80
         postprocessor_version:
           type: string
-          minLength: 1
           maxLength: 40
         units:
           type: string
@@ -34111,6 +34347,13 @@ components:
     PatchedCncToolPatchRequest:
       type: object
       properties:
+        expected_revision:
+          type: string
+          minLength: 64
+          maxLength: 64
+        authority_source:
+          type: string
+          maxLength: 500
         code:
           type: string
           minLength: 1

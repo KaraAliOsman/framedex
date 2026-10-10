@@ -8,6 +8,13 @@
 
 export interface PatchedCncToolPatchRequest {
   /**
+   * @minLength 64
+   * @maxLength 64
+   */
+  expected_revision?: string;
+  /** @maxLength 500 */
+  authority_source?: string;
+  /**
    * @minLength 1
    * @maxLength 40
    */

@@ -57,6 +57,12 @@ ERRORS = {
 # Contract codes raised without a public_detail get a Spanish action-oriented
 # message here — the generic fallback reads like a crash, not a diagnosis.
 DOCUMENTARY_ERROR_DETAILS = {
+    "cnc_authority_stale": "La autoridad cambió mientras revisabas. Actualiza máquinas y herramientas y prepara el cambio otra vez.",
+    "cnc_profile_setup_invalid": "El montaje del perfil necesita sección sellada, orientación de carga, origen inicial y fuente técnica.",
+    "cnc_preview_required": "Revisa la vista previa y confirma los archivos antes de generar.",
+    "cnc_preview_stale": "El plan, la máquina o el historial cambió. Revisa una vista previa nueva.",
+    "cnc_machine_axis_invalid": "Declara ejes válidos de la máquina.",
+    "cnc_numeric_invalid": "Escribe una medida decimal válida, sin infinito ni texto.",
     "version_not_releasable": "La versión no está lista para liberar a producción.",
     "production_measurements_unconfirmed": "Las medidas selladas no están confirmadas. Rectifica y confirma cada marco en una nueva revisión antes de liberar a producción.",
     "version_superseded": "La versión fue reemplazada por una revisión más reciente.",

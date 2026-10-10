@@ -397,6 +397,17 @@ def _same_documentary_value(left: object, right: object) -> bool:
     return documentary_canonical_json_v1(left) == documentary_canonical_json_v1(right)
 
 
+def _canonical_bom_transport(value: object) -> dict[str, object]:
+    """Read old Decimal transports without rewriting their immutable bytes.
+
+    Only typed engine facts are normalized; text and real numeric changes
+    remain part of the exact binding comparison. Missing fields stay missing.
+    """
+    return result_payload(
+        EngineResult.model_validate_json(json_text(value)), exclude_unset=True
+    )
+
+
 _BOM_ADDITIVE_KEYS = frozenset({"fittings"})
 _PIECE_ADDITIVE_KEYS = {
     # Output-additive metadata the model gained after BOMs were already
@@ -1137,16 +1148,19 @@ def compose_revision(
                 org_id=org_id,
                 drawing_plan=drawing_plan,
             )
-            current_bom = result.model_dump(mode="json")
+            # Saving and pricing use the engine's canonical Decimal transport.
+            # Compare the same representation here: model_dump(mode="json")
+            # leaves e.g. a default extra overhang as "0" instead of "0.00".
+            current_bom = result_payload(result)
             stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
             stored_bom.pop("calculation_hash", None)
             priced_ref = priced_bom.get(position_id)
             if not _same_documentary_value(
                 _without_additive_bom_fields(current_bom, stored_bom),
-                _without_additive_bom_fields(stored_bom, stored_bom),
+                _without_additive_bom_fields(_canonical_bom_transport(stored_bom), stored_bom),
             ) or not isinstance(priced_ref, dict) or not _same_documentary_value(
                 _without_additive_bom_fields(current_bom, priced_ref),
-                _without_additive_bom_fields(priced_ref, priced_ref),
+                _without_additive_bom_fields(_canonical_bom_transport(priced_ref), priced_ref),
             ):
                 raise DocumentaryError("applied_pricing_technical_binding_drift")
 
@@ -1417,7 +1431,10 @@ def compose_revision(
             purchase_authorities = _collect_purchase_authorities(
                 purchase_authorities, following
             )
+            from dekopen_engine.finishes import prepare_finish
+            from production.cnc_coverage import freeze_profile_sections
             position_inputs.append({
+                "profile_sections": freeze_profile_sections(prepare_finish(params, color), profile_skus),
                 "id": position_id,
                 "position_index": int(position["position_index"]),
                 "quantity": quantity,

@@ -544,3 +544,15 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - Recordatorio IA preparado para el dueño, sin cifras propuestas por el modelo.
   Enviar exige clic y confirmación, revalidación del saldo y outbox cifrada.
   Un saldo que incluye pagos simulados no se comunica como cobranza real.
+
+## P14 · autoridad de mecanizado (2026-10-10)
+
+- No se precargan capacidad, ejes, mordazas, profundidad ni montajes de máquina.
+  Los declara el dueño o jefe de taller desde Mecanizado › Máquinas y
+  herramientas. La ausencia bloquea; no es una preferencia numérica.
+- La única salida implementada es intercambio neutro revisado. Elegirlo no
+  acredita un controlador propietario ni envía archivos a la máquina.
+- Una sección nueva se sella con la revisión. Un histórico sin sección exige
+  nueva revisión; un montaje vincula esa sección, orientación y fuente.
+- Restaurar prepara los datos anteriores para comparación y confirmación.
+  No elimina la declaración posterior ni los archivos de programas emitidos.

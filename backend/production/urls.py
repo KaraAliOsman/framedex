@@ -49,10 +49,12 @@ from production.views import (
     CncMachineDetailView,
     CncReadinessView,
     CncProgramListView,
+    CncPreviewView,
     CncProgramFileView,
 )
 
 urlpatterns = [
+    path("orders/<uuid:order_id>/cnc/preview/", CncPreviewView.as_view(), name="production-order-cnc-preview"),
     path("operator-station/", OperatorStationView.as_view(), name="production-operator-station"),
     path("orders/<uuid:order_id>/qc-remake/", ProductionQcRemakeView.as_view(), name="production-qc-remake"),
     path("versions/<uuid:version_id>/hardware-picking/", VersionHardwarePickingView.as_view()),

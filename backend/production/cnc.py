@@ -18,6 +18,7 @@ from uuid import UUID
 
 from django.db import transaction
 
+from dekopen_engine.cnc_authorization import authorize_member_operations, member_preview, program_diff
 from dekopen_engine.cutting import CutBar
 from dekopen_engine.operations import (
     ClampZone,
@@ -31,7 +32,6 @@ from dekopen_engine.operations import (
     member_meta_map,
     member_program,
     operations_from_plan,
-    validate_operations,
 )
 from documents.repository import (
     DocumentaryError,
@@ -46,7 +46,6 @@ from documents.renderers import (
     _piece_labels,
 )
 from production.service import (
-    _declared_intent_gaps,
     _decoded,
     _operations_fact_units,
     _ops_source_fingerprint,
@@ -65,13 +64,16 @@ def _dec(value: object) -> Decimal | None:
     if value in (None, ""):
         return None
     try:
-        return Decimal(str(value))
+        number = Decimal(str(value))
+        if not number.is_finite():
+            raise ValueError("nonfinite")
+        return number
     except (InvalidOperation, ValueError):
         raise DocumentaryError("cnc_numeric_invalid")
 
 
 def _string_list(value: object, *, allowed: set[str], code: str) -> list[str] | None:
-    """NULL = unrestricted; otherwise validate against the enum set."""
+    """Preserve absence and explicit empty declarations without granting capability."""
     if value is None:
         return None
     if not isinstance(value, list) or any(
@@ -82,17 +84,28 @@ def _string_list(value: object, *, allowed: set[str], code: str) -> list[str] | 
 
 
 def _public_tool(row: dict[str, object]) -> dict[str, object]:
-    return {
+    public = {
         "id": str(row["id"]),
         "code": row["code"],
         "name": row["name"],
         "kind": row["kind"],
-        "diameter_mm": row["diameter_mm"],
-        "working_length_mm": row["working_length_mm"],
-        "max_depth_mm": row["max_depth_mm"],
+        "diameter_mm": str(row["diameter_mm"]) if row["diameter_mm"] is not None else None,
+        "working_length_mm": str(row["working_length_mm"]) if row["working_length_mm"] is not None else None,
+        "max_depth_mm": str(row["max_depth_mm"]) if row["max_depth_mm"] is not None else None,
         "compatible_kinds": row.get("compatible_kinds"),
         "active": row["active"],
+        "authority_source": row.get("authority_source", ""),
     }
+    return {**public, "authority_revision": _authority_revision(public)}
+
+
+def _authority_revision(public: dict[str, object]) -> str:
+    return hashlib.sha256(json.dumps(public, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+
+
+def _check_authority_review(data: dict[str, object], public: dict[str, object]) -> None:
+    if data.get("expected_revision") is not None and data["expected_revision"] != public["authority_revision"]:
+        raise DocumentaryError("cnc_authority_stale")
 
 
 def _jsonb_value(value: object) -> object:
@@ -106,18 +119,22 @@ def _jsonb_list(value: object) -> list[object]:
 
 
 def _public_machine(row: dict[str, object]) -> dict[str, object]:
-    return {
+    public = {
         "id": str(row["id"]),
         "code": row["code"],
         "name": row["name"],
+        "machine_type": row.get("machine_type", ""),
+        "profile_setups": _jsonb_list(row.get("profile_setups")),
+        "axes": row.get("axes"),
+        "clamps_declared": row.get("clamps_declared", False),
         "manufacturer": row["manufacturer"],
         "model": row["model"],
         "controller_family": row["controller_family"],
         "coordinate_systems": row["coordinate_systems"],
         "supported_kinds": row["supported_kinds"],
         "supported_faces": row["supported_faces"],
-        "max_member_length_mm": row["max_member_length_mm"],
-        "safe_margin_mm": row["safe_margin_mm"],
+        "max_member_length_mm": str(row["max_member_length_mm"]) if row["max_member_length_mm"] is not None else None,
+        "safe_margin_mm": str(row["safe_margin_mm"]) if row["safe_margin_mm"] is not None else None,
         "clamp_zones": _jsonb_value(row["clamp_zones"]),
         "tool_ids": [str(tool_id) for tool_id in row["tool_ids"]],
         "postprocessor_id": row["postprocessor_id"],
@@ -125,7 +142,9 @@ def _public_machine(row: dict[str, object]) -> dict[str, object]:
         "units": row["units"],
         "encoding": row["encoding"],
         "active": row["active"],
+        "authority_source": row.get("authority_source", ""),
     }
+    return {**public, "authority_revision": _authority_revision(public)}
 
 
 def list_tools(*, org_id: UUID) -> list[dict[str, object]]:
@@ -134,7 +153,7 @@ def list_tools(*, org_id: UUID) -> list[dict[str, object]]:
         for row in rows(
             """
             SELECT id, code, name, kind, diameter_mm, working_length_mm,
-                   max_depth_mm, compatible_kinds, active
+                   max_depth_mm, compatible_kinds, active, authority_source
             FROM public.cnc_tools WHERE org_id = %s ORDER BY code
             """,
             [str(org_id)],
@@ -156,10 +175,10 @@ def create_tool(*, org_id: UUID, actor_id: UUID, data: dict[str, object]) -> dic
             """
             INSERT INTO public.cnc_tools
                 (org_id, code, name, kind, diameter_mm, working_length_mm,
-                 max_depth_mm, compatible_kinds)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                 max_depth_mm, compatible_kinds, authority_source)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id, code, name, kind, diameter_mm, working_length_mm,
-                      max_depth_mm, compatible_kinds, active
+                      max_depth_mm, compatible_kinds, active, authority_source
             """,
             [
                 str(org_id),
@@ -170,25 +189,30 @@ def create_tool(*, org_id: UUID, actor_id: UUID, data: dict[str, object]) -> dic
                 _dec(data.get("working_length_mm")),
                 _dec(data.get("max_depth_mm")),
                 compatible,
+                str(data.get("authority_source") or "").strip(),
             ],
             "cnc_tool_invalid",
         )
     return _public_tool(created)
 
 
+@transaction.atomic
 def update_tool(
     *, org_id: UUID, tool_id: UUID, data: dict[str, object]
 ) -> dict[str, object]:
-    current = one(
-        """
-        SELECT id, code, name, kind, diameter_mm, working_length_mm,
-               max_depth_mm, compatible_kinds, active
-        FROM public.cnc_tools WHERE id = %s AND org_id = %s
-        """,
-        [str(tool_id), str(org_id)],
-        "cnc_tool_not_found",
-    )
-    merged = {**_public_tool(current), **data}
+    with documentary_backend():
+        current = one(
+            """
+            SELECT id, code, name, kind, diameter_mm, working_length_mm,
+                   max_depth_mm, compatible_kinds, active, authority_source
+            FROM public.cnc_tools WHERE id = %s AND org_id = %s FOR UPDATE
+            """,
+            [str(tool_id), str(org_id)],
+            "cnc_tool_not_found",
+        )
+    public = _public_tool(current)
+    _check_authority_review(data, public)
+    merged = {**public, **data}
     kind = str(merged["kind"])
     if kind not in _TOOL_KINDS:
         raise DocumentaryError("cnc_tool_invalid")
@@ -201,10 +225,10 @@ def update_tool(
             UPDATE public.cnc_tools SET
                 code = %s, name = %s, kind = %s, diameter_mm = %s,
                 working_length_mm = %s, max_depth_mm = %s,
-                compatible_kinds = %s, active = %s
+                compatible_kinds = %s, active = %s, authority_source = %s
             WHERE id = %s AND org_id = %s
             RETURNING id, code, name, kind, diameter_mm, working_length_mm,
-                      max_depth_mm, compatible_kinds, active
+                      max_depth_mm, compatible_kinds, active, authority_source
             """,
             [
                 str(merged["code"]).strip(),
@@ -215,6 +239,7 @@ def update_tool(
                 _dec(merged.get("max_depth_mm")),
                 compatible,
                 bool(merged["active"]),
+                str(merged.get("authority_source") or "").strip(),
                 str(tool_id),
                 str(org_id),
             ],
@@ -231,7 +256,7 @@ def list_machines(*, org_id: UUID) -> list[dict[str, object]]:
             SELECT id, code, name, manufacturer, model, controller_family,
                    coordinate_systems, supported_kinds, supported_faces,
                    max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
-                   postprocessor_id, postprocessor_version, units, encoding, active
+                   postprocessor_id, postprocessor_version, units, encoding, active, axes, clamps_declared, authority_source, machine_type, profile_setups
             FROM public.cnc_machines WHERE org_id = %s ORDER BY code
             """,
             [str(org_id)],
@@ -251,7 +276,7 @@ def _clamp_zones(value: object) -> list[dict[str, object]]:
             raise DocumentaryError("cnc_clamp_zones_invalid")
         start = _dec(item.get("start_mm"))
         end = _dec(item.get("end_mm"))
-        if start is None or end is None or end <= start:
+        if start is None or end is None or start < 0 or end <= start:
             raise DocumentaryError("cnc_clamp_zones_invalid")
         zones.append(
             {
@@ -285,6 +310,33 @@ def _tool_ids(value: object, *, org_id: UUID) -> list[str]:
     return ids
 
 
+def _machine_type(value):
+    value = str(value or "")
+    if value not in ("", "END_MILLER", "MACHINING_CENTER", "SAW", "DECLARED"):
+        raise DocumentaryError("cnc_machine_invalid")
+    return value
+
+
+def _profile_setups(value):
+    value = _jsonb_value(value)
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise DocumentaryError("cnc_profile_setup_invalid")
+    skus = set()
+    for entry in value:
+        if not isinstance(entry, dict) or set(entry) != {"profile_sku", "section_fingerprint", "loading_orientation", "axial_datum", "source"}:
+            raise DocumentaryError("cnc_profile_setup_invalid")
+        if not all(isinstance(v, str) and v.strip() for v in entry.values()):
+            raise DocumentaryError("cnc_profile_setup_invalid")
+        if (entry["profile_sku"] in skus or entry["loading_orientation"] not in ("EXTERIOR_UP", "EXTERIOR_DOWN", "EXTERIOR_LEFT", "EXTERIOR_RIGHT")
+            or entry["axial_datum"] != "MEMBER_START" or len(entry["section_fingerprint"]) != 64
+            or any(c not in "0123456789abcdef" for c in entry["section_fingerprint"])):
+            raise DocumentaryError("cnc_profile_setup_invalid")
+        skus.add(entry["profile_sku"])
+    return value
+
+
 def create_machine(
     *, org_id: UUID, actor_id: UUID, data: dict[str, object]
 ) -> dict[str, object]:
@@ -300,7 +352,8 @@ def create_machine(
     )
     coordinates = _string_list(
         data.get("coordinate_systems"), allowed=_COORDS, code="cnc_machine_coord_invalid"
-    ) or sorted(_COORDS)
+    )
+    coordinates = coordinates if coordinates is not None else []
     with documentary_backend():
         created = one(
             """
@@ -308,12 +361,12 @@ def create_machine(
                 (org_id, code, name, manufacturer, model, controller_family,
                  coordinate_systems, supported_kinds, supported_faces,
                  max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
-                 postprocessor_id, postprocessor_version, units, encoding)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::uuid[], %s, %s, %s, %s)
+                 postprocessor_id, postprocessor_version, units, encoding, axes, clamps_declared, authority_source, machine_type, profile_setups)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::uuid[], %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
             RETURNING id, code, name, manufacturer, model, controller_family,
                       coordinate_systems, supported_kinds, supported_faces,
                       max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
-                      postprocessor_id, postprocessor_version, units, encoding, active
+                      postprocessor_id, postprocessor_version, units, encoding, active, axes, clamps_declared, authority_source, machine_type, profile_setups
             """,
             [
                 str(org_id),
@@ -321,7 +374,7 @@ def create_machine(
                 name,
                 str(data.get("manufacturer") or "")[:120],
                 str(data.get("model") or "")[:120],
-                str(data.get("controller_family") or "NEUTRAL")[:80],
+                str(data.get("controller_family") or "")[:80],
                 coordinates,
                 supported_kinds,
                 supported_faces,
@@ -329,32 +382,40 @@ def create_machine(
                 _dec(data.get("safe_margin_mm")),
                 json.dumps(_clamp_zones(data.get("clamp_zones"))),
                 _tool_ids(data.get("tool_ids"), org_id=org_id),
-                str(data.get("postprocessor_id") or "neutral-ops-v1")[:80],
-                str(data.get("postprocessor_version") or "1")[:40],
+                str(data.get("postprocessor_id") or "")[:80],
+                str(data.get("postprocessor_version") or "")[:40],
                 str(data.get("units") or "mm")[:20],
                 str(data.get("encoding") or "utf-8")[:40],
+                _string_list(data.get("axes"), allowed={"X", "Y", "Z", "A", "B", "C"}, code="cnc_machine_axis_invalid"),
+                bool(data.get("clamps_declared", False)),
+                str(data.get("authority_source") or "").strip(),
+                _machine_type(data.get("machine_type")),
+                json.dumps(_profile_setups(data.get("profile_setups"))),
             ],
             "cnc_machine_invalid",
         )
     return _public_machine(created)
 
 
+@transaction.atomic
 def update_machine(
     *, org_id: UUID, machine_id: UUID, data: dict[str, object]
 ) -> dict[str, object]:
-    current = _public_machine(
-        one(
-            """
-            SELECT id, code, name, manufacturer, model, controller_family,
-                   coordinate_systems, supported_kinds, supported_faces,
-                   max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
-                   postprocessor_id, postprocessor_version, units, encoding, active
-            FROM public.cnc_machines WHERE id = %s AND org_id = %s
-            """,
-            [str(machine_id), str(org_id)],
-            "cnc_machine_not_found",
+    with documentary_backend():
+        current = _public_machine(
+            one(
+                """
+                SELECT id, code, name, manufacturer, model, controller_family,
+                       coordinate_systems, supported_kinds, supported_faces,
+                       max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
+                       postprocessor_id, postprocessor_version, units, encoding, active, axes, clamps_declared, authority_source, machine_type, profile_setups
+                FROM public.cnc_machines WHERE id = %s AND org_id = %s FOR UPDATE
+                """,
+                [str(machine_id), str(org_id)],
+                "cnc_machine_not_found",
+            )
         )
-    )
+    _check_authority_review(data, current)
     merged = {**current, **data}
     supported_kinds = _string_list(
         merged.get("supported_kinds"), allowed=_OP_KINDS, code="cnc_machine_kind_invalid"
@@ -377,19 +438,20 @@ def update_machine(
                 max_member_length_mm = %s, safe_margin_mm = %s,
                 clamp_zones = %s::jsonb, tool_ids = %s::uuid[],
                 postprocessor_id = %s, postprocessor_version = %s,
-                units = %s, encoding = %s, active = %s, updated_at = %s
+                units = %s, encoding = %s, active = %s, updated_at = %s,
+                axes = %s, clamps_declared = %s, authority_source = %s, machine_type = %s, profile_setups = %s::jsonb
             WHERE id = %s AND org_id = %s
             RETURNING id, code, name, manufacturer, model, controller_family,
                       coordinate_systems, supported_kinds, supported_faces,
                       max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
-                      postprocessor_id, postprocessor_version, units, encoding, active
+                      postprocessor_id, postprocessor_version, units, encoding, active, axes, clamps_declared, authority_source, machine_type, profile_setups
             """,
             [
                 str(merged["code"]).strip(),
                 str(merged["name"]).strip(),
                 str(merged.get("manufacturer") or "")[:120],
                 str(merged.get("model") or "")[:120],
-                str(merged.get("controller_family") or "NEUTRAL")[:80],
+                str(merged.get("controller_family") or "")[:80],
                 coordinates,
                 supported_kinds,
                 supported_faces,
@@ -397,12 +459,17 @@ def update_machine(
                 _dec(merged.get("safe_margin_mm")),
                 json.dumps(_clamp_zones(merged.get("clamp_zones"))),
                 _tool_ids(merged.get("tool_ids"), org_id=org_id),
-                str(merged.get("postprocessor_id") or "neutral-ops-v1")[:80],
-                str(merged.get("postprocessor_version") or "1")[:40],
+                str(merged.get("postprocessor_id") or "")[:80],
+                str(merged.get("postprocessor_version") or "")[:40],
                 str(merged.get("units") or "mm")[:20],
                 str(merged.get("encoding") or "utf-8")[:40],
                 bool(merged.get("active", True)),
                 datetime.now(timezone.utc),
+                _string_list(merged.get("axes"), allowed={"X", "Y", "Z", "A", "B", "C"}, code="cnc_machine_axis_invalid"),
+                bool(merged.get("clamps_declared", False)),
+                str(merged.get("authority_source") or "").strip(),
+                _machine_type(merged.get("machine_type")),
+                json.dumps(_profile_setups(merged.get("profile_setups"))),
                 str(machine_id),
                 str(org_id),
             ],
@@ -414,10 +481,14 @@ def update_machine(
 def _machine_profile(
     machine_row: dict[str, object], tools_by_id: dict[str, dict[str, object]]
 ) -> MachineProfile:
+    machine_row["profile_setups"] = _jsonb_list(machine_row.get("profile_setups"))
+    machine_row["tool_sources"] = {str(tool["code"]): tool.get("authority_source", "")
+        for tool_id in machine_row.get("tool_ids") or []
+        if (tool := tools_by_id.get(str(tool_id))) is not None and tool.get("active", True)}
     magazine: list[Tool] = []
     for tool_id in machine_row["tool_ids"] or []:
         tool = tools_by_id.get(str(tool_id))
-        if tool is None:
+        if tool is None or not tool.get("active", True):
             continue
         magazine.append(
             Tool(
@@ -429,7 +500,7 @@ def _machine_profile(
                 max_depth_mm=_dec(tool.get("max_depth_mm")),
                 compatible_kinds=(
                     [OperationKind(kind) for kind in tool["compatible_kinds"]]
-                    if tool.get("compatible_kinds")
+                    if tool.get("compatible_kinds") is not None
                     else None
                 ),
             )
@@ -444,12 +515,12 @@ def _machine_profile(
         tools=magazine,
         supported_kinds=(
             [OperationKind(kind) for kind in machine_row["supported_kinds"]]
-            if machine_row.get("supported_kinds")
+            if machine_row.get("supported_kinds") is not None
             else None
         ),
         supported_faces=(
             [MemberFace(face) for face in machine_row["supported_faces"]]
-            if machine_row.get("supported_faces")
+            if machine_row.get("supported_faces") is not None
             else None
         ),
         max_member_length_mm=_dec(machine_row.get("max_member_length_mm")),
@@ -485,6 +556,8 @@ def _order_ops(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         "work_order_not_found",
     )
     payload = _decoded(order["payload_json"])
+    if str(order["status"]) == "CANCELLED":
+        raise DocumentaryError("work_order_cancelled")
     optimization = payload.get("optimization")
     if not isinstance(optimization, dict) or not optimization:
         raise DocumentaryError("operations_requires_optimization")
@@ -511,13 +584,9 @@ def _order_ops(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         bars=bars, fact_units=fact_units, issues=ops_issues
     )
     ops.extend(_sealed_hardware_operations(version_snapshot, position_id, fact_units, ops_issues))
-    ops_issues.extend(
-        _declared_intent_gaps(
-            version_snapshot,
-            str(payload.get("position_id") or "") or None,
-            {op.kind.value for op in ops},
-        )
-    )
+    from production.cnc_coverage import declared_gaps, sealed_sections
+    gaps = declared_gaps(version_snapshot, position_id, fact_units, ops, ops_issues)
+    sections = sealed_sections(version_snapshot, position_id, fact_units)
     labels = _piece_labels(version_snapshot)
     member_labels = {
         str(member_id): code for member_id, code in labels.get("member", {}).items()
@@ -540,7 +609,10 @@ def _order_ops(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         for member in unit.members
     }
     manufacturing = _raw_fact_units(version_snapshot, position_id)
-    input_fingerprint = _ops_source_fingerprint(optimization, manufacturing)
+    input_fingerprint = hashlib.sha256(json.dumps({
+        "source": _ops_source_fingerprint(optimization, manufacturing),
+        "sections": sections, "gaps": gaps, "authorization": "cnc-strict-v1",
+    }, sort_keys=True, default=str).encode("utf-8")).hexdigest()
     project_code = ""
     if order.get("project_id"):
         # project_manual_read excludes floor roles — the operator's CNC
@@ -557,6 +629,8 @@ def _order_ops(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         "optimization": optimization,
         "ops": ops,
         "ops_issues": ops_issues,
+        "declared_gaps": gaps,
+        "sections": sections,
         "fact_units": fact_units,
         "member_labels": member_labels,
         "member_lengths": member_lengths,
@@ -579,7 +653,7 @@ def _tools_by_id(*, org_id: UUID) -> dict[str, dict[str, object]]:
         for row in rows(
             """
             SELECT id::text, code, name, kind, diameter_mm, working_length_mm,
-                   max_depth_mm, compatible_kinds, active
+                   max_depth_mm, compatible_kinds, active, authority_source
             FROM public.cnc_tools WHERE org_id = %s
             """,
             [str(org_id)],
@@ -598,7 +672,7 @@ def cnc_readiness(
         SELECT id, code, name, manufacturer, model, controller_family,
                coordinate_systems, supported_kinds, supported_faces,
                max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
-               postprocessor_id, postprocessor_version, units, encoding, active
+               postprocessor_id, postprocessor_version, units, encoding, active, axes, clamps_declared, authority_source, machine_type, profile_setups
         FROM public.cnc_machines
         WHERE org_id = %s AND active
         """ + (" AND id = %s" if machine_id else "") + " ORDER BY code",
@@ -609,7 +683,7 @@ def cnc_readiness(
     for op in bundle["ops"]:
         if op.host_kind == "MEMBER":
             member_ops.setdefault(op.host, []).append(op)
-    member_ids = sorted(member_ops.keys())
+    member_ids = sorted(member_meta_map(bundle["fact_units"]))
     machine_rows = machines
     machine_profiles = [
         _machine_profile(row, tools_by_id) for row in machine_rows
@@ -617,24 +691,17 @@ def cnc_readiness(
     member_meta = member_meta_map(bundle["fact_units"])
     members: list[dict[str, object]] = []
     for member_id in member_ids:
-        label = bundle["member_labels"].get(member_id) or member_id[:8]
+        label = bundle["member_labels"].get(member_id) or "Pieza sin dirección"
         meta = member_meta.get(member_id) or {}
-        ops = member_ops[member_id]
-        op_ids = {op.operation_id for op in ops}
+        ops = member_ops.get(member_id, [])
         machine_results: list[dict[str, object]] = []
         for profile, machine_row in zip(machine_profiles, machine_rows):
-            validations = [
-                item
-                for item in validate_operations(
-                    ops,
-                    profile,
-                    member_lengths_mm=bundle["member_lengths"],
-                    member_labels=bundle["member_labels"],
-                )
-                # A member's verdict covers its own ops only — a blocker on
-                # M-03 must not render M-07 as BLOCK on this machine.
-                if item.operation_id in op_ids
-            ]
+            validations = authorize_member_operations(
+                ops, profile, authority=machine_row,
+                member_length_mm=bundle["member_lengths"].get(member_id),
+                section=bundle["sections"].get(member_id), member_label=label,
+                profile_sku=meta.get("workshop_sku"),
+            )
             blockers = [item for item in validations if item.level == "BLOCK"]
             warnings = [item for item in validations if item.level == "WARN"]
             machine_results.append(
@@ -645,10 +712,12 @@ def cnc_readiness(
                     "verdict": (
                         "BLOCK"
                         if blockers
-                        else ("WARN" if warnings else "PASS")
+                        else ("WARN" if warnings or bundle["declared_gaps"] else "PASS")
                     ),
                     "blockers": [item.model_dump(mode="json") for item in blockers],
                     "warnings": [item.model_dump(mode="json") for item in warnings],
+                    "declared_unemitted": bundle["declared_gaps"],
+                    "output_kind": "NEUTRAL_INTERCHANGE",
                 }
             )
         members.append(
@@ -664,6 +733,8 @@ def cnc_readiness(
                 "operation_count": len(ops),
                 "kinds": sorted({op.kind.value for op in ops}),
                 "machines": machine_results,
+                "preview": member_preview(ops=ops, length_mm=bundle["member_lengths"].get(member_id), section=bundle["sections"].get(member_id)),
+                "geometry": meta,
                 "operations": [
                     {
                         "operation_id": op.operation_id,
@@ -693,6 +764,9 @@ def cnc_readiness(
         "order_code": bundle["order"]["order_code"],
         "members": members,
         "issues": bundle["ops_issues"],
+        "declared_unemitted": bundle["declared_gaps"],
+        "identity": bundle["identity"],
+        "plan_fingerprint": bundle["input_fingerprint"],
         # The op tool_ids a magazine must bind literally — without this list
         # a programmer has to guess that code "drill"/"end_mill" is required.
         "required_tool_ids": sorted(
@@ -703,13 +777,13 @@ def cnc_readiness(
     }
 
 
-def _machine_fingerprint(profile: MachineProfile) -> str:
+def _machine_fingerprint(profile: MachineProfile, authority: dict[str, object] | None = None) -> str:
     """Content hash of the resolved machine profile — tools, limits, clamps,
     postprocessor. A machine-config change stales the programs generated
     against the previous profile, exactly like a plan change does."""
     return hashlib.sha256(
         json.dumps(
-            profile.model_dump(mode="json"), sort_keys=True, default=str
+            {"profile": profile.model_dump(mode="json"), "authority": {key: (authority or {}).get(key) for key in ("active", "axes", "clamps_declared", "authority_source", "tool_sources", "machine_type", "profile_setups")}}, sort_keys=True, default=str
         ).encode("utf-8")
     ).hexdigest()
 
@@ -734,17 +808,17 @@ def _expected_program_input(
                    coordinate_systems, supported_kinds, supported_faces,
                    max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
                    postprocessor_id, postprocessor_version, units, encoding,
-                   active
+                   active, axes, clamps_declared, authority_source, machine_type, profile_setups
             FROM public.cnc_machines WHERE id = %s AND org_id = %s
             """,
             [str(machine_id), str(org_id)],
         )
     except DocumentaryError:
         return None
-    if not machine_row:
+    if not machine_row or not machine_row[0].get("active"):
         return None
     machine_fp = _machine_fingerprint(
-        _machine_profile(machine_row[0], _tools_by_id(org_id=org_id))
+        _machine_profile(machine_row[0], _tools_by_id(org_id=org_id)), machine_row[0]
     )
     return _program_input(str(bundle["input_fingerprint"]), machine_fp)
 
@@ -754,10 +828,83 @@ def _program_no(*, order_code: str, member_label: str, machine_code: str, seq: i
     return f"{order_code}-{label}-{machine_code}-{seq:02d}"
 
 
-def generate_program(
+def preview_program(*, org_id: UUID, order_id: UUID, machine_id: UUID,
+                    member_id: str) -> dict[str, object]:
+    bundle = _order_ops(org_id=org_id, order_id=order_id)
+    machine = one("SELECT * FROM public.cnc_machines WHERE id=%s AND org_id=%s AND active",
+                  [str(machine_id), str(org_id)], "cnc_machine_not_found")
+    profile = _machine_profile(machine, _tools_by_id(org_id=org_id))
+    ops = [op for op in bundle["ops"] if op.host_kind == "MEMBER" and op.host == member_id]
+    if not ops:
+        raise DocumentaryError("cnc_member_no_ops")
+    label = bundle["member_labels"].get(member_id) or "Pieza sin dirección"
+    validation = authorize_member_operations(ops, profile, authority=machine,
+        member_length_mm=bundle["member_lengths"].get(member_id),
+        section=bundle["sections"].get(member_id), member_label=label,
+        profile_sku=(member_meta_map(bundle["fact_units"]).get(member_id) or {}).get("workshop_sku"))
+    blockers = [item.model_dump(mode="json") for item in validation if item.level == "BLOCK"]
+    document = member_program(bundle["ops"], member_id=member_id, member_label=label,
+        machine=profile, identity=bundle["identity"], validations=validation, issues=bundle["ops_issues"])
+    document["machine"] = {**profile.model_dump(mode="json"), "authority_source": machine.get("authority_source"),
+        "clamps_declared": machine.get("clamps_declared"), "axes": machine.get("axes"),
+        "machine_type": machine.get("machine_type"), "profile_setups": _profile_setups(machine.get("profile_setups")),
+        "tool_sources": machine.get("tool_sources")}
+    document["preview"] = member_preview(ops=ops, length_mm=bundle["member_lengths"].get(member_id),
+        section=bundle["sections"].get(member_id))
+    document["declared_intent_gaps"] = bundle["declared_gaps"]
+    document["verdict"] = "BLOCK" if blockers else "WARN" if bundle["declared_gaps"] else "PASS"
+    prior = rows("SELECT id,program_no,files::text FROM public.cnc_programs WHERE org_id=%s AND work_order_id=%s AND machine_id=%s AND member_id=%s ORDER BY created_at DESC,id DESC LIMIT 1",
+                 [str(org_id), str(order_id), str(machine_id), member_id])
+    previous = None
+    if prior:
+        raw = _decoded(prior[0]["files"]).get("operations.json")
+        previous = json.loads(raw) if isinstance(raw, str) else None
+    review = hashlib.sha256(json.dumps({"proposed": document,
+        "input": _program_input(str(bundle["input_fingerprint"]), _machine_fingerprint(profile, machine)),
+        "previous_id": str(prior[0]["id"]) if prior else None,
+        "status": str(bundle["order"]["status"])}, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+    return {"review_fingerprint": review, "verdict": "BLOCK" if blockers else "WARN" if bundle["declared_gaps"] else "PASS",
+            "blockers": blockers, "member_label": label, "machine_code": machine["code"],
+            "preview": document["preview"], "document": document,
+            "diff": program_diff(previous, document), "declared_unemitted": bundle["declared_gaps"],
+            "previous_id": str(prior[0]["id"]) if prior else None,
+            "previous_no": prior[0]["program_no"] if prior else None,
+            "output_kind": "NEUTRAL_INTERCHANGE"}
+
+
+def generate_program(*, org_id: UUID, order_id: UUID, machine_id: UUID, member_id: str,
+                     actor_id: UUID, expected_preview: str = "", confirmed: bool = False) -> dict[str, object]:
+    with transaction.atomic(), documentary_backend():
+        locked_order = one("SELECT id,status FROM public.orders WHERE id=%s AND org_id=%s AND order_type='WORKSHOP_OT' FOR UPDATE",
+            [str(order_id), str(org_id)], "work_order_not_found")
+        if str(locked_order["status"]) == "CANCELLED":
+            raise DocumentaryError("work_order_cancelled")
+        one("SELECT id FROM public.cnc_machines WHERE id=%s AND org_id=%s FOR UPDATE",
+            [str(machine_id), str(org_id)], "cnc_machine_not_found")
+        rows("SELECT id FROM public.cnc_tools WHERE org_id=%s ORDER BY id FOR SHARE", [str(org_id)])
+        return _generate_program(org_id=org_id, order_id=order_id, machine_id=machine_id,
+            member_id=member_id, actor_id=actor_id, expected_preview=expected_preview, confirmed=confirmed)
+
+
+def _generate_program(
     *, org_id: UUID, order_id: UUID, machine_id: UUID, member_id: str,
-    actor_id: UUID,
+    actor_id: UUID, expected_preview: str, confirmed: bool,
 ) -> dict[str, object]:
+    if confirmed and expected_preview:
+        previous = rows("SELECT id,program_no,verdict,fingerprint,operation_count,member_label,created_at,files::text,input_fingerprint,status FROM public.cnc_programs WHERE org_id=%s AND work_order_id=%s AND machine_id=%s AND member_id=%s AND review_fingerprint=%s",
+            [str(org_id),str(order_id),str(machine_id),member_id,expected_preview])
+        if previous:
+            row = previous[0]
+            if row["status"] != "CURRENT" or row["input_fingerprint"] != _expected_program_input(org_id=org_id,order_id=order_id,machine_id=str(machine_id)):
+                raise DocumentaryError("cnc_preview_stale")
+            return {**row, "id":str(row["id"]),"files":_decoded(row["files"]),"machine_code":one("SELECT code FROM public.cnc_machines WHERE id=%s AND org_id=%s",[str(machine_id),str(org_id)],"cnc_machine_not_found")["code"]}
+    reviewed = preview_program(org_id=org_id, order_id=order_id, machine_id=machine_id, member_id=member_id)
+    if not confirmed or not expected_preview:
+        raise DocumentaryError("cnc_preview_required")
+    if expected_preview != reviewed["review_fingerprint"]:
+        raise DocumentaryError("cnc_preview_stale")
+    if reviewed["verdict"] == "BLOCK":
+        raise DocumentaryError("cnc_program_blocked", detail="No se puede generar: completa las autoridades señaladas en la vista previa.", extra={"blockers": reviewed["blockers"]})
     bundle = _order_ops(org_id=org_id, order_id=order_id)
     if str(bundle["order"]["status"]) == "CANCELLED":
         raise DocumentaryError("work_order_cancelled")
@@ -767,7 +914,7 @@ def generate_program(
         SELECT id, code, name, manufacturer, model, controller_family,
                coordinate_systems, supported_kinds, supported_faces,
                max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
-               postprocessor_id, postprocessor_version, units, encoding, active
+               postprocessor_id, postprocessor_version, units, encoding, active, axes, clamps_declared, authority_source, machine_type, profile_setups
         FROM public.cnc_machines
         WHERE id = %s AND org_id = %s AND active
         """,
@@ -775,60 +922,10 @@ def generate_program(
         "cnc_machine_not_found",
     )
     profile = _machine_profile(machine_row, tools_by_id)
-    member_ops = [
-        op
-        for op in bundle["ops"]
-        if op.host_kind == "MEMBER" and op.host == member_id
-    ]
-    if not member_ops:
-        raise DocumentaryError("cnc_member_no_ops")
-    validations = validate_operations(
-        bundle["ops"],
-        profile,
-        member_lengths_mm=bundle["member_lengths"],
-        member_labels=bundle["member_labels"],
-    )
-    member_blockers = [
-        item
-        for item in validations
-        if item.level == "BLOCK"
-        and item.operation_id in {op.operation_id for op in member_ops}
-    ]
-    if member_blockers:
-        # Physical language: which member, which machine, which blocker.
-        label = bundle["member_labels"].get(member_id) or member_id[:8]
-        first = member_blockers[0]
-        raise DocumentaryError(
-            "cnc_program_blocked",
-            detail=(
-                f"{label} no puede mecanizarse en {machine_row['code']}: "
-                f"{first.code} ({', '.join(sorted(first.detail.values()))})."
-            ),
-            extra={
-                "blockers": [item.model_dump(mode="json") for item in member_blockers],
-            },
-        )
-    document = member_program(
-        bundle["ops"],
-        member_id=member_id,
-        member_label=bundle["member_labels"].get(member_id) or member_id[:8],
-        machine=profile,
-        identity=bundle["identity"],
-        validations=validations,
-        issues=bundle["ops_issues"],
-    )
-    # Ship the member's sealed geometry inside the program's ops doc so a
-    # vendor adapter holding only the file can resolve the host's datum,
-    # axis, length and end angles.
-    member_fact = next(
-        (
-            member
-            for unit in bundle["fact_units"]
-            for member in unit.members
-            if member.member_id == member_id
-        ),
-        None,
-    )
+    document = dict(reviewed["document"])
+    document["verdict"] = reviewed["verdict"]
+    from dekopen_engine.operations import ops_fingerprint
+    document["fingerprint"] = ops_fingerprint(document)
     seq_row = one(
         """
         SELECT COUNT(*) + 1 AS seq FROM public.cnc_programs
@@ -843,66 +940,20 @@ def generate_program(
         machine_code=str(machine_row["code"]),
         seq=int(seq_row["seq"]),
     )
-    files = NeutralOpsPostProcessor().render(
-        {
-            "schema": "dekopen_ops_v1",
-            "order_code": bundle["identity"]["order_code"],
-            "project_code": bundle["identity"]["project_code"],
-            "revision_code": bundle["identity"]["revision_code"],
-            "plan_seed": bundle["identity"]["plan_seed"],
-            "machine": profile.model_dump(mode="json"),
-            "operation_count": document["operation_count"],
-            "counts_by_kind": document["counts_by_kind"],
-            # The member file must admit the same coverage gap the order
-            # document reports — never claim nothing was unemitted.
-            "unemitted_kinds": sorted(
-                _OP_KINDS - {op.kind.value for op in bundle["ops"]}
-            ),
-            "declared_intent_gaps": [
-                issue["kind"]
-                for issue in bundle["ops_issues"]
-                if issue.get("code") == "declared_intent_not_emitted"
-            ],
-            "issues": document["issues"],
-            "members": (
-                {
-                    member_id: {
-                        "workshop_sku": member_fact.workshop_sku,
-                        "material": member_fact.material.value,
-                        "role": member_fact.identity.role.value,
-                        "cut_length_mm": str(member_fact.cut_length_mm),
-                        "angle_left_deg": str(member_fact.angle_left),
-                        "angle_right_deg": str(member_fact.angle_right),
-                        "axis": member_fact.axis.value,
-                        "start": {
-                            "x_mm": str(member_fact.start.x_mm),
-                            "y_mm": str(member_fact.start.y_mm),
-                        },
-                        "end": {
-                            "x_mm": str(member_fact.end.x_mm),
-                            "y_mm": str(member_fact.end.y_mm),
-                        },
-                        "sagitta_mm": (
-                            str(member_fact.sagitta_mm)
-                            if member_fact.sagitta_mm is not None
-                            else None
-                        ),
-                        "bay_id": member_fact.bay_id,
-                        "leaf_id": member_fact.leaf_id,
-                        "leaf_slot": member_fact.identity.leaf_slot,
-                    }
-                }
-                if member_fact is not None
-                else {}
-            ),
-            "piece_labels": bundle["member_labels"],
-            "operations": document["operations"],
-        }
-    )
+    files = NeutralOpsPostProcessor().render({
+        **document, "schema": "dekopen_ops_v1", "output_kind": "NEUTRAL_INTERCHANGE",
+        "order_code": bundle["identity"]["order_code"],
+        "project_code": bundle["identity"]["project_code"],
+        "revision_code": bundle["identity"]["revision_code"],
+        "plan_seed": bundle["identity"]["plan_seed"],
+        "plan_fingerprint": bundle["input_fingerprint"],
+        "members": {member_id: member_meta_map(bundle["fact_units"]).get(member_id)},
+        "piece_labels": bundle["member_labels"],
+    })
     # The stored fingerprint binds plan inputs AND the machine profile — a
     # machine-config change invalidates the program like a plan change does.
     program_input = _program_input(
-        str(bundle["input_fingerprint"]), _machine_fingerprint(profile)
+        str(bundle["input_fingerprint"]), _machine_fingerprint(profile, machine_row)
     )
     # Export manifest: which files this program ships, byte-identical hashes
     # to verify them against, and who generated it — the operator can check
@@ -911,6 +962,11 @@ def generate_program(
         {
             "schema": "dekopen_export_manifest_v1",
             "kind": "cnc_program",
+            "output_kind": "NEUTRAL_INTERCHANGE",
+            "plan_fingerprint": bundle["input_fingerprint"],
+            "plan_seed": bundle["identity"]["plan_seed"],
+            "preview": reviewed["preview"],
+            "declared_intent_gaps": bundle["declared_gaps"],
             "program_no": program_no,
             "identity": document["identity"],
             "verdict": document["verdict"],
@@ -952,8 +1008,8 @@ def generate_program(
             INSERT INTO public.cnc_programs
                 (org_id, work_order_id, machine_id, member_id, member_label,
                  program_no, operation_count, verdict, fingerprint,
-                 input_fingerprint, identity, files, created_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s)
+                 input_fingerprint, identity, files, created_by, review_fingerprint)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s)
             RETURNING id, program_no, verdict, fingerprint, created_at
             """,
             [
@@ -970,6 +1026,7 @@ def generate_program(
                 json.dumps(document["identity"]),
                 json.dumps(files),
                 str(actor_id),
+                expected_preview,
             ],
             "cnc_program_invalid",
         )
@@ -1013,7 +1070,7 @@ def list_programs(*, org_id: UUID, order_id: UUID) -> list[dict[str, object]]:
         """
         SELECT p.id, p.program_no, p.member_id, p.member_label, p.operation_count,
                p.verdict, p.fingerprint, p.input_fingerprint, p.status,
-               p.created_at, p.machine_id::text, m.code AS machine_code
+               p.created_at, p.identity::text, p.machine_id::text, m.code AS machine_code
         FROM public.cnc_programs p
         LEFT JOIN public.cnc_machines m ON m.id = p.machine_id
         WHERE p.org_id = %s AND p.work_order_id = %s
@@ -1040,7 +1097,7 @@ def list_programs(*, org_id: UUID, order_id: UUID) -> list[dict[str, object]]:
                coordinate_systems, supported_kinds, supported_faces,
                max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
                postprocessor_id, postprocessor_version, units, encoding,
-               active
+               active, axes, clamps_declared, authority_source, machine_type, profile_setups
         FROM public.cnc_machines WHERE org_id = %s
         """,
         [str(org_id)],
@@ -1048,9 +1105,9 @@ def list_programs(*, org_id: UUID, order_id: UUID) -> list[dict[str, object]]:
     expected_by_machine = {
         str(row["id"]): _program_input(
             current_plan_input,
-            _machine_fingerprint(_machine_profile(row, tools_by_id)),
+            _machine_fingerprint(_machine_profile(row, tools_by_id), row),
         )
-        for row in machine_rows
+        for row in machine_rows if row.get("active") and current_plan_input
     }
     output: list[dict[str, object]] = []
     for row in program_rows:
@@ -1071,8 +1128,17 @@ def list_programs(*, org_id: UUID, order_id: UUID) -> list[dict[str, object]]:
                 "status": "SUPERSEDED" if stale else "CURRENT",
                 "machine_code": row["machine_code"],
                 "created_at": row["created_at"],
+                "identity": _decoded(row.get("identity") or {}),
+                "input_fingerprint": row["input_fingerprint"],
+                "machine_id": str(row["machine_id"]),
+                "output_kind": "NEUTRAL_INTERCHANGE",
             }
         )
+    for program in output:
+        successor = next((other for other in output if other["status"] == "CURRENT"
+            and other["member_id"] == program["member_id"] and other["machine_id"] == program["machine_id"]), None)
+        program["replacement_id"] = successor["id"] if successor and successor["id"] != program["id"] else None
+        program["replacement_no"] = successor["program_no"] if successor and successor["id"] != program["id"] else None
     return output
 
 
@@ -1097,16 +1163,6 @@ def program_file(
         machine_id=str(program["machine_id"]),
     )
     if expected_input is None or str(program["input_fingerprint"]) != expected_input:
-        # The plan moved under the program — flip it so downloads stop
-        # pretending this file is current.
-        with documentary_backend():
-            write(
-                """
-                UPDATE public.cnc_programs SET status = 'SUPERSEDED'
-                WHERE id = %s AND org_id = %s
-                """,
-                [str(program_id), str(org_id)],
-            )
         raise DocumentaryError("cnc_program_superseded")
     files = _decoded(program["files"])
     content = files.get(filename)
@@ -1125,7 +1181,7 @@ def cnc_workspace(*, org_id: UUID) -> dict[str, object]:
             SELECT id, code, name, manufacturer, model, controller_family,
                    coordinate_systems, supported_kinds, supported_faces,
                    max_member_length_mm, safe_margin_mm, clamp_zones, tool_ids,
-                   postprocessor_id, postprocessor_version, units, encoding, active
+                   postprocessor_id, postprocessor_version, units, encoding, active, axes, clamps_declared, authority_source, machine_type, profile_setups
             FROM public.cnc_machines WHERE org_id = %s ORDER BY code
             """,
             [str(org_id)],
@@ -1150,27 +1206,22 @@ def cnc_workspace(*, org_id: UUID) -> dict[str, object]:
             # machining (handles, end-milling) — full derive happens in
             # readiness; the desk lists orders that could need machining.
             needs_machining = bool(optimization.get("bars") or payload.get("materials"))
-        program_rows = rows(
-            """
-            SELECT COUNT(*) AS total,
-                   COUNT(*) FILTER (WHERE status = 'CURRENT') AS current
-            FROM public.cnc_programs
-            WHERE org_id = %s AND work_order_id = %s
-            """,
-            [str(org_id), str(order["id"])],
-        )
+        programs = list_programs(org_id=org_id, order_id=UUID(str(order["id"]))) if needs_machining else []
         if needs_machining:
             order_rows.append(
                 {
                     "order_id": order["id"],
                     "order_code": order["order_code"],
                     "status": order["status"],
-                    "programs_total": int(program_rows[0]["total"]),
-                    "programs_current": int(program_rows[0]["current"]),
+                    "programs_total": len(programs),
+                    "programs_current": sum(program["status"] == "CURRENT" for program in programs),
                 }
             )
     return {
         "machines": machine_rows,
         "tools": list_tools(org_id=org_id),
         "orders": order_rows,
+        "history": [{**row, "id": str(row["id"]), "entity_id": str(row["entity_id"]),
+                     "previous": _jsonb_value(row["previous"]), "current": _jsonb_value(row["current"])}
+                    for row in rows("SELECT id,entity_id,entity_kind,action,previous,current,actor_label,created_at FROM public.cnc_authority_events WHERE org_id=%s ORDER BY created_at DESC LIMIT 100", [str(org_id)])],
     }

@@ -2763,10 +2763,27 @@ def _raw_fact_units(
 def _operations_fact_units(
     version_snapshot: dict[str, object], position_id: str | None
 ) -> list[ManufacturingFactsV1]:
-    return [
-        ManufacturingFactsV1.model_validate_json(json.dumps(unit))
-        for unit in _raw_fact_units(version_snapshot, position_id)
-    ]
+    units = []
+    for raw in _raw_fact_units(version_snapshot, position_id):
+        unit = ManufacturingFactsV1.model_validate_json(json.dumps(raw))
+        if unit.module_id is not None:
+            # The BOM/annotations carry module namespaces; physical facts are
+            # module-local. Project their addresses for matching only. Stable
+            # piece IDs, coordinates and sealed bytes stay unchanged.
+            prefix = unit.module_id + "|"
+            updates = {}
+            for field in ("members", "leaves", "infills", "handles"):
+                projected = []
+                for item in getattr(unit, field):
+                    values = {key: prefix + value
+                              for key in ("bay_id", "leaf_id")
+                              if (value := getattr(item, key)) is not None
+                              and not value.startswith(prefix)}
+                    projected.append(item.model_copy(update=values))
+                updates[field] = projected
+            unit = unit.model_copy(update=updates)
+        units.append(unit)
+    return units
 
 
 def _sealed_hardware_operations(version_snapshot, position_id, fact_units, issues):

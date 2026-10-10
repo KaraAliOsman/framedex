@@ -14,6 +14,7 @@ from dekopen_engine.commercial import (
     finish_lines, target_project, unit_price, validate_segment,
 )
 from dekopen_engine.glass import exact_glass_area_m2
+from dekopen_engine.snapshot import result_payload
 from dekopen_engine.glass_composition import price_glass, glass_rate_requirements, glass_polygon_perimeter_m
 from engine_api.adapter import parse_parametric_node
 from engine_api.adapter import engine_result_from_api
@@ -428,7 +429,7 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None, 
                 technical.append({'position_id':position['id'],
                                   'position_index':index,
                                   'unit_cost':str(cost),
-                                  'bom':result.model_dump(mode='json'),**formation})
+                                  'bom':result_payload(result),**formation})
                 if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT:
                     price_weights[index] = cost-sum((item.total_cost for item in position_extras),D('0'))
                     continue

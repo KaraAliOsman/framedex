@@ -7,6 +7,8 @@
  */
 
 export interface CncTool {
+  authority_revision: string;
+  authority_source: string;
   id: string;
   code: string;
   name: string;

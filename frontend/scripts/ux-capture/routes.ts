@@ -4,6 +4,7 @@ export type FixtureRefs = {
   projectId: string;
   positionId: string;
   clientId: string;
+  orderId?: string;
   quoteTokens: {
     vigente: string;
     aprobada: string;
@@ -19,6 +20,7 @@ export type RouteDefinition = {
   roles: UxRole[];
   public?: boolean;
   workshop?: boolean;
+  expandDetails?: string;
 };
 
 export const VIEWPORTS = [
@@ -98,6 +100,21 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
     { id: "billetera", path: "/settings/wallet", roles: ["OWNER"] },
     { id: "facturacion", path: "/settings/billing", roles: ["OWNER"] },
     { id: "compras", path: "/purchasing", roles: ["OWNER", "WORKSHOP_MANAGER"] },
+    ...(refs.orderId
+      ? [
+          {
+            id: "cnc-piezas",
+            path: `/production?order=${refs.orderId}&section=mecanizado`,
+            roles: ["WORKSHOP_MANAGER", "ESTIMATOR"] as UxRole[],
+          },
+          {
+            id: "cnc-autoridad",
+            path: `/production?order=${refs.orderId}&section=mecanizado`,
+            roles: ["WORKSHOP_MANAGER", "ESTIMATOR"] as UxRole[],
+            expandDetails: "cnc-authorities",
+          },
+        ]
+      : []),
     {
       id: "produccion",
       path: "/production",

@@ -81,6 +81,8 @@ import type {
   CncMachine,
   CncMachineList,
   CncMachineRequestRequest,
+  CncPreview,
+  CncPreviewRequestRequest,
   CncProgram,
   CncProgramList,
   CncReadiness,
@@ -13485,6 +13487,89 @@ export const productionOrderCncFile = async (
       method: "GET",
     },
   );
+};
+
+export type productionOrderCncPreviewResponse200 = {
+  data: CncPreview;
+  status: 200;
+};
+
+export type productionOrderCncPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderCncPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderCncPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderCncPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderCncPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderCncPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderCncPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderCncPreviewResponseSuccess = productionOrderCncPreviewResponse200 & {
+  headers: Headers;
+};
+export type productionOrderCncPreviewResponseError = (
+  | productionOrderCncPreviewResponse400
+  | productionOrderCncPreviewResponse401
+  | productionOrderCncPreviewResponse403
+  | productionOrderCncPreviewResponse404
+  | productionOrderCncPreviewResponse409
+  | productionOrderCncPreviewResponse422
+  | productionOrderCncPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderCncPreviewResponse =
+  productionOrderCncPreviewResponseSuccess | productionOrderCncPreviewResponseError;
+
+export const getProductionOrderCncPreviewUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/cnc/preview/`;
+};
+
+export const productionOrderCncPreview = async (
+  orderId: string,
+  cncPreviewRequestRequest: CncPreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderCncPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderCncPreviewResponse>(getProductionOrderCncPreviewUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(cncPreviewRequestRequest),
+  });
 };
 
 export type productionOrderCncProgramsResponse200 = {
