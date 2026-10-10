@@ -29,7 +29,11 @@ visible antes de confirmar y descargar.
   representan el mismo número exacto; cambios reales de `0.01` o fuente se
   rechazan. No se reescribe una BOM sellada para normalizar su transporte.
 
-Validación completa y referencias de CI se registran al cerrar el PR.
+`make lint`, `make typecheck`, `make test` y `make build` PASA: 871 motor
+(+2 xfail), 1.472 backend y 967 frontend. El reintento focal tras retirar tokens
+incluye lint/tipos, toda la suite frontend y build; las suites de Python ya
+pasaron con el código final. Golden bytes sin cambios. Base de datos y CI
+se registran al cerrar el PR.
 
 ## Pase editorial
 
@@ -38,7 +42,8 @@ se retiró la falsa inversión del extremo final; la sección distingue plano
 completo de una trayectoria que no existe. Segunda ronda: las causas repetidas
 se agrupan conservando sus unidades, las cifras de comparación usan Mono y
 se corrigieron tamaño de fuentes, contraste, lenguaje y errores de transporte.
-Se eliminó el CSS CNC anterior y no quedan dos implementaciones paralelas.
+Se eliminó el CSS CNC anterior y sus veinticinco tokens sin consumidores;
+no quedan dos implementaciones paralelas ni se amplía el baseline de deuda.
 
 | R | Resultado | Evidencia y alcance |
 |---|---|---|

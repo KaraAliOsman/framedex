@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: 55d73156ac4981fab821eb279d73399025ac6057
+verified_ref: 7e274d6e136fe4a39fd3eaaf0fd28043afc75bb0
 sources:
+  - P14 implementación 7e274d6e136fe4a39fd3eaaf0fd28043afc75bb0, navegador y pruebas focales, 2026-10-10
+  - docs/redesign/P14-ACEPTACION.md
   - P11 PR https://github.com/KaraAliOsman/framedex/pull/142, CI 4/4 sobre debf64777ee210ff7b750ef06da0795ad573fc81, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38062719629, squash 55d73156ac4981fab821eb279d73399025ac6057, 2026-10-10.
   - P11 gates locales finales sobre 9838e8bd9af1116e8797299b0b878a042415d6f7, 2026-10-10
   - P11 implementación 2c73bf96cc71b30fff7f774ec4b1aaaaaaf5edb2, gates locales y navegador, 2026-10-10
@@ -61,6 +63,24 @@ sources:
 ---
 
 # Current reality
+
+## P14 · mecanizado con autoridad física (10-10-2026)
+
+Piezas y sección sellada explican origen, operaciones y trabajo pendiente.
+Máquinas/herramientas requieren física y montaje explícitos; el formato
+disponible es intercambio neutro. Confirmar revalida comparación y huella
+bajo locks. El replay conserva bytes, y el sucesor enlaza al vigente sin
+reescribir evidencia anterior. CRUD por tenant y rol, retiro lógico y
+restauración comparada dejan historial inmutable.
+
+El fixture DEMO P-000601 conserva 34 piezas y diez declaraciones pendientes.
+Generación, replay concurrente, archivos/hashes, reemplazo, retiro/reactivación,
+rechazo de otra pestaña y restauración pasan. Matriz de cuarenta vistas más
+32 oficiales en cuatro anchos, claro/oscuro, sin hallazgos ni desbordes; teclado
+y foco visibles pasan. No hay validación física industrial ni postprocesador
+propietario nuevo. La aceptación conserva esos límites.
+
+Gates completos y CI se registrarán al integrar; P14 todavía está en curso.
 
 ## P11 · cobranza y evidencia de cobro (10-10-2026)
 
