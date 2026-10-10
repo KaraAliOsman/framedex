@@ -542,12 +542,21 @@ class KitWriteSerializer(StrictSerializer):
             raise serializers.ValidationError(str(error)) from error
 
 
+class ReadinessTargetSerializer(serializers.Serializer):
+    resource = serializers.CharField()
+    row_id = serializers.UUIDField()
+    field = serializers.CharField()
+    label = serializers.CharField()
+    href = serializers.CharField()
+
+
 class ReadinessBlockerSerializer(serializers.Serializer):
     code = serializers.CharField()
     missing_authority = serializers.CharField()
     affected = serializers.CharField()
     why = serializers.CharField()
     action = serializers.CharField()
+    targets = ReadinessTargetSerializer(many=True, required=False)
 
 
 class ReadinessLevelSerializer(serializers.Serializer):
@@ -558,11 +567,42 @@ class ReadinessLevelSerializer(serializers.Serializer):
 
 
 class CatalogReadinessSerializer(serializers.Serializer):
+    state = serializers.CharField(required=False)
+    authority_gate = serializers.JSONField(required=False, allow_null=True)
     quote_ready = serializers.BooleanField()
     scope = serializers.CharField()
     reasons = serializers.ListField(child=serializers.CharField())
     levels = ReadinessLevelSerializer(many=True, required=False)
     process_via = serializers.CharField(required=False, allow_null=True)
+
+
+class AuthorityProvenanceSerializer(serializers.Serializer):
+    state = serializers.CharField()
+    evidence_count = serializers.IntegerField()
+    current_evidence_count = serializers.IntegerField()
+    missing_fields = serializers.ListField(child=serializers.CharField())
+    reviewed_at = serializers.DateTimeField(allow_null=True)
+    reviewer = serializers.CharField(allow_null=True)
+    reason = serializers.CharField()
+
+
+class SectionBoundsSerializer(serializers.Serializer):
+    min_x_mm = serializers.CharField()
+    max_x_mm = serializers.CharField()
+    min_y_mm = serializers.CharField()
+    max_y_mm = serializers.CharField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+
+
+class SectionFactsSerializer(serializers.Serializer):
+    state = serializers.CharField()
+    valid = serializers.BooleanField()
+    reasons = serializers.ListField(child=serializers.CharField())
+    bounds = SectionBoundsSerializer(allow_null=True)
+    orientation = serializers.CharField(allow_null=True)
+    local_origin = serializers.CharField(allow_null=True)
+    interpretation_declared = serializers.BooleanField()
 
 
 class ProvenanceFieldsMixin(serializers.Serializer):
@@ -576,6 +616,7 @@ class ProvenanceFieldsMixin(serializers.Serializer):
     technical_reviewed_at = serializers.DateTimeField(read_only=True, allow_null=True)
     technical_reviewed_by = serializers.UUIDField(read_only=True, allow_null=True)
     review_pending = serializers.BooleanField(read_only=True, default=False)
+    authority_provenance = AuthorityProvenanceSerializer(read_only=True, required=False)
 
 
 class SystemResponseSerializer(ProvenanceFieldsMixin, SystemWriteSerializer):
@@ -596,6 +637,7 @@ class ArticleResponseSerializer(ProvenanceFieldsMixin, ArticleWriteSerializer):
     section_revision = serializers.IntegerField(read_only=True)
     section_revised_at = serializers.DateTimeField(read_only=True, allow_null=True)
     section_revised_by = serializers.UUIDField(read_only=True, allow_null=True)
+    section_facts = SectionFactsSerializer(read_only=True, required=False)
 
 
 class BeadResponseSerializer(ProvenanceFieldsMixin, BeadWriteSerializer):
@@ -690,6 +732,26 @@ class ProcessProfileRowSerializer(serializers.Serializer):
     provenance = serializers.DictField()
 
 
+class WorkspaceGlassSerializer(serializers.Serializer):
+    mapping_id = serializers.UUIDField()
+    technical_sku = serializers.CharField()
+    name = serializers.CharField()
+    notation = serializers.CharField(allow_null=True)
+    source = serializers.CharField(allow_null=True)
+    synthetic = serializers.BooleanField()
+    product = serializers.JSONField(allow_null=True)
+
+
+class WorkspaceManufacturingPolicySerializer(serializers.Serializer):
+    kind = serializers.CharField()
+    authority_table = serializers.CharField()
+    label = serializers.CharField()
+    id = serializers.UUIDField(allow_null=True)
+    version = serializers.IntegerField(allow_null=True)
+    valid = serializers.BooleanField()
+    global_authority = serializers.BooleanField()
+
+
 class SystemWorkspaceSerializer(serializers.Serializer):
     """The §06 system home: identity + readiness + the entities bound to
     this system across every catalog domain, in one fetch."""
@@ -701,6 +763,8 @@ class SystemWorkspaceSerializer(serializers.Serializer):
     reinforcements = ReinforcementRowSerializer(many=True)
     purchase_mappings = PurchaseMappingRowSerializer(many=True)
     process_profile = ProcessProfileRowSerializer(allow_null=True)
+    glasses = WorkspaceGlassSerializer(many=True)
+    manufacturing_policies = WorkspaceManufacturingPolicySerializer(many=True, required=False)
 
 
 class ProcessProfileOptionSerializer(serializers.Serializer):
@@ -727,7 +791,7 @@ class EvidenceInputSerializer(serializers.Serializer):
     row_id = serializers.UUIDField()
     field_name = serializers.CharField(max_length=80)
     value_text = serializers.CharField(
-        required=False, allow_blank=True, allow_null=True, max_length=120)
+        required=False, allow_blank=True, allow_null=True, max_length=10000)
     unit = serializers.ChoiceField(
         choices=list(EVIDENCE_UNITS), required=False, allow_null=True)
     scope = serializers.ChoiceField(
@@ -738,6 +802,8 @@ class EvidenceInputSerializer(serializers.Serializer):
     source_page = serializers.IntegerField(
         required=False, allow_null=True, min_value=1)
     source_url = serializers.URLField(required=False, allow_null=True)
+    source_ref = serializers.CharField(required=False, allow_null=True, max_length=500)
+    source_quote = serializers.CharField(required=False, allow_null=True, max_length=10000)
 
 
 class EvidenceReviewInputSerializer(serializers.Serializer):
@@ -762,6 +828,14 @@ class EvidenceRowSerializer(serializers.Serializer):
     review_state = serializers.CharField()
     reviewed_by = serializers.UUIDField(allow_null=True)
     reviewed_at = serializers.CharField(allow_null=True)
+    source_import_id = serializers.UUIDField(allow_null=True, required=False)
+    source_ref = serializers.CharField(allow_null=True, required=False)
+    source_quote = serializers.CharField(allow_null=True, required=False)
+    source_literal = serializers.CharField(allow_null=True, required=False)
+    extraction_confidence = serializers.CharField(allow_null=True, required=False)
+    extraction_method = serializers.CharField(allow_null=True, required=False)
+    canonical_value = serializers.JSONField(allow_null=True, required=False)
+    original_value = serializers.JSONField(allow_null=True, required=False)
 
 
 class EvidenceListSerializer(serializers.Serializer):

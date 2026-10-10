@@ -90,6 +90,9 @@ SCHEMAS: dict[str, tuple[Column, ...]] = {
         c("commercial_length_mm", "Largo comercial (mm)", "positive"),
         c("weight_kg_m", "Masa de perfil (kg/m)", "positive"),
         c("steel_weight_kg_m", "Masa refuerzo (kg/m)", "decimal"),
+        c("welding_loss_mm", "Pérdida de soldadura del perfil (mm)", "decimal"),
+        c("reinforcement_gap_mm", "Holgura de refuerzo (mm)", "decimal"),
+        c("section", "Geometría, origen y orientación de sección", "json"),
         c("coupling_rule", "Ángulos y aporte desarrollado con fuente (JSON)", "json"), SOURCE),
     "Roles y reglas de corte": (SYSTEM, SKU, c("role", "Rol", required=True, choices=ROLES),
         c("angle_degrees", "Ángulo de corte", "angle", True),
@@ -251,7 +254,9 @@ def candidate(sheet: str, raw: dict, *, key: str, row: int, method: str,
     for index, column in enumerate(SCHEMAS[sheet], 1):
         reference = (refs or {}).get(column.key) or {
             "ref": f"{sheet}!{column_letter(index)}{row}",
-            "quote": str(raw.get(column.key) or ""), "confidence": "HIGH"}
+            "quote": str(raw.get(column.key) or ""),
+            "literal": str(raw.get(column.key) or ""),
+            "confidence": "HIGH" if raw.get(column.key) not in (None, "") else "UNKNOWN"}
         try:
             value = normalize(raw.get(column.key), column)
             if method == "AI" and reference.get("confidence") != "HIGH":
@@ -264,9 +269,10 @@ def candidate(sheet: str, raw: dict, *, key: str, row: int, method: str,
                            "message": f"Fila {row}, columna ‘{column.label}’: {error}."})
         values[column.key] = value
         evidence[column.key] = {**reference, "method": method}
+    doubtful = any(field.get("confidence") == "LOW" for field in evidence.values())
     return {"key": key, "sheet": sheet, "values": values, "fields": evidence,
             "row": row, "method": method, "errors": errors,
-            "confidence": "HIGH_CANDIDATE" if not errors else "REVIEW_REQUIRED"}
+            "confidence": "REVIEW_REQUIRED" if errors else "LOW" if doubtful else "HIGH_CANDIDATE"}
 
 
 def _xlsx_tables(content: bytes) -> list[tuple[str, list[dict[str, str]]]]:

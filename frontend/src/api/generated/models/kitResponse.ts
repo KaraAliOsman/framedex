@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { AuthorityProvenance } from "./authorityProvenance";
 import type { CatalogHardwareComponent } from "./catalogHardwareComponent";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { KitOpeningTypeEnum } from "./kitOpeningTypeEnum";
@@ -21,6 +22,7 @@ export interface KitResponse {
   /** @nullable */
   readonly technical_reviewed_by: string | null;
   readonly review_pending: boolean;
+  readonly authority_provenance: AuthorityProvenance;
   /** @nullable */
   system_id: string | null;
   /** @maxLength 100 */

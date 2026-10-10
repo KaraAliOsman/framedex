@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: c4eb4159a45caef4bbf88fb770372a5d13993411
+verified_ref: codex/P16-catalogo-tecnico
 sources:
+  - P16 rama codex/P16-catalogo-tecnico, navegador y pruebas focalizadas, 2026-10-10
+  - docs/redesign/P16-ACEPTACION.md
   - P14 PR https://github.com/KaraAliOsman/framedex/pull/143, CI 4/4 sobre 970df75643c67b6bec9c3813803b071066627aab, squash c4eb4159a45caef4bbf88fb770372a5d13993411, 2026-10-10
   - P14 limpieza eaf0eb5754cd6651fdad1bcab54e0d991ed39d1d, lint/tipos/frontend/build PASA, 2026-10-10
   - P14 implementación 7e274d6e136fe4a39fd3eaaf0fd28043afc75bb0, navegador y pruebas focales, 2026-10-10
@@ -65,6 +67,22 @@ sources:
 ---
 
 # Current reality
+
+## P16 · procedencia y revisión técnica (10-10-2026)
+
+Siete pestañas muestran perfiles, refuerzos, vidrio, herrajes, reglas, cobertura
+de costos e historial. La geometría se dibuja solo desde la sección declarada;
+ausencia y origen/orientación inválidos permanecen visibles. DEMO no se eleva
+por revisar. La evidencia vigente y la revisión humana son estados distintos.
+
+Catálogo/emisión comparten predicado de autoridad con alcance explícito; la
+liberación usa el gate y proceso sellados. El PDF sintético de tres páginas
+se corrigió y publicó con MiMo real, fuente original idéntica, foco de destino
+y deshacer. La auditoría conservó las seis etapas. La ruta de imagen real
+produce candidatos que requieren contraste humano; no certifica el proveedor.
+Cinco estados y matriz de tamaños/temas pasan; capturas generales sin hallazgos.
+
+P16 permanece en curso hasta completar gates locales y CI sobre el PR.
 
 ## P14 · mecanizado con autoridad física (10-10-2026)
 
@@ -712,8 +730,9 @@ the expanded 28/28 formula mutation drill. `main` is unchanged.
 
 Verification details and the acceptance scope are in
 [the D01 report](../../redesign/captures/sistemas-catalogo/aceptacion.md) and
-[the durable catalog page](../product/catalog-authority.md). D03–D07 and P16 still
-need their own acceptance; this does not accredit unfinished queue surfaces.
+[the durable catalog page](../product/catalog-authority.md). D03–D07 posteriormente
+integraron sus propias aceptaciones; P16 se registra en su sección del 10-10-2026.
+La aceptación histórica D01 no acredita otras superficies de la cola.
 
 **Warning:** this is a volatile navigation page. Re-check the repository before relying on it for implementation decisions.
 

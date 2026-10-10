@@ -20,11 +20,13 @@ import type { Capability } from "../canvas/physicalOpenings";
 import { SystemWorkspaceView } from "./SystemWorkspace";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import { SectionImportPanel } from "./SectionImportPanel";
+import { CatalogProvenance, SectionReviewFacts } from "./CatalogProvenance";
 import { Button, DeniedState, DimLoader, PageHeader, Tabs, useConfirm } from "../../ui";
 import type {
   FinishAuthority,
   ProcessProfileOption,
   SystemResponse,
+  EvidenceRow,
 } from "../../api/generated/models";
 import {
   HARDWARE_COMPONENT_CATEGORIES,
@@ -145,14 +147,19 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   const requested = new URLSearchParams(window.location.search);
   const [selected, setSelected] = useState<string | null>(() => requested.get("system"));
   const [resource, setResource] = useState<Resource>(() =>
-    requested.get("resource") === "articles" ? "articles" : "systems",
+    resources.includes(requested.get("resource") as Resource)
+      ? (requested.get("resource") as Resource)
+      : "systems",
   );
   // The detail pane's landing view for a selected system: the §06 workspace
   // is the system home; the tabbed records stay one click away for CRUD.
   const [detailTab, setDetailTab] = useState<"workspace" | "records">(() =>
     requested.get("resource") === "articles" ? "records" : "workspace",
   );
-  const [editor, setEditor] = useState<{ resource: Resource; id?: string } | null>(null);
+  const [editor, setEditor] = useState<{ resource: Resource; id?: string; field?: string } | null>(
+    null,
+  );
+  const requestedRecord = useRef(requested.get("record"));
   const [importExpanded, setImportExpanded] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -199,6 +206,16 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       });
     return () => controller.abort();
   }, [api, reload]);
+  useEffect(() => {
+    if (!data || !requestedRecord.current) return;
+    const id = requestedRecord.current;
+    requestedRecord.current = null;
+    if (data[resource].some((row) => row.id === id)) {
+      setEditor({ resource, id, field: requested.get("field") ?? undefined });
+    } else {
+      setNotice("La referencia no está disponible en tu catálogo. Revisa la serie y tus permisos.");
+    }
+  }, [data, resource]);
 
   function accept<R extends Resource>(kind: R, saved: Row<R>) {
     if (lifetime.current?.signal.aborted) return;
@@ -382,48 +399,59 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
         </aside>
 
         <section className="catalog-detail" aria-label={ct("detail")}>
-          <header>
-            <h2>{currentSystem?.name ?? ct("unassignedKits")}</h2>
-            {currentSystem && (
-              <p>
-                <strong>Estado del sistema:</strong> {systemReadinessLabel(currentSystem)}
-                {" · "}
-                {currentSystem.is_active ? ct("active") : ct("inactive")}
-              </p>
-            )}
-            {currentSystem?.is_global && <p>{ct("globalHelp")}</p>}
-            {currentSystem?.is_demo && <p>{ct("demoHelp")}</p>}
-          </header>
+          {detailTab === "workspace" && currentSystem && editor === null ? (
+            <div className="catalog-record-navigation">
+              <button type="button" onClick={() => setDetailTab("records")}>
+                Abrir lista de registros
+              </button>
+            </div>
+          ) : null}
+          {detailTab === "records" || !currentSystem ? (
+            <>
+              <header>
+                <h2>{currentSystem?.name ?? ct("unassignedKits")}</h2>
+                {currentSystem && (
+                  <p>
+                    <strong>Estado del sistema:</strong> {systemReadinessLabel(currentSystem)}
+                    {" · "}
+                    {currentSystem.is_active ? ct("active") : ct("inactive")}
+                  </p>
+                )}
+                {currentSystem?.is_global && <p>{ct("globalHelp")}</p>}
+                {currentSystem?.is_demo && <p>{ct("demoHelp")}</p>}
+              </header>
 
-          <Tabs
-            items={[
-              ...(currentSystem
-                ? [
-                    {
-                      disabled: editor !== null,
-                      id: "workspace",
-                      label: ct("workspaceTab"),
-                    },
-                  ]
-                : []),
-              ...resources.map((kind) => ({
-                disabled: editor !== null || (selected === null && kind !== "hardware-kits"),
-                id: kind,
-                label: ct(kind),
-              })),
-            ]}
-            label={ct("sections")}
-            onChange={(id) => {
-              if (id === "workspace") {
-                setDetailTab("workspace");
-              } else {
-                setResource(id as (typeof resources)[number]);
-                setDetailTab("records");
-              }
-              setNotice("");
-            }}
-            value={detailTab === "workspace" ? "workspace" : resource}
-          />
+              <Tabs
+                items={[
+                  ...(currentSystem
+                    ? [
+                        {
+                          disabled: editor !== null,
+                          id: "workspace",
+                          label: ct("workspaceTab"),
+                        },
+                      ]
+                    : []),
+                  ...resources.map((kind) => ({
+                    disabled: editor !== null || (selected === null && kind !== "hardware-kits"),
+                    id: kind,
+                    label: ct(kind),
+                  })),
+                ]}
+                label={ct("sections")}
+                onChange={(id) => {
+                  if (id === "workspace") {
+                    setDetailTab("workspace");
+                  } else {
+                    setResource(id as (typeof resources)[number]);
+                    setDetailTab("records");
+                  }
+                  setNotice("");
+                }}
+                value={detailTab === "workspace" ? "workspace" : resource}
+              />
+            </>
+          ) : null}
 
           {currentSystem && detailTab === "workspace" ? (
             <SystemWorkspaceView
@@ -563,6 +591,8 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
               systemId={selected}
               api={api}
               locked={!canEdit}
+              targetField={editor.field}
+              onReviewed={(row) => reviewRow(editor.resource, row)}
               onSaved={(saved) => accept(editor.resource, saved)}
               onDeleted={(id) => removed(editor.resource, id)}
               onClose={() => setEditor(null)}
@@ -581,6 +611,8 @@ type EditorProps = {
   systemId: string | null;
   api: ReturnType<typeof catalogApi>;
   locked: boolean;
+  targetField?: string;
+  onReviewed: (row: Row<Resource>) => Promise<void>;
   onSaved: (row: Row<Resource>) => void;
   onDeleted: (id: string) => void;
   onClose: () => void;
@@ -593,6 +625,8 @@ function CatalogEditor({
   systemId,
   api,
   locked,
+  targetField,
+  onReviewed,
   onSaved,
   onDeleted,
   onClose,
@@ -607,6 +641,27 @@ function CatalogEditor({
     initialSectionDraft(row && "section" in row ? row.section : null),
   );
   const [sectionImportOpen, setSectionImportOpen] = useState(false);
+  const [evidence, setEvidence] = useState<EvidenceRow[]>([]);
+  const [evidenceError, setEvidenceError] = useState("");
+  const [evidenceReload, setEvidenceReload] = useState(0);
+  const evidenceSystem = row && "system_id" in row ? row.system_id : (row?.id ?? systemId);
+  useEffect(() => {
+    if (!row || !evidenceSystem) return;
+    const controller = new AbortController();
+    setEvidenceError("");
+    void api
+      .evidence(evidenceSystem, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted) setEvidence(result);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setEvidenceError(
+            "No se pudo consultar la procedencia. Reintenta para revisar su fuente.",
+          );
+      });
+    return () => controller.abort();
+  }, [api, row, evidenceSystem, evidenceReload]);
   const confirm = useConfirm();
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -668,11 +723,15 @@ function CatalogEditor({
 
   useEffect(() => {
     alive.current = true;
-    firstControl.current?.focus();
+    const target = Array.from(document.querySelectorAll<HTMLElement>("[data-catalog-field]")).find(
+      (node) => node.dataset.catalogField === targetField,
+    );
+    (target ?? firstControl.current)?.focus();
+    if (target) target.scrollIntoView({ block: "center" });
     return () => {
       alive.current = false;
     };
-  }, []);
+  }, [targetField]);
 
   useEffect(() => {
     if (error) errorRef.current?.focus();
@@ -835,7 +894,13 @@ function CatalogEditor({
     const unknownOption =
       select && value !== "" && !options.some((option) => option.value === value);
     return (
-      <label key={field.name} htmlFor={id}>
+      <label
+        key={field.name}
+        htmlFor={id}
+        data-catalog-field={field.name}
+        tabIndex={-1}
+        className="catalog-field-target"
+      >
         <span>
           {field.label ?? ct(`field.${field.name}`)}
           {field.optional && <small> · {ct("optional")}</small>}
@@ -912,6 +977,19 @@ function CatalogEditor({
         </button>
       </header>
       <p>{ct(readOnly ? "readOnlyHelp" : "humanValues")}</p>
+      {row ? (
+        <div data-catalog-field="review" tabIndex={-1} className="catalog-field-target">
+          <CatalogProvenance row={row} evidence={evidence} />
+        </div>
+      ) : null}
+      {evidenceError ? (
+        <>
+          <p role="alert">{evidenceError}</p>
+          <button type="button" onClick={() => setEvidenceReload((value) => value + 1)}>
+            Reintentar procedencia
+          </button>
+        </>
+      ) : null}
       {row && resource !== "systems" && <p>{ct("parentFixed")}</p>}
       {noBeads && <p role="status">{ct("noBeads")}</p>}
       {uncertainCreate && !error && <p role="status">{ct("uncertainCreate")}</p>}
@@ -930,7 +1008,18 @@ function CatalogEditor({
               "reinforcementRule",
               ...(draft.role === "COUPLER" ? ["couplingRule"] : []),
             ].map((kind) => (
-              <label key={kind}>
+              <label
+                key={kind}
+                data-catalog-field={
+                  kind === "cutRule"
+                    ? "cut_rule"
+                    : kind === "reinforcementRule"
+                      ? "reinforcement_rule"
+                      : "coupling_rule"
+                }
+                tabIndex={-1}
+                className="catalog-field-target"
+              >
                 <input
                   type="checkbox"
                   checked={draft[`${kind}.enabled`] === "true"}
@@ -989,18 +1078,28 @@ function CatalogEditor({
           />
         )}
         {resource === "systems" && (
-          <CatalogLimitsEditor
-            family={draft.system_family ?? ""}
-            limits={limits ?? []}
-            onChange={(value) => {
-              setLimits(value);
-              setDirty(true);
-            }}
-          />
+          <div
+            data-catalog-field="dimensional_limits"
+            tabIndex={-1}
+            className="catalog-field-target"
+          >
+            <CatalogLimitsEditor
+              family={draft.system_family ?? ""}
+              limits={limits ?? []}
+              onChange={(value) => {
+                setLimits(value);
+                setDirty(true);
+              }}
+            />
+          </div>
         )}
 
         {resource === "articles" && (
-          <fieldset className="catalog-group">
+          <fieldset
+            className="catalog-group catalog-field-target"
+            data-catalog-field="section"
+            tabIndex={-1}
+          >
             <legend>{ct("field.section")}</legend>
             <label>
               <input
@@ -1288,11 +1387,21 @@ function CatalogEditor({
                 </button>
               </>
             )}
-            <SectionPreviewSvg
-              section={sectionPreviewFromDraft(sectionDraft)}
-              faceWidthMm={Number(draft.face_width_mm ?? 0)}
-              material={draft.material || "PVC"}
-            />
+            {sectionPreviewFromDraft(sectionDraft) ? (
+              <SectionPreviewSvg
+                section={sectionPreviewFromDraft(sectionDraft)}
+                faceWidthMm={Number(draft.face_width_mm ?? 0)}
+                material={draft.material || "PVC"}
+              />
+            ) : (
+              <p>
+                Sección: Sin dato. Importa el dibujo o declara sus coordenadas con la fuente del
+                proveedor.
+              </p>
+            )}
+            {row && "section_facts" in row ? (
+              <SectionReviewFacts facts={row.section_facts} />
+            ) : null}
           </fieldset>
         )}
 
@@ -1416,6 +1525,19 @@ function CatalogEditor({
         row.class_authority != null && <HardwareAuthorityView value={row.class_authority} />}
 
       <footer className="catalog-toolbar">
+        {row &&
+        !readOnly &&
+        "data_provenance" in row &&
+        (row.review_pending || row.data_provenance === "LEGACY_UNVERIFIED") ? (
+          <button
+            type="button"
+            data-catalog-field="review_action"
+            disabled={busy || dirty}
+            onClick={() => void onReviewed(row)}
+          >
+            {ct("markReviewed")}
+          </button>
+        ) : null}
         <button
           type="submit"
           className="catalog-primary"

@@ -92,6 +92,8 @@ def _fetch(resource, where, params, *, lock=False, org_id=None):
                     parse_int=int if name in {"class_authority", "finish_authority", "extra_authority"} else Decimal,
                 )
         row["revision"] = catalog_revision(row)
+    from catalogs.provenance import decorate
+    decorate(resource, result, org_id)
     return result
 
 
@@ -481,6 +483,11 @@ def review(resource, org_id, row_id, user_id, expected_revision=None):
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
     require_revision(current, expected_revision)
+    if resource is ARTICLES and current.get("section") is not None:
+        from catalogs.provenance import section_facts
+        if not section_facts(current)["valid"]:
+            raise contract_error(422, "catalog_section_review_invalid",
+                "Revisa la sección: profundidad, origen local y orientación deben corresponder a la geometría. Las revisiones históricas se conservan.")
     with connection.cursor() as cursor, catalog_backend():
         cursor.execute(
             f"UPDATE public.{resource.table} SET "
@@ -540,6 +547,19 @@ def system_workspace(org_id, system_id):
     articles = list_rows(ARTICLES, org_id, system_id)
     beads = list_rows(BEADS, org_id, system_id)
     kits = list_rows(KITS, org_id, system_id)
+    from catalogs.glass import load_products
+    from catalogs.policies import manufacturing_policy_facts
+    from dekopen_engine.glass_composition import format_glass_notation
+    glasses = []
+    for mapping in load_products(system_id, org_id):
+        product = mapping["resolved_product"]
+        glasses.append({"mapping_id": mapping["mapping_id"],
+            "technical_sku": mapping["technical_sku"],
+            "name": product.name if product else mapping["glass_spec"],
+            "notation": format_glass_notation(product.composition) if product else None,
+            "source": product.source if product else None,
+            "synthetic": bool(system["is_demo"] or (product and product.synthetic)),
+            "product": product.model_dump(mode="json") if product else None})
 
     article_ids = [str(article["id"]) for article in articles]
     purchase_mappings = (
@@ -593,6 +613,8 @@ def system_workspace(org_id, system_id):
         "reinforcements": reinforcements,
         "purchase_mappings": purchase_mappings,
         "process_profile": process_profile,
+        "glasses": glasses,
+        "manufacturing_policies": manufacturing_policy_facts(system_id, org_id),
     }
 
 

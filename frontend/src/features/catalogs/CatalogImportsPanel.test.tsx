@@ -11,6 +11,7 @@ vi.mock("../../api/generated/dekopen", () => ({
   catalogImportReview: vi.fn(),
   catalogImportPublish: vi.fn(),
   catalogImportUndo: vi.fn(),
+  catalogImportTimeline: vi.fn(),
 }));
 const entry = {
   id: "import-1",
@@ -24,6 +25,7 @@ const entry = {
       sheet: "Sistemas",
       row: 1,
       method: "AI",
+      confidence: "LOW",
       values: { system_code: "SERIE", depth_mm: null },
       fields: {
         system_code: { ref: "Página 1", quote: "Serie SERIE", confidence: "HIGH" },
@@ -51,6 +53,10 @@ async function openReview() {
 describe("CatalogImportsPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(api.catalogImportTimeline).mockResolvedValue({
+      status: 200,
+      data: { items: [] },
+    } as never);
     vi.mocked(api.catalogImportsList).mockResolvedValue({
       status: 200,
       data: { imports: [entry] },
@@ -97,7 +103,10 @@ describe("CatalogImportsPanel", () => {
     expect(screen.getByText("Tabla borrosa")).toBeVisible();
     expect(screen.getByText(/Lectura dudosa: 60/)).toBeVisible();
     expect(api.catalogImportPublish).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Incluir fila 1")).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Comparar cambios" })).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/^Profundidad/), { target: { value: "60.00" } });
+    fireEvent.click(screen.getByLabelText("Incluir fila 1"));
     fireEvent.click(screen.getByRole("button", { name: "Comparar cambios" }));
     const publish = await screen.findByRole("button", { name: "Publicar catálogo revisado" });
     expect(publish).toBeDisabled();
@@ -112,6 +121,7 @@ describe("CatalogImportsPanel", () => {
   });
   it("invalidates the reviewed diff when a field changes", async () => {
     await openReview();
+    fireEvent.click(screen.getByLabelText("Incluir fila 1"));
     fireEvent.click(screen.getByRole("button", { name: "Comparar cambios" }));
     await screen.findByRole("button", { name: "Publicar catálogo revisado" });
     fireEvent.click(screen.getByLabelText(/Revisé la fuente/));

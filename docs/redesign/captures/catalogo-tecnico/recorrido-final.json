@@ -1,0 +1,18 @@
+[
+  {
+    "flow": "Cobertura de costos del dueño",
+    "demoCosts": 116
+  },
+  {
+    "flow": "Cada política ausente tiene un destino real con foco",
+    "targets": [
+      "placement",
+      "handles",
+      "reinforcement"
+    ]
+  },
+  {
+    "flow": "Acción de revisión dentro de la ficha pendiente",
+    "visible": true
+  }
+]

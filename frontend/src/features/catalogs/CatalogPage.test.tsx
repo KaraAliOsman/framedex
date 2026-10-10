@@ -42,6 +42,15 @@ const PROVENANCE = {
   technical_reviewed_at: null,
   technical_reviewed_by: null,
   review_pending: false,
+  authority_provenance: {
+    state: "DECLARED",
+    evidence_count: 0,
+    current_evidence_count: 0,
+    missing_fields: [],
+    reviewed_at: null,
+    reviewer: null,
+    reason: "Fuente pendiente",
+  },
 };
 const SAVED_REVISION = `sha256:${"b".repeat(64)}`;
 
@@ -152,6 +161,15 @@ function article(overrides: Partial<ArticleResponse> = {}): ArticleResponse {
     section_revision: 1,
     section_revised_at: null,
     section_revised_by: null,
+    section_facts: {
+      state: "UNKNOWN",
+      valid: false,
+      reasons: ["section_missing"],
+      bounds: null,
+      orientation: null,
+      local_origin: null,
+      interpretation_declared: false,
+    },
     ...PROVENANCE,
     ...overrides,
   };
@@ -210,8 +228,12 @@ function button(key: TranslationKey) {
   return screen.getByRole("button", { name: t(key) });
 }
 
-// Section navigation is a real tablist — tabs are role=tab, not button.
+// CRUD navigation opens its record list, leaving one technical navigation
+// in the system sheet. It remains usable if the aggregate cannot load.
 function navTab(key: TranslationKey) {
+  if (!screen.queryByRole("tab", { name: t(key) })) {
+    fireEvent.click(screen.getByRole("button", { name: "Abrir lista de registros" }));
+  }
   return screen.getByRole("tab", { name: t(key) });
 }
 
@@ -276,6 +298,7 @@ async function declareSection() {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(client.catalogEvidenceList).mockResolvedValue(ok({ items: [] }));
   identity.role = "OWNER";
 
   vi.mocked(client.catalogSystemList).mockResolvedValue(ok({ items: [system()] }));

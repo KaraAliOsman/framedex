@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { AuthorityProvenance } from "./authorityProvenance";
 import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
 import type { CouplerRule } from "./couplerRule";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
@@ -12,6 +13,7 @@ import type { MaterialEnum } from "./materialEnum";
 import type { ProfileCutRule } from "./profileCutRule";
 import type { ProfileReinforcementRule } from "./profileReinforcementRule";
 import type { ProfileSection } from "./profileSection";
+import type { SectionFacts } from "./sectionFacts";
 
 /**
  * Read-only provenance/review state — written only by import jobs and
@@ -24,6 +26,7 @@ export interface ArticleResponse {
   /** @nullable */
   readonly technical_reviewed_by: string | null;
   readonly review_pending: boolean;
+  readonly authority_provenance: AuthorityProvenance;
   coupling_rule?: CouplerRule | null;
   cut_rule?: ProfileCutRule | null;
   reinforcement_rule?: ProfileReinforcementRule | null;
@@ -75,4 +78,5 @@ export interface ArticleResponse {
   readonly section_revised_at: string | null;
   /** @nullable */
   readonly section_revised_by: string | null;
+  readonly section_facts: SectionFacts;
 }

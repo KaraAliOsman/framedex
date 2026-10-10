@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { AuthorityProvenance } from "./authorityProvenance";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 
 /**
@@ -18,6 +19,7 @@ export interface BeadResponse {
   /** @nullable */
   readonly technical_reviewed_by: string | null;
   readonly review_pending: boolean;
+  readonly authority_provenance: AuthorityProvenance;
   system_id: string;
   /** @pattern ^-?\d{0,4}(?:\.\d{0,2})?$ */
   glass_thickness_mm: string;

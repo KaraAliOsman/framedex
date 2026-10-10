@@ -11,7 +11,7 @@ authority model.
 
 from typing import Any
 from uuid import UUID
-
+import json
 
 from authentication.errors import contract_error
 from authentication.rls import catalog_backend
@@ -56,13 +56,23 @@ _PUBLIC_FIELDS = (
     "id", "org_id", "authority_table", "row_id", "field_name", "value_text",
     "unit", "scope", "applicability", "source_document", "source_page",
     "source_url", "declared_by", "declared_at", "review_state",
-    "reviewed_by", "reviewed_at",
+    "reviewed_by", "reviewed_at", "source_import_id", "source_ref", "source_quote",
+    "source_literal", "extraction_confidence", "extraction_method",
 )
 
 
 def _public(row: dict) -> dict:
-    return {field: (str(row[field]) if row[field] is not None else None)
-            for field in _PUBLIC_FIELDS}
+    result = {field: (str(row.get(field)) if row.get(field) is not None else None)
+              for field in _PUBLIC_FIELDS}
+    for key in ("canonical_value", "original_value"):
+        value = row.get(key)
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except ValueError:
+                pass
+        result[key] = value
+    return result
 
 
 def list_evidence(*, org_id: UUID, system_id: UUID) -> list[dict]:
@@ -100,7 +110,9 @@ def _authority_row_visible(org_id: UUID, table: str, row_id: UUID) -> dict:
     if table not in EVIDENCE_TABLES:
         raise contract_error(400, "catalog_evidence_target_invalid",
                              "catalogs.errors.evidence_target")
-    visibility = "org_id IS NULL OR org_id = %s"
+    from catalogs.service import visibility_sql
+    visibility = ("org_id = %s" if table == "catalog_imports" else
+                  visibility_sql(child=table != "profile_systems"))
     found = rows(
         f"SELECT id,org_id FROM public.{table} WHERE id = %s AND ({visibility})",
         [str(row_id), str(org_id)],
@@ -131,7 +143,9 @@ def declare_evidence(*, org_id: UUID, actor_id: UUID, values: dict) -> dict:
             "INSERT INTO public.catalog_parameter_evidence ("
             "org_id, authority_table, row_id, field_name, value_text, unit,"
             " scope, applicability, source_document, source_page, source_url,"
-            " declared_by) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            " declared_by,source_import_id,source_ref,source_quote,source_literal,"
+            " extraction_confidence,extraction_method,canonical_value,original_value)"
+            " VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb)"
             " RETURNING *",
             [
                 str(org_id), table, str(values["row_id"]),
@@ -140,6 +154,11 @@ def declare_evidence(*, org_id: UUID, actor_id: UUID, values: dict) -> dict:
                 values.get("applicability"), str(values["source_document"]),
                 values.get("source_page"), values.get("source_url"),
                 str(actor_id),
+                values.get("source_import_id"), values.get("source_ref"),
+                values.get("source_quote"), values.get("source_literal"),
+                values.get("extraction_confidence"), values.get("extraction_method"),
+                json.dumps(values.get("canonical_value"), default=str),
+                json.dumps(values.get("original_value"), default=str),
             ],
         )
     return _public(inserted[0])
