@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: 0ab8b7204ac250c0bd8d118fdab041c22b5892b3
+verified_ref: fa3731843dbfbd75d00024e95f4986a3616a8747
 sources:
+  - ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.
   - ED2 metadatos b18b6506e55152702c37fdc0c7c6f3df21ff2d0f, matriz final y gates de presentación, 2026-10-10
   - ED2 implementación 0ab8b7204ac250c0bd8d118fdab041c22b5892b3, navegador, 2026-10-10
   - docs/redesign/ED2-ACEPTACION.md
@@ -93,8 +94,8 @@ La cotización bow queda «Solo cotización» por falta de autoridad para fabric
 no se inventa evidencia para liberar. Las 224 vistas finales en 14 rutas pasan
 sin hallazgos/desbordes/errores HTTP/consola. La suite completa pasa 881 motor
 (+2 xfail), 1.476 backend y 968 frontend, con lint/tipos/build. La repetición
-posterior de lint/tipos/968 frontend/build también pasa; CI se registra al integrar. Esta sección acredita
-implementación y recorridos sobre los refs citados, sin declarar integración.
+posterior de lint/tipos/968 frontend/build también pasa; CI 4/4 pasa sobre el head del PR #145; el squash citado integra la
+implementación y los recorridos aceptados en integracion/v1.
 
 Las reglas de presentación ED2 quedan vinculantes para la ola 3 en
 [sistema de diseño](../product/design-system.md). DEMO, sandbox financiero,

@@ -1246,3 +1246,6 @@ conservando el test. La repetición pasa 881 motor (+2 xfail), 1.476 backend,
 presentación pasan lint/tipos/968 frontend/build y las 224 vistas finales,
 sin hallazgos, desbordes, HTTP ni consola. CI se registra al integrar.
 Véase `docs/redesign/ED2-ACEPTACION.md`.
+
+ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.
+R1–R20 por superficie PASA. Las revisiones externas se omitieron por configuración/cuota y no se atribuyen como revisión completa. Servicios propios detenidos; fixture persistente conservado.

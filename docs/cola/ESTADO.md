@@ -29,7 +29,7 @@
 | P11 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/142 | 55d73156ac4981fab821eb279d73399025ac6057 | CI 4/4 verde; cobranza/RC/Flow y documentos internos sellados; 1.285 pgTAP, 483 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P14 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/143 | c4eb4159a45caef4bbf88fb770372a5d13993411 | CI 4/4 verde; autoridad física/intercambio y CRUD auditado; 1.299 pgTAP, 486 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P16 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/144 | 5a34db52c78d6a277b17a29267aaf139958655af | CI 4/4 verde; gate compartido/fuentes inmutables, MiMo PDF/foto y undo; 1.315 pgTAP, 493 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
-| ED2 | ED2 | en curso |  |  |  |
+| ED2 | ED2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/145 | fa3731843dbfbd75d00024e95f4986a3616a8747 | CI 4/4 verde; 224 vistas finales sin hallazgos/desbordes, cuatro personas y MiMo real; guardas 69/187 → 45/139 y rúbrica por superficie PASA. |
 | P21 | 3 | pendiente |  |  |  |
 | P10 | 3 | pendiente |  |  |  |
 | P22 | 3 | pendiente |  |  |  |
@@ -77,3 +77,9 @@ Conjuntos, emisión, corte, compras, cobranza, CNC y catálogo conservan autorid
 P16 contrasta PDF/foto con MiMo real, conserva fuentes y seis etapas de publicación/deshacer; DEMO no se certifica.
 Capturas clave: `docs/redesign/captures/catalogo-tecnico/`, `compras-inventario/`, `cnc-mecanizado/` y `pack-corte-etiquetas/`.
 Riesgos: catálogo sintético, políticas sin fuente declarada y calibración industrial externa; ED2 revisa ahora el conjunto.
+
+ED2 cerrado: revisión conjunta de la ola 2 integrada con CI 4/4 verde.
+Medidas, estados, capacidades y tablas móviles comparten reglas; Inventario del operario conserva tema y objetivos táctiles.
+Estimador/PDF/enlace, dueño/MiMo revisado, compra/recepción parcial/RT y taller/etiquetas/CNC pasan sin duplicar decisiones.
+Capturas clave: `docs/redesign/captures/ed2/`; 224 antes y después, cero hallazgos finales; baseline 69/187 → 45/139.
+Riesgos: bow Solo cotización, catálogo DEMO, integración financiera sandbox, autoridad térmica y validación industrial ausentes; la ola 3 conserva esos límites.

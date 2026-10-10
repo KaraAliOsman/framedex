@@ -3,8 +3,9 @@ type: concept
 status: active
 updated: 2026-10-10
 volatility: medium
-verified_ref: 0ab8b7204ac250c0bd8d118fdab041c22b5892b3
+verified_ref: fa3731843dbfbd75d00024e95f4986a3616a8747
 sources:
+  - ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.
   - ED2 implementación 0ab8b7204ac250c0bd8d118fdab041c22b5892b3, navegador, 2026-10-10
   - docs/redesign/ED2-ACEPTACION.md
   - ED1 PR https://github.com/KaraAliOsman/framedex/pull/137, CI 4/4 sobre ae9292864ad7d8efb9beba9243451fba49d8c04e, squash 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d, 2026-10-09

@@ -120,8 +120,7 @@ rutas conservan los resultados finales. No cambió ningún detector ni umbral.
 Las pruebas completas pasan: **881 motor (+2 xfail), 1.476 backend y 968
 frontend**, junto a lint, tipos, OpenAPI/orval reproducibles, goldens byte a
 byte y build. Las correcciones posteriores solo de presentación pasan
-lint, tipos, las 968 pruebas frontend y build. CI se registra al
-integrar. SQL, RLS, permisos y OpenAPI no cambiaron; Database Gate corre
+lint, tipos, las 968 pruebas frontend y build. CI 4/4 pasa en el PR #145. SQL, RLS, permisos y OpenAPI no cambiaron; Database Gate corre
 íntegro en CI. Las primeras corridas fallidas no acreditan aceptación.
 
 Los [estados de bow](captures/ed2/estados/bow/informe.json),
@@ -142,3 +141,6 @@ SMTP local usa Mailpit y la IA usa MiMo configurado. Activación se mantiene en
 sintética y conserva DEMO; la revisión no certifica datos de un fabricante.
 Uw ausente, calibración de máquinas, validación industrial y superficies de
 ola 3 permanecen fuera de esta aceptación.
+
+ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.
+Los cuatro checks requeridos pasan sobre el mismo head; el PR se integra con squash y el fixture persistente se conserva.
