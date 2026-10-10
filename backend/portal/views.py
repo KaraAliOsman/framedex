@@ -7,6 +7,8 @@ import logging
 from uuid import UUID
 
 from django.db import DatabaseError
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
@@ -14,10 +16,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from authentication.errors import contract_error
+from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from config.throttling import PortalRateThrottle
 from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from portal import service
+from portal import link_controls
+from pricing.serializers import StrictSerializer
 from portal.serializers import (
     ApprovalRecordSerializer,
     DecideRequestSerializer,
@@ -46,7 +51,7 @@ def public_portal_errors():
             raise contract_error(404, error.code, "El enlace de cotización no existe.") from error
         if error.code == "quote_revoked":
             raise contract_error(
-                410, error.code, "Este enlace fue revocado; solicita uno nuevo."
+                410, error.code, "Este enlace fue revocado; solicite uno nuevo."
             ) from error
         if error.code == "approval_not_pending":
             raise contract_error(
@@ -54,7 +59,7 @@ def public_portal_errors():
             ) from error
         if error.code in ("quote_expired", "quote_validity_expired"):
             raise contract_error(
-                410, error.code, "Esta cotización ya no está vigente; solicita un enlace nuevo."
+                410, error.code, "Esta cotización ya no está vigente; solicite un enlace nuevo."
             ) from error
         if error.code == "quote_approve_revision_mismatch":
             raise contract_error(
@@ -64,16 +69,18 @@ def public_portal_errors():
             raise contract_error(
                 409, error.code, "Esta cotización fue reemplazada por una revisión nueva."
             ) from error
+        if error.code == "quote_link_control_stale":
+            raise contract_error(409, error.code, error.public_detail) from error
         if error.code == "quote_already_decided":
             raise contract_error(
                 409, error.code, "Esta cotización ya fue respondida."
             ) from error
         raise contract_error(
-            422, error.code, "La acción sobre la cotización fue rechazada."
+            422, error.code, error.public_detail or "La acción sobre la cotización fue rechazada."
         ) from error
     except serializers.ValidationError as error:
         raise contract_error(
-            400, "portal_payload_invalid", "Revisa la decisión ingresada."
+            400, "portal_payload_invalid", "Revise la decisión ingresada."
         ) from error
     except DatabaseError as error:
         logger.warning("Portal transaction rejected (%s)", type(error).__name__)
@@ -149,6 +156,39 @@ class ProjectQuoteLinkRevokeView(APIView):
             )
 
 
+class LinkDeadlineSerializer(StrictSerializer):
+    expected_expires_at = serializers.DateTimeField()
+    expires_at = serializers.DateTimeField()
+    confirmed = serializers.BooleanField()
+
+
+class LinkRegenerateSerializer(StrictSerializer):
+    confirmed = serializers.BooleanField()
+
+
+class ProjectQuoteLinkDeadlineView(APIView):
+    @extend_schema(operation_id="project_quote_link_deadline", request=LinkDeadlineSerializer,
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: ApprovalRecordSerializer(many=True), **ERRORS})
+    def put(self, request, project_id: UUID, approval_id: UUID):
+        data = validate(LinkDeadlineSerializer, request.data)
+        with public_portal_errors(), documentary_scope(request, _WRITERS) as (token, _, org_id):
+            return Response(link_controls.change_deadline(org_id=org_id, project_id=project_id,
+                approval_id=approval_id, actor_id=token.user_id, data=data))
+
+
+class ProjectQuoteLinkRegenerateView(APIView):
+    @extend_schema(operation_id="project_quote_link_regenerate", request=LinkRegenerateSerializer,
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: ShareQuoteResponseSerializer, **ERRORS})
+    def post(self, request, project_id: UUID, approval_id: UUID):
+        data = validate(LinkRegenerateSerializer, request.data)
+        with public_portal_errors(), documentary_scope(request, _WRITERS) as (token, tenant, org_id):
+            return Response(link_controls.regenerate(org_id=org_id, project_id=project_id,
+                approval_id=approval_id, actor_id=token.user_id, role=tenant.active_organization.role,
+                confirmed=data["confirmed"]))
+
+
 class ProjectQuoteApproveView(APIView):
     @extend_schema(
         operation_id="project_quote_approve_internal",
@@ -177,6 +217,7 @@ class ProjectQuoteApproveView(APIView):
             )
 
 
+@method_decorator(never_cache, name="dispatch")
 class PortalQuoteView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -192,6 +233,7 @@ class PortalQuoteView(APIView):
             return Response(service.portal_quote(token))
 
 
+@method_decorator(never_cache, name="dispatch")
 class PortalQuoteDecisionView(APIView):
     authentication_classes = []
     throttle_classes = [PortalRateThrottle]

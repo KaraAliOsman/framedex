@@ -15,6 +15,8 @@ DEFAULT_TERMS = {
 }
 DEFAULT_PREFERENCES = {
     "paper": "LETTER", "accent": "TEAL", "legal_footer": "",
+    "quotation_preview_minutes": 30,
+    "quotation_valid_days": 15,
     "commercial_terms": DEFAULT_TERMS,
 }
 

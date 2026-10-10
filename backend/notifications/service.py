@@ -267,7 +267,8 @@ def _existing_send(*, org_id: UUID, project_id: UUID, event_key: str, source: di
     return public(row)
 
 
-def send_quote(*, org_id: UUID, project_id: UUID, actor_id: UUID, role: str, data: dict) -> dict:
+def send_quote(*, org_id: UUID, project_id: UUID, actor_id: UUID, role: str, data: dict,
+               document_token: str | None = None) -> dict:
     from portal.service import share_quote
 
     with transaction.atomic():
@@ -279,7 +280,8 @@ def send_quote(*, org_id: UUID, project_id: UUID, actor_id: UUID, role: str, dat
         )
         if existing:
             return existing
-        link = share_quote(org_id=org_id, project_id=project_id, actor_id=actor_id, role=role)
+        link = ({"token": document_token} if document_token is not None else
+                share_quote(org_id=org_id, project_id=project_id, actor_id=actor_id, role=role))
         url = f"{settings.DEKOPEN_PUBLIC_APP_URL}/cotizacion/{link['token']}"
         message = templates.render(
             "QUOTE",
@@ -438,7 +440,8 @@ def _check_live(row: dict, message: dict):
         active = rows(
             "SELECT a.id FROM public.customer_approvals a JOIN public.projects p ON p.id=a.project_id AND p.org_id=a.org_id "
             "JOIN public.project_versions v ON v.id=a.project_version_id AND v.org_id=a.org_id "
-            "WHERE a.org_id=%s AND a.token_hash=%s AND a.status IN ('PENDING','APPROVED') AND a.expires_at>now() AND p.current_revision=v.revision_code",
+            "WHERE a.org_id=%s AND a.token_hash=%s AND a.status IN ('PENDING','APPROVED') "
+            "AND private.quote_link_expires_at(a.id,a.org_id,a.expires_at)>now() AND p.current_revision=v.revision_code",
             [str(row["org_id"]), message["quote_token_hash"]],
         )
         if not active:

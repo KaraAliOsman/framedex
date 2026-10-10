@@ -110,7 +110,7 @@ def test_quotation_follow_up_and_pipeline_read_only_current_sealed_revision(docu
     assert index['total'] == 1 and index['items'][0]['valid_until'] == due.isoformat()
     assert index['items'][0]['revision_code'] == 'REV-A'
     work = read(client,org,'/analytics/today/')
-    assert next(a for a in work['actions'] if a['kind']=='quote_expiring')['href'] == f'/projects/{project}'
+    assert next(a for a in work['actions'] if a['kind']=='quote_expiring')['href'] == f'/projects/{project}?section=quote'
     assert work['pipeline'][0]['href'] == '/quotes?phase=QUOTED&currency=CLP'
     # The PDF has a document link. Viewing a separate share link must not
     # disappear behind that unopened token, even when created_at ties.

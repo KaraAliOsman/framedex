@@ -8,14 +8,11 @@ import {
   mailRecover,
   paymentMailPreview,
   paymentMailSend,
-  quoteMailPreview,
-  quoteMailSend,
 } from "../../api/generated/dekopen";
 import type { MailPreview, MailRecord } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { formatDateTime } from "../../format";
 import { actionErrorDetail } from "../errors";
-import { runJob } from "../jobs/runJob";
 import { BlockedState, Button, EmptyState, ErrorState, LoadingState, useConfirm } from "../../ui";
 import "./mail.css";
 
@@ -55,7 +52,7 @@ export function MailFrame({ html, title }: { html: string; title: string }): JSX
   return <iframe className="mail-preview-frame" title={title} srcDoc={html} sandbox="" />;
 }
 
-export function MailComposer({
+export function PaymentMailComposer({
   orgId,
   projectId,
   paymentId,
@@ -63,7 +60,7 @@ export function MailComposer({
 }: {
   orgId: string;
   projectId: string;
-  paymentId?: string;
+  paymentId: string;
   autoOpen?: boolean;
 }): JSX.Element {
   const queryClient = useQueryClient();
@@ -74,14 +71,12 @@ export function MailComposer({
   const [sent, setSent] = useState<MailRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const options = { headers: { "X-Organization-ID": orgId } };
-  const intentStorageKey = `mail-intent:${orgId}:${projectId}:${paymentId ?? "quote"}`;
+  const intentStorageKey = `mail-intent:${orgId}:${projectId}:${paymentId}`;
   const query = useQuery({
     queryKey: ["mail-preview", orgId, projectId, paymentId],
     enabled: open,
     queryFn: async ({ signal }) => {
-      const response = paymentId
-        ? await paymentMailPreview(projectId, paymentId, { ...options, signal })
-        : await quoteMailPreview(projectId, { ...options, signal });
+      const response = await paymentMailPreview(projectId, paymentId, { ...options, signal });
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       return response.data;
     },
@@ -90,37 +85,6 @@ export function MailComposer({
     setConfirmed(false);
     setOperationKey(pendingKey(intentStorageKey, query.data) ?? crypto.randomUUID());
   }, [intentStorageKey, query.data?.source_id, query.data?.recipient, query.data?.document_sha256]);
-  async function prepareDocument(): Promise<void> {
-    if (!query.data || busy || paymentId) return;
-    setBusy(true);
-    setConfirmed(false);
-    setError(null);
-    try {
-      await runJob(
-        {
-          type: "document.artifact.generate",
-          payload: {
-            document_type: "DOC-01",
-            format: "PDF",
-            project_version_id: query.data.source_id,
-            order_id: null,
-          },
-          idempotency_key: `doc01:${query.data.source_id}`,
-        },
-        options,
-      );
-      await query.refetch();
-    } catch (caught) {
-      setError(
-        actionErrorDetail(
-          caught,
-          "No se pudo preparar el PDF. Revisa la emisión y vuelve a intentarlo.",
-        ),
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
   async function send(): Promise<void> {
     if (!query.data?.document_sha256 || !confirmed || busy || query.isFetching) return;
     setBusy(true);
@@ -142,9 +106,7 @@ export function MailComposer({
       return;
     }
     try {
-      const response = paymentId
-        ? await paymentMailSend(projectId, paymentId, body, options)
-        : await quoteMailSend(projectId, body, options);
+      const response = await paymentMailSend(projectId, paymentId, body, options);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setSent(response.data);
       if (pendingKey(intentStorageKey, query.data) === operationKey)
@@ -171,11 +133,11 @@ export function MailComposer({
             setOpen(true);
           }}
         >
-          {paymentId ? "Enviar comprobante por correo" : "Enviar cotización por correo"}
+          Enviar comprobante por correo
         </Button>
       ) : (
         <section aria-label="Revisar correo antes de enviar">
-          <h3>{paymentId ? "Correo de pago registrado" : "Correo de cotización"}</h3>
+          <h3>Correo de pago registrado</h3>
           {query.isPending ? (
             <LoadingState label="Preparando la vista previa" />
           ) : query.isError ? (
@@ -212,27 +174,14 @@ export function MailComposer({
                 </div>
               ) : (
                 <BlockedState
-                  reason="Falta el PDF de esta emisión. Prepáralo y revísalo antes de enviar."
+                  reason="Falta el PDF de este comprobante. Revisa el pago registrado antes de enviar."
                   action={
-                    !paymentId ? (
-                      <Button
-                        disabled={busy}
-                        onClick={() => {
-                          void prepareDocument();
-                        }}
-                      >
-                        {busy ? "Preparando PDF sellado" : "Preparar PDF de la cotización"}
-                      </Button>
-                    ) : undefined
+                    <Button disabled={query.isFetching} onClick={() => void query.refetch()}>
+                      Revisar comprobante
+                    </Button>
                   }
                 />
               )}
-              {!paymentId ? (
-                <p className="mail-hint">
-                  El enlace de acceso del cliente se crea al confirmar el envío; esta vista aún no
-                  comparte la cotización.
-                </p>
-              ) : null}
               {sent ? (
                 <p role="status">
                   Envío registrado · {STATE[sent.state] ?? "Revisar estado en la bandeja"}. La
@@ -385,8 +334,8 @@ export function MailHistory({
               ) : null}
               {row.error_code === "mail_quote_link_inactive" ? (
                 <p>
-                  El enlace venció o fue revocado. Revisa la cotización vigente y confirma un nuevo
-                  correo; el envío anterior se conserva.
+                  El enlace venció o fue revocado. Revisa su historial y regenera el acceso si
+                  corresponde; el envío anterior se conserva.
                 </p>
               ) : row.error_code === "mail_payment_voided" ? (
                 <p>
@@ -397,9 +346,9 @@ export function MailHistory({
               {canWrite && row.error_code === "mail_quote_link_inactive" && row.project_id ? (
                 <Link
                   className="mail-document-link"
-                  to={`/projects/${row.project_id}?correo=cotizacion`}
+                  to={`/projects/${row.project_id}?section=quote`}
                 >
-                  Preparar nuevo correo
+                  Revisar enlace de cotización
                 </Link>
               ) : canWrite &&
                 row.error_code !== "mail_payment_voided" &&

@@ -126,6 +126,19 @@ def test_floor_handle_requires_explicit_installation_height(product: dict[str, A
     assert caught.value.code == "installation_height_required"
 
 
+@pytest.mark.parametrize("case", ["FRENCH_COMMON_HANDLE", "SLIDING_COMMON_HANDLE"])
+def test_global_height_targets_actual_handles_and_keeps_input_immutable(case: str) -> None:
+    from engine.tests.operation_cases import operation_cases
+    result = operation_cases()[case]
+    leaves = result["trace"]["leaves"]
+    heights = [item["opening_handle"]["height_from_bottom_mm"] for item in leaves if item.get("opening_handle") is not None]
+    heights.extend(item["resolution"]["handle_height_mm"] for item in result["hardware"]
+                   if item.get("resolution") and item["resolution"]["handle_height_mm"] is not None)
+    assert heights
+    assert all(Decimal(value) == Decimal("600") for value in heights)
+    assert result["before"]["assembly"]["modules"][0]["tree"].get("handle_height_mm") is None
+
+
 def test_move_size_and_remove_have_exact_child_geometry(product: dict[str, Any], demo_60_params: SystemParams) -> None:
     from dekopen_engine.design_operations import _layout
     from dekopen_engine.models import ProfileRole

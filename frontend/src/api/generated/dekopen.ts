@@ -175,6 +175,8 @@ import type {
   KitList,
   KitResponse,
   KitWriteRequest,
+  LinkDeadlineRequest,
+  LinkRegenerateRequest,
   MailExample,
   MailIntegration,
   MailListParams,
@@ -208,6 +210,7 @@ import type {
   PatchedCncToolPatchRequest,
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
+  PatchedQuotationCustomerRequestRequest,
   PatchedSystemWriteRequest,
   PaymentIntegrationRequest,
   PaymentIntegrationStatus,
@@ -259,7 +262,12 @@ import type {
   ProjectWriteRequest,
   PurchasingState,
   QcRemakeRequestRequest,
+  QuotationCustomer,
   QuotationIndexResponse,
+  QuotationIssue,
+  QuotationIssueRequestRequest,
+  QuotationPreview,
+  QuotationPreviewRequestRequest,
   RectificationRequest,
   RectificationResponse,
   RemakeRequestRequest,
@@ -7210,6 +7218,337 @@ export const documentarySaveInputs = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(documentaryInputsRequest),
   });
+};
+
+export type quotationIssueResponse200 = {
+  data: QuotationIssue;
+  status: 200;
+};
+
+export type quotationIssueResponse201 = {
+  data: QuotationIssue;
+  status: 201;
+};
+
+export type quotationIssueResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationIssueResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationIssueResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationIssueResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationIssueResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationIssueResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationIssueResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationIssueResponseSuccess = (
+  quotationIssueResponse200 | quotationIssueResponse201
+) & {
+  headers: Headers;
+};
+export type quotationIssueResponseError = (
+  | quotationIssueResponse400
+  | quotationIssueResponse401
+  | quotationIssueResponse403
+  | quotationIssueResponse404
+  | quotationIssueResponse409
+  | quotationIssueResponse422
+  | quotationIssueResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationIssueResponse = quotationIssueResponseSuccess | quotationIssueResponseError;
+
+export const getQuotationIssueUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/issue/`;
+};
+
+export const quotationIssue = async (
+  projectId: string,
+  quotationIssueRequestRequest: QuotationIssueRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationIssueResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationIssueResponse>(getQuotationIssueUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(quotationIssueRequestRequest),
+  });
+};
+
+export type quotationSaveCustomerResponse200 = {
+  data: QuotationCustomer;
+  status: 200;
+};
+
+export type quotationSaveCustomerResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationSaveCustomerResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationSaveCustomerResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationSaveCustomerResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationSaveCustomerResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationSaveCustomerResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationSaveCustomerResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationSaveCustomerResponseSuccess = quotationSaveCustomerResponse200 & {
+  headers: Headers;
+};
+export type quotationSaveCustomerResponseError = (
+  | quotationSaveCustomerResponse400
+  | quotationSaveCustomerResponse401
+  | quotationSaveCustomerResponse403
+  | quotationSaveCustomerResponse404
+  | quotationSaveCustomerResponse409
+  | quotationSaveCustomerResponse422
+  | quotationSaveCustomerResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationSaveCustomerResponse =
+  quotationSaveCustomerResponseSuccess | quotationSaveCustomerResponseError;
+
+export const getQuotationSaveCustomerUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-customer/`;
+};
+
+export const quotationSaveCustomer = async (
+  projectId: string,
+  patchedQuotationCustomerRequestRequest?: PatchedQuotationCustomerRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationSaveCustomerResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationSaveCustomerResponse>(getQuotationSaveCustomerUrl(projectId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedQuotationCustomerRequestRequest),
+  });
+};
+
+export type quotationPreparePreviewResponse201 = {
+  data: QuotationPreview;
+  status: 201;
+};
+
+export type quotationPreparePreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationPreparePreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationPreparePreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationPreparePreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationPreparePreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationPreparePreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationPreparePreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationPreparePreviewResponseSuccess = quotationPreparePreviewResponse201 & {
+  headers: Headers;
+};
+export type quotationPreparePreviewResponseError = (
+  | quotationPreparePreviewResponse400
+  | quotationPreparePreviewResponse401
+  | quotationPreparePreviewResponse403
+  | quotationPreparePreviewResponse404
+  | quotationPreparePreviewResponse409
+  | quotationPreparePreviewResponse422
+  | quotationPreparePreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationPreparePreviewResponse =
+  quotationPreparePreviewResponseSuccess | quotationPreparePreviewResponseError;
+
+export const getQuotationPreparePreviewUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-preview/`;
+};
+
+export const quotationPreparePreview = async (
+  projectId: string,
+  quotationPreviewRequestRequest: QuotationPreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationPreparePreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationPreparePreviewResponse>(getQuotationPreparePreviewUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(quotationPreviewRequestRequest),
+  });
+};
+
+export type quotationPreviewAccessResponse200 = {
+  data: QuotationPreview;
+  status: 200;
+};
+
+export type quotationPreviewAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationPreviewAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationPreviewAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationPreviewAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationPreviewAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationPreviewAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationPreviewAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationPreviewAccessResponseSuccess = quotationPreviewAccessResponse200 & {
+  headers: Headers;
+};
+export type quotationPreviewAccessResponseError = (
+  | quotationPreviewAccessResponse400
+  | quotationPreviewAccessResponse401
+  | quotationPreviewAccessResponse403
+  | quotationPreviewAccessResponse404
+  | quotationPreviewAccessResponse409
+  | quotationPreviewAccessResponse422
+  | quotationPreviewAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationPreviewAccessResponse =
+  quotationPreviewAccessResponseSuccess | quotationPreviewAccessResponseError;
+
+export const getQuotationPreviewAccessUrl = (projectId: string, previewId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-previews/${previewId}/`;
+};
+
+export const quotationPreviewAccess = async (
+  projectId: string,
+  previewId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationPreviewAccessResponse> => {
+  return apiMutator<quotationPreviewAccessResponse>(
+    getQuotationPreviewAccessUrl(projectId, previewId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type documentsCompareVersionsResponse200 = {
@@ -18804,6 +19143,180 @@ export const projectQuoteLinkCreate = async (
     ...options,
     method: "POST",
   });
+};
+
+export type projectQuoteLinkDeadlineResponse200 = {
+  data: ApprovalRecord[];
+  status: 200;
+};
+
+export type projectQuoteLinkDeadlineResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectQuoteLinkDeadlineResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectQuoteLinkDeadlineResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectQuoteLinkDeadlineResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectQuoteLinkDeadlineResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectQuoteLinkDeadlineResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectQuoteLinkDeadlineResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectQuoteLinkDeadlineResponseSuccess = projectQuoteLinkDeadlineResponse200 & {
+  headers: Headers;
+};
+export type projectQuoteLinkDeadlineResponseError = (
+  | projectQuoteLinkDeadlineResponse400
+  | projectQuoteLinkDeadlineResponse401
+  | projectQuoteLinkDeadlineResponse403
+  | projectQuoteLinkDeadlineResponse404
+  | projectQuoteLinkDeadlineResponse409
+  | projectQuoteLinkDeadlineResponse422
+  | projectQuoteLinkDeadlineResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectQuoteLinkDeadlineResponse =
+  projectQuoteLinkDeadlineResponseSuccess | projectQuoteLinkDeadlineResponseError;
+
+export const getProjectQuoteLinkDeadlineUrl = (projectId: string, approvalId: string) => {
+  return `/api/v1/projects/${projectId}/quote-links/${approvalId}/deadline/`;
+};
+
+export const projectQuoteLinkDeadline = async (
+  projectId: string,
+  approvalId: string,
+  linkDeadlineRequest: LinkDeadlineRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectQuoteLinkDeadlineResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectQuoteLinkDeadlineResponse>(
+    getProjectQuoteLinkDeadlineUrl(projectId, approvalId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(linkDeadlineRequest),
+    },
+  );
+};
+
+export type projectQuoteLinkRegenerateResponse200 = {
+  data: ShareQuoteResponse;
+  status: 200;
+};
+
+export type projectQuoteLinkRegenerateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectQuoteLinkRegenerateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectQuoteLinkRegenerateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectQuoteLinkRegenerateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectQuoteLinkRegenerateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectQuoteLinkRegenerateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectQuoteLinkRegenerateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectQuoteLinkRegenerateResponseSuccess = projectQuoteLinkRegenerateResponse200 & {
+  headers: Headers;
+};
+export type projectQuoteLinkRegenerateResponseError = (
+  | projectQuoteLinkRegenerateResponse400
+  | projectQuoteLinkRegenerateResponse401
+  | projectQuoteLinkRegenerateResponse403
+  | projectQuoteLinkRegenerateResponse404
+  | projectQuoteLinkRegenerateResponse409
+  | projectQuoteLinkRegenerateResponse422
+  | projectQuoteLinkRegenerateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectQuoteLinkRegenerateResponse =
+  projectQuoteLinkRegenerateResponseSuccess | projectQuoteLinkRegenerateResponseError;
+
+export const getProjectQuoteLinkRegenerateUrl = (projectId: string, approvalId: string) => {
+  return `/api/v1/projects/${projectId}/quote-links/${approvalId}/regenerate/`;
+};
+
+export const projectQuoteLinkRegenerate = async (
+  projectId: string,
+  approvalId: string,
+  linkRegenerateRequest: LinkRegenerateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectQuoteLinkRegenerateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectQuoteLinkRegenerateResponse>(
+    getProjectQuoteLinkRegenerateUrl(projectId, approvalId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(linkRegenerateRequest),
+    },
+  );
 };
 
 export type projectQuoteLinkRevokeResponse200 = {

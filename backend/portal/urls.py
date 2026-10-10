@@ -6,9 +6,13 @@ from portal.views import (
     ProjectQuoteApproveView,
     ProjectQuoteLinkRevokeView,
     ProjectQuoteLinkView,
+    ProjectQuoteLinkDeadlineView,
+    ProjectQuoteLinkRegenerateView,
 )
 
 urlpatterns = [
+    path("projects/<uuid:project_id>/quote-links/<uuid:approval_id>/deadline/", ProjectQuoteLinkDeadlineView.as_view(), name="project-quote-link-deadline"),
+    path("projects/<uuid:project_id>/quote-links/<uuid:approval_id>/regenerate/", ProjectQuoteLinkRegenerateView.as_view(), name="project-quote-link-regenerate"),
     path(
         "projects/<uuid:project_id>/quote-link/",
         ProjectQuoteLinkView.as_view(),

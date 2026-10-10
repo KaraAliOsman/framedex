@@ -68,17 +68,34 @@ def _product(position):
 
 def _design_edit(org_id, position, ops):
     # Wildcards expand against the actual graph before entering the engine.
-    product = _product(position)
+    from dekopen_engine.design_operations import as_product, handled_leaf_keys, walk
+    from dekopen_engine.geometry import compute_geometry
+    from dekopen_engine.models import ParametricNode
+    product = as_product(_product(position))
     expanded = []
     for op in ops:
-        if op.get("module") == "*":
-            expanded.extend({**op, "module": module["id"]} for module in product["assembly"]["modules"])
-        else:
-            expanded.append(op)
+        modules = product["assembly"]["modules"] if op.get("module") == "*" else [None]
+        for module in modules:
+            concrete = {**op, "module": module["id"]} if module else op
+            if concrete["op"] == "set_handle_height" and concrete.get("bay") == "*":
+                targets = [module] if module else [item for item in product["assembly"]["modules"] if item["id"] == concrete.get("module")]
+                params = catalog_for(org_id, position["design"]["system_id"])["params"]
+                for target in targets:
+                    root = {**target["tree"], "width_mm": target["width_mm"], "height_mm": target["height_mm"]}
+                    computation = compute_geometry(ParametricNode.model_validate_json(json.dumps(root)), params,
+                        finish=position["design"]["color"], diagnostic=True, diagnose_catalog_limits=True)
+                    leaf_bays = {bay for bay, _ in handled_leaf_keys(computation)}
+                    expanded.extend({**concrete, "module": target["id"], "bay": node["id"], "all_handles": True}
+                                    for node in walk(target["tree"]) if node["type"] == "BAY" and node["id"] in leaf_bays)
+            else:
+                expanded.append(concrete)
+    if not expanded:
+        return None
     design = position["design"]
     result = simulate_ops(org_id, product, expanded, design["system_id"], design["color"])
     if not result["valid"]:
-        raise OperationError("simulation_invalid", "El motor rechaza la geometría propuesta.")
+        diagnoses = [issue.get("message") for issue in result["issues"] if issue.get("message")]
+        raise OperationError("simulation_invalid", "El motor rechaza la geometría propuesta. " + " ".join(diagnoses))
     position["design"] = _plain(design_from_product(result["product"], result["system_id"], result["color"]))
     return result
 
@@ -182,7 +199,10 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
             if not wanted:
                 raise OperationError("batch_no_targets", "Ninguna posición coincide con el filtro.")
             for position in wanted:
-                _design_edit(org_id, position, op["ops"])
+                try:
+                    _design_edit(org_id, position, op["ops"])
+                except OperationError as error:
+                    raise OperationError(error.code, f"Posición {position['position_index']} · {position['location_tag'] or 'Sin ubicación'}: {error}") from error
         else:
             raise OperationError("operation_scope_invalid", "Usa operaciones de posición o filtros dentro del proyecto.")
         if len(after) > MAX_PROJECT_EDITS:

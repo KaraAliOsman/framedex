@@ -10,6 +10,16 @@ import type { CommercialTerms } from "./commercialTerms";
 import type { PaperEnum } from "./paperEnum";
 
 export interface DocumentPreferences {
+  /**
+   * @minimum 5
+   * @maximum 60
+   */
+  quotation_preview_minutes?: number;
+  /**
+   * @minimum 1
+   * @maximum 365
+   */
+  quotation_valid_days?: number;
   paper: PaperEnum;
   accent: AccentEnum;
   /** @maxLength 240 */

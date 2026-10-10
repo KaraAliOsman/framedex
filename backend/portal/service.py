@@ -11,6 +11,7 @@ import logging
 import secrets
 from typing import Iterator
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from django.db import DatabaseError, connection, transaction
 from psycopg import sql
@@ -157,8 +158,8 @@ def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]
     to (the token stays opaque — the link URL is the capability), which
     revision it carried, and how the client answered."""
     with documentary_backend():
-        one(
-            "SELECT id FROM public.projects WHERE id=%s AND org_id=%s",
+        project = one(
+            "SELECT id,current_revision FROM public.projects WHERE id=%s AND org_id=%s",
             [str(project_id), str(org_id)],
             "project_not_found",
         )
@@ -173,6 +174,12 @@ def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]
                 if row["decided_at"]
                 else None,
                 "expires_at": row["expires_at"].isoformat(),
+                "original_expires_at": row["original_expires_at"].isoformat(),
+                "link_state": ("SUPERSEDED" if str(row["revision_code"]) != str(project["current_revision"])
+                    else "REVOKED" if row["status"] == "REVOKED"
+                    else "EXPIRED" if row["expires_at"] <= datetime.now(timezone.utc) or _validity_expired(row["valid_until"])
+                    else row["status"] if row["status"] in ("APPROVED", "DECLINED")
+                    else "VIEWED" if row["view_count"] else "ACTIVE"),
                 "created_at": row["created_at"].isoformat(),
                 "revoked_at": row["revoked_at"].isoformat()
                 if row["revoked_at"]
@@ -185,8 +192,9 @@ def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]
             }
             for row in rows(
                 "SELECT a.id,a.status,a.link_source,a.decided_by,a.decided_at,a.decided_note,"
-                "a.expires_at,a.created_at,a.revoked_at,a.view_count,a.last_viewed_at,"
-                "v.revision_code "
+                "private.quote_link_expires_at(a.id,a.org_id,a.expires_at) AS expires_at,"
+                "a.expires_at AS original_expires_at,a.created_at,a.revoked_at,a.view_count,a.last_viewed_at,"
+                "v.revision_code,v.snapshot_json->'project'->>'quotation_valid_until' AS valid_until "
                 "FROM public.customer_approvals a "
                 "JOIN public.project_versions v "
                 "ON v.id = a.project_version_id "
@@ -203,7 +211,7 @@ def _validity_expired(value: object) -> bool:
     if not value:
         return False
     try:
-        return date.fromisoformat(str(value)) < datetime.now(timezone.utc).date()
+        return date.fromisoformat(str(value)) < datetime.now(ZoneInfo("America/Santiago")).date()
     except ValueError:
         raise DocumentaryError("quotation_valid_until_invalid") from None
 
@@ -216,6 +224,10 @@ def _approval_for_token(token: str) -> dict[str, object]:
     if len(found) != 1:
         raise DocumentaryError("quote_not_found")
     approval = found[0]
+    _scope_org(approval["org_id"])
+    deadline = one("SELECT private.quote_link_expires_at(%s,%s,%s) AS expires_at",
+                   [approval["id"], approval["org_id"], approval["expires_at"]])
+    approval["expires_at"] = deadline["expires_at"]
     if approval["status"] == "REVOKED":
         raise DocumentaryError("quote_revoked")
     if approval["expires_at"] < datetime.now(timezone.utc):

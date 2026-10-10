@@ -33,6 +33,7 @@ export interface OperationSetHandleHeight {
    * @pattern ^-?\d+(?:\.\d{1,2})?$
    */
   sill_height_mm?: string;
+  all_handles?: boolean;
   base_sig?: string;
   description?: string;
   result?: OperationSetHandleHeightResult;

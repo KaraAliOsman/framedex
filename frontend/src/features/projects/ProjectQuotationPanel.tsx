@@ -1,6 +1,6 @@
-import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
-import { fmtMm } from "../../format";
+import { fmtMm, isValidRut, isValidEmail } from "../../format";
+import { Link } from "react-router-dom";
 import { decimalInputValue } from "../../decimal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -8,19 +8,24 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
 import {
   documentaryArtifactAccess,
-  documentaryFreezeRevisionA,
+  quotationPreparePreview,
+  quotationIssue,
+  quotationSaveCustomer,
   documentaryListArtifacts,
   documentaryPrepareInputs,
   documentarySaveInputs,
   productionRelease,
   projectQuoteApproveInternal,
-  projectQuoteLinkCreate,
+  projectQuoteLinkRegenerate,
+  projectQuoteLinkDeadline,
   projectQuoteLinkRevoke,
   projectQuoteLinksList,
   projectsStartSuccessor,
   projectsResetPricing,
 } from "../../api/generated/dekopen";
 import type {
+  QuotationPreview,
+  QuotationIssueRequestRequest,
   AccessoryLine,
   AccessorySchedule,
   ApprovalRecord,
@@ -52,6 +57,17 @@ import { runJob } from "../jobs/runJob";
 import { useConfirm, usePrompt } from "../../ui";
 import { CommercialTermsEditor, validCommercialTerms } from "./CommercialTermsEditor";
 import "./document-settings.css";
+import "./quotation-workflow.css";
+import {
+  QuotationChecklist,
+  QuotationReview,
+  focusQuotationField,
+  type QuotationCheck,
+} from "./QuotationReview";
+import { QuotationLinkLedger } from "./QuotationLinkLedger";
+import { QuotationGlobalChanges } from "./QuotationGlobalChanges";
+import { MailHistory } from "../notifications/MailPanels";
+import { DimLoader } from "../../ui/Signature";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -121,13 +137,6 @@ const ORDER_TYPE_KEYS: Record<(typeof ORDER_TYPES)[number], TranslationKey> = {
 };
 
 const EMPTY_EDGES: PolishingEdges = { top: false, right: false, bottom: false, left: false };
-
-const approvalStatusKeys: Record<ApprovalRecord["status"], TranslationKey> = {
-  PENDING: "quotation.linkPending",
-  APPROVED: "quotation.linkApproved",
-  DECLINED: "quotation.linkDeclined",
-  REVOKED: "quotation.linkRevoked",
-};
 
 /** One inspector rule that blocked the freeze, from the 422's
  * `error.inspector_failures` extra (review WB2). */
@@ -652,7 +661,6 @@ export function ProjectQuotationPanel({
   orgId,
   canWrite,
   canRelease = false,
-  sharedUrlSeed,
   onChanged,
   onDirtyChange,
 }: {
@@ -662,9 +670,6 @@ export function ProjectQuotationPanel({
   /** OWNER/WORKSHOP_MANAGER — releasing a sealed version creates workshop
    * orders, a warehouse-side authority estimators don't hold. */
   canRelease?: boolean;
-  /** A link minted by the workspace header lands here too — the share row
-   * (WhatsApp/mail/copy) must appear regardless of which button minted it. */
-  sharedUrlSeed?: string;
   onChanged(): Promise<unknown>;
   onDirtyChange?(dirty: boolean): void;
 }): JSX.Element {
@@ -673,14 +678,43 @@ export function ProjectQuotationPanel({
   const queryClient = useQueryClient();
   const [preparation, setPreparation] = useState<DocumentaryPreparationResponse | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [customerDirty, setCustomerDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [sharedUrl, setSharedUrl] = useState("");
-  // Header-minted links flow in via sharedUrlSeed — without the sync the
-  // share row only ever appeared when THIS panel's button created the link.
+  const shareField = useRef<HTMLInputElement>(null);
+  const [manualCopy, setManualCopy] = useState(false);
+  const [pdf, setPdf] = useState<QuotationPreview | null>(null);
+  const [pdfReady, setPdfReady] = useState(false);
+  const [customer, setCustomer] = useState({
+    client_name: project.client_name,
+    client_rut: project.client_rut ?? "",
+    client_email: project.client_email ?? "",
+    delivery_address: project.delivery_address ?? "",
+  });
+  const pendingKey = `quotation-issue:${orgId}:${project.id}`;
+  const [pendingIssue, setPendingIssue] = useState<QuotationIssueRequestRequest | null>(() => {
+    try {
+      const raw = JSON.parse(sessionStorage.getItem(pendingKey) ?? "null");
+      return raw && typeof raw.preview_id === "string" && raw.confirmed === true ? raw : null;
+    } catch {
+      return null;
+    }
+  });
+  const focusAfterLoad = useRef<string | null>(null);
+  function markDirty(customerEdit = false): void {
+    if (customerEdit) setCustomerDirty(true);
+    else setDirty(true);
+    setPdf(null);
+    setPdfReady(false);
+    setConfirmed(false);
+  }
   useEffect(() => {
-    if (sharedUrlSeed) setSharedUrl(sharedUrlSeed);
-  }, [sharedUrlSeed]);
+    if (preparation && focusAfterLoad.current) {
+      focusQuotationField(focusAfterLoad.current);
+      focusAfterLoad.current = null;
+    }
+  }, [preparation]);
   // Inspector rules that blocked the last freeze attempt — the 422's
   // inspector_failures payload so the estimator sees WHAT failed (WB2).
   const [inspectorFailures, setInspectorFailures] = useState<InspectorFailure[]>([]);
@@ -705,10 +739,11 @@ export function ProjectQuotationPanel({
   const approvals = useQuery({
     queryKey: ["projects", "quote-approvals", orgId, project.id],
     queryFn: async () => {
-      const response = await projectQuoteLinksList(project.id);
+      const response = await projectQuoteLinksList(project.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       return response.data;
     },
+    refetchInterval: 10000,
   });
   useEffect(
     () => () => {
@@ -717,9 +752,9 @@ export function ProjectQuotationPanel({
     [],
   );
   useEffect(() => {
-    onDirtyChange?.(dirty);
+    onDirtyChange?.(dirty || customerDirty);
     return () => onDirtyChange?.(false);
-  }, [dirty, onDirtyChange]);
+  }, [dirty, customerDirty, onDirtyChange]);
 
   async function loadPreparation(): Promise<void> {
     const current = ++generation.current;
@@ -738,8 +773,13 @@ export function ProjectQuotationPanel({
           }),
         });
       }
-    } catch {
-      if (generation.current === current) setMessage(t("quotation.loadError"));
+    } catch (error) {
+      if (generation.current === current)
+        setMessage(
+          error instanceof ApiError
+            ? (apiDetail(error.payload) ?? t("quotation.loadError"))
+            : "No se pudo cargar la preparación. Revisa la conexión y vuelve a intentar.",
+        );
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -747,7 +787,7 @@ export function ProjectQuotationPanel({
 
   function updatePosition(index: number, update: Partial<DocumentaryPreparationPosition>): void {
     if (!preparation) return;
-    setDirty(true);
+    markDirty();
     setPreparation({
       ...preparation,
       positions: preparation.positions.map((position, positionIndex) =>
@@ -880,9 +920,15 @@ export function ProjectQuotationPanel({
     updateAccessories(index, { items });
   }
 
-  async function emit(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function prepareDocument(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!preparation || !confirmed) return;
+    if (!preparation || busy || pendingIssue) return;
+    if (checks.some((check) => !check.complete) || emitMissing.length > 0) {
+      const target = checks.find((check) => !check.complete)?.target ?? emitMissing[0]?.targetId;
+      setMessage("Completa los faltantes indicados antes de preparar el PDF.");
+      if (target) focusQuotationField(target);
+      return;
+    }
     if (preparation.commercial_terms && !validCommercialTerms(preparation.commercial_terms)) {
       setMessage(
         "Revisa el calendario de pagos: los porcentajes deben sumar 100 % y cada hito necesita un nombre.",
@@ -928,6 +974,18 @@ export function ProjectQuotationPanel({
     setBusy(true);
     setMessage("");
     try {
+      if (
+        Object.entries(customer).some(
+          ([key, value]) => value.trim() !== String(project[key as keyof typeof customer] ?? ""),
+        )
+      ) {
+        const response = await quotationSaveCustomer(
+          project.id,
+          { ...customer, expected_updated_at: project.updated_at },
+          requestOptions,
+        );
+        if (response.status !== 200) throw new ApiError(response.status, response.data);
+      }
       const saved = await documentarySaveInputs(
         project.id,
         {
@@ -953,28 +1011,20 @@ export function ProjectQuotationPanel({
         requestOptions,
       );
       if (saved.status !== 200) throw new ApiError(saved.status, saved.data);
-      const frozen = await documentaryFreezeRevisionA(
+      const response = await quotationPreparePreview(
         project.id,
-        { pricing_operation_id: project.current_pricing_operation_id, confirmed: true },
+        { pricing_operation_id: project.current_pricing_operation_id },
         requestOptions,
       );
-      if (frozen.status !== 200 && frozen.status !== 201)
-        throw new ApiError(frozen.status, frozen.data);
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
-      setPreparation(null);
+      setPdf(response.data);
       setConfirmed(false);
       setDirty(false);
+      setCustomerDirty(false);
       setInspectorFailures([]);
-      // A new sealed revision rebases the commercial deal — the header
-      // stepper's "Saldo" must recompute against THIS revision, not the
-      // previously emitted one (review WM5).
-      void queryClient.invalidateQueries({
-        queryKey: ["projects", "payments-summary", orgId, project.id],
-      });
       setMessage(
-        `${t("quotation.emitted")} ${formatRevision(frozen.data.revision_code)}${
-          frozen.data.production_allowed ? "" : ` · ${t("quotation.quoteOnlyNotice")}`
-        }`,
+        "PDF preparado. Revisa el documento, el destinatario y las condiciones antes de emitir.",
       );
       await onChanged();
     } catch (error) {
@@ -1032,6 +1082,9 @@ export function ProjectQuotationPanel({
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setPreparation(null);
+      setPdf(null);
+      setConfirmed(false);
+      setPdfReady(false);
       setDirty(false);
       await onChanged();
     } catch {
@@ -1127,56 +1180,183 @@ export function ProjectQuotationPanel({
   // APPROVED and still request changes; the sealed revision is immutable
   // and the successor just needs a fresh approval (review WM7).
   const canRevise = canWrite && (project.status === "QUOTED" || project.status === "APPROVED");
-  const canShare =
-    canWrite &&
-    (project.status === "QUOTED" || project.status === "APPROVED") &&
-    (project.versions?.length ?? 0) > 0;
-
-  async function shareQuote(): Promise<void> {
-    const pendingLink = (approvals.data ?? []).find(
-      (link) => link.status === "PENDING" && link.link_source !== "DOCUMENT",
-    );
-    if (pendingLink) {
-      const ok = await confirm({
-        title: t("quotation.shareReplacesLink"),
-        confirmLabel: t("quotation.share"),
-      });
-      if (!ok) return;
+  async function saveCustomer(): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await quotationSaveCustomer(
+        project.id,
+        { ...customer, expected_updated_at: project.updated_at },
+        requestOptions,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      await onChanged();
+      setMessage(
+        "Cliente y dirección de obra guardados. Los precios aplicados conservan su autoridad.",
+      );
+      setCustomerDirty(false);
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? (apiDetail(error.payload) ?? "No se pudo guardar. Recarga la obra y vuelve a intentar.")
+          : "No se pudo guardar. Revisa la conexión y vuelve a intentar.",
+      );
+    } finally {
+      setBusy(false);
     }
+  }
+  async function issue(recover = false): Promise<void> {
+    const intent = recover
+      ? pendingIssue
+      : pdf && confirmed && pdfReady
+        ? {
+            preview_id: pdf.id,
+            expected_document_sha256: pdf.file_sha256,
+            expected_snapshot_sha256: pdf.snapshot_sha256,
+            expected_recipient: pdf.recipient,
+            confirmed: true,
+          }
+        : null;
+    if (!intent || busy) return;
     const current = ++generation.current;
     setBusy(true);
     setMessage("");
-    setSharedUrl("");
     try {
-      const response = await projectQuoteLinkCreate(project.id, requestOptions);
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      sessionStorage.setItem(pendingKey, JSON.stringify(intent));
+      setPendingIssue(intent);
+      const response = await quotationIssue(project.id, intent, requestOptions);
+      if (response.status !== 200 && response.status !== 201)
+        throw new ApiError(response.status, response.data);
+      sessionStorage.removeItem(pendingKey);
+      setPendingIssue(null);
       if (generation.current !== current) return;
-      // The header's commercial timeline derives "sent" from the approvals
-      // list — refetch so the freshly created link shows immediately.
+      setSharedUrl(`${window.location.origin}${response.data.path}`);
+      setManualCopy(false);
+      setPdf(null);
+      setPreparation(null);
+      setConfirmed(false);
+      setDirty(false);
+      setCustomerDirty(false);
+      setInspectorFailures([]);
       void queryClient.invalidateQueries({
         queryKey: ["projects", "quote-approvals", orgId, project.id],
       });
-      const url = `${window.location.origin}${response.data.path}`;
-      setSharedUrl(url);
-      try {
-        await navigator.clipboard.writeText(url);
-        setMessage(`${t("quotation.shareCopied")} — ${url}`);
-      } catch {
-        setMessage(t("quotation.shareReady"));
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "payments-summary", orgId, project.id],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", "artifacts", orgId, project.id],
+      });
+      void queryClient.invalidateQueries({ queryKey: ["mail", orgId] });
+      setMessage(
+        `${formatRevision(response.data.revision_code)} sellada. El correo se registró para ${response.data.mail.recipient}; sigue su entrega en el historial.${response.data.production_allowed ? "" : " La fabricación requiere completar y confirmar su evidencia."}`,
+      );
+      await onChanged();
+    } catch (error) {
+      if (generation.current !== current) return;
+      setMessage(
+        error instanceof ApiError
+          ? (apiDetail(error.payload) ??
+              "No se pudo registrar la emisión. Revisa la conexión y recupera el mismo intento.")
+          : "La respuesta de emisión no llegó. Recupera el mismo intento para comprobar el sello y el correo.",
+      );
+      if (error instanceof ApiError && [400, 403, 404, 422].includes(error.status)) {
+        sessionStorage.removeItem(pendingKey);
+        setPendingIssue(null);
+      } else if (error instanceof ApiError && error.status === 409) {
+        const code = (error.payload as { error?: { code?: string } })?.error?.code;
+        if (["quotation_preview_stale", "quotation_preview_expired"].includes(code ?? "")) {
+          sessionStorage.removeItem(pendingKey);
+          setPendingIssue(null);
+          setPdf(null);
+          setConfirmed(false);
+        }
       }
-    } catch {
-      if (generation.current === current) setMessage(t("quotation.error"));
     } finally {
       if (generation.current === current) setBusy(false);
+    }
+  }
+  async function regenerateLink(link: ApprovalRecord): Promise<void> {
+    if (
+      !(await confirm({
+        title: `¿Regenerar el enlace de ${formatRevision(link.revision_code)}?`,
+        body: "El enlace seleccionado quedará revocado. Se creará uno nuevo para la misma revisión; el PDF sellado y las decisiones anteriores se conservan.",
+        confirmLabel: "Revocar y regenerar",
+      }))
+    )
+      return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectQuoteLinkRegenerate(
+        project.id,
+        link.id,
+        { confirmed: true },
+        requestOptions,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setSharedUrl(`${window.location.origin}${response.data.path}`);
+      setManualCopy(false);
+      await approvals.refetch();
+      setMessage("Enlace regenerado. Copia y entrega el enlace vigente al cliente.");
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? (apiDetail(error.payload) ??
+              "No se pudo regenerar. Recarga el historial y vuelve a intentar.")
+          : "No se pudo regenerar. Revisa la conexión y vuelve a intentar.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function changeDeadline(link: ApprovalRecord, date: string): Promise<void> {
+    if (
+      !(await confirm({
+        title: `¿Cambiar el acceso de ${formatRevision(link.revision_code)} hasta ${formatDateTime(date)}?`,
+        body: "El vencimiento del enlace cambiará. La vigencia comercial del PDF conserva su fecha sellada.",
+        confirmLabel: "Cambiar vencimiento",
+      }))
+    )
+      return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectQuoteLinkDeadline(
+        project.id,
+        link.id,
+        { expires_at: date, expected_expires_at: link.expires_at, confirmed: true },
+        requestOptions,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      await approvals.refetch();
+      setMessage(
+        "Vencimiento del enlace actualizado. El documento sellado conserva su vigencia comercial.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? (apiDetail(error.payload) ??
+              "No se pudo cambiar el vencimiento. Recarga el historial y vuelve a intentar.")
+          : "No se pudo cambiar el vencimiento. Revisa la conexión y vuelve a intentar.",
+      );
+    } finally {
+      setBusy(false);
     }
   }
 
   async function copySharedUrl(): Promise<void> {
     try {
       await navigator.clipboard.writeText(sharedUrl);
-      setMessage(`${t("quotation.shareCopied")} — ${sharedUrl}`);
+      setManualCopy(false);
+      setMessage("Enlace copiado.");
     } catch {
-      setMessage(sharedUrl);
+      setManualCopy(true);
+      setMessage("El portapapeles no está disponible. Selecciona el enlace y cópialo manualmente.");
+      requestAnimationFrame(() => {
+        shareField.current?.focus();
+        shareField.current?.select();
+      });
     }
   }
 
@@ -1292,13 +1472,90 @@ export function ProjectQuotationPanel({
         });
       }
     });
-    if (!confirmed) {
-      emitMissing.push({
-        key: "confirm",
-        label: t("quotation.confirm"),
-        targetId: "quotation-confirm",
-      });
+  }
+
+  const terms = preparation?.commercial_terms;
+  const clientComplete = Boolean(customer.client_name.trim());
+  const rutComplete = Boolean(customer.client_rut.trim()) && isValidRut(customer.client_rut);
+  const emailComplete =
+    Boolean(customer.client_email.trim()) && isValidEmail(customer.client_email);
+  const customerComplete =
+    clientComplete && rutComplete && emailComplete && Boolean(customer.delivery_address.trim());
+  const checks: QuotationCheck[] = [
+    { key: "client", label: "Cliente", complete: clientComplete, target: "quotation-client_name" },
+    { key: "rut", label: "RUT válido", complete: rutComplete, target: "quotation-client_rut" },
+    {
+      key: "email",
+      label: "Correo del cliente",
+      complete: emailComplete,
+      target: "quotation-client_email",
+    },
+    {
+      key: "address",
+      label: "Dirección de obra",
+      complete: Boolean(customer.delivery_address.trim()),
+      target: "quotation-delivery_address",
+    },
+    {
+      key: "positions",
+      label: "Posiciones y precios",
+      complete:
+        canEmit &&
+        Boolean(project.position_count) &&
+        !emitMissing.some((item) => /^(loc|pl|hp|rf|seed)-/.test(item.key)),
+      target:
+        emitMissing.find((item) => /^(loc|pl|hp|rf|seed)-/.test(item.key))?.targetId ??
+        "quotation-positions",
+    },
+    {
+      key: "valid",
+      label: "Vigencia",
+      complete: Boolean(
+        preparation?.quotation_valid_until &&
+        preparation.quotation_valid_until >=
+          new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(new Date()),
+      ),
+      target: "quotation-valid-until",
+    },
+    {
+      key: "payment",
+      label: "Condiciones de pago",
+      complete: Boolean(
+        preparation?.payment_terms.trim() &&
+        terms?.payment_schedule?.length &&
+        validCommercialTerms(terms),
+      ),
+      target: "quotation-payment-terms",
+    },
+    ...(
+      [
+        ["delivery_text", "Plazo de entrega"],
+        ["installation_text", "Alcance de instalación"],
+        ["exclusions", "Exclusiones"],
+        ["warranty", "Garantía"],
+      ] as const
+    ).map(([key, label]) => ({
+      key,
+      label,
+      complete: Boolean(terms?.[key]?.trim()),
+      target: `quotation-terms-${key}`,
+    })),
+  ];
+  function checklistTarget(target: string): void {
+    if (target === "quotation-positions" && !canEmit) {
+      focusQuotationField(target);
+      return;
     }
+    if (
+      target.startsWith("quotation-client_") ||
+      target === "quotation-delivery_address" ||
+      preparation
+    ) {
+      focusQuotationField(target);
+      return;
+    }
+    focusAfterLoad.current = target;
+    void loadPreparation();
   }
 
   /** production_ready is a load-time snapshot — it can't see policies the
@@ -1325,8 +1582,11 @@ export function ProjectQuotationPanel({
             {t("quotation.current")}: <strong>{formatRevision(project.current_revision)}</strong>
           </p>
         </div>
-        {canEmit && !preparation && (
-          <button disabled={busy} onClick={() => void loadPreparation()}>
+        {canWrite && project.status === "DRAFT" && !preparation && (
+          <button
+            disabled={busy || project.position_count === 0 || Boolean(pendingIssue)}
+            onClick={() => void loadPreparation()}
+          >
             {t("quotation.prepare")}
           </button>
         )}
@@ -1340,11 +1600,6 @@ export function ProjectQuotationPanel({
             {t("quotation.editQuoted")}
           </button>
         )}
-        {canShare && (
-          <button disabled={busy} onClick={() => void shareQuote()}>
-            {t("quotation.share")}
-          </button>
-        )}
         {canWrite && project.status === "QUOTED" && (
           <button disabled={busy} onClick={() => void approveInternally()}>
             {t("quotation.markApproved")}
@@ -1352,833 +1607,929 @@ export function ProjectQuotationPanel({
         )}
       </header>
       {message && <p role="status">{message}</p>}
-      {sharedUrl && (
-        <div className="quotation-share">
-          <a
-            className="link-button"
-            href={`https://wa.me/?text=${encodeURIComponent(
-              t("quotation.shareBody").replace("{name}", project.name).replace("{url}", sharedUrl),
-            )}`}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {t("quotation.shareWhatsApp")}
-          </a>
-          <a
-            className="link-button"
-            href={`mailto:${project.client_email ?? ""}?subject=${encodeURIComponent(
-              t("quotation.shareSubject").replace("{code}", project.code),
-            )}&body=${encodeURIComponent(
-              t("quotation.shareBody").replace("{name}", project.name).replace("{url}", sharedUrl),
-            )}`}
-          >
-            {t("quotation.shareEmail")}
-          </a>
-          <button className="link-button" onClick={() => void copySharedUrl()} type="button">
-            {t("quotation.shareCopy")}
+      {pendingIssue && (
+        <div className="quotation-pending">
+          <p>Hay una emisión confirmada cuya respuesta debes recuperar antes de preparar otra.</p>
+          <button type="button" disabled={busy} onClick={() => void issue(true)}>
+            Recuperar emisión confirmada
           </button>
         </div>
       )}
-      {inspectorFailures.length > 0 && (
-        <ul className="quotation-inspector-failures" role="alert">
-          {inspectorFailures.map((failure, index) => (
-            <li key={`${failure.rule}-${failure.bay_id ?? ""}-${index}`}>
-              <strong>{failure.rule}</strong> · {failure.title}
-              {failure.bay_id ? (
-                <>
-                  {" · "}
-                  {t("quotation.inspectorAffected")} {failure.bay_id}
-                  {failure.leaf_id ? `/${failure.leaf_id}` : ""}
-                </>
-              ) : null}
-              {failure.recommendation ? <p>{failure.recommendation}</p> : null}
-            </li>
-          ))}
-        </ul>
+      {sharedUrl && (
+        <div className="quotation-share">
+          <button className="link-button" onClick={() => void copySharedUrl()} type="button">
+            Copiar enlace
+          </button>
+          {manualCopy ? (
+            <label>
+              Enlace para copiar manualmente
+              <input
+                ref={shareField}
+                readOnly
+                value={sharedUrl}
+                onFocus={(event) => event.target.select()}
+              />
+            </label>
+          ) : null}
+        </div>
       )}
-      {canWrite && project.status === "DRAFT" && !project.pricing_current && (
-        <p>{t("quotation.priceFirst")}</p>
-      )}
-      {preparation && (
-        <ValidatedForm className="quotation-form" onSubmit={(event) => void emit(event)}>
-          <label htmlFor="quotation-payment-terms">{t("quotation.paymentTerms")}</label>
-          <textarea
-            id="quotation-payment-terms"
-            required
-            maxLength={2000}
-            disabled={busy}
-            value={preparation.payment_terms}
-            onChange={(event) => {
-              setDirty(true);
-              setPreparation({ ...preparation, payment_terms: event.target.value });
-            }}
-          />
-          <label htmlFor="quotation-valid-until">{t("quotation.validUntil")}</label>
-          <input
-            id="quotation-valid-until"
-            required
-            type="date"
-            disabled={busy}
-            value={preparation.quotation_valid_until ?? ""}
-            onChange={(event) => {
-              setDirty(true);
-              setPreparation({ ...preparation, quotation_valid_until: event.target.value });
-            }}
-          />
-          <CommercialTermsEditor
-            value={preparation.commercial_terms ?? {}}
-            disabled={busy}
-            onChange={(commercial_terms) => {
-              setDirty(true);
-              setPreparation({ ...preparation, commercial_terms });
-            }}
-          />
-          {(project.versions?.length ?? 0) > 0 && (
-            <details>
-              <summary>Comparar revisiones anteriores como alternativas</summary>
-              <p>
-                Se imprimen completas con su precio sellado y no se incluyen en el total. Puedes
-                elegir hasta tres.
-              </p>
-              {project.versions?.map((version) => (
-                <label key={version.id}>
+      {project.status === "DRAFT" && (
+        <div className="quotation-workbench">
+          <QuotationChecklist items={checks} onTarget={checklistTarget} />
+          <div className="quotation-fields">
+            <fieldset className="quotation-customer" disabled={!canWrite || busy}>
+              <legend>Cliente y obra</legend>
+              {(
+                [
+                  ["client_name", "Cliente"],
+                  ["client_rut", "RUT del cliente"],
+                  ["client_email", "Correo del cliente"],
+                  ["delivery_address", "Dirección de obra"],
+                ] as const
+              ).map(([field, label]) => (
+                <label key={field}>
+                  {label}
                   <input
-                    type="checkbox"
-                    checked={(preparation.alternative_version_ids ?? []).includes(version.id)}
-                    disabled={
-                      busy ||
-                      (!preparation.alternative_version_ids?.includes(version.id) &&
-                        (preparation.alternative_version_ids?.length ?? 0) >= 3)
+                    id={`quotation-${field}`}
+                    value={customer[field]}
+                    type={field === "client_email" ? "email" : "text"}
+                    maxLength={
+                      field === "delivery_address" ? 2000 : field === "client_rut" ? 50 : 255
+                    }
+                    aria-invalid={
+                      field === "client_rut"
+                        ? Boolean(customer[field] && !rutComplete)
+                        : field === "client_email"
+                          ? Boolean(customer[field] && !emailComplete)
+                          : undefined
                     }
                     onChange={(event) => {
-                      setDirty(true);
-                      setPreparation({
-                        ...preparation,
-                        alternative_version_ids: event.target.checked
-                          ? [...(preparation.alternative_version_ids ?? []), version.id]
-                          : (preparation.alternative_version_ids ?? []).filter(
-                              (id) => id !== version.id,
-                            ),
-                      });
+                      markDirty(true);
+                      setCustomer({ ...customer, [field]: event.target.value });
                     }}
                   />
-                  Revisión {version.revision_code.replace("REV-", "")}
+                  {field === "client_rut" && customer[field] && !rutComplete ? (
+                    <small>
+                      El dígito verificador no coincide. Revisa el RUT; se valida con módulo 11.
+                    </small>
+                  ) : null}
+                  {field === "client_email" && customer[field] && !emailComplete ? (
+                    <small>Ingresa un correo válido para entregar el documento.</small>
+                  ) : null}
                 </label>
               ))}
-            </details>
-          )}
-          {preparation.positions.map((position, index) => (
-            <fieldset key={position.position_id} disabled={busy}>
-              <legend>
-                {t("quotation.position")} {index + 1} · {position.system_name}
-                {!position.production_ready && (
-                  <span className="handle-pending">{t("quotation.quoteOnlyChip")}</span>
-                )}
-              </legend>
-              <label htmlFor={`position-location-${position.position_id}`}>
-                {t("projects.location")}
-              </label>
-              <input
-                id={`position-location-${position.position_id}`}
-                required
-                maxLength={120}
-                value={position.location_tag}
-                onChange={(event) => updatePosition(index, { location_tag: event.target.value })}
-              />
-              {selectedPolicy(
-                position.placement_options,
-                position.manufacturing_placement_policy_id,
-                (value) => {
-                  // Bounds move under the new placement: auto-seeded
-                  // midpoints recompute, manual heights stay as typed.
-                  const reseeded = reseedHandleIntents(
-                    {
-                      ...position,
-                      manufacturing_placement_policy_id: value,
-                    },
-                    seededIntentKeys.current.get(String(position.position_id)) ?? new Set(),
-                  );
-                  seededIntentKeys.current.set(
-                    String(position.position_id),
-                    new Set(reseeded.seededKeys),
-                  );
-                  updatePosition(index, reseeded.position);
-                },
-                t("quotation.placementPolicy"),
-                busy,
-                `placement-policy-${position.position_id}`,
-              )}
-              {selectedPolicy(
-                position.handle_options,
-                position.handle_requirement_policy_id,
-                (value) => {
-                  const reconciled = reconciledHandlePolicy(
-                    position,
-                    value,
-                    seededIntentKeys.current.get(String(position.position_id)) ?? new Set(),
-                  );
-                  seededIntentKeys.current.set(
-                    String(position.position_id),
-                    new Set(reconciled.seededKeys),
-                  );
-                  updatePosition(index, reconciled.update);
-                },
-                t("quotation.handlePolicy"),
-                busy,
-                `handle-policy-${position.position_id}`,
-              )}
-              {selectedPolicy(
-                position.reinforcement_options,
-                position.reinforcement_cut_policy_id,
-                (value) => updatePosition(index, { reinforcement_cut_policy_id: value }),
-                t("quotation.reinforcementPolicy"),
-                busy,
-                `reinforcement-policy-${position.position_id}`,
-              )}
-              {requirementsFor(position).length > 0 && (
-                <div className="handle-inputs">
-                  <h4>{t("quotation.handleInputs")}</h4>
-                  {(seededIntentKeys.current.get(String(position.position_id))?.size ?? 0) > 0 && (
-                    <div className="handle-suggested-bar">
-                      <span>{t("quotation.seedsNotice")}</span>
-                      <button
-                        type="button"
-                        className="handle-suggested-confirm"
-                        disabled={busy}
-                        onClick={() => {
-                          // Adopt every generated midpoint on this position as
-                          // the estimator's choice — they stop being suggested
-                          // values and can seal.
-                          seededIntentKeys.current.get(String(position.position_id))?.clear();
-                          updatePosition(index, {});
-                        }}
-                      >
-                        {t("quotation.confirmSuggested")}
-                      </button>
-                    </div>
-                  )}
-                  {requirementsFor(position).map((requirement) => {
-                    const intent = intentFor(position, requirement);
-                    const reference =
-                      intent?.vertical_reference ?? requirement.permitted_vertical_references[0];
-                    const bounds = reference
-                      ? heightBounds(position, requirement, reference)
-                      : null;
-                    const height =
-                      intent?.requested_height_mm !== undefined && intent.requested_height_mm !== ""
-                        ? parseDecimal(intent.requested_height_mm)
-                        : null;
-                    const boundMin = bounds?.[0] ? parseDecimal(bounds[0]) : null;
-                    const boundMax = bounds?.[1] ? parseDecimal(bounds[1]) : null;
-                    const outOfBounds =
-                      bounds !== null &&
-                      height !== null &&
-                      boundMin !== null &&
-                      boundMax !== null &&
-                      (compareDecimal(height, boundMin) < 0 ||
-                        compareDecimal(height, boundMax) > 0);
-                    // The policy's permitted span midpoint is the sane
-                    // default — visible, editable, still the estimator's
-                    // call; true authority stays the sealed intent.
-                    const defaultHeight = reference
-                      ? defaultHandleHeight(requirement, reference, bounds)
-                      : "";
-                    return (
-                      <div className="handle-row" key={intentKey(requirement)}>
-                        <div className="handle-leaf">
-                          <strong>{requirement.leaf_label}</strong>
-                          <span>
-                            {requirement.requires_handedness
-                              ? t("quotation.handednessRequired")
-                              : requirement.host_member_side === "LEFT"
-                                ? t("quotation.sideLeft")
-                                : requirement.host_member_side === "TOP"
-                                  ? "Borde superior"
-                                  : requirement.host_member_side === "BOTTOM"
-                                    ? "Borde inferior"
-                                    : t("quotation.sideRight")}
-                            {requirement.handle_domain_slot !== "PRIMARY" &&
-                              ` · ${requirement.handle_domain_slot}`}
-                          </span>
-                        </div>
-                        <div className="handle-field">
-                          <label
-                            htmlFor={`handle-height-${position.position_id}-${intentKey(requirement)}`}
-                          >
-                            {t("quotation.handleHeight")}
-                          </label>
-                          <input
-                            id={`handle-height-${position.position_id}-${intentKey(requirement)}`}
-                            type="text"
-                            inputMode="decimal"
-                            disabled={busy}
-                            aria-invalid={outOfBounds || undefined}
-                            placeholder={bounds ? `${bounds[0]}–${bounds[1]}` : undefined}
-                            value={intent?.requested_height_mm ?? defaultHeight}
-                            onChange={(event) =>
-                              updateIntent(index, requirement, {
-                                requested_height_mm: event.target.value,
-                              })
-                            }
-                          />
-                          {bounds && (
-                            <span className="handle-bounds">
-                              {t("quotation.handleBounds")} {bounds[0]}–{bounds[1]} mm
-                            </span>
-                          )}
-                          {requirement.source && (
-                            <span className="handle-bounds">Fuente: {requirement.source}</span>
-                          )}
-                        </div>
-                        <div className="handle-field">
-                          <label
-                            htmlFor={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
-                          >
-                            {t("quotation.handleReference")}
-                          </label>
-                          <select
-                            id={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
-                            disabled={
-                              busy || requirement.permitted_vertical_references.length === 1
-                            }
-                            value={
-                              intent?.vertical_reference ??
-                              requirement.permitted_vertical_references[0]
-                            }
-                            onChange={(event) =>
-                              updateIntent(index, requirement, {
-                                requested_height_mm: intent?.requested_height_mm ?? "",
-                                vertical_reference: event.target
-                                  .value as HandleIntent["vertical_reference"],
-                              })
-                            }
-                          >
-                            {requirement.permitted_vertical_references.map((reference) => (
-                              <option key={reference} value={reference}>
-                                {t(REFERENCE_KEYS[reference])}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        {!intent?.requested_height_mm && (
-                          <span className="handle-pending">{t("quotation.handlePending")}</span>
-                        )}
-                        {intent?.requested_height_mm &&
-                          (seededIntentKeys.current
-                            .get(String(position.position_id))
-                            ?.has(seedKeyForIntent(intent)) ??
-                            false) && (
-                            <span className="handle-suggested">
-                              {t("quotation.handleSuggested")}
-                            </span>
-                          )}
-                        {outOfBounds && (
-                          <span className="handle-pending" role="alert">
-                            {t("quotation.handleOutOfBounds")}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {position.workshop_targets && (
-                <details
-                  className="workshop-inputs"
-                  /* Inspector failures name the exact bay/leaf that needs
-                     workshop data — auto-open the editor that fixes it
-                     (hostile H1: the <details> hid the required fields). */
-                  open={inspectorFailures.some(
-                    (failure) =>
-                      (failure.bay_id != null &&
-                        position.workshop_targets.bays.some(
-                          (bay) => bay.bay_id === failure.bay_id,
-                        )) ||
-                      (failure.leaf_id != null &&
-                        position.workshop_targets.leaves.some(
-                          (leaf) => leaf.leaf_id === failure.leaf_id,
-                        )),
-                  )}
-                >
-                  <summary>{t("quotation.workshopData")}</summary>
-                  {position.workshop_targets.bays.map((bay) => {
-                    const annotation = position.workshop_annotations.find(
-                      (item) => item.bay_id === bay.bay_id && (item.leaf_id ?? null) === null,
-                    );
-                    return (
-                      <div className="workshop-target" key={bay.bay_id}>
-                        <strong>{bay.label}</strong>
-                        <div className="workshop-row">
-                          <CsvMmField
-                            id={`drains-${position.position_id}-${bay.bay_id}`}
-                            label={t("quotation.drains")}
-                            values={annotation?.bottom_drain_holes_mm}
-                            disabled={busy}
-                            onCommit={(value) =>
-                              updateAnnotation(index, bay.bay_id, null, {
-                                bottom_drain_holes_mm: value,
-                              })
-                            }
-                          />
-                          <label className="workshop-field">
-                            <span>{t("quotation.continuousWidth")}</span>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              disabled={busy}
-                              value={annotation?.continuous_width_mm ?? ""}
-                              onChange={(event) =>
-                                updateAnnotation(index, bay.bay_id, null, {
-                                  continuous_width_mm: event.target.value || null,
-                                })
-                              }
-                            />
-                            <span className="workshop-unit">mm</span>
-                          </label>
-                          <label className="workshop-field">
-                            <span>{t("quotation.expansionCoupler")}</span>
-                            <select
-                              disabled={busy}
-                              value={
-                                annotation?.has_coupler === true
-                                  ? "YES"
-                                  : annotation?.has_coupler === false
-                                    ? "NO"
-                                    : ""
-                              }
-                              onChange={(event) => {
-                                const value = event.target.value;
-                                if (value !== "YES" && value !== "NO") return;
-                                updateAnnotation(index, bay.bay_id, null, {
-                                  has_coupler: value === "YES",
-                                });
-                              }}
-                            >
-                              <option value="">{t("quotation.chooseCoverage")}</option>
-                              <option value="NO">{t("quotation.answerNo")}</option>
-                              <option value="YES">{t("quotation.answerYes")}</option>
-                            </select>
-                          </label>
-                          {annotation?.has_coupler == null && (
-                            <span className="handle-pending">{t("quotation.handlePending")}</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {position.workshop_targets.leaves.length > 0 && (
-                    <div className="workshop-group">
-                      <h5>{t("quotation.closingPoints")}</h5>
-                      {position.workshop_targets.leaves.map((leaf) => {
-                        const annotation = position.workshop_annotations.find(
-                          (item) =>
-                            item.bay_id === leaf.bay_id && (item.leaf_id ?? null) === leaf.leaf_id,
-                        );
-                        return (
-                          <CsvMmField
-                            key={`${leaf.bay_id}|${leaf.leaf_id ?? ""}`}
-                            id={`closing-${position.position_id}-${leaf.bay_id}-${leaf.leaf_id ?? ""}`}
-                            label={leaf.leaf_label}
-                            values={annotation?.closing_points_perimeter_mm}
-                            disabled={busy}
-                            onCommit={(value) =>
-                              updateAnnotation(index, leaf.bay_id, leaf.leaf_id ?? null, {
-                                closing_points_perimeter_mm: value,
-                              })
-                            }
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
-                  {position.workshop_targets.spans.length > 0 && (
-                    <div className="workshop-group">
-                      <h5>{t("quotation.structuralInputs")}</h5>
-                      {position.workshop_targets.spans.map((span) => {
-                        const structural = position.structural_inputs.find(
-                          (item) => item.target_id === span.target_id,
-                        );
-                        return (
-                          <div className="workshop-target" key={span.target_id}>
-                            <strong>
-                              {span.label} · {fmtMm(span.span_mm)} mm
-                            </strong>
-                            <div className="workshop-row">
-                              <label className="workshop-field">
-                                <span>{t("quotation.requiredIx")}</span>
-                                <input
-                                  type="text"
-                                  inputMode="decimal"
-                                  disabled={busy}
-                                  value={structural?.required_ix_cm4 ?? ""}
-                                  onChange={(event) =>
-                                    updateStructural(index, span.target_id, {
-                                      required_ix_cm4: event.target.value || null,
-                                    })
-                                  }
-                                />
-                                <span className="workshop-unit">cm⁴</span>
-                              </label>
-                              <label className="workshop-field workshop-field--wide">
-                                <span>{t("quotation.structuralBasis")}</span>
-                                <input
-                                  type="text"
-                                  maxLength={1000}
-                                  disabled={busy}
-                                  value={structural?.structural_basis ?? ""}
-                                  placeholder={t("quotation.structuralBasisHint")}
-                                  onChange={(event) =>
-                                    updateStructural(index, span.target_id, {
-                                      structural_basis: event.target.value || null,
-                                    })
-                                  }
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {position.workshop_targets.glass.length > 0 && (
-                    <div className="workshop-group">
-                      <h5>{t("quotation.glassPolishing")}</h5>
-                      {position.workshop_targets.glass.map((target) => (
-                        <GlassPolishingRow
-                          key={`${target.bay_id}|${target.leaf_id ?? ""}`}
-                          target={target}
-                          record={position.glass_polishing.find(
-                            (item) =>
-                              item.bay_id === target.bay_id &&
-                              (item.leaf_id ?? null) === target.leaf_id,
-                          )}
-                          disabled={busy}
-                          onEdges={(edges) =>
-                            setPolishingEdges(index, target.bay_id, target.leaf_id ?? null, edges)
-                          }
-                        />
-                      ))}
-                    </div>
-                  )}
-                  <div className="workshop-group">
-                    <h5>{t("quotation.accessories")}</h5>
-                    <label className="workshop-field">
-                      <span>{t("quotation.coverage")}</span>
-                      <select
-                        disabled={busy}
-                        value={position.accessory_schedule?.coverage ?? ""}
-                        onChange={(event) => {
-                          const coverage = event.target.value as CoverageEnum | "";
-                          if (!coverage) return;
-                          updateAccessories(index, {
-                            coverage,
-                            items:
-                              coverage === "DECLARED"
-                                ? (position.accessory_schedule?.items ?? [])
-                                : [],
-                          });
-                        }}
-                      >
-                        <option value="">{t("quotation.chooseCoverage")}</option>
-                        <option value="NONE_REQUIRED">{t("quotation.coverageNone")}</option>
-                        <option value="DECLARED">{t("quotation.coverageDeclared")}</option>
-                      </select>
-                    </label>
-                    {position.accessory_schedule?.coverage === "DECLARED" && (
-                      <div className="workshop-accessories">
-                        {position.accessory_schedule.items.map((item, itemIndex) => (
-                          <div className="workshop-accessory" key={itemIndex}>
-                            <input
-                              type="text"
-                              disabled={busy}
-                              maxLength={200}
-                              placeholder={t("quotation.obligationId")}
-                              value={item.obligation_id}
-                              onChange={(event) =>
-                                updateAccessoryItem(index, itemIndex, {
-                                  obligation_id: event.target.value,
-                                })
-                              }
-                            />
-                            <select
-                              disabled={busy}
-                              value={item.obligation_kind}
-                              onChange={(event) =>
-                                updateAccessoryItem(index, itemIndex, {
-                                  obligation_kind: event.target.value as ObligationKindEnum,
-                                })
-                              }
-                            >
-                              {OBLIGATION_KINDS.map((kind) => (
-                                <option key={kind} value={kind}>
-                                  {t(OBLIGATION_KIND_KEYS[kind])}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="text"
-                              disabled={busy}
-                              maxLength={200}
-                              placeholder={t("quotation.technicalSku")}
-                              value={item.technical_sku}
-                              onChange={(event) =>
-                                updateAccessoryItem(index, itemIndex, {
-                                  technical_sku: event.target.value,
-                                })
-                              }
-                            />
-                            <input
-                              type="text"
-                              disabled={busy}
-                              maxLength={200}
-                              placeholder={t("quotation.purchasingSku")}
-                              value={item.purchasing_sku}
-                              onChange={(event) =>
-                                updateAccessoryItem(index, itemIndex, {
-                                  purchasing_sku: event.target.value,
-                                })
-                              }
-                            />
-                            <input
-                              type="text"
-                              disabled={busy}
-                              maxLength={300}
-                              placeholder={t("quotation.manufacturer")}
-                              value={item.manufacturer_name}
-                              onChange={(event) =>
-                                updateAccessoryItem(index, itemIndex, {
-                                  manufacturer_name: event.target.value,
-                                })
-                              }
-                            />
-                            <select
-                              disabled={busy}
-                              value={item.order_type}
-                              onChange={(event) =>
-                                updateAccessoryItem(index, itemIndex, {
-                                  order_type: event.target.value as OrderTypeEnum,
-                                })
-                              }
-                            >
-                              {ORDER_TYPES.map((order) => (
-                                <option key={order} value={order}>
-                                  {t(ORDER_TYPE_KEYS[order])}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="number"
-                              disabled={busy}
-                              min="1"
-                              step="1"
-                              placeholder={t("quotation.quantityPerUnit")}
-                              value={item.quantity_per_position_unit}
-                              onChange={(event) =>
-                                updateAccessoryItem(index, itemIndex, {
-                                  quantity_per_position_unit: Math.max(
-                                    1,
-                                    Number(event.target.value) || 1,
-                                  ),
-                                })
-                              }
-                            />
-                            <input
-                              type="text"
-                              disabled={busy}
-                              maxLength={1000}
-                              placeholder={t("quotation.description")}
-                              value={item.description}
-                              onChange={(event) =>
-                                updateAccessoryItem(index, itemIndex, {
-                                  description: event.target.value,
-                                })
-                              }
-                            />
-                            <button
-                              type="button"
-                              className="ghost-button is-danger"
-                              disabled={busy}
-                              aria-label={t("quotation.removeAccessory")}
-                              onClick={() => updateAccessoryItem(index, itemIndex, null)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          className="ghost-button"
-                          disabled={busy}
-                          onClick={() =>
-                            updateAccessories(index, {
-                              items: [
-                                ...position.accessory_schedule!.items,
-                                {
-                                  obligation_id: nextObligationId(
-                                    position.accessory_schedule!.items,
-                                  ),
-                                  obligation_kind: "INSTALLATION_ACCESSORY",
-                                  technical_sku: "",
-                                  purchasing_sku: "",
-                                  manufacturer_name: "",
-                                  order_type: "SUPPLIER_HARDWARE_PO",
-                                  unit: "EA",
-                                  quantity_per_position_unit: 1,
-                                  description: "",
-                                },
-                              ],
-                            })
-                          }
-                        >
-                          {t("quotation.addAccessory")}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </details>
-              )}
+              <button
+                type="button"
+                disabled={busy || !customerComplete}
+                onClick={() => void saveCustomer()}
+              >
+                Guardar cliente y obra
+              </button>
             </fieldset>
-          ))}
-          {emitMissing.length > 0 && (
-            <div className="emit-checklist" aria-live="polite">
-              <strong>{t("quotation.missingTitle")}</strong>
-              <ul>
-                {emitMissing.map((item) => (
-                  <li key={item.key}>
-                    {item.targetId ? (
-                      <button
-                        type="button"
-                        className="link-button"
-                        onClick={() => document.getElementById(item.targetId!)?.focus()}
-                      >
-                        {item.label}
-                      </button>
-                    ) : (
-                      item.label
-                    )}
+            <div id="quotation-positions" tabIndex={-1}>
+              <p>
+                {project.position_count === 0
+                  ? "La obra aún no tiene posiciones."
+                  : canEmit
+                    ? "Los precios están aplicados. Revisa la preparación de las posiciones antes del PDF."
+                    : "Falta revisar y aplicar el precio de las posiciones."}
+              </p>
+              {project.position_count === 0 ? (
+                <Link to={`/projects/${project.id}/positions/new`}>Agregar primera posición</Link>
+              ) : canEmit === false ? (
+                <Link to={`/projects/${project.id}/pricing`}>
+                  Revisar precios de las posiciones
+                </Link>
+              ) : null}
+            </div>
+            <QuotationGlobalChanges
+              project={project}
+              orgId={orgId}
+              canWrite={canWrite}
+              onChanged={async () => {
+                setPreparation(null);
+                setPdf(null);
+                setConfirmed(false);
+                setPdfReady(false);
+                setDirty(false);
+                return onChanged();
+              }}
+            />
+            {inspectorFailures.length > 0 && (
+              <ul className="quotation-inspector-failures" role="alert">
+                {inspectorFailures.map((failure, index) => (
+                  <li key={`${failure.rule}-${failure.bay_id ?? ""}-${index}`}>
+                    <strong>{failure.rule}</strong> · {failure.title}
+                    {failure.bay_id ? (
+                      <>
+                        {" · "}
+                        {t("quotation.inspectorAffected")} {failure.bay_id}
+                        {failure.leaf_id ? `/${failure.leaf_id}` : ""}
+                      </>
+                    ) : null}
+                    {failure.recommendation ? <p>{failure.recommendation}</p> : null}
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-          {preparation.positions.length > 0 &&
-            (preparation.positions.every(
-              (position) => position.production_ready || positionFormComplete(position),
-            ) ? (
-              <p className="emit-outcome">{t("quotation.emitOutcomeReady")}</p>
-            ) : (
-              <p className="emit-outcome emit-outcome--warn" role="note">
-                {t("quotation.emitOutcomeQuoteOnly")}{" "}
-                {preparation.positions
-                  .map((position, index) => ({ position, index }))
-                  .filter(
-                    ({ position }) => !position.production_ready && !positionFormComplete(position),
-                  )
-                  .map(({ index }) => `${t("quotation.position")} ${index + 1}`)
-                  .join(" · ")}
-              </p>
-            ))}
-          <label className="quotation-confirm">
-            <input
-              id="quotation-confirm"
-              required
-              type="checkbox"
-              checked={confirmed}
-              disabled={busy}
-              onChange={(event) => {
-                setDirty(true);
-                setConfirmed(event.target.checked);
-              }}
-            />
-            {t("quotation.confirm")}
-          </label>
-          <div className="projects-actions">
-            <button disabled={busy || !confirmed}>{t("quotation.emit")}</button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                if (!dirty) {
-                  setPreparation(null);
-                  setConfirmed(false);
-                  return;
-                }
-                void confirm({ title: t("projects.discard") }).then((ok) => {
-                  if (ok) {
-                    setPreparation(null);
-                    setConfirmed(false);
-                    setDirty(false);
-                  }
-                });
-              }}
-            >
-              {t("projects.cancel")}
-            </button>
-          </div>
-        </ValidatedForm>
-      )}
-      {(approvals.data?.length ?? 0) > 0 && (
-        <div className="quotation-links">
-          <h3>{t("quotation.linksTitle")}</h3>
-          <ul>
-            {approvals.data?.map((link) => {
-              const live = link.status === "PENDING" && Date.parse(link.expires_at) > Date.now();
-              return (
-                <li
-                  className="quotation-link"
-                  data-status={link.status.toLowerCase()}
-                  key={link.id}
-                >
-                  <StatusBadge
-                    showIcon={false}
-                    className="status-chip"
-                    data-status={link.status.toLowerCase()}
+            )}
+            {canWrite && project.status === "DRAFT" && !project.pricing_current && (
+              <p>{t("quotation.priceFirst")}</p>
+            )}
+            {preparation && (
+              <ValidatedForm
+                className="quotation-form"
+                onSubmit={(event) => void prepareDocument(event)}
+              >
+                <label htmlFor="quotation-payment-terms">{t("quotation.paymentTerms")}</label>
+                <textarea
+                  id="quotation-payment-terms"
+                  required
+                  maxLength={2000}
+                  disabled={busy}
+                  value={preparation.payment_terms}
+                  onChange={(event) => {
+                    markDirty();
+                    setPreparation({ ...preparation, payment_terms: event.target.value });
+                  }}
+                />
+                <label htmlFor="quotation-valid-until">{t("quotation.validUntil")}</label>
+                <input
+                  id="quotation-valid-until"
+                  required
+                  type="date"
+                  disabled={busy}
+                  value={preparation.quotation_valid_until ?? ""}
+                  onChange={(event) => {
+                    markDirty();
+                    setPreparation({ ...preparation, quotation_valid_until: event.target.value });
+                  }}
+                />
+                <CommercialTermsEditor
+                  idPrefix="quotation-terms"
+                  required
+                  value={preparation.commercial_terms ?? {}}
+                  disabled={busy}
+                  onChange={(commercial_terms) => {
+                    markDirty();
+                    setPreparation({ ...preparation, commercial_terms });
+                  }}
+                />
+                {(project.versions?.length ?? 0) > 0 && (
+                  <details>
+                    <summary>Comparar revisiones anteriores como alternativas</summary>
+                    <p>
+                      Se imprimen completas con su precio sellado y no se incluyen en el total.
+                      Puedes elegir hasta tres.
+                    </p>
+                    {project.versions?.map((version) => (
+                      <label key={version.id}>
+                        <input
+                          type="checkbox"
+                          checked={(preparation.alternative_version_ids ?? []).includes(version.id)}
+                          disabled={
+                            busy ||
+                            (!preparation.alternative_version_ids?.includes(version.id) &&
+                              (preparation.alternative_version_ids?.length ?? 0) >= 3)
+                          }
+                          onChange={(event) => {
+                            markDirty();
+                            setPreparation({
+                              ...preparation,
+                              alternative_version_ids: event.target.checked
+                                ? [...(preparation.alternative_version_ids ?? []), version.id]
+                                : (preparation.alternative_version_ids ?? []).filter(
+                                    (id) => id !== version.id,
+                                  ),
+                            });
+                          }}
+                        />
+                        Revisión {version.revision_code.replace("REV-", "")}
+                      </label>
+                    ))}
+                  </details>
+                )}
+                {preparation.positions.map((position, index) => (
+                  <details className="quotation-position" key={position.position_id}>
+                    <summary>
+                      Posición {index + 1} · {position.location_tag || "Sin ubicación"} ·{" "}
+                      {positionFormComplete(position) ? "Preparada" : "Qué falta"}
+                    </summary>
+                    <fieldset disabled={busy}>
+                      <legend>
+                        {t("quotation.position")} {index + 1} · {position.system_name}
+                        {!position.production_ready && (
+                          <span className="handle-pending">{t("quotation.quoteOnlyChip")}</span>
+                        )}
+                      </legend>
+                      <label htmlFor={`position-location-${position.position_id}`}>
+                        {t("projects.location")}
+                      </label>
+                      <input
+                        id={`position-location-${position.position_id}`}
+                        required
+                        maxLength={120}
+                        value={position.location_tag}
+                        onChange={(event) =>
+                          updatePosition(index, { location_tag: event.target.value })
+                        }
+                      />
+                      {selectedPolicy(
+                        position.placement_options,
+                        position.manufacturing_placement_policy_id,
+                        (value) => {
+                          // Bounds move under the new placement: auto-seeded
+                          // midpoints recompute, manual heights stay as typed.
+                          const reseeded = reseedHandleIntents(
+                            {
+                              ...position,
+                              manufacturing_placement_policy_id: value,
+                            },
+                            seededIntentKeys.current.get(String(position.position_id)) ?? new Set(),
+                          );
+                          seededIntentKeys.current.set(
+                            String(position.position_id),
+                            new Set(reseeded.seededKeys),
+                          );
+                          updatePosition(index, reseeded.position);
+                        },
+                        t("quotation.placementPolicy"),
+                        busy,
+                        `placement-policy-${position.position_id}`,
+                      )}
+                      {selectedPolicy(
+                        position.handle_options,
+                        position.handle_requirement_policy_id,
+                        (value) => {
+                          const reconciled = reconciledHandlePolicy(
+                            position,
+                            value,
+                            seededIntentKeys.current.get(String(position.position_id)) ?? new Set(),
+                          );
+                          seededIntentKeys.current.set(
+                            String(position.position_id),
+                            new Set(reconciled.seededKeys),
+                          );
+                          updatePosition(index, reconciled.update);
+                        },
+                        t("quotation.handlePolicy"),
+                        busy,
+                        `handle-policy-${position.position_id}`,
+                      )}
+                      {selectedPolicy(
+                        position.reinforcement_options,
+                        position.reinforcement_cut_policy_id,
+                        (value) => updatePosition(index, { reinforcement_cut_policy_id: value }),
+                        t("quotation.reinforcementPolicy"),
+                        busy,
+                        `reinforcement-policy-${position.position_id}`,
+                      )}
+                      {requirementsFor(position).length > 0 && (
+                        <div className="handle-inputs">
+                          <h4>{t("quotation.handleInputs")}</h4>
+                          {(seededIntentKeys.current.get(String(position.position_id))?.size ?? 0) >
+                            0 && (
+                            <div className="handle-suggested-bar">
+                              <span>{t("quotation.seedsNotice")}</span>
+                              <button
+                                type="button"
+                                className="handle-suggested-confirm"
+                                disabled={busy}
+                                onClick={() => {
+                                  // Adopt every generated midpoint on this position as
+                                  // the estimator's choice — they stop being suggested
+                                  // values and can seal.
+                                  seededIntentKeys.current
+                                    .get(String(position.position_id))
+                                    ?.clear();
+                                  updatePosition(index, {});
+                                }}
+                              >
+                                {t("quotation.confirmSuggested")}
+                              </button>
+                            </div>
+                          )}
+                          {requirementsFor(position).map((requirement) => {
+                            const intent = intentFor(position, requirement);
+                            const reference =
+                              intent?.vertical_reference ??
+                              requirement.permitted_vertical_references[0];
+                            const bounds = reference
+                              ? heightBounds(position, requirement, reference)
+                              : null;
+                            const height =
+                              intent?.requested_height_mm !== undefined &&
+                              intent.requested_height_mm !== ""
+                                ? parseDecimal(intent.requested_height_mm)
+                                : null;
+                            const boundMin = bounds?.[0] ? parseDecimal(bounds[0]) : null;
+                            const boundMax = bounds?.[1] ? parseDecimal(bounds[1]) : null;
+                            const outOfBounds =
+                              bounds !== null &&
+                              height !== null &&
+                              boundMin !== null &&
+                              boundMax !== null &&
+                              (compareDecimal(height, boundMin) < 0 ||
+                                compareDecimal(height, boundMax) > 0);
+                            // The policy's permitted span midpoint is the sane
+                            // default — visible, editable, still the estimator's
+                            // call; true authority stays the sealed intent.
+                            const defaultHeight = reference
+                              ? defaultHandleHeight(requirement, reference, bounds)
+                              : "";
+                            return (
+                              <div className="handle-row" key={intentKey(requirement)}>
+                                <div className="handle-leaf">
+                                  <strong>{requirement.leaf_label}</strong>
+                                  <span>
+                                    {requirement.requires_handedness
+                                      ? t("quotation.handednessRequired")
+                                      : requirement.host_member_side === "LEFT"
+                                        ? t("quotation.sideLeft")
+                                        : requirement.host_member_side === "TOP"
+                                          ? "Borde superior"
+                                          : requirement.host_member_side === "BOTTOM"
+                                            ? "Borde inferior"
+                                            : t("quotation.sideRight")}
+                                    {requirement.handle_domain_slot !== "PRIMARY" &&
+                                      ` · ${requirement.handle_domain_slot}`}
+                                  </span>
+                                </div>
+                                <div className="handle-field">
+                                  <label
+                                    htmlFor={`handle-height-${position.position_id}-${intentKey(requirement)}`}
+                                  >
+                                    {t("quotation.handleHeight")}
+                                  </label>
+                                  <input
+                                    id={`handle-height-${position.position_id}-${intentKey(requirement)}`}
+                                    type="text"
+                                    inputMode="decimal"
+                                    disabled={busy}
+                                    aria-invalid={outOfBounds || undefined}
+                                    placeholder={bounds ? `${bounds[0]}–${bounds[1]}` : undefined}
+                                    value={intent?.requested_height_mm ?? defaultHeight}
+                                    onChange={(event) =>
+                                      updateIntent(index, requirement, {
+                                        requested_height_mm: event.target.value,
+                                      })
+                                    }
+                                  />
+                                  {bounds && (
+                                    <span className="handle-bounds">
+                                      {t("quotation.handleBounds")} {bounds[0]}–{bounds[1]} mm
+                                    </span>
+                                  )}
+                                  {requirement.source && (
+                                    <span className="handle-bounds">
+                                      Fuente: {requirement.source}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="handle-field">
+                                  <label
+                                    htmlFor={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
+                                  >
+                                    {t("quotation.handleReference")}
+                                  </label>
+                                  <select
+                                    id={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
+                                    disabled={
+                                      busy || requirement.permitted_vertical_references.length === 1
+                                    }
+                                    value={
+                                      intent?.vertical_reference ??
+                                      requirement.permitted_vertical_references[0]
+                                    }
+                                    onChange={(event) =>
+                                      updateIntent(index, requirement, {
+                                        requested_height_mm: intent?.requested_height_mm ?? "",
+                                        vertical_reference: event.target
+                                          .value as HandleIntent["vertical_reference"],
+                                      })
+                                    }
+                                  >
+                                    {requirement.permitted_vertical_references.map((reference) => (
+                                      <option key={reference} value={reference}>
+                                        {t(REFERENCE_KEYS[reference])}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                {!intent?.requested_height_mm && (
+                                  <span className="handle-pending">
+                                    {t("quotation.handlePending")}
+                                  </span>
+                                )}
+                                {intent?.requested_height_mm &&
+                                  (seededIntentKeys.current
+                                    .get(String(position.position_id))
+                                    ?.has(seedKeyForIntent(intent)) ??
+                                    false) && (
+                                    <span className="handle-suggested">
+                                      {t("quotation.handleSuggested")}
+                                    </span>
+                                  )}
+                                {outOfBounds && (
+                                  <span className="handle-pending" role="alert">
+                                    {t("quotation.handleOutOfBounds")}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {position.workshop_targets && (
+                        <details
+                          className="workshop-inputs"
+                          /* Inspector failures name the exact bay/leaf that needs
+                     workshop data — auto-open the editor that fixes it
+                     (hostile H1: the <details> hid the required fields). */
+                          open={inspectorFailures.some(
+                            (failure) =>
+                              (failure.bay_id != null &&
+                                position.workshop_targets.bays.some(
+                                  (bay) => bay.bay_id === failure.bay_id,
+                                )) ||
+                              (failure.leaf_id != null &&
+                                position.workshop_targets.leaves.some(
+                                  (leaf) => leaf.leaf_id === failure.leaf_id,
+                                )),
+                          )}
+                        >
+                          <summary>{t("quotation.workshopData")}</summary>
+                          {position.workshop_targets.bays.map((bay) => {
+                            const annotation = position.workshop_annotations.find(
+                              (item) =>
+                                item.bay_id === bay.bay_id && (item.leaf_id ?? null) === null,
+                            );
+                            return (
+                              <div className="workshop-target" key={bay.bay_id}>
+                                <strong>{bay.label}</strong>
+                                <div className="workshop-row">
+                                  <CsvMmField
+                                    id={`drains-${position.position_id}-${bay.bay_id}`}
+                                    label={t("quotation.drains")}
+                                    values={annotation?.bottom_drain_holes_mm}
+                                    disabled={busy}
+                                    onCommit={(value) =>
+                                      updateAnnotation(index, bay.bay_id, null, {
+                                        bottom_drain_holes_mm: value,
+                                      })
+                                    }
+                                  />
+                                  <label className="workshop-field">
+                                    <span>{t("quotation.continuousWidth")}</span>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      disabled={busy}
+                                      value={annotation?.continuous_width_mm ?? ""}
+                                      onChange={(event) =>
+                                        updateAnnotation(index, bay.bay_id, null, {
+                                          continuous_width_mm: event.target.value || null,
+                                        })
+                                      }
+                                    />
+                                    <span className="workshop-unit">mm</span>
+                                  </label>
+                                  <label className="workshop-field">
+                                    <span>{t("quotation.expansionCoupler")}</span>
+                                    <select
+                                      disabled={busy}
+                                      value={
+                                        annotation?.has_coupler === true
+                                          ? "YES"
+                                          : annotation?.has_coupler === false
+                                            ? "NO"
+                                            : ""
+                                      }
+                                      onChange={(event) => {
+                                        const value = event.target.value;
+                                        if (value !== "YES" && value !== "NO") return;
+                                        updateAnnotation(index, bay.bay_id, null, {
+                                          has_coupler: value === "YES",
+                                        });
+                                      }}
+                                    >
+                                      <option value="">{t("quotation.chooseCoverage")}</option>
+                                      <option value="NO">{t("quotation.answerNo")}</option>
+                                      <option value="YES">{t("quotation.answerYes")}</option>
+                                    </select>
+                                  </label>
+                                  {annotation?.has_coupler == null && (
+                                    <span className="handle-pending">
+                                      {t("quotation.handlePending")}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {position.workshop_targets.leaves.length > 0 && (
+                            <div className="workshop-group">
+                              <h5>{t("quotation.closingPoints")}</h5>
+                              {position.workshop_targets.leaves.map((leaf) => {
+                                const annotation = position.workshop_annotations.find(
+                                  (item) =>
+                                    item.bay_id === leaf.bay_id &&
+                                    (item.leaf_id ?? null) === leaf.leaf_id,
+                                );
+                                return (
+                                  <CsvMmField
+                                    key={`${leaf.bay_id}|${leaf.leaf_id ?? ""}`}
+                                    id={`closing-${position.position_id}-${leaf.bay_id}-${leaf.leaf_id ?? ""}`}
+                                    label={leaf.leaf_label}
+                                    values={annotation?.closing_points_perimeter_mm}
+                                    disabled={busy}
+                                    onCommit={(value) =>
+                                      updateAnnotation(index, leaf.bay_id, leaf.leaf_id ?? null, {
+                                        closing_points_perimeter_mm: value,
+                                      })
+                                    }
+                                  />
+                                );
+                              })}
+                            </div>
+                          )}
+                          {position.workshop_targets.spans.length > 0 && (
+                            <div className="workshop-group">
+                              <h5>{t("quotation.structuralInputs")}</h5>
+                              {position.workshop_targets.spans.map((span) => {
+                                const structural = position.structural_inputs.find(
+                                  (item) => item.target_id === span.target_id,
+                                );
+                                return (
+                                  <div className="workshop-target" key={span.target_id}>
+                                    <strong>
+                                      {span.label} · {fmtMm(span.span_mm)} mm
+                                    </strong>
+                                    <div className="workshop-row">
+                                      <label className="workshop-field">
+                                        <span>{t("quotation.requiredIx")}</span>
+                                        <input
+                                          type="text"
+                                          inputMode="decimal"
+                                          disabled={busy}
+                                          value={structural?.required_ix_cm4 ?? ""}
+                                          onChange={(event) =>
+                                            updateStructural(index, span.target_id, {
+                                              required_ix_cm4: event.target.value || null,
+                                            })
+                                          }
+                                        />
+                                        <span className="workshop-unit">cm⁴</span>
+                                      </label>
+                                      <label className="workshop-field workshop-field--wide">
+                                        <span>{t("quotation.structuralBasis")}</span>
+                                        <input
+                                          type="text"
+                                          maxLength={1000}
+                                          disabled={busy}
+                                          value={structural?.structural_basis ?? ""}
+                                          placeholder={t("quotation.structuralBasisHint")}
+                                          onChange={(event) =>
+                                            updateStructural(index, span.target_id, {
+                                              structural_basis: event.target.value || null,
+                                            })
+                                          }
+                                        />
+                                      </label>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {position.workshop_targets.glass.length > 0 && (
+                            <div className="workshop-group">
+                              <h5>{t("quotation.glassPolishing")}</h5>
+                              {position.workshop_targets.glass.map((target) => (
+                                <GlassPolishingRow
+                                  key={`${target.bay_id}|${target.leaf_id ?? ""}`}
+                                  target={target}
+                                  record={position.glass_polishing.find(
+                                    (item) =>
+                                      item.bay_id === target.bay_id &&
+                                      (item.leaf_id ?? null) === target.leaf_id,
+                                  )}
+                                  disabled={busy}
+                                  onEdges={(edges) =>
+                                    setPolishingEdges(
+                                      index,
+                                      target.bay_id,
+                                      target.leaf_id ?? null,
+                                      edges,
+                                    )
+                                  }
+                                />
+                              ))}
+                            </div>
+                          )}
+                          <div className="workshop-group">
+                            <h5>{t("quotation.accessories")}</h5>
+                            <label className="workshop-field">
+                              <span>{t("quotation.coverage")}</span>
+                              <select
+                                disabled={busy}
+                                value={position.accessory_schedule?.coverage ?? ""}
+                                onChange={(event) => {
+                                  const coverage = event.target.value as CoverageEnum | "";
+                                  if (!coverage) return;
+                                  updateAccessories(index, {
+                                    coverage,
+                                    items:
+                                      coverage === "DECLARED"
+                                        ? (position.accessory_schedule?.items ?? [])
+                                        : [],
+                                  });
+                                }}
+                              >
+                                <option value="">{t("quotation.chooseCoverage")}</option>
+                                <option value="NONE_REQUIRED">{t("quotation.coverageNone")}</option>
+                                <option value="DECLARED">{t("quotation.coverageDeclared")}</option>
+                              </select>
+                            </label>
+                            {position.accessory_schedule?.coverage === "DECLARED" && (
+                              <div className="workshop-accessories">
+                                {position.accessory_schedule.items.map((item, itemIndex) => (
+                                  <div className="workshop-accessory" key={itemIndex}>
+                                    <input
+                                      type="text"
+                                      disabled={busy}
+                                      maxLength={200}
+                                      placeholder={t("quotation.obligationId")}
+                                      value={item.obligation_id}
+                                      onChange={(event) =>
+                                        updateAccessoryItem(index, itemIndex, {
+                                          obligation_id: event.target.value,
+                                        })
+                                      }
+                                    />
+                                    <select
+                                      disabled={busy}
+                                      value={item.obligation_kind}
+                                      onChange={(event) =>
+                                        updateAccessoryItem(index, itemIndex, {
+                                          obligation_kind: event.target.value as ObligationKindEnum,
+                                        })
+                                      }
+                                    >
+                                      {OBLIGATION_KINDS.map((kind) => (
+                                        <option key={kind} value={kind}>
+                                          {t(OBLIGATION_KIND_KEYS[kind])}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <input
+                                      type="text"
+                                      disabled={busy}
+                                      maxLength={200}
+                                      placeholder={t("quotation.technicalSku")}
+                                      value={item.technical_sku}
+                                      onChange={(event) =>
+                                        updateAccessoryItem(index, itemIndex, {
+                                          technical_sku: event.target.value,
+                                        })
+                                      }
+                                    />
+                                    <input
+                                      type="text"
+                                      disabled={busy}
+                                      maxLength={200}
+                                      placeholder={t("quotation.purchasingSku")}
+                                      value={item.purchasing_sku}
+                                      onChange={(event) =>
+                                        updateAccessoryItem(index, itemIndex, {
+                                          purchasing_sku: event.target.value,
+                                        })
+                                      }
+                                    />
+                                    <input
+                                      type="text"
+                                      disabled={busy}
+                                      maxLength={300}
+                                      placeholder={t("quotation.manufacturer")}
+                                      value={item.manufacturer_name}
+                                      onChange={(event) =>
+                                        updateAccessoryItem(index, itemIndex, {
+                                          manufacturer_name: event.target.value,
+                                        })
+                                      }
+                                    />
+                                    <select
+                                      disabled={busy}
+                                      value={item.order_type}
+                                      onChange={(event) =>
+                                        updateAccessoryItem(index, itemIndex, {
+                                          order_type: event.target.value as OrderTypeEnum,
+                                        })
+                                      }
+                                    >
+                                      {ORDER_TYPES.map((order) => (
+                                        <option key={order} value={order}>
+                                          {t(ORDER_TYPE_KEYS[order])}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <input
+                                      type="number"
+                                      disabled={busy}
+                                      min="1"
+                                      step="1"
+                                      placeholder={t("quotation.quantityPerUnit")}
+                                      value={item.quantity_per_position_unit}
+                                      onChange={(event) =>
+                                        updateAccessoryItem(index, itemIndex, {
+                                          quantity_per_position_unit: Math.max(
+                                            1,
+                                            Number(event.target.value) || 1,
+                                          ),
+                                        })
+                                      }
+                                    />
+                                    <input
+                                      type="text"
+                                      disabled={busy}
+                                      maxLength={1000}
+                                      placeholder={t("quotation.description")}
+                                      value={item.description}
+                                      onChange={(event) =>
+                                        updateAccessoryItem(index, itemIndex, {
+                                          description: event.target.value,
+                                        })
+                                      }
+                                    />
+                                    <button
+                                      type="button"
+                                      className="ghost-button is-danger"
+                                      disabled={busy}
+                                      aria-label={t("quotation.removeAccessory")}
+                                      onClick={() => updateAccessoryItem(index, itemIndex, null)}
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                                <button
+                                  type="button"
+                                  className="ghost-button"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    updateAccessories(index, {
+                                      items: [
+                                        ...position.accessory_schedule!.items,
+                                        {
+                                          obligation_id: nextObligationId(
+                                            position.accessory_schedule!.items,
+                                          ),
+                                          obligation_kind: "INSTALLATION_ACCESSORY",
+                                          technical_sku: "",
+                                          purchasing_sku: "",
+                                          manufacturer_name: "",
+                                          order_type: "SUPPLIER_HARDWARE_PO",
+                                          unit: "EA",
+                                          quantity_per_position_unit: 1,
+                                          description: "",
+                                        },
+                                      ],
+                                    })
+                                  }
+                                >
+                                  {t("quotation.addAccessory")}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </details>
+                      )}
+                    </fieldset>
+                  </details>
+                ))}
+                {preparation.positions.length > 0 &&
+                  (preparation.positions.every(
+                    (position) => position.production_ready || positionFormComplete(position),
+                  ) ? (
+                    <p className="emit-outcome">
+                      El motor verificará la evidencia al preparar el PDF. La confirmación mostrará
+                      si permite fabricar o si quedan antecedentes pendientes.
+                    </p>
+                  ) : (
+                    <p className="emit-outcome emit-outcome--warn" role="note">
+                      {t("quotation.emitOutcomeQuoteOnly")}{" "}
+                      {preparation.positions
+                        .map((position, index) => ({ position, index }))
+                        .filter(
+                          ({ position }) =>
+                            !position.production_ready && !positionFormComplete(position),
+                        )
+                        .map(({ index }) => `${t("quotation.position")} ${index + 1}`)
+                        .join(" · ")}
+                    </p>
+                  ))}
+                {emitMissing.length > 0 && (
+                  <div className="quotation-technical-missing">
+                    <h4>Preparación de las posiciones</h4>
+                    <ul>
+                      {emitMissing.map((item) => (
+                        <li key={item.key}>
+                          {item.targetId ? (
+                            <button
+                              type="button"
+                              className="link-button"
+                              onClick={() => focusQuotationField(item.targetId!)}
+                            >
+                              {item.label}
+                            </button>
+                          ) : (
+                            item.label
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="projects-actions">
+                  <button
+                    type="submit"
+                    className="primary-action"
+                    disabled={busy || !canEmit || Boolean(pendingIssue)}
                   >
-                    {t(approvalStatusKeys[link.status] ?? "quotation.linkPending")}
-                  </StatusBadge>
-                  <strong>{formatRevision(link.revision_code)}</strong>
-                  <span>
-                    {link.link_source === "DOCUMENT"
-                      ? "Enlace del QR del PDF"
-                      : "Enlace compartido"}
-                  </span>
-                  <time dateTime={link.created_at}>{formatDateTime(link.created_at)}</time>
-                  {link.status === "PENDING" && (
-                    <span className="quotation-link__meta">
-                      {live
-                        ? `${t("quotation.linkExpires")} ${formatDateTime(link.expires_at)}`
-                        : t("quotation.linkExpired")}
-                    </span>
-                  )}
-                  {(link.view_count ?? 0) > 0 && (
-                    <span className="quotation-link__meta">
-                      {t("quotation.linkViews").replace("{count}", String(link.view_count))}
-                      {link.last_viewed_at ? ` · ${formatDateTime(link.last_viewed_at)}` : ""}
-                    </span>
-                  )}
-                  {(link.status === "APPROVED" || link.status === "DECLINED") && (
-                    <span className="quotation-link__meta">
-                      {link.decided_by ?? ""}
-                      {link.decided_at ? ` · ${formatDateTime(link.decided_at)}` : ""}
-                      {link.decided_note ? ` · “${link.decided_note}”` : ""}
-                    </span>
-                  )}
-                  {link.status === "REVOKED" && link.revoked_at && (
-                    <span className="quotation-link__meta">
-                      {t("quotation.linkRevokedAt")} {formatDateTime(link.revoked_at)}
-                    </span>
-                  )}
-                  {live && canWrite && (
-                    <button type="button" disabled={busy} onClick={() => void revokeLink(link.id)}>
-                      {t("quotation.linkRevoke")}
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    Preparar PDF para revisar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      if (!dirty) {
+                        setPreparation(null);
+                        setPdf(null);
+                        setConfirmed(false);
+                        return;
+                      }
+                      void confirm({ title: t("projects.discard") }).then((ok) => {
+                        if (ok) {
+                          setPreparation(null);
+                          setPdf(null);
+                          setConfirmed(false);
+                          setDirty(false);
+                        }
+                      });
+                    }}
+                  >
+                    {t("projects.cancel")}
+                  </button>
+                </div>
+              </ValidatedForm>
+            )}
+          </div>
+          <QuotationReview
+            preview={pdf}
+            previousRevision={project.versions?.[0]?.revision_code}
+            code={project.code}
+            busy={busy}
+            confirmed={confirmed}
+            onConfirmed={setConfirmed}
+            onReady={setPdfReady}
+            onIssue={() => void issue()}
+          />
         </div>
       )}
+      {busy ? (
+        <p>
+          <DimLoader label="Preparando la cotización" /> Preparando la cotización…
+        </p>
+      ) : null}
+      {!canWrite && project.status === "DRAFT" ? (
+        <p>
+          Solo un estimador o propietario puede preparar y emitir. Solicita acceso al propietario.
+        </p>
+      ) : null}
+      {approvals.isPending ? (
+        <p>
+          <DimLoader label="Cargando el historial del enlace" /> Cargando el historial del enlace…
+        </p>
+      ) : approvals.isError ? (
+        <div>
+          <p role="alert">
+            No se pudo cargar el historial del enlace. Revisa la conexión y vuelve a intentar.
+          </p>
+          <button type="button" onClick={() => void approvals.refetch()}>
+            Reintentar historial
+          </button>
+        </div>
+      ) : (
+        <QuotationLinkLedger
+          project={project}
+          links={approvals.data ?? []}
+          canWrite={canWrite}
+          busy={busy}
+          onRevoke={(id) => void revokeLink(id)}
+          onRegenerate={(link) => void regenerateLink(link)}
+          onDeadline={(link, date) => void changeDeadline(link, date)}
+        />
+      )}
+      <MailHistory orgId={orgId} projectId={project.id} />
       {(project.versions?.length ?? 0) > 0 && (
         <div className="quotation-history">
           <h3>{t("quotation.history")}</h3>
