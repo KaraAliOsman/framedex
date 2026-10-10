@@ -5,14 +5,16 @@ from pathlib import Path
 
 from django.db import DatabaseError
 from django.http import FileResponse, HttpResponse
+from io import BytesIO
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import serializers
 
 from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from documents.views import ERRORS, documentary_scope, validate
-from ingest import catalog_review
+from ingest import catalog_review, catalog_sources
 from ingest.catalog_service import _get
 from ingest.catalog_template import SCHEMAS, export_csv, public_schema
 from ingest.serializers import (
@@ -34,7 +36,7 @@ FORMAT_PARAMETERS = [*HEADERS,
 def _sheet(request):
     value = request.query_params.get("sheet", "Sistemas")
     if value not in SCHEMAS:
-        raise contract_error(422, "catalog_template_sheet_invalid", "Elige una de las nueve hojas de la plantilla.")
+        raise contract_error(422, "catalog_template_sheet_invalid", "Elige una hoja de la plantilla vigente.")
     return value
 
 
@@ -86,9 +88,50 @@ class CatalogImportReviewView(APIView):
     @extend_schema(operation_id="catalog_import_review", request=CatalogReviewRequestSerializer,
         responses={200: CatalogReviewResponseSerializer, **ERRORS}, **SCHEMA)
     def post(self, request, import_id):
-        with documentary_scope(request, _CATALOG_WRITERS) as (_, _, org_id):
+        with documentary_scope(request, _CATALOG_WRITERS) as (token, _, org_id):
             data = validate(CatalogReviewRequestSerializer, request.data)
-            return _payload(catalog_review.preview(org_id=org_id, import_id=import_id, items=data["items"]))
+            result = catalog_review.preview(org_id=org_id, import_id=import_id, items=data["items"])
+            catalog_sources.record_review(org_id=org_id, import_id=import_id,
+                actor_id=token.user_id, items=data["items"], review_token=result["review_token"], errors=result["errors"])
+            return _payload(result)
+
+
+class CatalogImportEventSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    action = serializers.CharField()
+    actor_id = serializers.UUIDField()
+    actor = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    details = serializers.DictField()
+
+
+class CatalogImportTimelineSerializer(serializers.Serializer):
+    items = CatalogImportEventSerializer(many=True)
+
+
+class CatalogImportTimelineView(APIView):
+    @extend_schema(operation_id="catalog_import_timeline", responses={200: CatalogImportTimelineSerializer, **ERRORS}, **SCHEMA)
+    def get(self, request, import_id):
+        with documentary_scope(request, _READERS) as (_, _, org_id):
+            return _payload(catalog_sources.timeline(org_id, import_id))
+
+
+class CatalogImportSourceView(APIView):
+    @extend_schema(operation_id="catalog_import_source", responses={200: OpenApiTypes.BINARY, **ERRORS}, **SCHEMA)
+    def get(self, request, import_id):
+        # Original files can contain costs even when extraction did not find
+        # any. Only the commercial catalog reviewers may open those bytes.
+        with documentary_scope(request, _CATALOG_WRITERS) as (_, _, org_id):
+            row, content = catalog_sources.original_source(org_id, import_id)
+            mime = {"PDF": "application/pdf", "TEXT": "text/plain; charset=utf-8",
+                    "CSV": "text/csv; charset=utf-8", "XLSX": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}.get(row["kind"])
+            if row["kind"] == "IMAGE":
+                suffix = row["file_name"].rsplit(".", 1)[-1].lower()
+                mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[suffix]
+            response = FileResponse(BytesIO(content), filename=row["file_name"], content_type=mime)
+            response["Cache-Control"] = "private, no-store"
+            response["X-Content-Type-Options"] = "nosniff"
+            return response
 
 
 class CatalogImportPublishView(APIView):

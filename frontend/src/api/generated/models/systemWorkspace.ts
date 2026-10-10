@@ -12,6 +12,8 @@ import type { ProcessProfileRow } from "./processProfileRow";
 import type { PurchaseMappingRow } from "./purchaseMappingRow";
 import type { ReinforcementRow } from "./reinforcementRow";
 import type { SystemResponse } from "./systemResponse";
+import type { WorkspaceGlass } from "./workspaceGlass";
+import type { WorkspaceManufacturingPolicy } from "./workspaceManufacturingPolicy";
 
 /**
  * The §06 system home: identity + readiness + the entities bound to
@@ -25,4 +27,6 @@ export interface SystemWorkspace {
   reinforcements: ReinforcementRow[];
   purchase_mappings: PurchaseMappingRow[];
   process_profile: ProcessProfileRow | null;
+  glasses: WorkspaceGlass[];
+  manufacturing_policies?: WorkspaceManufacturingPolicy[];
 }

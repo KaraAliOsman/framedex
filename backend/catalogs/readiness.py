@@ -25,7 +25,8 @@ from engine_api.cutting_repository import CuttingRepository, MissingStockAuthori
 from engine_api.inspection_repository import InspectorRepository
 from engine_api.repository import SystemParamsRepository, SystemNotFound, UnsupportedCatalogContract
 from pricing.repository import rows
-from production.service import _STEP_CODE_FOR_CENTER, _load_profile_for
+from production.service import _STEP_CODE_FOR_CENTER, _resolve_process_profile
+from catalogs.authority import catalog_authority_gate, manufacturing_review_gate
 
 _CENTER_KIND_FOR_STEP = {step: kind for kind, step in _STEP_CODE_FOR_CENTER.items()}
 
@@ -74,6 +75,23 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
             "la geometría máxima/mínima no es verificable sin inspección declarada",
             "completar los parámetros de inspección"))
 
+    profile = None
+    process_via = None
+    if params is not None:
+        bound = rows(
+            "SELECT process_profile_id::text FROM public.profile_systems WHERE id=%s",
+            [system_id],
+        )
+        if bound and bound[0].get("process_profile_id"):
+            bound_id = bound[0]["process_profile_id"]
+        else:
+            bound_id = None
+        profile, process_via = _resolve_process_profile(org_id, {}, {
+            "material": params.material.value, "process_profile_id": bound_id})
+    shared_gate = catalog_authority_gate(system_id=system_id, org_id=org_id, params=params,
+        process_facts={"profile": profile, "resolved_via": process_via}) if params is not None else None
+    process_gate = shared_gate["process"] if shared_gate else {"ok": False}
+
     policies = []
     for table in ("manufacturing_placement_policies", "handle_requirement_policies",
                   "reinforcement_cut_policies"):
@@ -114,47 +132,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
         #   certification undecidable.
         # * Couplers load outside effective articles; any reinforced coupler
         #   runs reinforcement_cut_length regardless of material.
-        fabrication_missing: list[str] = []
-        if params.rebate_depth_mm is None:
-            fabrication_missing.append("rebate_depth_mm")
-        if params.end_milling_overlap_mm is None:
-            fabrication_missing.append("end_milling_overlap_mm")
-        if params.uses_legacy_rules and params.material is MaterialType.PVC:
-            fabrication_missing += [
-                article.sku
-                for role, article in params.effective_profile_articles.items()
-                if role is not ProfileRole.THRESHOLD
-                and (article.welding_loss_mm is None or article.reinforcement_gap_mm is None)
-            ]
-        if not params.uses_legacy_rules:
-            fabrication_missing += [
-                article.sku
-                for role, article in params.effective_profile_articles.items()
-                if article.cut_rule is None or (
-                    params.material is MaterialType.PVC
-                    and role not in (ProfileRole.GLAZING_BEAD, ProfileRole.RAIL,
-                                     ProfileRole.THRESHOLD, ProfileRole.CHANNEL,
-                                     ProfileRole.SILL, ProfileRole.FRAME_EXTENSION,
-                                     ProfileRole.COVER_TRIM, ProfileRole.ADDITIONAL)
-                    and article.reinforcement_rule is None
-                )
-            ]
-        for role in (ProfileRole.SASH, ProfileRole.SLIDING_SASH, ProfileRole.DOOR_SASH):
-            sash = params.effective_profile_articles.get(role)
-            if sash is not None and (
-                sash.weight_kg_m is None
-                or ((bool(sash.reinforcement_sku) or sash.reinforcement_rule is not None)
-                    and sash.steel_weight_kg_m is None)
-            ):
-                fabrication_missing.append(sash.sku)
-        fabrication_missing += [
-            kit.sku for kit in params.available_hardware_kits
-            if (kit.weight_kg is None if kit.class_authority is None else
-                any(rule.weight_kg is None and rule.weight_kg_m is None for rule in (
-                    *kit.class_authority.components,
-                    *(rule for option in kit.class_authority.options for rule in option.components),
-                    *(color.component for handle in kit.class_authority.handles for color in handle.colors))))
-        ]
+        fabrication_missing = shared_gate["fabrication"]["missing"]
         if not fabrication_missing:
             try:
                 couplers = SystemParamsRepository().load_coupler_articles(system_id, org_id)
@@ -182,30 +160,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
         # * kits bound to THIS system only — the engine loads kits strictly
         #   by system_id, so an unbound kit is dead weight it can't consume
         #   and shouldn't gate readiness.
-        if rows(
-            "SELECT 1 FROM public.profile_systems WHERE id=%s"
-            " AND org_id=%s"
-            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
-            " UNION ALL"
-            " SELECT 1 FROM public.profile_articles WHERE system_id=%s"
-            " AND org_id=%s"
-            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
-            " UNION ALL"
-            " SELECT 1 FROM public.infill_articles WHERE system_id=%s"
-            " AND org_id=%s"
-            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
-            " UNION ALL"
-            " SELECT 1 FROM public.hardware_kits WHERE system_id=%s"
-            " AND org_id=%s"
-            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
-            " UNION ALL"
-            " SELECT 1 FROM public.glazing_bead_matrix WHERE system_id=%s"
-            " AND org_id=%s"
-            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
-            " LIMIT 1",
-            [system_id, org_id, system_id, org_id,
-             system_id, org_id, system_id, org_id, system_id, org_id],
-        ):
+        if not shared_gate["review"]["ok"]:
             mfg_b.append(_blocker(
                 "catalog_review", "revisión técnica humana de datos heredados",
                 str(system_id),
@@ -295,23 +250,7 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
     # ── Production level: declared process authority + work centers ──
     # The catalog resolves profiles exactly like production does, minus the
     # sealed product: system-bound → material default → GENERIC_LEGACY.
-    profile = None
-    process_via = None
-    if params is not None:
-        bound = rows(
-            "SELECT process_profile_id::text FROM public.profile_systems WHERE id=%s",
-            [system_id],
-        )
-        if bound and bound[0].get("process_profile_id"):
-            profile, process_via = _load_profile_for(org_id, profile_id=bound[0]["process_profile_id"])
-        if profile is None:
-            material = params.material.value if params.material else None
-            if material:
-                profile, process_via = _load_profile_for(org_id, material=material)
-        if profile is None:
-            profile, via = _load_profile_for(org_id, code="GENERIC_LEGACY")
-            process_via = "generic_fallback" if profile else via
-    if params is not None and (profile is None or process_via == "generic_fallback"):
+    if params is not None and not process_gate["ok"]:
         prod_b.append(_blocker(
             "process_profile", "perfil de proceso declarado",
             str(system_id),
@@ -404,11 +343,60 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
                 "una operación de máquina sin estación declarada cae al fallback de UI",
                 "declarar la estación de cada operación en el perfil de proceso"))
 
+    # Resolve each diagnosis to the actual visible article or rule. Links
+    # are API transport; names are human labels, never raw identifiers.
+    from catalogs.service import visibility_sql
+    targets = rows("SELECT id,sku,name,welding_loss_mm,reinforcement_gap_mm,weight_kg_m,cut_rule FROM public.profile_articles WHERE system_id=%s AND " +
+                   visibility_sql(child=True), [system_id, org_id])
+    policy_fields = {"technical_catalog": "system_family", "inspection": "dimensional_limits", "manufacturing": "process_profile_id",
+                     "process_profile": "process_profile_id", "station_map": "process_profile_id"}
+    for blocker in design_b + quote_b + mfg_b + prod_b + cnc_b:
+        links = []
+        if blocker["code"] == "manufacturing":
+            from catalogs.policies import manufacturing_policy_facts
+            for policy in manufacturing_policy_facts(system_id, org_id):
+                if not policy["valid"]:
+                    links.append({"resource": "systems", "row_id": str(system_id),
+                                  "field": policy["kind"], "label": policy["label"]})
+        for target in targets:
+            if target["sku"] in blocker["affected"]:
+                missing_field = "cut_rule"
+                if params is not None and params.uses_legacy_rules:
+                    missing_field = next((field for field in ("welding_loss_mm", "reinforcement_gap_mm", "weight_kg_m")
+                                          if target[field] is None), "welding_loss_mm")
+                links.append({"resource": "articles", "row_id": str(target["id"]),
+                    "field": "section" if blocker["code"] == "catalog_review" else missing_field,
+                    "label": target["name"]})
+        if blocker["code"] == "catalog_review":
+            for target in manufacturing_review_gate(system_id, org_id)["pending"]:
+                resource = {"profile_articles": "articles", "hardware_kits": "hardware-kits",
+                            "glazing_bead_matrix": "glazing"}.get(target["table"], "systems")
+                links.append({"resource": resource, "row_id": target["id"],
+                              "field": "review", "label": "Revisar " + target["label"]})
+        if not links:
+            default_field = policy_fields.get(blocker["code"], blocker["code"])
+            if blocker["code"] == "fabrication":
+                default_field = next((field for field in ("rebate_depth_mm", "end_milling_overlap_mm")
+                                      if field in blocker["affected"]), "rebate_depth_mm")
+            links.append({"resource": "systems", "row_id": str(system_id),
+                "field": default_field,
+                "label": blocker["action"]})
+        for link in links:
+            link["href"] = (f"/catalogs/systems?system={system_id}&resource={link['resource']}"
+                            f"&record={link['row_id']}&field={link['field']}")
+            if blocker["code"] in ("work_centers", "station_map", "manufacturing", "purchase"):
+                anchor = (("ws.policy-" + link["field"] if link["field"] in ("placement", "handles", "reinforcement") else "ws.policies") if blocker["code"] == "manufacturing"
+                          else {"work_centers": "ws.centers", "purchase": "ws.purchase"}.get(blocker["code"], "ws.process"))
+                link["href"] = f"/catalogs/systems?system={system_id}&tab=reglas&anchor={anchor}"
+        blocker["targets"] = links
+
     # quote_ready keeps its legacy contract — the WHITE_FIXED_CATALOG gate is
     # design + purchase + manufacturing authority; the new production/CNC
     # levels report above it without tightening the existing gate.
     reasons = [b["code"] for b in design_b + quote_b + mfg_b]
     return {
+        "state": "BLOCK" if reasons else "WARN" if prod_b or cnc_b else "PASS",
+        "authority_gate": shared_gate,
         "quote_ready": not reasons,
         "scope": "WHITE_FIXED_CATALOG",
         "reasons": reasons,

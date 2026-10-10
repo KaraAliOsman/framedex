@@ -1169,6 +1169,13 @@ def compose_revision(
                 engine_result=current_bom,
                 system_facts=system_facts_by_id.get(str(system_id)),
             )
+            from catalogs.authority import catalog_authority_gate
+            catalog_gate = catalog_authority_gate(system_id=system_id, org_id=org_id,
+                params=params, process_facts=process_facts,
+                profile_skus={str(item.get("sku")) for item in current_bom.get("profile_cuts", [])},
+                hardware_skus={item.kit_sku for item in result.hardware_items},
+                panel_skus={str(item.get("sku")) for item in current_bom.get("panels", [])})
+            production_allowed = production_allowed and catalog_gate["ok"]
             annotations = workshop_annotations(position["workshop_annotations"])
             structural = structural_inputs(position["structural_inputs"])
             targets = {
@@ -1476,6 +1483,7 @@ def compose_revision(
                     position["legacy_handle_migration_confirmed"]
                 ),
                 "process_facts": process_facts,
+                "catalog_authority_gate": catalog_gate,
                 "measurements": measure,
             })
             bom.append({

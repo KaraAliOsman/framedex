@@ -3,6 +3,7 @@ import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import {
   catalogImportPublish,
   catalogImportReview,
+  catalogImportTimeline,
   catalogImportUndo,
   catalogImportsCreate,
   catalogImportsList,
@@ -13,6 +14,7 @@ import type {
   CatalogReviewResponse,
   CatalogTemplateColumn,
   CatalogTemplateSheet,
+  CatalogImportTimeline,
 } from "../../api/generated/models";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { formatDate, formatDateTime, formatDecimal, fmtMm, formatMoney } from "../../format";
@@ -24,13 +26,22 @@ import type { ExtraAuthority } from "../projects/extraModel";
 import { FinishAuthorityEditor } from "./FinishAuthorityEditor";
 import type { FinishAuthority } from "../../api/generated/models";
 import { physicalLabel, type Capability } from "../canvas/physicalOpenings";
+import { SourceHighlight } from "./CatalogProvenance";
+import { ImportedSectionFields } from "./ImportedSectionFields";
 
-type Evidence = { ref?: string; quote?: string; confidence?: string; proposed?: unknown };
+type Evidence = {
+  ref?: string;
+  quote?: string;
+  literal?: string;
+  confidence?: string;
+  proposed?: unknown;
+};
 type ReviewRow = {
   key: string;
   sheet: string;
   row: number;
   method: string;
+  confidence: string;
   include: boolean;
   values: Record<string, unknown>;
   fields: Record<string, Evidence>;
@@ -128,10 +139,15 @@ function typedRow(raw: Record<string, unknown>): ReviewRow | null {
     sheet: String(raw.sheet),
     row: Number(raw.row),
     method: String(raw.method),
+    confidence: String(raw.confidence ?? "REVIEW_REQUIRED"),
     values: { ...(raw.values as Record<string, unknown>) },
     fields: (raw.fields ?? {}) as ReviewRow["fields"],
     errors: (raw.errors ?? []) as ReviewRow["errors"],
-    include: true,
+    include:
+      raw.confidence === "HIGH_CANDIDATE" &&
+      !Object.values((raw.fields ?? {}) as Record<string, Evidence>).some(
+        (field) => field.confidence === "LOW",
+      ),
   };
 }
 export function CatalogImportsPanel({
@@ -147,7 +163,8 @@ export function CatalogImportsPanel({
   onExpandedChange?: (expanded: boolean) => void;
 }): JSX.Element {
   const confirm = useConfirm();
-  const [expanded, setExpanded] = useState(false);
+  const requestedImport = useRef(new URLSearchParams(window.location.search).get("import"));
+  const [expanded, setExpanded] = useState(!!requestedImport.current);
   useEffect(() => onExpandedChange?.(expanded), [expanded, onExpandedChange]);
   const [imports, setImports] = useState<CatalogImportResponse[]>([]);
   const [sheets, setSheets] = useState<CatalogTemplateSheet[]>([]);
@@ -163,6 +180,9 @@ export function CatalogImportsPanel({
   const [reviewed, setReviewed] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [timeline, setTimeline] = useState<CatalogImportTimeline | null>(null);
+  const [timelineError, setTimelineError] = useState("");
+  const [timelineReload, setTimelineReload] = useState(0);
   const mounted = useRef(true);
   const generation = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -208,6 +228,38 @@ export function CatalogImportsPanel({
     const timer = window.setTimeout(() => void load(), 2500);
     return () => window.clearTimeout(timer);
   }, [imports, load]);
+  useEffect(() => {
+    const wanted = imports.find((item) => item.id === requestedImport.current);
+    if (wanted) {
+      requestedImport.current = null;
+      const candidates = wanted.candidates
+        .map(typedRow)
+        .filter((row): row is ReviewRow => row !== null);
+      setReviewId(wanted.id);
+      setRows(candidates);
+      setSheetName(candidates[0]?.sheet ?? "Sistemas");
+      setRowKey(candidates[0]?.key ?? "");
+    }
+    // A deep link opens once; subsequent list refreshes preserve local edits.
+  }, [imports]);
+  useEffect(() => {
+    if (!reviewId) return;
+    const controller = new AbortController();
+    setTimeline(null);
+    setTimelineError("");
+    void catalogImportTimeline(reviewId, {
+      headers: { "X-Organization-ID": orgId },
+      signal: controller.signal,
+    })
+      .then((result) => {
+        if (result.status === 200 && !controller.signal.aborted) setTimeline(result.data);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setTimelineError("No se pudo cargar el historial. Reintenta para revisar la auditoría.");
+      });
+    return () => controller.abort();
+  }, [reviewId, orgId, timelineReload]);
   async function download(url: string): Promise<void> {
     setBusy(true);
     setMessage("");
@@ -249,7 +301,7 @@ export function CatalogImportsPanel({
       .filter((row): row is ReviewRow => row !== null);
     if (!candidates.length) {
       setMessage(
-        "Esta importación no tiene filas de la plantilla vigente. Sube nuevamente el archivo para revisar las nueve hojas.",
+        "Esta importación no tiene filas de la plantilla vigente. Sube nuevamente el archivo para revisar sus hojas.",
       );
       return;
     }
@@ -296,6 +348,7 @@ export function CatalogImportsPanel({
       const response = await catalogImportReview(reviewId, { items: items() }, options);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setDiff(response.data);
+      setTimelineReload((value) => value + 1);
       if (response.data.errors.length)
         setMessage(
           "Corrige los campos indicados o excluye sus filas. La publicación está bloqueada.",
@@ -359,6 +412,7 @@ export function CatalogImportsPanel({
       await load();
       onConfirmed?.();
       setMessage("Publicación deshecha. La fuente y la revisión quedan en el historial.");
+      setTimelineReload((value) => value + 1);
     } catch (error) {
       setMessage(errorText(error));
     } finally {
@@ -415,8 +469,8 @@ export function CatalogImportsPanel({
           <div>
             <h4>Con plantilla</h4>
             <p>
-              Nueve hojas para sistemas, perfiles, corte, refuerzos, límites, colores, vidrios,
-              herrajes y costos. Una celda vacía queda como Sin dato.
+              Hojas para sistemas, perfiles, corte, refuerzos, límites, colores, vidrios, herrajes y
+              costos. Una celda vacía queda como Sin dato.
             </p>
             <div className="catalog-toolbar">
               <button
@@ -450,8 +504,8 @@ export function CatalogImportsPanel({
           <div>
             <h4>Con tus archivos e IA</h4>
             <p>
-              Ficha PDF con texto, planilla, correo o texto pegado. Las fotos y escaneos sin texto
-              quedan pendientes de transcripción; sus valores no se publican como verificados.
+              PDF, planilla, correo, texto o foto. La IA propone lecturas con su fuente. Una foto o
+              un escaneo sin texto verificable requiere tu revisión y queda desmarcado.
             </p>
             <div
               className={`catalog-dropzone${dragging ? " is-dragging" : ""}`}
@@ -551,6 +605,19 @@ export function CatalogImportsPanel({
               Cerrar revisión
             </button>
           </header>
+          <p>
+            Las filas con dudas o errores están desmarcadas. Lo ausente queda Sin dato; selecciona
+            una fila solo después de contrastarla con la fuente.
+          </p>
+          {canWrite ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void download(`/api/v1/catalog-imports/${entry.id}/source/`)}
+            >
+              Descargar original para contrastar
+            </button>
+          ) : null}
           {entry.warnings.map((warning) => (
             <p key={warning} className="catalog-ingest-message">
               {WARNINGS[warning] ?? warning}
@@ -610,6 +677,13 @@ export function CatalogImportsPanel({
                       <span>
                         Fila {row.row} · {row.method === "AI" ? "Propuesta de IA" : "Plantilla"}
                       </span>
+                      <span>
+                        {row.confidence === "HIGH_CANDIDATE"
+                          ? "Lectura con fuente"
+                          : row.confidence === "LOW"
+                            ? "Lectura dudosa"
+                            : "Requiere revisión"}
+                      </span>
                       {row.errors.length > 0 && <span>Requiere corrección</span>}
                     </button>
                   </div>
@@ -643,7 +717,12 @@ export function CatalogImportsPanel({
                         {column.required && <small>Requerido</small>}
                       </label>
                       <div>
-                        {column.key === "extra_authority" ? (
+                        {column.key === "section" ? (
+                          <ImportedSectionFields
+                            value={value}
+                            onChange={(next) => patch(selected.key, column.key, next)}
+                          />
+                        ) : column.key === "extra_authority" ? (
                           <ExtraAuthorityEditor
                             value={(value as ExtraAuthority | null) ?? null}
                             onChange={(next) => patch(selected.key, column.key, next)}
@@ -727,17 +806,19 @@ export function CatalogImportsPanel({
                         /\d+[.,]\d{4,}/u.test(evidence.quote ?? "") ? (
                           <details>
                             <summary>Ver texto original de la fuente</summary>
-                            <blockquote>
-                              {evidence.quote || "La fuente no declara este campo."}
-                            </blockquote>
+                            <div>
+                              <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
+                            </div>
                           </details>
                         ) : (
-                          <blockquote>
-                            {evidence.quote || "La fuente no declara este campo."}
-                          </blockquote>
+                          <SourceHighlight quote={evidence.quote} literal={evidence.literal} />
                         )}
                         {evidence.confidence !== "HIGH" && (
-                          <strong>Sin dato verificado · revisa la fuente</strong>
+                          <strong>
+                            {evidence.confidence === "LOW"
+                              ? "Lectura dudosa · revisa la fuente"
+                              : "Sin dato · la fuente no lo declara"}
+                          </strong>
                         )}
                         {evidence.proposed != null && value == null && (
                           <small>Lectura dudosa: {display(evidence.proposed, column)}</small>
@@ -847,6 +928,41 @@ export function CatalogImportsPanel({
               )}
             </div>
           )}
+          <details className="catalog-import-timeline">
+            <summary>Historial de la importación</summary>
+            {timelineError ? (
+              <>
+                <p role="alert">{timelineError}</p>
+                <button type="button" onClick={() => setTimelineReload((value) => value + 1)}>
+                  Reintentar historial
+                </button>
+              </>
+            ) : timeline === null ? (
+              <p role="status">Cargando historial…</p>
+            ) : (
+              <ol>
+                {timeline.items.map((event) => (
+                  <li key={event.id}>
+                    <strong>
+                      {{
+                        UPLOADED: "Archivo recibido",
+                        EXTRACTING: "Extracción iniciada",
+                        REVIEW_READY: "Candidatos preparados",
+                        REVIEW: "Diff revisado",
+                        PUBLISH: "Publicación confirmada",
+                        UNDO: "Publicación deshecha",
+                        FAILED: "Extracción fallida",
+                        HISTORICAL_STATE: "Estado histórico; pasos anteriores sin registro",
+                      }[event.action] ?? "Paso de importación"}
+                    </strong>
+                    <span>
+                      {event.actor} · {formatDateTime(event.created_at)}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </details>
         </div>
       )}
     </section>

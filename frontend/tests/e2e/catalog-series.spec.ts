@@ -121,6 +121,8 @@ function form(page: Page) {
 }
 
 async function section(page: Page, resource: Resource): Promise<void> {
+  const openRecords = page.getByRole("button", { name: "Abrir lista de registros", exact: true });
+  if (await openRecords.count()) await openRecords.click();
   await page
     .getByRole("tablist", {
       name: t("catalog.sections"),
@@ -139,6 +141,7 @@ async function selectSystem(page: Page, name: string): Promise<void> {
   });
   await expect(button).toHaveCount(1);
   await button.click();
+  await page.getByRole("button", { name: "Abrir lista de registros", exact: true }).click();
   await expect(page.locator(".catalog-detail > header h2")).toHaveText(name);
 }
 

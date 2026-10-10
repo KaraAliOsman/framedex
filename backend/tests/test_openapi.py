@@ -181,6 +181,8 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/catalog-imports/{import_id}/review/",
         "/api/v1/catalog-imports/{import_id}/publish/",
         "/api/v1/catalog-imports/{import_id}/undo/",
+        "/api/v1/catalog-imports/{import_id}/source/",
+        "/api/v1/catalog-imports/{import_id}/timeline/",
         "/api/v1/production/orders/",
         "/api/v1/production/versions/{version_id}/hardware-picking/",
         "/api/v1/production/prep/",

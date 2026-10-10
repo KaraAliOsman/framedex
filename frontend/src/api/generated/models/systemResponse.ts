@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { AuthorityProvenance } from "./authorityProvenance";
 import type { CatalogReadiness } from "./catalogReadiness";
 import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { FinishAuthority } from "./finishAuthority";
@@ -25,6 +26,7 @@ export interface SystemResponse {
   /** @nullable */
   readonly technical_reviewed_by: string | null;
   readonly review_pending: boolean;
+  readonly authority_provenance: AuthorityProvenance;
   extra_authority?: unknown | null;
   system_family:
     (typeof SystemResponseSystemFamily)[keyof typeof SystemResponseSystemFamily] | null;

@@ -457,8 +457,13 @@ def publish(*, org_id, actor_id, import_id, items, review_token):
                     source = entry["fields"][field]
                     attestation = evidence.declare_evidence(org_id=org_id, actor_id=actor_id, values={
                         "authority_table": change.table, "row_id": item["id"], "field_name": field,
-                        "value_text": json_text(value)[:120],
+                        "value_text": json_text(value), "canonical_value": value,
                         "source_document": f"{row['file_name']} · {source.get('ref','')}"[:300],
+                        "source_import_id": import_id, "source_ref": source.get("ref"),
+                        "source_quote": source.get("quote"), "source_literal": source.get("literal"),
+                        "extraction_confidence": source.get("confidence"),
+                        "extraction_method": source.get("method", entry["method"]),
+                        "original_value": source.get("original", value),
                         "applicability": f"{source.get('ref','')} · {source.get('method',entry['method'])} · {entry['values']['source']}"[:300]})
                     evidence.review_evidence(org_id=org_id, evidence_id=UUID(attestation["id"]), actor_id=actor_id, state="REVIEWED")
             result.append({"key": change.key, "table": change.table, "row_id": str(item["id"]), "action": change.action})

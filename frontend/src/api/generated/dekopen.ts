@@ -60,6 +60,7 @@ import type {
   CatalogImportDetailResponse,
   CatalogImportExportParams,
   CatalogImportListResponse,
+  CatalogImportTimeline,
   CatalogKitListParams,
   CatalogPublishRequestRequest,
   CatalogReviewRequestRequest,
@@ -3610,6 +3611,150 @@ export const catalogImportReview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(catalogReviewRequestRequest),
+  });
+};
+
+export type catalogImportSourceResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type catalogImportSourceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportSourceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportSourceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportSourceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportSourceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportSourceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportSourceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportSourceResponseSuccess = catalogImportSourceResponse200 & {
+  headers: Headers;
+};
+export type catalogImportSourceResponseError = (
+  | catalogImportSourceResponse400
+  | catalogImportSourceResponse401
+  | catalogImportSourceResponse403
+  | catalogImportSourceResponse404
+  | catalogImportSourceResponse409
+  | catalogImportSourceResponse422
+  | catalogImportSourceResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportSourceResponse =
+  catalogImportSourceResponseSuccess | catalogImportSourceResponseError;
+
+export const getCatalogImportSourceUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/source/`;
+};
+
+export const catalogImportSource = async (
+  importId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportSourceResponse> => {
+  return apiMutator<catalogImportSourceResponse>(getCatalogImportSourceUrl(importId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogImportTimelineResponse200 = {
+  data: CatalogImportTimeline;
+  status: 200;
+};
+
+export type catalogImportTimelineResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportTimelineResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportTimelineResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportTimelineResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportTimelineResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportTimelineResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportTimelineResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportTimelineResponseSuccess = catalogImportTimelineResponse200 & {
+  headers: Headers;
+};
+export type catalogImportTimelineResponseError = (
+  | catalogImportTimelineResponse400
+  | catalogImportTimelineResponse401
+  | catalogImportTimelineResponse403
+  | catalogImportTimelineResponse404
+  | catalogImportTimelineResponse409
+  | catalogImportTimelineResponse422
+  | catalogImportTimelineResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportTimelineResponse =
+  catalogImportTimelineResponseSuccess | catalogImportTimelineResponseError;
+
+export const getCatalogImportTimelineUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/timeline/`;
+};
+
+export const catalogImportTimeline = async (
+  importId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportTimelineResponse> => {
+  return apiMutator<catalogImportTimelineResponse>(getCatalogImportTimelineUrl(importId), {
+    ...options,
+    method: "GET",
   });
 };
 

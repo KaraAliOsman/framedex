@@ -1190,3 +1190,28 @@ La repetición PostgreSQL/E2E está en curso y el fixture persistente se conserv
 
 P14 PR https://github.com/KaraAliOsman/framedex/pull/143, CI 4/4 sobre 970df75643c67b6bec9c3813803b071066627aab, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38076669544, squash c4eb4159a45caef4bbf88fb770372a5d13993411, 2026-10-10.
 R1–R20 PASA. Servicios propios y stack aislado detenidos; fixture persistente intacto. Las revisiones externas fueron omitidas por sus proveedores y no se atribuyen como revisión completa.
+
+## 2026-10-10 — P16 · fuente, revisión y autoridad visible
+
+La rama `codex/P16-catalogo-tecnico` comparte el predicado de revisión/fabricación/
+proceso entre catálogo y sellado, con cobertura y consumo explícitos. Liberación
+lee el gate histórico. DEMO prevalece; REVIEWED no certifica; VERIFIED exige
+evidencia vigente para todos los valores técnicos presentes. Sección ausente,
+origen/orientación y profundidad inválidos no pasan a verificada.
+
+MiMo real produjo tres candidatos de un PDF sintético, dos dudosos. Colores y
+sección se corrigieron desde el original; la regla de corte se excluyó. Publicación,
+foco exacto, ficha y deshacer dejaron seis etapas inmutables. Una imagen de la
+ficha produjo candidatos visuales sujetos a contraste humano. Los originales
+potencialmente comerciales requieren rol técnico; un estimador recibe 403.
+
+Se eliminaron mapa y navegación duplicados, cajas inferidas y saltos genéricos;
+se acotó el riel de series y se corrigieron contraste/reintentos. Matriz y cinco
+estados pasan. Las primeras corridas completas encontraron anotaciones de tipos
+faltantes y un puerto ocupado antes de E2E; esas corridas no acreditan aceptación
+final. Gates y CI se registran al integrar. Véase `docs/redesign/P16-ACEPTACION.md`.
+
+P16 verificación final local: Los cuatro gates locales pasan: 881 pruebas del motor (+2 xfail), 1.476 del backend y 967 del frontend, goldens byte a byte y build.
+El gate de base de datos termina con `[PASS] database gate`: 1315 aserciones pgTAP, 493 integraciones, 19 E2E y diez verificaciones de upgrade PG16. El stack aislado termina detenido y el fixture persistente se conserva.
+CI se registra cuando terminen los cuatro checks del PR.
+La cobertura de costos identifica DEMO y las políticas de fabricación tienen destinos individuales con foco. El acceso pgTAP del rol técnico solo existe dentro del ROLLBACK de su prueba.

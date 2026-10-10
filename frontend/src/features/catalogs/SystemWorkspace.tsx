@@ -1,3 +1,6 @@
+import { CatalogProvenance, SectionReviewFacts, SourceHighlight } from "./CatalogProvenance";
+import { WorkspaceGlasses, WorkspaceCosts } from "./WorkspaceMaterials";
+import { DemoBadge, DimLoader } from "../../ui";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useState } from "react";
 import { WorkCenterRequestKindEnum } from "../../api/generated/models";
@@ -13,7 +16,7 @@ import type {
   WorkCenterRequestRequest,
 } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
-import { fmtMm, formatDecimal } from "../../format";
+import { fmtMm, formatDecimal, formatDateTime } from "../../format";
 import { domainLabel } from "../../i18n/domainLabels";
 import { centerKindLabel, opKindLabel, stationCodeLabel } from "../production/labels";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
@@ -32,19 +35,6 @@ function TechnicalCode({ value }: { value: string }) {
   );
 }
 
-function provenanceLabel(value: string | null | undefined): string {
-  if (!value) return "—";
-  if (value === "LEGACY_UNVERIFIED") return t("catalog.provenanceLegacy");
-  const key = `catalog.provenance.${value}` as Label;
-  return [
-    "catalog.provenance.SEED_SYNTHETIC",
-    "catalog.provenance.MANUAL",
-    "catalog.provenance.IMPORT",
-  ].includes(key)
-    ? t(key)
-    : value;
-}
-
 function productKindLabel(kind: string): string {
   const key = `catalog.productKind.${kind}` as Label;
   return ["catalog.productKind.STANDARD", "catalog.productKind.FRAMELESS"].includes(key)
@@ -60,19 +50,6 @@ function joiningMethodLabel(method: string | null | undefined): string {
     : method;
 }
 
-/** Readiness blocker codes → the workspace section where they resolve. */
-const BLOCKER_SECTION: Record<string, string> = {
-  technical_catalog: "ws.articles",
-  inspection: "ws.system",
-  manufacturing: "ws.process",
-  fabrication: "ws.system",
-  catalog_review: "ws.articles",
-  purchase: "ws.purchase",
-  process_profile: "ws.process",
-  work_centers: "ws.process",
-  station_map: "ws.process",
-};
-
 /** Entity references in blocker text carry raw UUIDs — a record id means
  * nothing read as prose. The system's own id renders as its name; any other
  * keeps a short code. */
@@ -83,49 +60,35 @@ function levelOk(level: { ok?: boolean; state?: string; blockers: unknown[] }): 
   return level.ok === true;
 }
 
-function ProvenanceBadge({
-  row,
-}: {
-  row: {
-    data_provenance?: string;
-    review_pending?: boolean;
-    technical_reviewed_at?: string | null;
-  };
-}) {
-  // "Verificado" is reserved for an actual technical review — provenance
-  // alone (manual entry, an import, a demo seed) is not verification.
-  if (row.technical_reviewed_at)
-    return <span className="ws-badge ws-badge--ok">{wst("verified")}</span>;
-  if (row.data_provenance === "LEGACY_UNVERIFIED")
-    return <span className="ws-badge ws-badge--warn">{ct("provenanceLegacy")}</span>;
-  if (row.review_pending)
-    return <span className="ws-badge ws-badge--warn">{ct("reviewPending")}</span>;
-  return <span className="ws-badge">{provenanceLabel(row.data_provenance)}</span>;
-}
-
 function ArticleCard({
   article,
   purchased,
   beads,
   canEdit,
   onEdit,
+  evidence,
 }: {
   article: ArticleResponse;
   purchased: boolean;
+  evidence: EvidenceRow[];
   beads: number;
   canEdit: boolean;
   onEdit: () => void;
 }) {
   const depth = article.section?.depth_mm;
   return (
-    <article className="ws-article-card">
-      <div className="ws-article-section" aria-hidden="true">
-        <SectionPreviewSvg
-          section={article.section}
-          faceWidthMm={Number(article.face_width_mm) || 60}
-          depthMm={depth ? Number(depth) : undefined}
-          material={article.material}
-        />
+    <article className="ws-article-card" id={`article-${article.id}`}>
+      <div className="ws-article-section">
+        {article.section ? (
+          <SectionPreviewSvg
+            section={article.section}
+            faceWidthMm={Number(article.face_width_mm)}
+            material={article.material}
+          />
+        ) : (
+          <p className="ws-empty">Sección: Sin dato. Declara la geometría del proveedor.</p>
+        )}
+        <SectionReviewFacts facts={article.section_facts} />
         <small>
           {article.section
             ? `${ct(`sectionSource.${article.section.source}`)}${depth ? ` · ${fmtMm(depth)} mm` : ""}`
@@ -163,6 +126,14 @@ function ArticleCard({
             </dd>
           </div>
           <div>
+            <dt>Pérdida de soldadura</dt>
+            <dd>
+              {article.welding_loss_mm == null
+                ? "Sin dato"
+                : `${fmtMm(article.welding_loss_mm)} mm`}
+            </dd>
+          </div>
+          <div>
             <dt>{wst("purchaseState")}</dt>
             <dd>
               {purchased ? (
@@ -178,7 +149,7 @@ function ArticleCard({
           </div>
         </dl>
         <footer>
-          <ProvenanceBadge row={article} />
+          <CatalogProvenance row={article} evidence={evidence} />
           {canEdit && (
             <button type="button" className="ui-button ui-button--small" onClick={onEdit}>
               {ct(article.read_only === false ? "edit" : "view")}
@@ -195,13 +166,7 @@ function ArticleCard({
   );
 }
 
-function ReadinessLadder({
-  system,
-  onJump,
-}: {
-  system: Row<"systems">;
-  onJump: (anchor: string) => void;
-}) {
+function ReadinessLadder({ system }: { system: Row<"systems"> }) {
   const readiness = system.readiness;
   if (!readiness) return <p className="ws-empty">{ct("readinessUnknown")}</p>;
   const levels = readiness.levels ?? [];
@@ -271,16 +236,16 @@ function ReadinessLadder({
             <li key={`${level}-${blocker.code}-${index}`} className="ws-blocker">
               <div className="ws-blocker-head">
                 <span className="ws-blocker-level">{wst(`level.${level}`)}</span>
-                <button
-                  type="button"
-                  className="ws-blocker-target"
-                  onClick={() => onJump(BLOCKER_SECTION[blocker.code] ?? "ws.system")}
-                  title={wst("jumpToSection")}
-                >
+                <strong className="ws-blocker-target">
                   {ct(`readiness.${blocker.code}`)}
                   <span className="ws-blocker-affected"> — {labelFor(blocker.affected)}</span>
-                </button>
+                </strong>
               </div>
+              {blocker.targets?.map((target) => (
+                <a key={`${target.row_id}-${target.field}`} href={target.href}>
+                  {target.label}
+                </a>
+              ))}
               <p className="ws-blocker-detail">
                 <strong>{wst("missingAuthority")}:</strong> {labelFor(blocker.missing_authority)}
                 <br />
@@ -307,10 +272,7 @@ type WorkspaceProps = {
   reloadKey: number;
 };
 
-/** §06 system home — the profile system's whole technical authority in one
- * view: who/what it is, how far it can carry a product (readiness ladder with
- * per-blocker deep links), and every entity bound to it. Relationship map is
- * the §06-C section below. */
+/** Current authority, its sources and the exact requirements to resolve. */
 export function SystemWorkspaceView({
   api,
   systemId,
@@ -324,7 +286,11 @@ export function SystemWorkspaceView({
   const [centers, setCenters] = useState<WorkCenter[] | null>(null);
   const [evidenceRows, setEvidenceRows] = useState<EvidenceRow[] | null>(null);
   const [error, setError] = useState(false);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [tab, setTab] = useState(
+    () => new URLSearchParams(window.location.search).get("tab") ?? "perfiles",
+  );
+  const [evidenceError, setEvidenceError] = useState("");
+  const [fetchReload, setFetchReload] = useState(0);
 
   useEffect(() => {
     // Per-effect flag: a shared ref lets a superseded fetch's AbortError
@@ -334,6 +300,9 @@ export function SystemWorkspaceView({
     setWorkspace(null);
     setCenters(null);
     setError(false);
+    setEvidenceError("");
+    setCenterError(null);
+    setEvidenceRows(null);
     void api
       .workspace(systemId, controller.signal)
       .then((result) => {
@@ -348,7 +317,10 @@ export function SystemWorkspaceView({
         if (alive) setCenters(result);
       })
       .catch(() => {
-        if (alive) setCenters([]);
+        if (alive)
+          setCenterError(
+            "No se pudieron cargar los centros. Reintenta para revisar su disponibilidad.",
+          );
       });
     void api
       .evidence(systemId, controller.signal)
@@ -356,13 +328,16 @@ export function SystemWorkspaceView({
         if (alive) setEvidenceRows(result);
       })
       .catch(() => {
-        if (alive) setEvidenceRows([]);
+        if (alive)
+          setEvidenceError(
+            "No se pudieron cargar las fuentes. Reintenta antes de revisar sus valores.",
+          );
       });
     return () => {
       alive = false;
       controller.abort();
     };
-  }, [api, systemId, reloadKey]);
+  }, [api, systemId, reloadKey, fetchReload]);
 
   const [centerForm, setCenterForm] = useState<{
     code: string;
@@ -372,6 +347,17 @@ export function SystemWorkspaceView({
   const [centerSaving, setCenterSaving] = useState(false);
   const [centerSeeding, setCenterSeeding] = useState(false);
   const [centerError, setCenterError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!workspace) return;
+    const anchor = new URLSearchParams(window.location.search).get("anchor");
+    if (!anchor) return;
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(anchor);
+      target?.focus();
+      target?.scrollIntoView({ block: "center" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [workspace]);
 
   /** One-click standard station set — the read no longer self-seeds, so an
    * empty org resolves its work_centers blocker here (or at first release). */
@@ -397,7 +383,9 @@ export function SystemWorkspaceView({
       });
       setCenters(await api.workCenters());
     } catch {
-      /* the centers list keeps its last state; the readiness ladder still shows the blocker */
+      setCenterError(
+        "No se pudo activar el centro. Reintenta y revisa su estado antes de fabricar.",
+      );
     }
   };
 
@@ -428,8 +416,16 @@ export function SystemWorkspaceView({
     }
   };
 
-  if (error) return <p role="alert">{ct("errorNetwork")}</p>;
-  if (!workspace) return <p role="status">{ct("loading")}</p>;
+  if (error)
+    return (
+      <div>
+        <p role="alert">{ct("errorNetwork")}</p>
+        <button type="button" onClick={() => setFetchReload((value) => value + 1)}>
+          Reintentar catálogo
+        </button>
+      </div>
+    );
+  if (!workspace) return <DimLoader label={ct("loading")} />;
 
   const { system, articles, beads, kits, reinforcements, purchase_mappings, process_profile } =
     workspace;
@@ -439,70 +435,6 @@ export function SystemWorkspaceView({
   for (const bead of beads) {
     beadsByArticle.set(bead.bead_article_id, (beadsByArticle.get(bead.bead_article_id) ?? 0) + 1);
   }
-
-  const jump = (anchor: string) => {
-    const target =
-      anchor === "ws.articles" || anchor === "ws.purchase" || anchor === "ws.process"
-        ? anchor
-        : "ws.system";
-    document.getElementById(target)?.scrollIntoView({ block: "start" });
-  };
-
-  // §06-C relationship map — nodes are the authority groups; clicking one
-  // shows dependencies, consumers and the impact if it changes.
-  const nodes: { id: string; label: string; count: number; deps: string[]; uses: string[] }[] = [
-    {
-      id: "system",
-      label: system.name,
-      count: 1,
-      deps: [],
-      uses: ["articles", "beads", "kits", "reinforcements", "process"],
-    },
-    {
-      id: "articles",
-      label: wst("articles"),
-      count: articles.length,
-      deps: ["system"],
-      uses: ["beads", "reinforcements", "purchase"],
-    },
-    {
-      id: "beads",
-      label: wst("beads"),
-      count: beads.length,
-      deps: ["system", "articles"],
-      uses: [],
-    },
-    {
-      id: "reinforcements",
-      label: wst("reinforcements"),
-      count: reinforcements.length,
-      deps: ["system", "articles"],
-      uses: [],
-    },
-    {
-      id: "kits",
-      label: wst("hardware"),
-      count: kits.length,
-      deps: ["system"],
-      uses: [],
-    },
-    {
-      id: "purchase",
-      label: wst("purchase"),
-      count: purchase_mappings.length,
-      deps: ["articles"],
-      uses: [],
-    },
-    {
-      id: "process",
-      label: wst("process"),
-      count: process_profile ? 1 : 0,
-      deps: ["system"],
-      uses: [],
-    },
-  ];
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const activeNode = selectedNode ? nodeById.get(selectedNode) : undefined;
 
   // Fuentes: human-readable name for the row each evidence attests.
   const targetName = (row: EvidenceRow): string => {
@@ -514,15 +446,21 @@ export function SystemWorkspaceView({
     const kit = kits.find((k) => k.id === row.row_id);
     if (kit) return kit.name;
     const reinforcement = reinforcements.find((r) => r.id === row.row_id);
-    if (reinforcement) return reinforcement.id.slice(0, 8);
-    return `${row.authority_table} · ${row.row_id.slice(0, 8)}`;
+    if (reinforcement) return reinforcement.name;
+    return "Regla de la serie";
   };
   const reviewEvidence = (row: EvidenceRow, state: "REVIEWED" | "REJECTED") => {
-    void api.reviewEvidence(row.id, state).then((updated) => {
-      setEvidenceRows((rows) =>
-        rows ? rows.map((r) => (r.id === updated.id ? updated : r)) : rows,
+    setEvidenceError("");
+    void api
+      .reviewEvidence(row.id, state)
+      .then((updated) => {
+        setEvidenceRows((rows) =>
+          rows ? rows.map((r) => (r.id === updated.id ? updated : r)) : rows,
+        );
+      })
+      .catch(() =>
+        setEvidenceError("No se pudo revisar esta evidencia. Actualiza el catálogo y reintenta."),
       );
-    });
   };
 
   return (
@@ -539,7 +477,7 @@ export function SystemWorkspaceView({
                 {app}
               </span>
             ))}
-            <ProvenanceBadge row={system} />
+            {system.is_demo ? <DemoBadge /> : null}
             <span className="ws-badge">{system.is_active ? ct("active") : ct("inactive")}</span>
           </div>
           <dl className="ws-identity-facts">
@@ -561,7 +499,9 @@ export function SystemWorkspaceView({
             </div>
             <div>
               <dt>{wst("provenance")}</dt>
-              <dd>{provenanceLabel(system.data_provenance)}</dd>
+              <dd>
+                <CatalogProvenance row={system} evidence={evidenceRows ?? []} />
+              </dd>
             </div>
           </dl>
           <button
@@ -572,598 +512,707 @@ export function SystemWorkspaceView({
             {canEdit ? ct("edit") : "Consultar sistema"}
           </button>
         </div>
-        <ReadinessLadder system={system} onJump={jump} />
+        <p className="ws-readiness-summary">
+          <strong>
+            {system.readiness.state === "PASS"
+              ? "Listo"
+              : system.readiness.state === "WARN"
+                ? "Cotizable; revisa fabricación"
+                : "Bloqueado"}
+          </strong>{" "}
+          · Cobertura de la serie. La emisión comprueba los artículos usados y sella su decisión.
+        </p>
+        <details className="ws-readiness">
+          <summary>Ver requisitos para cotizar y fabricar</summary>
+          <ReadinessLadder system={system} />
+        </details>
       </header>
 
-      <section className="ws-map" aria-label={wst("map")}>
-        <h3>{wst("map")}</h3>
-        <div className="ws-map-row" role="list">
-          {nodes.map((node, index) => (
-            <div key={node.id} className="ws-map-item" role="listitem">
-              {index > 0 && (
-                <span className="ws-map-edge" aria-hidden="true">
-                  →
-                </span>
-              )}
-              <button
-                type="button"
-                className={`ws-map-node ${activeNode?.id === node.id ? "is-active" : ""}`}
-                onClick={() => setSelectedNode(node.id === selectedNode ? null : node.id)}
-              >
-                <strong>{node.label}</strong>
-                <small>
-                  {node.count} {wst("entities")}
-                </small>
-              </button>
-            </div>
-          ))}
+      <nav className="ws-tabs" aria-label="Datos técnicos del sistema">
+        {[
+          ["perfiles", "Perfiles"],
+          ["refuerzos", "Refuerzos"],
+          ["vidrios", "Vidrios"],
+          ["herrajes", "Herrajes"],
+          ["reglas", "Reglas de compatibilidad"],
+          ["costos", "Costos"],
+          ["historial", "Historial"],
+        ].map(([key, label]) => (
+          <button
+            type="button"
+            key={key}
+            aria-pressed={tab === key}
+            onClick={() => setTab(key ?? "perfiles")}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      {centerError ? (
+        <div role="alert">
+          <p>{centerError}</p>
+          <button type="button" onClick={() => setFetchReload((value) => value + 1)}>
+            Reintentar centros
+          </button>
         </div>
-        {activeNode && (
-          <div className="ws-map-detail">
-            <p>
-              <strong>{wst("dependsOn")}:</strong>{" "}
-              {activeNode.deps.length
-                ? activeNode.deps.map((d) => nodeById.get(d)?.label ?? d).join(", ")
-                : wst("none")}
-            </p>
-            <p>
-              <strong>{wst("usedBy")}:</strong>{" "}
-              {activeNode.uses.length
-                ? activeNode.uses.map((u) => nodeById.get(u)?.label ?? u).join(", ")
-                : wst("terminal")}
-            </p>
-            <p>
-              <strong>{wst("impact")}:</strong>{" "}
-              {activeNode.id === "system"
-                ? wst("impactSystem")
-                : activeNode.id === "articles"
-                  ? wst("impactArticles")
-                  : activeNode.id === "beads"
-                    ? wst("impactBeads")
-                    : activeNode.id === "reinforcements"
-                      ? wst("impactReinforcements")
-                      : activeNode.id === "kits"
-                        ? wst("impactKits")
-                        : activeNode.id === "purchase"
-                          ? wst("impactPurchase")
-                          : wst("impactProcess")}
-            </p>
-          </div>
-        )}
-      </section>
-
-      <section className="ws-section" id="ws.articles">
-        <header className="ws-section-head">
-          <h3>
-            {wst("articles")} <span className="ws-count">{articles.length}</span>
-          </h3>
-          <button
-            type="button"
-            className="ui-button ui-button--ghost ui-button--small"
-            onClick={() => onShowRecords("articles")}
-          >
-            {wst("allRecords")}
-          </button>
-          {canEdit && (
+      ) : null}
+      {tab === "vidrios" ? <WorkspaceGlasses glasses={workspace.glasses} /> : null}
+      {tab === "costos" ? <WorkspaceCosts /> : null}
+      {tab === "perfiles" && (
+        <section className="ws-section" id="ws.articles">
+          <header className="ws-section-head">
+            <h3>
+              {wst("articles")} <span className="ws-count">{articles.length}</span>
+            </h3>
             <button
               type="button"
-              className="ui-button ui-button--small"
-              onClick={() => onEdit("articles")}
+              className="ui-button ui-button--ghost ui-button--small"
+              onClick={() => onShowRecords("articles")}
             >
-              {ct("create")}
+              {wst("allRecords")}
             </button>
-          )}
-        </header>
-        {!articles.length ? (
-          <p className="ws-empty">{wst("noArticles")}</p>
-        ) : (
-          <div className="ws-article-grid">
-            {articles.map((article) => (
-              <ArticleCard
-                key={article.id}
-                article={article}
-                purchased={purchased.has(article.id)}
-                beads={beadsByArticle.get(article.id) ?? 0}
-                canEdit={canEdit}
-                onEdit={() => onEdit("articles", article.id)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="ws-section">
-        <header className="ws-section-head">
-          <h3>
-            {wst("glazing")} <span className="ws-count">{beads.length}</span>
-          </h3>
-          <button
-            type="button"
-            className="ui-button ui-button--ghost ui-button--small"
-            onClick={() => onShowRecords("glazing")}
-          >
-            {wst("allRecords")}
-          </button>
-          {canEdit && (
-            <button
-              type="button"
-              className="ui-button ui-button--small"
-              onClick={() => onEdit("glazing")}
-            >
-              {ct("create")}
-            </button>
-          )}
-        </header>
-        {!beads.length ? (
-          <p className="ws-empty">{wst("noBeadsRows")}</p>
-        ) : (
-          <div className="catalog-table-scroll">
-            <table className="ws-table">
-              <thead>
-                <tr>
-                  <th scope="col">{wst("bead")}</th>
-                  <th scope="col">{ct("field.glass_thickness_mm")}</th>
-                  <th scope="col">{ct("field.bead_width_mm")}</th>
-                  <th scope="col">{ct("field.gasket_interior_mm")}</th>
-                  <th scope="col">{ct("field.gasket_exterior_mm")}</th>
-                  <th scope="col">{ct("field.cut_add_mm")}</th>
-                  <th scope="col">{ct("actions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {beads.map((bead: BeadResponse) => {
-                  const article = articles.find((a) => a.id === bead.bead_article_id);
-                  return (
-                    <tr key={bead.id}>
-                      <th scope="row">{article?.name ?? bead.bead_article_id}</th>
-                      <td>{fmtMm(bead.glass_thickness_mm)} mm</td>
-                      <td>{fmtMm(bead.bead_width_mm)} mm</td>
-                      <td>{fmtMm(bead.gasket_interior_mm)} mm</td>
-                      <td>{fmtMm(bead.gasket_exterior_mm)} mm</td>
-                      <td>{fmtMm(bead.cut_add_mm)} mm</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="ui-button ui-button--small"
-                          onClick={() => onEdit("glazing", bead.id)}
-                        >
-                          {ct(canEdit && !bead.read_only ? "edit" : "view")}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="ws-section">
-        <header className="ws-section-head">
-          <h3>
-            {wst("hardware")} <span className="ws-count">{kits.length}</span>
-          </h3>
-          <button
-            type="button"
-            className="ui-button ui-button--ghost ui-button--small"
-            onClick={() => onShowRecords("hardware-kits")}
-          >
-            {wst("allRecords")}
-          </button>
-          {canEdit && (
-            <button
-              type="button"
-              className="ui-button ui-button--small"
-              onClick={() => onEdit("hardware-kits")}
-            >
-              {ct("create")}
-            </button>
-          )}
-        </header>
-        {!kits.length ? (
-          <p className="ws-empty">{wst("noKits")}</p>
-        ) : (
-          <div className="ws-kit-row">
-            {kits.map((kit: KitResponse) => (
-              <button
-                key={kit.id}
-                type="button"
-                className="ws-kit-card"
-                title={kit.sku}
-                onClick={() => onEdit("hardware-kits", kit.id)}
-              >
-                <strong>{kit.name}</strong>
-                <small>
-                  {ct(`option.${kit.opening_type}`)} · {ct(`option.${kit.rail_type}`)}
-                </small>
-                <ProvenanceBadge row={kit} />
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="ws-section">
-        <header className="ws-section-head">
-          <h3>
-            {wst("reinforcements")} <span className="ws-count">{reinforcements.length}</span>
-          </h3>
-        </header>
-        {!reinforcements.length ? (
-          <p className="ws-empty">{wst("noReinforcements")}</p>
-        ) : (
-          <div className="catalog-table-scroll">
-            <table className="ws-table">
-              <thead>
-                <tr>
-                  <th scope="col">{wst("parent")}</th>
-                  <th scope="col">{ct("field.sku")}</th>
-                  <th scope="col">{wst("name")}</th>
-                  <th scope="col">{wst("thickness")}</th>
-                  <th scope="col">{wst("inertia")}</th>
-                  <th scope="col">{wst("stockLength")}</th>
-                  <th scope="col">{wst("supplier")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reinforcements.map((row: ReinforcementRow) => {
-                  const parent = articles.find((a) => a.id === row.parent_profile_article_id);
-                  return (
-                    <tr key={row.id}>
-                      <th scope="row">{parent?.name ?? wst("unknown")}</th>
-                      <td>
-                        <TechnicalCode value={row.sku} />
-                        {row.is_default && <span className="ws-badge">{wst("default")}</span>}
-                      </td>
-                      <td>{row.name}</td>
-                      <td>{row.thickness_mm ? `${fmtMm(row.thickness_mm)} mm` : wst("unknown")}</td>
-                      <td>{row.ix_cm4 ? `${row.ix_cm4} cm⁴` : wst("unknown")}</td>
-                      <td>{fmtMm(row.stock_length_mm)} mm</td>
-                      <td>{row.supplier_name ?? row.manufacturer_name ?? wst("unknown")}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="ws-section" id="ws.purchase">
-        <header className="ws-section-head">
-          <h3>
-            {wst("purchase")} <span className="ws-count">{purchase_mappings.length}</span>
-          </h3>
-        </header>
-        {!purchase_mappings.length ? (
-          <p className="ws-empty">{wst("noPurchase")}</p>
-        ) : (
-          <div className="catalog-table-scroll">
-            <table className="ws-table">
-              <thead>
-                <tr>
-                  <th scope="col">{wst("article")}</th>
-                  <th scope="col">{wst("commercialSku")}</th>
-                  <th scope="col">{wst("manufacturer")}</th>
-                  <th scope="col">{wst("supplier")}</th>
-                  <th scope="col">{wst("unit")}</th>
-                  <th scope="col">{ct("state")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {purchase_mappings.map((map: PurchaseMappingRow) => {
-                  const article = articles.find((a) => a.id === map.profile_article_id);
-                  return (
-                    <tr key={map.id}>
-                      <th scope="row">{article?.name ?? wst("unknown")}</th>
-                      <td>
-                        <TechnicalCode value={map.commercial_sku} />
-                      </td>
-                      <td>{map.manufacturer_name}</td>
-                      <td>{map.supplier_name ?? wst("unknown")}</td>
-                      <td>{domainLabel(map.purchase_unit)}</td>
-                      <td>{ct(map.is_active ? "active" : "inactive")}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="ws-section" id="ws.process">
-        <header className="ws-section-head">
-          <h3>{wst("process")}</h3>
-        </header>
-        {!process_profile ? (
-          <p className="ws-empty">
-            {wst("noProcessBound")}{" "}
             {canEdit && (
               <button
                 type="button"
                 className="ui-button ui-button--small"
-                onClick={() => onEdit("systems", system.id)}
+                onClick={() => onEdit("articles")}
               >
-                {wst("bindProcess")}
+                {ct("create")}
               </button>
             )}
-          </p>
-        ) : (
-          <div className="ws-process">
-            <header>
-              <strong>
-                {process_profile.label} <code>{process_profile.code}</code> v
-                {process_profile.version}
-              </strong>
-              <div className="ws-identity-meta">
-                {process_profile.org_id === null && <span className="ws-chip">{ct("global")}</span>}
-                {process_profile.material && (
-                  <span className="ws-chip">{ct(`option.${process_profile.material}`)}</span>
-                )}
-                {process_profile.product_kind && (
-                  <span className="ws-chip">{productKindLabel(process_profile.product_kind)}</span>
-                )}
-                <span className="ws-chip">
-                  {joiningMethodLabel(process_profile.joining_method)}
-                </span>
-              </div>
-            </header>
-            <div className="ws-process-cols">
-              <div>
-                <h4>{wst("stations")}</h4>
-                <ul className="ws-stations">
-                  {(
-                    process_profile.stations as {
-                      code?: string;
-                      station?: string;
-                      when?: string;
-                      work_center?: string;
-                    }[]
-                  ).map((station, index) => (
-                    <li key={index}>
-                      <strong>{stationCodeLabel(station.code ?? station.station ?? "?")}</strong>
-                      {station.when && <small> · {station.when}</small>}
-                      {station.work_center && <small> · {station.work_center}</small>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h4>{wst("operationMap")}</h4>
-                <ul className="ws-stations">
-                  {Object.entries(process_profile.operation_station_map).map(([op, station]) => (
-                    <li key={op}>
-                      <code>{opKindLabel(op)}</code> →{" "}
-                      <strong>{stationCodeLabel(String(station))}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h4>{wst("capabilities")}</h4>
-                <ul className="ws-stations">
-                  {[
-                    ["sashAssembly", process_profile.sash_assembly_required],
-                    ["hardwareStation", process_profile.hardware_station],
-                    ["glazing", process_profile.glazing],
-                    ["qc", process_profile.qc],
-                    ["packaging", process_profile.packaging],
-                  ].map(([key, enabled]) => (
-                    <li key={String(key)} className={enabled ? "" : "ws-off"}>
-                      {wst(String(key))}: {enabled ? "✓" : "—"}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          </header>
+          {!articles.length ? (
+            <p className="ws-empty">{wst("noArticles")}</p>
+          ) : (
+            <div className="ws-article-grid">
+              {articles.map((article) => (
+                <ArticleCard
+                  key={article.id}
+                  article={article}
+                  evidence={evidenceRows ?? []}
+                  purchased={purchased.has(article.id)}
+                  beads={beadsByArticle.get(article.id) ?? 0}
+                  canEdit={canEdit}
+                  onEdit={() => onEdit("articles", article.id)}
+                />
+              ))}
             </div>
-          </div>
-        )}
-        {centers !== null ? (
-          <div className="ws-centers">
-            <h4>{wst("centers")}</h4>
-            {centers.length === 0 && (
-              <p className="ws-empty">
-                {wst("noCenters")}
-                {canEdit && (
-                  <>
-                    {" "}
-                    <button
-                      type="button"
-                      className="ui-button ui-button--small"
-                      disabled={centerSeeding}
-                      onClick={() => void seedCenters()}
-                    >
-                      {centerSeeding ? wst("seedingCenters") : wst("seedCenters")}
-                    </button>
-                  </>
-                )}
-              </p>
-            )}
-            <ul className="ws-stations">
-              {centers.map((center) => (
-                <li key={center.id}>
-                  <strong>{center.name}</strong>
-                  <small> · {centerKindLabel(center.kind)}</small>
-                  <TechnicalCode value={center.code} />
-                  {!center.active && (
-                    <>
-                      {" "}
-                      <span className="ws-chip ws-chip--off">{wst("centerInactive")}</span>
-                      {canEdit && (
-                        <>
-                          {" "}
-                          <button
-                            type="button"
-                            className="link-button"
-                            onClick={() => void reactivateCenter(center)}
-                          >
-                            {wst("centerActivate")}
-                          </button>
-                        </>
-                      )}
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {canEdit &&
-              (centerForm ? (
-                <ValidatedForm
-                  className="ws-center-form"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void createCenter();
-                  }}
-                >
-                  <input
-                    value={centerForm.code}
-                    placeholder={wst("centerCode")}
-                    maxLength={50}
-                    aria-label={wst("centerCode")}
-                    onChange={(event) => setCenterForm({ ...centerForm, code: event.target.value })}
-                  />
-                  <input
-                    value={centerForm.name}
-                    placeholder={wst("centerName")}
-                    maxLength={200}
-                    aria-label={wst("centerName")}
-                    onChange={(event) => setCenterForm({ ...centerForm, name: event.target.value })}
-                  />
-                  <select
-                    value={centerForm.kind}
-                    aria-label={wst("centerKind")}
-                    onChange={(event) =>
-                      setCenterForm({
-                        ...centerForm,
-                        kind: event.target.value as WorkCenterRequestRequest["kind"],
-                      })
-                    }
-                  >
-                    {Object.values(WorkCenterRequestKindEnum).map((kind) => (
-                      <option key={kind} value={kind}>
-                        {centerKindLabel(kind)}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="submit"
-                    className="ui-button ui-button--small"
-                    disabled={centerSaving || !centerForm.code.trim() || !centerForm.name.trim()}
-                  >
-                    {wst("centerCreate")}
-                  </button>
-                  <button
-                    type="button"
-                    className="link-button"
-                    onClick={() => {
-                      setCenterForm(null);
-                      setCenterError(null);
-                    }}
-                  >
-                    {t("projects.cancel")}
-                  </button>
-                  {centerError ? <span role="alert">{centerError}</span> : null}
-                </ValidatedForm>
-              ) : (
-                <button
-                  type="button"
-                  className="ui-button ui-button--small"
-                  onClick={() => setCenterForm({ code: "", name: "", kind: "CUT" })}
-                >
-                  {wst("newCenter")}
-                </button>
-              ))}
-          </div>
-        ) : null}
-      </section>
+          )}
+        </section>
+      )}
 
-      <section className="ws-section" id="ws.sources">
-        <header className="ws-section-head">
-          <h3>{wst("sources")}</h3>
-        </header>
-        <p className="ws-hint">{wst("sourcesHint")}</p>
-        {evidenceRows === null ? (
-          <p className="ws-empty">{ct("loading")}</p>
-        ) : !evidenceRows.length ? (
-          <p className="ws-empty">{wst("noSources")}</p>
-        ) : (
-          <table className="ui-table ws-evidence">
-            <thead>
-              <tr>
-                <th>{wst("evidenceTarget")}</th>
-                <th>{wst("evidenceField")}</th>
-                <th>{wst("evidenceValue")}</th>
-                <th>{wst("evidenceSource")}</th>
-                <th>{wst("evidenceScope")}</th>
-                <th>{wst("evidenceStateCol")}</th>
-                {canEdit && <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {evidenceRows.map((row) => (
-                <tr key={row.id}>
-                  <td>{targetName(row)}</td>
-                  <td>
-                    <code>{row.field_name}</code>
-                  </td>
-                  <td>
-                    {row.value_text ?? "—"}
-                    {row.unit ? ` ${row.unit}` : ""}
-                  </td>
-                  <td>
-                    {row.source_url ? (
-                      <a href={row.source_url} target="_blank" rel="noreferrer">
-                        {row.source_document}
-                      </a>
-                    ) : (
-                      row.source_document
-                    )}
-                    {row.source_page ? ` · ${wst("evidencePage")} ${row.source_page}` : ""}
-                    {row.applicability ? (
-                      <small className="ws-evidence-applies">
-                        {" "}
-                        {wst("evidenceOn")} {row.applicability}
-                      </small>
-                    ) : null}
-                  </td>
-                  <td>{row.scope}</td>
-                  <td>
-                    <span
-                      className={`ws-badge ${row.review_state === "REVIEWED" ? "ws-badge--ok" : row.review_state === "REJECTED" ? "ws-badge--warn" : ""}`}
-                    >
-                      {wst(`evidenceState.${row.review_state}`)}
-                    </span>
-                  </td>
-                  {canEdit && (
-                    <td>
-                      {row.review_state === "PENDING" && (
-                        <span className="ws-evidence-actions">
+      {tab === "reglas" && (
+        <section className="ws-section">
+          <header className="ws-section-head">
+            <h3>
+              {wst("glazing")} <span className="ws-count">{beads.length}</span>
+            </h3>
+            <button
+              type="button"
+              className="ui-button ui-button--ghost ui-button--small"
+              onClick={() => onShowRecords("glazing")}
+            >
+              {wst("allRecords")}
+            </button>
+            {canEdit && (
+              <button
+                type="button"
+                className="ui-button ui-button--small"
+                onClick={() => onEdit("glazing")}
+              >
+                {ct("create")}
+              </button>
+            )}
+          </header>
+          {!beads.length ? (
+            <p className="ws-empty">{wst("noBeadsRows")}</p>
+          ) : (
+            <div className="catalog-table-scroll">
+              <table className="ws-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{wst("bead")}</th>
+                    <th scope="col">{ct("field.glass_thickness_mm")}</th>
+                    <th scope="col">{ct("field.bead_width_mm")}</th>
+                    <th scope="col">{ct("field.gasket_interior_mm")}</th>
+                    <th scope="col">{ct("field.gasket_exterior_mm")}</th>
+                    <th scope="col">{ct("field.cut_add_mm")}</th>
+                    <th scope="col">{ct("actions")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {beads.map((bead: BeadResponse) => {
+                    const article = articles.find((a) => a.id === bead.bead_article_id);
+                    return (
+                      <tr key={bead.id}>
+                        <th scope="row">{article?.name ?? bead.bead_article_id}</th>
+                        <td>{fmtMm(bead.glass_thickness_mm)} mm</td>
+                        <td>{fmtMm(bead.bead_width_mm)} mm</td>
+                        <td>{fmtMm(bead.gasket_interior_mm)} mm</td>
+                        <td>{fmtMm(bead.gasket_exterior_mm)} mm</td>
+                        <td>{fmtMm(bead.cut_add_mm)} mm</td>
+                        <td>
                           <button
                             type="button"
                             className="ui-button ui-button--small"
-                            onClick={() => reviewEvidence(row, "REVIEWED")}
+                            onClick={() => onEdit("glazing", bead.id)}
                           >
-                            {wst("evidenceReview")}
+                            {ct(canEdit && !bead.read_only ? "edit" : "view")}
                           </button>
-                          <button
-                            type="button"
-                            className="ui-button ui-button--ghost ui-button--small"
-                            onClick={() => reviewEvidence(row, "REJECTED")}
-                          >
-                            {wst("evidenceReject")}
-                          </button>
-                        </span>
-                      )}
-                    </td>
-                  )}
-                </tr>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === "herrajes" && (
+        <section className="ws-section">
+          <header className="ws-section-head">
+            <h3>
+              {wst("hardware")} <span className="ws-count">{kits.length}</span>
+            </h3>
+            <button
+              type="button"
+              className="ui-button ui-button--ghost ui-button--small"
+              onClick={() => onShowRecords("hardware-kits")}
+            >
+              {wst("allRecords")}
+            </button>
+            {canEdit && (
+              <button
+                type="button"
+                className="ui-button ui-button--small"
+                onClick={() => onEdit("hardware-kits")}
+              >
+                {ct("create")}
+              </button>
+            )}
+          </header>
+          {!kits.length ? (
+            <p className="ws-empty">{wst("noKits")}</p>
+          ) : (
+            <div className="ws-kit-row">
+              {kits.map((kit: KitResponse) => (
+                <button
+                  key={kit.id}
+                  type="button"
+                  className="ws-kit-card"
+                  title={kit.sku}
+                  onClick={() => onEdit("hardware-kits", kit.id)}
+                >
+                  <strong>{kit.name}</strong>
+                  <small>
+                    {ct(`option.${kit.opening_type}`)} · {ct(`option.${kit.rail_type}`)}
+                  </small>
+                  <span>
+                    {system.is_demo ? (
+                      <DemoBadge />
+                    ) : kit.authority_provenance?.state === "VERIFIED" ? (
+                      "Verificado con evidencia"
+                    ) : (
+                      "Declarado; consulta su fuente"
+                    )}
+                  </span>
+                  <span>
+                    {kit.min_leaf_width_mm == null || kit.max_leaf_width_mm == null
+                      ? "Ancho de hoja: Sin dato"
+                      : `${fmtMm(kit.min_leaf_width_mm)}–${fmtMm(kit.max_leaf_width_mm)} mm`}
+                  </span>
+                  <span>
+                    {kit.min_leaf_height_mm == null || kit.max_leaf_height_mm == null
+                      ? "Alto de hoja: Sin dato"
+                      : `${fmtMm(kit.min_leaf_height_mm)}–${fmtMm(kit.max_leaf_height_mm)} mm`}
+                  </span>
+                </button>
               ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === "refuerzos" && (
+        <section className="ws-section">
+          <header className="ws-section-head">
+            <h3>
+              {wst("reinforcements")} <span className="ws-count">{reinforcements.length}</span>
+            </h3>
+          </header>
+          {!reinforcements.length ? (
+            <p className="ws-empty">{wst("noReinforcements")}</p>
+          ) : (
+            <div className="catalog-table-scroll">
+              <table className="ws-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{wst("parent")}</th>
+                    <th scope="col">{ct("field.sku")}</th>
+                    <th scope="col">{wst("name")}</th>
+                    <th scope="col">{wst("thickness")}</th>
+                    <th scope="col">{wst("inertia")}</th>
+                    <th scope="col">{wst("stockLength")}</th>
+                    <th scope="col">{wst("supplier")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reinforcements.map((row: ReinforcementRow) => {
+                    const parent = articles.find((a) => a.id === row.parent_profile_article_id);
+                    return (
+                      <tr key={row.id}>
+                        <th scope="row">{parent?.name ?? wst("unknown")}</th>
+                        <td>
+                          <TechnicalCode value={row.sku} />
+                          {row.is_default && <span className="ws-badge">{wst("default")}</span>}
+                        </td>
+                        <td>
+                          {row.name} {system.is_demo ? <DemoBadge /> : null}
+                        </td>
+                        <td>
+                          {row.thickness_mm ? `${fmtMm(row.thickness_mm)} mm` : wst("unknown")}
+                        </td>
+                        <td>{row.ix_cm4 ? `${row.ix_cm4} cm⁴` : wst("unknown")}</td>
+                        <td>{fmtMm(row.stock_length_mm)} mm</td>
+                        <td>{row.supplier_name ?? row.manufacturer_name ?? wst("unknown")}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === "costos" && (
+        <section className="ws-section catalog-field-target" id="ws.purchase" tabIndex={-1}>
+          <header className="ws-section-head">
+            <h3>
+              {wst("purchase")} <span className="ws-count">{purchase_mappings.length}</span>
+            </h3>
+          </header>
+          {!purchase_mappings.length ? (
+            <p className="ws-empty">{wst("noPurchase")}</p>
+          ) : (
+            <div className="catalog-table-scroll">
+              <table className="ws-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{wst("article")}</th>
+                    <th scope="col">{wst("commercialSku")}</th>
+                    <th scope="col">{wst("manufacturer")}</th>
+                    <th scope="col">{wst("supplier")}</th>
+                    <th scope="col">{wst("unit")}</th>
+                    <th scope="col">{ct("state")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchase_mappings.map((map: PurchaseMappingRow) => {
+                    const article = articles.find((a) => a.id === map.profile_article_id);
+                    return (
+                      <tr key={map.id}>
+                        <th scope="row">{article?.name ?? wst("unknown")}</th>
+                        <td>
+                          <TechnicalCode value={map.commercial_sku} />
+                        </td>
+                        <td>{map.manufacturer_name}</td>
+                        <td>{map.supplier_name ?? wst("unknown")}</td>
+                        <td>{domainLabel(map.purchase_unit)}</td>
+                        <td>{ct(map.is_active ? "active" : "inactive")}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === "reglas" && (
+        <section className="ws-section catalog-field-target" id="ws.process" tabIndex={-1}>
+          <section id="ws.policies" className="catalog-field-target" tabIndex={-1}>
+            <h3>Políticas de fabricación</h3>
+            <p>
+              Estas autoridades versionadas se sellan al emitir. Una corrección requiere una nueva
+              política del responsable técnico; las revisiones emitidas conservan la anterior.
+            </p>
+            {(workspace.manufacturing_policies ?? []).map((policy) => {
+              const sources = (evidenceRows ?? []).filter((row) => row.row_id === policy.id);
+              return (
+                <article
+                  key={policy.kind}
+                  id={`ws.policy-${policy.kind}`}
+                  className="catalog-field-target"
+                  tabIndex={-1}
+                >
+                  <h4>
+                    {policy.label} {system.is_demo ? <DemoBadge /> : null}
+                  </h4>
+                  <p>
+                    {policy.id === null
+                      ? "Sin dato: falta una política declarada por el responsable técnico."
+                      : policy.valid
+                        ? `Declarada · revisión ${policy.version}`
+                        : "Bloqueada: la política no cumple el contrato del motor. El responsable técnico debe publicar una revisión válida."}
+                  </p>
+                  {policy.global_authority ? (
+                    <p>Autoridad de plataforma; la organización puede consultarla.</p>
+                  ) : null}
+                  {sources.length ? (
+                    sources.map((source) => (
+                      <div key={source.id}>
+                        <p>{source.source_document}</p>
+                        <SourceHighlight
+                          quote={source.source_quote}
+                          literal={source.source_literal}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <p>
+                      Fuente documental: Sin dato. La validez del contrato no acredita certificación
+                      del fabricante.
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+          </section>
+          <header className="ws-section-head">
+            <h3>{wst("process")}</h3>
+          </header>
+          {!process_profile ? (
+            <p className="ws-empty">
+              {wst("noProcessBound")}{" "}
+              {canEdit && (
+                <button
+                  type="button"
+                  className="ui-button ui-button--small"
+                  onClick={() => onEdit("systems", system.id)}
+                >
+                  {wst("bindProcess")}
+                </button>
+              )}
+            </p>
+          ) : (
+            <div className="ws-process">
+              <header>
+                <strong>
+                  {process_profile.label} <code>{process_profile.code}</code> v
+                  {process_profile.version}
+                </strong>
+                <div className="ws-identity-meta">
+                  {process_profile.org_id === null && (
+                    <span className="ws-chip">{ct("global")}</span>
+                  )}
+                  {process_profile.material && (
+                    <span className="ws-chip">{ct(`option.${process_profile.material}`)}</span>
+                  )}
+                  {process_profile.product_kind && (
+                    <span className="ws-chip">
+                      {productKindLabel(process_profile.product_kind)}
+                    </span>
+                  )}
+                  <span className="ws-chip">
+                    {joiningMethodLabel(process_profile.joining_method)}
+                  </span>
+                </div>
+              </header>
+              <div className="ws-process-cols">
+                <div>
+                  <h4>{wst("stations")}</h4>
+                  <ul className="ws-stations">
+                    {(
+                      process_profile.stations as {
+                        code?: string;
+                        station?: string;
+                        when?: string;
+                        work_center?: string;
+                      }[]
+                    ).map((station, index) => (
+                      <li key={index}>
+                        <strong>{stationCodeLabel(station.code ?? station.station ?? "?")}</strong>
+                        {station.when && (
+                          <small>
+                            {" "}
+                            ·{" "}
+                            {station.when === "required"
+                              ? "Requerida"
+                              : station.when === "auto"
+                                ? "Según el trabajo emitido"
+                                : "Condicional"}
+                          </small>
+                        )}
+                        {station.work_center && <small> · {station.work_center}</small>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4>{wst("operationMap")}</h4>
+                  <ul className="ws-stations">
+                    {Object.entries(process_profile.operation_station_map).map(([op, station]) => (
+                      <li key={op}>
+                        <code>{opKindLabel(op)}</code> →{" "}
+                        <strong>{stationCodeLabel(String(station))}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4>{wst("capabilities")}</h4>
+                  <ul className="ws-stations">
+                    {[
+                      ["sashAssembly", process_profile.sash_assembly_required],
+                      ["hardwareStation", process_profile.hardware_station],
+                      ["glazing", process_profile.glazing],
+                      ["qc", process_profile.qc],
+                      ["packaging", process_profile.packaging],
+                    ].map(([key, enabled]) => (
+                      <li key={String(key)} className={enabled ? "" : "ws-off"}>
+                        {wst(String(key))}: {enabled ? "✓" : "—"}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+          {centers !== null ? (
+            <div className="ws-centers catalog-field-target" id="ws.centers" tabIndex={-1}>
+              <h4>{wst("centers")}</h4>
+              {centers.length === 0 && (
+                <p className="ws-empty">
+                  {wst("noCenters")}
+                  {canEdit && (
+                    <>
+                      {" "}
+                      <button
+                        type="button"
+                        className="ui-button ui-button--small"
+                        disabled={centerSeeding}
+                        onClick={() => void seedCenters()}
+                      >
+                        {centerSeeding ? wst("seedingCenters") : wst("seedCenters")}
+                      </button>
+                    </>
+                  )}
+                </p>
+              )}
+              <ul className="ws-stations">
+                {centers.map((center) => (
+                  <li key={center.id}>
+                    <strong>{center.name}</strong>
+                    <small> · {centerKindLabel(center.kind)}</small>
+                    <TechnicalCode value={center.code} />
+                    {!center.active && (
+                      <>
+                        {" "}
+                        <span className="ws-chip ws-chip--off">{wst("centerInactive")}</span>
+                        {canEdit && (
+                          <>
+                            {" "}
+                            <button
+                              type="button"
+                              className="link-button"
+                              onClick={() => void reactivateCenter(center)}
+                            >
+                              {wst("centerActivate")}
+                            </button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {canEdit &&
+                (centerForm ? (
+                  <ValidatedForm
+                    className="ws-center-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void createCenter();
+                    }}
+                  >
+                    <input
+                      value={centerForm.code}
+                      placeholder={wst("centerCode")}
+                      maxLength={50}
+                      aria-label={wst("centerCode")}
+                      onChange={(event) =>
+                        setCenterForm({ ...centerForm, code: event.target.value })
+                      }
+                    />
+                    <input
+                      value={centerForm.name}
+                      placeholder={wst("centerName")}
+                      maxLength={200}
+                      aria-label={wst("centerName")}
+                      onChange={(event) =>
+                        setCenterForm({ ...centerForm, name: event.target.value })
+                      }
+                    />
+                    <select
+                      value={centerForm.kind}
+                      aria-label={wst("centerKind")}
+                      onChange={(event) =>
+                        setCenterForm({
+                          ...centerForm,
+                          kind: event.target.value as WorkCenterRequestRequest["kind"],
+                        })
+                      }
+                    >
+                      {Object.values(WorkCenterRequestKindEnum).map((kind) => (
+                        <option key={kind} value={kind}>
+                          {centerKindLabel(kind)}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="submit"
+                      className="ui-button ui-button--small"
+                      disabled={centerSaving || !centerForm.code.trim() || !centerForm.name.trim()}
+                    >
+                      {wst("centerCreate")}
+                    </button>
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() => {
+                        setCenterForm(null);
+                        setCenterError(null);
+                      }}
+                    >
+                      {t("projects.cancel")}
+                    </button>
+                    {centerError ? <span role="alert">{centerError}</span> : null}
+                  </ValidatedForm>
+                ) : (
+                  <button
+                    type="button"
+                    className="ui-button ui-button--small"
+                    onClick={() => setCenterForm({ code: "", name: "", kind: "CUT" })}
+                  >
+                    {wst("newCenter")}
+                  </button>
+                ))}
+            </div>
+          ) : null}
+        </section>
+      )}
+
+      {tab === "historial" && (
+        <section className="ws-section" id="ws.sources">
+          <header className="ws-section-head">
+            <h3>{wst("sources")}</h3>
+          </header>
+          <p className="ws-hint">
+            Cada evidencia conserva su fuente, revisor y fecha. Una corrección no se atribuye al
+            fabricante.
+          </p>
+          {evidenceError ? <p role="alert">{evidenceError}</p> : null}
+          {evidenceRows === null ? (
+            <p className="ws-empty">{ct("loading")}</p>
+          ) : !evidenceRows.length ? (
+            <p className="ws-empty">{wst("noSources")}</p>
+          ) : (
+            <table className="ui-table ws-evidence">
+              <thead>
+                <tr>
+                  <th>{wst("evidenceTarget")}</th>
+                  <th>{wst("evidenceField")}</th>
+                  <th>{wst("evidenceValue")}</th>
+                  <th>{wst("evidenceSource")}</th>
+                  <th>{wst("evidenceScope")}</th>
+                  <th>{wst("evidenceStateCol")}</th>
+                  {canEdit && <th />}
+                </tr>
+              </thead>
+              <tbody>
+                {evidenceRows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{targetName(row)}</td>
+                    <td>{catalogVocabulary[`field.${row.field_name}`] ?? "Parámetro técnico"}</td>
+                    <td>
+                      <details>
+                        <summary>Valor declarado</summary>
+                        <p>{row.value_text ?? "Sin dato"}</p>
+                        <SourceHighlight quote={row.source_quote} literal={row.source_literal} />
+                      </details>
+                    </td>
+                    <td>
+                      {row.source_url ? (
+                        <a href={row.source_url} target="_blank" rel="noreferrer">
+                          {row.source_document}
+                        </a>
+                      ) : (
+                        row.source_document
+                      )}
+                      {row.source_ref ?? (row.source_page ? ` · página ${row.source_page}` : "")}
+                      {row.source_import_id ? (
+                        <a href={`/catalogs/systems?import=${row.source_import_id}`}>
+                          Ver importación e historial
+                        </a>
+                      ) : null}
+                      <time>
+                        {row.reviewed_at ? formatDateTime(row.reviewed_at) : "Sin revisión"}
+                      </time>
+                      {row.applicability ? (
+                        <small className="ws-evidence-applies">
+                          {" "}
+                          {wst("evidenceOn")} {row.applicability}
+                        </small>
+                      ) : null}
+                    </td>
+                    <td>
+                      {{
+                        SYSTEM: "Sistema",
+                        SERIES: "Serie",
+                        GLOBAL: "Catálogo global",
+                        ORG: "Organización",
+                      }[row.scope ?? ""] ?? "Sin dato"}
+                    </td>
+                    <td>
+                      <span
+                        className={`ws-badge ${row.review_state === "REVIEWED" ? "ws-badge--ok" : row.review_state === "REJECTED" ? "ws-badge--warn" : ""}`}
+                      >
+                        {wst(`evidenceState.${row.review_state}`)}
+                      </span>
+                    </td>
+                    {canEdit && (
+                      <td>
+                        {row.review_state === "PENDING" && (
+                          <span className="ws-evidence-actions">
+                            <button
+                              type="button"
+                              className="ui-button ui-button--small"
+                              onClick={() => reviewEvidence(row, "REVIEWED")}
+                            >
+                              {wst("evidenceReview")}
+                            </button>
+                            <button
+                              type="button"
+                              className="ui-button ui-button--ghost ui-button--small"
+                              onClick={() => reviewEvidence(row, "REJECTED")}
+                            >
+                              {wst("evidenceReject")}
+                            </button>
+                          </span>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      )}
 
       {canEdit && (
         <p className="ws-delete">
