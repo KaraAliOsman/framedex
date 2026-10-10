@@ -1187,3 +1187,6 @@ La repetición completa con afinidad de cuatro CPU pasa lint, tipos, 871 motor
 (+2 xfail), 1.472 backend, 967 frontend y build, salida 0. Las dos pruebas
 frontend conservan sus límites y pasan; no cambió la configuración de CI.
 La repetición PostgreSQL/E2E está en curso y el fixture persistente se conserva.
+
+P14 PR https://github.com/KaraAliOsman/framedex/pull/143, CI 4/4 sobre 970df75643c67b6bec9c3813803b071066627aab, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38076669544, squash c4eb4159a45caef4bbf88fb770372a5d13993411, 2026-10-10.
+R1–R20 PASA. Servicios propios y stack aislado detenidos; fixture persistente intacto. Las revisiones externas fueron omitidas por sus proveedores y no se atribuyen como revisión completa.

@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: eaf0eb5754cd6651fdad1bcab54e0d991ed39d1d
+verified_ref: c4eb4159a45caef4bbf88fb770372a5d13993411
 sources:
+  - P14 PR https://github.com/KaraAliOsman/framedex/pull/143, CI 4/4 sobre 970df75643c67b6bec9c3813803b071066627aab, squash c4eb4159a45caef4bbf88fb770372a5d13993411, 2026-10-10
   - P14 limpieza eaf0eb5754cd6651fdad1bcab54e0d991ed39d1d, lint/tipos/frontend/build PASA, 2026-10-10
   - P14 implementación 7e274d6e136fe4a39fd3eaaf0fd28043afc75bb0, navegador y pruebas focales, 2026-10-10
   - docs/redesign/P14-ACEPTACION.md
@@ -81,7 +82,7 @@ rechazo de otra pestaña y restauración pasan. Matriz de cuarenta vistas más
 y foco visibles pasan. No hay validación física industrial ni postprocesador
 propietario nuevo. La aceptación conserva esos límites.
 
-Gates completos y CI se registrarán al integrar; P14 todavía está en curso.
+Gates completos y CI 4/4 PASA; P14 integrado por PR #143, squash `c4eb4159a45caef4bbf88fb770372a5d13993411`.
 
 ## P11 · cobranza y evidencia de cobro (10-10-2026)
 

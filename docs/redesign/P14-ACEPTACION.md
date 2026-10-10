@@ -34,8 +34,9 @@ La aceptación anterior pasó 871 pruebas de motor (+2 xfail), 1.472 de backend,
 Tras los cambios de sincronización, los cuatro gates completos pasan con
 afinidad de cuatro CPU y salida 0: 871 motor (+2 xfail), 1.472 backend y
 967 frontend. Los goldens siguen intactos y el fixture persistente se conserva.
-La nueva ejecución DB está en curso; su resultado y CI se registrarán al cerrar
-el PR. La aceptación DB anterior no acredita todavía estos cambios.
+La nueva ejecución DB pasa 1.299 pgTAP, 486 integraciones, 19 E2E y diez
+upgrades PG16, con `[PASS] database gate` y salida 0. El proyecto aislado
+se detuvo al terminar; el fixture persistente se conserva.
 
 La corrida de CI `38072197716` falló una comprobación de SHOT-10: el selector
 de vidrio se comprobó antes de que terminara la simulación del producto
@@ -106,3 +107,5 @@ no quedan dos implementaciones paralelas ni se amplía el baseline de deuda.
   el catálogo mutable no puede completar retroactivamente su autoridad.
 - El historial visible acota las últimas cien declaraciones/programas. Las
   filas y archivos anteriores se conservan; la UI no afirma mostrar todo.
+
+CI 4/4 PASA en [PR #143](https://github.com/KaraAliOsman/framedex/pull/143) sobre `970df75643c67b6bec9c3813803b071066627aab`. Squash en integración: `c4eb4159a45caef4bbf88fb770372a5d13993411`.
