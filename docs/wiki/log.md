@@ -1218,3 +1218,31 @@ La cobertura de costos identifica DEMO y las políticas de fabricación tienen d
 
 P16 PR https://github.com/KaraAliOsman/framedex/pull/144, CI 4/4 sobre 69ea0913812bc7cd60cf36238e21de730826d60f, squash 5a34db52c78d6a277b17a29267aaf139958655af, 2026-10-10.
 R1–R20 PASA; procesos propios detenidos y fixture persistente conservado.
+
+## 2026-10-10 — ED2 · decisiones editoriales vinculantes para la ola 3
+
+Implementación `0ab8b7204ac250c0bd8d118fdab041c22b5892b3`, ajuste de metadatos
+`b18b6506e55152702c37fdc0c7c6f3df21ff2d0f`: un formato común de milímetros,
+porcentajes decimales, estados con `StatusBadge`, capacidades en filas y
+metadatos sin chips. Se eliminan insignias/formateadores duplicados, tarjetas
+de capacidades, puntos decorativos y ocho alias de tokens sin consumidores.
+Las tablas móviles conservan etiquetas/valores y orden/filtro. Inventario
+del operario mantiene densidad de taller, su tema elegido y checkbox de 44 px.
+Módulos de emisión usan ordinales físicos sin cambiar destinos/autoridad.
+
+El baseline baja de 69 claves/187 ocurrencias a 45/139; las infracciones reales
+al entrar eran 60/171. Ningún check, umbral ni detector se flexibiliza. Los
+recorridos de las cuatro personas pasan: PDF real revisado y emitido, revisión
+MiMo sin publicar, una recepción parcial/stock/RT y pack/etiquetas con CNC.
+La cotización bow queda «Solo cotización»; su fabricación continúa bloqueada
+por autoridad ausente. Las OT DEMO ya selladas permiten recorrer el taller.
+
+La matriz detectó contraste incorrecto en Inventario claro, checkbox estrecho
+y metadatos de catálogo bajo 11 px; esas corridas no acreditan aceptación.
+La corrección focal de Inventario pasa ambos temas y 390/1024, con las mismas
+guardas. La primera suite completa detectó ocho alias muertos; se retiraron,
+conservando el test. La repetición pasa 881 motor (+2 xfail), 1.476 backend,
+968 frontend y lint/tipos/build. Las correcciones posteriores solo de
+presentación pasan lint/tipos/968 frontend/build y las 224 vistas finales,
+sin hallazgos, desbordes, HTTP ni consola. CI se registra al integrar.
+Véase `docs/redesign/ED2-ACEPTACION.md`.

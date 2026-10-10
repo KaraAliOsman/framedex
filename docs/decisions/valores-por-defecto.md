@@ -570,3 +570,19 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - El archivo original puede contener costos: acceso de dueño/jefe de taller,
   con RLS y sin caché pública. Los otros roles consultan únicamente las
   proyecciones técnicas que su permiso permite.
+
+## ED2 · coherencia editorial de la ola 2 (2026-10-10)
+
+- Se conserva ED1: formato decimal común, `StatusBadge`, gramática DIN,
+  desconocidos con causa y densidad por tarea. Inventario del operario usa
+  `workshop`; consultar no habilita modificar material ni ajustes.
+- Las tablas móviles muestran las etiquetas junto a los valores, sin ocultar
+  magnitudes, columnas o acciones. El orden y filtro continúan disponibles.
+- La revisión de una sección muestra las centésimas de los vértices que se
+  aplican. CNC usa el mismo formato de milímetros y porcentajes conservan su
+  fracción decimal. No se crea una precisión técnica nueva.
+- Los módulos se identifican por su ordinal en la emisión; destinos y UUID
+  siguen internos. Fabricante/familia/material son metadatos; capacidades y
+  procedencia conservan estados con texto e icono.
+- No se agregan preferencias de negocio en este pase. Todas las fuentes y
+  configuraciones existentes conservan su autoridad y sus ajustes.
