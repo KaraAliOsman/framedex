@@ -159,8 +159,11 @@ humana ni relaja confirmación o revisión del visor real.
 Database Gate completo PASA sobre `e841ae29`: 86 archivos / 1.249 pgTAP,
 455 integraciones PostgreSQL, 19 E2E y migraciones/seed en PostgreSQL 16 con
 los diez verificadores de upgrade. El teardown confirma puertos 8000/5173
-libres y detiene solo el stack del gate. Cuatro checks de CI y squash se
-registran después de su resultado; ESTADO sigue en curso hasta integrar.
+libres y detiene solo el stack del gate. CI 4/4 PASA sobre
+`2ebc5165767236a557417cfb1b4e64b7190002f8`, corrida `38011547655`.
+PR [#139](https://github.com/KaraAliOsman/framedex/pull/139) integrado con
+squash `9329e9e3378c58bc2bef3bd9c23d80f613379397` en `integracion/v1`.
+Servicios propios detenidos y fixture persistente conservado.
 
 ## Defaults, sandbox y límites
 

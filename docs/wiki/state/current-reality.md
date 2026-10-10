@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-09
 volatility: high
-verified_ref: e841ae294f2a9fc849b4f9d0847beceecf1fb07c
+verified_ref: 9329e9e3378c58bc2bef3bd9c23d80f613379397
 sources:
+  - P08 PR https://github.com/KaraAliOsman/framedex/pull/139, CI 4/4 sobre 2ebc5165767236a557417cfb1b4e64b7190002f8, corrida 38011547655, squash 9329e9e3378c58bc2bef3bd9c23d80f613379397, 2026-10-09
   - P08 E2E focal SHOT-10 e841ae29, aceptación SMTP, MIME y PDF A/B byte a byte, 2026-10-09
   - P08 RUT histórico fb5b82d11c18e50fe9856e3b5e8b63023a27eef6, 27 requisitos de emisión y gates completos, 2026-10-09
   - P08 implementación d6bf84f4f9b4aa6ecdef3dfe16b86f39ec86bcbe, stack local, 98 vistas sin hallazgos y gates completos, 2026-10-09

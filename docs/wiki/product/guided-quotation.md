@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-09
 volatility: medium
-verified_ref: e841ae294f2a9fc849b4f9d0847beceecf1fb07c
+verified_ref: 9329e9e3378c58bc2bef3bd9c23d80f613379397
 sources:
   - docs/cola/prompts/P08-cotizacion-emision.md
   - backend/documents/issuance.py

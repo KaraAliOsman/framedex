@@ -1052,3 +1052,11 @@ completo PASA: 86 archivos / 1.249 pgTAP, 455 integraciones, 19 E2E y
 PostgreSQL 16 con diez verificadores de upgrade. No se alteran los nueve
 goldens históricos ni se usa entrega SMTP como prueba de lectura humana.
 La fila P08 queda en curso hasta recibir CI 4/4 e integrar el PR.
+
+## 2026-10-09 — P08 · integrado
+
+PR [#139](https://github.com/KaraAliOsman/framedex/pull/139) pasa los cuatro checks
+sobre `2ebc5165767236a557417cfb1b4e64b7190002f8`, corrida `38011547655`,
+y se integra con squash `9329e9e3378c58bc2bef3bd9c23d80f613379397` en `integracion/v1`.
+La evidencia local conserva MIME/SMTP, PDF A/B y R1–R20 en PASA.
+Servicios propios detenidos; fixture persistente intacto. Continúa P13.
