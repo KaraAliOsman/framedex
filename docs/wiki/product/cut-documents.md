@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-09
+updated: 2026-10-10
 volatility: medium
-verified_ref: dbe2423e90d36d68d190eb45705baf58904b393a
+verified_ref: 7066f28175750fb510d9bb2c831d95d10bb52587
 sources:
+  - P13 PR https://github.com/KaraAliOsman/framedex/pull/140, CI 4/4 y squash 7066f28175750fb510d9bb2c831d95d10bb52587, 2026-10-10
   - backend/production/cut_manifest.py
   - backend/production/cut_documents.py
   - backend/production/cut_labels.py

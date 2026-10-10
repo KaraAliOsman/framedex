@@ -1,10 +1,11 @@
 ---
 type: state
 status: active
-updated: 2026-10-09
+updated: 2026-10-10
 volatility: high
-verified_ref: dbe2423e90d36d68d190eb45705baf58904b393a
+verified_ref: 7066f28175750fb510d9bb2c831d95d10bb52587
 sources:
+  - P13 PR https://github.com/KaraAliOsman/framedex/pull/140, CI 4/4 sobre 7a94f09f9587b1f9c4918a1f6db94affdf0e2258, corrida 38018629281, squash 7066f28175750fb510d9bb2c831d95d10bb52587, 2026-10-10
   - P13 cierre dbe2423e90d36d68d190eb45705baf58904b393a, gates locales completos y PostgreSQL aislado, 2026-10-09
   - P13 implementación 7ac18654c3987d9b1d7c4d2422fec164c2a76b5b, 169 regresiones focales, navegador y PDF/QR, 2026-10-09
   - docs/redesign/P13-ACEPTACION.md
@@ -54,7 +55,7 @@ sources:
 
 # Current reality
 
-## P13 · corte y etiquetas verificadas; CI pendiente (09-10-2026)
+## P13 · corte y etiquetas integradas y verificadas (10-10-2026)
 
 El pack apaisado coloca tres barras por página con cierre exacto y callouts;
 PDF/CSV/DXF/etiquetas/QR conservan dirección y secuencia. UTF-8 y precisión
@@ -73,8 +74,7 @@ La revisión visual corrigió además un recorte interno de tabla móvil que el
 control de desborde de página no detectaba. Los gates completos locales y
 PostgreSQL pasan: 848 motor (+2 xfail), 1.443 backend, 956 frontend, 1.249 pgTAP,
 467 integraciones y 19 E2E, más diez upgrades PG16. El código de suministro
-rechaza formatos incompatibles sin escritura. P13 continúa en curso hasta CI
-4/4 y squash.
+rechaza formatos incompatibles sin escritura. PR [#140](https://github.com/KaraAliOsman/framedex/pull/140) pasa CI 4/4 sobre `7a94f09f9587b1f9c4918a1f6db94affdf0e2258` y se integra con squash `7066f28175750fb510d9bb2c831d95d10bb52587` en `integracion/v1`.
 Ver [corte y etiquetas](../product/cut-documents.md).
 
 ## P08 · cotización guiada y emisión del PDF revisado (09-10-2026)

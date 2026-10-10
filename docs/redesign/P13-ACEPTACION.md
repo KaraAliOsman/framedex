@@ -149,7 +149,7 @@ motor ni se regeneran goldens.
 - La regresión focal de Producción pasa 124 tests tras proteger el orden
   independiente de filas. La validación real de servidor/navegador rechaza
   entradas incompatibles con 422, mensaje accionable y cero escritura.
-- CI 4/4 y squash se registran al integrar; la fila sigue en curso hasta entonces.
+- CI 4/4 PASA sobre `7a94f09f9587b1f9c4918a1f6db94affdf0e2258`, corrida [38018629281](https://github.com/KaraAliOsman/framedex/actions/runs/38018629281). PR [#140](https://github.com/KaraAliOsman/framedex/pull/140), squash `7066f28175750fb510d9bb2c831d95d10bb52587` en `integracion/v1`.
 
 ## Decisiones y límites
 

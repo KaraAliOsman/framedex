@@ -1088,3 +1088,11 @@ sustrato desconocido, despunte sin medida útil y suministro incompatible
 devuelven 422 accionable sin escritura. Un mismo código de suministro no
 mezcla formatos físicos; los candidatos de área igual tienen orden estable.
 P13 conserva R1–R20 PASA. CI y squash quedan pendientes de integración.
+
+## 2026-10-10 — P13 · integrado
+
+PR [#140](https://github.com/KaraAliOsman/framedex/pull/140) pasa los cuatro checks sobre `7a94f09f9587b1f9c4918a1f6db94affdf0e2258`, corrida
+`38018629281`, y se integra con squash `7066f28175750fb510d9bb2c831d95d10bb52587` en `integracion/v1`.
+La aceptación local conserva identidad PDF/CSV/DXF/etiquetas/QR, alta/replay
+de RT, fuente de láminas y R1–R20 PASA. Servicios propios detenidos y fixture
+persistente intacto. Continúa P15 desde esta integración.
