@@ -1,5 +1,17 @@
 /** One glossary for API enums. Unknown additions must fail the exhaustiveness gate. */
 export const domainLabels: Readonly<Record<string, string>> = {
+  APPROVAL: "Al aprobar",
+  DELIVERY: "Contra entrega completa",
+  WARNINGS: "Aceptado con reparos",
+  simulated: "Simulado",
+  FACTURA: "Factura interna",
+  BOLETA: "Boleta interna",
+  OVERDUE: "Vencido",
+  DUE: "Vence hoy",
+  UNKNOWN: "Sin fecha declarada",
+  APPROVAL_PENDING: "Aprobación pendiente",
+  DELIVERY_PENDING: "Entrega completa pendiente",
+
   RELEASED: "Liberada",
   HOLD: "Bloqueada",
   WELD: "Soldadura",

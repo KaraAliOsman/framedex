@@ -88,6 +88,10 @@ import type {
   CncToolList,
   CncToolRequestRequest,
   CncWorkspace,
+  CollectionIntegration,
+  CollectionReminder,
+  CollectionReminderSendRequest,
+  CollectionSettingsRequestRequest,
   Commerce,
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
@@ -139,8 +143,14 @@ import type {
   ExtrasPreviewResponse,
   FinishPreviewRequestRequest,
   FinishPreviewResponse,
+  FiscalSimulation,
+  FiscalSimulationRequestRequest,
+  FiscalSimulations,
   FlowAcknowledgement,
   FlowConfirmationRequest,
+  FlowSimulation,
+  FlowSimulationRequestRequest,
+  FlowSimulationStatusParams,
   FreezeRequestRequest,
   FreezeResponse,
   GlassOrder,
@@ -163,6 +173,7 @@ import type {
   InstallationRequestRequest,
   InternalApprovalRequest,
   InternalApprovalResult,
+  InternalDocumentRequestRequest,
   InventoryMovement,
   InventoryMovementRequestRequest,
   InventoryMovements,
@@ -9914,6 +9925,159 @@ export const organizationBrandingLogoDelete = async (
   );
 };
 
+export type collectionIntegrationsResponse200 = {
+  data: CollectionIntegration;
+  status: 200;
+};
+
+export type collectionIntegrationsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type collectionIntegrationsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type collectionIntegrationsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type collectionIntegrationsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type collectionIntegrationsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type collectionIntegrationsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type collectionIntegrationsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type collectionIntegrationsResponseSuccess = collectionIntegrationsResponse200 & {
+  headers: Headers;
+};
+export type collectionIntegrationsResponseError = (
+  | collectionIntegrationsResponse400
+  | collectionIntegrationsResponse401
+  | collectionIntegrationsResponse403
+  | collectionIntegrationsResponse404
+  | collectionIntegrationsResponse409
+  | collectionIntegrationsResponse422
+  | collectionIntegrationsResponse503
+) & {
+  headers: Headers;
+};
+
+export type collectionIntegrationsResponse =
+  collectionIntegrationsResponseSuccess | collectionIntegrationsResponseError;
+
+export const getCollectionIntegrationsUrl = () => {
+  return `/api/v1/organization/collections/`;
+};
+
+export const collectionIntegrations = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<collectionIntegrationsResponse> => {
+  return apiMutator<collectionIntegrationsResponse>(getCollectionIntegrationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type collectionSettingsSaveResponse200 = {
+  data: CollectionIntegration;
+  status: 200;
+};
+
+export type collectionSettingsSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type collectionSettingsSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type collectionSettingsSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type collectionSettingsSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type collectionSettingsSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type collectionSettingsSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type collectionSettingsSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type collectionSettingsSaveResponseSuccess = collectionSettingsSaveResponse200 & {
+  headers: Headers;
+};
+export type collectionSettingsSaveResponseError = (
+  | collectionSettingsSaveResponse400
+  | collectionSettingsSaveResponse401
+  | collectionSettingsSaveResponse403
+  | collectionSettingsSaveResponse404
+  | collectionSettingsSaveResponse409
+  | collectionSettingsSaveResponse422
+  | collectionSettingsSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type collectionSettingsSaveResponse =
+  collectionSettingsSaveResponseSuccess | collectionSettingsSaveResponseError;
+
+export const getCollectionSettingsSaveUrl = () => {
+  return `/api/v1/organization/collections/`;
+};
+
+export const collectionSettingsSave = async (
+  collectionSettingsRequestRequest: CollectionSettingsRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<collectionSettingsSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<collectionSettingsSaveResponse>(getCollectionSettingsSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(collectionSettingsRequestRequest),
+  });
+};
+
 export type organizationExtraPolicyResponse200 = {
   data: PolicyResponse;
   status: 200;
@@ -17075,6 +17239,161 @@ export const projectsClone = async (
   });
 };
 
+export type collectionReminderPrepareResponse200 = {
+  data: CollectionReminder;
+  status: 200;
+};
+
+export type collectionReminderPrepareResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type collectionReminderPrepareResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type collectionReminderPrepareResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type collectionReminderPrepareResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type collectionReminderPrepareResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type collectionReminderPrepareResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type collectionReminderPrepareResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type collectionReminderPrepareResponseSuccess = collectionReminderPrepareResponse200 & {
+  headers: Headers;
+};
+export type collectionReminderPrepareResponseError = (
+  | collectionReminderPrepareResponse400
+  | collectionReminderPrepareResponse401
+  | collectionReminderPrepareResponse403
+  | collectionReminderPrepareResponse404
+  | collectionReminderPrepareResponse409
+  | collectionReminderPrepareResponse422
+  | collectionReminderPrepareResponse503
+) & {
+  headers: Headers;
+};
+
+export type collectionReminderPrepareResponse =
+  collectionReminderPrepareResponseSuccess | collectionReminderPrepareResponseError;
+
+export const getCollectionReminderPrepareUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/collection-reminder/`;
+};
+
+export const collectionReminderPrepare = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<collectionReminderPrepareResponse> => {
+  return apiMutator<collectionReminderPrepareResponse>(getCollectionReminderPrepareUrl(projectId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type collectionReminderSendResponse202 = {
+  data: MailRecord;
+  status: 202;
+};
+
+export type collectionReminderSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type collectionReminderSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type collectionReminderSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type collectionReminderSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type collectionReminderSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type collectionReminderSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type collectionReminderSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type collectionReminderSendResponseSuccess = collectionReminderSendResponse202 & {
+  headers: Headers;
+};
+export type collectionReminderSendResponseError = (
+  | collectionReminderSendResponse400
+  | collectionReminderSendResponse401
+  | collectionReminderSendResponse403
+  | collectionReminderSendResponse404
+  | collectionReminderSendResponse409
+  | collectionReminderSendResponse422
+  | collectionReminderSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type collectionReminderSendResponse =
+  collectionReminderSendResponseSuccess | collectionReminderSendResponseError;
+
+export const getCollectionReminderSendUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/collection-reminder/send/`;
+};
+
+export const collectionReminderSend = async (
+  projectId: string,
+  collectionReminderSendRequest: CollectionReminderSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<collectionReminderSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<collectionReminderSendResponse>(getCollectionReminderSendUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(collectionReminderSendRequest),
+  });
+};
+
 export type projectCreditNoteAccessResponse200 = {
   data: ProjectCreditNoteAccess;
   status: 200;
@@ -17314,6 +17633,160 @@ export const projectCreditNoteDteEnvioSend = async (
       body: JSON.stringify(siiEnvioSendRequest),
     },
   );
+};
+
+export type fiscalSimulationsResponse200 = {
+  data: FiscalSimulations;
+  status: 200;
+};
+
+export type fiscalSimulationsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fiscalSimulationsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fiscalSimulationsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fiscalSimulationsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fiscalSimulationsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fiscalSimulationsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fiscalSimulationsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fiscalSimulationsResponseSuccess = fiscalSimulationsResponse200 & {
+  headers: Headers;
+};
+export type fiscalSimulationsResponseError = (
+  | fiscalSimulationsResponse400
+  | fiscalSimulationsResponse401
+  | fiscalSimulationsResponse403
+  | fiscalSimulationsResponse404
+  | fiscalSimulationsResponse409
+  | fiscalSimulationsResponse422
+  | fiscalSimulationsResponse503
+) & {
+  headers: Headers;
+};
+
+export type fiscalSimulationsResponse =
+  fiscalSimulationsResponseSuccess | fiscalSimulationsResponseError;
+
+export const getFiscalSimulationsUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/fiscal-simulations/`;
+};
+
+export const fiscalSimulations = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fiscalSimulationsResponse> => {
+  return apiMutator<fiscalSimulationsResponse>(getFiscalSimulationsUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type fiscalSimulateResponse201 = {
+  data: FiscalSimulation;
+  status: 201;
+};
+
+export type fiscalSimulateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fiscalSimulateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fiscalSimulateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fiscalSimulateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fiscalSimulateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fiscalSimulateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fiscalSimulateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fiscalSimulateResponseSuccess = fiscalSimulateResponse201 & {
+  headers: Headers;
+};
+export type fiscalSimulateResponseError = (
+  | fiscalSimulateResponse400
+  | fiscalSimulateResponse401
+  | fiscalSimulateResponse403
+  | fiscalSimulateResponse404
+  | fiscalSimulateResponse409
+  | fiscalSimulateResponse422
+  | fiscalSimulateResponse503
+) & {
+  headers: Headers;
+};
+
+export type fiscalSimulateResponse = fiscalSimulateResponseSuccess | fiscalSimulateResponseError;
+
+export const getFiscalSimulateUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/fiscal-simulations/`;
+};
+
+export const fiscalSimulate = async (
+  projectId: string,
+  fiscalSimulationRequestRequest: FiscalSimulationRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fiscalSimulateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<fiscalSimulateResponse>(getFiscalSimulateUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(fiscalSimulationRequestRequest),
+  });
 };
 
 export type projectImportsListResponse200 = {
@@ -17686,11 +18159,22 @@ export const getProjectInvoiceEmitUrl = (projectId: string) => {
 
 export const projectInvoiceEmit = async (
   projectId: string,
+  internalDocumentRequestRequest?: InternalDocumentRequestRequest,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<projectInvoiceEmitResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
   return apiMutator<projectInvoiceEmitResponse>(getProjectInvoiceEmitUrl(projectId), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(internalDocumentRequestRequest),
   });
 };
 
@@ -20663,6 +21147,174 @@ export const projectPaymentFlowConfirm = async (
       ...getHeaders(options?.headers),
     },
     body: formUrlEncoded,
+  });
+};
+
+export type flowSimulationStatusResponse200 = {
+  data: FlowSimulation;
+  status: 200;
+};
+
+export type flowSimulationStatusResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowSimulationStatusResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowSimulationStatusResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowSimulationStatusResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowSimulationStatusResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowSimulationStatusResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowSimulationStatusResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowSimulationStatusResponseSuccess = flowSimulationStatusResponse200 & {
+  headers: Headers;
+};
+export type flowSimulationStatusResponseError = (
+  | flowSimulationStatusResponse400
+  | flowSimulationStatusResponse401
+  | flowSimulationStatusResponse403
+  | flowSimulationStatusResponse404
+  | flowSimulationStatusResponse409
+  | flowSimulationStatusResponse422
+  | flowSimulationStatusResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowSimulationStatusResponse =
+  flowSimulationStatusResponseSuccess | flowSimulationStatusResponseError;
+
+export const getFlowSimulationStatusUrl = (linkId: string, params: FlowSimulationStatusParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/projects/flow/simulated/${linkId}/?${stringifiedParams}`
+    : `/api/v1/projects/flow/simulated/${linkId}/`;
+};
+
+export const flowSimulationStatus = async (
+  linkId: string,
+  params: FlowSimulationStatusParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowSimulationStatusResponse> => {
+  return apiMutator<flowSimulationStatusResponse>(getFlowSimulationStatusUrl(linkId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type flowSimulationConfirmResponse200 = {
+  data: FlowSimulation;
+  status: 200;
+};
+
+export type flowSimulationConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowSimulationConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowSimulationConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowSimulationConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowSimulationConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowSimulationConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowSimulationConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowSimulationConfirmResponseSuccess = flowSimulationConfirmResponse200 & {
+  headers: Headers;
+};
+export type flowSimulationConfirmResponseError = (
+  | flowSimulationConfirmResponse400
+  | flowSimulationConfirmResponse401
+  | flowSimulationConfirmResponse403
+  | flowSimulationConfirmResponse404
+  | flowSimulationConfirmResponse409
+  | flowSimulationConfirmResponse422
+  | flowSimulationConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowSimulationConfirmResponse =
+  flowSimulationConfirmResponseSuccess | flowSimulationConfirmResponseError;
+
+export const getFlowSimulationConfirmUrl = (linkId: string) => {
+  return `/api/v1/projects/flow/simulated/${linkId}/`;
+};
+
+export const flowSimulationConfirm = async (
+  linkId: string,
+  flowSimulationRequestRequest: FlowSimulationRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowSimulationConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<flowSimulationConfirmResponse>(getFlowSimulationConfirmUrl(linkId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(flowSimulationRequestRequest),
   });
 };
 

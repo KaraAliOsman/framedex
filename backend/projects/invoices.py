@@ -22,6 +22,8 @@ from django.db import connection, transaction
 from django.utils import timezone
 
 from authentication.errors import contract_error
+from dekopen_engine.collections import CollectionPayment, collection_summary
+from datetime import date
 from documents.repository import documentary_backend
 from documents.renderers import render_project_invoice
 from documents.storage import SupabaseDocumentStorage
@@ -36,9 +38,11 @@ SIGNED_URL_TTL_SECONDS = 600
 def _invoice_public(
     row, credit_note: dict | None = None, dte: dict | None = None
 ) -> dict:
+    payload = row["payload_json"] if isinstance(row["payload_json"], dict) else json.loads(row["payload_json"])
     return {
         "id": str(row["id"]),
         "invoice_code": row["invoice_code"],
+        "document_kind": payload.get("document_kind", "FACTURA"),
         "project_id": str(row["project_id"]),
         "revision_code": row["payload_json"].get("revision_code")
         if isinstance(row["payload_json"], dict)
@@ -131,13 +135,17 @@ def _sealed_deal(
         "currency": project.get("currency") or "CLP",
         "payment_terms": project.get("payment_terms"),
         "positions": positions if isinstance(positions, list) else [],
+        "pricing": snapshot.get("pricing") or {},
+        "bom_hash": snapshot.get("bom_hash"),
     }
 
 
-def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID) -> dict:
+def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID, document_kind="FACTURA") -> dict:
     """Seal a factura against the latest sealed revision. Called from the
     emit endpoint inside a transaction: an org-scoped advisory lock
     serializes the FAC sequence across every project of the org."""
+    if document_kind not in {"FACTURA", "BOLETA"}:
+        raise contract_error(400, "invoice_document_kind_invalid", "Elige factura o boleta interna.")
     org_id_s, project_id_s = str(org_id), str(project["id"])
     object_key: str | None = None
     try:
@@ -163,6 +171,10 @@ def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID) -> dict:
                 [org_id_s, project_id_s, str(deal["version_id"])],
             )
             if existing:
+                saved = existing[0]["payload_json"]
+                saved = json.loads(saved) if isinstance(saved, str) else saved
+                if saved.get("document_kind", "FACTURA") != document_kind:
+                    raise contract_error(409, "invoice_document_kind_conflict", "Esta revisión ya tiene un documento emitido. Corrígelo con una nota de crédito y una nueva revisión.")
                 return _invoice_public(existing[0])
             sequence = int(
                 one(
@@ -170,17 +182,26 @@ def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID) -> dict:
                     [org_id_s],
                 )["n"]
             )
-            invoice_code = f"FAC-{sequence + 1:04d}"
+            invoice_code = f"{'BOL' if document_kind == 'BOLETA' else 'FAC'}-{sequence + 1:04d}"
             collected = _collected(org_id, UUID(project_id_s))
+            includes_simulation = bool(rows(
+                "SELECT id FROM public.project_payments WHERE org_id=%s AND project_id=%s "
+                "AND simulated AND voided_at IS NULL LIMIT 1", [org_id_s, project_id_s],
+            ))
+            collection = collection_summary(total=deal["gross"], currency=deal["currency"], milestones=[],
+                payments=[CollectionPayment("ledger", collected, simulated=includes_simulation)] if collected > 0 else [], today=date.today())
             # Every revision-bound field comes from the frozen header — a
             # successor may have already rewritten the live project's client
             # data, and the invoice must never mix two different states.
             sealed_project = deal["project"]
             payload = {
                 "invoice_code": invoice_code,
+                "document_kind": document_kind,
                 "organization": org_branding.branding_for_snapshot(org_id=org_id),
                 "issued_at": timezone.now().isoformat(),
                 "revision_code": deal["revision_code"],
+                "pricing": deal.get("pricing") or {},
+                "bom_hash": deal.get("bom_hash"),
                 "project": {
                     "code": sealed_project.get("code"),
                     "name": sealed_project.get("name"),
@@ -198,6 +219,8 @@ def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID) -> dict:
                         "position_index": position.get("position_index"),
                         "typology": position.get("typology"),
                         "quantity": position.get("quantity"),
+                        "parametric_tree": position.get("parametric_tree"),
+                        "discount_pct": position.get("discount_pct"),
                         "width_mm": str(position.get("width_mm"))
                         if position.get("width_mm") is not None
                         else None,
@@ -221,7 +244,8 @@ def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID) -> dict:
                 },
                 "balance": {
                     "collected": str(collected),
-                    "amount_due": str(deal["gross"] - collected),
+                    "amount_due": str(collection.balance),
+                    "includes_simulation": collection.includes_simulation,
                 },
             }
             identifier = hashlib.sha256(

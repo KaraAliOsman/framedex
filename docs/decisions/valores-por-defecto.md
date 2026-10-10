@@ -524,3 +524,23 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - Mover o desechar retazos requiere motivo, confirmación y actor. El catálogo
   fija identidad/color/sustrato y límites de medida del suministro. La ubicación
   inicial conserva la preferencia P13; la recepción y el traslado declaran rack.
+
+## P11 · cobranza y documentos internos (2026-10-10)
+
+- Vigencia de enlaces de pago: **7 días**, configurable entre 1 y 90 en
+  Ajustes › General › Cobranza e integraciones. Se fija al crear cada enlace;
+  modificar la preferencia no cambia su autoridad histórica.
+- Simuladores explícitos habilitados por defecto en esa sección. No contactan
+  proveedores ni acreditan dinero; sus pagos/folios permanecen etiquetados.
+  SII activo y certificación declarada parten desactivados.
+- Anticipo al aprobar y saldo contra **entrega completa con comprobante**, o
+  la fecha explícita del acuerdo sellado si se declaró. La agenda estimada y
+  una entrega parcial no hacen vencer el saldo. Se configuran los eventos/fechas
+  en las condiciones de emisión; una revisión ya emitida conserva su calendario.
+- Fecha manual del cobro obligatoria, sin futuro, en America/Santiago. El
+  calendario reparte pagos vigentes en el orden del acuerdo y excluye anulados.
+- Una factura o boleta interna por revisión, conservada en reintentos. Corregir
+  su tipo requiere NC y nueva revisión; el original no se sobrescribe.
+- Recordatorio IA preparado para el dueño, sin cifras propuestas por el modelo.
+  Enviar exige clic y confirmación, revalidación del saldo y outbox cifrada.
+  Un saldo que incluye pagos simulados no se comunica como cobranza real.

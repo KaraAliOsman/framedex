@@ -31,12 +31,25 @@ import type {
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { actionErrorDetail } from "../errors";
-import { formatDate, formatMoney, parseMoneyInput } from "../money";
+import { parseMoneyInput } from "../money";
 import { formatRevision } from "../../format";
-import { compareDecimal, decimalInputValue } from "../../decimal";
+import { compareDecimal, decimalInputValue, parseDecimalInput } from "../../decimal";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
 import { PaymentMailComposer } from "../notifications/MailPanels";
-import { useConfirm, usePrompt } from "../../ui";
+import {
+  useConfirm,
+  usePrompt,
+  DataTable,
+  DateOnly,
+  ErrorState,
+  LoadingState,
+  Money,
+  MoneyField,
+  Percent,
+  Stepper,
+} from "../../ui";
+import { FiscalSimulationPanel, fiscalLabels } from "./FiscalSimulationPanel";
+import { CollectionReminder } from "./CollectionReminder";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
   ANTICIPO: "projects.paymentKindAnticipo",
@@ -98,6 +111,8 @@ export function ProjectPaymentsPanel({
   const [kind, setKind] = useState<PaymentKindEnum>("ANTICIPO");
   const [method, setMethod] = useState<MethodEnum>("TRANSFER");
   const [amount, setAmount] = useState("");
+  const [recordedOn, setRecordedOn] = useState("");
+  const [documentKind, setDocumentKind] = useState<"FACTURA" | "BOLETA">("FACTURA");
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [baseline, setBaseline] = useState({ kind, method });
@@ -134,6 +149,9 @@ export function ProjectPaymentsPanel({
 
   function openForm(): void {
     setOperationKey(crypto.randomUUID());
+    setRecordedOn(
+      new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Santiago" }).format(new Date()),
+    );
     // Follow the deal's position — registering against an outstanding
     // balance should open as SALDO prefilled with what is owed, not the
     // anticipo the first payment was (review WM7).
@@ -150,7 +168,7 @@ export function ProjectPaymentsPanel({
   async function record(event: FormEvent): Promise<void> {
     event.preventDefault();
     const precision = summary?.currency === "USD" ? 2 : 0;
-    const amountParsed = parseMoneyInput(amount, precision);
+    const amountParsed = parseDecimalInput(amount, precision);
     if (amountParsed === null || compareDecimal(amountParsed, "0") <= 0) {
       setMessage(t("projects.paymentAmountInvalid"));
       return;
@@ -166,6 +184,7 @@ export function ProjectPaymentsPanel({
           kind,
           amount: amountParsed,
           method,
+          recorded_on: recordedOn,
           ...(reference.trim() ? { reference: reference.trim() } : {}),
           ...(note.trim() ? { note: note.trim() } : {}),
         },
@@ -243,7 +262,11 @@ export function ProjectPaymentsPanel({
     setBusy(true);
     setMessage("");
     try {
-      const response = await projectInvoiceEmit(projectId, requestOptions);
+      const response = await projectInvoiceEmit(
+        projectId,
+        { document_kind: documentKind },
+        requestOptions,
+      );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
@@ -547,22 +570,43 @@ export function ProjectPaymentsPanel({
 
   const payments = summary?.payments ?? [];
   const invoiceList = summary?.invoices ?? [];
-  const percent =
-    summary?.quote_total_gross && Number(summary.quote_total_gross) > 0
-      ? Math.min(100, (Number(summary.collected) / Number(summary.quote_total_gross)) * 100)
-      : null;
+  const percent = summary?.collected_percent ?? null;
+  const revisionHasDocument = invoiceList.some(
+    (invoice) => invoice.revision_code === summary?.sealed_revision,
+  );
 
   return (
     <section className="projects-payments">
       <div className="projects-actions">
         <h2>{t("projects.paymentsTitle")}</h2>
-        {canWrite && !showForm && (
-          <button type="button" className="primary-action" onClick={openForm} disabled={busy}>
-            {t("projects.paymentRecord")}
-          </button>
-        )}
+        {canWrite &&
+          summary?.sealed_revision &&
+          summary.balance &&
+          compareDecimal(summary.balance, "0") > 0 &&
+          !showForm && (
+            <button type="button" className="primary-action" onClick={openForm} disabled={busy}>
+              {t("projects.paymentRecord")}
+            </button>
+          )}
       </div>
       {message && <p className="form-error">{message}</p>}
+      {paymentsQuery.isPending && <LoadingState label="Consultando el saldo y los recibos" />}
+      {paymentsQuery.isError && (
+        <ErrorState
+          title="No se cargó la cobranza"
+          body="Los movimientos se conservan. Reintenta consultar el saldo."
+          onRetry={() => void load()}
+        />
+      )}
+      {!canWrite && (
+        <p>
+          El dueño o estimador puede registrar pagos y emitir documentos. Tu rol permite consultar
+          la cobranza.
+        </p>
+      )}
+      {summary && !summary.sealed_revision && (
+        <p>Emite una revisión para registrar cobros y generar su calendario sellado.</p>
+      )}
       {summary && (
         <div className="payments-summary">
           <StatusBadge
@@ -574,28 +618,118 @@ export function ProjectPaymentsPanel({
           <dl className="payments-summary-facts">
             <div>
               <dt>{t("projects.paymentCollected")}</dt>
-              <dd>{formatMoney(summary.collected, summary.currency)}</dd>
+              <dd>
+                <Money value={summary.collected} currency={summary.currency} />
+              </dd>
             </div>
             <div>
               <dt>{t("projects.paymentDealTotal")}</dt>
-              <dd>{formatMoney(summary.quote_total_gross, summary.currency)}</dd>
+              <dd>
+                <Money value={summary.quote_total_gross} currency={summary.currency} />
+              </dd>
             </div>
             <div>
               <dt>{t("projects.paymentBalance")}</dt>
-              <dd>{formatMoney(summary.balance, summary.currency)}</dd>
+              <dd>
+                <Money value={summary.balance} currency={summary.currency} />
+              </dd>
             </div>
           </dl>
           {percent !== null && (
             <div
               className="payments-progress"
               role="progressbar"
-              aria-valuenow={Math.round(percent)}
+              aria-valuenow={Number(percent)}
               aria-valuemin={0}
               aria-valuemax={100}
             >
               <div style={{ width: `${percent}%` }} />
             </div>
           )}
+          {percent !== null && (
+            <p>
+              Avance del cobro: <Percent value={percent} kind="points" />
+            </p>
+          )}
+          {summary.includes_simulation && (
+            <p className="collection-simulation-warning">
+              Incluye pagos simulados. Este saldo de prueba no acredita dinero real.
+            </p>
+          )}
+          {compareDecimal(summary.excess ?? "0", "0") > 0 && (
+            <p>
+              Exceso por conciliar: <Money value={summary.excess} currency={summary.currency} />
+            </p>
+          )}
+          <details className="collection-source">
+            <summary>¿De dónde sale el saldo?</summary>
+            <p>{summary.source}</p>
+            <p>Revisión {formatRevision(summary.sealed_revision)}</p>
+            <ul>
+              {payments.map((payment) => (
+                <li key={payment.id}>
+                  {payment.receipt_code ?? "Recibo sin dato"} ·{" "}
+                  <Money value={payment.amount} currency={summary.currency} /> ·{" "}
+                  {payment.voided_at ? "Anulado · no se suma" : "Vigente"}
+                  {payment.simulated ? " · Simulado" : ""}
+                </li>
+              ))}
+            </ul>
+          </details>
+          {summary.schedule?.length > 0 ? (
+            <section className="collection-calendar" aria-label="Calendario del acuerdo sellado">
+              <h3>Calendario del acuerdo</h3>
+              <Stepper
+                completed={summary.schedule.every((item) => item.status === "PAID")}
+                steps={summary.schedule.map((item, index) => ({
+                  id: String(index),
+                  label: item.label,
+                }))}
+                current={String(summary.schedule.findIndex((item) => item.status !== "PAID"))}
+              />
+              <dl>
+                {summary.schedule.map((item, index) => (
+                  <div key={index}>
+                    <dt>{item.label}</dt>
+                    <dd>
+                      <Money value={item.amount} currency={summary.currency} />
+                    </dd>
+                    <dd>
+                      {item.due_on ? (
+                        <DateOnly value={item.due_on} />
+                      ) : item.due_source === "APPROVAL_PENDING" ? (
+                        "Al aprobar · aún sin aprobación"
+                      ) : item.due_source === "DELIVERY_PENDING" ? (
+                        "Contra entrega completa · pendiente"
+                      ) : (
+                        "Sin dato · falta fecha acordada"
+                      )}
+                    </dd>
+                    <dd>
+                      {item.status === "PAID"
+                        ? "Pagado"
+                        : item.status === "OVERDUE"
+                          ? "Vencido"
+                          : item.status === "DUE"
+                            ? "Vence hoy"
+                            : "Pendiente"}{" "}
+                      · Pendiente <Money value={item.remaining} currency={summary.currency} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ) : (
+            <p>
+              Sin calendario de cuotas en esta revisión. Declara los hitos en una nueva emisión para
+              ver sus vencimientos.
+            </p>
+          )}
+          {isOwner &&
+            compareDecimal(summary.overdue ?? "0", "0") > 0 &&
+            !summary.includes_simulation && (
+              <CollectionReminder orgId={orgId} projectId={projectId} />
+            )}
         </div>
       )}
       {showForm && (
@@ -613,7 +747,8 @@ export function ProjectPaymentsPanel({
           </label>
           <label>
             {t("projects.paymentAmount")}
-            <input
+            <MoneyField
+              aria-label={t("projects.paymentAmount")}
               required
               inputMode="decimal"
               name="amount"
@@ -621,8 +756,18 @@ export function ProjectPaymentsPanel({
               min={summary?.currency === "USD" ? "0.01" : "1"}
               title={t("projects.paymentAmountHint")}
               value={amount}
-              onChange={(event) => setAmount(event.target.value)}
+              onValueChange={setAmount}
+              currency={summary?.currency === "USD" ? "USD" : "CLP"}
               placeholder="500000"
+            />
+          </label>
+          <label>
+            Fecha del cobro
+            <input
+              type="date"
+              required
+              value={recordedOn}
+              onChange={(event) => setRecordedOn(event.target.value)}
             />
           </label>
           <label>
@@ -656,75 +801,136 @@ export function ProjectPaymentsPanel({
           </div>
         </ValidatedForm>
       )}
-      {payments.length > 0 && (
-        <table className="payments-table">
-          <thead>
-            <tr>
-              <th>{t("projects.paymentDate")}</th>
-              <th>{t("projects.paymentKind")}</th>
-              <th className="num">{t("projects.paymentAmount")}</th>
-              <th>{t("projects.paymentMethod")}</th>
-              <th>{t("projects.paymentReference")}</th>
-              <th>{t("projects.paymentNote")}</th>
-              <th>{t("projects.paymentReceipt")}</th>
-              {canWrite && <th />}
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((payment) => (
-              <tr key={payment.id} className={payment.voided_at ? "payments-voided" : undefined}>
-                <td>{formatDate(payment.recorded_at)}</td>
-                <td>{t(KIND_LABEL[payment.kind] ?? "projects.paymentKindParcial")}</td>
-                <td className="num">{formatMoney(payment.amount, summary?.currency ?? "CLP")}</td>
-                <td>{t(METHOD_LABEL[payment.method] ?? "projects.paymentMethodOther")}</td>
-                <td>{payment.reference ?? "—"}</td>
-                <td>
-                  {payment.voided_at
-                    ? `${t("projects.paymentVoided")}${payment.void_reason ? ` — ${payment.void_reason}` : ""}`
-                    : (payment.note ?? "—")}
-                </td>
-                <td>
-                  {payment.receipt_code ? (
-                    <button type="button" onClick={() => void openReceipt(payment)} disabled={busy}>
-                      {payment.receipt_code}
-                    </button>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                {canWrite && (
-                  <td>
-                    {!payment.voided_at && (
-                      <PaymentMailComposer
-                        key={`${orgId}-${payment.id}`}
-                        orgId={orgId}
-                        projectId={projectId}
-                        paymentId={payment.id}
-                      />
-                    )}
-                    {!payment.voided_at && (
-                      <button type="button" onClick={() => voidPayment(payment)} disabled={busy}>
-                        {t("projects.paymentVoid")}
-                      </button>
-                    )}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {summary && (
+        <DataTable
+          rows={payments}
+          rowKey={(payment) => payment.id}
+          label="Movimientos y recibos"
+          emptyReason="Todavía no hay pagos registrados en este proyecto."
+          columns={[
+            {
+              id: "date",
+              label: "Fecha de cobro",
+              value: (p) => p.recorded_at,
+              render: (p) => <DateOnly value={p.recorded_at} />,
+            },
+            {
+              id: "kind",
+              label: "Concepto y medio",
+              value: (p) => t(KIND_LABEL[p.kind] ?? "projects.paymentKindParcial"),
+              render: (p) => (
+                <>
+                  {t(KIND_LABEL[p.kind] ?? "projects.paymentKindParcial")}
+                  <p>{t(METHOD_LABEL[p.method] ?? "projects.paymentMethodOther")}</p>
+                </>
+              ),
+            },
+            {
+              id: "amount",
+              label: "Monto",
+              value: (p) => p.amount,
+              numeric: true,
+              render: (p) => <Money value={p.amount} currency={summary.currency} />,
+            },
+            {
+              id: "actor",
+              label: "Registrado por",
+              value: (p) => p.actor_label,
+              render: (p) => (
+                <>
+                  {p.actor_label ?? "Sin dato · registro histórico"}
+                  {p.simulated && <p>Simulado · sin dinero real</p>}
+                </>
+              ),
+            },
+            {
+              id: "reference",
+              label: "Referencia y estado",
+              value: (p) => p.reference,
+              render: (p) => (
+                <>
+                  {p.reference ?? "Sin dato"}
+                  <p>
+                    {p.voided_at
+                      ? `Anulado · ${p.void_reason ?? "motivo sin dato"}`
+                      : (p.note ?? "Vigente")}
+                  </p>
+                </>
+              ),
+            },
+            {
+              id: "receipt",
+              label: "Documento",
+              value: (p) => p.receipt_code,
+              render: (p) =>
+                p.receipt_code ? (
+                  <button type="button" onClick={() => void openReceipt(p)} disabled={busy}>
+                    {p.receipt_code}
+                  </button>
+                ) : (
+                  "Sin dato · recibo histórico"
+                ),
+            },
+            ...(canWrite
+              ? [
+                  {
+                    id: "actions",
+                    label: "Acciones",
+                    value: (p: ProjectPayment) => (p.voided_at ? "Anulado" : "Vigente"),
+                    sortable: false,
+                    render: (p: ProjectPayment) => (
+                      <>
+                        {!p.voided_at && !p.simulated && (
+                          <PaymentMailComposer
+                            key={`${orgId}-${p.id}`}
+                            orgId={orgId}
+                            projectId={projectId}
+                            paymentId={p.id}
+                          />
+                        )}{" "}
+                        {!p.voided_at && (
+                          <button type="button" disabled={busy} onClick={() => void voidPayment(p)}>
+                            Anular pago
+                          </button>
+                        )}
+                      </>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+        />
       )}
-      {summary && payments.length === 0 && !showForm && <p>{t("projects.paymentsEmpty")}</p>}
       {summary && (summary.sealed_revision || invoiceList.length > 0) && (
         <div className="projects-invoices">
           <div className="projects-actions">
             <h3>{t("projects.invoicesTitle")}</h3>
-            {canWrite && summary.sealed_revision && (
+            {canWrite && summary.sealed_revision && !revisionHasDocument && (
+              <label>
+                Documento
+                <select
+                  aria-label="Documento"
+                  value={documentKind}
+                  onChange={(event) => setDocumentKind(event.target.value as "FACTURA" | "BOLETA")}
+                >
+                  <option value="FACTURA">Factura interna</option>
+                  <option value="BOLETA">Boleta interna</option>
+                </select>
+              </label>
+            )}
+            {canWrite && summary.sealed_revision && !revisionHasDocument && (
               <button type="button" onClick={() => void emitInvoice()} disabled={busy}>
-                {t("projects.invoiceEmit")}
+                Emitir documento interno
               </button>
             )}
           </div>
+          <p>Documento interno — no válido como documento tributario electrónico</p>
+          <p>
+            SII:{" "}
+            {summary.integrations?.sii_connected
+              ? "Activo · consulta el estado del envío tributario"
+              : "No conectado. Los documentos internos no tienen timbre electrónico SII."}
+          </p>
           {invoiceList.length > 0 ? (
             <table className="payments-table">
               <thead>
@@ -739,9 +945,18 @@ export function ProjectPaymentsPanel({
               <tbody>
                 {invoiceList.map((invoice) => (
                   <tr key={invoice.id}>
-                    <td>{formatDate(invoice.created_at)}</td>
-                    <td>{invoice.invoice_code}</td>
-                    <td>{formatRevision(invoice.revision_code)}</td>
+                    <td>
+                      <DateOnly value={invoice.created_at} />
+                    </td>
+                    <td>
+                      <span className="ui-value">{invoice.invoice_code}</span>
+                      <p>
+                        {invoice.document_kind === "BOLETA" ? "Boleta interna" : "Factura interna"}
+                      </p>
+                    </td>
+                    <td>
+                      <span className="ui-value">{formatRevision(invoice.revision_code)}</span>
+                    </td>
                     <td>
                       {invoice.credit_note ? (
                         <button
@@ -790,7 +1005,7 @@ export function ProjectPaymentsPanel({
                           onClick={() => void openEnvio(invoice)}
                           disabled={busy}
                         >
-                          {`${t("projects.envioStatus")} · ${invoice.dte.envio.status}`}
+                          {`${t("projects.envioStatus")} · ${fiscalLabels[invoice.dte.envio.status] ?? "Por verificar"}`}
                         </button>
                       )}
                       {invoice.credit_note?.dte?.envio && (
@@ -803,7 +1018,7 @@ export function ProjectPaymentsPanel({
                           }}
                           disabled={busy}
                         >
-                          {`${t("projects.envioStatus")} · ${invoice.credit_note.dte.envio.status}`}
+                          {`${t("projects.envioStatus")} · ${fiscalLabels[invoice.credit_note.dte.envio.status] ?? "Por verificar"}`}
                         </button>
                       )}
                     </td>
@@ -815,11 +1030,19 @@ export function ProjectPaymentsPanel({
                       >
                         {t("projects.invoiceOpen")}
                       </button>
-                      {canWrite && !invoice.credit_note && !invoice.dte && (
-                        <button type="button" onClick={() => void emitDte(invoice)} disabled={busy}>
-                          {t("projects.dteEmit")}
-                        </button>
-                      )}
+                      {canWrite &&
+                        summary.integrations?.sii_connected &&
+                        !invoice.credit_note &&
+                        !invoice.dte &&
+                        invoice.document_kind !== "BOLETA" && (
+                          <button
+                            type="button"
+                            onClick={() => void emitDte(invoice)}
+                            disabled={busy}
+                          >
+                            {t("projects.dteEmit")}
+                          </button>
+                        )}
                       {canWrite && !invoice.credit_note && !invoice.dte && (
                         <button
                           type="button"
@@ -911,9 +1134,20 @@ export function ProjectPaymentsPanel({
         orgId={orgId}
         canWrite={canWrite}
         isOwner={isOwner}
+        integration={summary?.integrations}
+        balance={summary?.balance}
         onChanged={load}
         onDirtyChange={setLinksDirty}
       />
+      {summary && invoiceList.length > 0 && (
+        <FiscalSimulationPanel
+          orgId={orgId}
+          projectId={projectId}
+          invoices={invoiceList}
+          canWrite={canWrite}
+          enabled={summary.integrations?.simulation_enabled ?? false}
+        />
+      )}
     </section>
   );
 }

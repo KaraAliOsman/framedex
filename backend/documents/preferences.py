@@ -7,8 +7,8 @@ ACCENTS = {"TEAL": "#075F5A", "TEAL_DARK": "#064440", "GRAPHITE": "#161C1F"}
 PAPERS = {"LETTER": "letter portrait", "OFICIO": "216mm 330mm", "A4": "A4 portrait"}
 DEFAULT_TERMS = {
     "payment_schedule": [
-        {"label": "Al aprobar", "share": "0.50"},
-        {"label": "Contra entrega", "share": "0.50"},
+        {"label": "Al aprobar", "share": "0.50", "due_event": "APPROVAL"},
+        {"label": "Contra entrega", "share": "0.50", "due_event": "DELIVERY"},
     ],
     "delivery_text": "", "installation_text": "", "exclusions": "",
     "warranty": "", "jurisdiction": "",

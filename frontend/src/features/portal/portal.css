@@ -722,3 +722,11 @@
     align-items: stretch;
   }
 }
+.collection-payer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.collection-payer-actions button {
+  min-height: 44px;
+}

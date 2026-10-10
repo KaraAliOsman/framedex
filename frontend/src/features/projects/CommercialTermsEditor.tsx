@@ -1,4 +1,5 @@
 import type { CommercialTerms } from "../../api/generated/models";
+import type { DueEventEnum } from "../../api/generated/models";
 import { parseDecimal, multiplyDecimal, divideByInt, formatDecimal } from "./decimal";
 
 export function CommercialTermsEditor({
@@ -63,6 +64,27 @@ export function CommercialTermsEditor({
                       share: number ? formatDecimal(divideByInt(number, 100)) : event.target.value,
                     });
                   }}
+                />
+              </label>
+              <label>
+                Vencimiento
+                <select
+                  value={milestone.due_event ?? ""}
+                  onChange={(event) =>
+                    update({ due_event: (event.target.value || null) as DueEventEnum | null })
+                  }
+                >
+                  <option value="">Fecha declarada o sin dato</option>
+                  <option value="APPROVAL">Al aprobar</option>
+                  <option value="DELIVERY">Contra entrega completa</option>
+                </select>
+              </label>
+              <label>
+                Fecha acordada (opcional)
+                <input
+                  type="date"
+                  value={milestone.due_on ?? ""}
+                  onChange={(event) => update({ due_on: event.target.value || null })}
                 />
               </label>
               <button

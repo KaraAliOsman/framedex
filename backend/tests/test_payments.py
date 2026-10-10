@@ -15,6 +15,15 @@ from projects import payments, views as project_views
 from projects.serializers import PaymentRecordSerializer
 
 
+@pytest.fixture(autouse=True)
+def isolated_collection_integration(monkeypatch):
+    # The ledger unit tests isolate their PostgreSQL reads; readiness has its
+    # own unit/integration suite rather than touching a live DB here.
+    from projects import collection_settings
+    monkeypatch.setattr(collection_settings, "documentary_backend", _noop)
+    monkeypatch.setattr(collection_settings, "rows", lambda *args: [])
+
+
 @contextmanager
 def _noop():
     yield

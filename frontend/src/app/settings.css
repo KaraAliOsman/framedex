@@ -56,11 +56,14 @@
   max-width: 100%;
   object-fit: contain;
 }
+.settings-card a {
+  color: var(--theme-accent);
+}
 .payments-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 .payments-form label {
   display: grid;
@@ -79,21 +82,18 @@
 .payments-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: var(--space-2);
   font-size: var(--text-s, 13px);
 }
 .payments-table th,
 .payments-table td {
   text-align: left;
   padding: 6px 8px;
-  border-bottom: 1px solid var(--border, #e0deda);
+  border-bottom: 1px solid var(--theme-border);
 }
 .payments-table .num {
   text-align: right;
   font-family: var(--font-mono, monospace);
-}
-.payments-voided td {
-  opacity: 0.55;
 }
 .file-input-hidden {
   display: none;

@@ -63,6 +63,11 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
       roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"],
     },
     {
+      id: "cobranza-proyecto",
+      path: `/projects/${refs.projectId}?section=payments`,
+      roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"],
+    },
+    {
       id: "posicion-nueva",
       path: `/projects/${refs.projectId}/positions/new`,
       roles: ["ESTIMATOR"],

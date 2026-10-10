@@ -5,6 +5,8 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CollectionIntegration } from "./collectionIntegration";
+import type { CollectionMilestone } from "./collectionMilestone";
 import type { CurrencyEnum } from "./currencyEnum";
 import type { PaymentStatusEnum } from "./paymentStatusEnum";
 import type { ProjectInvoice } from "./projectInvoice";
@@ -22,4 +24,12 @@ export interface PaymentsSummary {
   status: PaymentStatusEnum;
   /** @nullable */
   sealed_revision: string | null;
+  /** @nullable */
+  collected_percent: string | null;
+  excess: string;
+  overdue: string;
+  includes_simulation: boolean;
+  schedule: CollectionMilestone[];
+  source: string;
+  integrations: CollectionIntegration;
 }

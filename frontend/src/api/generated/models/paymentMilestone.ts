@@ -5,10 +5,14 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { PaymentMilestoneDueEvent } from "./paymentMilestoneDueEvent";
 
 export interface PaymentMilestone {
   /** @maxLength 120 */
   label: string;
   /** @pattern ^-?\d{0,1}(?:\.\d{0,6})?$ */
   share: string;
+  /** @nullable */
+  due_on?: string | null;
+  due_event?: (typeof PaymentMilestoneDueEvent)[keyof typeof PaymentMilestoneDueEvent] | null;
 }

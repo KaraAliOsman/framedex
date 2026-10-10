@@ -8884,6 +8884,139 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/organization/collections/:
+    get:
+      operationId: collection_integrations
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionIntegration'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: collection_settings_save
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionSettingsRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionIntegration'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/organization/extras/:
     get:
       operationId: organizationExtraPolicy
@@ -15499,6 +15632,152 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/collection-reminder/:
+    post:
+      operationId: collection_reminder_prepare
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionReminder'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/collection-reminder/send/:
+    post:
+      operationId: collection_reminder_send
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionReminderSendRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailRecord'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/credit-notes/{credit_note_id}/:
     get:
       operationId: project_credit_note_access
@@ -15688,6 +15967,151 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SiiEnvio'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/fiscal-simulations/:
+    get:
+      operationId: fiscal_simulations
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalSimulations'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: fiscal_simulate
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalSimulationRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalSimulation'
           description: ''
         '400':
           content:
@@ -16059,6 +16483,11 @@ paths:
         required: true
       tags:
       - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalDocumentRequestRequest'
       security:
       - SupabaseBearer: []
       responses:
@@ -18891,6 +19320,138 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowAcknowledgement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/flow/simulated/{link_id}/:
+    get:
+      operationId: flow_simulation_status
+      parameters:
+      - in: path
+        name: link_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - projects
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowSimulation'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: flow_simulation_confirm
+      parameters:
+      - in: path
+        name: link_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowSimulationRequestRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowSimulation'
           description: ''
         '400':
           content:
@@ -23645,6 +24206,135 @@ components:
       - machines
       - orders
       - tools
+    CollectionIntegration:
+      type: object
+      properties:
+        simulation_enabled:
+          type: boolean
+        payment_link_days:
+          type: integer
+          maximum: 90
+          minimum: 1
+        sii_active:
+          type: boolean
+        sii_certified:
+          type: boolean
+        flow_connected:
+          type: boolean
+        sii_connected:
+          type: boolean
+        flow_environment:
+          type: string
+          nullable: true
+        flow_instructions:
+          type: string
+        sii_instructions:
+          type: string
+      required:
+      - flow_connected
+      - flow_environment
+      - flow_instructions
+      - payment_link_days
+      - sii_active
+      - sii_certified
+      - sii_connected
+      - sii_instructions
+      - simulation_enabled
+    CollectionMilestone:
+      type: object
+      properties:
+        label:
+          type: string
+        share:
+          type: string
+        amount:
+          type: string
+        collected:
+          type: string
+        remaining:
+          type: string
+        due_on:
+          type: string
+          format: date
+          nullable: true
+        due_source:
+          $ref: '#/components/schemas/DueSourceEnum'
+        status:
+          $ref: '#/components/schemas/CollectionMilestoneStatusEnum'
+      required:
+      - amount
+      - collected
+      - due_on
+      - due_source
+      - label
+      - remaining
+      - share
+      - status
+    CollectionMilestoneStatusEnum:
+      enum:
+      - PENDING
+      - DUE
+      - OVERDUE
+      - PAID
+      type: string
+      description: |-
+        * `PENDING` - PENDING
+        * `DUE` - DUE
+        * `OVERDUE` - OVERDUE
+        * `PAID` - PAID
+    CollectionReminder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        recipient:
+          type: string
+          format: email
+        reference:
+          type: string
+        body:
+          type: string
+        prepared_by_ai:
+          type: boolean
+        sent:
+          type: boolean
+      required:
+      - body
+      - id
+      - prepared_by_ai
+      - recipient
+      - reference
+      - sent
+    CollectionReminderSendRequest:
+      type: object
+      properties:
+        reminder_id:
+          type: string
+          format: uuid
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - reminder_id
+    CollectionSettingsRequestRequest:
+      type: object
+      properties:
+        simulation_enabled:
+          type: boolean
+        payment_link_days:
+          type: integer
+          maximum: 90
+          minimum: 1
+        sii_active:
+          type: boolean
+        sii_certified:
+          type: boolean
+      required:
+      - payment_link_days
+      - sii_active
+      - sii_certified
+      - simulation_enabled
     ColorEnum:
       enum:
       - WHITE
@@ -25090,6 +25780,14 @@ components:
       description: |-
         * `ITEMIZED` - ITEMIZED
         * `GROUPED` - GROUPED
+    DocumentKindEnum:
+      enum:
+      - FACTURA
+      - BOLETA
+      type: string
+      description: |-
+        * `FACTURA` - FACTURA
+        * `BOLETA` - BOLETA
     DocumentPreferences:
       type: object
       properties:
@@ -25583,6 +26281,30 @@ components:
       - bottom_mm
       - height_from_bottom_mm
       - y_mm
+    DueEventEnum:
+      enum:
+      - APPROVAL
+      - DELIVERY
+      type: string
+      description: |-
+        * `APPROVAL` - APPROVAL
+        * `DELIVERY` - DELIVERY
+    DueSourceEnum:
+      enum:
+      - DECLARED
+      - UNKNOWN
+      - APPROVAL
+      - APPROVAL_PENDING
+      - DELIVERY
+      - DELIVERY_PENDING
+      type: string
+      description: |-
+        * `DECLARED` - DECLARED
+        * `UNKNOWN` - UNKNOWN
+        * `APPROVAL` - APPROVAL
+        * `APPROVAL_PENDING` - APPROVAL_PENDING
+        * `DELIVERY` - DELIVERY
+        * `DELIVERY_PENDING` - DELIVERY_PENDING
     DxfExport:
       type: object
       properties:
@@ -26013,14 +26735,6 @@ components:
             $ref: '#/components/schemas/ProfileSystemSummary'
       required:
       - systems
-    EnvironmentEnum:
-      enum:
-      - sandbox
-      - production
-      type: string
-      description: |-
-        * `sandbox` - sandbox
-        * `production` - production
     ErrorDetail:
       type: object
       properties:
@@ -26516,6 +27230,85 @@ components:
       - currency
       - kind
       - source
+    FiscalSimulation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoice_id:
+          type: string
+          format: uuid
+        credit_note_id:
+          type: string
+          format: uuid
+          nullable: true
+        folio:
+          type: string
+        dte_type:
+          type: integer
+        status:
+          $ref: '#/components/schemas/FiscalSimulationStatusEnum'
+        detail:
+          type: string
+        simulated:
+          type: boolean
+        actor_label:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - actor_label
+      - created_at
+      - credit_note_id
+      - detail
+      - dte_type
+      - folio
+      - id
+      - invoice_id
+      - simulated
+      - status
+    FiscalSimulationRequestRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 80
+        invoice_id:
+          type: string
+          format: uuid
+        credit_note_id:
+          type: string
+          format: uuid
+          nullable: true
+        scenario:
+          $ref: '#/components/schemas/FiscalSimulationStatusEnum'
+      required:
+      - invoice_id
+      - operation_key
+      - scenario
+    FiscalSimulationStatusEnum:
+      enum:
+      - ACCEPTED
+      - WARNINGS
+      - REJECTED
+      type: string
+      description: |-
+        * `ACCEPTED` - ACCEPTED
+        * `WARNINGS` - WARNINGS
+        * `REJECTED` - REJECTED
+    FiscalSimulations:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiscalSimulation'
+      required:
+      - items
     FittingPiece:
       type: object
       description: Counted frameless fitting — patch/clamp/hinge/lock/connector/seal/support.
@@ -26567,6 +27360,59 @@ components:
           maxLength: 512
       required:
       - token
+    FlowSimulation:
+      type: object
+      properties:
+        amount:
+          type: string
+        status:
+          $ref: '#/components/schemas/FlowSimulationStatusEnum'
+        environment:
+          $ref: '#/components/schemas/FlowSimulationEnvironmentEnum'
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        deal_revision:
+          type: string
+          nullable: true
+      required:
+      - amount
+      - deal_revision
+      - environment
+      - expires_at
+      - status
+    FlowSimulationEnvironmentEnum:
+      enum:
+      - simulated
+      type: string
+      description: '* `simulated` - simulated'
+    FlowSimulationRequestRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 20
+          maxLength: 100
+        outcome:
+          $ref: '#/components/schemas/OutcomeEnum'
+      required:
+      - outcome
+      - token
+    FlowSimulationStatusEnum:
+      enum:
+      - PENDING
+      - PAID
+      - FAILED
+      - EXPIRED
+      - CANCELLED
+      type: string
+      description: |-
+        * `PENDING` - PENDING
+        * `PAID` - PAID
+        * `FAILED` - FAILED
+        * `EXPIRED` - EXPIRED
+        * `CANCELLED` - CANCELLED
     FormatEnum:
       enum:
       - PDF
@@ -27902,6 +28748,13 @@ components:
           type: string
       required:
       - project_status
+    InternalDocumentRequestRequest:
+      type: object
+      properties:
+        document_kind:
+          allOf:
+          - $ref: '#/components/schemas/DocumentKindEnum'
+          default: FACTURA
     InventoryMovement:
       type: object
       properties:
@@ -32909,6 +33762,14 @@ components:
         * `EXTERIOR_UP` - EXTERIOR_UP
         * `EXTERIOR_LEFT` - EXTERIOR_LEFT
         * `EXTERIOR_RIGHT` - EXTERIOR_RIGHT
+    OutcomeEnum:
+      enum:
+      - PAID
+      - FAILED
+      type: string
+      description: |-
+        * `PAID` - PAID
+        * `FAILED` - FAILED
     PackingLabel:
       type: object
       properties:
@@ -33668,7 +34529,14 @@ components:
         status:
           $ref: '#/components/schemas/PaymentLinkStatusEnum'
         environment:
-          $ref: '#/components/schemas/EnvironmentEnum'
+          $ref: '#/components/schemas/PaymentLinkEnvironmentEnum'
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        deal_revision:
+          type: string
+          nullable: true
         url:
           type: string
           nullable: true
@@ -33682,7 +34550,9 @@ components:
       required:
       - amount
       - created_at
+      - deal_revision
       - environment
+      - expires_at
       - id
       - kind
       - operation_key
@@ -33713,11 +34583,27 @@ components:
         subject:
           type: string
           maxLength: 200
+        simulated:
+          type: boolean
+          default: false
+        expires_at:
+          type: string
+          format: date-time
       required:
       - amount
       - kind
       - operation_key
       - payer_email
+    PaymentLinkEnvironmentEnum:
+      enum:
+      - sandbox
+      - production
+      - simulated
+      type: string
+      description: |-
+        * `sandbox` - sandbox
+        * `production` - production
+        * `simulated` - simulated
     PaymentLinkResponse:
       type: object
       properties:
@@ -33733,6 +34619,7 @@ components:
       - FAILED
       - UNCERTAIN
       - CANCELLED
+      - EXPIRED
       type: string
       description: |-
         * `DISPATCHING` - DISPATCHING
@@ -33741,6 +34628,7 @@ components:
         * `FAILED` - FAILED
         * `UNCERTAIN` - UNCERTAIN
         * `CANCELLED` - CANCELLED
+        * `EXPIRED` - EXPIRED
     PaymentLinksResponse:
       type: object
       properties:
@@ -33760,6 +34648,15 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,1}(?:\.\d{0,6})?$
+        due_on:
+          type: string
+          format: date
+          nullable: true
+        due_event:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/DueEventEnum'
+          - $ref: '#/components/schemas/NullEnum'
       required:
       - label
       - share
@@ -33774,6 +34671,15 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,1}(?:\.\d{0,6})?$
+        due_on:
+          type: string
+          format: date
+          nullable: true
+        due_event:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/DueEventEnum'
+          - $ref: '#/components/schemas/NullEnum'
       required:
       - label
       - share
@@ -33843,6 +34749,9 @@ components:
         recorded_at:
           type: string
           format: date-time
+        recorded_on:
+          type: string
+          format: date
       required:
       - amount
       - kind
@@ -33874,6 +34783,23 @@ components:
         sealed_revision:
           type: string
           nullable: true
+        collected_percent:
+          type: string
+          nullable: true
+        excess:
+          type: string
+        overdue:
+          type: string
+        includes_simulation:
+          type: boolean
+        schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionMilestone'
+        source:
+          type: string
+        integrations:
+          $ref: '#/components/schemas/CollectionIntegration'
         payment:
           $ref: '#/components/schemas/ProjectPayment'
         receipt:
@@ -33883,13 +34809,20 @@ components:
       required:
       - balance
       - collected
+      - collected_percent
       - currency
+      - excess
+      - includes_simulation
+      - integrations
       - invoices
+      - overdue
       - payment
       - payments
       - quote_total_gross
       - receipt
+      - schedule
       - sealed_revision
+      - source
       - status
     PaymentStatusEnum:
       enum:
@@ -33935,14 +34868,38 @@ components:
         sealed_revision:
           type: string
           nullable: true
+        collected_percent:
+          type: string
+          nullable: true
+        excess:
+          type: string
+        overdue:
+          type: string
+        includes_simulation:
+          type: boolean
+        schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionMilestone'
+        source:
+          type: string
+        integrations:
+          $ref: '#/components/schemas/CollectionIntegration'
       required:
       - balance
       - collected
+      - collected_percent
       - currency
+      - excess
+      - includes_simulation
+      - integrations
       - invoices
+      - overdue
       - payments
       - quote_total_gross
+      - schedule
       - sealed_revision
+      - source
       - status
     PhysicalPieceLabel:
       type: object
@@ -36019,6 +36976,8 @@ components:
         revision_code:
           type: string
           nullable: true
+        document_kind:
+          $ref: '#/components/schemas/DocumentKindEnum'
         credit_note:
           allOf:
           - $ref: '#/components/schemas/ProjectCreditNote'
@@ -36032,6 +36991,7 @@ components:
       required:
       - created_at
       - credit_note
+      - document_kind
       - id
       - invoice_code
       - project_id
@@ -36050,6 +37010,8 @@ components:
         revision_code:
           type: string
           nullable: true
+        document_kind:
+          $ref: '#/components/schemas/DocumentKindEnum'
         credit_note:
           allOf:
           - $ref: '#/components/schemas/ProjectCreditNote'
@@ -36070,6 +37032,7 @@ components:
       required:
       - created_at
       - credit_note
+      - document_kind
       - expires_in
       - id
       - invoice_code
@@ -36216,6 +37179,11 @@ components:
         recorded_by:
           type: string
           nullable: true
+        actor_label:
+          type: string
+          nullable: true
+        simulated:
+          type: boolean
         recorded_at:
           type: string
         voided_at:
@@ -36227,6 +37195,7 @@ components:
         created_at:
           type: string
       required:
+      - actor_label
       - amount
       - created_at
       - id
@@ -36238,6 +37207,7 @@ components:
       - recorded_at
       - recorded_by
       - reference
+      - simulated
       - void_reason
       - voided_at
     ProjectResponse:

@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from rest_framework import serializers
+from projects.collection_serializers import CollectionIntegrationSerializer, CollectionMilestoneSerializer
 
 from projects.operation_serializers import DesignOperationSerializer
 from documents.quote_serializers import DocumentPreferencesSerializer
@@ -208,6 +209,7 @@ class PaymentRecordSerializer(StrictSerializer):
     reference = serializers.CharField(max_length=200, required=False, allow_blank=True)
     note = serializers.CharField(max_length=2000, required=False, allow_blank=True)
     recorded_at = serializers.DateTimeField(required=False)
+    recorded_on = serializers.DateField(required=False)
 
 
 class PaymentVoidSerializer(StrictSerializer):
@@ -236,6 +238,8 @@ class ProjectPaymentSerializer(serializers.Serializer):
     reference = serializers.CharField(allow_null=True)
     note = serializers.CharField(allow_null=True)
     recorded_by = serializers.CharField(allow_null=True)
+    actor_label = serializers.CharField(allow_null=True)
+    simulated = serializers.BooleanField()
     recorded_at = serializers.CharField()
     voided_at = serializers.CharField(allow_null=True)
     void_reason = serializers.CharField(allow_null=True)
@@ -295,6 +299,7 @@ class ProjectInvoiceSerializer(serializers.Serializer):
     invoice_code = serializers.CharField()
     project_id = serializers.UUIDField()
     revision_code = serializers.CharField(allow_null=True)
+    document_kind = serializers.ChoiceField(choices=("FACTURA", "BOLETA"))
     credit_note = ProjectCreditNoteSerializer(allow_null=True)
     dte = ProjectDteSerializer(allow_null=True, required=False)
     created_at = serializers.CharField()
@@ -390,6 +395,13 @@ class PaymentsSummarySerializer(serializers.Serializer):
     currency = serializers.ChoiceField(choices=("CLP", "USD"))
     status = serializers.ChoiceField(choices=("NO_DEAL", "PENDING", "PARTIAL", "PAID"))
     sealed_revision = serializers.CharField(allow_null=True)
+    collected_percent = serializers.CharField(allow_null=True)
+    excess = serializers.CharField()
+    overdue = serializers.CharField()
+    includes_simulation = serializers.BooleanField()
+    schedule = CollectionMilestoneSerializer(many=True)
+    source = serializers.CharField()
+    integrations = CollectionIntegrationSerializer()
 
 
 class PaymentRecordResponseSerializer(PaymentsSummarySerializer):
@@ -405,6 +417,8 @@ class PaymentLinkCreateSerializer(StrictSerializer):
     amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"))
     payer_email = serializers.EmailField(max_length=200)
     subject = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    simulated = serializers.BooleanField(required=False, default=False)
+    expires_at = serializers.DateTimeField(required=False)
 
 
 class PaymentLinkSerializer(serializers.Serializer):
@@ -415,9 +429,11 @@ class PaymentLinkSerializer(serializers.Serializer):
     payer_email = serializers.CharField()
     subject = serializers.CharField()
     status = serializers.ChoiceField(
-        choices=("DISPATCHING", "PENDING", "PAID", "FAILED", "UNCERTAIN", "CANCELLED")
+        choices=("DISPATCHING", "PENDING", "PAID", "FAILED", "UNCERTAIN", "CANCELLED", "EXPIRED")
     )
-    environment = serializers.ChoiceField(choices=("sandbox", "production"))
+    environment = serializers.ChoiceField(choices=("sandbox", "production", "simulated"))
+    expires_at = serializers.DateTimeField(allow_null=True)
+    deal_revision = serializers.CharField(allow_null=True)
     url = serializers.CharField(allow_null=True)
     project_payment_id = serializers.CharField(allow_null=True)
     created_at = serializers.CharField()

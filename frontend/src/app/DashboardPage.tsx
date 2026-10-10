@@ -4,6 +4,7 @@ import type { TodayAction } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { DateOnly, DeniedState, ErrorState, LoadingState, Money, PageHeader } from "../ui";
 import { PriceDecision } from "../features/pricing/PriceDecision";
+import { CollectionReminder } from "../features/projects/CollectionReminder";
 import { useToday } from "./useToday";
 import { consequenceLabels, phaseLabels } from "./todayLabels";
 
@@ -129,6 +130,12 @@ function TodayWorkspace(): JSX.Element {
                         <h2>{item.title}</h2>
                         <p>{item.entity_name}</p>
                         <p>{item.reason}</p>
+                        {item.key.startsWith("receivable_overdue:") && org.role === "OWNER" && (
+                          <CollectionReminder
+                            orgId={org.id}
+                            projectId={item.key.slice("receivable_overdue:".length)}
+                          />
+                        )}
                         {item.amount !== null && item.currency && (
                           <p className="today-amount">
                             <Money value={item.amount} currency={item.currency} />

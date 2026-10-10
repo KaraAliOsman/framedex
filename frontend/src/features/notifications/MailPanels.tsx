@@ -26,6 +26,7 @@ const STATE: Record<string, string> = {
 const KIND: Record<string, string> = {
   QUOTE: "Cotización",
   PAYMENT: "Pago registrado",
+  COLLECTION: "Recordatorio de pago",
   APPROVAL: "Aprobación recibida",
   ORDER_BLOCKED: "OT bloqueada",
   PURCHASE: "Orden de compra",

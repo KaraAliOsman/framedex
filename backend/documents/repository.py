@@ -120,7 +120,20 @@ def documentary_backend() -> Iterator[None]:
     with connection.cursor() as cursor:
         cursor.execute("SELECT current_setting('role', true)")
         previous = str(cursor.fetchone()[0] or "none")
-        cursor.execute("SET LOCAL ROLE documentary_backend")
+        # An already trusted provider/worker scope has no end-user claims.
+        # Preserve its existing service privilege rather than switching to a
+        # tenant role with an empty membership set. This never grants a role:
+        # authenticated requests have already been scoped to authenticated.
+        if previous == "service_role":
+            cursor.execute("SELECT auth.uid()")
+            service_callback = cursor.fetchone()[0] is None
+        else:
+            service_callback = False
+        if not service_callback:
+            cursor.execute("SET LOCAL ROLE documentary_backend")
+    if service_callback:
+        yield
+        return
     try:
         yield
     except DatabaseError:

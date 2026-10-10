@@ -176,6 +176,8 @@ def payment_source(*, org_id: UUID, project_id: UUID, payment_id: UUID) -> dict:
                 detail="El pago fue anulado. No se puede enviar una confirmación de pago vigente.",
             )
     payload = decoded(receipt["payload_json"])
+    if payload["payment"].get("simulated"):
+        raise DocumentaryError("mail_payment_simulated", detail="El recibo corresponde a una prueba. Descárgalo desde Cobranza; no se envía como confirmación de dinero real.")
     from documents.renderers import _money
 
     project = payload["project"]
@@ -436,6 +438,17 @@ def blocked_event(*, org_id: UUID, actor_id: UUID, step_id: UUID):
 
 
 def _check_live(row: dict, message: dict):
+    if row["kind"] == "COLLECTION":
+        from projects.collection_reminders import source
+
+        reminder = one("SELECT * FROM public.collection_reminders WHERE id=%s AND org_id=%s AND project_id=%s",
+            [message["collection_reminder_id"], str(row["org_id"]), str(row["project_id"])])
+        try:
+            current = source(org_id=row["org_id"], project_id=row["project_id"])
+        except Exception as error:
+            raise ValueError("mail_collection_no_longer_due") from error
+        if reminder["source_hash"] != current["source_hash"]:
+            raise ValueError("mail_collection_stale")
     if row["kind"] == "QUOTE":
         active = rows(
             "SELECT a.id FROM public.customer_approvals a JOIN public.projects p ON p.id=a.project_id AND p.org_id=a.org_id "

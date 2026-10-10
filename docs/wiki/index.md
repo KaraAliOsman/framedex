@@ -26,6 +26,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Cobranza y documentos de cobro](product/collections.md) — calendario sellado, recibos, enlaces verificados, simulación fiscal y recordatorio humano.
+
 - [Compras e inventario](product/purchasing-inventory.md) — necesidades por OT, recepción útil, OC/REC, retazos físicos y correo humano.
 
 - [Conjuntos y acoples](product/coupled-assemblies.md) — autoridad angular, cotas exactas, planta sincronizada y venta por módulo.

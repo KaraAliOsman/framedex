@@ -79,13 +79,16 @@ class FlowClient:
         return self._request("GET", "/payment/getStatusByCommerceId", {"commerceId": order})
 
     def create_payment(self, *, order: str, subject: str, amount: Decimal, email: str,
-                       confirmation_url: str, return_url: str) -> dict:
+                       confirmation_url: str, return_url: str, timeout_seconds: int | None = None) -> dict:
         if not amount.is_finite() or amount <= 0 or amount != amount.to_integral_value():
             raise ValueError("Flow CLP payments require positive integral Decimal amounts")
+        if timeout_seconds is not None and (type(timeout_seconds) is not int or timeout_seconds <= 0):
+            raise ValueError("Flow expiry requires positive integral seconds")
         return self._request("POST", "/payment/create", {
             "commerceOrder": order, "subject": subject, "currency": "CLP",
             "amount": format(amount, ".0f"), "email": email,
             "urlConfirmation": confirmation_url, "urlReturn": return_url,
+            **({"timeout": str(timeout_seconds)} if timeout_seconds is not None else {}),
         })
 
     def customer(self, customer_id: str) -> dict:
