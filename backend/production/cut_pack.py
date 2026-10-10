@@ -5,29 +5,17 @@ plan (and therefore the old pack) so the print always matches authority.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from decimal import Decimal
 from html import escape
 from uuid import UUID
 
 from documents.renderers import (
-    _CATEGORY_ES,
-    _COLOR_ES,
-    _CSS,
-    _ROLE_ES,
-    _STRATEGY_ES,
-    _cldate,
     _cut_key,
     _cut_member_map,
-    _cut_piece_ids,
     _infill_code_map,
     _infill_key,
     _location,
-    _member_op_marks,
-    _pct,
     _piece_labels,
-    _role_name,
-    _table,
     _url_fetcher,
     _value,
 )
@@ -642,298 +630,13 @@ def _sheet_svg(
     return "".join(svg)
 
 
-def _pack_html(
-    *,
-    order: dict[str, object],
-    optimization: dict[str, object],
-    snapshot: dict[str, object],
-    labels: dict[str, dict[object, str]],
-    cut_map: dict[tuple[str, ...], str],
-    infills: dict[tuple[str, str, str], str],
-    bar_meta: dict[str, dict[str, object]],
-    remnant_racks: dict[str, str],
-    fingerprint: str,
-) -> str:
-    order_code = _value(order["order_code"])
-    short_fp = fingerprint[:16]
-    from production.pieces import entity_address
+def _pack_html(**context) -> str:
+    from production.cut_documents import pack_html
 
-    qr_payload = entity_address("/production", order=order.get("id", ""), code=order_code)
-    import segno
-
-    qr_svg = segno.make(qr_payload, error="m").svg_inline(border=4, scale=6, omitsize=True)
-    bars = [b for b in (optimization.get("bars") or {}).get("workshop_cut_plan") or []
-            if isinstance(b, dict)]
-    sheets = [s for s in optimization.get("sheets") or [] if isinstance(s, dict)]
-    unnested = [u for u in optimization.get("unnested") or [] if isinstance(u, dict)]
-    sheet_purchases = [
-        p for p in (optimization.get("sheet_purchases") or [])
-        if isinstance(p, dict)
-    ]
-    stats = optimization.get("stats") or {}
-    metrics = (optimization.get("bars") or {}).get("metrics") or {}
-    generated = _cldate(datetime.now(timezone.utc).isoformat())
-    strategy = _value(optimization.get("applied_strategy")
-                      or optimization.get("strategy"))
-
-    pools = _piece_pools(_cut_piece_ids(snapshot), labels)
-    op_marks = _member_op_marks(snapshot)
-
-    body = (
-        '<div class="titleblock">'
-        f'<div class="tb-cell tb-wide"><span class="tb-label">Orden de trabajo</span>'
-        f'<span class="tb-value">{escape(order_code)} · Pack de corte</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Huella del plan</span>'
-        f'<span class="tb-value">{escape(short_fp)}</span></div>'
-        f'<div class="tb-cell"><span class="tb-label">Emitido</span>'
-        f'<span class="tb-value">{escape(generated)}</span></div>'
-        '<div class="tb-cell"><span class="tb-label">Página</span>'
-        '<span class="tb-value pg"></span></div></div>'
-        '<main class="workshop">'
-        '<div class="masthead"><span class="brand">DEKOPEN<span class="mark">'
-        "</span></span>"
-        f'<div class="meta"><strong>{escape(order_code)}</strong><br/>'
-        'Pack de corte</div></div>'
-        '<div class="rule-stack"></div>'
-        '<div class="pack-meta">'
-        f'<span>Color: <strong>{escape(_COLOR_ES.get(str(optimization.get("color")), _value(optimization.get("color"))))}</strong></span>'
-        f'<span>Unidades: <strong>{_value(optimization.get("units"))}</strong></span>'
-        f'<span>Estrategia: <strong>{escape(_STRATEGY_ES.get(strategy, "Sin dato · falta estrategia"))}</strong></span>'
-        f'<span>Barras nuevas: <strong>{_value(stats.get("bars_new", metrics.get("bars")))}</strong></span>'
-        f'<span>Barras de retazo: <strong>{_value(stats.get("bars_remnant", 0))}</strong></span>'
-        f'<span>Cortes: <strong>{_value(stats.get("cuts_total", metrics.get("cuts")))}</strong></span>'
-        f'<span>Material útil: <strong>{_fmt_mm(metrics.get("productive_length_mm"))} mm</strong></span>'
-        f'<span>Desperdicio de proceso: <strong>{_fmt_mm(metrics.get("process_waste_mm"))} mm</strong></span>'
-        f'<span>Retazo recuperable: <strong>{_fmt_mm(metrics.get("reusable_remnant_mm"))} mm</strong></span>'
-        f'<span>Sin solución: <strong>{_value(stats.get("unnested_count", len(unnested)))}</strong></span>'
-        "</div>"
-    )
-    if bars:
-        first = True
-        for bar in bars:
-            source = str(bar.get("source") or "NEW")
-            remnant_id = str(bar.get("remnant_id") or "")
-            rack = remnant_racks.get(remnant_id)
-            badge = (
-                '<span class="badge badge-remnant">retazo '
-                + escape(str(bar.get("remnant_code") or "Sin dato"))
-                + (f" · rack {escape(rack)}" if rack else "")
-                + "</span>"
-                if source == "REMNANT"
-                else '<span class="badge badge-new">barra nueva</span>'
-            )
-            sku = _value(bar.get("commercial_sku"))
-            meta = bar_meta.get(sku) or {}
-            section = _section_svg(meta.get("section"))
-            article = _value(meta.get("name")) or _value(meta.get("article_sku"))
-            material = _MATERIAL_ES.get(
-                str(bar.get("material")), _value(bar.get("material"))
-            )
-            color = _COLOR_ES.get(str(bar.get("color")), _value(bar.get("color")))
-            stock = _mm(bar.get("stock_length_mm"))
-            kerf = _mm(bar.get("kerf_mm") or "0")
-            head_trim = _mm(bar.get("head_trim_mm") or "0")
-            tail_trim = _mm(bar.get("tail_trim_mm") or "0")
-            remainder = _mm(bar.get("remainder_mm") or "0")
-            kerf_total = _mm(bar.get("kerf_total_mm") or "0")
-            cuts = [
-                c for c in (bar.get("cuts") or []) if isinstance(c, dict)
-            ]
-            pieces_mm = sum(
-                (_mm(c.get("length_mm") or "0") for c in cuts), Decimal("0")
-            )
-            accounted = pieces_mm + kerf_total + head_trim + tail_trim + remainder
-            diff = stock - accounted
-            codes: list[str] = []
-            rows_data: list[list[object]] = []
-            for index, cut in enumerate(cuts):
-                if cut.get("piece_code"):
-                    code, entity_id = cut["piece_code"], cut.get("piece_stable_id")
-                else:
-                    code, entity_id = _claim_piece(cut, pools, labels, cut_map)
-                codes.append(code)
-                notes = []
-                if cut.get("sagitta_mm") not in (None, "", "0", "0.00"):
-                    notes.append(f"flecha {_fmt_mm(cut.get('sagitta_mm'))} mm")
-                if entity_id is not None and op_marks.get(str(entity_id)):
-                    notes.append("lleva mecanizado")
-                function = " · ".join(
-                    part
-                    for part in (
-                        _CATEGORY_ES.get(
-                            str(cut.get("source_kind")),
-                            _value(cut.get("source_kind")),
-                        ),
-                        _ROLE_ES.get(
-                            _role_name(cut.get("role")),
-                            _value(cut.get("role")),
-                        ),
-                    )
-                    if part
-                )
-                rows_data.append(
-                    [
-                        cut.get("sequence") or index + 1,
-                        code,
-                        function,
-                        _location(labels, cut.get("bay_id"), cut.get("leaf_id")),
-                        _fmt_mm(cut.get("length_mm")),
-                        f"{_fmt_mm(cut.get('angle_left'))}°",
-                        f"{_fmt_mm(cut.get('angle_right'))}°",
-                        " · ".join(notes) if notes else "—",
-                    ]
-                )
-            convention = (
-                "Extremo inicial a la izquierda; alimentación →. "
-                "Ángulos izq/der medidos sobre ese extremo, visto desde "
-                "arriba; marca de esquina = extremo ingleteado. "
-                f"Disco {_fmt_mm(kerf)} mm · despuntes "
-                f"{_fmt_mm(head_trim)}/{_fmt_mm(tail_trim)} mm."
-            )
-            orient_bits = [convention]
-            if section:
-                orient_bits.append(
-                    "Sección declarada — "
-                    + _ORIENTATION_ES.get(
-                        str((meta.get("section") or {}).get("orientation") or ""),
-                        "orientación según dibujo",
-                    )
-                )
-            elif meta:
-                orient_bits.append("Sin sección declarada.")
-            remnant_line = ""
-            if remainder > 0:
-                if bar.get("remainder_reusable"):
-                    remnant_line = (
-                        f"Retazo {_fmt_mm(remainder)} mm recuperable — "
-                        "etiquetar y devolver a stock."
-                    )
-                else:
-                    remnant_line = (
-                        f"Cola {_fmt_mm(remainder)} mm — desecho, no "
-                        "retorna a stock."
-                    )
-            body += (
-                '<div class="bar-block">'
-                + ("<h2>Plan de barras</h2>" if first else "")
-                + '<div class="bar-head"><h3>'
-                + f"Barra {_value(bar.get('bar_index'))} · "
-                f"{escape(sku)}{' — ' + escape(article) if article else ''} · "
-                f"{escape(material)} · {escape(color)} · "
-                f"{_fmt_mm(stock)} mm</h3>{badge}"
-                f'<span class="muted">aprovechamiento '
-                f"{_pct(bar.get('yield_pct'))} %</span></div>"
-                + f'<div class="bar-orient">{section}'
-                f'<span class="conv">{escape(" ".join(orient_bits))}</span>'
-                "</div>"
-                + _bar_svg(bar, labels, cut_map, codes)
-                + _table(
-                    ["Sec.", "Pieza", "Función", "Vano / hoja", "Corte mm",
-                     "∠ izq.", "∠ der.", "Obs."],
-                    rows_data,
-                    ["", "", "", "", "dimension", "dimension", "dimension", ""],
-                    thead_extra=(
-                        f'<tr class="bar-cont"><th colspan="8">Tabla de cortes — '
-                        f"Barra {_value(bar.get('bar_index'))} · "
-                        f"{escape(sku)}</th></tr>"
-                    ),
-                )
-                + (
-                    f'<div class="bar-balance {"ok" if diff == 0 else "diff"}">'
-                    f"{_fmt_mm(stock)} mm = {_fmt_mm(pieces_mm)} mm piezas "
-                    f"({len(cuts)}) + {_fmt_mm(kerf_total)} mm disco "
-                    f"+ {_fmt_mm(head_trim + tail_trim)} mm despuntes "
-                    f"+ {_fmt_mm(remainder)} mm remanente"
-                    + (
-                        " — cierra exacto"
-                        if diff == 0
-                        else f" — diferencia sin asignar {_fmt_mm(diff)} mm"
-                    )
-                    + "</div>"
-                )
-                + (
-                    f'<div class="bar-remnant">{escape(remnant_line)}</div>'
-                    if remnant_line
-                    else ""
-                )
-                + "</div>"
-            )
-            first = False
-    if sheets:
-        first = True
-        for sheet in sheets:
-            # The h2 rides inside the first block — break-after:avoid is
-            # unreliable across pages in WeasyPrint, while an inline-level
-            # box is atomic by construction.
-            body += (
-                '<div class="bar-block">'
-                + ("<h2>Plan de láminas</h2>" if first else "")
-                + f"<h3>Lámina {_value(sheet.get('sheet_index'))} · "
-                f"{escape(_value(sheet.get('purchasing_sku')))} · "
-                f"{_fmt_mm(sheet.get('sheet_width_mm'))}×"
-                f"{_fmt_mm(sheet.get('sheet_height_mm'))} mm · "
-                f"aprovechamiento {_pct(sheet.get('yield_pct'))} %</h3>"
-                + _sheet_svg(sheet, labels, infills)
-                + "</div>"
-            )
-            first = False
-    if sheet_purchases:
-        body += (
-            "<h2>Vidrio / lámina a medida — pedido</h2>"
-            '<p class="muted">Comprado al tamaño final; no se corta en '
-            "taller.</p>"
-            + _table(
-                ["Grupo", "Medidas", "Cantidad", "Identidad"],
-                [
-                    [
-                        _value(purchase.get("workshop_sku")
-                               or purchase.get("purchasing_sku")
-                               or purchase.get("group")),
-                        (
-                            f"{_fmt_mm(purchase.get('width_mm'))}×"
-                            f"{_fmt_mm(purchase.get('height_mm'))} mm"
-                        ),
-                        _value(purchase.get("quantity") or 1),
-                        _value(purchase.get("group_kind") or "—"),
-                    ]
-                    for purchase in sheet_purchases
-                ],
-                ["", "dimension", "", ""],
-            )
-        )
-    if unnested:
-        body += (
-            "<h2>Piezas no ubicadas</h2>"
-            + _table(
-                ["Pieza", "Grupo", "Medidas", "Motivo"],
-                [[infills.get(
-                      _infill_key(item),
-                      str(item.get("kind") or "") + " · "
-                      + _location(labels, item.get("bay_id"), item.get("leaf_id")),
-                  ),
-                  item.get("group"),
-                  f"{_fmt_mm(item.get('width_mm'))}×{_fmt_mm(item.get('height_mm'))}"
-                  if item.get("width_mm") else _fmt_mm(item.get("length_mm")),
-                  _UNNEST_REASONS.get(str(item.get("reason") or ""),
-                                      _value(item.get("reason")))]
-                 for item in unnested],
-                ["", "", "dimension", ""],
-            )
-        )
-    body += (
-        f'<h2>Identidad</h2><div class="sign-row"><div class="qr">{qr_svg}</div>'
-        '<div class="sign-cell sign-date"><span class="sign-label">Fecha</span></div>'
-        '<div class="sign-cell"><span class="sign-label">Operario</span></div>'
-        '<div class="sign-cell"><span class="sign-label">Verificado por</span></div>'
-        "</div></main>"
-    )
-    return (
-        '<!doctype html><html lang="es-CL"><head><meta charset="utf-8">'
-        f"<style>{_CSS}{_CSS_PACK}</style></head><body>{body}</body></html>"
-    )
+    return pack_html(**context)
 
 
-def render_cut_pack(*, org_id: UUID, order_id: UUID) -> tuple[bytes, str]:
+def render_cut_pack(*, org_id: UUID, order_id: UUID, grouped: bool = False) -> tuple[bytes, str]:
     """PDF bytes for the order's current optimization plan; refuses when the
     plan is missing or was invalidated by a newer optimization run."""
     from weasyprint import HTML
@@ -999,6 +702,7 @@ def render_cut_pack(*, org_id: UUID, order_id: UUID) -> tuple[bytes, str]:
             bar_meta=_bar_context(org_id, bars),
             remnant_racks=remnant_racks,
             fingerprint=fingerprint,
+            grouped=grouped,
         )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
         pdf_identifier=f"cut-pack-{order['order_code']}",

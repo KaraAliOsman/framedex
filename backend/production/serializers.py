@@ -319,6 +319,16 @@ class PhysicalPieceLabelSerializer(serializers.Serializer):
     width_mm = serializers.CharField(allow_null=True)
     height_mm = serializers.CharField(allow_null=True)
     workshop_sku = serializers.CharField(allow_null=True)
+    order_code = serializers.CharField(required=False)
+    position = serializers.CharField(required=False, allow_null=True)
+    unit_index = serializers.IntegerField(required=False, allow_null=True)
+    role_label = serializers.CharField(required=False)
+    parent_code = serializers.CharField(required=False, allow_null=True)
+    angle_left = serializers.CharField(required=False, allow_null=True)
+    angle_right = serializers.CharField(required=False, allow_null=True)
+    color = serializers.CharField(required=False, allow_null=True)
+    fingerprint = serializers.CharField(required=False)
+    next_station = serializers.CharField(required=False)
 
 
 class PackingLabelsSerializer(serializers.Serializer):

@@ -394,26 +394,65 @@ class ProductionOrderDxfFileView(APIView):
         return response
 
 
+class CutPrintQuerySerializer(serializers.Serializer):
+    grouped = serializers.BooleanField(required=False, default=False)
+
+    def to_internal_value(self, data):
+        if set(data) - set(self.fields) or any(len(data.getlist(key)) != 1 for key in data):
+            raise serializers.ValidationError("Revisa los parámetros de impresión.")
+        return super().to_internal_value(data)
+
+
+class PieceLabelQuerySerializer(CutPrintQuerySerializer):
+    paper = serializers.ChoiceField(choices=["LETTER", "A4", "ROLL_100_50"], required=False)
+
+
 class ProductionOrderCutPackView(APIView):
     @extend_schema(
         operation_id="production_order_cut_pack",
-        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        parameters=[ACTIVE_ORGANIZATION_HEADER, OpenApiParameter("grouped", OpenApiTypes.BOOL)],
         request=None,
         responses={(200, "application/pdf"): OpenApiTypes.STR, **ERRORS},
         tags=["production"],
     )
     def get(self, request, order_id: UUID):
+        query = validate(CutPrintQuerySerializer, request.query_params)
         with public_production_errors():
             with documentary_scope(request, _READERS) as (_, _, org_id):
                 from production.cut_pack import render_cut_pack
 
                 content, download_name = render_cut_pack(
-                    org_id=org_id, order_id=order_id
+                    org_id=org_id, order_id=order_id,
+                    grouped=query["grouped"],
                 )
         response = HttpResponse(content, content_type="application/pdf")
         response["Content-Disposition"] = (
             f'attachment; filename="{download_name}"'
         )
+        response["Cache-Control"] = "private, no-store"
+        return response
+
+
+class ProductionOrderPieceLabelsView(APIView):
+    @extend_schema(
+        operation_id="production_order_piece_labels",
+        parameters=[ACTIVE_ORGANIZATION_HEADER,
+                    OpenApiParameter("grouped", OpenApiTypes.BOOL),
+                    OpenApiParameter("paper", OpenApiTypes.STR, enum=["LETTER", "A4", "ROLL_100_50"])],
+        request=None, responses={(200,"application/pdf"): OpenApiTypes.STR, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        from production.cut_labels import render_piece_labels
+
+        query = validate(PieceLabelQuerySerializer, request.query_params)
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                content, name = render_piece_labels(org_id=org_id,order_id=order_id,
+                    grouped=query["grouped"], paper=query.get("paper"))
+        response = HttpResponse(content,content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{name}"'
+        response["Cache-Control"] = "private, no-store"
         return response
 
 

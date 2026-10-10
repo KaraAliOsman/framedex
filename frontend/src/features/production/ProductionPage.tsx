@@ -248,6 +248,7 @@ export function ProductionPage(): JSX.Element {
 }
 
 function ProductionOfficePage(): JSX.Element {
+  const [groupPrint, setGroupPrint] = useState(false);
   const [glassBatch, setGlassBatch] = useState<string[]>([]);
   const auth = useAuthSession();
   const role = auth.me?.active_organization?.role ?? "";
@@ -1243,10 +1244,14 @@ function ProductionOfficePage(): JSX.Element {
     URL.revokeObjectURL(url);
   }
 
-  async function downloadCutPack(orderId: string, orderCode: string): Promise<void> {
+  async function downloadCutPack(
+    orderId: string,
+    orderCode: string,
+    grouped = false,
+  ): Promise<void> {
     try {
       const { blob, filename } = await apiFetchBlob(
-        `/api/v1/production/orders/${orderId}/cut-pack/`,
+        `/api/v1/production/orders/${orderId}/cut-pack/?grouped=${grouped}`,
       );
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -1256,6 +1261,28 @@ function ProductionOfficePage(): JSX.Element {
       URL.revokeObjectURL(url);
     } catch {
       setMessage(t("production.cutPackError"));
+    }
+  }
+
+  async function downloadPieceLabels(
+    orderId: string,
+    orderCode: string,
+    grouped = false,
+  ): Promise<void> {
+    try {
+      const { blob, filename } = await apiFetchBlob(
+        `/api/v1/production/orders/${orderId}/piece-labels/?grouped=${grouped}`,
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename ?? `${orderCode}-etiquetas-piezas.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setMessage(
+        "No se pudieron generar las etiquetas. Revisa el plan vigente y vuelve a intentar.",
+      );
     }
   }
 
@@ -2037,9 +2064,30 @@ function ProductionOfficePage(): JSX.Element {
                                   ? t("production.cutPackInvalidated")
                                   : undefined
                               }
-                              onClick={() => downloadCutPack(detail.id, detail.order_code)}
+                              onClick={() =>
+                                downloadCutPack(detail.id, detail.order_code, groupPrint)
+                              }
                             >
                               {t("production.cutPackButton")}
+                            </button>
+                            <label className="production-print-order">
+                              Orden de impresión
+                              <select
+                                value={groupPrint ? "group" : "sequence"}
+                                onChange={(event) => setGroupPrint(event.target.value === "group")}
+                              >
+                                <option value="sequence">Secuencia de corte</option>
+                                <option value="group">Cortes idénticos · sierra manual</option>
+                              </select>
+                            </label>
+                            <button
+                              type="button"
+                              disabled={busy || Boolean(optimization.invalidated)}
+                              onClick={() =>
+                                downloadPieceLabels(detail.id, detail.order_code, groupPrint)
+                              }
+                            >
+                              Etiquetas de piezas y retazos (PDF)
                             </button>
                             <button
                               type="button"

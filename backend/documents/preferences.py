@@ -17,6 +17,8 @@ DEFAULT_PREFERENCES = {
     "paper": "LETTER", "accent": "TEAL", "legal_footer": "",
     "quotation_preview_minutes": 30,
     "quotation_valid_days": 15,
+    "piece_label_paper": "LETTER",
+    "remnant_destination": "Recepción de retazos",
     "commercial_terms": DEFAULT_TERMS,
 }
 

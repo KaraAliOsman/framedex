@@ -7,3 +7,5 @@ ruff==0.16.5
 PyYAML==6.0.3
 PyMuPDF==1.26.5
 zxing-cpp==2.3.0
+ezdxf==1.4.3
+pyparsing==3.2.5

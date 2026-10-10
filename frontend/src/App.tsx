@@ -62,6 +62,9 @@ const ClientsPage = lazy(async () => ({
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
 }));
+const SheetFormatsPage = lazy(async () => ({
+  default: (await import("./features/catalogs/SheetFormatsPage")).SheetFormatsPage,
+}));
 const AssistantWorkspacePage = lazy(async () => ({
   default: (await import("./features/assistant/AssistantWorkspacePage")).AssistantWorkspacePage,
 }));
@@ -390,6 +393,18 @@ export function AppRoutes(): JSX.Element {
         />
         <Route path="/projects" element={<ProjectSurface />} />
         <Route path="/catalogs" element={<Navigate to="/catalogs/systems" replace />} />
+        <Route
+          path="/catalogs/sheet-formats"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<p role="status">Cargando formatos de lámina…</p>}>
+                  <SheetFormatsPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
         <Route
           path="/assistant"
           element={

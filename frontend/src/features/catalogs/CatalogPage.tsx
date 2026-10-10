@@ -295,6 +295,9 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
       <p className="catalog-status" role="status" aria-live="polite">
         {loading ? ct("loading") : notice}
       </p>
+      <p>
+        <a href="/catalogs/sheet-formats">Vidrios y paneles › Formatos de lámina</a>
+      </p>
       {error && (
         <div>
           <p role="alert">{error}</p>

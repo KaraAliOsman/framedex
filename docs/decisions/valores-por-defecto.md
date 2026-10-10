@@ -486,3 +486,23 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   costos internos ni un precio independiente del acoplador.
 - El arrastre ajusta a 0°, 10°, 15°, 22,5°, 30°, 45° y 90°, o admite el ángulo
   numérico declarado entre −90° y 90°. El catálogo decide su viabilidad.
+
+## P13 · corte y etiquetas (2026-10-10)
+
+- Las etiquetas usan Carta con grilla de 100 × 50 mm; Ajustes › General ›
+  Documentos permite A4 o rollo térmico de 100 × 50 mm. La elección define
+  el papel; conserva medidas, identidad, huella y secuencia del motor.
+- Los retazos recuperables se dirigen inicialmente a «Recepción de retazos».
+  Es una ubicación declarada de recepción, editable en los mismos Ajustes;
+  queda fijada al optimizar y no se reescribe al cambiar la preferencia.
+  Se reserva el código RT en la transacción del plan y se da de alta la
+  pieza física solo al completar Corte. Reservar una etiqueta no crea stock.
+- La lectura inicia en secuencia de barras. El cortador puede imprimir el
+  pack y las etiquetas por cortes idénticos para una sierra manual. La
+  agrupación compara suministro, color, función, largo, ángulos y flecha
+  exactos; mantiene cada dirección física y su posición original.
+- No se propone tamaño de lámina ni despunte silencioso. Catálogo › Vidrios
+  y paneles › Formatos permite declarar ambos desde la ficha del proveedor,
+  con fuente y permisos de dueño/jefe de taller. La variante es inmutable;
+  una nueva declaración se aplica al volver a optimizar. No es un ingreso
+  de stock ni un cambio de las medidas ya selladas de la pieza.

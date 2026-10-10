@@ -7859,6 +7859,151 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/inventory/sheet-formats/:
+    get:
+      operationId: inventory_sheet_formats
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - inventory
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SheetFormatList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: inventory_sheet_format_declare
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SheetFormatRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SheetFormatRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SheetFormatRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SheetFormatCreated'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SheetFormatCreated'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/inventory/stock/:
     get:
       operationId: inventory_stock
@@ -11914,6 +12059,10 @@ paths:
           format: uuid
         description: Active organization; validated against the JWT user's active
           memberships.
+      - in: query
+        name: grouped
+        schema:
+          type: boolean
       - in: path
         name: order_id
         schema:
@@ -13610,6 +13759,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PackingManifest'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/orders/{order_id}/piece-labels/:
+    get:
+      operationId: production_order_piece_labels
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: grouped
+        schema:
+          type: boolean
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: paper
+        schema:
+          type: string
+          enum:
+          - A4
+          - LETTER
+          - ROLL_100_50
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
           description: ''
         '400':
           content:
@@ -24396,6 +24627,11 @@ components:
     DocumentPreferences:
       type: object
       properties:
+        piece_label_paper:
+          $ref: '#/components/schemas/PieceLabelPaperEnum'
+        remnant_destination:
+          type: string
+          maxLength: 80
         quotation_preview_minutes:
           type: integer
           maximum: 60
@@ -24421,6 +24657,12 @@ components:
     DocumentPreferencesRequest:
       type: object
       properties:
+        piece_label_paper:
+          $ref: '#/components/schemas/PieceLabelPaperEnum'
+        remnant_destination:
+          type: string
+          minLength: 1
+          maxLength: 80
         quotation_preview_minutes:
           type: integer
           maximum: 60
@@ -33203,6 +33445,32 @@ components:
         workshop_sku:
           type: string
           nullable: true
+        order_code:
+          type: string
+        position:
+          type: string
+          nullable: true
+        unit_index:
+          type: integer
+          nullable: true
+        role_label:
+          type: string
+        parent_code:
+          type: string
+          nullable: true
+        angle_left:
+          type: string
+          nullable: true
+        angle_right:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        fingerprint:
+          type: string
+        next_station:
+          type: string
       required:
       - code
       - height_mm
@@ -33212,6 +33480,16 @@ components:
       - stable_id
       - width_mm
       - workshop_sku
+    PieceLabelPaperEnum:
+      enum:
+      - LETTER
+      - A4
+      - ROLL_100_50
+      type: string
+      description: |-
+        * `LETTER` - LETTER
+        * `A4` - A4
+        * `ROLL_100_50` - ROLL_100_50
     PipelinePhase:
       type: object
       properties:
@@ -36997,6 +37275,134 @@ components:
       - expires_at
       - path
       - token
+    SheetFormat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+        technical_sku:
+          type: string
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        edge_trim_mm:
+          type: string
+        supplier:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        is_demo:
+          type: boolean
+      required:
+      - edge_trim_mm
+      - height_mm
+      - id
+      - is_demo
+      - kind
+      - name
+      - sku
+      - source
+      - supplier
+      - technical_sku
+      - width_mm
+    SheetFormatCreated:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+      - id
+    SheetFormatList:
+      type: object
+      properties:
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/SheetFormatOption'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SheetFormat'
+      required:
+      - items
+      - options
+    SheetFormatOption:
+      type: object
+      properties:
+        sku:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        is_demo:
+          type: boolean
+      required:
+      - is_demo
+      - kind
+      - name
+      - sku
+    SheetFormatRequestKindEnum:
+      enum:
+      - GLASS
+      - PANEL
+      type: string
+      description: |-
+        * `GLASS` - GLASS
+        * `PANEL` - PANEL
+    SheetFormatRequestRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/SheetFormatRequestKindEnum'
+        technical_sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 100
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        edge_trim_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        supplier:
+          type: string
+          minLength: 1
+          maxLength: 255
+        source:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+      - edge_trim_mm
+      - height_mm
+      - kind
+      - sku
+      - source
+      - supplier
+      - technical_sku
+      - width_mm
     SideEnum:
       type: string
       enum:

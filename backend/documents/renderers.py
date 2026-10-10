@@ -2458,7 +2458,7 @@ def _opening_labels(tree: dict[str, object]) -> list[str]:
 _ROLE_ES = {
     "FRAME": "Marco", "SASH": "Hoja", "MULLION_V": "Montante",
     "MULLION_H": "Travesaño", "INVERSOR": "Inversor",
-    "GLAZING_BEAD": "Juntaquillo", "COUPLER": "Cople",
+    "GLAZING_BEAD": "Junquillo", "COUPLER": "Cople",
     "ADDITIONAL": "Adicional", "THRESHOLD": "Umbral", "CHANNEL": "Canal",
 }
 

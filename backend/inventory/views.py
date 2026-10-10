@@ -18,6 +18,7 @@ from documents.repository import DocumentaryError
 from documents.views import DOCUMENTARY_ERROR_DETAILS, ERRORS, documentary_scope, validate
 from inventory import service
 from inventory import remnants as remnants_service
+from inventory import sheet_formats
 from inventory.serializers import (
     BarAuthorityListSerializer,
     InventoryMovementRequestSerializer,
@@ -32,6 +33,9 @@ from inventory.serializers import (
     RemnantLabelSerializer,
     RemnantListSerializer,
     RemnantSerializer,
+    SheetFormatCreatedSerializer,
+    SheetFormatListSerializer,
+    SheetFormatRequestSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,6 +69,24 @@ def public_inventory_errors():
             "inventory_transaction_rejected",
             "El movimiento de inventario entró en conflicto; reintenta la operación.",
         ) from error
+
+
+class SheetFormatListView(APIView):
+    @extend_schema(operation_id="inventory_sheet_formats", parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   responses={200: SheetFormatListSerializer, **ERRORS}, tags=["inventory"])
+    def get(self, request):
+        with public_inventory_errors(), documentary_scope(request, _READERS) as (_, _, org_id):
+            output = sheet_formats.list_formats(org_id=org_id)
+        return Response(output)
+
+    @extend_schema(operation_id="inventory_sheet_format_declare", parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   request=SheetFormatRequestSerializer,
+                   responses={200: SheetFormatCreatedSerializer, 201: SheetFormatCreatedSerializer, **ERRORS}, tags=["inventory"])
+    def post(self, request):
+        data = validate(SheetFormatRequestSerializer, request.data)
+        with public_inventory_errors(), documentary_scope(request, _WRITERS) as (_, _, org_id):
+            output, created = sheet_formats.declare_format(org_id=org_id, data=data)
+        return Response(output, status=201 if created else 200)
 
 
 class InventoryStockView(APIView):

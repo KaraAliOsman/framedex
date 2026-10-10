@@ -1549,6 +1549,9 @@ def get_work_order(*, org_id: UUID, order_id: UUID, actor_role: str | None = Non
         )
         with documentary_backend():
             add_remnant_codes(display_payload["optimization"], org_id)
+        from production.cut_manifest import grouped_cuts
+
+        display_payload["optimization"]["cut_groups"] = grouped_cuts(display_payload["optimization"])
     output["events"] = [
         {
             "id": str(event["id"]),
@@ -3432,7 +3435,11 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                 "SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
                 [str(order["project_version_id"]), str(org_id)], "version_not_found",
             )["snapshot_json"]) if order.get("project_version_id") else {}
-            piece_labels = physical_labels(addressed_plan(snapshot, optimization, order_id=order_id))
+            route = rows("SELECT sequence,code,label FROM public.production_steps "
+                         "WHERE order_id=%s AND org_id=%s ORDER BY sequence", [str(order_id),str(org_id)])
+            piece_labels = physical_labels(addressed_plan(snapshot, optimization, order_id=order_id),
+                snapshot=snapshot,order_code=order["order_code"],fingerprint=_optimization_fingerprint(optimization),
+                route=route)
         return {
             "order_id": str(order_id),
             "order_code": order["order_code"],
@@ -3957,6 +3964,7 @@ def _compute_optimization(
             entry["rack_location"] = consumed_locations.get(entry["id"])
     produced_bars = [
         {
+            "bar_index": bar["bar_index"],
             "stock_authority_id": bar["stock_authority_id"],
             "remainder_mm": bar["remainder_mm"],
         }
@@ -3965,6 +3973,7 @@ def _compute_optimization(
     ]
     produced_sheets = [
         {
+            "sheet_index": sheet["sheet_index"],
             "workshop_sku": sheet["workshop_sku"],
             "width_mm": remnant["width_mm"],
             "height_mm": remnant["height_mm"],
@@ -4380,6 +4389,14 @@ def optimize_work_order(
         consumed_sheets = plan["consumed_sheets"]
         produced_bars = plan["produced_bars"]
         produced_sheets = plan["produced_sheets"]
+        from documents.preferences import document_preferences
+
+        preferences = document_preferences(one(
+            "SELECT document_preferences FROM public.tenancy_organizations WHERE id=%s",
+            [str(org_id)], "organization_not_found",
+        )["document_preferences"])
+        remnants_service.plan_remnant_addresses(org_id=org_id, order_id=order_id, plan=plan,
+            rack_location=preferences["remnant_destination"])
         # Re-optimizing replaces the plan: the old reservation releases before
         # the new one claims, atomically — for remnants and for ledger stock
         # alike. Ledger reservations are capped at what is physically
