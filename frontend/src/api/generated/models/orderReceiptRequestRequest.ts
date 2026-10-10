@@ -20,4 +20,13 @@ export interface OrderReceiptRequestRequest {
    */
   note?: string | null;
   lines: ReceiptLineRequestRequest[];
+  /**
+   * @minLength 1
+   * @maxLength 100
+   * @nullable
+   */
+  supplier_document?: string | null;
+  /** @nullable */
+  received_on?: string | null;
+  confirm_over_receipt?: boolean;
 }

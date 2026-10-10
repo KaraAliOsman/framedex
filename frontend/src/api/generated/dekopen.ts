@@ -262,6 +262,12 @@ import type {
   ProjectOpsState,
   ProjectResponse,
   ProjectWriteRequest,
+  PurchaseMailPreview,
+  PurchaseMailRequestRequest,
+  PurchaseMailResult,
+  PurchaseNeeds,
+  PurchaseNeedsConfirmRequest,
+  PurchaseNeedsResult,
   PurchasingState,
   QcRemakeRequestRequest,
   QuotationCustomer,
@@ -274,9 +280,12 @@ import type {
   RectificationResponse,
   RemakeRequestRequest,
   Remnant,
+  RemnantActionRequest,
   RemnantCreateRequest,
   RemnantLabel,
   RemnantList,
+  RemnantMoveRequest,
+  RemnantReserveRequest,
   ResetPricingRequest,
   RevisionCompareResponse,
   RuleWriteRequest,
@@ -8688,6 +8697,89 @@ export const inventoryRemnantLabel = async (
   });
 };
 
+export type inventoryRemnantMoveResponse200 = {
+  data: Remnant;
+  status: 200;
+};
+
+export type inventoryRemnantMoveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryRemnantMoveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryRemnantMoveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryRemnantMoveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryRemnantMoveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryRemnantMoveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryRemnantMoveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryRemnantMoveResponseSuccess = inventoryRemnantMoveResponse200 & {
+  headers: Headers;
+};
+export type inventoryRemnantMoveResponseError = (
+  | inventoryRemnantMoveResponse400
+  | inventoryRemnantMoveResponse401
+  | inventoryRemnantMoveResponse403
+  | inventoryRemnantMoveResponse404
+  | inventoryRemnantMoveResponse409
+  | inventoryRemnantMoveResponse422
+  | inventoryRemnantMoveResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryRemnantMoveResponse =
+  inventoryRemnantMoveResponseSuccess | inventoryRemnantMoveResponseError;
+
+export const getInventoryRemnantMoveUrl = (remnantId: string) => {
+  return `/api/v1/inventory/remnants/${remnantId}/move/`;
+};
+
+export const inventoryRemnantMove = async (
+  remnantId: string,
+  remnantMoveRequest: RemnantMoveRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryRemnantMoveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventoryRemnantMoveResponse>(getInventoryRemnantMoveUrl(remnantId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(remnantMoveRequest),
+  });
+};
+
 export type inventoryRemnantReleaseResponse200 = {
   data: Remnant;
   status: 200;
@@ -8760,6 +8852,89 @@ export const inventoryRemnantRelease = async (
   });
 };
 
+export type inventoryRemnantReserveResponse200 = {
+  data: Remnant;
+  status: 200;
+};
+
+export type inventoryRemnantReserveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryRemnantReserveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryRemnantReserveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryRemnantReserveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryRemnantReserveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryRemnantReserveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryRemnantReserveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryRemnantReserveResponseSuccess = inventoryRemnantReserveResponse200 & {
+  headers: Headers;
+};
+export type inventoryRemnantReserveResponseError = (
+  | inventoryRemnantReserveResponse400
+  | inventoryRemnantReserveResponse401
+  | inventoryRemnantReserveResponse403
+  | inventoryRemnantReserveResponse404
+  | inventoryRemnantReserveResponse409
+  | inventoryRemnantReserveResponse422
+  | inventoryRemnantReserveResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryRemnantReserveResponse =
+  inventoryRemnantReserveResponseSuccess | inventoryRemnantReserveResponseError;
+
+export const getInventoryRemnantReserveUrl = (remnantId: string) => {
+  return `/api/v1/inventory/remnants/${remnantId}/reserve/`;
+};
+
+export const inventoryRemnantReserve = async (
+  remnantId: string,
+  remnantReserveRequest: RemnantReserveRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryRemnantReserveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventoryRemnantReserveResponse>(getInventoryRemnantReserveUrl(remnantId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(remnantReserveRequest),
+  });
+};
+
 export type inventoryRemnantScrapResponse200 = {
   data: Remnant;
   status: 200;
@@ -8824,11 +8999,22 @@ export const getInventoryRemnantScrapUrl = (remnantId: string) => {
 
 export const inventoryRemnantScrap = async (
   remnantId: string,
+  remnantActionRequest: RemnantActionRequest,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<inventoryRemnantScrapResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
   return apiMutator<inventoryRemnantScrapResponse>(getInventoryRemnantScrapUrl(remnantId), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(remnantActionRequest),
   });
 };
 
@@ -20953,6 +21139,158 @@ export const projectPaymentIntegrationSave = async (
   });
 };
 
+export type purchasingNeedsResponse200 = {
+  data: PurchaseNeeds;
+  status: 200;
+};
+
+export type purchasingNeedsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type purchasingNeedsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type purchasingNeedsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type purchasingNeedsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type purchasingNeedsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type purchasingNeedsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type purchasingNeedsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type purchasingNeedsResponseSuccess = purchasingNeedsResponse200 & {
+  headers: Headers;
+};
+export type purchasingNeedsResponseError = (
+  | purchasingNeedsResponse400
+  | purchasingNeedsResponse401
+  | purchasingNeedsResponse403
+  | purchasingNeedsResponse404
+  | purchasingNeedsResponse409
+  | purchasingNeedsResponse422
+  | purchasingNeedsResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchasingNeedsResponse = purchasingNeedsResponseSuccess | purchasingNeedsResponseError;
+
+export const getPurchasingNeedsUrl = () => {
+  return `/api/v1/purchasing/needs/`;
+};
+
+export const purchasingNeeds = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<purchasingNeedsResponse> => {
+  return apiMutator<purchasingNeedsResponse>(getPurchasingNeedsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type purchasingNeedsConfirmResponse200 = {
+  data: PurchaseNeedsResult;
+  status: 200;
+};
+
+export type purchasingNeedsConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type purchasingNeedsConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type purchasingNeedsConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type purchasingNeedsConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type purchasingNeedsConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type purchasingNeedsConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type purchasingNeedsConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type purchasingNeedsConfirmResponseSuccess = purchasingNeedsConfirmResponse200 & {
+  headers: Headers;
+};
+export type purchasingNeedsConfirmResponseError = (
+  | purchasingNeedsConfirmResponse400
+  | purchasingNeedsConfirmResponse401
+  | purchasingNeedsConfirmResponse403
+  | purchasingNeedsConfirmResponse404
+  | purchasingNeedsConfirmResponse409
+  | purchasingNeedsConfirmResponse422
+  | purchasingNeedsConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchasingNeedsConfirmResponse =
+  purchasingNeedsConfirmResponseSuccess | purchasingNeedsConfirmResponseError;
+
+export const getPurchasingNeedsConfirmUrl = () => {
+  return `/api/v1/purchasing/needs/confirm/`;
+};
+
+export const purchasingNeedsConfirm = async (
+  purchaseNeedsConfirmRequest: PurchaseNeedsConfirmRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<purchasingNeedsConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<purchasingNeedsConfirmResponse>(getPurchasingNeedsConfirmUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(purchaseNeedsConfirmRequest),
+  });
+};
+
 export type purchasingOrdersIndexResponse200 = {
   data: OrderIndexResponse;
   status: 200;
@@ -21104,6 +21442,161 @@ export const purchasingCancelOrder = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(sendOrderRequestRequest),
+  });
+};
+
+export type purchasingMailPreviewResponse200 = {
+  data: PurchaseMailPreview;
+  status: 200;
+};
+
+export type purchasingMailPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type purchasingMailPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type purchasingMailPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type purchasingMailPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type purchasingMailPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type purchasingMailPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type purchasingMailPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type purchasingMailPreviewResponseSuccess = purchasingMailPreviewResponse200 & {
+  headers: Headers;
+};
+export type purchasingMailPreviewResponseError = (
+  | purchasingMailPreviewResponse400
+  | purchasingMailPreviewResponse401
+  | purchasingMailPreviewResponse403
+  | purchasingMailPreviewResponse404
+  | purchasingMailPreviewResponse409
+  | purchasingMailPreviewResponse422
+  | purchasingMailPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchasingMailPreviewResponse =
+  purchasingMailPreviewResponseSuccess | purchasingMailPreviewResponseError;
+
+export const getPurchasingMailPreviewUrl = (orderId: string) => {
+  return `/api/v1/purchasing/orders/${orderId}/mail/`;
+};
+
+export const purchasingMailPreview = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<purchasingMailPreviewResponse> => {
+  return apiMutator<purchasingMailPreviewResponse>(getPurchasingMailPreviewUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type purchasingMailSendResponse200 = {
+  data: PurchaseMailResult;
+  status: 200;
+};
+
+export type purchasingMailSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type purchasingMailSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type purchasingMailSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type purchasingMailSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type purchasingMailSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type purchasingMailSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type purchasingMailSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type purchasingMailSendResponseSuccess = purchasingMailSendResponse200 & {
+  headers: Headers;
+};
+export type purchasingMailSendResponseError = (
+  | purchasingMailSendResponse400
+  | purchasingMailSendResponse401
+  | purchasingMailSendResponse403
+  | purchasingMailSendResponse404
+  | purchasingMailSendResponse409
+  | purchasingMailSendResponse422
+  | purchasingMailSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchasingMailSendResponse =
+  purchasingMailSendResponseSuccess | purchasingMailSendResponseError;
+
+export const getPurchasingMailSendUrl = (orderId: string) => {
+  return `/api/v1/purchasing/orders/${orderId}/mail/`;
+};
+
+export const purchasingMailSend = async (
+  orderId: string,
+  purchaseMailRequestRequest: PurchaseMailRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<purchasingMailSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<purchasingMailSendResponse>(getPurchasingMailSendUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(purchaseMailRequestRequest),
   });
 };
 

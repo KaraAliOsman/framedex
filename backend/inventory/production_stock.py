@@ -600,7 +600,7 @@ def coverage_for_version(org_id: UUID, version_id: UUID) -> dict[str, Any]:
                    COUNT(*) AS count, SUM(length_mm) AS total_mm
             FROM public.inventory_remnants
             WHERE org_id = %s AND kind = 'BAR' AND status = 'AVAILABLE'
-              AND physical_stock_identity = ANY(%s::uuid[])
+              AND physical_stock_identity = ANY(%s::text[])
             GROUP BY physical_stock_identity
             """,
             [str(org_id), psi_values],

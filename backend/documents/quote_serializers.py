@@ -36,6 +36,7 @@ class CommercialTermsSerializer(StrictSerializer):
 class DocumentPreferencesSerializer(StrictSerializer):
     piece_label_paper = serializers.ChoiceField(choices=["LETTER", "A4", "ROLL_100_50"], required=False)
     remnant_destination = serializers.CharField(max_length=80, allow_blank=False, required=False)
+    remnant_age_days = serializers.IntegerField(min_value=1, max_value=3650, required=False)
     quotation_preview_minutes = serializers.IntegerField(required=False, min_value=5, max_value=60)
     quotation_valid_days = serializers.IntegerField(required=False, min_value=1, max_value=365)
     paper = serializers.ChoiceField(choices=["LETTER", "OFICIO", "A4"])

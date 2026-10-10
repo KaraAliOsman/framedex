@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { apiMutator } from "../../api/apiMutator";
 import type { InventoryStockItem } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
@@ -42,6 +43,9 @@ function InventoryWorkspace({
 }): JSX.Element {
   const [params] = useSearchParams();
   const [needle, setNeedle] = useState(params.get("sku") ?? "");
+  const [showEmpty, setShowEmpty] = useState(false);
+  const [sort, setSort] = useState("sku");
+  const [offset, setOffset] = useState(0);
   useEffect(() => setNeedle(params.get("sku") ?? ""), [params]);
   const request = useCallback(
     async <T,>(path: string, method = "GET", body?: unknown): Promise<T> => {
@@ -67,12 +71,23 @@ function InventoryWorkspace({
       return result.data.items;
     },
   });
-  const filtered = (stock.data ?? []).filter((item) =>
-    [item.sku, item.name, item.spec_text ?? "", item.racks ?? ""]
-      .join(" ")
-      .toLowerCase()
-      .includes(needle.toLowerCase()),
-  );
+  const filtered = (stock.data ?? [])
+    .filter(
+      (item) =>
+        (showEmpty ||
+          Number(item.on_hand_qty) > 0 ||
+          Number(item.incoming_qty) > 0 ||
+          Number(item.reserved_qty) > 0) &&
+        [item.sku, item.name, item.spec_text ?? "", item.racks ?? ""]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle.toLowerCase()),
+    )
+    .sort((a, b) =>
+      sort === "sku"
+        ? a.sku.localeCompare(b.sku)
+        : Number(b.available_qty) - Number(a.available_qty),
+    );
   return (
     <section className="purchasing-page inventory-page" data-density="office">
       <PageHeader
@@ -92,14 +107,54 @@ function InventoryWorkspace({
           <h2>Stock</h2>
           <label>
             Buscar por código, nombre o ubicación
-            <input type="search" value={needle} onChange={(e) => setNeedle(e.target.value)} />
+            <input
+              type="search"
+              value={needle}
+              onChange={(e) => {
+                setNeedle(e.target.value);
+                setOffset(0);
+              }}
+            />
           </label>
+          <div className="purchasing-index-filters">
+            <label>
+              Ordenar
+              <select
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value);
+                  setOffset(0);
+                }}
+              >
+                <option value="sku">Código de material</option>
+                <option value="available">Mayor disponible</option>
+              </select>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={showEmpty}
+                onChange={(e) => {
+                  setShowEmpty(e.target.checked);
+                  setOffset(0);
+                }}
+              />
+              Incluir materiales sin existencia
+            </label>
+          </div>
           {stock.data.length === 0 ? (
             <p>No hay stock registrado. El taller puede registrar una recepción o un ajuste.</p>
           ) : filtered.length === 0 ? (
             <p>
-              No hay stock con esta búsqueda.{" "}
-              <button type="button" onClick={() => setNeedle("")}>
+              No hay material con existencia o en tránsito para esta búsqueda.{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setNeedle("");
+                  setShowEmpty(true);
+                  setOffset(0);
+                }}
+              >
                 Ver todo el stock
               </button>
             </p>
@@ -123,7 +178,7 @@ function InventoryWorkspace({
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((item) => (
+                  {filtered.slice(offset, offset + 50).map((item) => (
                     <tr key={`${item.item_id}:${item.variant_key}`}>
                       <td className="ui-value">{item.sku}</td>
                       <td>
@@ -148,6 +203,19 @@ function InventoryWorkspace({
                             }
                             unit={units[item.unit] ?? "Sin unidad declarada"}
                           />
+                          {index === 1 &&
+                            item.reservations?.map((hold) => (
+                              <p key={String(hold.order_id)}>
+                                <Link to={`/production?order=${String(hold.order_id)}`}>
+                                  {String(hold.order_code)}
+                                </Link>{" "}
+                                ·{" "}
+                                <Qty
+                                  value={String(hold.quantity)}
+                                  unit={units[item.unit] ?? "un."}
+                                />
+                              </p>
+                            ))}
                         </td>
                       ))}
                       <td>{item.racks || "Sin ubicación registrada"}</td>
@@ -157,9 +225,41 @@ function InventoryWorkspace({
               </table>
             </div>
           )}
+          {filtered.length > 50 && (
+            <nav aria-label="Páginas de stock">
+              <button
+                type="button"
+                className="secondary"
+                disabled={offset === 0}
+                onClick={() => setOffset((n) => n - 50)}
+              >
+                Anteriores
+              </button>
+              <span className="ui-value">
+                {offset + 1}–{Math.min(offset + 50, filtered.length)} de {filtered.length}
+              </span>
+              <button
+                type="button"
+                className="secondary"
+                disabled={offset + 50 >= filtered.length}
+                onClick={() => setOffset((n) => n + 50)}
+              >
+                Siguientes
+              </button>
+            </nav>
+          )}
         </section>
       )}
-      <InventorySection request={request} canWrite={canWrite} stockItems={stock.data ?? []} />
+      <InventorySection
+        request={request}
+        canWrite={canWrite}
+        stockItems={
+          (stock.data ?? []).filter((item) => item.item_id !== null) as (InventoryStockItem & {
+            item_id: string;
+          })[]
+        }
+        onStockChanged={() => void stock.refetch()}
+      />
     </section>
   );
 }

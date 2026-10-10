@@ -28,6 +28,7 @@ const KIND: Record<string, string> = {
   PAYMENT: "Pago registrado",
   APPROVAL: "Aprobación recibida",
   ORDER_BLOCKED: "OT bloqueada",
+  PURCHASE: "Orden de compra",
 };
 
 function pendingKey(key: string, source: MailPreview | undefined): string | null {
@@ -342,6 +343,11 @@ export function MailHistory({
                   El pago fue anulado. Este comprobante no se puede volver a enviar como un pago
                   vigente.
                 </p>
+              ) : row.error_code === "mail_purchase_cancelled" ? (
+                <p>
+                  La OC fue cancelada. Este correo se conserva como historial; revisa la nueva
+                  compra antes de enviar.
+                </p>
               ) : null}
               {canWrite && row.error_code === "mail_quote_link_inactive" && row.project_id ? (
                 <Link
@@ -350,8 +356,11 @@ export function MailHistory({
                 >
                   Revisar enlace de cotización
                 </Link>
-              ) : canWrite &&
+              ) : (canWrite ||
+                  (row.kind === "PURCHASE" &&
+                    auth.me?.active_organization?.role === "WORKSHOP_MANAGER")) &&
                 row.error_code !== "mail_payment_voided" &&
+                row.error_code !== "mail_purchase_cancelled" &&
                 ["FAILED", "UNCERTAIN"].includes(row.state) ? (
                 <Button
                   disabled={busy}

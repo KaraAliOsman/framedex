@@ -1,0 +1,18 @@
+[
+  {
+    "subject": "Hoy · aceptación P03 DEMO · Su orden de compra · OC-000008",
+    "recipient": "compras-p15@example.invalid",
+    "file": "OC-000008.pdf",
+    "pages": 2,
+    "sha256": "c094d21c3bbdfe9d93cd4dbe24b0881b1bb7bdba280e83e38b2cf50e10fa974e",
+    "mailpitDeliveries": 1
+  },
+  {
+    "subject": "Hoy · aceptación P03 DEMO · Su orden de compra · OC-000007",
+    "recipient": "compras-p15@example.invalid",
+    "file": "OC-000007.pdf",
+    "pages": 1,
+    "sha256": "78ba46f0a0351486b23338299c113efc22245682dc22036a57f1910897bde797",
+    "mailpitDeliveries": 1
+  }
+]

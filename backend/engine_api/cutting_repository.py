@@ -49,6 +49,13 @@ def effective_scope(
 
 
 class CuttingRepository:
+    def __init__(self):
+        # Request-local cache only. A new proposal/optimization rechecks live
+        # catalogue authority; no tenant or publication cache survives a call.
+        self._visible_systems=set()
+        self._profile_stocks={}
+        self._reinforcement_stocks={}
+
     def cutting_profile(self, org_id: UUID, code: str | None = None) -> CuttingProfile:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -76,6 +83,12 @@ class CuttingRepository:
         )
 
     def profile_stock(self, system_id: UUID, org_id: UUID, sku: str, color: str) -> StockRule:
+        key=(system_id,org_id,sku,color)
+        if key not in self._profile_stocks:
+            self._profile_stocks[key]=self._profile_stock(system_id,org_id,sku,color)
+        return self._profile_stocks[key]
+
+    def _profile_stock(self, system_id: UUID, org_id: UUID, sku: str, color: str) -> StockRule:
         with connection.cursor() as cursor:
             cursor.execute(
                 """SELECT a.id, a.commercial_length_mm, a.material::text,
@@ -123,6 +136,16 @@ class CuttingRepository:
         )
 
     def reinforcement_stock(
+        self, system_id: UUID, org_id: UUID, parent_sku: str,
+        requested_sku: str | None, color: str,
+    ) -> tuple[StockRule, Decimal | None]:
+        key = (system_id, org_id, parent_sku, requested_sku, color)
+        if key not in self._reinforcement_stocks:
+            self._reinforcement_stocks[key] = self._reinforcement_stock(
+                system_id, org_id, parent_sku, requested_sku, color)
+        return self._reinforcement_stocks[key]
+
+    def _reinforcement_stock(
         self,
         system_id: UUID,
         org_id: UUID,
@@ -186,7 +209,10 @@ class CuttingRepository:
         color: str,
     ) -> CuttingAuthorities:
         # Also verifies that the requested system is visible and active through the original loader.
-        SystemParamsRepository().load_visible(system_id, org_id)
+        scope=(system_id,org_id)
+        if scope not in self._visible_systems:
+            SystemParamsRepository().load_visible(system_id, org_id)
+            self._visible_systems.add(scope)
         stocks: dict[str, StockRule] = {}
         defaults: dict[str, str] = {}
         inertias: dict[str, Decimal | None] = {}

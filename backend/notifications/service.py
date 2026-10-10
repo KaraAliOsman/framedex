@@ -453,6 +453,13 @@ def _check_live(row: dict, message: dict):
         )
         if not active:
             raise ValueError("mail_payment_voided")
+    if row["kind"] == "PURCHASE":
+        # Dispatch holds service claims. Member RLS cannot establish a user's
+        # membership here; retain the explicit sealed order and tenant scope.
+        active=rows("SELECT id FROM public.orders WHERE id=%s AND org_id=%s AND status NOT IN ('DRAFT','CANCELLED')",
+                    [message['order_id'],str(row['org_id'])])
+        if not active:
+            raise ValueError('mail_purchase_cancelled')
 
 
 def _finish(row: dict, state: str, error_code=None):
@@ -500,7 +507,7 @@ def dispatch(*, org_id: UUID, mail_id: UUID) -> dict:
             code = str(error) if isinstance(error, ValueError) else None
             preflight_error = (
                 code
-                if code in {"mail_quote_link_inactive", "mail_payment_voided"}
+                if code in {"mail_quote_link_inactive", "mail_payment_voided", "mail_purchase_cancelled"}
                 else "mail_preflight_failed"
             )
         row = one(

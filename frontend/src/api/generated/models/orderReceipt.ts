@@ -15,4 +15,8 @@ export interface OrderReceipt {
   /** @nullable */
   received_by: string | null;
   created_at: string;
+  /** @nullable */
+  supplier_document?: string | null;
+  /** @nullable */
+  received_on?: string | null;
 }

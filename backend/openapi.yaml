@@ -7719,6 +7719,88 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/inventory/remnants/{remnant_id}/move/:
+    post:
+      operationId: inventory_remnant_move
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: remnant_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemnantMoveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RemnantMoveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RemnantMoveRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Remnant'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/inventory/remnants/{remnant_id}/release/:
     post:
       operationId: inventory_remnant_release
@@ -7789,6 +7871,88 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/inventory/remnants/{remnant_id}/reserve/:
+    post:
+      operationId: inventory_remnant_reserve
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: remnant_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemnantReserveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RemnantReserveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RemnantReserveRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Remnant'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/inventory/remnants/{remnant_id}/scrap/:
     post:
       operationId: inventory_remnant_scrap
@@ -7808,6 +7972,18 @@ paths:
         required: true
       tags:
       - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemnantActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RemnantActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RemnantActionRequest'
+        required: true
       security:
       - SupabaseBearer: []
       responses:
@@ -19171,6 +19347,146 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/purchasing/needs/:
+    get:
+      operationId: purchasing_needs
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - purchasing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseNeeds'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/purchasing/needs/confirm/:
+    post:
+      operationId: purchasing_needs_confirm
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseNeedsConfirmRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseNeedsConfirmRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseNeedsConfirmRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseNeedsResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/purchasing/orders/:
     get:
       operationId: purchasing_orders_index
@@ -19274,6 +19590,157 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/purchasing/orders/{order_id}/mail/:
+    get:
+      operationId: purchasing_mail_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - purchasing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseMailPreview'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: purchasing_mail_send
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseMailRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseMailRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseMailRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseMailResult'
           description: ''
         '400':
           content:
@@ -21968,7 +22435,6 @@ components:
           type: string
         physical_stock_identity:
           type: string
-          format: uuid
           nullable: true
         stock_color:
           type: string
@@ -24632,6 +25098,10 @@ components:
         remnant_destination:
           type: string
           maxLength: 80
+        remnant_age_days:
+          type: integer
+          maximum: 3650
+          minimum: 1
         quotation_preview_minutes:
           type: integer
           maximum: 60
@@ -24663,6 +25133,10 @@ components:
           type: string
           minLength: 1
           maxLength: 80
+        remnant_age_days:
+          type: integer
+          maximum: 3650
+          minimum: 1
         quotation_preview_minutes:
           type: integer
           maximum: 60
@@ -27467,6 +27941,19 @@ components:
         actor_label:
           type: string
           nullable: true
+        order_code:
+          type: string
+          nullable: true
+        receipt_code:
+          type: string
+          nullable: true
+        supplier_document:
+          type: string
+          nullable: true
+        received_on:
+          type: string
+          format: date
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -27564,6 +28051,7 @@ components:
         item_id:
           type: string
           format: uuid
+          nullable: true
         sku:
           type: string
         name:
@@ -27596,6 +28084,11 @@ components:
           nullable: true
         spec_text:
           type: string
+        reservations:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
       required:
       - available_qty
       - category
@@ -31987,6 +32480,11 @@ components:
           $ref: '#/components/schemas/OrderTypeEnum'
         status:
           $ref: '#/components/schemas/OrderStatusEnum'
+        net_amount:
+          type: string
+          nullable: true
+        currency:
+          type: string
         supplier_identity:
           type: string
           nullable: true
@@ -32085,6 +32583,13 @@ components:
         created_at:
           type: string
           format: date-time
+        supplier_document:
+          type: string
+          nullable: true
+        received_on:
+          type: string
+          format: date
+          nullable: true
       required:
       - created_at
       - id
@@ -32108,6 +32613,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ReceiptLineRequestRequest'
+        supplier_document:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 100
+        received_on:
+          type: string
+          format: date
+          nullable: true
+        confirm_over_receipt:
+          type: boolean
+          default: false
       required:
       - lines
       - receipt_key
@@ -32186,6 +32703,11 @@ components:
           $ref: '#/components/schemas/OrderTypeEnum'
         status:
           $ref: '#/components/schemas/OrderStatusEnum'
+        net_amount:
+          type: string
+          nullable: true
+        currency:
+          type: string
         supplier_name:
           type: string
         order_snapshot_hash:
@@ -35965,6 +36487,45 @@ components:
       - stock_length_mm
       - supplier
       - unit
+    PurchaseMailPreview:
+      type: object
+      properties:
+        recipient:
+          type: string
+        subject:
+          type: string
+        text:
+          type: string
+        document_type:
+          type: string
+      required:
+      - document_type
+      - recipient
+      - subject
+      - text
+    PurchaseMailRequestRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+        expected_recipient:
+          type: string
+          format: email
+          minLength: 1
+      required:
+      - confirmed
+      - expected_recipient
+    PurchaseMailResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          type: string
+      required:
+      - id
+      - state
     PurchaseMappingRow:
       type: object
       description: Catalog article → commercial purchase identity.
@@ -35999,6 +36560,207 @@ components:
       - profile_article_id
       - purchase_unit
       - supplier_name
+    PurchaseNeed:
+      type: object
+      properties:
+        is_demo:
+          type: boolean
+        requirement_id:
+          type: string
+          format: uuid
+        version_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        project_code:
+          type: string
+        revision_code:
+          type: string
+        order_type:
+          $ref: '#/components/schemas/OrderTypeEnum'
+        sku:
+          type: string
+        unit:
+          type: string
+        specification:
+          type: object
+          additionalProperties: {}
+        required:
+          type: string
+        reserved:
+          type: string
+        stock:
+          type: string
+        incoming:
+          type: string
+        draft:
+          type: string
+        purchase:
+          type: string
+        uncovered:
+          type: string
+        maximum:
+          type: string
+        cause:
+          type: string
+          nullable: true
+        supplier_eligibility_id:
+          type: string
+          format: uuid
+          nullable: true
+        supplier_name:
+          type: string
+          nullable: true
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseNeedOrigin'
+      required:
+      - cause
+      - draft
+      - incoming
+      - is_demo
+      - maximum
+      - order_type
+      - orders
+      - project_code
+      - project_id
+      - purchase
+      - required
+      - requirement_id
+      - reserved
+      - revision_code
+      - sku
+      - specification
+      - stock
+      - supplier_eligibility_id
+      - supplier_name
+      - uncovered
+      - unit
+      - version_id
+    PurchaseNeedBlocker:
+      type: object
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        order_code:
+          type: string
+        cause:
+          type: string
+        code:
+          type: string
+      required:
+      - cause
+      - code
+      - order_code
+      - order_id
+    PurchaseNeedChoiceRequest:
+      type: object
+      properties:
+        requirement_id:
+          type: string
+          format: uuid
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,4})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - quantity
+      - requirement_id
+    PurchaseNeedOrigin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        quantity:
+          type: string
+      required:
+      - code
+      - id
+      - quantity
+    PurchaseNeedRemnant:
+      type: object
+      properties:
+        remnant_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        order_code:
+          type: string
+        reserved:
+          type: boolean
+      required:
+      - order_code
+      - order_id
+      - remnant_id
+      - reserved
+    PurchaseNeeds:
+      type: object
+      properties:
+        preview_hash:
+          type: string
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseNeed'
+        remnant_offers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseNeedRemnant'
+        blockers:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseNeedBlocker'
+      required:
+      - blockers
+      - lines
+      - preview_hash
+      - remnant_offers
+    PurchaseNeedsConfirmRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 120
+        preview_hash:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-f]{64}$
+        confirmed:
+          type: boolean
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseNeedChoiceRequest'
+      required:
+      - confirmed
+      - lines
+      - operation_key
+      - preview_hash
+    PurchaseNeedsResult:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - orders
     PurchaseUnitEnum:
       enum:
       - BAR
@@ -36597,7 +37359,6 @@ components:
           nullable: true
         physical_stock_identity:
           type: string
-          format: uuid
           nullable: true
         material:
           type: string
@@ -36657,6 +37418,10 @@ components:
         updated_at:
           type: string
           format: date-time
+        age_days:
+          type: integer
+        age_alert:
+          type: boolean
       required:
       - code
       - color
@@ -36678,6 +37443,18 @@ components:
       - stock_authority_id
       - updated_at
       - width_mm
+    RemnantActionRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required:
+      - confirmed
+      - reason
     RemnantCreateRequest:
       type: object
       properties:
@@ -36694,8 +37471,8 @@ components:
           maxLength: 100
         physical_stock_identity:
           type: string
-          format: uuid
           nullable: true
+          minLength: 1
         material:
           type: string
           nullable: true
@@ -36756,8 +37533,32 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Remnant'
+        age_limit_days:
+          type: integer
+        events:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
       required:
       - remnants
+    RemnantMoveRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+        rack_location:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - confirmed
+      - rack_location
+      - reason
     RemnantOriginEnum:
       enum:
       - RECEIPT
@@ -36768,6 +37569,17 @@ components:
         * `RECEIPT` - RECEIPT
         * `PRODUCTION` - PRODUCTION
         * `MANUAL` - MANUAL
+    RemnantReserveRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+        order_id:
+          type: string
+          format: uuid
+      required:
+      - confirmed
+      - order_id
     RemnantStatusEnum:
       enum:
       - AVAILABLE

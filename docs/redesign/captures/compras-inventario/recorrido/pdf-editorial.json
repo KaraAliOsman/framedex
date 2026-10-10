@@ -1,0 +1,14 @@
+[
+  {
+    "type": "DOC-04",
+    "pages": 2,
+    "scope": "preview actual desde snapshot sellado; artefacto emitido anterior intacto",
+    "sha256": "82e55ef67216a283788a00136cd88d079e7198ca418eb5374dc908c286cdbd83"
+  },
+  {
+    "type": "DOC-02",
+    "pages": 1,
+    "scope": "preview actual desde snapshot sellado; artefacto emitido anterior intacto",
+    "sha256": "d46818526b3ffb7ddcb0b7a14ee1ff730db27cf13bd2ca69f6b5f6dcbd4e0e22"
+  }
+]

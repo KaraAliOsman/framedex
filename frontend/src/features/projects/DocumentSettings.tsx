@@ -168,6 +168,22 @@ export function DocumentSettings({
               </small>
             </label>
             <label>
+              Alertar retazos a partir de (días)
+              <input
+                type="number"
+                min={1}
+                max={3650}
+                required
+                value={value.remnant_age_days ?? 90}
+                onChange={(event) =>
+                  setValue({ ...value, remnant_age_days: Number(event.target.value) })
+                }
+              />
+              <small>
+                La alerta conserva el material disponible; revisa su ubicación y estado.
+              </small>
+            </label>
+            <label>
               Acento de impresión
               <select
                 aria-label="Acento de impresión"

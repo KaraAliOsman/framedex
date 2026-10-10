@@ -131,7 +131,13 @@ class MailRecoverView(APIView):
     )
     def post(self, request, mail_id):
         data = validate(MailRecoverySerializer, request.data)
-        with documentary_scope(request, WRITERS) as (token, _, org_id):
+        with documentary_scope(request, READERS) as (token, tenant, org_id):
+            if tenant.active_organization.role == 'WORKSHOP_MANAGER':
+                from documents.repository import documentary_backend,one
+                with documentary_backend():
+                    row=one('SELECT kind FROM mail_outbox WHERE org_id=%s AND id=%s',[org_id,mail_id],'mail_not_found')
+                if row['kind'] != 'PURCHASE':
+                    raise contract_error(403,'documentary_permission_denied','El taller puede recuperar solo correos de compras.')
             return Response(
                 service.recover(
                     org_id=org_id,

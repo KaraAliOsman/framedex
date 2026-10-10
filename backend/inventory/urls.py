@@ -11,9 +11,12 @@ from inventory.views import (
     RemnantReleaseView,
     RemnantScrapView,
     SheetFormatListView,
+    RemnantMoveView, RemnantReserveView,
 )
 
 urlpatterns = [
+    path("remnants/<uuid:remnant_id>/move/", RemnantMoveView.as_view()),
+    path("remnants/<uuid:remnant_id>/reserve/", RemnantReserveView.as_view()),
     path("sheet-formats/", SheetFormatListView.as_view(), name="inventory-sheet-formats"),
     path("stock/", InventoryStockView.as_view(), name="inventory-stock"),
     path("movements/", InventoryMovementsView.as_view(), name="inventory-movements"),

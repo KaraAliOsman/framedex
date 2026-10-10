@@ -1,6 +1,7 @@
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import { fmtMm, formatDecimal } from "../../format";
@@ -31,6 +32,8 @@ type Remnant = {
   rack_location: string | null;
   notes: string | null;
   created_at: string;
+  age_days?: number;
+  age_alert?: boolean;
 };
 
 type Movement = {
@@ -44,6 +47,10 @@ type Movement = {
   note: string | null;
   actor_label: string | null;
   created_at: string;
+  order_code?: string | null;
+  receipt_code?: string | null;
+  supplier_document?: string | null;
+  received_on?: string | null;
 };
 
 type StockIdentity = {
@@ -125,10 +132,12 @@ export function InventorySection({
   request,
   canWrite,
   stockItems,
+  onStockChanged,
 }: {
   request: RequestFn;
   canWrite: boolean;
   stockItems: StockIdentity[];
+  onStockChanged?: () => void;
 }): JSX.Element {
   const confirm = useConfirm();
   const [params] = useSearchParams();
@@ -142,6 +151,29 @@ export function InventorySection({
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [events, setEvents] = useState<
+    Array<{
+      id: string;
+      remnant_code: string;
+      action: string;
+      rack_location: string | null;
+      previous_rack: string | null;
+      reason: string | null;
+      actor_label: string | null;
+      created_at: string;
+    }>
+  >([]);
+  const [offers, setOffers] = useState<
+    Array<{ remnant_id: string; order_id: string; order_code: string; reserved: boolean }>
+  >([]);
+  const [ageLimit, setAgeLimit] = useState(90);
+  const [operation, setOperation] = useState<{
+    kind: "move" | "scrap" | "reserve";
+    remnant: Remnant;
+  } | null>(null);
+  const [reason, setReason] = useState("");
+  const [rack, setRack] = useState("");
+  const [destination, setDestination] = useState("");
   const inventoryReady = !loading && !loadError;
   const [showCreate, setShowCreate] = useState(false);
   const [adjustItem, setAdjustItem] = useState<string | null>(null);
@@ -179,7 +211,9 @@ export function InventorySection({
     setLoading(true);
     setLoadError(false);
     void Promise.all([
-      request<{ remnants?: Remnant[] }>("inventory/remnants/"),
+      request<{ remnants?: Remnant[]; age_limit_days?: number; events?: typeof events }>(
+        "inventory/remnants/",
+      ),
       request<{ movements?: Movement[] }>("inventory/movements/"),
       request<{ authorities?: BarAuthority[] }>("inventory/bar-authorities/"),
     ])
@@ -188,6 +222,8 @@ export function InventorySection({
         setRemnants(pool.remnants ?? []);
         setMovements(ledger.movements ?? []);
         setAuthorities(bars.authorities ?? []);
+        setEvents(pool.events ?? []);
+        setAgeLimit(pool.age_limit_days ?? 90);
       })
       .catch(() => {
         if (generation === loadGeneration.current) setLoadError(true);
@@ -195,7 +231,18 @@ export function InventorySection({
       .finally(() => {
         if (generation === loadGeneration.current) setLoading(false);
       });
-  }, [request]);
+    if (canWrite)
+      void request<{ remnant_offers: typeof offers }>("purchasing/needs/")
+        .then((value) => {
+          if (generation === loadGeneration.current) setOffers(value.remnant_offers);
+        })
+        .catch(() => {
+          if (generation === loadGeneration.current)
+            setMessage(
+              "No se pudieron revisar los destinos compatibles. Reintenta las necesidades en Compras.",
+            );
+        });
+  }, [request, canWrite]);
 
   useEffect(() => {
     load();
@@ -223,6 +270,7 @@ export function InventorySection({
     try {
       await task;
       load();
+      onStockChanged?.();
       return true;
     } catch (error) {
       const detail =
@@ -332,6 +380,44 @@ export function InventorySection({
       });
   }
 
+  async function submitOperation(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    if (!operation) return;
+    const ok = await confirm({
+      title:
+        operation.kind === "scrap"
+          ? "¿Desechar este retazo?"
+          : operation.kind === "move"
+            ? "¿Mover este retazo?"
+            : "¿Reservar este retazo para la OT?",
+      body:
+        operation.kind === "reserve"
+          ? "El motor recalcula y reserva el plan completo de la OT. Si el material ya cambió, la decisión se rechaza."
+          : `${operation.remnant.code} · ${reason}. La decisión queda en el libro con tu nombre.`,
+      confirmLabel:
+        operation.kind === "scrap"
+          ? "Desechar con motivo"
+          : operation.kind === "move"
+            ? "Mover al rack"
+            : "Reservar plan",
+      danger: operation.kind === "scrap",
+    });
+    if (!ok) return;
+    const payload =
+      operation.kind === "reserve"
+        ? { confirmed: true, order_id: destination }
+        : {
+            confirmed: true,
+            reason,
+            ...(operation.kind === "move" ? { rack_location: rack } : {}),
+          };
+    const success = await run(
+      request(`inventory/remnants/${operation.remnant.id}/${operation.kind}/`, "POST", payload),
+      "inventory.movementError",
+    );
+    if (success) setOperation(null);
+  }
+
   return (
     <section className="purchasing-stock inventory-workspace" aria-label={t("inventory.title")}>
       {canWrite && stockItems.length > 0 ? (
@@ -411,6 +497,10 @@ export function InventorySection({
       ) : null}
       <h2>{t("inventory.remnants")}</h2>
       <p className="purchasing-hint">{t("inventory.remnantsHint")}</p>
+      <p>
+        Revisa los retazos disponibles de <span className="ui-value">{ageLimit}</span> días o más.{" "}
+        <Link to="/settings/general">Cambiar alerta en Ajustes</Link>
+      </p>
       {loading ? <LoadingState label="Cargando retazos y movimientos" /> : null}
       {loadError ? (
         <ErrorState
@@ -565,6 +655,71 @@ export function InventorySection({
           </button>
         </ValidatedForm>
       ) : null}
+      {operation && (
+        <ValidatedForm
+          className="inventory-remnant-form"
+          onSubmit={(event) => void submitOperation(event)}
+        >
+          <p className="ui-value">
+            {operation.remnant.code} · {remnantDims(operation.remnant)}
+          </p>
+          {operation.kind === "move" && (
+            <label>
+              Rack de destino
+              <input
+                aria-label="Rack de destino"
+                required
+                maxLength={100}
+                value={rack}
+                onChange={(e) => setRack(e.target.value)}
+              />
+            </label>
+          )}
+          {operation.kind !== "reserve" && (
+            <label>
+              Motivo
+              <input
+                aria-label="Motivo"
+                required
+                minLength={3}
+                maxLength={500}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </label>
+          )}
+          {operation.kind === "reserve" && (
+            <label>
+              OT compatible según el motor
+              <select
+                aria-label="OT compatible según el motor"
+                required
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+              >
+                <option value="">Elige la OT</option>
+                {offers
+                  .filter((o) => o.remnant_id === operation.remnant.id && !o.reserved)
+                  .map((o) => (
+                    <option key={o.order_id} value={o.order_id}>
+                      {o.order_code}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          )}
+          <button type="submit" disabled={busy}>
+            {operation.kind === "move"
+              ? "Revisar traslado"
+              : operation.kind === "scrap"
+                ? "Revisar desecho"
+                : "Revisar reserva"}
+          </button>
+          <button type="button" className="secondary" onClick={() => setOperation(null)}>
+            Cancelar
+          </button>
+        </ValidatedForm>
+      )}
       {!loading && !loadError && visible.length > 0 ? (
         <table className="inventory-remnants">
           <thead>
@@ -599,9 +754,14 @@ export function InventorySection({
                       authorityNames.get(r.stock_authority_id ?? "") ??
                       ([r.material, r.color].filter(Boolean).join(" · ") || "—"))}
                   {r.notes ? <span className="purchasing-hint"> — {r.notes}</span> : null}
+                  {r.color && (
+                    <p>
+                      {r.color === "WHITE" ? "Blanco" : r.color === "FOILED" ? "Foliado" : r.color}
+                    </p>
+                  )}
                 </td>
                 <td className="ui-value">{remnantDims(r)}</td>
-                <td>{r.rack_location ?? "—"}</td>
+                <td>{r.rack_location || "Sin dato · registra el rack"}</td>
                 <td>
                   {remnantOriginLabel(r.origin)}
                   {r.origin_order_code ? ` · ${r.origin_order_code}` : ""}
@@ -613,9 +773,39 @@ export function InventorySection({
                 </td>
                 <td>
                   {remnantAge(r.created_at)}
+                  {r.age_alert && <p role="status">Revisar antigüedad</p>}
                   <span className="purchasing-hint"> · {formatDateTime(r.created_at)}</span>
                 </td>
                 <td>
+                  {canWrite && ["AVAILABLE", "RESERVED"].includes(r.status) && (
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        setOperation({ kind: "move", remnant: r });
+                        setRack(r.rack_location ?? "");
+                        setReason("");
+                      }}
+                    >
+                      Mover de rack
+                    </button>
+                  )}
+                  {canWrite &&
+                    r.status === "AVAILABLE" &&
+                    offers.some((o) => o.remnant_id === r.id && o.reserved === false) && (
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={busy}
+                        onClick={() => {
+                          setOperation({ kind: "reserve", remnant: r });
+                          setDestination("");
+                        }}
+                      >
+                        Reservar para OT
+                      </button>
+                    )}
                   <button type="button" className="secondary" onClick={() => showLabel(r)}>
                     {t("inventory.label")}
                   </button>
@@ -639,20 +829,10 @@ export function InventorySection({
                       type="button"
                       className="secondary"
                       disabled={busy}
-                      onClick={() =>
-                        void confirm({
-                          title: t("inventory.scrapConfirmTitle"),
-                          body: t("inventory.scrapConfirmBody"),
-                          confirmLabel: t("inventory.scrap"),
-                          danger: true,
-                        }).then((ok) => {
-                          if (!ok) return;
-                          void run(
-                            request(`inventory/remnants/${r.id}/scrap/`, "POST", {}),
-                            "inventory.remnantScrapError",
-                          );
-                        })
-                      }
+                      onClick={() => {
+                        setOperation({ kind: "scrap", remnant: r });
+                        setReason("");
+                      }}
                     >
                       {t("inventory.scrap")}
                     </button>
@@ -698,6 +878,7 @@ export function InventorySection({
                 <th>{t("inventory.movementQty")}</th>
                 <th>{t("inventory.movementRack")}</th>
                 <th>{t("inventory.movementWho")}</th>
+                <th>Documento y lote</th>
                 <th>{t("inventory.movementNote")}</th>
               </tr>
             </thead>
@@ -721,6 +902,11 @@ export function InventorySection({
                   </td>
                   <td>{m.rack_location ?? "—"}</td>
                   <td>{m.actor_label ?? "—"}</td>
+                  <td>
+                    {m.order_code || m.receipt_code || "Ajuste de bodega"}
+                    {m.supplier_document && <p>Guía {m.supplier_document}</p>}
+                    {m.lot_code && <p>Lote {m.lot_code}</p>}
+                  </td>
                   <td>{m.note ?? m.lot_code ?? "—"}</td>
                 </tr>
               ))}
@@ -728,6 +914,48 @@ export function InventorySection({
           </table>
         </details>
       ) : null}
+      {events.length > 0 && (
+        <details className="inventory-movements">
+          <summary>Historia física de retazos</summary>
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Retazo y decisión</th>
+                <th>Ubicación</th>
+                <th>Actor</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((e) => (
+                <tr key={e.id}>
+                  <td>{formatDateTime(e.created_at)}</td>
+                  <td>
+                    <span className="ui-value">{e.remnant_code}</span> ·{" "}
+                    {(
+                      {
+                        CREATE: "Ingreso",
+                        MOVE: "Traslado",
+                        AVAILABLE: "Liberación",
+                        RESERVED: "Reserva",
+                        CONSUMED: "Consumo",
+                        SCRAPPED: "Desecho",
+                      } as Record<string, string>
+                    )[e.action] ?? "Movimiento"}
+                  </td>
+                  <td>
+                    {e.previous_rack ? `${e.previous_rack} → ` : ""}
+                    {e.rack_location || "Sin ubicación declarada"}
+                  </td>
+                  <td>{e.actor_label || "Sin dato · registro histórico"}</td>
+                  <td>{e.reason || "Movimiento del plan de producción"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+      )}
       {message ? <p className="purchasing-message">{message}</p> : null}
     </section>
   );

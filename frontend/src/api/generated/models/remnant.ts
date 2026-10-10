@@ -58,4 +58,6 @@ export interface Remnant {
   article_sku?: string | null;
   created_at: string;
   updated_at: string;
+  age_days?: number;
+  age_alert?: boolean;
 }

@@ -14,7 +14,8 @@ import { apiMutator, ApiError } from "../../api/apiMutator";
 import { EntityCode, PageHeader, Qty, useConfirm } from "../../ui";
 import { documentaryArtifactAccess } from "../../api/generated/dekopen";
 import type { OrderIndexItem } from "../../api/generated/models";
-import { InventorySection } from "./InventorySection";
+import { PurchaseNeeds, PurchaseMail } from "./PurchaseNeeds";
+import { Money } from "../../ui";
 import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { DeniedState } from "../../ui";
@@ -23,6 +24,7 @@ import { t } from "../../i18n/es-CL";
 import { formatDateTime, formatRevision } from "../../format";
 import { formatDate } from "../money";
 import "./purchasing.css";
+import { MailHistory } from "../notifications/MailPanels";
 
 type OrderType =
   "SUPPLIER_PROFILE_PO" | "SUPPLIER_GLASS_PO" | "SUPPLIER_HARDWARE_PO" | "SUPPLIER_PANEL_PO";
@@ -138,6 +140,8 @@ type Order = {
   damaged_qty?: string | null;
   receipt_count?: string | null;
   lines_preview?: OrderLinePreview[];
+  net_amount?: string | null;
+  currency?: string;
 };
 const ORDER_STATUSES: OrderStatus[] = [
   "DRAFT",
@@ -177,19 +181,6 @@ type ReceivingState = {
     created_at: string;
     note: string | null;
   }>;
-};
-type StockItem = {
-  item_id: string;
-  sku: string;
-  name: string;
-  category: string;
-  unit: string;
-  on_hand_qty: string;
-  reserved_qty: string;
-  available_qty: string;
-  incoming_qty?: string;
-  racks?: string | null;
-  spec_text?: string;
 };
 type VersionItem = {
   id: string;
@@ -358,8 +349,6 @@ function PurchasingWorkspace({
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [versionId, setVersionId] = useState(initialVersionId);
   const [state, setState] = useState<PurchasingState | null>(null);
-  const [stock, setStock] = useState<StockItem[]>([]);
-  const [stockQuery, setStockQuery] = useState("");
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState("");
   const [revision, setRevision] = useState(0);
@@ -412,19 +401,6 @@ function PurchasingWorkspace({
             if (current) {
               setSuppliers([]);
               markSection("suppliers", true);
-            }
-          });
-        void request<{ items?: StockItem[] }>("inventory/stock/")
-          .then((stockData) => {
-            if (current) {
-              setStock(stockData.items ?? []);
-              markSection("stock", false);
-            }
-          })
-          .catch(() => {
-            if (current) {
-              setStock([]);
-              markSection("stock", true);
             }
           });
         if (!current) return;
@@ -545,7 +521,7 @@ function PurchasingWorkspace({
   const requirements = state?.requirements ?? [];
   const eligibilities = state?.eligibilities ?? [];
   const allocations = state?.allocations ?? [];
-  const orders = state?.orders ?? [];
+  const orders = (state?.orders ?? []).filter((order) => ORDER_TYPES.includes(order.order_type));
   const blockers = state?.blockers ?? [];
   const coverage = state?.coverage;
   const coverageLines = coverage?.lines ?? [];
@@ -571,6 +547,12 @@ function PurchasingWorkspace({
       {message && <p role="alert">{message}</p>}
       {busy && <p role="status">{t("purchasing.loading")}</p>}
       {!busy && versions.length === 0 && <p>{t("purchasing.empty")}</p>}
+      <PurchaseNeeds
+        request={request}
+        canWrite={canWrite}
+        revision={revision}
+        onCreated={() => setRevision((n) => n + 1)}
+      />
       <OrdersIndex
         orders={ordersIndex}
         loadFailed={failedSections.has("orders")}
@@ -607,48 +589,6 @@ function PurchasingWorkspace({
           {formatRevision(state.version.revision_code)} · {t("purchasing.immutable")}
         </p>
       )}
-      {coverageLines.length > 0 &&
-        (() => {
-          // §1 at-a-glance: shortages and next incoming answer "what's missing
-          // and when does it land" before the operator reads a single row.
-          // "Sin stock" is the raw fact (required − on hand); "Por comprar" is
-          // the actionable number (net of stock AND open orders) — the red
-          // state belongs on the number a buyer can still act on, so a fully
-          // ordered line stops flagging red.
-          const shortLines = coverageLines.filter((line) => line.shortage !== "0");
-          const recommended = coverageLines.filter((line) => line.recommended_purchase !== "0");
-          const openOrders = orders.filter(
-            (order) => order.status !== "FULFILLED" && order.status !== "CANCELLED",
-          );
-          const nextExpected = openOrders
-            .map((order) => order.expected_at)
-            .filter((value): value is string => Boolean(value))
-            .sort()[0];
-          return (
-            <section className="purchasing-glance" aria-label={t("purchasing.glanceTitle")}>
-              <div className="purchasing-glance-cell">
-                <strong>{shortLines.length}</strong>
-                <span>{t("purchasing.glanceShort")}</span>
-              </div>
-              <div
-                className={
-                  recommended.length ? "purchasing-glance-cell is-short" : "purchasing-glance-cell"
-                }
-              >
-                <strong>{recommended.length}</strong>
-                <span>{t("purchasing.glanceBuying")}</span>
-              </div>
-              <div className="purchasing-glance-cell">
-                <strong>{openOrders.length}</strong>
-                <span>{t("purchasing.glanceIncoming")}</span>
-              </div>
-              <div className="purchasing-glance-cell">
-                <strong>{nextExpected ? formatDate(nextExpected) : "—"}</strong>
-                <span>{t("purchasing.glanceNext")}</span>
-              </div>
-            </section>
-          );
-        })()}
       {blockers.length > 0 && (
         <section
           className="purchasing-blockers"
@@ -801,80 +741,9 @@ function PurchasingWorkspace({
           ))}
         </section>
       )}
-      {(stock.length > 0 || failedSections.has("stock")) && (
-        <section className="purchasing-stock">
-          <h2>{t("purchasing.stockTitle")}</h2>
-          {failedSections.has("stock") ? (
-            <p role="alert">{t("purchasing.sectionLoadError")}</p>
-          ) : null}
-          <label className="purchasing-stock-search">
-            {t("purchasing.stockSearch")}
-            <input
-              type="search"
-              value={stockQuery}
-              onChange={(e) => setStockQuery(e.target.value)}
-              placeholder={t("purchasing.stockSearchHint")}
-            />
-          </label>
-          <table>
-            <thead>
-              <tr>
-                <th>{t("purchasing.purchaseSku")}</th>
-                <th>{t("purchasing.stockName")}</th>
-                <th>{t("purchasing.stockOnHand")}</th>
-                <th>{t("purchasing.stockReserved")}</th>
-                <th>{t("purchasing.stockAvailable")}</th>
-                <th>{t("purchasing.stockIncoming")}</th>
-                <th>{t("purchasing.stockRacks")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stock
-                .filter((item) => {
-                  const q = stockQuery.trim().toLowerCase();
-                  if (!q) return true;
-                  return [item.sku, item.name, item.spec_text ?? "", item.racks ?? ""]
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(q);
-                })
-                .map((item) => (
-                  <tr key={item.item_id}>
-                    <td>{item.sku}</td>
-                    <td>
-                      {item.name} · {purchaseUnitLabel(item.unit, 2)}
-                    </td>
-                    <td>{purchaseQty(item.on_hand_qty, item.unit)}</td>
-                    <td>{purchaseQty(item.reserved_qty, item.unit)}</td>
-                    <td>{purchaseQty(item.available_qty, item.unit)}</td>
-                    <td>
-                      {item.incoming_qty && item.incoming_qty !== "0" ? (
-                        <strong className="purchasing-coverage-received">
-                          {purchaseQty(item.incoming_qty, item.unit)}
-                        </strong>
-                      ) : (
-                        "0"
-                      )}
-                    </td>
-                    <td>{item.racks || "—"}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-      <InventorySection
-        request={request}
-        canWrite={canWrite}
-        stockItems={stock.map((item) => ({
-          item_id: item.item_id,
-          sku: item.sku,
-          name: item.name,
-          unit: item.unit,
-        }))}
-      />
       {state?.version && (
         <section className="purchasing-documents">
+          <MailHistory orgId={orgId} projectId={state.version.project_id} />
           <h2>{t("purchasing.documents")}</h2>
           <ul>
             {revisionDocuments(role).map((doc) => (
@@ -1342,6 +1211,17 @@ function OrderCard({
           ))}
         </ul>
       )}
+      <p>
+        Monto neto:{" "}
+        {order.net_amount == null ? (
+          "Sin dato · falta cotización del proveedor"
+        ) : (
+          <Money value={order.net_amount} currency={order.currency ?? "CLP"} />
+        )}
+      </p>
+      {canWrite && ["SENT", "PARTIALLY_RECEIVED", "FULFILLED"].includes(order.status) && (
+        <PurchaseMail request={request} orderId={order.id} />
+      )}
       {(order.expected_at || order.sent_to) && (
         <p className="purchasing-order-expected">
           {order.expected_at
@@ -1494,8 +1374,10 @@ function SupplierDirectory({
           <li key={supplier.id} className="purchasing-directory-row">
             <div className="purchasing-directory-id">
               <strong>{supplier.name}</strong>
-              {supplier.tax_id ? (
-                <span className="purchasing-directory-tax">{supplier.tax_id}</span>
+              {supplier.details?.tax_id || supplier.tax_id ? (
+                <span className="purchasing-directory-tax">
+                  {supplier.details?.tax_id || supplier.tax_id}
+                </span>
               ) : null}
             </div>
             <div className="purchasing-directory-contact">
@@ -1595,6 +1477,7 @@ function OrdersIndex({
             <th>{t("purchasing.expectedAt")}</th>
             <th>{t("purchasing.indexReceipts")}</th>
             <th>{t("purchasing.indexOutstanding")}</th>
+            <th>Monto neto</th>
           </tr>
         </thead>
         <tbody>
@@ -1642,6 +1525,13 @@ function OrdersIndex({
                 )}
               </td>
               <td>{order.status === "CANCELLED" ? "—" : fmtMm(order.outstanding_qty)}</td>
+              <td>
+                {order.net_amount == null ? (
+                  "Sin dato · falta precio del proveedor"
+                ) : (
+                  <Money value={order.net_amount} currency={order.currency ?? "CLP"} />
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -1701,6 +1591,9 @@ function ReceivingPanel({
   const [open, setOpen] = useState(Boolean(targetReceipt));
   const [state, setState] = useState<ReceivingState | null>(null);
   const [note, setNote] = useState("");
+  const [supplierDocument, setSupplierDocument] = useState("");
+  const [receivedOn, setReceivedOn] = useState("");
+  const [overConfirmed, setOverConfirmed] = useState(false);
   const [formError, setFormError] = useState("");
   const [quantities, setQuantities] = useState<Quantities>({});
   const [receiptKey, setReceiptKey] = useState(
@@ -1775,6 +1668,9 @@ function ReceivingPanel({
       request(`inventory/orders/${order.id}/receipts/`, "POST", {
         receipt_key: receiptKey,
         note: note || null,
+        supplier_document: supplierDocument || null,
+        received_on: receivedOn || null,
+        confirm_over_receipt: overConfirmed,
         lines,
       }),
     ).then((ok) => {
@@ -1810,6 +1706,26 @@ function ReceivingPanel({
       )}
       {open && state && (
         <ValidatedForm onSubmit={submit}>
+          <div className="inventory-remnant-form">
+            <label>
+              Guía del proveedor
+              <input
+                aria-label="Guía del proveedor"
+                maxLength={100}
+                value={supplierDocument}
+                onChange={(e) => setSupplierDocument(e.target.value)}
+              />
+            </label>
+            <label>
+              Fecha de recepción
+              <input
+                aria-label="Fecha de recepción"
+                type="date"
+                value={receivedOn}
+                onChange={(e) => setReceivedOn(e.target.value)}
+              />
+            </label>
+          </div>
           <div className="purchasing-receiving-scroll">
             <table>
               <thead>
@@ -1943,6 +1859,21 @@ function ReceivingPanel({
               </tbody>
             </table>
           </div>
+          {state.lines.some(
+            (line) =>
+              Number(quantities[line.id]?.received ?? 0) -
+                Number(quantities[line.id]?.damaged ?? 0) >
+              Number(line.outstanding_qty),
+          ) && (
+            <label className="purchase-surplus" role="alert">
+              <input
+                type="checkbox"
+                checked={overConfirmed}
+                onChange={(e) => setOverConfirmed(e.target.checked)}
+              />
+              La cantidad útil supera lo pendiente. Confirmo el ingreso del excedente a bodega.
+            </label>
+          )}
           <label>
             {t("purchasing.receiveNote")}
             <input

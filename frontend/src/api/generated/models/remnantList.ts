@@ -6,7 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { Remnant } from "./remnant";
+import type { RemnantListEventsItem } from "./remnantListEventsItem";
 
 export interface RemnantList {
   remnants: Remnant[];
+  age_limit_days?: number;
+  events?: RemnantListEventsItem[];
 }

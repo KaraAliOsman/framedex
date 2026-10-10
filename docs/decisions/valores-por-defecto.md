@@ -506,3 +506,21 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   con fuente y permisos de dueño/jefe de taller. La variante es inmutable;
   una nueva declaración se aplica al volver a optimizar. No es un ingreso
   de stock ni un cambio de las medidas ya selladas de la pieza.
+
+## P15 · compras e inventario (2026-10-10)
+
+- Revisar retazos disponibles a los **90 días**, configurable en Ajustes ›
+  General › Documentos. La alerta invita a una revisión física; no desecha
+  material ni declara su condición por antigüedad.
+- La propuesta descuenta reservas, stock útil, tránsito y retazos del motor;
+  una OC preparada tiene columna propia. Se compran solo las líneas visibles
+  en la página revisada, con detalle antes de confirmar. Las listas tienen
+  páginas de 50 y filtros por material/proveedor/proyecto/OT.
+- El precio unitario es autoridad declarada del proveedor, opcional. Ausencia
+  significa Sin dato. No se imputa un precio de venta ni una tarifa DEMO.
+- Una compra parcial no modifica el requisito sellado. Cuando las OT separadas
+  requieren más barras que su consolidación original, se muestra el faltante
+  adicional y se exige revisar planificación/revisión; no se inventa capacidad.
+- Mover o desechar retazos requiere motivo, confirmación y actor. El catálogo
+  fija identidad/color/sustrato y límites de medida del suministro. La ubicación
+  inicial conserva la preferencia P13; la recepción y el traslado declaran rack.
