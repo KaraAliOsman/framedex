@@ -138,15 +138,48 @@ async function reviewAndIssueQuotation(
   return { bytes, artifactId: result.artifact_id, fileHash: result.file_sha256 };
 }
 
+async function openProjectPrices(page: Page): Promise<void> {
+  const projection = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/pricing/workspace/",
+  );
+  await page.getByRole("link", { name: "Cotizar proyecto", exact: true }).click();
+  const projected = await projection;
+  expect(projected.status(), await projected.text()).toBe(200);
+  expect((await projected.json()).workspace.positions.length).toBeGreaterThan(0);
+}
+
 async function prepareProjectPrice(page: Page, date: string, reason: string): Promise<void> {
   await expect(page.getByRole("heading", { name: "Actual y propuesto" })).toBeVisible();
   const control = page.getByRole("button", { name: "Ajustar propuesta y decidir" });
   if (await control.isVisible()) await control.click();
   await page.getByText("Moneda y autoridades", { exact: true }).click();
+  const projection = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/pricing/workspace/" &&
+      (response.request().postDataJSON() as { effective_date: string }).effective_date === date,
+  );
   await page.getByLabel("Fecha de costos", { exact: true }).fill(date);
+  const projected = await projection;
+  expect(projected.status(), await projected.text()).toBe(200);
+  expect((await projected.json()).workspace.positions.length).toBeGreaterThan(0);
   await page.getByRole("textbox", { name: "Motivo", exact: true }).fill(reason);
   await page.getByLabel("Confirmo las condiciones comerciales").check();
   await expect(page.getByRole("button", { name: "Aplicar", exact: true })).toBeEnabled();
+}
+
+async function applyProjectPrice(page: Page): Promise<void> {
+  const applied = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      /^\/api\/v1\/pricing\/operations\/[^/]+\/apply\/$/.test(new URL(response.url()).pathname),
+  );
+  await page.getByRole("button", { name: "Aplicar", exact: true }).click();
+  const result = await applied;
+  expect(result.status(), await result.text()).toBe(200);
+  expect((await result.json()).state).toBe("APPLIED");
 }
 
 test.beforeEach(async () => {
@@ -488,7 +521,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   const glassSimulation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
-      new URL(response.url()).pathname === "/api/v1/projects/operations/simulate/",
+      new URL(response.url()).pathname === "/api/v1/projects/operations/simulate/" &&
+      (response.request().postDataJSON() as { ops: Array<{ op: string }> }).ops.some(
+        (op) => op.op === "set_glass",
+      ),
   );
   await glass.selectOption("DEMO_60-VIDRIO-4");
   const simulatedGlass = await glassSimulation;
@@ -503,13 +539,13 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   // would still show "Añadir vano" instead of the quote next-action. Reload to
   // force the backend read that reflects the position just saved.
   await page.reload();
-  await page.getByRole("link", { name: "Cotizar proyecto", exact: true }).click();
+  await openProjectPrices(page);
   await expect(page.getByLabel("Proyecto", { exact: true })).toHaveCount(0);
   await prepareProjectPrice(page, "2026-09-10", "Aplicar cotización desde el navegador");
   const previewResponse = page.waitForResponse((response) =>
     response.url().endsWith("/api/v1/pricing/preview/"),
   );
-  await page.getByRole("button", { name: "Aplicar", exact: true }).click();
+  await applyProjectPrice(page);
   const priced = await previewResponse;
   expect(priced.status(), await priced.text()).toBe(200);
   const quote = (await priced.json()) as {
@@ -624,9 +660,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   // would still show "Añadir vano" instead of the quote next-action. Reload to
   // force the backend read that reflects the position just saved.
   await page.reload();
-  await page.getByRole("link", { name: "Cotizar proyecto", exact: true }).click();
+  await openProjectPrices(page);
   await prepareProjectPrice(page, "2026-09-19", "Aplicar cotización de la revisión B");
-  await page.getByRole("button", { name: "Aplicar", exact: true }).click();
+  await applyProjectPrice(page);
   await expect(page.getByText("Precio aplicado al proyecto.", { exact: true })).toBeVisible();
   await page.goto(`/projects/${draft.id}`);
   const prepB = page.waitForResponse(
@@ -690,9 +726,27 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
     label: demoSeriesLabel,
   });
+  const compositeGlassSimulation = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/projects/operations/simulate/" &&
+      (response.request().postDataJSON() as { ops: Array<{ op: string }> }).ops.some(
+        (op) => op.op === "set_glass",
+      ),
+  );
   await page
     .getByRole("combobox", { name: "Vidrio", exact: true })
     .selectOption("DEMO_60-VIDRIO-4");
+  const compositeGlassResponse = await compositeGlassSimulation;
+  expect(compositeGlassResponse.status()).toBe(200);
+  const compositeGlass = (await compositeGlassResponse.json()) as {
+    valid: boolean;
+    ops: Array<{ op: string; sku?: string }>;
+  };
+  expect(compositeGlass.valid).toBe(true);
+  expect(compositeGlass.ops).toContainEqual(
+    expect.objectContaining({ op: "set_glass", sku: "DEMO_60-VIDRIO-4" }),
+  );
   await expect(page.getByRole("combobox", { name: "Vidrio", exact: true })).toHaveValue(
     "DEMO_60-VIDRIO-4",
   );
@@ -738,14 +792,14 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   // would still show "Añadir vano" instead of the quote next-action. Reload to
   // force the backend read that reflects the position just saved.
   await page.reload();
-  await page.getByRole("link", { name: "Cotizar proyecto", exact: true }).click();
+  await openProjectPrices(page);
   await prepareProjectPrice(page, "2026-09-19", "Precio de la fachada compuesta");
   const compositePreview = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/v1/pricing/preview/",
   );
-  await page.getByRole("button", { name: "Aplicar", exact: true }).click();
+  await applyProjectPrice(page);
   expect((await compositePreview).status()).toBe(200);
   await expect(page.getByText("Precio aplicado al proyecto.", { exact: true })).toBeVisible();
 });

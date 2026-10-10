@@ -36,3 +36,13 @@ formato propietario o una autoridad física ausente no son capacidad ejecutable.
 Las declaraciones sin emisor se muestran con sus causas. La aceptación usa
 DEMO y no certifica mecanizado industrial. Ver la evidencia P14 antes de
 afirmar una nueva capacidad física.
+
+El recorrido de emisión espera la simulación concreta de vidrio antes de
+comprobar su selección. El precio indicativo comparte el endpoint, por lo que
+identificar solo su URL no demuestra que el vidrio haya sido validado. La
+regresión de CI y su corrección quedan registradas en la aceptación P14.
+
+La repetición local detectó también esperas de proyección de precio y de lista
+de proyectos. Cada recorrido registra la espera antes de la acción y verifica
+la respuesta y su contenido. Una aprobación solo avanza tras recibir APPLIED.
+Las pruebas mantienen los límites de tiempo y la autoridad comercial original.

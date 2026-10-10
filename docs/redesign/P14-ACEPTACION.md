@@ -29,13 +29,36 @@ visible antes de confirmar y descargar.
   representan el mismo número exacto; cambios reales de `0.01` o fuente se
   rechazan. No se reescribe una BOM sellada para normalizar su transporte.
 
-`make lint`, `make typecheck`, `make test` y `make build` PASA: 871 motor
-(+2 xfail), 1.472 backend y 967 frontend. El reintento focal tras retirar tokens
-incluye lint/tipos, toda la suite frontend y build; las suites de Python ya
-pasaron con el código final. Golden bytes sin cambios. La ejecución aislada
-de PostgreSQL pasa 1.299 pgTAP, 486 integraciones, 19 E2E y diez upgrades
-PG16, con `[PASS] database gate` y salida 0. El proyecto aislado se detuvo
-al terminar; el fixture persistente se conserva. CI se registra al cerrar el PR.
+La aceptación anterior pasó 871 pruebas de motor (+2 xfail), 1.472 de backend,
+967 de frontend, 1.299 pgTAP, 486 integraciones, 19 E2E y diez upgrades PG16.
+Tras los cambios de sincronización, los cuatro gates completos pasan con
+afinidad de cuatro CPU y salida 0: 871 motor (+2 xfail), 1.472 backend y
+967 frontend. Los goldens siguen intactos y el fixture persistente se conserva.
+La nueva ejecución DB está en curso; su resultado y CI se registrarán al cerrar
+el PR. La aceptación DB anterior no acredita todavía estos cambios.
+
+La corrida de CI `38072197716` falló una comprobación de SHOT-10: el selector
+de vidrio se comprobó antes de que terminara la simulación del producto
+compuesto. La respuesta del motor llegó después de vencer esa aserción. El
+recorrido ahora registra la espera antes de seleccionar, identifica la operación
+`set_glass` y exige HTTP 200, validez y el SKU esperado antes de comprobar el
+selector. También distingue esa petición del precio indicativo que comparte
+endpoint. Conserva las aserciones de guardado, emisión e inmutabilidad, sin
+ampliar tiempos ni reintentos. La corrida fallida no cuenta como aceptación CI.
+
+La repetición local pasó 1.299 pgTAP y 486 integraciones, pero acabó con
+17 E2E PASA y dos fallos: el precio se comprobó mientras aún recalculaba y
+la lista vacía se comprobó antes de recibir los proyectos. Los recorridos ahora
+registran la espera antes de navegar o cambiar la fecha, verifican HTTP 200 y
+las posiciones de la proyección, y exigen la operación de precio APPLIED antes
+de avanzar. La lista inicial exige además `items:[]`. Conservan los límites de
+tiempo y todas las aserciones comerciales.
+
+La primera repetición de los cuatro gates pasó lint, tipos, motor y backend,
+pero dos pruebas frontend agotaron cinco segundos con paralelismo local.
+La repetición con afinidad de cuatro CPU pasa completa, sin cambiar checks,
+aserciones, timeouts ni reintentos. Esa ejecución fallida se conserva como
+evidencia; ambas pruebas pasan en la ejecución final de 967 pruebas frontend.
 
 ## Pase editorial
 

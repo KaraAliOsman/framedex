@@ -1167,3 +1167,23 @@ integración 486, 19 E2E y diez upgrades PG16 PASA, salida 0. La repetición
 sin mutaciones concurrentes resuelve la interferencia de regeneración/HMR.
 CI y squash se registrarán al integrar. No se acredita un formato propietario
 ni mecanizado industrial a partir del intercambio neutro sintético.
+
+## 2026-10-10 — P14 · sincronización de simulación en SHOT-10
+
+La corrida CI `38072197716` pasó tres gates y falló una aserción de vidrio
+antes de terminar la simulación del producto compuesto. El recorrido identifica
+`set_glass` entre las peticiones al endpoint compartido, valida HTTP 200,
+validez y SKU antes del selector y mantiene las comprobaciones de emisión e
+inmutabilidad. No aumenta tiempos ni reintentos. La primera repetición local
+pasó lint/tipos, 871 motor (+2 xfail) y 1.472 backend, con goldens intactos;
+dos pruebas frontend agotaron su tiempo con paralelismo local. Se repite con
+cuatro CPU, conservando checks y aserciones. La repetición DB pasó 1.299 pgTAP
+y 486 integraciones, pero dos E2E comprobaron precio/lista antes de la respuesta.
+Los recorridos esperan su proyección, la fecha efectiva y APPLIED. Estas
+corridas fallidas no acreditan aceptación; el resultado final local y CI se
+registrará después de completarse.
+
+La repetición completa con afinidad de cuatro CPU pasa lint, tipos, 871 motor
+(+2 xfail), 1.472 backend, 967 frontend y build, salida 0. Las dos pruebas
+frontend conservan sus límites y pasan; no cambió la configuración de CI.
+La repetición PostgreSQL/E2E está en curso y el fixture persistente se conserva.

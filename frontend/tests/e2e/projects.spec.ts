@@ -83,7 +83,14 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       .click();
   const freshRead = () => page.reload();
 
-  await page.goto("/projects");
+  const emptyProjects = await responseTo<{ items: ProjectResponse[] }>(
+    page,
+    "GET",
+    "/api/v1/projects/",
+    200,
+    () => page.goto("/projects"),
+  );
+  expect(emptyProjects.items).toEqual([]);
   await expect(page.getByText("No hay proyectos que coincidan.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
   // Extended identity fields live under the collapsed "Datos adicionales" section.
