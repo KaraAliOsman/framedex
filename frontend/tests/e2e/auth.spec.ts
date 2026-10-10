@@ -529,12 +529,12 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       .first(),
   ).toContainText(formatMoney(quote.project_gross, "CLP"));
   await page.goto(`/projects/${draft.id}`);
-  await expect(
-    page
-      .locator("dd")
-      .filter({ hasText: formatMoney(quote.project_gross, "CLP") })
-      .first(),
-  ).toBeVisible();
+  const projectGross = page
+    .locator(".project-facts__list dd")
+    .filter({ hasText: formatMoney(quote.project_gross, "CLP") });
+  await expect(projectGross).toHaveCount(1);
+  await expect(projectGross).toBeVisible();
+  await expect(projectGross).toHaveText(formatMoney(quote.project_gross, "CLP"));
   const persisted = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
   expect(persisted.status()).toBe(200);
   const project = await persisted.json();
