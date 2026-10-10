@@ -1,4 +1,6 @@
 BEGIN;
+CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
+SET LOCAL search_path=public,extensions;
 SELECT plan(15);
 SELECT has_column('public','order_receipts','supplier_document','Supplier guide is retained');
 SELECT col_type_is('public','order_receipts','received_on','date','Physical reception has an explicit date');
