@@ -49,6 +49,8 @@ def test_list_stock_returns_view_rows() -> None:
     }
 
     def fake_rows(query, params=()):
+        if "GROUP BY m.item_id" in query:
+            return []
         if "order_requirement_lines" in query:
             return []
         return [stock_row]
@@ -87,6 +89,8 @@ def test_list_stock_incoming_keys_by_spec_variant() -> None:
     )
 
     def fake_rows(query, params=()):
+        if "GROUP BY m.item_id" in query:
+            return []
         if "order_requirement_lines" in query:
             return [{"line_snapshot": line_snapshot, "open_qty": Decimal(2)}]
         return [stock_row]
@@ -947,6 +951,8 @@ def test_list_bar_authorities_merges_profiles_and_reinforcement() -> None:
             return [profile_row]
         if "reinforcement_articles" in query:
             return [reinforce_row]
+        if "catalog_color_skus" in query:
+            return []
         raise AssertionError(query)
 
     with patch("inventory.remnants.rows", side_effect=fake_rows):
@@ -1007,7 +1013,7 @@ def test_remnant_label_returns_qr_and_identity() -> None:
     from urllib.parse import parse_qs, urlsplit
 
     address = urlsplit(output["qr_payload"])
-    assert address.path == "/purchasing"
+    assert address.path == "/inventory"
     assert parse_qs(address.query) == {"remnant": [str(remnant_id)], "code": ["RT-000001"]}
     assert "<svg" in output["qr_svg"]
     assert output["remnant"]["id"] == str(remnant_id)

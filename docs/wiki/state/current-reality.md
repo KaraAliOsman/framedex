@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: 7066f28175750fb510d9bb2c831d95d10bb52587
+verified_ref: 56a9032fee741e279579ed532a271bc784a6e6bc
 sources:
+  - P15 implementación 56a9032fee741e279579ed532a271bc784a6e6bc, gates locales y aceptación, 2026-10-10
+  - docs/redesign/P15-ACEPTACION.md
   - P13 PR https://github.com/KaraAliOsman/framedex/pull/140, CI 4/4 sobre 7a94f09f9587b1f9c4918a1f6db94affdf0e2258, corrida 38018629281, squash 7066f28175750fb510d9bb2c831d95d10bb52587, 2026-10-10
   - P13 cierre dbe2423e90d36d68d190eb45705baf58904b393a, gates locales completos y PostgreSQL aislado, 2026-10-09
   - P13 implementación 7ac18654c3987d9b1d7c4d2422fec164c2a76b5b, 169 regresiones focales, navegador y PDF/QR, 2026-10-09
@@ -54,6 +56,28 @@ sources:
 ---
 
 # Current reality
+
+## P15 · compras e inventario verificados localmente (10-10-2026)
+
+Las necesidades se explican por OT y se descuentan contra stock, tránsito
+y retazos del motor. La confirmación revisada crea OC reales, conserva
+capacidad sellada e idempotencia y reserva los retazos usados por el plan.
+Inventario separa existencias/reservas, recepción útil y movimientos con
+guía, lote, rack y actor. Mover/desechar deja historia inmutable.
+
+El recorrido DEMO verifica compra, dos correos PDF/Mailpit, recepción con
+un dañado, reserva, Corte QR 390 y RT físico con movimiento/desecho/reuso.
+Dieciséis vistas oficiales no tienen hallazgos; las dos rondas editoriales
+y R1–R20 PASA constan en la aceptación. La revisión visual corrigió
+acabado/pulido, área formateada y huella BOM; artefactos históricos intactos.
+
+Gates locales finales PASA: `make lint`, `make typecheck`, `make test`
+y `make build`; 853 pruebas de motor (+2 xfail), 1.444 backend y 957 frontend.
+`make test-db` PASA: 1269 pgTAP, 473 integraciones, 19 E2E
+y upgrades PostgreSQL 16. Se usa una base aislada; el fixture persistente
+de aceptación permanece intacto. CI y squash se registran al integrar.
+
+Ver [compras e inventario](../product/purchasing-inventory.md).
 
 ## P13 · corte y etiquetas integradas y verificadas (10-10-2026)
 

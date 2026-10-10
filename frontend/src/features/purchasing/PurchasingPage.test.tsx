@@ -5,6 +5,7 @@ import { apiMutator } from "../../api/apiMutator";
 import { t } from "../../i18n/es-CL";
 import { ConfirmProvider } from "../../ui";
 import { PurchasingPage } from "./PurchasingPage";
+vi.mock("../notifications/MailPanels", () => ({ MailHistory: () => null }));
 
 const identity = vi.hoisted(() => ({ id: "tenant-a", role: "WORKSHOP_MANAGER" }));
 vi.mock("../../auth/AuthSessionProvider", () => ({
@@ -81,6 +82,10 @@ function state(overrides: Record<string, unknown> = {}) {
 
 function mockState(overrides: Record<string, unknown> = {}) {
   vi.mocked(apiMutator).mockImplementation((url) => {
+    if (String(url).endsWith("purchasing/needs/"))
+      return Promise.resolve({
+        data: { preview_hash: "a".repeat(64), lines: [], blockers: [], remnant_offers: [] },
+      });
     if (String(url).endsWith("purchasing/versions/"))
       return Promise.resolve({ data: { versions: [versionItem] } });
     if (String(url).endsWith("purchasing/orders/"))
@@ -317,6 +322,10 @@ it("drops the stale revision when the newly selected version fails to load", asy
   const other = { ...versionItem, id: "version-b", revision_code: "REV-B" };
   vi.mocked(apiMutator).mockImplementation((url) => {
     const path = String(url);
+    if (path.endsWith("purchasing/needs/"))
+      return Promise.resolve({
+        data: { preview_hash: "a".repeat(64), lines: [], blockers: [], remnant_offers: [] },
+      });
     if (path.endsWith("purchasing/versions/"))
       return Promise.resolve({ data: { versions: [versionItem, other] } });
     if (path.includes(`purchasing/versions/${versionItem.id}/`)) return Promise.resolve(state());

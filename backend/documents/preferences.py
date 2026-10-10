@@ -19,6 +19,7 @@ DEFAULT_PREFERENCES = {
     "quotation_valid_days": 15,
     "piece_label_paper": "LETTER",
     "remnant_destination": "Recepción de retazos",
+    "remnant_age_days": 90,
     "commercial_terms": DEFAULT_TERMS,
 }
 

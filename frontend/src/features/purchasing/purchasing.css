@@ -26,7 +26,7 @@
   background: var(--theme-surface-panel);
   color: var(--theme-text-primary);
   border: 1px solid var(--theme-border-subtle);
-  padding: 0.6rem;
+  padding: var(--space-6px) var(--space-8px);
   border-radius: 0.25rem;
   min-width: 0;
 }
@@ -35,7 +35,7 @@
   height: 1.25rem;
 }
 .purchasing-page button {
-  padding: 0.55rem 0.8rem;
+  padding: var(--space-6px) var(--space-12px);
   cursor: pointer;
 }
 .purchasing-page button:disabled {
@@ -46,12 +46,12 @@
   border: 1px solid var(--theme-danger, #b3261e);
   color: var(--theme-danger, #b3261e);
   background: transparent;
-  border-radius: 0.4rem;
+  border-radius: var(--r-2);
   font-weight: 500;
 }
 .purchasing-blockers {
   border: 1px solid var(--theme-danger);
-  border-radius: 0.5rem;
+  border-radius: var(--r-2);
   padding: 1rem;
   margin: 1rem 0;
 }
@@ -79,18 +79,16 @@
 .purchasing-orders,
 .purchasing-documents {
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.5rem;
+  border-radius: var(--r-2);
   padding: 1rem;
   margin: 1rem 0;
   background: var(--theme-surface-panel);
-  overflow-x: auto;
   max-width: 100%;
 }
 .purchasing-type > table {
   min-width: 36rem;
 }
 .purchasing-stock {
-  overflow-x: auto;
   max-width: 100%;
 }
 .purchasing-stock > table {
@@ -99,7 +97,7 @@
 .purchasing-badge {
   margin-left: 0.75rem;
   padding: 0.15rem 0.5rem;
-  border-radius: 0.5rem;
+  border-radius: var(--r-2);
   border: 1px solid var(--theme-accent);
   color: var(--theme-accent);
   font-size: 0.8rem;
@@ -124,7 +122,6 @@
 .purchasing-order {
   border-top: 1px solid var(--theme-border-subtle);
   padding: 0.75rem 0;
-  overflow-x: auto;
   max-width: 100%;
 }
 .purchasing-receipts {
@@ -169,7 +166,6 @@
 
 .purchasing-coverage {
   margin: 1rem 0;
-  overflow-x: auto;
   max-width: 100%;
 }
 .purchasing-coverage table {
@@ -203,7 +199,6 @@
   align-items: center;
 }
 .purchasing-receiving-scroll {
-  overflow-x: auto;
   max-width: 100%;
 }
 .purchasing-receiving-scroll table {
@@ -235,7 +230,7 @@
   align-items: end;
   padding: 0.75rem;
   border: 1px dashed var(--theme-border-subtle);
-  border-radius: 0.4rem;
+  border-radius: var(--r-2);
   margin-bottom: 0.75rem;
 }
 .inventory-remnant-form .purchasing-hint {
@@ -244,7 +239,6 @@
 }
 .inventory-movements {
   margin-top: 0.75rem;
-  overflow-x: auto;
   max-width: 100%;
 }
 .inventory-movements summary {
@@ -321,12 +315,12 @@
   color: var(--theme-text-muted, #666);
   padding: 0.35rem 0.5rem;
   border-bottom: 1px solid var(--theme-border, #e0e0e0);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .purchasing-index td {
   padding: 0.45rem 0.5rem;
   border-bottom: 1px solid var(--theme-border, #eee);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .purchasing-index-row {
   cursor: pointer;
@@ -414,36 +408,6 @@
   }
 }
 
-.purchasing-glance {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.5rem;
-  margin: 0.5rem 0;
-}
-.purchasing-glance-cell {
-  border: 1px solid var(--theme-border);
-  border-radius: var(--radius-md, 8px);
-  padding: 0.6rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  background: var(--theme-surface);
-}
-.purchasing-glance-cell strong {
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-.purchasing-glance-cell span {
-  font-size: 0.78rem;
-  color: var(--theme-text-secondary);
-}
-.purchasing-glance-cell.is-short {
-  border-color: var(--theme-danger, #b3261e);
-}
-.purchasing-glance-cell.is-short strong {
-  color: var(--theme-danger, #b3261e);
-}
-
 .purchasing-directory ul {
   list-style: none;
   margin: 0;
@@ -460,7 +424,7 @@
   gap: 0.75rem;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--theme-border);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--r-2);
   background: var(--theme-surface);
   align-items: center;
   font-size: 0.85rem;
@@ -520,4 +484,116 @@
 }
 .inventory-page .purchasing-stock td {
   vertical-align: top;
+}
+
+.purchase-needs {
+  border-bottom: 1px solid var(--border-default);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  min-width: 0;
+}
+.purchasing-page a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.purchasing-page small {
+  font-size: var(--type-label);
+}
+.purchase-needs > p,
+.purchase-need-group h3 {
+  margin: var(--space-2) 0;
+}
+.purchase-needs form > label {
+  max-width: 32rem;
+}
+.purchase-need-group {
+  margin: var(--space-4) 0;
+  border-top: 1px solid var(--border-default);
+}
+.purchase-need-group input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.purchase-need-group table {
+  table-layout: fixed;
+}
+.purchase-need-group th {
+  white-space: normal;
+  font-size: var(--type-label);
+  font-weight: 500;
+}
+.purchase-need-group th:first-child {
+  width: 24%;
+}
+.purchase-need-group td {
+  overflow-wrap: anywhere;
+}
+.purchase-need-group td:not(:first-child) {
+  text-align: right;
+}
+.purchase-need-group td p {
+  text-align: left;
+}
+.purchase-need-group summary,
+.purchase-mail summary {
+  cursor: pointer;
+  padding: var(--space-1) 0;
+}
+.purchase-needs nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+.purchase-mail {
+  margin: var(--space-3) 0;
+}
+.purchase-need-cause td {
+  text-align: left;
+  padding-top: 0;
+}
+.purchase-need-cause p {
+  margin: 0;
+}
+@media (max-width: 1280px) {
+  .purchase-need-group .purchase-need-cause {
+    display: block;
+  }
+  .purchase-need-group table,
+  .purchase-need-group tbody {
+    display: block;
+  }
+  .purchase-need-group thead {
+    display: none;
+  }
+  .purchase-need-group tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: 1px solid var(--border-default);
+    padding: var(--space-2) 0;
+  }
+  .purchase-need-group td {
+    border: 0;
+    text-align: left;
+  }
+  .purchase-need-group td:first-child {
+    grid-column: 1 / -1;
+  }
+  .purchase-need-group td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--text-secondary);
+    font-size: var(--type-label);
+    margin-bottom: var(--space-1);
+  }
+  .purchasing-index table {
+    table-layout: fixed;
+  }
+  .purchasing-index th,
+  .purchasing-index td {
+    padding: var(--space-1);
+    overflow-wrap: anywhere;
+  }
 }

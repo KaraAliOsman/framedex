@@ -15,6 +15,7 @@ from dekopen_engine.documentary_canonical import (
     documentary_canonical_json_v1,
     documentary_sha256_v1,
 )
+from dekopen_engine.inventory import purchase_total
 
 from documents.renderers import _piece_labels
 from documents.repository import DocumentaryError, decoded, documentary_backend, json_text, one, rows, write
@@ -33,6 +34,16 @@ ORDER_TYPES = (
 
 def _public(value: object) -> object:
     return json.loads(json_text(value))
+
+
+def _purchase_amount(payload: object) -> Decimal | None:
+    snapshot=decoded(payload) if payload else {}
+    lines=snapshot.get('lines') or []
+    if not lines:
+        return None
+    return purchase_total([(Decimal(str(line['quantity'])),
+                           Decimal(str(line['unit_price'])) if line.get('unit_price') is not None else None)
+                          for line in lines])
 
 
 def _object(value: object, code: str) -> dict[str, object]:
@@ -252,7 +263,7 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
         orders = rows(
             "SELECT o.id,private.entity_code(o.org_id,'OC',o.id,o.order_code) AS order_code,o.order_type::text,o.status::text,o.supplier_identity,"
             "o.supplier_name,o.order_snapshot_hash,o.confirmed_at,o.sent_at,o.expected_at,"
-            "o.sent_to,o.cancelled_at,o.supplier_details::text AS supplier_details,"
+            "o.sent_to,o.cancelled_at,o.supplier_details::text AS supplier_details,o.payload_json,"
             "l.line_count,l.total_qty,l.released_qty,l.lines_preview::text AS lines_preview,"
             "r.damaged_qty,r.receipt_count "
             "FROM public.orders o LEFT JOIN ("
@@ -280,6 +291,9 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             [version_id, org_id],
         )
         allocated = {str(item["requirement_line_id"]) for item in allocations}
+        for order in orders:
+            order['net_amount']=_purchase_amount(order.pop('payload_json',None))
+            order['currency']='CLP'
         coverage = {
             str(row["requirement_line_id"]): Decimal(str(row["covered_qty"]))
             for row in rows(
@@ -461,6 +475,8 @@ def allocate_requirement(
 def confirm_order_type_batch(
     *, org_id: UUID, actor_id: UUID, version_id: UUID,
     order_type: str, confirmed: bool,
+    quantities: dict[str, Decimal] | None = None,
+    unit_prices: dict[str, Decimal | None] | None = None,
 ) -> tuple[list[dict[str, object]], bool]:
     if not confirmed:
         raise DocumentaryError("order_batch_confirmation_required")
@@ -481,6 +497,12 @@ def confirm_order_type_batch(
         # Requirements already claimed by a live order line stay claimed — a
         # re-confirm only covers lines released by a cancellation.
         requirement_rows = _unclaimed_requirements(version_id, org_id, order_type)
+        if quantities is not None:
+            offered={str(r['id']):r for r in requirement_rows}
+            if any(rid not in offered or qty<=0 or qty>Decimal(str(offered[rid]['open_qty']))
+                   for rid,qty in quantities.items()):
+                raise DocumentaryError('purchase_choice_invalid')
+            requirement_rows=[{**offered[rid],'open_qty':qty} for rid,qty in quantities.items()]
         attempt = 1
         if existing_batch:
             # Idempotent while the batch covers the type and nothing was
@@ -552,6 +574,8 @@ def confirm_order_type_batch(
                 "requirement_key": str(requirement["requirement_key"]),
                 "supplier_eligibility_id": eligibility_id,
                 "eligibility_content_hash": str(allocation["content_hash"]),
+                **({'quantity':requirement['open_qty'],'unit_price':(unit_prices or {}).get(str(requirement['id']))}
+                   if quantities is not None else {}),
             })
         allocation_hash = documentary_sha256_v1({
             "schema_version": 1,
@@ -586,6 +610,10 @@ def confirm_order_type_batch(
                 _line_snapshot(item, labels, quantity_override=item.get("open_qty"))
                 for item, _ in values
             ]
+            if unit_prices is not None:
+                for line in line_snapshots:
+                    line['unit_price']=unit_prices.get(line['id'])
+                    line['currency']='CLP'
             order_id = uuid5(
                 NAMESPACE_URL,
                 f"https://dekopen.local/order/{batch_id}/{eligibility_id}",
@@ -781,7 +809,7 @@ def orders_index(org_id: UUID, status: str | None = None) -> dict[str, object]:
     with documentary_backend():
         orders = rows(
             "SELECT o.id,private.entity_code(o.org_id,'OC',o.id,o.order_code) AS order_code,o.order_type::text,o.status::text,o.supplier_identity,"
-            "o.supplier_name,o.expected_at,o.sent_at,o.sent_to,o.created_at,"
+            "o.supplier_name,o.expected_at,o.sent_at,o.sent_to,o.created_at,o.payload_json,"
             "v.revision_code,v.id AS project_version_id,"
             "p.id AS project_id,p.code AS project_code,"
             "COALESCE(l.line_count,0) AS line_count,l.total_qty,l.released_qty,"
@@ -815,9 +843,11 @@ def orders_index(org_id: UUID, status: str | None = None) -> dict[str, object]:
         result = []
         for item in orders:
             item = dict(item)
+            item['net_amount']=_purchase_amount(item.pop('payload_json',None))
+            item['currency']='CLP'
             total = Decimal(str(item.get("total_qty") or 0))
             good = Decimal(str(item.get("good_qty") or 0))
-            item["outstanding_qty"] = total - good
+            item["outstanding_qty"] = max(total - good - Decimal(str(item.get("released_qty") or 0)), Decimal(0))
             result.append(_public(item))
         return {"orders": result}
 

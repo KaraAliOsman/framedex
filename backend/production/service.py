@@ -3773,13 +3773,16 @@ def _compute_optimization(
     version_snapshot: dict[str, object],
     strategy: str,
     cutting_profile_code: str | None = None,
+    excluded_remnant_ids: set[str] | None = None,
+    stock_repository: CuttingRepository | None = None,
+    sheet_rules: dict | None = None,
 ) -> dict[str, object]:
     """Pure plan computation — reads stock/remnant pools, writes nothing:
     no reservations, no events. ``optimize_work_order`` persists the result;
     ``compare_optimization_strategies`` previews the same computation per
     strategy so the choice is evidence, not a guess."""
     started = perf_counter()
-    stocks = CuttingRepository()
+    stocks = stock_repository or CuttingRepository()
     authorities = stocks.for_result(result, UUID(str(system_id)), org_id, color)
     profile = stocks.cutting_profile(org_id, cutting_profile_code)
     # §6: on-hand bar drops matching the plan's stock authorities are cut
@@ -3788,6 +3791,8 @@ def _compute_optimization(
         org_id=org_id,
         authority_ids={s.stock_authority_id for s in authorities.stocks},
     )
+    if excluded_remnant_ids:
+        bar_remnants = [r for r in bar_remnants if r.remnant_id not in excluded_remnant_ids]
     per_unit = pieces_from_result(
         result,
         color=color,
@@ -3809,7 +3814,7 @@ def _compute_optimization(
     ).model_dump(mode="json")
     bar_runtime_ms = int((perf_counter() - started) * 1000)
 
-    rules = _sheet_rules(org_id)
+    rules = sheet_rules if sheet_rules is not None else _sheet_rules(org_id)
     sheets: list[dict[str, object]] = []
     sheet_purchases: list[dict[str, object]] = []
     unnested: list[dict[str, object]] = []
@@ -3909,9 +3914,9 @@ def _compute_optimization(
     for rule, group_pieces, group_kind in merged.values():
         outcome = nest_rects(
             group_pieces, rule,
-            remnants=remnants_service.sheet_remnants_for_sku(
+            remnants=[r for r in remnants_service.sheet_remnants_for_sku(
                 org_id=org_id, workshop_sku=rule.workshop_sku
-            ),
+            ) if not excluded_remnant_ids or r.remnant_id not in excluded_remnant_ids],
         )
         for layout in outcome.layouts:
             dumped = layout.model_dump(mode="json")

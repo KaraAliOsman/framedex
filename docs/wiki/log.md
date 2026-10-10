@@ -1096,3 +1096,24 @@ PR [#140](https://github.com/KaraAliOsman/framedex/pull/140) pasa los cuatro che
 La aceptación local conserva identidad PDF/CSV/DXF/etiquetas/QR, alta/replay
 de RT, fuente de láminas y R1–R20 PASA. Servicios propios detenidos y fixture
 persistente intacto. Continúa P15 desde esta integración.
+
+## 2026-10-10 — P15 · verificación local de compras e inventario
+
+La rama `codex/P15-compras-inventario` verifica OT → compra revisada → correo/PDF
+Mailpit → recepción con un dañado → stock/reserva → Corte QR 390 → RT con rack,
+traslado/desecho auditables y reserva de un retazo para otra OT. Se distinguen
+existencia, tránsito y OC preparadas; se conservan capacidad e identidad selladas.
+Las dieciséis vistas oficiales no tienen hallazgos. La integración y los gates
+completos se registrarán con sus SHA; esta entrada describe evidencia local,
+no un merge. Véase [aceptación P15](../redesign/P15-ACEPTACION.md).
+
+## 2026-10-10 — P15 · gates locales finales
+
+La implementación `56a9032fee741e279579ed532a271bc784a6e6bc` conserva compra/stock/retazos y
+el recorrido aceptado. La revisión final del papel corrige nombres,
+área y huella del cajetín sin sustituir documentos emitidos.
+Gates locales finales PASA: `make lint`, `make typecheck`, `make test`
+y `make build`; 853 pruebas de motor (+2 xfail), 1.444 backend y 957 frontend.
+`make test-db` PASA: 1269 pgTAP, 473 integraciones, 19 E2E
+y upgrades PostgreSQL 16. Se usa una base aislada; el fixture persistente
+de aceptación permanece intacto. CI y squash se registran al integrar.

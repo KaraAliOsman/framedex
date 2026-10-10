@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 from projects.brand_color import PAPER, effective_color
 
-KINDS = ("MAGIC_LINK", "QUOTE", "APPROVAL", "PAYMENT", "ORDER_BLOCKED")
+KINDS = ("MAGIC_LINK", "QUOTE", "APPROVAL", "PAYMENT", "ORDER_BLOCKED", "PURCHASE")
 
 
 def render(
@@ -28,6 +28,7 @@ def render(
         "APPROVAL": "Aprobación recibida",
         "PAYMENT": "Su pago quedó registrado",
         "ORDER_BLOCKED": "Orden de taller bloqueada",
+        "PURCHASE": "Su orden de compra",
     }
     title = titles[kind]
     issuer = (

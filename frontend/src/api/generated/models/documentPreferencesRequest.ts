@@ -18,6 +18,11 @@ export interface DocumentPreferencesRequest {
    */
   remnant_destination?: string;
   /**
+   * @minimum 1
+   * @maximum 3650
+   */
+  remnant_age_days?: number;
+  /**
    * @minimum 5
    * @maximum 60
    */

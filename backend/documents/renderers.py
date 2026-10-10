@@ -1862,6 +1862,43 @@ def _po_parties(order: dict[str, object], snapshot: dict[str, object]) -> str:
     )
 
 
+def _purchase_unit(value: object) -> str:
+    return {'BAR': 'barras', 'EA': 'un.', 'KIT': 'kits', 'M': 'm', 'M2': 'm²', 'SHEET': 'planchas', 'KG': 'kg'}.get(str(value).upper(), 'Sin dato')
+
+
+def _purchase_finish(value: object) -> str:
+    names = {'WHITE': 'Blanco', 'FOILED': 'Foliado', 'CREAM': 'Crema',
+             'WALNUT': 'Nogal', 'ANTHRACITE': 'Antracita', 'COEX_GREY': 'Gris coextruido'}
+    if value is None:
+        return 'Sin dato · falta acabado declarado'
+    code = str(value)
+    if code in names:
+        return names[code]
+    for interior, label in names.items():
+        if code.startswith(interior + '_') and code[len(interior) + 1:] in names:
+            return label + ' interior / ' + names[code[len(interior) + 1:]] + ' exterior'
+    return 'Acabado del catálogo: ' + code
+
+
+def _purchase_detail(spec: dict[str, object]) -> str:
+    details = []
+    if spec.get('oriented_width_mm') is not None and spec.get('oriented_height_mm') is not None:
+        details.append(_survey_dim(spec['oriented_width_mm']) + ' × ' + _survey_dim(spec['oriented_height_mm']) + ' mm')
+    if spec.get('supply_form') == 'CUT_TO_SIZE':
+        details.append('Cortado a medida')
+    if spec.get('location_tag'):
+        details.append('Ubicación: ' + _value(spec['location_tag']))
+    for component in spec.get('hardware_contents') or []:
+        part = _object(component, 'invalid_order_line')
+        detail = _value(part.get('name')) + ' · ' + _survey_dim(part.get('qty')) + ' ' + _purchase_unit(part.get('unit'))
+        if part.get('cut_length_mm') is not None:
+            detail += ' · ' + _survey_dim(part['cut_length_mm']) + ' mm'
+        if part.get('sku'):
+            detail += ' · ' + _value(part['sku'])
+        details.append(detail)
+    return '; '.join(details)
+
+
 def _doc04(snapshot: dict[str, object]) -> str:
     order = _object(snapshot.get("order"), "invalid_order_snapshot")
     revision = _object(snapshot.get("revision"), "invalid_order_snapshot")
@@ -1872,6 +1909,7 @@ def _doc04(snapshot: dict[str, object]) -> str:
     pseudo_revision = {
         "project": {"code": order.get("project_code")},
         "revision": revision.get("revision_code"),
+        "bom_hash": revision.get("bom_hash"),
         "sealed_at": order.get("confirmed_at"),
         "organization": snapshot.get("organization"),
     }
@@ -1889,17 +1927,35 @@ def _doc04(snapshot: dict[str, object]) -> str:
                      or _object(line.get("specification"), "invalid_order_line").get("manufacturer_name")
                      or "—")),
               ", ".join(_value(item) for item in _array(line.get("technical_skus"), "invalid_order_line")),
-              _object(line.get("specification"), "invalid_order_line").get("color"),
+              _purchase_finish(_object(line.get("specification"), "invalid_order_line").get("color")),
               _object(line.get("specification"), "invalid_order_line").get("stock_length_mm"),
-              line.get("quantity"), line.get("unit"),
+              line.get("quantity"), _purchase_unit(line.get("unit")),
               ", ".join(str(label) for label in _array(
                   line.get("source_trace_labels") or [], "invalid_order_line"
               ) if label)]
              for line in lines], ["", "", "", "", "dimension", "dimension", "", ""],
         )
+        + _purchase_prices(lines)
         + "</main>"
     )
     return body
+
+
+def _purchase_prices(lines: list[dict[str, object]]) -> str:
+    from dekopen_engine.inventory import purchase_total
+    if not any("unit_price" in line for line in lines):
+        return ""
+    quantities = [(Decimal(str(line["quantity"])),
+                   Decimal(str(line["unit_price"])) if line.get("unit_price") is not None else None)
+                  for line in lines]
+    total = purchase_total(quantities)
+    return _table(["Material", "Precio neto unitario CLP", "Monto neto CLP"],
+                  [[line.get("purchasing_sku"), _money(price, "CLP") if price is not None else "Sin dato",
+                    _money(purchase_total([(quantity, price)]), "CLP") if price is not None else "Sin dato"]
+                   for line, (quantity, price) in zip(lines, quantities, strict=True)]
+                  + [["TOTAL NETO", "", _money(total, "CLP") if total is not None
+                      else "Sin dato · falta cotización del proveedor"]],
+                  ["", "dimension", "dimension"])
 
 
 def _doc02(snapshot: dict[str, object]) -> str:
@@ -1914,50 +1970,52 @@ def _doc02(snapshot: dict[str, object]) -> str:
     pseudo_revision = {
         "project": {"code": order.get("project_code")},
         "revision": revision.get("revision_code"),
+        "bom_hash": revision.get("bom_hash"),
         "sealed_at": order.get("confirmed_at"),
         "organization": snapshot.get("organization"),
     }
+    from dekopen_engine.inventory import purchase_glass_areas
+    areas, total_area = purchase_glass_areas([
+        (Decimal(_value(_object(line.get('specification'), 'invalid_order_line').get('oriented_width_mm'))),
+         Decimal(_value(_object(line.get('specification'), 'invalid_order_line').get('oriented_height_mm'))),
+         int(line['quantity'])) for line in lines])
     rows_data: list[list[object]] = []
-    total_area = Decimal("0")
-    for line in lines:
+    for line, area in zip(lines, areas, strict=True):
         spec = _object(line.get("specification"), "invalid_order_line")
         polishing = _object(spec.get("polishing"), "invalid_order_line")
         quantity = int(line["quantity"])
-        width = Decimal(_value(spec.get("oriented_width_mm")))
-        height = Decimal(_value(spec.get("oriented_height_mm")))
-        area = width * height * quantity / Decimal("1000000")
-        total_area += area
         rows_data.append([
             line.get("purchasing_sku"),
             spec.get("composition"),
             ", ".join(_value(item) for item in _array(
                 line.get("technical_skus"), "invalid_order_line")),
-            f"{_value(spec.get('oriented_width_mm'))} × {_value(spec.get('oriented_height_mm'))}",
+            f"{_survey_dim(spec.get('oriented_width_mm'))} × {_survey_dim(spec.get('oriented_height_mm'))}",
             quantity,
-            line.get("unit"),
+            _purchase_unit(line.get("unit")),
             "/".join(
                 edge_es
                 for edge, edge_es in (
-                    ("top", "SUP"), ("right", "DER"),
-                    ("bottom", "INF"), ("left", "IZQ"),
+                    ("top", "Superior"), ("right", "Derecho"),
+                    ("bottom", "Inferior"), ("left", "Izquierdo"),
                 )
                 if polishing.get(edge) is True
-            ) or "SIN PULIDO",
+            ) or "Sin pulido",
             spec.get("location_tag"),
-            format(area.normalize(), "f"),
+            _measure(area, 'm²', 2),
         ])
     rows_data.append(
-        ["TOTAL", "—", "—", "—", "—", "—", "—", "—",
-         format(total_area.normalize(), "f")]
+        ["Total", "", "", "", "", "", "", "",
+         _measure(total_area, 'm²', 2)]
     )
     body, _ = _revision_header(pseudo_revision, "Pedido de vidrios", "DOC-02", workshop=True)
     body += (
         _po_parties(order, snapshot)
         + _table(
             ["SKU compra", "Composición", "SKU taller", "Medidas (mm)",
-             "Cantidad", "Unidad", "Pulido", "Ubicación", "Área m²"],
+             "Cantidad", "Unidad", "Pulido", "Ubicación", "Área"],
             rows_data, ["", "", "", "dimension", "dimension", "", "", "", "dimension"],
         )
+        + _purchase_prices(lines)
         + "</main>"
     )
     return body
@@ -1973,6 +2031,7 @@ def _doc08(snapshot: dict[str, object]) -> str:
     pseudo_revision = {
         "project": {"code": order.get("project_code")},
         "revision": revision.get("revision_code"),
+        "bom_hash": revision.get("bom_hash"),
         "sealed_at": order.get("confirmed_at"),
         "organization": snapshot.get("organization"),
     }
@@ -1986,19 +2045,14 @@ def _doc08(snapshot: dict[str, object]) -> str:
               _object(line.get("specification"), "invalid_order_line").get("description")
               or _object(line.get("specification"), "invalid_order_line").get("manufacturer_name"),
               ", ".join(_value(item) for item in _array(line.get("technical_skus"), "invalid_order_line")),
-              line.get("quantity"), line.get("unit"),
-              "; ".join(
-                  f"{key}={_spec_value(value)}"
-                  for key, value in sorted(
-                      _object(line.get("specification"), "invalid_order_line").items()
-                  )
-                  if key not in ("description", "manufacturer_name")
-              ),
+              line.get("quantity"), _purchase_unit(line.get("unit")),
+              _purchase_detail(_object(line.get("specification"), "invalid_order_line")),
               ", ".join(str(label) for label in _array(
                   line.get("source_trace_labels") or [], "invalid_order_line"
               ) if label)]
              for line in lines], ["", "", "", "dimension", "", "", ""],
         )
+        + _purchase_prices(lines)
         + "</main>"
     )
     return body

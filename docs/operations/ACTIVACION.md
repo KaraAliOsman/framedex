@@ -266,3 +266,26 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 5. Configure almacenamiento y jobs según las secciones existentes. No se
    necesita proveedor nuevo para QR: el portal existente sirve la revisión y
    el artefacto inmutable conserva sus bytes después de cambios de preferencias.
+
+## Compras, recepción y retazos (P15)
+
+1. Configure correo/almacenamiento/worker según las secciones anteriores. En el
+   sandbox el PDF de la OC llega solo a Mailpit. Antes de activar SMTP, compruebe
+   remitente, dominio y TLS con una OC de aceptación; verifique el archivo adjunto
+   y la bandeja de correo de la revisión en Compras.
+2. Declare la elegibilidad del proveedor con RUT, contacto/correo, materiales y
+   fuente vigente. Revise asignaciones, cantidades y precios antes de crear OC.
+   Cambiar un proveedor no modifica las órdenes ya selladas.
+3. Configure en Ajustes › General › Documentos el rack inicial de retazos y los
+   días de alerta. Etiquete racks físicos con esos nombres. Registre guía, fecha,
+   lote, rack y dañados al recibir; no ingrese lo dañado como material útil.
+4. Revise suministros/color/largo de barras y declare formatos/sustratos de
+   lámina desde autoridad real. Los retazos manuales deben corresponder a ese
+   suministro; no se aceptan identidades o medidas arbitrarias.
+5. Complete el recorrido de aceptación: OT → necesidades → OC → envío humano →
+   recepción parcial → stock → reserva → Corte → RT con QR/rack. Compruebe actor
+   y documento en el libro de movimientos. Una cantidad fuera de la capacidad
+   sellada exige revisar la planificación o emitir una revisión adicional.
+6. Una respuesta SMTP perdida no autoriza un reenvío automático. Compruebe la
+   ausencia de entrega y confirme la recuperación en la bandeja. Una OC cancelada
+   no se envía; conserve su historia y revise la compra nueva.

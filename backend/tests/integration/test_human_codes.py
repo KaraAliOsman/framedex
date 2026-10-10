@@ -82,6 +82,11 @@ def test_remnant_insert_trigger_and_org_cascade(committed_commercial_rows):
          " VALUES(%s,%s,'SHEET','P02-SHEET',100,200,'MANUAL') RETURNING id", [identity, org])
     assert one("SELECT private.entity_code(%s,'RT',%s) AS code", [org, identity])["code"] == "RT-000001"
     rows("DELETE FROM public.inventory_remnants WHERE id=%s RETURNING id", [identity])
+    # Physical maintenance never erases its enduring RT address or history.
+    assert one("SELECT count(*) AS n FROM public.inventory_remnant_events "
+               "WHERE org_id=%s AND remnant_id=%s", [org, identity])["n"] == 1
+    with pytest.raises(DatabaseError, match="inventory_history_immutable"), transaction.atomic():
+        rows("DELETE FROM public.inventory_remnant_events WHERE remnant_id=%s RETURNING id", [identity])
     assert assign(org, "RT", uuid4()) == "RT-000002"
 
 

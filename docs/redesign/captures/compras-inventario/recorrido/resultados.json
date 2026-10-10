@@ -1,0 +1,21 @@
+{
+  "cut": "DONE",
+  "order": "OT-P-a941b082-REV-A-01",
+  "receipt": "OC→REC sin ajuste",
+  "qr390": true,
+  "remnants": [
+    "RT-000059",
+    "RT-000060",
+    "RT-000061",
+    "RT-000062",
+    "RT-000063",
+    "RT-000064",
+    "RT-000065",
+    "RT-000066",
+    "RT-000067",
+    "RT-000068"
+  ],
+  "transfer": "R-02 con actor/motivo",
+  "scrap": "con motivo y confirmación",
+  "labelTarget": "/inventory"
+}
