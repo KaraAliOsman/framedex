@@ -50,9 +50,9 @@ def declare_format(*, org_id: UUID, data: dict) -> tuple[dict, bool]:
     option = next((item for item in list_formats(org_id=org_id)["options"]
                    if item["sku"] == data["technical_sku"] and item["kind"] == data["kind"]), None)
     if option is None:
-        raise DocumentaryError("sheet_substrate_not_found", public_detail="Selecciona un vidrio o panel visible en tu catálogo.")
+        raise DocumentaryError("sheet_substrate_not_found", detail="Selecciona un vidrio o panel visible en tu catálogo.")
     if data["edge_trim_mm"] * 2 >= min(data["width_mm"], data["height_mm"]):
-        raise DocumentaryError("sheet_usable_size_invalid", public_detail="El despunte debe dejar ancho y alto útiles positivos.")
+        raise DocumentaryError("sheet_usable_size_invalid", detail="El despunte debe dejar ancho y alto útiles positivos.")
     # A panel is matched by its physical article; glass by declared substrate.
     sku = data["technical_sku"] if data["kind"] == "PANEL" else data["sku"]
     attributes = {
@@ -80,7 +80,7 @@ def declare_format(*, org_id: UUID, data: dict) -> tuple[dict, bool]:
                     or Decimal(str(previous["sheet_height_mm"])) != data["height_mm"]
                     or Decimal(str(previous.get("sheet_edge_trim_mm") or "0")) != data["edge_trim_mm"]
                     or previous.get("glass_sku") != attributes.get("glass_sku")):
-                raise DocumentaryError("sheet_supply_identity_conflict", public_detail=
+                raise DocumentaryError("sheet_supply_identity_conflict", detail=
                     "Ese código de compra ya identifica otro formato o vidrio. Declara un código de compra distinto para este suministro.")
         inserted = rows(
             """INSERT INTO public.inventory_items(org_id,sku,name,category,unit,variant_key,attributes)

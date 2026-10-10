@@ -73,6 +73,9 @@ tomados pasan a consumidos. La OT anterior de P12 conserva su historia.
 - [Corte por QR](captures/pack-corte-etiquetas/recorrido/02-qr-en-corte-390-oscuro.png),
   [RT físico](captures/pack-corte-etiquetas/recorrido/03-retazo-real-con-destino.png)
   y [resultado del flujo](captures/pack-corte-etiquetas/recorrido/resultados.json).
+- [Formato incompatible rechazado](captures/pack-corte-etiquetas/recorrido/04-formato-incompatible-rechazado.png):
+  el servidor rechaza sustrato desconocido, despunte sin medida útil e identidad
+  de suministro incompatible con 422 y texto accionable, sin escribir datos.
 - [Matriz](captures/pack-corte-etiquetas/matriz/resultados.json): dieciséis
   vistas de corte/formatos y ocho agrupadas a 1440/1280/1024/390, claro/oscuro,
   sin desborde de página ni errores JavaScript; carga, error/reintento, vacío,
