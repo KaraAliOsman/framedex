@@ -26,6 +26,9 @@
   color: var(--text-secondary);
   line-height: 1.5;
 }
+.catalog small {
+  font-size: var(--type-dense);
+}
 .catalog-layout[hidden] {
   display: none;
 }
