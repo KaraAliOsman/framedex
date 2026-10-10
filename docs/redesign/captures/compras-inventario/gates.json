@@ -17,5 +17,18 @@
     "postgres16_upgrades": "PASA",
     "project": "framedex-cola-native",
     "db_port": 25342
+  },
+  "pr": "https://github.com/KaraAliOsman/framedex/pull/141",
+  "integration_sha": "fc0c685146b330878ed6712a153f995fda22735c",
+  "ci": {
+    "status": "PASA",
+    "head_sha": "f19fb3b291a6efeb6f49b56e254395900c4422df",
+    "run_url": "https://github.com/KaraAliOsman/framedex/actions/runs/38029036704",
+    "checks": {
+      "Lint & Typecheck": "SUCCESS",
+      "Test Suite": "SUCCESS",
+      "Frontend Build": "SUCCESS",
+      "Database Gate": "SUCCESS"
+    }
   }
 }

@@ -25,7 +25,7 @@
 | P06 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/138 | c01fd3fe720f71ca8acf7ef8d86510d106e73075 | CI 4/4 verde; planta/ángulos/venta por módulo, 1.231 pgTAP, 445 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P08 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/139 | 9329e9e3378c58bc2bef3bd9c23d80f613379397 | CI 4/4 verde; PDF revisado/emisión A/B y recibos; 1.249 pgTAP, 455 integraciones, 19 E2E y diez upgrades PG16; rúbrica PASA. |
 | P13 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/140 | 7066f28175750fb510d9bb2c831d95d10bb52587 | CI 4/4 verde; papel/etiquetas, UTF-8 y QR comunes; 1.249 pgTAP, 467 integraciones, 19 E2E y diez upgrades PG16; rúbrica PASA. |
-| P15 | 2 | en curso |  |  |  |
+| P15 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/141 | fc0c685146b330878ed6712a153f995fda22735c | CI 4/4 verde; compra/stock/RT y correo sellados; 1.269 pgTAP, 473 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P11 | 2 | pendiente |  |  |  |
 | P14 | 2 | pendiente |  |  |  |
 | P16 | 2 | pendiente |  |  |  |

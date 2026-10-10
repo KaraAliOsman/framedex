@@ -89,7 +89,7 @@ Gates locales finales PASA: `make lint`, `make typecheck`, `make test`
 y `make build`; 853 pruebas de motor (+2 xfail), 1.444 backend y 957 frontend.
 `make test-db` PASA: 1269 pgTAP, 473 integraciones, 19 E2E
 y upgrades PostgreSQL 16. Se usa una base aislada; el fixture persistente
-de aceptación permanece intacto. CI y squash se registran al integrar.
+de aceptación permanece intacto. CI 4/4 verde; PR #141, squash `fc0c685146b330878ed6712a153f995fda22735c`.
 
 
 ## Dos rondas editoriales
@@ -161,3 +161,9 @@ requiere conectar correo, identidad real, catálogo revisado y suministros físi
 según [ACTIVACION](../operations/ACTIVACION.md). Mailpit es sandbox; no se envió
 correo a proveedores reales. Los PDF editoriales son previews actuales desde
 el snapshot: no sustituyen las primeras versiones emitidas durante la prueba.
+
+## Integración
+
+PR [#141](https://github.com/KaraAliOsman/framedex/pull/141) integrado con squash `fc0c685146b330878ed6712a153f995fda22735c`.
+[CI](https://github.com/KaraAliOsman/framedex/actions/runs/38029036704) PASA en sus cuatro checks sobre `f19fb3b291a6efeb6f49b56e254395900c4422df`.
+El stack de aceptación propio quedó detenido y el fixture persistente conservado.

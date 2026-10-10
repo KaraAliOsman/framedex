@@ -1117,3 +1117,9 @@ y `make build`; 853 pruebas de motor (+2 xfail), 1.444 backend y 957 frontend.
 `make test-db` PASA: 1269 pgTAP, 473 integraciones, 19 E2E
 y upgrades PostgreSQL 16. Se usa una base aislada; el fixture persistente
 de aceptación permanece intacto. CI y squash se registran al integrar.
+
+## 2026-10-10 — P15 · integración aceptada
+
+P15 PR https://github.com/KaraAliOsman/framedex/pull/141, CI 4/4 sobre f19fb3b291a6efeb6f49b56e254395900c4422df, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38029036704, squash fc0c685146b330878ed6712a153f995fda22735c, 2026-10-10.
+Compras e Inventario conservan fuentes selladas, permisos y direcciones RT.
+Aceptación local y pase editorial constan en P15-ACEPTACION; el fixture no se reinició.
