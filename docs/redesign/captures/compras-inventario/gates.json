@@ -1,0 +1,21 @@
+{
+  "source_ref": "56a9032fee741e279579ed532a271bc784a6e6bc",
+  "lint": "PASA",
+  "typecheck": "PASA",
+  "build": "PASA",
+  "tests": {
+    "engine": 853,
+    "expected_xfails": 2,
+    "backend": 1444,
+    "frontend": 957
+  },
+  "test_db": {
+    "status": "PASA",
+    "pgtap": 1269,
+    "integration": 473,
+    "e2e": 19,
+    "postgres16_upgrades": "PASA",
+    "project": "framedex-cola-native",
+    "db_port": 25342
+  }
+}

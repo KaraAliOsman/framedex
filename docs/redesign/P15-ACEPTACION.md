@@ -83,7 +83,14 @@ conservan consulta e historia, sin acciones físicas incompatibles.
   contiene doce vistas de escritorio sin desborde ni errores de página.
 - 47 pruebas focales de stock/motor; 6 integraciones de compras, RLS, recepción,
   concurrencia y MIME; 19 pruebas frontend focales. `make goldgen` no cambia
-  el golden histórico. Los gates completos y CI se registran al cerrar el PR.
+  el golden histórico. Los resultados finales están registrados a continuación.
+
+Gates locales finales PASA: `make lint`, `make typecheck`, `make test`
+y `make build`; 853 pruebas de motor (+2 xfail), 1.444 backend y 957 frontend.
+`make test-db` PASA: 1269 pgTAP, 473 integraciones, 19 E2E
+y upgrades PostgreSQL 16. Se usa una base aislada; el fixture persistente
+de aceptación permanece intacto. CI y squash se registran al integrar.
+
 
 ## Dos rondas editoriales
 
