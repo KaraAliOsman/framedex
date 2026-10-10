@@ -68,9 +68,10 @@ async function reviewAndIssueQuotation(
   const result = (await sealed.json()) as {
     artifact_id: string;
     file_sha256: string;
-    mail: { id: string };
+    mail: { id: string; recipient: string; subject: string };
   };
   expect(result.file_sha256).toBe(preview.file_sha256);
+  expect(result.mail.recipient).toBe(preview.recipient);
   await expect
     .poll(
       async () => {
@@ -83,7 +84,57 @@ async function reviewAndIssueQuotation(
       },
       { timeout: 30_000 },
     )
-    .toBe("DELIVERED");
+    .toBe("SENT");
+  // SENT means SMTP accepted it. Prove the same message and exact PDF reached
+  // this gate's Mailpit, rather than infer delivery from the database state.
+  type MailpitMessage = {
+    ID: string;
+    MessageID: string;
+    Subject: string;
+    To: { Address: string }[];
+  };
+  let receivedId = "";
+  await expect
+    .poll(
+      async () => {
+        const listing = await request.get(`${mailpitUrl}/api/v1/messages`, {
+          params: { limit: 200 },
+        });
+        expect(listing.status()).toBe(200);
+        const mailbox = (await listing.json()) as { messages: MailpitMessage[] };
+        const matches = mailbox.messages.filter(
+          (message) =>
+            message.MessageID.replace(/^<|>$/g, "").startsWith(`${result.mail.id}@`) &&
+            message.Subject === result.mail.subject &&
+            message.To.some((address) => address.Address === preview.recipient),
+        );
+        receivedId = matches[0]?.ID ?? "";
+        return matches.length;
+      },
+      { timeout: 30_000 },
+    )
+    .toBe(1);
+  const message = await request.get(
+    `${mailpitUrl}/api/v1/message/${encodeURIComponent(receivedId)}`,
+  );
+  expect(message.status()).toBe(200);
+  const received = (await message.json()) as MailpitMessage & {
+    Attachments: { PartID: string; ContentType: string }[];
+  };
+  expect(received.MessageID.replace(/^<|>$/g, "").startsWith(`${result.mail.id}@`)).toBe(true);
+  expect(received.To.map((address) => address.Address)).toContain(preview.recipient);
+  const attachments = received.Attachments.filter(
+    (attachment) => attachment.ContentType === "application/pdf",
+  );
+  expect(attachments).toHaveLength(1);
+  const attachment = attachments[0]!;
+  const delivered = await request.get(
+    `${mailpitUrl}/api/v1/message/${encodeURIComponent(receivedId)}/part/${encodeURIComponent(attachment.PartID)}`,
+  );
+  expect(delivered.status()).toBe(200);
+  const deliveredBytes = await delivered.body();
+  expect(createHash("sha256").update(deliveredBytes).digest("hex")).toBe(preview.file_sha256);
+  expect(deliveredBytes).toEqual(bytes);
   return { bytes, artifactId: result.artifact_id, fileHash: result.file_sha256 };
 }
 
