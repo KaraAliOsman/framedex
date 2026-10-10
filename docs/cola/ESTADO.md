@@ -29,7 +29,7 @@
 | P11 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/142 | 55d73156ac4981fab821eb279d73399025ac6057 | CI 4/4 verde; cobranza/RC/Flow y documentos internos sellados; 1.285 pgTAP, 483 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P14 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/143 | c4eb4159a45caef4bbf88fb770372a5d13993411 | CI 4/4 verde; autoridad física/intercambio y CRUD auditado; 1.299 pgTAP, 486 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
 | P16 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/144 | 5a34db52c78d6a277b17a29267aaf139958655af | CI 4/4 verde; gate compartido/fuentes inmutables, MiMo PDF/foto y undo; 1.315 pgTAP, 493 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
-| ED2 | ED2 | pendiente |  |  |  |
+| ED2 | ED2 | en curso |  |  |  |
 | P21 | 3 | pendiente |  |  |  |
 | P10 | 3 | pendiente |  |  |  |
 | P22 | 3 | pendiente |  |  |  |
