@@ -84,8 +84,26 @@ se verifican además contra PostgreSQL, sin depender de los controles de UI.
   conservan sus valores. Regresiones de Flow, documentos, recordatorios y API
   distinguen autoridad del usuario de capacidad pública del pagador.
 
-Gates completos y CI pendientes de su resultado final; no se declara integración
-antes de registrar los cuatro checks y el SHA de squash.
+Implementación final `9838e8bd9af1116e8797299b0b878a042415d6f7`. Los cuatro gates locales PASA:
+`make lint`, `make typecheck`, `make test`, `make build`; 856 pruebas de motor
+(+2 xfail), 1.464 backend y 965 frontend. Golden byte check PASA.
+`make test-db` PASA: 1.285 pgTAP, 483 integraciones, 19 E2E y upgrades
+poblados PostgreSQL 16. CI y squash se registran al integrar.
+
+La revisión de capacidades reproduce el fallo con texto Unicode y lo corrige.
+La comparación interna devuelve 404 para tokens ASCII incorrectos, Unicode,
+un sustituto aislado, vacío y nulo, antes de consultar el proyecto. La API
+conserva su validación del cuerpo; la regresión HTTP usa un token Unicode de
+longitud válida y exige 404. Diecisiete pruebas focales pasan.
+El E2E espera y valida la simulación real del vidrio antes de comprobar su
+selección; conserva todas sus aserciones y comprueba además HTTP 200/valid.
+La comprobación del total se acota al resumen visible del proyecto, con una
+única coincidencia y texto exacto; no selecciona el saldo de la vista oculta.
+La plantilla pública de Magic Link se restauró byte a byte en el bind local
+después del reinicio de Docker; no se reinició el fixture ni cambió producción.
+Los 100 PNG se comprimieron sin modificar ningún píxel. Las 24 vistas oficiales
+son la evidencia posterior a las correcciones editoriales de fechas y códigos;
+la matriz funcional de 41 vistas precede ese ajuste de presentación.
 
 ## Dos rondas editoriales
 

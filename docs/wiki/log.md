@@ -1123,3 +1123,26 @@ de aceptación permanece intacto. CI y squash se registran al integrar.
 P15 PR https://github.com/KaraAliOsman/framedex/pull/141, CI 4/4 sobre f19fb3b291a6efeb6f49b56e254395900c4422df, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38029036704, squash fc0c685146b330878ed6712a153f995fda22735c, 2026-10-10.
 Compras e Inventario conservan fuentes selladas, permisos y direcciones RT.
 Aceptación local y pase editorial constan en P15-ACEPTACION; el fixture no se reinició.
+
+## 2026-10-10 — P11 · implementación y aceptación local
+
+Ref `2c73bf96cc71b30fff7f774ec4b1aaaaaaf5edb2`: cobranza del acuerdo, recibos,
+Flow verificado/simulado, boleta/factura/NC internas y evidencia SIM separada.
+MiMo real prepara el recordatorio; el clic humano y la revalidación del worker
+preceden SMTP. La matriz de 41 vistas y 24 oficiales pasa sin hallazgos finales;
+15 PDF conservan SHA sellado y ocho artefactos históricos permanecen idénticos.
+R1–R20 y dos rondas editoriales constan en P11-ACEPTACION. Los cuatro gates
+locales pasan, 856 motor (+2 xfail), 1.459 backend y 965 frontend.
+Database Gate y CI se registrarán al concluir; esta entrada no declara merge.
+
+## 2026-10-10 — P11 · gates finales y capacidades inválidas
+
+Ref `9838e8bd9af1116e8797299b0b878a042415d6f7`: lint/tipos/OpenAPI/orval/build y tests completos PASA,
+856 motor (+2 xfail), 1.464 backend y 965 frontend. Database Gate pasa
+1.285 pgTAP, 483 integraciones, 19 E2E y upgrades PostgreSQL 16.
+Los tokens Unicode incorrectos devuelven 404; diecisiete pruebas focales
+protegen la capacidad pública sin consultar el proyecto. El E2E valida la
+respuesta del motor antes de la selección, manteniendo todas las aserciones.
+El bind local de Magic Link se restauró desde la plantilla pública con SHA
+idéntico; fixture intacto. Los 100 PNG conservan píxeles tras compresión.
+CI y squash se registrarán al integrar.
