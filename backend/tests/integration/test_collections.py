@@ -63,7 +63,7 @@ def test_capability_replay_creates_one_payment_receipt_and_zero_balance(deal):
     token = first["url"].split("token=")[1]
     client = APIClient()
     path = f"/api/v1/projects/flow/simulated/{first['id']}/"
-    for invalid in ("wrong-token-for-test-only", "inválido"):
+    for invalid in ("wrong-token-for-test-only", "inválido-token-for-test-only"):
         denied = client.post(path, {"token": invalid, "outcome": "PAID"}, format="json")
         assert denied.status_code == 404
     for _ in range(2):
