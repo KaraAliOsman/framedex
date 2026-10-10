@@ -499,7 +499,11 @@ export function InventorySection({
       <p className="purchasing-hint">{t("inventory.remnantsHint")}</p>
       <p>
         Revisa los retazos disponibles de <span className="ui-value">{ageLimit}</span> días o más.{" "}
-        <Link to="/settings/general">Cambiar alerta en Ajustes</Link>
+        {canWrite ? (
+          <Link to="/settings/general">Cambiar alerta en Ajustes</Link>
+        ) : (
+          "El dueño puede cambiar la alerta en Ajustes."
+        )}
       </p>
       {loading ? <LoadingState label="Cargando retazos y movimientos" /> : null}
       {loadError ? (
@@ -721,7 +725,7 @@ export function InventorySection({
         </ValidatedForm>
       )}
       {!loading && !loadError && visible.length > 0 ? (
-        <table className="inventory-remnants">
+        <table className="ui-stacked-table inventory-remnants">
           <thead>
             <tr>
               <th>{t("inventory.remnantCode")}</th>
@@ -743,11 +747,11 @@ export function InventorySection({
                 tabIndex={r.id === targetId ? -1 : undefined}
                 aria-current={r.id === targetId ? "true" : undefined}
               >
-                <td className="inventory-remnant-code">
+                <td className="inventory-remnant-code" data-label={t("inventory.remnantCode")}>
                   <EntityCode kind="retazo" code={r.code} />
                 </td>
-                <td>{remnantKindLabel(r.kind)}</td>
-                <td>
+                <td data-label={t("inventory.remnantKind")}>{remnantKindLabel(r.kind)}</td>
+                <td data-label={t("inventory.identity")}>
                   {r.kind === "SHEET"
                     ? (r.sheet_workshop_sku ?? "—")
                     : (r.article_sku ??
@@ -760,23 +764,27 @@ export function InventorySection({
                     </p>
                   )}
                 </td>
-                <td className="ui-value">{remnantDims(r)}</td>
-                <td>{r.rack_location || "Sin dato · registra el rack"}</td>
-                <td>
+                <td className="ui-value" data-label={t("inventory.dims")}>
+                  {remnantDims(r)}
+                </td>
+                <td data-label={t("inventory.rack")}>
+                  {r.rack_location || "Sin dato · registra el rack"}
+                </td>
+                <td data-label={t("inventory.origin")}>
                   {remnantOriginLabel(r.origin)}
                   {r.origin_order_code ? ` · ${r.origin_order_code}` : ""}
                 </td>
-                <td>
+                <td data-label={t("inventory.reservedFor")}>
                   {r.status === "RESERVED"
                     ? (r.reserved_order_code ?? "Sin dato · orden no disponible")
                     : "—"}
                 </td>
-                <td>
+                <td data-label={t("inventory.registered")}>
                   {remnantAge(r.created_at)}
                   {r.age_alert && <p role="status">Revisar antigüedad</p>}
                   <span className="purchasing-hint"> · {formatDateTime(r.created_at)}</span>
                 </td>
-                <td>
+                <td data-label={t("inventory.actions")}>
                   {canWrite && ["AVAILABLE", "RESERVED"].includes(r.status) && (
                     <button
                       type="button"
@@ -869,7 +877,7 @@ export function InventorySection({
       {movements.length > 0 ? (
         <details className="inventory-movements">
           <summary>{t("inventory.movements")}</summary>
-          <table>
+          <table className="ui-stacked-table">
             <thead>
               <tr>
                 <th>{t("inventory.movementWhen")}</th>
@@ -885,10 +893,12 @@ export function InventorySection({
             <tbody>
               {movements.map((m) => (
                 <tr key={m.id}>
-                  <td>{formatDateTime(m.created_at)}</td>
-                  <td>{movementLabel(m.movement_type)}</td>
-                  <td>{itemNames.get(m.item_id) ?? "Sin dato · artículo no disponible"}</td>
-                  <td className="ui-value">
+                  <td data-label={t("inventory.movementWhen")}>{formatDateTime(m.created_at)}</td>
+                  <td data-label={t("inventory.movementType")}>{movementLabel(m.movement_type)}</td>
+                  <td data-label={t("inventory.movementItem")}>
+                    {itemNames.get(m.item_id) ?? "Sin dato · artículo no disponible"}
+                  </td>
+                  <td className="ui-value" data-label={t("inventory.movementQty")}>
                     {formatDecimal(
                       m.quantity,
                       ["M", "M2"].includes(
@@ -900,14 +910,14 @@ export function InventorySection({
                           : 0,
                     )}
                   </td>
-                  <td>{m.rack_location ?? "—"}</td>
-                  <td>{m.actor_label ?? "—"}</td>
-                  <td>
+                  <td data-label={t("inventory.movementRack")}>{m.rack_location ?? "—"}</td>
+                  <td data-label={t("inventory.movementWho")}>{m.actor_label ?? "—"}</td>
+                  <td data-label="Documento y lote">
                     {m.order_code || m.receipt_code || "Ajuste de bodega"}
                     {m.supplier_document && <p>Guía {m.supplier_document}</p>}
                     {m.lot_code && <p>Lote {m.lot_code}</p>}
                   </td>
-                  <td>{m.note ?? m.lot_code ?? "—"}</td>
+                  <td data-label={t("inventory.movementNote")}>{m.note ?? m.lot_code ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -917,7 +927,7 @@ export function InventorySection({
       {events.length > 0 && (
         <details className="inventory-movements">
           <summary>Historia física de retazos</summary>
-          <table>
+          <table className="ui-stacked-table">
             <thead>
               <tr>
                 <th>Fecha</th>
@@ -930,8 +940,8 @@ export function InventorySection({
             <tbody>
               {events.map((e) => (
                 <tr key={e.id}>
-                  <td>{formatDateTime(e.created_at)}</td>
-                  <td>
+                  <td data-label="Fecha">{formatDateTime(e.created_at)}</td>
+                  <td data-label="Retazo y decisión">
                     <span className="ui-value">{e.remnant_code}</span> ·{" "}
                     {(
                       {
@@ -944,12 +954,12 @@ export function InventorySection({
                       } as Record<string, string>
                     )[e.action] ?? "Movimiento"}
                   </td>
-                  <td>
+                  <td data-label="Ubicación">
                     {e.previous_rack ? `${e.previous_rack} → ` : ""}
                     {e.rack_location || "Sin ubicación declarada"}
                   </td>
-                  <td>{e.actor_label || "Sin dato · registro histórico"}</td>
-                  <td>{e.reason || "Movimiento del plan de producción"}</td>
+                  <td data-label="Actor">{e.actor_label || "Sin dato · registro histórico"}</td>
+                  <td data-label="Motivo">{e.reason || "Movimiento del plan de producción"}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,0 +1,25 @@
+{
+  "records": [
+    "cobranza-cargando",
+    "cobranza-error",
+    "cobranza-vacio-bloqueado",
+    "cobranza-permiso-consulta",
+    "inventario-cargando",
+    "inventario-error",
+    "inventario-vacio",
+    "inventario-operario-consulta",
+    "cnc-sin-permiso-declarar"
+  ],
+  "recovery": [
+    "cobranza-recuperada",
+    "inventario-recuperado"
+  ],
+  "injected": [
+    "503 de enlaces",
+    "503 de stock",
+    "stock vacío",
+    "retención de respuesta"
+  ],
+  "mutations": 0,
+  "authority": "Roles y bloqueos de emisión reales; no se emitió ni se recibió material"
+}

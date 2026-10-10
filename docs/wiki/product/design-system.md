@@ -1,10 +1,12 @@
 ---
 type: concept
 status: active
-updated: 2026-10-09
+updated: 2026-10-10
 volatility: medium
-verified_ref: 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d
+verified_ref: 0ab8b7204ac250c0bd8d118fdab041c22b5892b3
 sources:
+  - ED2 implementación 0ab8b7204ac250c0bd8d118fdab041c22b5892b3, navegador, 2026-10-10
+  - docs/redesign/ED2-ACEPTACION.md
   - ED1 PR https://github.com/KaraAliOsman/framedex/pull/137, CI 4/4 sobre ae9292864ad7d8efb9beba9243451fba49d8c04e, squash 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d, 2026-10-09
   - ED1 autoridad angular 9019282e1ded4b287f4518b09da069bcdee20abc, gate completo y ocho vistas finales, 2026-10-09
   - ED1 corrección de apariencia 3dd2a8bef4c4b05d01fe4598f5b99ea08d283c75, gate completo y ocho vistas, 2026-10-09
@@ -44,6 +46,28 @@ reales iniciales se eliminan 279. Ningún detector ni umbral se flexibiliza.
 Los recorridos conectan Hoy, editor, emisión real, jefe/operario y MiMo real
 con aplicar/recargar/deshacer. [Aceptación ED1](../../redesign/ED1-ACEPTACION.md)
 conserva la rúbrica por superficie y los refs de integración.
+
+**Decisiones editoriales ED2 para la ola 3:** las medidas de CNC comparten
+`formatMillimeters`; los descuentos usan la fracción decimal y las dimensiones
+de una sección se leen de sus vértices confirmados a centésimas. El float del
+renderer no gobierna el texto técnico ni la geometría aplicada. `StatusBadge`
+representa también procedencia, capacidades y compra confirmada; fabricante,
+familia y material son metadatos, sin chips de estado. Las capacidades del
+catálogo forman filas técnicas, sin tarjetas ni puntos decorativos.
+
+Las tablas estrechas conservan etiqueta y valor con `data-label` y el patrón
+común `.ui-stacked-table`; no eliminan columnas ni orden/filtro. Inventario
+permite encoger sus hijos y usa `workshop` para el operario. Consultar material
+no da permiso de modificarlo: la orientación de alertas lleva al dueño. La
+superficie consume el tema elegido y mantiene tintas/fondos correspondientes,
+con objetivo táctil de 44 px también en el checkbox de stock. La
+preparación de emisión nombra módulos por ordinal físico; conserva los UUID
+internos y la autoridad de cada hoja. Los ocho alias de tokens sin consumidores
+se eliminan, manteniendo la guarda de variables definidas.
+
+[Aceptación ED2](../../redesign/ED2-ACEPTACION.md) registra la comparación y los
+recorridos. Estas decisiones son de presentación; no crean valores por defecto
+de catálogo, precios, fabricación, máquina o permisos.
 
 **Límites actuales:** sin autoridad térmica, Uw sigue Sin dato. La aceptación
 de la ola 1 no acredita compras, inventario, CNC, instalación ni portal completo;

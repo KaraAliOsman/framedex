@@ -226,7 +226,7 @@ export function ProjectPaymentLinksPanel({
         <p>No hay enlaces de pago en este proyecto.</p>
       ) : (
         <div className="collection-table">
-          <table className="payments-table">
+          <table className="ui-stacked-table payments-table">
             <thead>
               <tr>
                 <th>Fecha</th>
@@ -240,10 +240,10 @@ export function ProjectPaymentLinksPanel({
             <tbody>
               {query.data.map((link) => (
                 <tr key={link.id}>
-                  <td>
+                  <td data-label="Fecha">
                     <DateOnly value={link.created_at} />
                   </td>
-                  <td>
+                  <td data-label="Concepto">
                     {kinds[link.kind]}
                     <p>
                       {link.environment === "simulated"
@@ -253,16 +253,16 @@ export function ProjectPaymentLinksPanel({
                           : "Flow producción"}
                     </p>
                   </td>
-                  <td className="num">
+                  <td className="num" data-label="Monto CLP">
                     <Money value={link.amount} />
                   </td>
-                  <td>
+                  <td data-label="Vencimiento">
                     <DateOnly value={link.expires_at} />
                   </td>
-                  <td>
+                  <td data-label="Estado">
                     <StatusBadge>{states[link.status]}</StatusBadge>
                   </td>
-                  <td>
+                  <td data-label="Acceso">
                     {link.url && link.status === "PENDING" && (
                       <a className="ui-button" href={link.url} target="_blank" rel="noreferrer">
                         {link.environment === "simulated" ? "Abrir prueba de pago" : "Abrir pago"}

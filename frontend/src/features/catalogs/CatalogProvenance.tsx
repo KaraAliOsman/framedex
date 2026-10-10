@@ -1,4 +1,5 @@
 import { DemoBadge } from "../../ui";
+import { StatusBadge } from "../../ui/StatusBadge";
 import { fmtMm, formatDateTime } from "../../format";
 import type { AuthorityProvenance, EvidenceRow, SectionFacts } from "../../api/generated/models";
 import { catalogVocabulary } from "./catalogModel";
@@ -59,9 +60,9 @@ export function CatalogProvenance({
         {demo ? (
           <DemoBadge />
         ) : (
-          <span className={`ws-badge${authority?.state === "VERIFIED" ? " ws-badge--ok" : ""}`}>
+          <StatusBadge tone={authority?.state === "VERIFIED" ? "success" : "person"}>
             {label}
-          </span>
+          </StatusBadge>
         )}
       </summary>
       <div>

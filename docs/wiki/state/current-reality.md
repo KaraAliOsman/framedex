@@ -3,8 +3,11 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: 5a34db52c78d6a277b17a29267aaf139958655af
+verified_ref: 0ab8b7204ac250c0bd8d118fdab041c22b5892b3
 sources:
+  - ED2 metadatos b18b6506e55152702c37fdc0c7c6f3df21ff2d0f, matriz final y gates de presentación, 2026-10-10
+  - ED2 implementación 0ab8b7204ac250c0bd8d118fdab041c22b5892b3, navegador, 2026-10-10
+  - docs/redesign/ED2-ACEPTACION.md
   - P16 PR https://github.com/KaraAliOsman/framedex/pull/144, CI 4/4 sobre 69ea0913812bc7cd60cf36238e21de730826d60f, squash 5a34db52c78d6a277b17a29267aaf139958655af, 2026-10-10
   - P16 rama codex/P16-catalogo-tecnico, navegador y pruebas focalizadas, 2026-10-10
   - docs/redesign/P16-ACEPTACION.md
@@ -68,6 +71,34 @@ sources:
 ---
 
 # Current reality
+
+## ED2 · lectura conjunta de la ola 2 (10-10-2026)
+
+Bow/emisión, cobranza, corte/etiquetas, CNC, compras/inventario y catálogo
+conservan las decisiones de ED1. Medidas, descuentos y estados usan funciones
+y componentes comunes. Las tablas móviles mantienen sus encabezados junto al
+valor, sin eliminar columnas. Catálogo retira chips de metadatos, puntos de
+estado y tarjetas de capacidades; ocho alias de tokens ya sin uso desaparecen.
+
+Inventario del operario usa densidad de taller, el tema elegido y controles de
+44 px. La matriz detectó el desacople de tintas y fondo en tema claro, además
+del checkbox estrecho; cuatro vistas focales posteriores pasan contraste y
+objetivos, sin modificar detectores. Los módulos de emisión usan ordinales
+físicos visibles mientras sus destinos y autoridad mantienen UUID internos.
+
+Los cuatro recorridos reales pasan: doce posiciones con bow y PDF comercial,
+MiMo con tres candidatos de PDF sintético revisado sin publicar, recepción
+parcial de una barra y lectura de RT, y pack/etiquetas con revisión CNC.
+La cotización bow queda «Solo cotización» por falta de autoridad para fabricar;
+no se inventa evidencia para liberar. Las 224 vistas finales en 14 rutas pasan
+sin hallazgos/desbordes/errores HTTP/consola. La suite completa pasa 881 motor
+(+2 xfail), 1.476 backend y 968 frontend, con lint/tipos/build. La repetición
+posterior de lint/tipos/968 frontend/build también pasa; CI se registra al integrar. Esta sección acredita
+implementación y recorridos sobre los refs citados, sin declarar integración.
+
+Las reglas de presentación ED2 quedan vinculantes para la ola 3 en
+[sistema de diseño](../product/design-system.md). DEMO, sandbox financiero,
+autoridad térmica ausente y validación industrial conservan sus límites.
 
 ## P16 · procedencia y revisión técnica (10-10-2026)
 
@@ -181,8 +212,7 @@ Cambios globales comparten apply_to_positions IA2; altura común se resuelve
 contra destinos físicos sin asignar manilla a fijos. Los nueve goldens previos
 conservan valores, con dos casos comunes nuevos. Hay una sola emisión en UI.
 Las vigencias configurables (15 días / 30 minutos) pasan rechazo sin escritura,
-guardar, recargar y restaurar. La matriz específica tiene 74 vistas; la oficial,
-24. Ambas tienen cero hallazgos/desbordes; teclado y densidad a 1024 pasan.
+guardar, recargar y restaurar. La matriz específica tiene 74 vistas; la oficial, 24. Ambas tienen cero hallazgos/desbordes; teclado y densidad a 1024 pasan.
 La aceptación registra dos rondas editoriales, R1–R20 y límites del sandbox.
 
 Lint, tipos, 848 motor (+2 xfail), 1.434 backend, 954 frontend y build pasan.

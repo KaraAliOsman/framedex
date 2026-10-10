@@ -413,20 +413,12 @@
   --theme-fg-muted: var(--text-small-muted);
   --theme-fg-primary: var(--text-primary);
   --theme-fg-secondary: var(--text-secondary);
-  --theme-hover: var(--surface-hover);
-  --theme-line: var(--border-subtle);
-  --theme-ok: var(--state-success-ink);
   --theme-radius: var(--r-2);
-  --theme-radius-pill: var(--r-1);
   --theme-radius-sm: var(--r-1);
-  --theme-surface-2: var(--surface-card);
   --theme-surface-inset: var(--surface-card);
   --theme-surface-page: var(--bg-app);
   --theme-surface-sunken: var(--surface-card);
   --theme-text: var(--text-primary);
-  --theme-text-dim: var(--text-secondary);
-  --theme-warn: var(--state-warning-ink);
-  --theme-warn-bg: var(--state-warning-soft);
 }
 [data-density="office"] {
   --type-body: 0.8125rem;

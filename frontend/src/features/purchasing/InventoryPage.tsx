@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { apiMutator } from "../../api/apiMutator";
 import type { InventoryStockItem } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { useTheme } from "../../theme/ThemeProvider";
 import { DeniedState, ErrorState, LoadingState, PageHeader, Qty } from "../../ui";
 import { InventorySection } from "./InventorySection";
 import "./purchasing.css";
@@ -30,6 +31,7 @@ export function InventoryPage(): JSX.Element {
       key={org.id}
       orgId={org.id}
       canWrite={org.role === "OWNER" || org.role === "WORKSHOP_MANAGER"}
+      density={org.role === "OPERATOR" ? "workshop" : "office"}
     />
   );
 }
@@ -37,10 +39,13 @@ export function InventoryPage(): JSX.Element {
 function InventoryWorkspace({
   orgId,
   canWrite,
+  density,
 }: {
   orgId: string;
   canWrite: boolean;
+  density: "office" | "workshop";
 }): JSX.Element {
+  const { theme } = useTheme();
   const [params] = useSearchParams();
   const [needle, setNeedle] = useState(params.get("sku") ?? "");
   const [showEmpty, setShowEmpty] = useState(false);
@@ -89,7 +94,7 @@ function InventoryWorkspace({
         : Number(b.available_qty) - Number(a.available_qty),
     );
   return (
-    <section className="purchasing-page inventory-page" data-density="office">
+    <section className="purchasing-page inventory-page" data-density={density} data-theme={theme}>
       <PageHeader
         title="Inventario"
         context="Stock disponible, reservas y retazos de la organización"
@@ -165,7 +170,7 @@ function InventoryWorkspace({
               role="region"
               aria-label="Detalle de stock"
             >
-              <table>
+              <table className="ui-stacked-table">
                 <thead>
                   <tr>
                     <th>Código</th>
@@ -180,8 +185,10 @@ function InventoryWorkspace({
                 <tbody>
                   {filtered.slice(offset, offset + 50).map((item) => (
                     <tr key={`${item.item_id}:${item.variant_key}`}>
-                      <td className="ui-value">{item.sku}</td>
-                      <td>
+                      <td className="ui-value" data-label="Código">
+                        {item.sku}
+                      </td>
+                      <td data-label="Material">
                         {item.name}
                         {item.spec_text && <p className="ui-value">{item.spec_text}</p>}
                       </td>
@@ -191,7 +198,10 @@ function InventoryWorkspace({
                         item.available_qty,
                         item.incoming_qty,
                       ].map((value, index) => (
-                        <td key={index}>
+                        <td
+                          key={index}
+                          data-label={["Stock", "Reservado", "Disponible", "En tránsito"][index]}
+                        >
                           <Qty
                             value={value}
                             precision={
@@ -218,7 +228,7 @@ function InventoryWorkspace({
                             ))}
                         </td>
                       ))}
-                      <td>{item.racks || "Sin ubicación registrada"}</td>
+                      <td data-label="Ubicación">{item.racks || "Sin ubicación registrada"}</td>
                     </tr>
                   ))}
                 </tbody>

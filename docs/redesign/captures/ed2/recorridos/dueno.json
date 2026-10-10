@@ -1,0 +1,7 @@
+{
+  "flow": "Cobranza → cargar PDF → extracción MiMo real → fuente/revisión humana, dudosos excluidos",
+  "result": "PASA",
+  "rows": 3,
+  "importId": "573eadcb-cd52-4ef2-b81b-1192168bb29a",
+  "published": false
+}

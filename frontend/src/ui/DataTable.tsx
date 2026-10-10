@@ -251,7 +251,11 @@ export function DataTable<Row>({
                   </td>
                 ) : null}
                 {columns.map((column) => (
-                  <td key={column.id} className={column.numeric ? "is-numeric ui-value" : ""}>
+                  <td
+                    key={column.id}
+                    data-label={column.label}
+                    className={column.numeric ? "is-numeric ui-value" : ""}
+                  >
                     {column.render
                       ? column.render(row)
                       : column.numeric

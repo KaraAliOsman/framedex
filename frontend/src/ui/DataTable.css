@@ -67,3 +67,64 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Compact table rows become labelled technical records on a narrow screen.
+ * Sorting controls remain visible; static headings move next to their value. */
+@media (max-width: 760px) {
+  .ui-stacked-table.ui-stacked-table,
+  .ui-stacked-table tbody,
+  .projects-payments .ui-data-table,
+  .projects-payments .ui-data-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .ui-stacked-table thead {
+    display: none;
+  }
+  .projects-payments .ui-data-table thead,
+  .projects-payments .ui-data-table thead tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .projects-payments .ui-data-table th {
+    position: static;
+    border: 0;
+  }
+  .ui-stacked-table tbody tr,
+  .projects-payments .ui-data-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-bottom: 1px solid var(--border-default);
+    padding: var(--space-2) 0;
+  }
+  .ui-stacked-table tbody td,
+  .projects-payments .ui-data-table tbody td {
+    display: block;
+    min-width: 0;
+    height: auto;
+    border: 0;
+    padding: var(--space-2);
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .ui-stacked-table td::before,
+  .projects-payments .ui-data-table td::before {
+    content: attr(data-label);
+    display: block;
+    font: var(--type-label) var(--font-sans);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-1);
+  }
+  .ui-stacked-table td button,
+  .projects-payments .ui-data-table td button {
+    max-width: 100%;
+    white-space: normal;
+  }
+  .ui-stacked-table td:last-child,
+  .projects-payments .ui-data-table td:last-child {
+    grid-column: 1 / -1;
+  }
+}

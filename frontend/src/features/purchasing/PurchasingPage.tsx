@@ -1,3 +1,4 @@
+import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import {
   useCallback,
@@ -641,7 +642,7 @@ function PurchasingWorkspace({
               {t("purchasing.coverageShortages")}: {coverage?.shortages}
             </p>
           )}
-          <table>
+          <table className="ui-stacked-table">
             <thead>
               <tr>
                 <th>{t("purchasing.category")}</th>
@@ -659,19 +660,27 @@ function PurchasingWorkspace({
             <tbody>
               {coverageLines.map((line) => (
                 <tr key={line.requirement_line_id}>
-                  <td>{categoryLabel(line.category)}</td>
-                  <td>
+                  <td data-label={t("purchasing.category")}>{categoryLabel(line.category)}</td>
+                  <td data-label={t("purchasing.purchaseSku")}>
                     {line.purchasing_sku}
                     <span className="purchasing-coverage-unit">
                       {" "}
                       {purchaseUnitLabel(line.unit, 2)}
                     </span>
                   </td>
-                  <td>{purchaseQty(line.required, line.unit)}</td>
-                  <td>{purchaseQty(line.on_hand, line.unit)}</td>
-                  <td>{purchaseQty(line.reserved, line.unit)}</td>
-                  <td>{purchaseQty(line.open_ordered, line.unit)}</td>
-                  <td>
+                  <td data-label={t("purchasing.coverageRequired")}>
+                    {purchaseQty(line.required, line.unit)}
+                  </td>
+                  <td data-label={t("purchasing.coverageOnHand")}>
+                    {purchaseQty(line.on_hand, line.unit)}
+                  </td>
+                  <td data-label={t("purchasing.coverageReserved")}>
+                    {purchaseQty(line.reserved, line.unit)}
+                  </td>
+                  <td data-label={t("purchasing.coverageOrdered")}>
+                    {purchaseQty(line.open_ordered, line.unit)}
+                  </td>
+                  <td data-label={t("purchasing.coverageReceived")}>
                     {line.received !== "0" ? (
                       <strong className="purchasing-coverage-received">
                         {purchaseQty(line.received, line.unit)} · {t("purchasing.receivedMark")}
@@ -680,7 +689,7 @@ function PurchasingWorkspace({
                       purchaseQty(line.received, line.unit)
                     )}
                   </td>
-                  <td>
+                  <td data-label={t("purchasing.coverageRemnant")}>
                     {line.remnant_pool
                       ? `${line.remnant_pool.count}${
                           line.remnant_pool.total_mm
@@ -689,7 +698,7 @@ function PurchasingWorkspace({
                         }`
                       : "—"}
                   </td>
-                  <td>
+                  <td data-label={t("purchasing.coverageShortage")}>
                     {line.shortage !== "0" ? (
                       <strong className="purchasing-coverage-short">
                         {purchaseQty(line.shortage, line.unit)}
@@ -698,7 +707,9 @@ function PurchasingWorkspace({
                       "0"
                     )}
                   </td>
-                  <td>{purchaseQty(line.recommended_purchase, line.unit)}</td>
+                  <td data-label={t("purchasing.coverageRecommended")}>
+                    {purchaseQty(line.recommended_purchase, line.unit)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -802,7 +813,7 @@ function RequirementSection({
     <section className="purchasing-type" id={`purchasing-type-${orderType}`}>
       <h2>
         {t(orderTypeLabels[orderType])}
-        {confirmed && <span className="purchasing-badge">{t("purchasing.confirmedBadge")}</span>}
+        {confirmed && <StatusBadge tone="success">{t("purchasing.confirmedBadge")}</StatusBadge>}
       </h2>
       {requirements.length === 0 && <p>{t("purchasing.noRequirements")}</p>}
       {requirements.length > 0 &&
@@ -810,7 +821,7 @@ function RequirementSection({
           <p className="purchasing-order-expected">{t("purchasing.consolidateHint")}</p>
         )}
       {requirements.length > 0 && (
-        <table>
+        <table className="ui-stacked-table">
           <thead>
             <tr>
               <th>{t("purchasing.category")}</th>
@@ -907,9 +918,11 @@ function RequirementRow({
   const allocated = eligibilities.find((item) => item.id === allocation?.supplier_eligibility_id);
   return (
     <tr>
-      <td>{categoryLabel(requirement.category)}</td>
-      <td>{requirement.technical_skus.join(", ") || "—"}</td>
-      <td>
+      <td data-label={t("purchasing.category")}>{categoryLabel(requirement.category)}</td>
+      <td data-label={t("purchasing.technicalSku")}>
+        {requirement.technical_skus.join(", ") || "—"}
+      </td>
+      <td data-label={t("purchasing.purchaseSku")}>
         {requirement.purchasing_sku ?? "—"}
         {requirement.physical_stock_identity && (
           <small>
@@ -922,7 +935,7 @@ function RequirementRow({
           </small>
         )}
       </td>
-      <td>
+      <td data-label={t("purchasing.quantity")}>
         {requirement.open_qty !== undefined &&
         requirement.open_qty > 0 &&
         requirement.open_qty < (qtyNumber(requirement.quantity) ?? requirement.open_qty) ? (
@@ -941,7 +954,7 @@ function RequirementRow({
           </>
         )}
       </td>
-      <td>
+      <td data-label={t("purchasing.allocatedTo")}>
         {requirement.claimed === true || !canWrite ? (
           (allocated?.supplier_name ?? "—")
         ) : (
@@ -986,7 +999,7 @@ function RequirementRow({
           </select>
         )}
       </td>
-      <td>
+      <td data-label={t("purchasing.trace")}>
         <details>
           <summary>{t("purchasing.trace")}</summary>
           {requirement.source_trace.length === 0 && <p>{t("purchasing.noTrace")}</p>}
@@ -1042,10 +1055,7 @@ function EligibilityForm({
           {item.supplier_name} · v{item.version} · {item.eligible_requirement_keys.length}{" "}
           {t("purchasing.requirements")}
           {item.expired && (
-            <span className="purchasing-badge purchasing-badge--expired">
-              {" "}
-              {t("purchasing.supplierExpired")}
-            </span>
+            <StatusBadge tone="blocked"> {t("purchasing.supplierExpired")}</StatusBadge>
           )}
         </p>
       ))}
@@ -1466,7 +1476,7 @@ function OrdersIndex({
           </button>
         ))}
       </div>
-      <table>
+      <table className="ui-stacked-table">
         <thead>
           <tr>
             <th>{t("purchasing.indexOrder")}</th>
@@ -1497,25 +1507,27 @@ function OrdersIndex({
                 }
               }}
             >
-              <td>
+              <td data-label={t("purchasing.indexOrder")}>
                 <EntityCode kind="orden de compra" code={order.order_code} />
               </td>
-              <td>
+              <td data-label={t("purchasing.project")}>
                 {order.project_code ?? "—"} · {formatRevision(order.revision_code ?? "")}
               </td>
-              <td>
+              <td data-label={t("purchasing.indexType")}>
                 {orderTypeLabels[order.order_type as OrderType]
                   ? t(orderTypeLabels[order.order_type as OrderType])
                   : order.order_type}
               </td>
-              <td>{order.supplier_name ?? "—"}</td>
-              <td>
+              <td data-label={t("purchasing.indexSupplier")}>{order.supplier_name ?? "—"}</td>
+              <td data-label={t("purchasing.indexStatus")}>
                 {orderStatusLabels[order.status as OrderStatus]
                   ? t(orderStatusLabels[order.status as OrderStatus])
                   : order.status}
               </td>
-              <td>{order.expected_at ? formatDate(order.expected_at) : "Sin dato"}</td>
-              <td>
+              <td data-label={t("purchasing.expectedAt")}>
+                {order.expected_at ? formatDate(order.expected_at) : "Sin dato"}
+              </td>
+              <td data-label={t("purchasing.indexReceipts")}>
                 {Number(order.receipt_count ?? 0) > 0 ? order.receipt_count : "—"}
                 {Number(order.damaged_qty ?? 0) > 0 && (
                   <span className="purchasing-coverage-short">
@@ -1524,8 +1536,10 @@ function OrdersIndex({
                   </span>
                 )}
               </td>
-              <td>{order.status === "CANCELLED" ? "—" : fmtMm(order.outstanding_qty)}</td>
-              <td>
+              <td data-label={t("purchasing.indexOutstanding")}>
+                {order.status === "CANCELLED" ? "—" : fmtMm(order.outstanding_qty)}
+              </td>
+              <td data-label="Monto neto">
                 {order.net_amount == null ? (
                   "Sin dato · falta precio del proveedor"
                 ) : (
@@ -1727,7 +1741,7 @@ function ReceivingPanel({
             </label>
           </div>
           <div className="purchasing-receiving-scroll">
-            <table>
+            <table className="ui-stacked-table">
               <thead>
                 <tr>
                   <th>{t("purchasing.purchaseSku")}</th>
@@ -1743,13 +1757,17 @@ function ReceivingPanel({
               <tbody>
                 {state.lines.map((line) => (
                   <tr key={line.id}>
-                    <td>{line.purchasing_sku ?? line.category}</td>
-                    <td>
+                    <td data-label={t("purchasing.purchaseSku")}>
+                      {line.purchasing_sku ?? line.category}
+                    </td>
+                    <td data-label={t("purchasing.receiveOrdered")}>
                       {purchaseQty(line.ordered_qty, line.unit)}{" "}
                       {purchaseUnitLabel(line.unit, qtyNumber(line.ordered_qty))}
                     </td>
-                    <td>{purchaseQty(line.received_qty, line.unit)}</td>
-                    <td>
+                    <td data-label={t("purchasing.receiveReceived")}>
+                      {purchaseQty(line.received_qty, line.unit)}
+                    </td>
+                    <td data-label={t("purchasing.receiveOutstanding")}>
                       {Number(line.outstanding_qty) < 0
                         ? "0"
                         : purchaseQty(line.outstanding_qty, line.unit)}
@@ -1764,7 +1782,7 @@ function ReceivingPanel({
                         </small>
                       ) : null}
                     </td>
-                    <td>
+                    <td data-label={t("purchasing.receiveNow")}>
                       <input
                         type="number"
                         min="0"
@@ -1787,7 +1805,7 @@ function ReceivingPanel({
                         }
                       />
                     </td>
-                    <td>
+                    <td data-label={t("purchasing.receiveDamaged")}>
                       <input
                         type="number"
                         min="0"
@@ -1810,7 +1828,7 @@ function ReceivingPanel({
                         }
                       />
                     </td>
-                    <td>
+                    <td data-label={t("purchasing.receiveLot")}>
                       <input
                         type="text"
                         aria-label={`${t("purchasing.receiveLot")} · ${line.purchasing_sku ?? line.category}`}
@@ -1832,7 +1850,7 @@ function ReceivingPanel({
                         }
                       />
                     </td>
-                    <td>
+                    <td data-label={t("purchasing.receiveRack")}>
                       <input
                         type="text"
                         aria-label={`${t("purchasing.receiveRack")} · ${line.purchasing_sku ?? line.category}`}
@@ -1912,7 +1930,7 @@ function ReceivingPanel({
             {t("purchasing.receiveSubmit")}
           </button>
           {state.receipts.length > 0 && (
-            <table className="purchasing-receipts">
+            <table className="ui-stacked-table purchasing-receipts">
               <caption>{t("purchasing.receiveHistory")}</caption>
               <thead>
                 <tr>
@@ -1927,11 +1945,13 @@ function ReceivingPanel({
                     key={receipt.id}
                     aria-current={receipt.id === targetReceipt ? "true" : undefined}
                   >
-                    <td>
+                    <td data-label={t("purchasing.receiptKey")}>
                       <EntityCode kind="recepción" code={receipt.receipt_code} />
                     </td>
-                    <td>{formatDateTime(receipt.created_at)}</td>
-                    <td>{receipt.note || "—"}</td>
+                    <td data-label={t("purchasing.receiptDate")}>
+                      {formatDateTime(receipt.created_at)}
+                    </td>
+                    <td data-label={t("purchasing.receiptNote")}>{receipt.note || "—"}</td>
                   </tr>
                 ))}
               </tbody>

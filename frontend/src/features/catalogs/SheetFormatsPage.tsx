@@ -84,7 +84,9 @@ function SheetFormats({ canWrite }: { canWrite: boolean }): JSX.Element {
         Declara las medidas y el despunte indicados por el proveedor. Cada formato conserva su
         fuente; el plan de corte cambia cuando vuelves a optimizar la OT.
       </p>
-      <a href="/production">Volver a Producción</a>
+      <a className="ui-button ui-button--ghost" href="/production">
+        Volver a Producción
+      </a>
       {loading ? <DimLoader label="Cargando formatos de lámina…" /> : null}
       {error ? (
         <div>

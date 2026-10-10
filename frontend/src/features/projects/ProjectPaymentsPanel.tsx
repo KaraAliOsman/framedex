@@ -932,7 +932,7 @@ export function ProjectPaymentsPanel({
               : "No conectado. Los documentos internos no tienen timbre electrónico SII."}
           </p>
           {invoiceList.length > 0 ? (
-            <table className="payments-table">
+            <table className="ui-stacked-table payments-table">
               <thead>
                 <tr>
                   <th>{t("projects.invoiceDate")}</th>
@@ -945,19 +945,19 @@ export function ProjectPaymentsPanel({
               <tbody>
                 {invoiceList.map((invoice) => (
                   <tr key={invoice.id}>
-                    <td>
+                    <td data-label={t("projects.invoiceDate")}>
                       <DateOnly value={invoice.created_at} />
                     </td>
-                    <td>
+                    <td data-label={t("projects.invoiceCode")}>
                       <span className="ui-value">{invoice.invoice_code}</span>
                       <p>
                         {invoice.document_kind === "BOLETA" ? "Boleta interna" : "Factura interna"}
                       </p>
                     </td>
-                    <td>
+                    <td data-label={t("projects.invoiceRevision")}>
                       <span className="ui-value">{formatRevision(invoice.revision_code)}</span>
                     </td>
-                    <td>
+                    <td data-label={t("projects.invoiceStatus")}>
                       {invoice.credit_note ? (
                         <button
                           type="button"
@@ -1022,7 +1022,7 @@ export function ProjectPaymentsPanel({
                         </button>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Acciones">
                       <button
                         type="button"
                         onClick={() => void openInvoice(invoice)}

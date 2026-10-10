@@ -1,5 +1,6 @@
 import { CatalogProvenance, SectionReviewFacts, SourceHighlight } from "./CatalogProvenance";
 import { WorkspaceGlasses, WorkspaceCosts } from "./WorkspaceMaterials";
+import { StatusBadge } from "../../ui/StatusBadge";
 import { DemoBadge, DimLoader } from "../../ui";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { useEffect, useState } from "react";
@@ -137,9 +138,9 @@ function ArticleCard({
             <dt>{wst("purchaseState")}</dt>
             <dd>
               {purchased ? (
-                <span className="ws-badge ws-badge--ok">{wst("mapped")}</span>
+                <StatusBadge tone="success">{wst("mapped")}</StatusBadge>
               ) : (
-                <span className="ws-badge ws-badge--warn">{wst("unmapped")}</span>
+                <StatusBadge tone="person">{wst("unmapped")}</StatusBadge>
               )}
             </dd>
           </div>
@@ -214,17 +215,14 @@ function ReadinessLadder({ system }: { system: Row<"systems"> }) {
           return (
             <li key={level.level} className={`ws-ladder-level ${ok ? "is-ok" : "is-blocked"}`}>
               <header>
-                <span className="ws-ladder-state" aria-hidden="true">
-                  {ok ? "●" : "◐"}
-                </span>
                 <strong>{wst(`level.${level.level}`)}</strong>
-                <em>
+                <StatusBadge tone={ok ? "success" : "person"}>
                   {level.state
                     ? t(`catalog.ws.state.${level.state}` as Label)
                     : ok
                       ? wst("complete")
                       : wst("incomplete")}
-                </em>
+                </StatusBadge>
               </header>
             </li>
           );
@@ -469,16 +467,18 @@ export function SystemWorkspaceView({
         <div className="ws-identity-head">
           <h2>{system.name} </h2>
           <div className="ws-identity-meta">
-            {system.manufacturer && <span className="ws-chip">{system.manufacturer}</span>}
-            {system.family && <span className="ws-chip">{system.family}</span>}
-            <span className="ws-chip">{ct(`option.${system.material}`)}</span>
+            {system.manufacturer && <span className="ws-metadata">{system.manufacturer}</span>}
+            {system.family && <span className="ws-metadata">{system.family}</span>}
+            <span className="ws-metadata">{ct(`option.${system.material}`)}</span>
             {(system.applications ?? []).map((app) => (
-              <span key={app} className="ws-chip ws-chip--app">
+              <span key={app} className="ws-metadata">
                 {app}
               </span>
             ))}
             {system.is_demo ? <DemoBadge /> : null}
-            <span className="ws-badge">{system.is_active ? ct("active") : ct("inactive")}</span>
+            <StatusBadge tone={system.is_active ? "success" : "neutral"}>
+              {system.is_active ? ct("active") : ct("inactive")}
+            </StatusBadge>
           </div>
           <dl className="ws-identity-facts">
             <div>
@@ -766,7 +766,9 @@ export function SystemWorkspaceView({
                         <th scope="row">{parent?.name ?? wst("unknown")}</th>
                         <td>
                           <TechnicalCode value={row.sku} />
-                          {row.is_default && <span className="ws-badge">{wst("default")}</span>}
+                          {row.is_default && (
+                            <StatusBadge showIcon={false}>{wst("default")}</StatusBadge>
+                          )}
                         </td>
                         <td>
                           {row.name} {system.is_demo ? <DemoBadge /> : null}
@@ -907,17 +909,17 @@ export function SystemWorkspaceView({
                 </strong>
                 <div className="ws-identity-meta">
                   {process_profile.org_id === null && (
-                    <span className="ws-chip">{ct("global")}</span>
+                    <span className="ws-metadata">{ct("global")}</span>
                   )}
                   {process_profile.material && (
-                    <span className="ws-chip">{ct(`option.${process_profile.material}`)}</span>
+                    <span className="ws-metadata">{ct(`option.${process_profile.material}`)}</span>
                   )}
                   {process_profile.product_kind && (
-                    <span className="ws-chip">
+                    <span className="ws-metadata">
                       {productKindLabel(process_profile.product_kind)}
                     </span>
                   )}
-                  <span className="ws-chip">
+                  <span className="ws-metadata">
                     {joiningMethodLabel(process_profile.joining_method)}
                   </span>
                 </div>
@@ -1012,7 +1014,7 @@ export function SystemWorkspaceView({
                     {!center.active && (
                       <>
                         {" "}
-                        <span className="ws-chip ws-chip--off">{wst("centerInactive")}</span>
+                        <StatusBadge>{wst("centerInactive")}</StatusBadge>
                         {canEdit && (
                           <>
                             {" "}
@@ -1178,11 +1180,17 @@ export function SystemWorkspaceView({
                       }[row.scope ?? ""] ?? "Sin dato"}
                     </td>
                     <td>
-                      <span
-                        className={`ws-badge ${row.review_state === "REVIEWED" ? "ws-badge--ok" : row.review_state === "REJECTED" ? "ws-badge--warn" : ""}`}
+                      <StatusBadge
+                        tone={
+                          row.review_state === "REVIEWED"
+                            ? "success"
+                            : row.review_state === "REJECTED"
+                              ? "blocked"
+                              : "person"
+                        }
                       >
                         {wst(`evidenceState.${row.review_state}`)}
-                      </span>
+                      </StatusBadge>
                     </td>
                     {canEdit && (
                       <td>

@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-10-10T22:02:08.018Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "cotizacion-emision",
+      "path": "/projects/c832c5d4-8263-4003-b188-ad628d47250a?section=quote",
+      "reachedPath": "/projects/c832c5d4-8263-4003-b188-ad628d47250a",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "cotizacion-emision__ESTIMATOR__light__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cotizacion-emision",
+      "path": "/projects/c832c5d4-8263-4003-b188-ad628d47250a?section=quote",
+      "reachedPath": "/projects/c832c5d4-8263-4003-b188-ad628d47250a",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "cotizacion-emision__ESTIMATOR__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cotizacion-emision",
+      "path": "/projects/c832c5d4-8263-4003-b188-ad628d47250a?section=quote",
+      "reachedPath": "/projects/c832c5d4-8263-4003-b188-ad628d47250a",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "cotizacion-emision__ESTIMATOR__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cotizacion-emision",
+      "path": "/projects/c832c5d4-8263-4003-b188-ad628d47250a?section=quote",
+      "reachedPath": "/projects/c832c5d4-8263-4003-b188-ad628d47250a",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "cotizacion-emision__ESTIMATOR__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cotizacion-emision",
+      "path": "/projects/c832c5d4-8263-4003-b188-ad628d47250a?section=quote",
+      "reachedPath": "/projects/c832c5d4-8263-4003-b188-ad628d47250a",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "cotizacion-emision__ESTIMATOR__dark__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cotizacion-emision",
+      "path": "/projects/c832c5d4-8263-4003-b188-ad628d47250a?section=quote",
+      "reachedPath": "/projects/c832c5d4-8263-4003-b188-ad628d47250a",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "cotizacion-emision__ESTIMATOR__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cotizacion-emision",
+      "path": "/projects/c832c5d4-8263-4003-b188-ad628d47250a?section=quote",
+      "reachedPath": "/projects/c832c5d4-8263-4003-b188-ad628d47250a",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "cotizacion-emision__ESTIMATOR__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cotizacion-emision",
+      "path": "/projects/c832c5d4-8263-4003-b188-ad628d47250a?section=quote",
+      "reachedPath": "/projects/c832c5d4-8263-4003-b188-ad628d47250a",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "cotizacion-emision__ESTIMATOR__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    }
+  ],
+  "topFindings": []
+}

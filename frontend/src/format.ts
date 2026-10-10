@@ -54,6 +54,13 @@ export function fmtMm(value: string | number | null | undefined): string {
   return formatDecimal(value, Math.min(precision, 12));
 }
 
+/** One millimetre label for CNC, catalogs and workshop projections.
+ * An absent/invalid value has no fabricated unit or numeric default. */
+export function formatMillimeters(value: string | number | null | undefined): string {
+  const formatted = fmtMm(value);
+  return formatted === "Sin dato" ? formatted : `${formatted} mm`;
+}
+
 /** Chilean RUT — módulo-11 check digit. Accepts "12.345.678-5", "12345678-5",
  * "123456785" and "K" digits; empty/blank is valid (the field is optional). */
 export function isValidRut(candidate: string): boolean {
