@@ -25,7 +25,7 @@ def test_new_validity_uses_declared_org_default_and_preserves_history(monkeypatc
 
 
 @pytest.mark.parametrize(
-    "value", ["12.345.678-5", "123456785", " 12 345 678-5 ", "11.111.111-1", "6.000.000-K"]
+    "value", ["12.345.678-5", "123456785", " 12 345 678-5 ", "11.111.111-1", "6.000.000-K", "123.456-0", "12.345-5"]
 )
 def test_rut_module_eleven_accepts_declared_identity(value):
     assert valid_rut(value)

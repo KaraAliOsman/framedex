@@ -5,7 +5,8 @@ import re
 
 def valid_rut(value: str | None) -> bool:
     compact = re.sub(r"[.\s-]", "", value or "").upper()
-    if not re.fullmatch(r"[0-9]{7,8}[0-9K]", compact):
+    # Keep the historical body range accepted by the SII boundary as well.
+    if not re.fullmatch(r"[0-9]{5,8}[0-9K]", compact):
         return False
     digits, check = compact[:-1], compact[-1]
     if int(digits) == 0:
