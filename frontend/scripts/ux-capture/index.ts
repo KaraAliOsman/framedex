@@ -199,6 +199,7 @@ async function discoverFixture(session: AuthSession): Promise<FixtureRefs> {
   return {
     projectId: process.env.DEKOPEN_UX_PROJECT_ID ?? project.id,
     positionId: process.env.DEKOPEN_UX_POSITION_ID ?? positionId,
+    orderId: process.env.DEKOPEN_UX_ORDER_ID,
     clientId,
     quoteTokens: {
       vigente: process.env.DEKOPEN_UX_QUOTE_VIGENTE ?? "fixture-vigente",
@@ -278,6 +279,12 @@ async function captureRoute(
     }
   });
   await page.goto(route.path, { waitUntil: "networkidle", timeout: 45_000 });
+  if (route.expandDetails) {
+    const summary = page.locator(`#${route.expandDetails} > summary`);
+    await summary.waitFor();
+    await summary.click();
+    await page.waitForLoadState("networkidle");
+  }
   await page.waitForTimeout(350);
   const text = await page
     .locator("body")

@@ -1689,19 +1689,25 @@ def test_optimize_rejects_cancelled_order() -> None:
 
 
 def test_cnc_generate_rejects_cancelled_order() -> None:
+    from contextlib import nullcontext
     from production import cnc
 
     order_id = uuid4()
     bundle = {
         "order": {"id": order_id, "order_code": "OT", "status": "CANCELLED"}
     }
-    with patch("production.cnc._order_ops", return_value=bundle):
+    with (
+        patch("production.cnc.transaction.atomic", return_value=nullcontext()),
+        patch("production.cnc.documentary_backend", return_value=nullcontext()),
+        patch("production.cnc.one", return_value=bundle["order"]) as locked_lookup,
+    ):
         with pytest.raises(DocumentaryError) as error:
             cnc.generate_program(
                 org_id=uuid4(), order_id=order_id, machine_id=uuid4(),
                 member_id="M-1", actor_id=uuid4(),
             )
     assert error.value.code == "work_order_cancelled"
+    assert "FOR UPDATE" in locked_lookup.call_args.args[0]
 
 
 def test_cnc_generate_rejects_malformed_machine_id(monkeypatch) -> None:
@@ -1713,7 +1719,8 @@ def test_cnc_generate_rejects_malformed_machine_id(monkeypatch) -> None:
     )
     response = client.post(
         f"/api/v1/production/orders/{uuid4()}/cnc/programs/",
-        {"machine_id": "not-a-uuid", "member_id": "M-1"},
+        {"machine_id": "not-a-uuid", "member_id": "M-1", "confirmed": True,
+         "expected_preview": "0" * 64},
         format="json",
     )
     assert response.status_code == 400

@@ -1706,11 +1706,8 @@ function ProductionOfficePage(): JSX.Element {
                 {activeTab === "vidrios" ? <GlassOrderPanel orderIds={[detail.id]} /> : null}
                 {activeTab === "mecanizado" ? (
                   <>
-                    <CncPanel orderId={detail.id} canWrite={canWrite} />
-                    <details>
-                      <summary>Máquinas y programas de la planta</summary>
-                      <CncWorkspace />
-                    </details>
+                    <CncPanel key={"cnc-" + detail.id} orderId={detail.id} canWrite={canWrite} />
+                    <CncWorkspace key={"authority-" + detail.id} orderId={detail.id} />
                   </>
                 ) : null}
                 {activeTab === "calidad" && canWrite && nextOpenStepIsQc ? (

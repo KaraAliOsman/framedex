@@ -42,6 +42,8 @@ from production.serializers import (
     DeliveryTransitionRequestSerializer,
     CncExportSerializer,
     CncGenerateRequestSerializer,
+    CncPreviewRequestSerializer,
+    CncPreviewSerializer,
     CncMachineListSerializer,
     CncMachinePatchSerializer,
     CncMachineRequestSerializer,
@@ -1234,6 +1236,7 @@ class CncProgramListView(APIView):
                     machine_id=machine_id,
                     member_id=data["member_id"],
                     actor_id=token.user_id,
+                    expected_preview=data["expected_preview"], confirmed=data["confirmed"],
                 )
         return Response(output, status=201)
 
@@ -1259,3 +1262,15 @@ class CncProgramFileView(APIView):
         response = HttpResponse(content, content_type=f"{mime}; charset=utf-8")
         response["Content-Disposition"] = f'attachment; filename="{name}"'
         return response
+
+
+class CncPreviewView(APIView):
+    @extend_schema(operation_id="production_order_cnc_preview", parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=CncPreviewRequestSerializer, responses={200: CncPreviewSerializer, **ERRORS}, tags=["production", "cnc"])
+    def post(self, request, order_id: UUID):
+        data = validate(CncPreviewRequestSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = cnc.preview_program(org_id=org_id, order_id=order_id,
+                    machine_id=data["machine_id"], member_id=data["member_id"])
+        return Response(output)

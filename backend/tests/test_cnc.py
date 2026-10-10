@@ -139,3 +139,56 @@ def test_program_no_uses_physical_codes() -> None:
         machine_code="SBZ-01", seq=2,
     )
     assert no == "OT-0001-M07-SBZ-01-02"
+
+
+def test_retired_tools_do_not_resolve_into_a_magazine():
+    tool_id = str(uuid4())
+    row = {"code":"CNC", "name":"Test", "tool_ids":[tool_id], "controller_family":"NEUTRAL",
+           "coordinate_systems":[], "postprocessor_id":"", "postprocessor_version":"", "units":"mm","encoding":"utf-8"}
+    assert cnc._machine_profile(row,{tool_id:{"active":False,"code":"end_mill"}}).tools == []
+
+
+def test_declared_drains_are_scoped_per_unit_even_when_other_work_is_emitted():
+    from production.cnc_coverage import declared_gaps
+    from engine.tests.test_operations import _unit
+    first, second = _unit(), _unit(repetition_index=2)
+    snapshot = {"positions":[{"id":"pos-1","workshop_annotations":[
+        {"bay_id":"B1","bottom_drain_holes_mm":["100","500","900"]}]}]}
+    gaps = declared_gaps(snapshot,None,[first,second],[],[])
+    assert len(gaps) == 2
+    assert [g["unit_index"] for g in gaps] == [1,2]
+    assert all(g["reason_code"] == "emitter_not_implemented" for g in gaps)
+
+
+def test_module_scope_matches_annotations_once_without_changing_physical_identity():
+    from production.cnc_coverage import declared_gaps
+    from production.service import _operations_fact_units
+    from engine.tests.test_operations import _unit
+    base = _unit()
+    snapshot = {"manufacturing": [{**base.model_dump(mode="json"), "module_id": scope}
+                                  for scope in ("left", "right")],
+                "positions": [{"id": "pos-1", "workshop_annotations": [
+                    {"bay_id": "left|B1", "bottom_drain_holes_mm": ["100"]},
+                    {"bay_id": "right|B1", "bottom_drain_holes_mm": ["200"]}]}]}
+    units = _operations_fact_units(snapshot, "pos-1")
+    gaps = declared_gaps(snapshot, None, units, [], [])
+    assert len(gaps) == 2
+    assert [g["bay_id"] for g in gaps] == ["left|B1", "right|B1"]
+    assert [m.member_id for m in units[0].members] == [m.member_id for m in base.members]
+    assert "module_id" not in base.model_dump()
+
+
+def test_profile_setups_need_exact_sealed_section_loading_datum_and_source():
+    with pytest.raises(DocumentaryError,match="cnc_profile_setup_invalid"):
+        cnc._profile_setups([{"profile_sku":"P","loading_orientation":"EXTERIOR_UP"}])
+    data = {"profile_sku":"P","loading_orientation":"EXTERIOR_UP","axial_datum":"MEMBER_START",
+            "section_fingerprint":"a"*64,"source":"Plant review"}
+    assert cnc._profile_setups([data]) == [data]
+    with pytest.raises(DocumentaryError,match="cnc_profile_setup_invalid"):
+        cnc._profile_setups([data,data])
+
+
+@pytest.mark.parametrize("number",["NaN","Infinity","-Infinity"])
+def test_nonfinite_machine_numbers_are_rejected(number):
+    with pytest.raises(DocumentaryError,match="cnc_numeric_invalid"):
+        cnc._dec(number)

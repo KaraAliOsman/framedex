@@ -7,6 +7,12 @@
  */
 
 export interface CncGenerateRequestRequest {
+  /**
+   * @minLength 1
+   * @maxLength 64
+   */
+  expected_preview: string;
+  confirmed: boolean;
   /** @minLength 1 */
   machine_id: string;
   /**

@@ -132,6 +132,13 @@ See [physical openings](../product/physical-openings.md).
 
 ## CNC
 
+P14 separa la autoridad física estricta de la lectura histórica: sección y
+montaje sellados, X desde el origen inicial, tramo completo frente a mordazas,
+comparación/confirmación y auditoría inmutable. Los recorridos verifican
+intercambio neutro sintético, sin acreditarlo como formato ejecutable ni
+validación industrial. Las declaraciones sin emisor o patrón siguen pendientes.
+Véase [autoridad CNC](../product/cnc-authority.md) y su aceptación.
+
 Treat all CNC capability as high-risk until validated against known machine fixtures.
 
 Audit:

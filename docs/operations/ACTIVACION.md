@@ -339,3 +339,21 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 6. Una respuesta SMTP perdida no autoriza un reenvío automático. Compruebe la
    ausencia de entrega y confirme la recuperación en la bandeja. Una OC cancelada
    no se envía; conserve su historia y revise la compra nueva.
+
+## Mecanizado · autoridad de planta
+
+1. En Producción › OT › Mecanizado › Máquinas y herramientas declare datos
+   del manual y del montaje físico: capacidad, ejes, controlador, carrera,
+   margen, todas las mordazas revisadas, fuente y herramientas disponibles.
+2. Para cada código de herramienta declare tipo, diámetro, largo útil,
+   profundidad máxima y operaciones que admite. Para cada perfil revise el
+   montaje ligado a su sección sellada, origen inicial y orientación de carga.
+   No copie la autoridad DEMO de aceptación a una máquina productiva.
+3. Revise operaciones emitidas y pendientes, luego la comparación de programa.
+   Confirme el intercambio y verifique su manifiesto. Una revisión de plan o
+   autoridad puede reemplazar el programa; el historial conserva sus bytes.
+4. La salida implementada es intercambio neutro. Conectar una CNC requiere un
+   postprocesador declarado del fabricante y validación física específica.
+   DEKOPEN no envía este intercambio a una máquina ni inventa su formato.
+   Falta de patrón, Y/Z, herramienta, profundidad, sujeción u orientación
+   bloquea; completar esas autoridades no se sustituye por un valor estimado.

@@ -407,6 +407,7 @@ class PhysicalRelationshipV1(EngineModel):
 
 class ManufacturingFactsV1(EngineModel):
     schema_version: Literal[1] = 1
+    module_id: str | None = None
     position_id: str
     position_index: int = Field(ge=1)
     repetition_index: int = Field(ge=1)
@@ -432,6 +433,13 @@ class ManufacturingFactsV1(EngineModel):
     infills: list[InfillLocationFactV1]
     handles: list[HandleLocationFactV1]
     relationships: list[PhysicalRelationshipV1]
+
+    @model_serializer(mode="wrap")
+    def preserve_old_scope(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        if self.module_id is None:
+            result.pop("module_id", None)
+        return result
 
 
 def _segment_for_side(rect: TraceRectV1, side: MemberSide) -> TraceSegmentV1:

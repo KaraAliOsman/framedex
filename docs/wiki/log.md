@@ -1151,3 +1151,39 @@ CI y squash se registrarán al integrar.
 
 P11 PR https://github.com/KaraAliOsman/framedex/pull/142, CI 4/4 sobre debf64777ee210ff7b750ef06da0795ad573fc81, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38062719629, squash 55d73156ac4981fab821eb279d73399025ac6057, 2026-10-10.
 Las cinco comprobaciones HTTP finales conservan 404/400 sin pagos nuevos. La aceptación incluye saldos, recibos, documentos, simulación y MiMo real; R1–R20 PASA. Servicios propios detenidos y fixture persistente intacto.
+
+## 2026-10-10 — P14 · autoridad física y evidencia CNC
+
+Implementación `7e274d6e136fe4a39fd3eaaf0fd28043afc75bb0`, limpieza
+`eaf0eb5754cd6651fdad1bcab54e0d991ed39d1d`: sección/montaje separados,
+origen inicial inequívoco, tramo completo contra mordazas, confirmación
+revalidada y replay concurrente. Máquina/herramientas con RLS y auditoría,
+retiro/reactivación y restauración revisada; evidencia anterior inmutable.
+Se mantienen explícitas diez declaraciones no emitidas en 34 piezas DEMO.
+Cuarenta vistas propias y 32 oficiales, cero hallazgos/desbordes; teclado,
+foco, hashes y bytes PASA. Motor 871 (+2 xfail), backend 1.472,
+frontend 967 y lint/tipos/build PASA. Gate aislado completo: pgTAP 1.299,
+integración 486, 19 E2E y diez upgrades PG16 PASA, salida 0. La repetición
+sin mutaciones concurrentes resuelve la interferencia de regeneración/HMR.
+CI y squash se registrarán al integrar. No se acredita un formato propietario
+ni mecanizado industrial a partir del intercambio neutro sintético.
+
+## 2026-10-10 — P14 · sincronización de simulación en SHOT-10
+
+La corrida CI `38072197716` pasó tres gates y falló una aserción de vidrio
+antes de terminar la simulación del producto compuesto. El recorrido identifica
+`set_glass` entre las peticiones al endpoint compartido, valida HTTP 200,
+validez y SKU antes del selector y mantiene las comprobaciones de emisión e
+inmutabilidad. No aumenta tiempos ni reintentos. La primera repetición local
+pasó lint/tipos, 871 motor (+2 xfail) y 1.472 backend, con goldens intactos;
+dos pruebas frontend agotaron su tiempo con paralelismo local. Se repite con
+cuatro CPU, conservando checks y aserciones. La repetición DB pasó 1.299 pgTAP
+y 486 integraciones, pero dos E2E comprobaron precio/lista antes de la respuesta.
+Los recorridos esperan su proyección, la fecha efectiva y APPLIED. Estas
+corridas fallidas no acreditan aceptación; el resultado final local y CI se
+registrará después de completarse.
+
+La repetición completa con afinidad de cuatro CPU pasa lint, tipos, 871 motor
+(+2 xfail), 1.472 backend, 967 frontend y build, salida 0. Las dos pruebas
+frontend conservan sus límites y pasan; no cambió la configuración de CI.
+La repetición PostgreSQL/E2E está en curso y el fixture persistente se conserva.
