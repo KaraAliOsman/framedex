@@ -3727,7 +3727,9 @@ def _sheet_rules(org_id: UUID) -> dict[str, list[SheetRule]]:
     for group in (by_sku, by_thickness, by_glass):
         for candidates in group.values():
             candidates.sort(
-                key=lambda r: (r.sheet_width_mm * r.sheet_height_mm, r.workshop_sku)
+                key=lambda r: (r.sheet_width_mm * r.sheet_height_mm, r.workshop_sku,
+                               r.sheet_width_mm, r.sheet_height_mm, r.edge_trim_mm,
+                               r.purchasing_sku, r.supplier_name or "", r.manufacturer_name or "")
             )
     return {
         "by_sku": by_sku,

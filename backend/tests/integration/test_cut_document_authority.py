@@ -78,6 +78,23 @@ def test_sheet_declaration_rollback_and_rls_write_denial(documentary_tenant):
         rows("INSERT INTO inventory_items(org_id,sku,name,category,unit) VALUES(%s,'RLS','RLS','GLASS','M2') RETURNING id", [other])
 
 
+@pytest.mark.parametrize("changes", [{"width_mm":"1800.00", "height_mm":"2400.00"},
+                                    {"edge_trim_mm":"15.00"}])
+def test_one_supply_sku_cannot_mix_physical_formats(documentary_tenant, changes):
+    org, _, users, _ = documentary_tenant
+    client = owner_client(users["WORKSHOP_MANAGER"])
+    headers = {"HTTP_X_ORGANIZATION_ID":str(org)}
+    route = "/api/v1/inventory/sheet-formats/"
+    assert client.post(route, sheet_body(), format="json", **headers).status_code == 201
+    response = client.post(route, {**sheet_body(), **changes}, format="json", **headers)
+    assert response.status_code == 422 and response.data["error"]["code"] == "sheet_supply_identity_conflict"
+    assert one("SELECT count(*) AS n FROM inventory_items WHERE org_id=%s", [org])["n"] == 1
+    assert one("SELECT count(*) AS n FROM inventory_movements WHERE org_id=%s", [org])["n"] == 0
+    # An explicit different supply identity is accepted; sealed plans are untouched.
+    assert client.post(route, {**sheet_body(), **changes, "sku":"LAMINA-P13-OTRA"},
+                       format="json", **headers).status_code == 201
+
+
 def planned_remnants():
     authority = one("SELECT id FROM profile_purchase_mappings WHERE org_id IS NULL LIMIT 1")["id"]
     return {"bars":{"workshop_cut_plan":[{"bar_index":1, "stock_authority_id":str(authority),

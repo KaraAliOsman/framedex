@@ -1524,6 +1524,23 @@ def test_optimize_routes_shaped_glass_to_unnested() -> None:
     assert flagged["shape"] == shape
 
 
+def test_sheet_rule_equal_area_order_is_independent_of_database_rows(monkeypatch) -> None:
+    from decimal import Decimal
+    from production import service
+
+    stock = [{"sku":"IGUAL", "name":"Proveedor", "attributes":{
+        "sheet_width_mm":width, "sheet_height_mm":height, "sheet_edge_trim_mm":"0",
+        "glass_sku":"VIDRIO-BASE",
+    }} for width, height in (("2400", "1800"), ("1800", "2400"))]
+    monkeypatch.setattr(service, "rows", lambda *_: stock)
+    first = service._sheet_rules(uuid4())["by_glass"]["VIDRIO-BASE"]
+    stock.reverse()
+    second = service._sheet_rules(uuid4())["by_glass"]["VIDRIO-BASE"]
+    assert [(r.sheet_width_mm, r.sheet_height_mm) for r in first] == [
+        (r.sheet_width_mm, r.sheet_height_mm) for r in second]
+    assert first[0].sheet_width_mm == Decimal("1800")
+
+
 def test_pick_sheet_rule_prefers_smallest_fitting() -> None:
     from decimal import Decimal
 

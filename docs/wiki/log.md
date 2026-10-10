@@ -1060,3 +1060,19 @@ sobre `2ebc5165767236a557417cfb1b4e64b7190002f8`, corrida `38011547655`,
 y se integra con squash `9329e9e3378c58bc2bef3bd9c23d80f613379397` en `integracion/v1`.
 La evidencia local conserva MIME/SMTP, PDF A/B y R1–R20 en PASA.
 Servicios propios detenidos; fixture persistente intacto. Continúa P13.
+
+## 2026-10-09 — P13 · papel compacto y dirección física común
+
+Implementación `7ac18654c3987d9b1d7c4d2422fec164c2a76b5b`: secuencia única
+en PDF/CSV/DXF/etiquetas/QR, pack de tres barras por hoja, callouts, padres y
+estación por material. Carta/A4/rollo y destino RT son configurables. Las
+láminas se declaran con proveedor/fuente y sin movimiento de stock; imprimir
+no asigna códigos ni material. El flujo DEMO completa Corte mediante QR en
+390 oscuro: cinco RT conservan sus códigos/dimensiones/destinos y dos RT de
+entrada quedan consumidos. La escala recorre 113 OT sin cambiar el contrato
+de una OT por posición. La regresión focal pasa 169 tests, y se decodifican
+dieciocho QR desde píxeles de etiquetas. Matriz/oficial sin hallazgos finales;
+la revisión visual corrige una tabla internamente recortada en móvil.
+Se conservan como límites la autoridad DEMO y la reoptimización explícita de
+planes históricos sin dirección RT prevista. P13 y gates completos siguen
+en curso; no se declara merge ni CI aceptados antes de esos resultados.

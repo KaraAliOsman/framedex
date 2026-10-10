@@ -4,6 +4,7 @@ Each declaration is an immutable inventory variant. Existing cut plans keep
 their sealed dimensions; a new declaration affects only a human re-optimize.
 """
 
+from decimal import Decimal
 from uuid import UUID
 
 from django.db import transaction
@@ -64,6 +65,23 @@ def declare_format(*, org_id: UUID, data: dict) -> tuple[dict, bool]:
         attributes["glass_sku"] = data["technical_sku"]
     variant = "FORMAT:" + documentary_sha256_v1(attributes)
     with transaction.atomic(), documentary_backend():
+        # The existing stock ledger addresses sheet supply by commercial SKU.
+        # Serialize declarations so this identity cannot describe incompatible
+        # dimensions/substrates; another physical format needs its own SKU.
+        rows("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", [f"sheet-format:{org_id}:{sku}"])
+        existing = rows(
+            """SELECT attributes FROM public.inventory_items WHERE org_id=%s AND sku=%s
+               AND attributes ? 'sheet_width_mm' AND attributes ? 'sheet_height_mm'""",
+            [str(org_id), sku],
+        )
+        for item in existing:
+            previous = decoded(item["attributes"])
+            if (Decimal(str(previous["sheet_width_mm"])) != data["width_mm"]
+                    or Decimal(str(previous["sheet_height_mm"])) != data["height_mm"]
+                    or Decimal(str(previous.get("sheet_edge_trim_mm") or "0")) != data["edge_trim_mm"]
+                    or previous.get("glass_sku") != attributes.get("glass_sku")):
+                raise DocumentaryError("sheet_supply_identity_conflict", public_detail=
+                    "Ese código de compra ya identifica otro formato o vidrio. Declara un código de compra distinto para este suministro.")
         inserted = rows(
             """INSERT INTO public.inventory_items(org_id,sku,name,category,unit,variant_key,attributes)
                VALUES (%s,%s,%s,%s,'M2',%s,%s::jsonb)

@@ -19,6 +19,14 @@ baseline evidence preserved. New hardware controls have their own clean matrix.
 
 This page records recurring failure modes. It does **not** assert that every item is still broken. Re-test against the current ref.
 
+P13 verifica papel, CSV/DXF UTF-8, etiquetas y QR con la misma dirección física,
+callouts sin colisión y origen/destino de retazos. Imprimir no asigna códigos ni
+stock; una dirección prevista se vuelve material al completar Corte. Los planes
+históricos sin esa dirección requieren reoptimización humana. La tabla móvil
+de formatos expone la fuente completa: el control de desborde de página por sí
+solo no detectaba un recorte dentro del contenedor. Véase
+[corte y etiquetas](../product/cut-documents.md) y su aceptación P13.
+
 ## Editor/domain semantics
 
 P05 verifies shared DIN primitives, declared travel, exact arch crowns and

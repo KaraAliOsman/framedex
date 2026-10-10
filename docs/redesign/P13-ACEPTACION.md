@@ -23,6 +23,9 @@ sin movimiento de stock. Una declaración nueva afecta al optimizar de nuevo;
 no reescribe un plan sellado. El servidor limita la escritura al dueño o
 jefe de taller; los demás lectores solo consultan. DEMO procede del sistema
 de catálogo. Los documentos históricos sin fuente la muestran como Sin dato.
+El código de compra conserva una sola identidad física: dimensiones/despunte
+o sustrato incompatibles exigen otro código. La validación se serializa por
+organización/código; las alternativas del mismo área tienen orden determinista.
 
 La organización configura Carta, A4 o rollo 100 × 50 mm y el destino de los
 retazos. Cada etiqueta muestra OT, posición/unidad, función, largo/medidas,
@@ -128,7 +131,8 @@ Los tests renderizan las 113 OT de revisiones de 1/12/100 posiciones, respetando
 una OT por posición. Verifican páginas ≤ ceil(barras/3) + dos secciones,
 tipografía, bbox sin recorte/colisión, cierre Decimal, Unicode, precisión,
 agrupación sin mezcla y paridad entre artefactos. La regresión focal de
-producción/inventario/OpenAPI pasa 169 tests. No cambia ninguna fórmula del
+producción/inventario/OpenAPI pasa 169 tests; la regresión de orden independiente
+de filas se añade durante el cierre. No cambia ninguna fórmula del
 motor ni se regeneran goldens.
 
 Los resultados finales de los gates locales y CI se incorporan antes del merge.
