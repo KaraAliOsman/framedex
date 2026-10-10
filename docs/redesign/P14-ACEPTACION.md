@@ -32,8 +32,10 @@ visible antes de confirmar y descargar.
 `make lint`, `make typecheck`, `make test` y `make build` PASA: 871 motor
 (+2 xfail), 1.472 backend y 967 frontend. El reintento focal tras retirar tokens
 incluye lint/tipos, toda la suite frontend y build; las suites de Python ya
-pasaron con el código final. Golden bytes sin cambios. Base de datos y CI
-se registran al cerrar el PR.
+pasaron con el código final. Golden bytes sin cambios. La ejecución aislada
+de PostgreSQL pasa 1.299 pgTAP, 486 integraciones, 19 E2E y diez upgrades
+PG16, con `[PASS] database gate` y salida 0. El proyecto aislado se detuvo
+al terminar; el fixture persistente se conserva. CI se registra al cerrar el PR.
 
 ## Pase editorial
 

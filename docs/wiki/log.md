@@ -1151,3 +1151,19 @@ CI y squash se registrarán al integrar.
 
 P11 PR https://github.com/KaraAliOsman/framedex/pull/142, CI 4/4 sobre debf64777ee210ff7b750ef06da0795ad573fc81, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38062719629, squash 55d73156ac4981fab821eb279d73399025ac6057, 2026-10-10.
 Las cinco comprobaciones HTTP finales conservan 404/400 sin pagos nuevos. La aceptación incluye saldos, recibos, documentos, simulación y MiMo real; R1–R20 PASA. Servicios propios detenidos y fixture persistente intacto.
+
+## 2026-10-10 — P14 · autoridad física y evidencia CNC
+
+Implementación `7e274d6e136fe4a39fd3eaaf0fd28043afc75bb0`, limpieza
+`eaf0eb5754cd6651fdad1bcab54e0d991ed39d1d`: sección/montaje separados,
+origen inicial inequívoco, tramo completo contra mordazas, confirmación
+revalidada y replay concurrente. Máquina/herramientas con RLS y auditoría,
+retiro/reactivación y restauración revisada; evidencia anterior inmutable.
+Se mantienen explícitas diez declaraciones no emitidas en 34 piezas DEMO.
+Cuarenta vistas propias y 32 oficiales, cero hallazgos/desbordes; teclado,
+foco, hashes y bytes PASA. Motor 871 (+2 xfail), backend 1.472,
+frontend 967 y lint/tipos/build PASA. Gate aislado completo: pgTAP 1.299,
+integración 486, 19 E2E y diez upgrades PG16 PASA, salida 0. La repetición
+sin mutaciones concurrentes resuelve la interferencia de regeneración/HMR.
+CI y squash se registrarán al integrar. No se acredita un formato propietario
+ni mecanizado industrial a partir del intercambio neutro sintético.

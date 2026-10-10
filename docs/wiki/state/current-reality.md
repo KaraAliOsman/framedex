@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-10
 volatility: high
-verified_ref: 7e274d6e136fe4a39fd3eaaf0fd28043afc75bb0
+verified_ref: eaf0eb5754cd6651fdad1bcab54e0d991ed39d1d
 sources:
+  - P14 limpieza eaf0eb5754cd6651fdad1bcab54e0d991ed39d1d, lint/tipos/frontend/build PASA, 2026-10-10
   - P14 implementación 7e274d6e136fe4a39fd3eaaf0fd28043afc75bb0, navegador y pruebas focales, 2026-10-10
   - docs/redesign/P14-ACEPTACION.md
   - P11 PR https://github.com/KaraAliOsman/framedex/pull/142, CI 4/4 sobre debf64777ee210ff7b750ef06da0795ad573fc81, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38062719629, squash 55d73156ac4981fab821eb279d73399025ac6057, 2026-10-10.
