@@ -136,8 +136,31 @@ sin pérdida y se verifica igualdad de todos sus píxeles (17.406.022 bytes).
 | R19 · firma | PASA | F11 en revisión/sello e historial; F2 en cajetín y detalles de huella. |
 | R20 · capacidad del §8 | PASA | Checklist accionable y emisión de los mismos bytes del PDF revisado. |
 
-Los gates finales y el ref probado se registran en la sección siguiente antes
-de abrir el PR; el estado de integración se registra después del squash.
+## Verificación técnica
+
+Fuente de implementación `d6bf84f4f9b4aa6ecdef3dfe16b86f39ec86bcbe`,
+con regresión de RUT histórico en `fb5b82d11c18e50fe9856e3b5e8b63023a27eef6`.
+Gate nativo completo: `make lint`, `make typecheck`, `make test` y `make build`
+PASA; 848 tests del motor (+2 xfail), 1.434 backend y 954 frontend. OpenAPI/orval
+reproducibles, guardas y golden byte check PASA. Los nueve golden de operaciones
+anteriores conservan exactamente sus valores; se añaden dos casos físicos.
+El RUT conserva el rango histórico de cinco a ocho dígitos del contrato SII,
+incluidos los casos módulo 11 de cinco y seis dígitos, sin admitir cuerpo nulo.
+
+El gate SMTP toma el puerto declarado del proyecto aislado, fuerza el proveedor
+sandbox y descarta credenciales MAIL heredadas. Seis regresiones comprueban
+aislamiento y rechazo de autoridad inválida. El E2E permanente, en
+`e841ae29`, verifica preview, confirmación y emisión A/B. Espera SENT (aceptación
+SMTP), encuentra un único correo en el Mailpit del gate por Message-ID, asunto
+y destinatario, y comprueba SHA y bytes de su adjunto contra el PDF revisado.
+Conserva los bytes de A después de B. El E2E focal pasa; no presume lectura
+humana ni relaja confirmación o revisión del visor real.
+
+Database Gate completo PASA sobre `e841ae29`: 86 archivos / 1.249 pgTAP,
+455 integraciones PostgreSQL, 19 E2E y migraciones/seed en PostgreSQL 16 con
+los diez verificadores de upgrade. El teardown confirma puertos 8000/5173
+libres y detiene solo el stack del gate. Cuatro checks de CI y squash se
+registran después de su resultado; ESTADO sigue en curso hasta integrar.
 
 ## Defaults, sandbox y límites
 

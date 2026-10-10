@@ -3,10 +3,12 @@ type: concept
 status: active
 updated: 2026-10-09
 volatility: medium
+verified_ref: e841ae294f2a9fc849b4f9d0847beceecf1fb07c
 sources:
   - docs/cola/prompts/P08-cotizacion-emision.md
   - backend/documents/issuance.py
   - backend/tests/integration/test_guided_quotation.py
+  - frontend/tests/e2e/auth.spec.ts, SHOT-10, e841ae29
   - docs/redesign/P08-ACEPTACION.md
 ---
 
@@ -18,6 +20,8 @@ La pestaña Cotización guía desde los datos de cliente/obra hasta el PDF real,
 su confirmación y el sello. El checklist enfoca el campo exacto, abre los
 antecedentes plegados y declara los bloqueos de precio/fabricación. El backend
 valida RUT módulo 11, correo, dirección, vigencia y condiciones comerciales.
+El rango del cuerpo del RUT conserva los cinco a ocho dígitos del contrato
+tributario existente; el cuerpo nulo y un verificador incorrecto se rechazan.
 El calendario calcula montos mediante el motor; no convierte texto en dinero.
 
 La preparación compone la misma revisión que la emisión histórica, con fecha
@@ -33,6 +37,11 @@ recibo. Una falla de transacción elimina únicamente uploads propios del
 intento. Las APIs históricas de freeze se conservan para sus consumidores;
 la UI tiene una sola llamada a `quotationIssue` y retira compartir/enviar
 cotización por rutas alternativas. La cobranza conserva su compositor de pago.
+
+SHOT-10 verifica SENT como aceptación SMTP y encuentra un único Message-ID,
+destinatario y asunto en el Mailpit aislado. Su único adjunto PDF conserva SHA
+y bytes de la vista previa; el PDF A se recupera idéntico después de emitir B.
+La recepción sandbox no afirma lectura humana ni entrega única de SMTP real.
 
 ## Vigencia y decisiones
 
