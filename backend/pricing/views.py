@@ -108,8 +108,10 @@ def _preview_attempt(token, claims, organization_header, data, service=preview):
     with transaction.atomic(durable=True):
         with connection.cursor() as cursor:
             cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ')
-            cursor.execute("SELECT set_config('request.jwt.claims',%s,true)",
-                           [json.dumps(claims,separators=(',',':'),sort_keys=True)])
+            cursor.execute("SELECT set_config('request.jwt.claims',%s,true), "
+                           "set_config('request.jwt.claim.sub',%s,true)",
+                           [json.dumps(claims,separators=(',',':'),sort_keys=True),
+                            str(claims.get('sub') or '')])
             cursor.execute('SET LOCAL ROLE authenticated')
         tenant = resolve_tenant_context(MembershipRepository().list_active_for_user(token.user_id),
                                         organization_header)

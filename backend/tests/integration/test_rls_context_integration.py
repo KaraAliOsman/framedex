@@ -9,6 +9,7 @@ import json
 import os
 import secrets
 import base64
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 from django.conf import settings
@@ -215,6 +216,56 @@ def test_nested_verified_identities_restore_individual_and_json_claims(real_rows
         with connection.cursor() as cursor:
             cursor.execute('SELECT auth.uid(), auth.jwt()->>\'sub\'')
             assert cursor.fetchone() == (first.user_id, str(first.user_id))
+    assert_no_context()
+
+
+@pytest.mark.parametrize('boundary', ['price', 'freeze', 'preview', 'issue'])
+def test_repeatable_read_boundary_pins_verified_individual_claim(
+    real_rows: RLSFixtures, monkeypatch: pytest.MonkeyPatch, boundary: str,
+) -> None:
+    """Special outermost transactions must ignore an older session's subject."""
+    from documents import issuance_views, views as documentary_views
+    from pricing import views as pricing_views
+
+    current, stale = real_rows.tokens['A'], real_rows.tokens['B']
+    org = real_rows.organizations['A']
+    seen = []
+
+    def observe(*args, **kwargs):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT current_setting('request.jwt.claim.sub',true)::uuid, "
+                "current_setting('request.jwt.claims',true)::jsonb->>'sub'"
+            )
+            seen.append(cursor.fetchone())
+        return {'project_id': str(org)}
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT set_config('request.jwt.claim.sub',%s,false)", [str(stale.user_id)])
+    try:
+        if boundary == 'price':
+            pricing_views._preview_attempt(current, current.claims, str(org), {}, service=observe)
+        elif boundary == 'freeze':
+            monkeypatch.setattr(documentary_views, 'freeze_revision_a', observe)
+            documentary_views._freeze_attempt(
+                current, current.claims, str(org), uuid4(),
+                {'pricing_operation_id': uuid4(), 'confirmed': True},
+            )
+        else:
+            monkeypatch.setattr(issuance_views, 'verified_request_token', lambda _: current)
+            monkeypatch.setattr(issuance_views.issuance, 'prepare_preview', observe)
+            monkeypatch.setattr(issuance_views.issuance, 'issue_preview', observe)
+            issuance_views.guided_with_retry(
+                request=SimpleNamespace(headers={'X-Organization-ID': str(org)}),
+                project_id=uuid4(), data={'pricing_operation_id': uuid4()},
+                issuing=boundary == 'issue',
+            )
+        assert seen == [(current.user_id, str(current.user_id))]
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT current_setting('request.jwt.claim.sub',true)")
+            assert cursor.fetchone()[0] == str(stale.user_id)
+    finally:
+        connection.close()
     assert_no_context()
 
 
