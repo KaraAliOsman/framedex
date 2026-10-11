@@ -402,6 +402,10 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
     page.getByRole("button", { name: "Descargar plantilla XLSX", exact: true }),
   ).toHaveCount(0);
   await navigation.getByRole("link", { name: "Ajustes", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Secciones de ajustes" })
+    .getByRole("button", { name: "Documentos", exact: true })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Documentos", exact: true, level: 3 }),
   ).toBeVisible();
