@@ -704,3 +704,26 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   comparten hojas/manillas del motor. P19 incorpora la física avanzada en 3D.
 - Fuentes y precios del fixture siguen DEMO; ni el dibujo ni un ensayo local
   acreditan catálogo de fabricante, viento de obra o certificación industrial.
+
+## P19 · representación física 3D (2026-10-11)
+
+- La cámara comienza en Interior; Exterior y Detalle se eligen en el visor.
+  Muro, corte y despiece comienzan ocultos. Son preferencias de presentación,
+  sin efecto en diseño, BOM, fabricación, precio o autoridad documental.
+- Aperturas avanzadas usan sólo hojas y planos evaluados/sellados del motor.
+  Las correderas simples conservan el layout y `travel` de P05: ese contrato
+  histórico no emite `opening_leaves`. Su referencia visual permanece
+  contenida en el vano y sus carriles; no publica un recorrido de fabricación.
+- Una apertura física sin evaluación se muestra como Sin dato, sin inventar
+  hojas. No existe un default en Ajustes que sustituya esa autoridad; perfiles,
+  recetas y acabados se declaran en Catálogo por el flujo de revisión existente.
+- La limitación al volumen cerrado se aplica a traslaciones guiadas. Una
+  hoja abatible/pivotante gira rígidamente en su eje y debe sobresalir en
+  profundidad para abrir; impedirlo rompería el contrato físico D03/D08.
+- Secciones y herrajes sin geometría declarada se etiquetan aproximados.
+  Sin textura de fabricante disponible el foliado es plano aproximado.
+  Un render no acredita la serie sintética ni una prestación técnica.
+- El portal lee la revisión sellada. Usa su sección esquemática cuando no
+  existe sección en ese snapshot; no completa los huecos con Catálogo vivo.
+  DOC-01 mantiene su dibujo SVG y sus bytes emitidos. PNG descarga la cámara
+  y pose visibles; miniaturas comparten rig, luz, color y materiales del visor.

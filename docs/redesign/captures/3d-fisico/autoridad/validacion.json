@@ -1,0 +1,49 @@
+[
+  {
+    "test": "bicolor sellado blanco/antracita",
+    "result": "PASA",
+    "authority": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+  },
+  {
+    "test": "foliado sin textura declarada",
+    "result": "PASA",
+    "proceduralTexture": false
+  },
+  {
+    "test": "apertura sin evaluación motor",
+    "result": "PASA",
+    "fabricatedLeaf": false
+  },
+  {
+    "test": "contexto perdido y reintentar",
+    "result": "PASA"
+  },
+  {
+    "test": "vacío",
+    "result": "PASA"
+  },
+  {
+    "test": "animación normal",
+    "result": "PASA",
+    "stableAfterMs": 320,
+    "observedElapsedMs": 749
+  },
+  {
+    "test": "reducción de movimiento",
+    "result": "PASA",
+    "stableAfterMs": 320,
+    "observedElapsedMs": 673
+  },
+  {
+    "test": "equipo sin WebGL conserva dibujo técnico",
+    "result": "PASA"
+  },
+  {
+    "test": "sin permiso",
+    "result": "PASA"
+  },
+  {
+    "test": "carga y resolución",
+    "result": "PASA"
+  }
+]
