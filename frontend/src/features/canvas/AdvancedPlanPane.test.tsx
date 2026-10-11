@@ -37,4 +37,27 @@ describe("engine-sourced advanced plan", () => {
         .join(" "),
     );
   });
+  it("preserves other bays' travel and horizontal pivot polygons in passage mode", () => {
+    const source = (name: string, bay: string) =>
+      (fixtures.find((item) => item.name === name)!.leaves as unknown as OpeningLeafFact[]).map(
+        (leaf) => ({ ...leaf, bay_id: bay }),
+      );
+    const fold = source("DEMO_PLEGABLE/3+0-PASO/interior", "fold");
+    const hst = source("DEMO_HST/A/interior", "hst");
+    const pivot = source("DEMO_PIVOT_H/EJE-30/interior", "pivot");
+    const { container } = render(
+      <AdvancedPlanPane facts={{ m: [...fold, ...hst, ...pivot] }} onHide={() => {}} />,
+    );
+    const figures = container.querySelectorAll("figure");
+    const preserved = [...figures].slice(1).map((figure) => figure.innerHTML);
+    fireEvent.click(screen.getByRole("button", { name: "Ver hoja de paso" }));
+    expect([...figures].slice(1).map((figure) => figure.innerHTML)).toEqual(preserved);
+    expect(figures[0]!.querySelectorAll(".advanced-plan-open")[0]?.getAttribute("d")).toBe(
+      fold[0]!
+        .advanced!.closed_plan.map(
+          (point, index) => `${index ? "L" : "M"}${point.x_mm} ${point.depth_mm}`,
+        )
+        .join(" "),
+    );
+  });
 });

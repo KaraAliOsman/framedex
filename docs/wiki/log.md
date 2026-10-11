@@ -1424,3 +1424,12 @@ integraciones, 19 Auth E2E y trece programas de upgrade poblado PostgreSQL 16.
 La expectativa E2E incluye las siete series v8 y la regeneración API se separa
 del navegador; la repetición completa sale 0 sin debilitar checks. 189 PNG
 conservan sus píxeles. Procesos propios detenidos; CI/squash siguen su cierre.
+
+### 2026-10-11 · D08, correcciones de revisión
+
+El PR #150 detectó pérdida de borradores decimales y un modo paso que cerraba
+otros vanos. Se conserva el texto de fuente hasta blur, se valida sin redondear
+y se limita el paso al vano correspondiente. Cuatro regresiones nuevas pasan;
+gates completos repetidos: 1006 motor (+2 xfail), 1544 backend, 1076 frontend,
+lint/tipos/build y mypy sin caché en las 128 fuentes. No cambió SQL ni RLS.
+Aceptación y evidencia de escritura/planta se enlazan al cerrar el PR.

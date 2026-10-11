@@ -1,3 +1,4 @@
+import { useId, useState } from "react";
 import { decimalInputValue } from "../../decimal";
 import type { AdvancedRecipe, Capability } from "../canvas/physicalOpenings";
 import { domainLabel } from "../../i18n/domainLabels";
@@ -57,6 +58,46 @@ type Authority = AdvancedRecipe &
     pass_through_hardware_kit_skus: string[];
   };
 
+/** Preserve exact source drafts, including a sign or decimal separator in progress. */
+function SourceDecimalField({
+  label,
+  value,
+  update,
+}: {
+  label: string;
+  value: string;
+  update(value: string): void;
+}): JSX.Element {
+  const id = useId();
+  const [checked, setChecked] = useState(false);
+  const canonical = decimalInputValue(value.trim().replace(",", "."));
+  const invalid = checked && value !== "" && canonical === "";
+  return (
+    <label>
+      <span>{label}</span>
+      <input
+        value={value}
+        inputMode="decimal"
+        aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? id : undefined}
+        onChange={(event) => {
+          setChecked(false);
+          update(event.target.value);
+        }}
+        onBlur={() => {
+          setChecked(true);
+          if (canonical !== "") update(canonical);
+        }}
+      />
+      {invalid && (
+        <span id={id} role="alert">
+          Completa un número decimal desde la fuente. El valor escrito se conserva.
+        </span>
+      )}
+    </label>
+  );
+}
+
 /** Only authored source values. Empty measures never become engineering defaults. */
 export function AdvancedRecipesEditor({
   capability,
@@ -68,18 +109,15 @@ export function AdvancedRecipesEditor({
   const recipes = (capability.advanced_recipes ?? []) as Authority[];
   const patch = (at: number, values: Partial<Authority>) =>
     onChange(recipes.map((recipe, index) => (index === at ? { ...recipe, ...values } : recipe)));
-  const text = (label: string, value: string, update: (value: string) => void, numeric = false) => (
-    <label>
-      <span>{label}</span>
-      <input
-        value={value}
-        inputMode={numeric ? "decimal" : "text"}
-        onChange={(event) =>
-          update(numeric ? decimalInputValue(event.target.value) : event.target.value)
-        }
-      />
-    </label>
-  );
+  const text = (label: string, value: string, update: (value: string) => void, numeric = false) =>
+    numeric ? (
+      <SourceDecimalField label={label} value={value} update={update} />
+    ) : (
+      <label>
+        <span>{label}</span>
+        <input value={value} inputMode="text" onChange={(event) => update(event.target.value)} />
+      </label>
+    );
   const select = (
     label: string,
     value: string | null,

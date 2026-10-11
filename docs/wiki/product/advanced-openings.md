@@ -29,6 +29,11 @@ usa migración y no depende de reproducir seed. No se infieren HST G/K.
 SQL aplica fuentes y compatibilidad de familia, kit y tenant; el editor
 estructurado comparte las validaciones y la autoridad de P16.
 
+Los campos de receta conservan el borrador decimal literal durante la escritura,
+incluyendo signo y separador en curso; al salir normalizan sin redondear y
+explican los valores incompletos. El modo de hoja de paso sólo altera el vano
+plegable; los carriles y polígonos de otros vanos se conservan.
+
 El motor calcula el movimiento y produce geometría cerrada/abierta y ejes.
 Los plegables conservan longitud rígida, paquete y cierre de paso independiente.
 Las guillotinas declaran muelle/contrapeso y recorrido por hoja/carril.

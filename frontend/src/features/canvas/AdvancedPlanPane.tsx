@@ -39,10 +39,11 @@ export function AdvancedPlanPane({
         Línea discontinua: posición cerrada · Línea continua: posición abierta
       </p>
       {rows.map(({ key, leaves }) => {
+        const passageBay = passage && leaves.some((leaf) => leaf.advanced!.pass_open_plan);
         const points = leaves.flatMap((leaf) => [
           ...leaf.advanced!.closed_plan,
-          ...(!passage ? (leaf.advanced!.open_plan_polygon ?? []) : []),
-          ...(passage
+          ...(!passageBay ? (leaf.advanced!.open_plan_polygon ?? []) : []),
+          ...(passageBay
             ? (leaf.advanced!.pass_open_plan ?? leaf.advanced!.closed_plan)
             : leaf.advanced!.open_plan),
         ]);
@@ -73,7 +74,7 @@ export function AdvancedPlanPane({
                     <title>
                       {data.kind === "FIXED"
                         ? "Paño fijo"
-                        : data.pass_through && passage
+                        : data.pass_through && passageBay
                           ? "Hoja de paso independiente"
                           : data.track != null
                             ? `Carril ${data.track + 1} · recorrido ${fmtMm(data.travel_mm)} mm`
@@ -86,10 +87,12 @@ export function AdvancedPlanPane({
                     />
                     <path
                       className="advanced-plan-open"
-                      d={path(passage ? (data.pass_open_plan ?? data.closed_plan) : data.open_plan)}
+                      d={path(
+                        passageBay ? (data.pass_open_plan ?? data.closed_plan) : data.open_plan,
+                      )}
                       vectorEffect="non-scaling-stroke"
                     />
-                    {!passage && Boolean(data.open_plan_polygon?.length) && (
+                    {!passageBay && Boolean(data.open_plan_polygon?.length) && (
                       <path
                         className="advanced-plan-open"
                         d={`${path(data.open_plan_polygon!)} Z`}

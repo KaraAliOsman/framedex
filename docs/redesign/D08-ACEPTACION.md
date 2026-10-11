@@ -131,7 +131,7 @@ Véase [decisiones](../decisions/valores-por-defecto.md).
 ## Gates
 
 Lint, typecheck, test y build locales PASA: motor 1006 (+2 xfail históricos),
-backend 1544 y frontend 1072. Golden check byte a byte PASA.
+backend 1544 y frontend 1076. Golden check byte a byte PASA.
 Database Gate completo PASA: 95 archivos / 1451 pgTAP, 554 integraciones,
 19 Auth E2E y trece programas de upgrade poblado PostgreSQL 16, incluido
 D08 y la comprobación final de terreno. Teardown propio PASA, salida 0.
@@ -139,3 +139,11 @@ La primera corrida encontró una lista E2E de series anterior a v8 y una
 regeneración API concurrente con Vite. Se actualizó la expectativa de las
 siete series y se separaron ambos procesos; la corrida completa posterior
 pasó sin debilitar checks ni timeouts. CI se registra al integrar.
+
+La revisión del PR detectó dos regresiones: el formulario normalizaba cada
+tecla y borraba decimales aún incompletos; el modo paso afectaba otros vanos.
+Se conserva el borrador literal y se normaliza exactamente al salir, con error
+en español cuando falta completarlo. La planta limita el paso al vano plegable.
+Cuatro regresiones nuevas y seis pruebas focales pasan; los gates completos
+posteriores conservan motor/backend y suman 1076 pruebas frontend. Mypy sin
+caché verifica las 128 fuentes; el manifiesto v7 declara su retorno tipado.
