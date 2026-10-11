@@ -35,7 +35,7 @@
 | P22 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/148 | e317edb9b76b4346e33aa3b60b4783b4cc2f0a99 | CI 4/4 verde; ficha/RUT/fusión, PDF vivo, MFA/invitación y moneda/FX con autoridad; 1,389 pgTAP, 535 integraciones, 19 E2E y upgrades PG16; 356 capturas verificadas sin hallazgos y rúbrica PASA. |
 | P23 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/149 | 331d2eeeec57dedd14577c4ffd5ce8079568bc44 | CI 4/4 verde; despacho/terreno/postventa, replay privado y actas selladas; 1,427 pgTAP, 553 integraciones, 19 E2E y doce upgrades PG16; 40 vistas sin hallazgos y rúbrica PASA. |
 | D08 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/150 | d6921a893fcc3b303fcd693bd934380e7227f3d0 | CI 4/4 verde; catorce recetas, cortes/BOM/kits y planta; 1.451 pgTAP, 554 integraciones, 19 E2E y trece upgrades PG16; 199 capturas verificadas y rúbrica PASA. |
-| P19 | 3 | pendiente |  |  |  |
+| P19 | 3 | en curso |  |  |  |
 | P18 | 3 | pendiente |  |  |  |
 | P24 | 4 | pendiente |  |  |  |
 | P20 | 5 | pendiente |  |  |  |
