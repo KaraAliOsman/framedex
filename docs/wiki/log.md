@@ -1313,3 +1313,13 @@ poblados PostgreSQL 16. Las 40 vistas finales distinguen oferta B/elección A,
 y la captura oficial de 40 vistas no tiene hallazgos. Secret scan PASA.
 Los procesos propios están detenidos y el fixture se conserva. CI/squash
 siguen pendientes hasta su registro de integración.
+
+### 2026-10-11 · P10 integrado
+
+PR [#147](https://github.com/KaraAliOsman/framedex/pull/147) integrado en `integracion/v1` con squash
+`8c8bda1c70c70fddd6f45ae0401efea03a725bb8`. Los cuatro checks requeridos pasan sobre
+`f2130e1fe51243c90c7bcca822f7a613ac00896c` (corrida `38119756219`).
+Los gates locales completos y matrices finales están en `P10-ACEPTACION.md`.
+CodeRabbit omitió la revisión por configuración de rama y Devin Review por
+cuota; no se atribuyen como revisiones completas. Los procesos propios de
+P10 fueron detenidos; el stack se abrió después para la base visual de P22.

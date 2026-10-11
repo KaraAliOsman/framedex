@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: d0c9210bbebb92092e7099d0f06a1d93800ba4ee
+verified_ref: 8c8bda1c70c70fddd6f45ae0401efea03a725bb8
 sources:
+  - P10 PR https://github.com/KaraAliOsman/framedex/pull/147, CI 4/4 sobre f2130e1fe51243c90c7bcca822f7a613ac00896c, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38119756219, squash 8c8bda1c70c70fddd6f45ae0401efea03a725bb8, 2026-10-11
   - P10 cierre local d0c9210bbebb92092e7099d0f06a1d93800ba4ee, cuatro checks de código, Database Gate completo y matrices finales, 2026-10-11
   - P10 implementación 08947c855b2339fa830058883cfa9c0d5a685c8c, navegador, matrices y conciliación PostgreSQL focal, 2026-10-11
   - docs/redesign/P10-ACEPTACION.md
@@ -99,7 +100,7 @@ da 81. Los cuatro gates locales pasan: 899 motor (dos xfails preexistentes),
 1.493 backend y 1.002 frontend, golden byte check, lint, tipos y build. El
 gate completo verifica 1.350 pgTAP, 512 integraciones, 19 E2E y upgrades
 poblados en PostgreSQL 16. La oferta B y la elección A se distinguen en
-las 40 vistas finales. CI y squash se registran al integrar.
+las 40 vistas finales. CI 4/4 PASA; PR #147 integrado con squash `8c8bda1c70c70fddd6f45ae0401efea03a725bb8`.
 
 Véase [propuesta y acuerdo](../product/customer-proposals.md) y
 `docs/redesign/P10-ACEPTACION.md`. Flow productivo y catálogo certificado
