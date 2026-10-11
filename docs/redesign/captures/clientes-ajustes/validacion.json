@@ -1,0 +1,30 @@
+{
+  "verifiedRef": "68674c22ec1ffd303c572764bf472c6587d58d84",
+  "codeGates": "PASA",
+  "databaseGate": "PASA",
+  "completeCodeSuiteRef": "4409f0a681552e4c7ae9406bd10a775af800da8a",
+  "subsequentChange": "Auth E2E selects Documentos; the historical glass upgrade expects the additive client_address_id to remain NULL; product code unchanged",
+  "subsequentChecks": [
+    "frontend lint (ESLint + tsc)",
+    "Prettier auth.spec.ts",
+    "ruff check_glass_upgrade.py",
+    "full Database Gate"
+  ],
+  "engine": 903,
+  "knownEngineXfail": 2,
+  "backend": 1494,
+  "frontend": 1013,
+  "pgtap": 1389,
+  "integration": 530,
+  "authE2e": 19,
+  "postgres16Upgrades": "PASA",
+  "finalViews": 280,
+  "findings": 0,
+  "overflow": 0,
+  "httpErrors": 0,
+  "consoleErrors": 0,
+  "localLogsSha256": {
+    "p22-four-identity-final.log": "d61db6f1691d1ed8d3221d6eda070ee647cff1cf6931c77a76f02f5199e00f45",
+    "p22-db-full-identity-final.log": "4bbca490c3ca62973e75badfaea6c4f2be8c4b66f5a1b1c5a5f0be4f2b089ded"
+  }
+}

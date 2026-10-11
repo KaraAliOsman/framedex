@@ -3,8 +3,12 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: 8c8bda1c70c70fddd6f45ae0401efea03a725bb8
+verified_ref: 68674c22ec1ffd303c572764bf472c6587d58d84
 sources:
+  - P22 cierre 68674c22ec1ffd303c572764bf472c6587d58d84, cuatro gates completos, Database Gate, identidad Auth real y navegador por rol, 2026-10-11
+  - P22 presentación final 5dee5684, FX real del motor, 280 vistas sin hallazgos y lectura móvil con etiquetas, 2026-10-11
+  - P22 implementación b27492b6, navegador y once integraciones PostgreSQL focales, 2026-10-11
+  - docs/redesign/P22-ACEPTACION.md
   - P10 PR https://github.com/KaraAliOsman/framedex/pull/147, CI 4/4 sobre f2130e1fe51243c90c7bcca822f7a613ac00896c, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38119756219, squash 8c8bda1c70c70fddd6f45ae0401efea03a725bb8, 2026-10-11
   - P10 cierre local d0c9210bbebb92092e7099d0f06a1d93800ba4ee, cuatro checks de código, Database Gate completo y matrices finales, 2026-10-11
   - P10 implementación 08947c855b2339fa830058883cfa9c0d5a685c8c, navegador, matrices y conciliación PostgreSQL focal, 2026-10-11
@@ -80,6 +84,31 @@ sources:
 ---
 
 # Current reality
+
+## P22 · empresa, clientes y ajustes (11-10-2026)
+
+La ficha tiene identidad explícita, contactos, direcciones de obra y notas
+auditadas. Fusión y edición de hijos comparten bloqueo/CAS y conservan origen,
+historia y documentos emitidos. El motor agrega la cuenta real por moneda;
+falta de acuerdo no se interpreta como cero. El recorrido cliente→dirección
+Sur→obra→precio→emisión confirma dirección e importe del PDF descargado.
+
+Nueve secciones de ajustes consumen los permisos y dominios existentes. El
+PDF de referencia usa una revisión con huella verificada y permite probar
+marca/condiciones antes de guardar. Guardar Empresa coordina la revisión
+con Marca antes del éxito. La preferencia de cotización no reinterpreta la
+moneda base de tarifas ni acuerdos; ambas conversiones usan FX explícito y
+replay sellado. El caso nuevo CLP→USD tiene golden; los anteriores no cambian.
+
+El dueño conserva MFA obligatorio y puede exigirlo a todos. Invitación cifra
+su capability, verifica correo vivo y requiere aceptación; desactivar conserva
+auditoría. El recorrido completo de correo sandbox/acceso y el alta inicial
+hasta primera obra/editor pasan. Once pruebas PostgreSQL focales, 57 de motor
+comercial/golden, 22 de tarifas y 28 de espacio de precios pasan. La suite
+completa verifica 903 motor (+2 xfail), 1.494 backend y 1.013 frontend;
+golden, lint, tipos y build pasan. La corrección posterior de presentación
+pasa otra vez lint, tipos, build y 28 tests de Precios. Las 280 vistas finales
+no tienen hallazgos, desbordes, errores HTTP ni consola. El cierre repite los cuatro gates y Database Gate completo: 1389 pgTAP, 530 integraciones, 19 E2E y upgrades PG16 PASA. La identidad JWT individual y JSON se fija/restaura en solicitudes y workers; el material en camino tiene proyección física por rol sin acceso a órdenes privadas. CI y squash siguen su cierre; P22 está en curso. Véase [empresa y clientes](../product/company-customers.md).
 
 ## P10 · propuesta y acuerdo del cliente (11-10-2026)
 

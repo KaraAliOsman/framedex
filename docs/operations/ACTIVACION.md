@@ -383,3 +383,30 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
    Desactive la simulación según la preferencia de la organización; un saldo
    de prueba mantiene su marca. Flow admite CLP; otras monedas usan movimientos
    manuales con evidencia en Cobranza. No infiera una cotización de cambio.
+
+## Empresa, usuarios y fichas de clientes (P22)
+
+1. En Ajustes › Empresa confirme razón social, RUT legal y moneda. Complete
+   marca, giro, dirección y contacto. Revise el PDF real de una cotización
+   de aceptación; guardar solo afecta emisiones nuevas. La moneda sugerida
+   no cambia la moneda base de las tarifas por m². Declare listas compatibles
+   y la tasa USD→CLP con fecha/fuente cuando corresponda. Costos locales CLP
+   cotizados en USD se dividen por esa observación de pesos por dólar, sin
+   reserva adicional de importación. No use una preferencia
+   como conversión de los precios existentes.
+2. Confirme vigencia, calendario y condiciones en Comercial, y papel y pie
+   en Documentos. La numeración es una referencia sin reserva. Declare las
+   estaciones y la ruta real de cada serie en Producción y Catálogo.
+3. Configure `BILLING_FRONTEND_ORIGIN` como origen HTTPS público antes de
+   invitar. Supabase Auth debe permitir ese origen y `/auth/callback`; active
+   su propio SMTP de acceso y verificación. El correo de invitación usa la
+   outbox cifrada y el SMTP del producto ya descritos arriba.
+4. Invite una cuenta de aceptación con clic humano, compruebe entrega, enlace
+   de acceso, correo verificado y aceptación del rol. Los enlaces vencen en
+   siete días. Revocar o desactivar conserva auditoría y bloquea el acceso.
+5. El dueño mantiene segundo factor obligatorio. Antes de exigirlo a todos,
+   informe a los usuarios para configurar su autenticador desde Cuenta.
+   La política se aplica en servidor y RLS, con acceso mínimo al alta de MFA.
+6. Importar o fusionar clientes requiere identidad revisada. Conserve contactos
+   y direcciones de obra; pruebe una entrega distinta de facturación. No use
+   tarifas, RUT, usuarios ni capacidades del fixture como datos productivos.

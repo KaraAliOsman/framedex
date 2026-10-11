@@ -1,0 +1,18 @@
+[
+  {
+    "flow": "fusión revisada, hijos, auditoría y PDF sellado intacto",
+    "result": "PASA"
+  },
+  {
+    "flow": "marca en preparación, PDF real vivo y emisión anterior intacta",
+    "result": "PASA"
+  },
+  {
+    "flow": "guardar identidad legal conserva borrador de marca y coordina revisión CAS",
+    "result": "PASA"
+  },
+  {
+    "flow": "empresa nueva → comercial → documentos → cliente → obra → editor",
+    "result": "PASA"
+  }
+]

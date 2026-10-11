@@ -626,3 +626,31 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - Una factura ya emitida de otra solución requiere conciliación antes de
   aceptar una alternativa. La emisión y la decisión comparten el bloqueo
   del acuerdo. Los documentos históricos conservan sus importes y bytes.
+
+## P22 · clientes, empresa y ajustes (2026-10-11)
+
+- Persona y empresa son tipos explícitos; una ficha histórica sin tipo conserva
+  «Sin dato». RUT nuevo exige dígito válido y comparación canónica dentro de
+  la empresa. Una coincidencia se revisa; nunca se fusiona automáticamente.
+- Fusionar exige motivo, comparación y confirmación de ambas revisiones. El
+  origen conserva su dirección e historia; el destino recibe contactos y
+  direcciones con procedencia. La ficha reúne las obras sin cambiar sus vínculos
+  históricos. RUT distintos no vacíos requieren corregir la identidad.
+- La dirección elegida de la obra se copia al proyecto. Facturación y entrega
+  permanecen separadas; editar o fusionar la ficha no cambia documentos emitidos.
+- El dueño configura identidad legal, moneda, usuarios y seguridad; dueño y
+  estimador mantienen marca y condiciones. El segundo factor del dueño sigue
+  obligatorio. Exigirlo a todos comienza desactivado y se aplica en API y RLS.
+- Invitaciones de siete días con correo verificado y aceptación humana. Preparar
+  el usuario de acceso no crea membresía. Desactivar no borra la evidencia.
+- Moneda inicial CLP, con USD disponible: se propone para cálculos nuevos y
+  conserva la moneda del precio aplicado. La preferencia no cambia la moneda
+  base de las tarifas laborales ni de instalación. Cada lista mantiene la suya;
+  el contrato USD→CLP exige tasa, fecha y fuente con buffer del 5 %. Cotizar
+  un costo local CLP en USD divide por esa misma observación explícita de pesos
+  por dólar, sin añadir la reserva de importación a un costo local. Conserva
+  fecha, fuente y replay sellado; no infiere una tasa ni autoridad UF. Numeración
+  muestra solo la siguiente referencia, sin reservar ni modificar secuencias.
+- Empresa, Comercial y Documentos se confirman antes del primer proyecto. Papel,
+  vigencia y plantillas mantienen los defaults de la constitución; el PDF vivo
+  usa una revisión real y nunca inventa una obra o importe de ejemplo.
