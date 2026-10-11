@@ -97,6 +97,7 @@ export type Operation = Omit<PriceResponse, "workspace" | "id" | "created_at"> &
   created_at: string | null;
 };
 type Options = {
+  default_currency: string;
   fx: {
     id: string;
     base_currency: string;
@@ -942,6 +943,12 @@ export function ProjectPrices({
         if (!touched.current)
           setControls((current) => ({
             ...current,
+            currency:
+              projectResult.data.items.find(
+                (project) => project.id === boundProjectId && project.pricing_current,
+              )?.currency ??
+              available.default_currency ??
+              current.currency,
             target_margin: available.band?.default_margin_pct ?? current.target_margin,
           }));
       })

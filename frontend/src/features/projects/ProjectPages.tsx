@@ -105,6 +105,7 @@ function metadata(project?: ProjectResponse): ProjectWriteRequest {
   return {
     name: project?.name ?? "",
     client_id: project?.client_id ?? null,
+    ...(project?.client_address_id ? { client_address_id: project.client_address_id } : {}),
     client_name: project?.client_name ?? "",
     client_rut: project?.client_rut ?? "",
     client_email: project?.client_email ?? "",
@@ -167,6 +168,7 @@ function ProjectMetadataForm({
                   value: {
                     ...draft.value,
                     client_id: picked?.id ?? null,
+                    client_address_id: null,
                     ...(picked
                       ? {
                           client_name: picked.name,
@@ -176,7 +178,7 @@ function ProjectMetadataForm({
                           client_giro: picked.giro ?? "",
                           client_comuna: picked.comuna ?? "",
                           client_address: picked.address,
-                          delivery_address: draft.value.delivery_address || picked.address,
+                          delivery_address: "",
                         }
                       : {}),
                   },
@@ -193,6 +195,43 @@ function ProjectMetadataForm({
                   </option>
                 ))}
             </select>
+          </label>
+        )}
+        {Boolean(draft.value.client_id) && (
+          <label>
+            Dirección de obra del cliente
+            <select
+              name="client_address_id"
+              value={draft.value.client_address_id ?? ""}
+              onChange={(event) => {
+                const picked = clients
+                  .find((item) => item.id === draft.value.client_id)
+                  ?.addresses?.find((item) => item.id === event.target.value);
+                onChange({
+                  ...draft,
+                  value: {
+                    ...draft.value,
+                    client_address_id: picked?.id ?? null,
+                    delivery_address: picked
+                      ? [picked.address, picked.comuna].filter(Boolean).join(", ")
+                      : draft.value.delivery_address,
+                  },
+                });
+              }}
+            >
+              <option value="">Dirección escrita en el proyecto</option>
+              {clients
+                .find((item) => item.id === draft.value.client_id)
+                ?.addresses?.map((address) => (
+                  <option value={address.id} key={address.id}>
+                    {address.label} · {address.address}
+                  </option>
+                ))}
+            </select>
+            <small>
+              La dirección elegida se copia a la obra y su cotización. Editar la ficha del cliente
+              no cambia lo emitido.
+            </small>
           </label>
         )}
         {/* Required fields first and marked; the nine optional commercial
@@ -237,7 +276,11 @@ function ProjectMetadataForm({
               onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
                 onChange({
                   ...draft,
-                  value: { ...draft.value, [name]: event.target.value },
+                  value: {
+                    ...draft.value,
+                    [name]: event.target.value,
+                    ...(name === "delivery_address" ? { client_address_id: null } : {}),
+                  },
                 }),
             };
             return (
@@ -1177,11 +1220,14 @@ function ProjectWorkspace({
   const navigate = useNavigate();
   const confirm = useConfirm();
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<Draft | null>(null);
+  const [params, setParams] = useSearchParams();
+  const [draft, setDraft] = useState<Draft | null>(() =>
+    !id && canWrite && params.get("create") === "1" ? { value: metadata() } : null,
+  );
+  const initialClient = useRef(params.get("client"));
   const [quotationDirty, setQuotationDirty] = useState(false);
   const [paymentsDirty, setPaymentsDirty] = useState(false);
   const [importsDirty, setImportsDirty] = useState(false);
-  const [params, setParams] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openSection, setSectionState] = useState<FactsSection | null>(null);
   const [visited, setVisited] = useState<Set<string>>(() => new Set(["positions"]));
@@ -1281,6 +1327,32 @@ function ProjectWorkspace({
     gcTime: 0,
     refetchOnWindowFocus: false,
   });
+  useEffect(() => {
+    if (!initialClient.current || !clientsQuery.data || id || !canWrite) return;
+    const picked = clientsQuery.data.find(
+      (client) => client.id === initialClient.current && client.is_active,
+    );
+    initialClient.current = null;
+    if (picked)
+      setDraft((current) =>
+        current
+          ? {
+              ...current,
+              value: {
+                ...current.value,
+                client_id: picked.id,
+                client_name: picked.name,
+                client_rut: picked.rut,
+                client_email: picked.email,
+                client_phone: picked.phone,
+                client_address: picked.address,
+                client_giro: picked.giro ?? "",
+                client_comuna: picked.comuna ?? "",
+              },
+            }
+          : current,
+      );
+  }, [clientsQuery.data, id, canWrite]);
 
   async function save(): Promise<void> {
     const controller = lifetime.current;

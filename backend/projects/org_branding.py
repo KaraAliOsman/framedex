@@ -58,13 +58,14 @@ def _branding(row: dict) -> dict:
         "notification_email": row.get("notification_email"),
         "internal_mail_enabled": row.get("internal_mail_enabled", False),
         "document_preferences": document_preferences(row.get("document_preferences")),
+        **({"updated_at": row["updated_at"]} if row.get("updated_at") else {}),
     }
 
 
 _FIELDS = (
     "name, tax_id, commercial_name, giro, brand_address, brand_phone,"
     " brand_email, brand_logo_key, brand_logo_sha256, brand_primary_color,"
-    " document_attribution, portal_attribution, notification_email, internal_mail_enabled, document_preferences"
+    " document_attribution, portal_attribution, notification_email, internal_mail_enabled, document_preferences, updated_at"
 )
 
 
@@ -85,6 +86,7 @@ def branding_for_snapshot(*, org_id: UUID) -> dict:
     # Notification preferences never belong in a customer deliverable.
     result.pop("notification_email", None)
     result.pop("internal_mail_enabled", None)
+    result.pop("updated_at", None)
     result.update(snapshot_preferences(result))
     return result
 
@@ -101,6 +103,12 @@ def save_branding(*, org_id: UUID, data: dict) -> dict:
 
 def _save_branding(*, org_id: UUID, data: dict) -> dict:
     current = _branding(one("SELECT " + _FIELDS + " FROM public.tenancy_organizations WHERE id=%s FOR UPDATE", [str(org_id)], "organization_not_found"))
+    if data.get("expected_updated_at") and data["expected_updated_at"] != current.get("updated_at"):
+        raise contract_error(409, "company_stale_edit", "Otra persona cambió los ajustes. Recarga esta sección antes de guardar.")
+    patch = data.get("document_preferences", {})
+    preferences = document_preferences({**current["document_preferences"], **patch})
+    if "commercial_terms" in patch:
+        preferences["commercial_terms"] = {**current["document_preferences"]["commercial_terms"], **patch["commercial_terms"]}
     if data.get("internal_mail_enabled", current["internal_mail_enabled"]) and not _blank(
         data.get("notification_email", current["notification_email"])
     ):
@@ -113,7 +121,7 @@ def _save_branding(*, org_id: UUID, data: dict) -> dict:
         "UPDATE public.tenancy_organizations SET "
         "commercial_name=%s, giro=%s, brand_address=%s, brand_phone=%s,"
         " brand_email=%s, brand_primary_color=%s, document_attribution=%s,"
-        " portal_attribution=%s, notification_email=%s, internal_mail_enabled=%s, document_preferences=%s::jsonb, updated_at=now() "
+        " portal_attribution=%s, notification_email=%s, internal_mail_enabled=%s, document_preferences=%s::jsonb, updated_at=clock_timestamp() "
         "WHERE id=%s RETURNING " + _FIELDS,
         [
             _blank(data.get("commercial_name", current["commercial_name"])),
@@ -126,7 +134,7 @@ def _save_branding(*, org_id: UUID, data: dict) -> dict:
             data.get("portal_attribution", current["portal_attribution"]),
             _blank(data.get("notification_email", current["notification_email"])),
             data.get("internal_mail_enabled", current["internal_mail_enabled"]),
-            json_text(data.get("document_preferences", current["document_preferences"])),
+            json_text(preferences),
             str(org_id),
         ],
         "organization_not_found",

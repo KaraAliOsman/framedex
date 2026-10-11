@@ -332,10 +332,20 @@ export function PricingPage(): JSX.Element {
   return <PricingWorkspace key={org.id} orgId={org.id} />;
 }
 
-function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
+export function PricingRulesSettings({ orgId }: { orgId: string }): JSX.Element {
+  return <PricingWorkspace orgId={orgId} fixedResource="rules" />;
+}
+
+function PricingWorkspace({
+  orgId,
+  fixedResource,
+}: {
+  orgId: string;
+  fixedResource?: string;
+}): JSX.Element {
   const [searchParams] = useSearchParams();
   const [resource, setResource] = useState<string>(() => {
-    const section = searchParams.get("section");
+    const section = fixedResource ?? searchParams.get("section");
     return section && sections.some((name) => name === section) ? section : "cost-lists";
   });
   const [items, setItems] = useState<Row[]>([]);
@@ -472,18 +482,22 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <section className="pricing-page">
-      <PageHeader context={t("pricing.subtitle")} title={t("pricing.title")} />
-      <DemoCosts request={request} />
-      <Tabs
-        items={sections.map((name, index) => ({
-          disabled: busy,
-          id: name,
-          label: t(sectionLabels[index]!),
-        }))}
-        label={t("pricing.sections")}
-        onChange={setResource}
-        value={resource}
-      />
+      {!fixedResource && (
+        <>
+          <PageHeader context={t("pricing.subtitle")} title={t("pricing.title")} />
+          <DemoCosts request={request} />
+          <Tabs
+            items={sections.map((name, index) => ({
+              disabled: busy,
+              id: name,
+              label: t(sectionLabels[index]!),
+            }))}
+            label={t("pricing.sections")}
+            onChange={setResource}
+            value={resource}
+          />
+        </>
+      )}
       {message && <p role="alert">{message}</p>}
       {busy && (
         <p className="price-loading" role="status">

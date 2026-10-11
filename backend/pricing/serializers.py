@@ -221,6 +221,7 @@ class WorkspaceResponseSerializer(PriceResponseSerializer):
 
 
 class PricingOptionsSerializer(serializers.Serializer):
+    default_currency = serializers.ChoiceField(choices=('CLP','USD'))
     fx = serializers.ListField(child=serializers.DictField())
     commercial_lists = serializers.ListField(child=serializers.DictField())
     band = serializers.DictField(allow_null=True)

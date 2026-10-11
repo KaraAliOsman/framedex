@@ -82,7 +82,7 @@ def test_mail_clients_get_mime_html_text_and_correct_issuer(kind, settings):
         reference="Referencia sellada",
         body="Texto <seguro> para revisar.",
     )
-    internal = kind in {"MAGIC_LINK", "APPROVAL", "ORDER_BLOCKED"}
+    internal = kind in {"MAGIC_LINK", "APPROVAL", "ORDER_BLOCKED", "INVITATION"}
     for part in ("html", "text", "subject", "from_name"):
         assert ("DEKOPEN" in message[part]) == internal
     assert "<seguro>" not in message["html"]

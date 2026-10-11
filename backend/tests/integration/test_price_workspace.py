@@ -163,7 +163,8 @@ def test_options_are_selling_only_and_admin_stays_owner_only(committed_commercia
     options = client.get('/api/v1/pricing/options/',HTTP_X_ORGANIZATION_ID=str(org))
     assert options.status_code == (200 if role == 'ESTIMATOR' else 403)
     if role == 'ESTIMATOR':
-        assert set(options.json()) == {'fx','commercial_lists','band'}
+        assert set(options.json()) == {'fx','commercial_lists','band','default_currency'}
+        assert options.json()['default_currency'] == 'CLP'
     assert client.get('/api/v1/pricing/admin/fx/',HTTP_X_ORGANIZATION_ID=str(org)).status_code == 403
 
 

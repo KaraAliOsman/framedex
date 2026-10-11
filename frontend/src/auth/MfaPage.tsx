@@ -1,6 +1,6 @@
 import { ValidatedForm } from "../ui/FormValidation";
 import { type FormEvent, useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
 import { Wordmark } from "../brand/Brand";
@@ -17,6 +17,9 @@ type FactorState = {
 
 export function MfaPage(): JSX.Element {
   const auth = useAuthSession();
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const configuring = params.get("configure") === "1";
   const [factor, setFactor] = useState<FactorState | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadingFactors, setLoadingFactors] = useState(true);
@@ -48,7 +51,7 @@ export function MfaPage(): JSX.Element {
     };
   }, []);
 
-  if (auth.status === "ready") return <Navigate to={consumeReturnTo()} replace />;
+  if (auth.status === "ready" && !configuring) return <Navigate to={consumeReturnTo()} replace />;
 
   async function enroll(): Promise<void> {
     if (supabase === null) return;
@@ -104,6 +107,12 @@ export function MfaPage(): JSX.Element {
     }
     telemetry.capture("mfa_verified", { aal: "aal2" });
     await auth.refreshContext();
+    if (configuring)
+      navigate(
+        sessionStorage.getItem("dekopen.pending-invitation")
+          ? "/invitation"
+          : "/settings/general?section=account",
+      );
   }
 
   return (

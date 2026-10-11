@@ -5,11 +5,13 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CurrencyEnum } from "./currencyEnum";
 import type { PricingOptionsBand } from "./pricingOptionsBand";
 import type { PricingOptionsCommercialListsItem } from "./pricingOptionsCommercialListsItem";
 import type { PricingOptionsFxItem } from "./pricingOptionsFxItem";
 
 export interface PricingOptions {
+  default_currency: CurrencyEnum;
   fx: PricingOptionsFxItem[];
   commercial_lists: PricingOptionsCommercialListsItem[];
   /** @nullable */

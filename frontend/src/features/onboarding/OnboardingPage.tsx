@@ -25,6 +25,7 @@ import {
 } from "../../ui";
 import "./onboarding.css";
 import { type ClientFields, type Draft, readDraft, storageKey } from "./draft";
+import { CompanySetup } from "./CompanySetup";
 
 const STEPS = ["Serie", "Cliente", "Obra", "Primera posición"] as const;
 const emptyFields: ClientFields = { rut: "", email: "", phone: "" };
@@ -33,6 +34,9 @@ export function OnboardingPage(): JSX.Element {
   const auth = useAuthSession();
   const org = auth.me?.active_organization;
   const orgId = org?.id ?? "";
+  const [setupComplete, setSetupComplete] = useState(
+    () => sessionStorage.getItem(`onboarding-company:${orgId}`) === "confirmed",
+  );
   const canWrite = org?.role === "OWNER" || org?.role === "ESTIMATOR";
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft>({});
@@ -48,6 +52,7 @@ export function OnboardingPage(): JSX.Element {
   const update = (value: Partial<Draft>): void => setDraft((current) => ({ ...current, ...value }));
 
   useEffect(() => {
+    setSetupComplete(sessionStorage.getItem(`onboarding-company:${orgId}`) === "confirmed");
     setDraft(readDraft(orgId));
     setRestoredFor(orgId);
     setError(null);
@@ -185,6 +190,18 @@ export function OnboardingPage(): JSX.Element {
   if (!canWrite)
     return (
       <DeniedState reason="El dueño o el estimador crea la primera obra y sus posiciones. Pide acceso al dueño de tu organización." />
+    );
+  if (!setupComplete)
+    return (
+      <CompanySetup
+        key={orgId}
+        orgId={orgId}
+        owner={org?.role === "OWNER"}
+        onComplete={() => {
+          sessionStorage.setItem(`onboarding-company:${orgId}`, "confirmed");
+          setSetupComplete(true);
+        }}
+      />
     );
   return (
     <section className="onboarding" data-density="office" aria-labelledby="onboarding-title">

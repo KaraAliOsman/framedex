@@ -7,10 +7,8 @@
  */
 import type { DocumentPreferences } from "./documentPreferences";
 
-/**
- * Org white-label identity rendered on emitted documents.
- */
 export interface OrgBranding {
+  updated_at?: string;
   name: string;
   /** @nullable */
   tax_id: string | null;

@@ -73,6 +73,9 @@ beforeEach(() => {
   scope.org = "a";
   vi.resetAllMocks();
   sessionStorage.clear();
+  // These regression cases exercise the first-project stage after company
+  // setup. CompanySetup has its own save/permission/confirmation coverage.
+  for (const org of ["a", "b"]) sessionStorage.setItem(`onboarding-company:${org}`, "confirmed");
   vi.mocked(catalogSystemList).mockResolvedValue({
     status: 200,
     data: { items: [] },

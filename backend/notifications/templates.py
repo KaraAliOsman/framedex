@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 from projects.brand_color import PAPER, effective_color
 
-KINDS = ("MAGIC_LINK", "QUOTE", "APPROVAL", "PAYMENT", "ORDER_BLOCKED", "PURCHASE", "COLLECTION")
+KINDS = ("MAGIC_LINK", "QUOTE", "APPROVAL", "PAYMENT", "ORDER_BLOCKED", "PURCHASE", "COLLECTION", "INVITATION")
 
 
 def render(
@@ -21,9 +21,10 @@ def render(
     action_url: str | None = None,
     logo: tuple[bytes, str] | None = None,
 ) -> dict:
-    internal = kind in {"MAGIC_LINK", "APPROVAL", "ORDER_BLOCKED"}
+    internal = kind in {"MAGIC_LINK", "APPROVAL", "ORDER_BLOCKED", "INVITATION"}
     titles = {
         "MAGIC_LINK": "Tu enlace de acceso",
+        "INVITATION": "Te invitaron a una empresa",
         "QUOTE": "Su cotización está disponible",
         "APPROVAL": "Aprobación recibida",
         "PAYMENT": "Su pago quedó registrado",

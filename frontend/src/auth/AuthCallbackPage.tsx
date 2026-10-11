@@ -25,7 +25,13 @@ export function AuthCallbackPage(): JSX.Element {
   useEffect(() => {
     // consumeReturnTo reads the path the guard stashed before the magic-link
     // round trip — a validated internal path only, never an open redirect.
-    if (auth.status === "ready") navigate(consumeReturnTo(), { replace: true });
+    if (auth.status === "ready")
+      navigate(
+        consumeReturnTo(sessionStorage.getItem("dekopen.pending-invitation") ? "/invitation" : "/"),
+        { replace: true },
+      );
+    if (auth.status === "no_membership" && sessionStorage.getItem("dekopen.pending-invitation"))
+      navigate(consumeReturnTo("/invitation"), { replace: true });
     if (auth.status === "mfa_required") navigate("/auth/mfa", { replace: true });
     if (auth.status === "organization_required") {
       navigate("/select-organization", { replace: true });

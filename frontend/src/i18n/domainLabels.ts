@@ -1,5 +1,10 @@
 /** One glossary for API enums. Unknown additions must fail the exhaustiveness gate. */
 export const domainLabels: Readonly<Record<string, string>> = {
+  PERSON: "Persona natural",
+  COMPANY: "Empresa",
+  QUOTE: "Cotización",
+  INVOICE: "Factura",
+  CREDIT_NOTE: "Nota de crédito",
   APPROVAL: "Al aprobar",
   DELIVERY: "Contra entrega completa",
   WARNINGS: "Aceptado con reparos",

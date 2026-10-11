@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { CommercialPricingPage } from "./PricingPage";
+import { projectsList } from "../../api/generated/dekopen";
 
 const identity = vi.hoisted(() => ({ id: "tenant-a", role: "OWNER" }));
 vi.mock("../../auth/AuthSessionProvider", () => ({
@@ -32,6 +33,7 @@ vi.mock("../../api/generated/dekopen", () => ({
 }));
 
 const options = {
+  default_currency: "CLP",
   fx: [
     {
       id: "fx-a",
@@ -168,6 +170,7 @@ function page(bound = true, strict = false) {
   return strict ? <StrictMode>{ui}</StrictMode> : ui;
 }
 beforeEach(() => {
+  options.default_currency = "CLP";
   identity.id = "tenant-a";
   identity.role = "OWNER";
   history = [];
@@ -207,6 +210,38 @@ beforeEach(() => {
     });
 });
 afterEach(cleanup);
+
+it("consumes the company currency in a new motor projection", async () => {
+  options.default_currency = "USD";
+  render(page());
+  await waitFor(() => expect(calls("workspace/")).toHaveLength(1));
+  expect(JSON.parse(String(calls("workspace/")[0]?.[1].body))).toMatchObject({ currency: "USD" });
+  fireEvent.click(screen.getByText("Moneda y autoridades"));
+  expect(screen.getByLabelText("Moneda")).toHaveValue("USD");
+});
+
+it("keeps the applied project currency after the company default changes", async () => {
+  options.default_currency = "USD";
+  vi.mocked(projectsList).mockResolvedValueOnce({
+    status: 200,
+    headers: new Headers(),
+    data: {
+      items: [
+        {
+          id: "project-a",
+          code: "P-001",
+          name: "Casa",
+          status: "DRAFT",
+          currency: "CLP",
+          pricing_current: { id: "applied-a" },
+        },
+      ],
+    },
+  } as unknown as Awaited<ReturnType<typeof projectsList>>);
+  render(page());
+  await waitFor(() => expect(calls("workspace/")).toHaveLength(1));
+  expect(JSON.parse(String(calls("workspace/")[0]?.[1].body))).toMatchObject({ currency: "CLP" });
+});
 
 it.each(["WORKSHOP_MANAGER", "OPERATOR", "INSTALLER"])(
   "denies commercial workspace to %s without requests",

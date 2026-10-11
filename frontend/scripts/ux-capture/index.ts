@@ -192,7 +192,7 @@ async function discoverFixture(session: AuthSession): Promise<FixtureRefs> {
   let clientId = process.env.DEKOPEN_UX_CLIENT_ID ?? "missing-client";
   try {
     const clients = await authenticatedFetch<{ items: { id: string }[] }>(session, "/clients/");
-    clientId = clients.items[0]?.id ?? clientId;
+    clientId = process.env.DEKOPEN_UX_CLIENT_ID ?? clients.items[0]?.id ?? clientId;
   } catch {
     // Clients are still covered by /clients when detail discovery is unavailable.
   }

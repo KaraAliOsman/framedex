@@ -52,6 +52,7 @@ PROJECT_COLUMNS = (
     "total_price_tax",
     "total_price_gross",
     "client_id",
+    "client_address_id",
     "updated_at",
 )
 POSITION_COLUMNS = (
@@ -381,9 +382,9 @@ def create_project(org_id, actor_id, data):
     if client_id:
         linkable_client(org_id, client_id)
     rows(
-        "INSERT INTO public.projects(id,org_id,code,created_by," + ",".join(METADATA) + ",client_id) "
-        "VALUES(" + ",".join(["%s"] * (5 + len(METADATA))) + ") RETURNING id",
-        [identity, org_id, code, actor_id, *values.values(), client_id],
+        "INSERT INTO public.projects(id,org_id,code,created_by," + ",".join(METADATA) + ",client_id,client_address_id) "
+        "VALUES(" + ",".join(["%s"] * (6 + len(METADATA))) + ") RETURNING id",
+        [identity, org_id, code, actor_id, *values.values(), client_id, data.get("client_address_id")],
     )
     return project_public(org_id, project_row(org_id, identity), detail=True)
 
@@ -393,9 +394,13 @@ def update_project(org_id, project_id, data):
     unchanged(current, data["expected_updated_at"])
     values = {key: data[key] for key in METADATA if key in data}
     if "client_id" in data:
-        if data["client_id"]:
+        if data["client_id"] and str(data["client_id"]) != str(current.get("client_id")):
             linkable_client(org_id, data["client_id"])
         values["client_id"] = data["client_id"] or None
+        if "client_address_id" not in data and data["client_id"] != current.get("client_id"):
+            values["client_address_id"] = None
+    if "client_address_id" in data:
+        values["client_address_id"] = data["client_address_id"]
     if not values:
         return project_public(org_id, current, detail=True)
     query = sql.SQL(
