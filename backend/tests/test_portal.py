@@ -22,6 +22,15 @@ def _roles(monkeypatch):
     monkeypatch.setattr("portal.service.transaction.atomic", _atomic)
     monkeypatch.setattr("portal.service.documentary_backend", _atomic)
     monkeypatch.setattr("portal.service.portal_backend", _atomic)
+    # SQL seams follow the extracted proposal implementation. Domain guards
+    # and consent still run; only the persistence boundary is substituted.
+    for name in ('one','rows','write'):
+        monkeypatch.setattr('portal.proposal_service.'+name, lambda *a,_name=name,**k:getattr(service,_name)(*a,**k))
+    monkeypatch.setattr('portal.proposal_service.choice',lambda *a:None)
+    monkeypatch.setattr('portal.service.choice',lambda *a:None)
+    monkeypatch.setattr('portal.payments.provider_scope',_atomic)
+    monkeypatch.setattr('portal.payments.rows',lambda *a,**k:[])
+    monkeypatch.setattr('portal.proposal_service.resolve_option',lambda org,offer,rev:(offer,json.loads(offer['snapshot_json'])))
 
 
 def test_share_quote_mints_hashed_token(monkeypatch) -> None:
@@ -121,6 +130,8 @@ def _approval(status="PENDING", expired=False):
 
 def _version(snapshot: dict | None = None, revision="REV-A"):
     return {
+        "id": uuid4(), "org_id":uuid4(), "project_id":uuid4(),
+        "snapshot_sha256": "a"*64,
         "revision_code": revision,
         "emitted_at": datetime.now(timezone.utc),
         "snapshot_json": json.dumps(
@@ -134,7 +145,8 @@ def _version(snapshot: dict | None = None, revision="REV-A"):
                     "total_price_tax": "1.90",
                     "total_price_gross": "11.90",
                     "quotation_valid_until": "2999-01-01",
-                }
+                },
+                "positions": [{"id":str(uuid4()),"quantity":1,"price_net":"10.00"}]
             }
         ),
     }
@@ -165,6 +177,8 @@ def _install_fakes(monkeypatch, approval, version=None, live=None, calls=None):
     def fake_one(sql_text, params, code="not_found"):
         lowered = " ".join(sql_text.lower().split())
         calls.append(lowered)
+        if lowered.startswith('insert into public.quote_decisions'):
+            return {'id':uuid4()}
         if "private.quote_link_expires_at" in lowered:
             return {"expires_at": params[2]}
         if "project_versions" in lowered:
@@ -262,8 +276,8 @@ def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) ->
             return [approval]
         if "project_payments" in lowered:
             return [
-                {"amount": "400.00", "voided_at": None},
-                {"amount": "50.00", "voided_at": "x"},
+                {"id":uuid4(),"amount": "400.00", "voided_at": None},
+                {"id":uuid4(),"amount": "50.00", "voided_at": "x"},
             ]
         return []
 
@@ -300,6 +314,7 @@ def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) ->
         "status": "PARTIAL",
         "collected": "400.00",
         "balance": "790.00",
+        "simulated": False,
     }
 
 
@@ -345,7 +360,10 @@ def test_decide_approves_project_and_replays(monkeypatch) -> None:
     )
     with patch("portal.service.SupabaseDocumentStorage"):
         out = service.decide_quote(
-            token="tok", decision="APPROVED", decided_by="Ana", note=None
+            token="tok", decision="APPROVED", decided_by="Ana", note=None,
+            decided_rut='12.345.678-5',confirmed=True,
+            expected_offering_sha256='a'*64,expected_selected_sha256='a'*64,
+            consent_text='Acepto la propuesta COT-P-1-REV-A por $12 IVA incluido y sus condiciones'
         )
 
     assert any("pricing_backend" in c for c in role_calls)
@@ -376,19 +394,16 @@ def test_decide_rejects_stale_link(monkeypatch) -> None:
     assert not any(c.startswith("update") for c in calls)
 
 
-def test_decide_confirm_on_already_approved_project(monkeypatch) -> None:
-    """A second link on the same sealed revision still seals its approval."""
+def test_decide_cannot_add_another_agreement_after_off_channel_approval(monkeypatch) -> None:
+    """A pending capability cannot create new consent after staff approval."""
     _roles(monkeypatch)
     approval = _approval()
     calls = _install_fakes(monkeypatch, approval, live=_live(status="APPROVED"))
     with patch("portal.service.SupabaseDocumentStorage"):
-        out = service.decide_quote(
-            token="tok", decision="APPROVED", decided_by="Ana", note=None
-        )
-    # the approval seals, but the project is not transitioned again
-    assert any("update public.customer_approvals" in c for c in calls)
+        with pytest.raises(DocumentaryError,match='quote_already_decided'):
+            service.decide_quote(token='tok',decision='APPROVED',decided_by='Ana',note=None)
+    assert not any("update public.customer_approvals" in c for c in calls)
     assert not any("update public.projects" in c for c in calls)
-    assert out["approval_status"] in {"PENDING", "APPROVED"}
 
 
 def test_decide_decline_on_approved_project_is_honest(monkeypatch) -> None:

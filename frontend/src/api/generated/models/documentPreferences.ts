@@ -11,6 +11,7 @@ import type { PaperEnum } from "./paperEnum";
 import type { PieceLabelPaperEnum } from "./pieceLabelPaperEnum";
 
 export interface DocumentPreferences {
+  portal_successor_link?: boolean;
   piece_label_paper?: PieceLabelPaperEnum;
   /** @maxLength 80 */
   remnant_destination?: string;

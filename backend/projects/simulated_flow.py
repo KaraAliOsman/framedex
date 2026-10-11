@@ -27,7 +27,7 @@ from projects.provider_scope import provider_scope
 from projects.service import project_row
 
 
-def create_link(*, org_id, project_id, actor_id, data):
+def create_link(*, org_id, project_id, actor_id, data, prepare_return=None):
     pref = preferences(org_id)
     if not pref["simulation_enabled"]:
         raise contract_error(422, "collection_simulation_disabled", "El dueño desactivó los simuladores en Ajustes › Cobranza e integraciones.")
@@ -82,6 +82,8 @@ def create_link(*, org_id, project_id, actor_id, data):
                         data["payer_email"], data.get("subject") or f"{project['code']} · pago simulado",
                         token, f"{origin}/pago/simulado/{identifier}?token={token}", str(actor_id),
                         deal["total"], deal["currency"], expiry, deal["sealed_revision"], digest])
+            if prepare_return is not None:
+                prepare_return(link)
     return {"link": _public_link(link)}
 
 
@@ -96,10 +98,54 @@ def _capability(link_id, token):
     return found[0]
 
 
+def _available(link, project):
+    deal = _deal(link['org_id'], link['project_id'], project)
+    if (not deal or deal['sealed_revision'] != link['deal_revision']
+        or project['current_revision'] != deal.get('offering_revision', deal['sealed_revision'])):
+        raise contract_error(409, 'payment_link_stale', 'La cotización fue reemplazada. Pida un cobro de la revisión vigente.')
+    if project['status'] not in ('APPROVED','IN_PRODUCTION','COMPLETED'):
+        raise contract_error(409, 'payment_requires_approval', 'El cliente debe aprobar la propuesta antes de pagar. Consulte el enlace del fabricante.')
+    from portal.service import _validity_expired
+    with documentary_backend():
+        offer = rows('SELECT snapshot_json FROM public.project_versions WHERE org_id=%s AND project_id=%s AND revision_code=%s',
+                     [link['org_id'], link['project_id'], deal.get('offering_revision', deal['sealed_revision'])])
+    if offer:
+        snapshot = offer[0]['snapshot_json']
+        if isinstance(snapshot, str):
+            snapshot = json.loads(snapshot)
+        if _validity_expired(snapshot.get('project', {}).get('quotation_valid_until')):
+            raise contract_error(409, 'payment_quote_expired', 'La propuesta venció. Solicite una cotización vigente al fabricante.')
+    if not preferences(link['org_id'])['simulation_enabled']:
+        raise contract_error(409, 'collection_simulation_disabled', 'El fabricante desactivó el proveedor de prueba. Contáctelo para coordinar el pago.')
+    with documentary_backend():
+        contexts = rows('SELECT * FROM public.portal_payment_contexts WHERE org_id=%s AND payment_link_id=%s',
+                        [link['org_id'], link['id']])
+    if contexts:
+        from portal.payments import _open
+        from portal.service import portal_quote
+        quote = portal_quote(_open(contexts[0])['portal_token'], track=False)
+        if (quote['superseded'] or quote['validity_expired'] or quote['approval_status'] != 'APPROVED'
+            or quote['payment_provider'] != 'SIMULATED'):
+            raise contract_error(409, 'portal_payment_unavailable', 'Este enlace ya no autoriza un pago. Consulte la propuesta vigente del fabricante.')
+    with documentary_backend():
+        ledger = rows('SELECT id,amount,voided_at,simulated FROM public.project_payments WHERE org_id=%s AND project_id=%s',
+                      [link['org_id'], link['project_id']])
+    balance = collection_projection(org_id=link['org_id'], project_id=link['project_id'], deal=deal, payments=ledger).balance
+    if balance <= 0 or Decimal(str(link['amount'])) > balance:
+        raise contract_error(422, 'payment_exceeds_balance', 'El saldo cambió. Solicite al fabricante un cobro por el saldo vigente.')
+    return deal
+
+
 def payer_status(*, link_id, token):
     link = _capability(link_id, token)
+    if link['status'] == 'PENDING' and link['expires_at'] > timezone.now():
+        with provider_scope():
+            project = project_row(link['org_id'], link['project_id'])
+            _available(link, project)
     public = _public_link(link)
-    return {k: public[k] for k in ("amount", "status", "expires_at", "deal_revision", "environment")}
+    from portal.payments import path_for_link
+    return {**{k: public[k] for k in ("amount", "status", "expires_at", "deal_revision", "environment")},
+            'portal_path': path_for_link(link)}
 
 
 def confirm(*, link_id, token, outcome):
@@ -113,6 +159,7 @@ def confirm(*, link_id, token, outcome):
                 return payer_status(link_id=link_id, token=token)
             if link["status"] != "PENDING" or link["expires_at"] <= timezone.now():
                 raise contract_error(409, "payment_link_expired", "El enlace de prueba venció. Pida un nuevo acceso.")
+            deal = _available(link, project)
             if outcome == "FAILED":
                 rows("UPDATE public.project_payment_links SET status='FAILED',updated_at=now() WHERE id=%s RETURNING id", [str(link_id)])
                 return payer_status(link_id=link_id, token=token)

@@ -34,5 +34,449 @@
       "discount": "11.11",
       "net": "100.01"
     }
+  },
+  "gross_CLP_positions": {
+    "display_gross": "142829",
+    "lines": [
+      {
+        "gross": "11902",
+        "key": "position-0",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-1",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-2",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-3",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-4",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-5",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-6",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-7",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-8",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-9",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-10",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-11",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      }
+    ],
+    "rounding_adjustment": "5",
+    "sealed_gross": "142829"
+  },
+  "gross_CLP_services": {
+    "display_gross": "160679",
+    "lines": [
+      {
+        "gross": "11902",
+        "key": "position-0",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-1",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-2",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-3",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-4",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-5",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-6",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-7",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-8",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-9",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-10",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11902",
+        "key": "position-11",
+        "net": "10002",
+        "quantity": 3,
+        "unit_adjustment": "1",
+        "unit_gross": "3967"
+      },
+      {
+        "gross": "11900",
+        "key": "service",
+        "net": "10000",
+        "quantity": 1,
+        "unit_adjustment": "0",
+        "unit_gross": "11900"
+      },
+      {
+        "gross": "5950",
+        "key": "charge",
+        "net": "5000",
+        "quantity": 1,
+        "unit_adjustment": "0",
+        "unit_gross": "5950"
+      }
+    ],
+    "rounding_adjustment": "5",
+    "sealed_gross": "160679"
+  },
+  "gross_USD_positions": {
+    "display_gross": "1428.29",
+    "lines": [
+      {
+        "gross": "119.02",
+        "key": "position-0",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-1",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-2",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-3",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-4",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-5",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-6",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-7",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-8",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-9",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-10",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-11",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      }
+    ],
+    "rounding_adjustment": "0.05",
+    "sealed_gross": "1428.29"
+  },
+  "gross_USD_services": {
+    "display_gross": "1606.79",
+    "lines": [
+      {
+        "gross": "119.02",
+        "key": "position-0",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-1",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-2",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-3",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-4",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-5",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-6",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-7",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-8",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-9",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-10",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.02",
+        "key": "position-11",
+        "net": "100.02",
+        "quantity": 3,
+        "unit_adjustment": "0.01",
+        "unit_gross": "39.67"
+      },
+      {
+        "gross": "119.00",
+        "key": "service",
+        "net": "100.00",
+        "quantity": 1,
+        "unit_adjustment": "0.00",
+        "unit_gross": "119.00"
+      },
+      {
+        "gross": "59.50",
+        "key": "charge",
+        "net": "50.00",
+        "quantity": 1,
+        "unit_adjustment": "0.00",
+        "unit_gross": "59.50"
+      }
+    ],
+    "rounding_adjustment": "0.05",
+    "sealed_gross": "1606.79"
   }
 }

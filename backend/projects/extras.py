@@ -175,9 +175,15 @@ def services_response(org,project):
     from projects.service import _priced
     from dekopen_engine.commercial import PricingError
     from pricing.service import pricing_public_detail
+    from projects.accepted_quote import selected_projects
+    chosen = selected_projects(org, [project['id']]).get(str(project['id']))
+    if chosen:
+        project = {**project, 'current_revision': chosen['revision_code']}
     reason, lines = None, []
     with extra_backend():
         currency = one("SELECT currency FROM public.tenancy_organizations WHERE id=%s",[org])["currency"]
+    if chosen:
+        currency = json.loads(chosen['snapshot_json'])['project']['currency']
     locked = project["status"] != "DRAFT" or _priced(org,project["id"],project["current_revision"])
     if locked:
         from projects.service import _pricing_authority

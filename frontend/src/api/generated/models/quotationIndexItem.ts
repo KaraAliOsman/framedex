@@ -22,6 +22,8 @@ export interface QuotationIndexItem {
   /** @nullable */
   response_note: string | null;
   /** @nullable */
+  decision_kind?: string | null;
+  /** @nullable */
   total: string | null;
   /** @nullable */
   currency: string | null;

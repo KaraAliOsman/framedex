@@ -1,0 +1,74 @@
+[
+  {
+    "state": "vigente",
+    "width": 1440,
+    "theme": "light",
+    "positions": 1,
+    "api_status": 200,
+    "overflow": false,
+    "title": "Ventanas Sur · DEMO · Propuesta comercial · P-000513"
+  },
+  {
+    "state": "vigente",
+    "width": 1440,
+    "theme": "dark",
+    "positions": 1,
+    "api_status": 200,
+    "overflow": false,
+    "title": "Ventanas Sur · DEMO · Propuesta comercial · P-000513"
+  },
+  {
+    "state": "vigente",
+    "width": 390,
+    "theme": "light",
+    "positions": 1,
+    "api_status": 200,
+    "overflow": false,
+    "title": "Ventanas Sur · DEMO · Propuesta comercial · P-000513"
+  },
+  {
+    "state": "vigente",
+    "width": 390,
+    "theme": "dark",
+    "positions": 1,
+    "api_status": 200,
+    "overflow": false,
+    "title": "Ventanas Sur · DEMO · Propuesta comercial · P-000513"
+  },
+  {
+    "state": "reemplazada",
+    "width": 1440,
+    "theme": "light",
+    "positions": 1,
+    "api_status": 200,
+    "overflow": false,
+    "title": "Ventanas Sur · DEMO · Propuesta comercial · P-000513"
+  },
+  {
+    "state": "reemplazada",
+    "width": 1440,
+    "theme": "dark",
+    "positions": 1,
+    "api_status": 200,
+    "overflow": false,
+    "title": "Ventanas Sur · DEMO · Propuesta comercial · P-000513"
+  },
+  {
+    "state": "reemplazada",
+    "width": 390,
+    "theme": "light",
+    "positions": 1,
+    "api_status": 200,
+    "overflow": false,
+    "title": "Ventanas Sur · DEMO · Propuesta comercial · P-000513"
+  },
+  {
+    "state": "reemplazada",
+    "width": 390,
+    "theme": "dark",
+    "positions": 1,
+    "api_status": 200,
+    "overflow": false,
+    "title": "Ventanas Sur · DEMO · Propuesta comercial · P-000513"
+  }
+]

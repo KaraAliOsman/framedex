@@ -17,6 +17,7 @@ from decimal import Decimal, InvalidOperation
 import hashlib
 import json
 from uuid import UUID
+from contextlib import nullcontext
 
 from django.conf import settings
 from django.db import transaction
@@ -162,14 +163,18 @@ def list_links(*, org_id: UUID, project_id: UUID) -> dict:
     return {"links": [_public_link(row) for row in found]}
 
 
-def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -> dict:
+def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict,
+                prepare_return=None, authorization=None) -> dict:
     """One durable dispatch claim per operation_key — a replay returns the
     existing link instead of minting a second charge."""
     if data.get("simulated"):
         from projects.simulated_flow import create_link as simulate
 
-        return simulate(org_id=org_id, project_id=project_id, actor_id=actor_id, data=data)
-    project = project_row(org_id, project_id)
+        with (authorization or nullcontext)():
+            return simulate(org_id=org_id, project_id=project_id, actor_id=actor_id, data=data,
+                            prepare_return=prepare_return)
+    with (authorization or nullcontext)():
+        project = project_row(org_id, project_id)
     amount = Decimal(str(data["amount"]))
     if not amount.is_finite() or amount <= 0 or amount != amount.to_integral_value():
         raise contract_error(422, "amount_invalid", "El monto debe ser un entero CLP positivo.")
@@ -178,7 +183,7 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
         raise contract_error(422, "payment_kind_invalid", "Tipo de cobro no válido.")
     subject = (data.get("subject") or "").strip() or f"{project['name']} — pago {kind.lower()}"
     request_hash = hashlib.sha256(json.dumps(data, default=str, sort_keys=True).encode()).hexdigest()
-    with transaction.atomic(), documentary_backend():
+    with transaction.atomic(), (authorization or nullcontext)(), documentary_backend():
         project = project_row(org_id, project_id, lock=True)
         existing = rows(
             "SELECT * FROM public.project_payment_links WHERE org_id=%s AND operation_key=%s",
@@ -320,6 +325,8 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
                 request_hash,
             ],
         )[0]
+        if prepare_return is not None:
+            return_url = prepare_return(link)
         integration = integration[0]
     # The claim is committed — now the provider mutation. An uncertain outcome
     # marks the link UNCERTAIN; recovery is a GET, never a second POST.
@@ -339,7 +346,7 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
         if type(created.get("flowOrder")) is not int or created["flowOrder"] <= 0:
             raise FlowError("flow_invalid_payment", uncertain=True)
     except FlowError as error:
-        with transaction.atomic(), documentary_backend():
+        with transaction.atomic(), (authorization or nullcontext)(), documentary_backend():
             rows(
                 "UPDATE public.project_payment_links SET status='UNCERTAIN', updated_at=now() "
                 "WHERE org_id=%s AND id=%s AND status='DISPATCHING' RETURNING id",
@@ -348,7 +355,7 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
         raise contract_error(
             503, "payment_link_dispatch_failed", "Flow no confirmó el link — reintenta verificar."
         ) from error
-    with transaction.atomic(), documentary_backend():
+    with transaction.atomic(), (authorization or nullcontext)(), documentary_backend():
         updated = rows(
             "UPDATE public.project_payment_links SET status='PENDING', flow_order=%s, "
             "flow_token=%s, url=%s, updated_at=now() "

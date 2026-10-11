@@ -56,9 +56,12 @@ def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
     priced. Zero-valued live totals without that authority are not a deal."""
     with documentary_backend():
         versions = rows(
-            "SELECT id,revision_code,snapshot_json::text AS snapshot_json "
-            "FROM public.project_versions "
-            "WHERE org_id=%s AND project_id=%s ORDER BY emitted_at DESC,id DESC LIMIT 1",
+            "SELECT v.id,v.revision_code,v.snapshot_json::text AS snapshot_json,"
+            "o.id AS offering_version_id,o.revision_code AS offering_revision "
+            "FROM (SELECT * FROM public.project_versions WHERE org_id=%s AND project_id=%s "
+            "ORDER BY emitted_at DESC,id DESC LIMIT 1) o "
+            "LEFT JOIN LATERAL private.quotation_choice(o.org_id,o.id) c ON c.kind='APPROVED' "
+            "JOIN public.project_versions v ON v.id=COALESCE(c.selected_version_id,o.id) AND v.org_id=o.org_id",
             [str(org_id), str(project_id)],
         )
     if versions:
@@ -73,6 +76,8 @@ def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
                 "currency": (sealed_project or {}).get("currency") or "CLP",
                 "sealed_revision": versions[0]["revision_code"],
                 "version_id": str(versions[0]["id"]) if versions[0].get("id") else None,
+                "offering_version_id": str(versions[0]["offering_version_id"]) if versions[0].get("offering_version_id") else None,
+                "offering_revision": versions[0].get("offering_revision") or versions[0]["revision_code"],
                 "commercial_terms": (sealed_project or {}).get("commercial_terms") or {},
                 "project": sealed_project,
                 "bom_hash": snapshot.get("bom_hash"),
@@ -106,7 +111,7 @@ def collection_projection(*, org_id, project_id, deal, payments, today=None):
             approvals = rows("SELECT decided_at FROM public.customer_approvals "
                              "WHERE org_id=%s AND project_id=%s AND project_version_id=%s "
                              "AND status='APPROVED' ORDER BY decided_at,id LIMIT 1",
-                             [str(org_id), str(project_id), deal.get("version_id")])
+                             [str(org_id), str(project_id), deal.get("offering_version_id") or deal.get("version_id")])
         if approvals and approvals[0]["decided_at"]:
             value = approvals[0]["decided_at"]
             stamp = datetime.fromisoformat(value) if isinstance(value, str) else value

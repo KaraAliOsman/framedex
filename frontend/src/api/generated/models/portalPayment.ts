@@ -7,6 +7,7 @@
  */
 
 export interface PortalPayment {
+  simulated?: boolean;
   status: string;
   collected: string;
   balance: string;

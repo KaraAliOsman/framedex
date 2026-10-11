@@ -238,6 +238,11 @@ import type {
   PaymentsSummary,
   PolicyResponse,
   PolicyWriteRequest,
+  PortalPayRequestRequest,
+  PortalPayResult,
+  PortalPayReturn,
+  PortalPaymentProviderReturnParams,
+  PortalPaymentReturnParams,
   PortalQuote,
   PositionResponse,
   PositionUpdateRequest,
@@ -10604,6 +10609,185 @@ export const mountingRuleSave = async (
   });
 };
 
+export type portalPaymentReturnResponse200 = {
+  data: PortalPayReturn;
+  status: 200;
+};
+
+export type portalPaymentReturnResponse302 = {
+  data: void;
+  status: 302;
+};
+
+export type portalPaymentReturnResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type portalPaymentReturnResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type portalPaymentReturnResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type portalPaymentReturnResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type portalPaymentReturnResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type portalPaymentReturnResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type portalPaymentReturnResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type portalPaymentReturnResponseSuccess = portalPaymentReturnResponse200 & {
+  headers: Headers;
+};
+export type portalPaymentReturnResponseError = (
+  | portalPaymentReturnResponse302
+  | portalPaymentReturnResponse400
+  | portalPaymentReturnResponse401
+  | portalPaymentReturnResponse403
+  | portalPaymentReturnResponse404
+  | portalPaymentReturnResponse409
+  | portalPaymentReturnResponse422
+  | portalPaymentReturnResponse503
+) & {
+  headers: Headers;
+};
+
+export type portalPaymentReturnResponse =
+  portalPaymentReturnResponseSuccess | portalPaymentReturnResponseError;
+
+export const getPortalPaymentReturnUrl = (contextId: string, params: PortalPaymentReturnParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/portal/payments/${contextId}/return/?${stringifiedParams}`
+    : `/api/v1/portal/payments/${contextId}/return/`;
+};
+
+export const portalPaymentReturn = async (
+  contextId: string,
+  params: PortalPaymentReturnParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<portalPaymentReturnResponse> => {
+  return apiMutator<portalPaymentReturnResponse>(getPortalPaymentReturnUrl(contextId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type portalPaymentProviderReturnResponse302 = {
+  data: void;
+  status: 302;
+};
+
+export type portalPaymentProviderReturnResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type portalPaymentProviderReturnResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type portalPaymentProviderReturnResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type portalPaymentProviderReturnResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type portalPaymentProviderReturnResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type portalPaymentProviderReturnResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type portalPaymentProviderReturnResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type portalPaymentProviderReturnResponseError = (
+  | portalPaymentProviderReturnResponse302
+  | portalPaymentProviderReturnResponse400
+  | portalPaymentProviderReturnResponse401
+  | portalPaymentProviderReturnResponse403
+  | portalPaymentProviderReturnResponse404
+  | portalPaymentProviderReturnResponse409
+  | portalPaymentProviderReturnResponse422
+  | portalPaymentProviderReturnResponse503
+) & {
+  headers: Headers;
+};
+
+export type portalPaymentProviderReturnResponse = portalPaymentProviderReturnResponseError;
+
+export const getPortalPaymentProviderReturnUrl = (
+  contextId: string,
+  params: PortalPaymentProviderReturnParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/portal/payments/${contextId}/return/?${stringifiedParams}`
+    : `/api/v1/portal/payments/${contextId}/return/`;
+};
+
+export const portalPaymentProviderReturn = async (
+  contextId: string,
+  params: PortalPaymentProviderReturnParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<portalPaymentProviderReturnResponse> => {
+  return apiMutator<portalPaymentProviderReturnResponse>(
+    getPortalPaymentProviderReturnUrl(contextId, params),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
 export type portalQuoteRetrieveResponse200 = {
   data: PortalQuote;
   status: 200;
@@ -10762,6 +10946,88 @@ export const portalQuoteDecide = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(decideRequestRequest),
+  });
+};
+
+export type portalQuotePayResponse200 = {
+  data: PortalPayResult;
+  status: 200;
+};
+
+export type portalQuotePayResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type portalQuotePayResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type portalQuotePayResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type portalQuotePayResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type portalQuotePayResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type portalQuotePayResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type portalQuotePayResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type portalQuotePayResponseSuccess = portalQuotePayResponse200 & {
+  headers: Headers;
+};
+export type portalQuotePayResponseError = (
+  | portalQuotePayResponse400
+  | portalQuotePayResponse401
+  | portalQuotePayResponse403
+  | portalQuotePayResponse404
+  | portalQuotePayResponse409
+  | portalQuotePayResponse422
+  | portalQuotePayResponse503
+) & {
+  headers: Headers;
+};
+
+export type portalQuotePayResponse = portalQuotePayResponseSuccess | portalQuotePayResponseError;
+
+export const getPortalQuotePayUrl = (token: string) => {
+  return `/api/v1/portal/quotes/${token}/pay/`;
+};
+
+export const portalQuotePay = async (
+  token: string,
+  portalPayRequestRequest: PortalPayRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<portalQuotePayResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<portalQuotePayResponse>(getPortalQuotePayUrl(token), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(portalPayRequestRequest),
   });
 };
 

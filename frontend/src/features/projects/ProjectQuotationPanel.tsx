@@ -2562,7 +2562,11 @@ export function ProjectQuotationPanel({
                 >
                   {t("quotation.openEvidence")}
                 </button>
-                {canRelease ? (
+                {canRelease &&
+                version.id ===
+                  (project.accepted_version_id ||
+                    project.versions?.find((v) => v.revision_code === project.current_revision)
+                      ?.id) ? (
                   version.production_allowed ? (
                     <button
                       type="button"

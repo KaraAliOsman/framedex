@@ -759,6 +759,8 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             [str(version_id), str(org_id)],
             "version_not_found",
         )
+        from documents.agreements import lock_quote
+        lock_quote(org_id, version['project_id'])
         frozen_measurements = version['snapshot_json']
         if isinstance(frozen_measurements,str):
             frozen_measurements = json.loads(frozen_measurements)
@@ -778,14 +780,24 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         # suffix length then lexicographically, never plain text order.
         latest = rows(
             """
-            SELECT revision_code::text AS code FROM public.project_versions
-            WHERE project_id = %s AND org_id = %s
-            ORDER BY length(revision_code) DESC, revision_code DESC LIMIT 1
+            SELECT v.revision_code::text AS code,p.current_revision,
+                   COALESCE(c.selected_version_id,v.id) AS selected_version_id
+            FROM public.project_versions v JOIN public.projects p ON p.id=v.project_id AND p.org_id=v.org_id
+            LEFT JOIN LATERAL private.quotation_choice(v.org_id,v.id) c ON c.kind='APPROVED'
+            WHERE v.project_id = %s AND v.org_id = %s
+            ORDER BY length(v.revision_code) DESC, v.revision_code DESC LIMIT 1
             """,
             [str(version["project_id"]), str(org_id)],
         )
-        if latest and str(latest[0]["code"]) != str(version["revision_code"]):
-            raise DocumentaryError("version_superseded")
+        if latest:
+            live = latest[0]
+            if live.get('current_revision') and str(live['current_revision']) != str(live['code']):
+                raise DocumentaryError('version_superseded')
+            if live.get('selected_version_id'):
+                if str(live['selected_version_id']) != str(version_id):
+                    raise DocumentaryError('version_superseded')
+            elif str(live['code']) != str(version['revision_code']):
+                raise DocumentaryError('version_superseded')
         snapshot = version["snapshot_json"]
         if isinstance(snapshot, str):
             snapshot = json.loads(snapshot)
@@ -1090,10 +1102,13 @@ def production_prep(*, org_id: UUID) -> dict[str, object]:
                    p.code AS project_code,
                    jsonb_array_length(COALESCE(v.snapshot_json->'bom', '[]'::jsonb))
                        AS positions
-            FROM public.project_versions v
-            JOIN public.projects p ON p.id = v.project_id AND p.org_id = v.org_id
+            FROM public.project_versions offered
+            JOIN public.projects p ON p.id = offered.project_id AND p.org_id = offered.org_id
+            LEFT JOIN LATERAL private.quotation_choice(offered.org_id,offered.id) c ON c.kind='APPROVED'
+            JOIN public.project_versions v ON v.id=COALESCE(c.selected_version_id,offered.id) AND v.org_id=offered.org_id
             WHERE v.org_id = %s AND v.production_allowed
               AND jsonb_array_length(COALESCE(v.snapshot_json->'bom', '[]'::jsonb)) > 0
+              AND p.current_revision=offered.revision_code
               AND NOT EXISTS (
                   SELECT 1 FROM public.orders o
                   WHERE o.org_id = v.org_id AND o.project_version_id = v.id
@@ -1105,9 +1120,9 @@ def production_prep(*, org_id: UUID) -> dict[str, object]:
                   -- every version — an unreleasable newer revision still
                   -- supersedes) can actually be released.
                   SELECT 1 FROM public.project_versions v2
-                  WHERE v2.org_id = v.org_id AND v2.project_id = v.project_id
+                  WHERE v2.org_id = offered.org_id AND v2.project_id = offered.project_id
                     AND (length(v2.revision_code), v2.revision_code)
-                      > (length(v.revision_code), v.revision_code)
+                      > (length(offered.revision_code), offered.revision_code)
               )
             ORDER BY v.emitted_at DESC NULLS LAST, v.id
             """,

@@ -243,7 +243,7 @@ _UNSET = object()
 
 
 def project_public(org_id, row, *, detail=False, authority=_UNSET,
-                   position_count=_UNSET):
+                   position_count=_UNSET, accepted=_UNSET):
     if authority is _UNSET:
         authority = _pricing_authority(org_id, row["id"], row["current_revision"])
     value = {
@@ -290,6 +290,12 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
                 "line_net": line.get("line_net"), "source": "Precio aplicado de esta revisión; motor comercial."} for line in lines}
         for item in value["positions"]:
             item["commercial"] = commercial.get(item["position_index"])
+    if accepted is _UNSET and row['status'] in ('APPROVED','IN_PRODUCTION','COMPLETED'):
+        from projects.accepted_quote import selected_projects
+        accepted = selected_projects(org_id, [row['id']]).get(str(row['id']))
+    if accepted is not _UNSET and accepted:
+        from projects.accepted_quote import public_solution
+        value = public_solution(value, accepted, detail=detail)
     return value
 
 
@@ -332,6 +338,8 @@ def list_projects(org_id):
         )
     }
     authorities = {}
+    from projects.accepted_quote import selected_projects
+    accepted = selected_projects(org_id, project_ids)
     rows_by_id = {row["id"]: row for row in project_rows}
     for candidate in _bulk_pricing_authorities(org_id, project_ids):
         row = rows_by_id[candidate["project_id"]]
@@ -351,6 +359,7 @@ def list_projects(org_id):
             org_id, row,
             authority=authorities.get(row["id"]),
             position_count=counts.get(row["id"], 0),
+            accepted=accepted.get(str(row['id'])),
         )
         for row in project_rows
     ]
@@ -801,6 +810,11 @@ def clone_project(org_id, actor_id, project_id, data):
             raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
         _assert_live_matches_version(org_id, project_id, latest)
     source_positions = positions(org_id, project_id)
+    from projects.accepted_quote import selected_projects, public_solution
+    chosen = selected_projects(org_id, [project_id]).get(str(project_id))
+    if chosen:
+        solution = public_solution({'id': project_id}, chosen, detail=True)
+        source_positions = solution['positions']
     metadata = {key: source[key] or "" for key in METADATA}
     metadata["client_id"] = source.get("client_id")
     metadata["name"] = data.get("name", "Copia de " + source["name"][:246])
@@ -817,7 +831,7 @@ def clone_project(org_id, actor_id, project_id, data):
         serializer.is_valid(raise_exception=True)
         save_position(org_id, copied["id"], serializer.validated_data,apply_defaults=False)
     from projects.extras import copy_services
-    copy_services(org_id,source,copied)
+    copy_services(org_id,{**source,'current_revision':chosen['revision_code']} if chosen else source,copied)
     return project_public(org_id, project_row(org_id, copied["id"]), detail=True)
 
 
@@ -883,6 +897,8 @@ def start_successor(org_id, project_id, expected_current_revision=None):
     if latest["revision_code"] != project["current_revision"]:
         raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
     _assert_live_matches_version(org_id, project_id, latest)
+    from projects.accepted_quote import selected_projects, restore_draft
+    chosen = selected_projects(org_id, [project_id]).get(str(project_id))
     if project_versions(org_id, project_id)[-1]["revision_code"] != latest["revision_code"]:
         raise contract_error(409, "revision_sequence_invalid", "La secuencia de revisiones no es válida.")
     audit_reason(f"Open {successor}; invalidate {latest['revision_code']} live commercial authority")
@@ -901,9 +917,12 @@ def start_successor(org_id, project_id, expected_current_revision=None):
     if not updated_positions or len(updated_projects) != 1:
         raise contract_error(403, "successor_permission_denied", "Tu rol no permite crear revisiones.")
     from projects.extras import copy_services
-    copy_services(org_id,project,{**project,'current_revision':successor})
+    if chosen:
+        restore_draft(org_id, project_id, chosen, successor)
+    before_revision = chosen['revision_code'] if chosen else expected
+    copy_services(org_id,{**project,'current_revision':before_revision},{**project,'current_revision':successor})
     from projects.mounting import copy_measurements
-    copy_measurements(org_id,project_id,expected,successor)
+    copy_measurements(org_id,project_id,before_revision,successor)
     return {
         **project_public(org_id, project_row(org_id, project_id), detail=True),
         "successor_created": True,

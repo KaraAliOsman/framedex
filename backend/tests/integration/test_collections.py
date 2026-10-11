@@ -43,6 +43,10 @@ def deal(documentary_tenant, monkeypatch, settings):
             [json_text({"payment_schedule": [{"label": "Anticipo", "share": "0.5", "due_on": "2026-10-01"},
                                           {"label": "Saldo", "share": "0.5", "due_event": "DELIVERY"}]}), str(project)])
     version = _freeze(org, users["OWNER"], project, op)
+    from portal.service import approve_internal
+    with as_user(users['ESTIMATOR']):
+        approve_internal(org_id=org,project_id=project,actor_id=users['ESTIMATOR'],
+                         actor_label='Estimador',note='Aceptación explícita para probar cobros')
     return org, other, users, outsider, project, version
 
 
@@ -154,6 +158,10 @@ def test_two_public_callbacks_converge_on_one_sealed_payment(documentary_committ
     settings.BILLING_FRONTEND_ORIGIN = "http://127.0.0.1:5173"
     project, _, operation = _seed_project(org, users["OWNER"])
     _freeze(org, users["OWNER"], project, operation)
+    from portal.service import approve_internal
+    with as_user(users['ESTIMATOR']):
+        approve_internal(org_id=org,project_id=project,actor_id=users['ESTIMATOR'],
+                         actor_label='Estimador',note='Aceptación explícita para callbacks concurrentes')
     with as_user(users["ESTIMATOR"]):
         amount = payments.list_payments(org_id=org, project_id=project)["balance"]
         link = simulated_flow.create_link(org_id=org, project_id=project, actor_id=users["ESTIMATOR"],

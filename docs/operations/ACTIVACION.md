@@ -357,3 +357,29 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
    DEKOPEN no envía este intercambio a una máquina ni inventa su formato.
    Falta de patrón, Y/Z, herramienta, profundidad, sujeción u orientación
    bloquea; completar esas autoridades no se sustituye por un valor estimado.
+
+## Portal de propuesta y retorno del pago (P10)
+
+1. Configure `BILLING_CALLBACK_ORIGIN` con el origen HTTPS público del backend
+   y `DEKOPEN_PUBLIC_APP_URL`/`BILLING_FRONTEND_ORIGIN` con el origen HTTPS del
+   frontend. Mantenga el proxy de `/api` y compruebe ambos desde fuera de la red.
+2. En Ajustes › Flow configure credenciales y endpoint sandbox; siga el webhook
+   de cobranza P11. El retorno de cada cobro del portal se prepara automáticamente
+   en `/api/v1/portal/payments/<contexto>/return/` antes de llamar al proveedor.
+   Flow puede retornar por GET o POST; el servidor consulta su estado real y
+   lleva al enlace original. Una navegación por sí sola nunca acredita dinero.
+3. Mantenga estable `MAIL_ENCRYPTION_KEY`: cifra también el contexto de retorno.
+   Respáldela según su procedimiento de secretos, fuera de git y del frontend.
+   No copie las claves ni capacidades de la aceptación local a producción.
+4. Desde una propuesta de aceptación: elija/apruebe una alternativa, prepare
+   un pago parcial, rechácelo, continúe/reintente, apruébelo y recargue el portal.
+   Compruebe revisión elegida, único movimiento/recibo y saldo. Verifique la
+   ausencia de pago en propuesta pendiente, vencida, reemplazada y sin saldo.
+5. Ajustes › General › Documentos controla si un enlace reemplazado puede llevar
+   a la revisión vigente. Configure antes de emitir. El permiso se sella y los
+   PDFs históricos conservan sus bytes. Revocar una capacidad impide seguir
+   consultando o pagando desde ella.
+6. Active Flow productivo solo después de verificar sandbox y dominio/webhook.
+   Desactive la simulación según la preferencia de la organización; un saldo
+   de prueba mantiene su marca. Flow admite CLP; otras monedas usan movimientos
+   manuales con evidencia en Cobranza. No infiera una cotización de cambio.

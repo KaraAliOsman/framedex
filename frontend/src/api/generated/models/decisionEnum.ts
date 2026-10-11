@@ -8,11 +8,13 @@
 
 /**
  * * `APPROVED` - APPROVED
+ * * `CHANGES_REQUESTED` - CHANGES_REQUESTED
  * * `DECLINED` - DECLINED
  */
 export type DecisionEnum = (typeof DecisionEnum)[keyof typeof DecisionEnum];
 
 export const DecisionEnum = {
   APPROVED: "APPROVED",
+  CHANGES_REQUESTED: "CHANGES_REQUESTED",
   DECLINED: "DECLINED",
 } as const;

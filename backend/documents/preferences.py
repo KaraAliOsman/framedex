@@ -14,6 +14,7 @@ DEFAULT_TERMS = {
     "warranty": "", "jurisdiction": "",
 }
 DEFAULT_PREFERENCES = {
+    "portal_successor_link": False,
     "paper": "LETTER", "accent": "TEAL", "legal_footer": "",
     "quotation_preview_minutes": 30,
     "quotation_valid_days": 15,

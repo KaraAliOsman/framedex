@@ -7,9 +7,12 @@ import logging
 from uuid import UUID
 
 from django.db import DatabaseError
+from django.conf import settings
+from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-from drf_spectacular.utils import extend_schema
+from django.views.decorators.gzip import gzip_page
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -30,6 +33,7 @@ from portal.serializers import (
     InternalApprovalSerializer,
     PortalQuoteSerializer,
     ShareQuoteResponseSerializer,
+    PortalPayRequestSerializer, PortalPayResultSerializer, PortalPayReturnSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,7 +55,7 @@ def public_portal_errors():
             raise contract_error(404, error.code, "El enlace de cotización no existe.") from error
         if error.code == "quote_revoked":
             raise contract_error(
-                410, error.code, "Este enlace fue revocado; solicite uno nuevo."
+                410, error.code, "Este enlace fue revocado; solicite uno nuevo.", extra=error.extra
             ) from error
         if error.code == "approval_not_pending":
             raise contract_error(
@@ -59,7 +63,7 @@ def public_portal_errors():
             ) from error
         if error.code in ("quote_expired", "quote_validity_expired"):
             raise contract_error(
-                410, error.code, "Esta cotización ya no está vigente; solicite un enlace nuevo."
+                410, error.code, "Esta cotización ya no está vigente; solicite un enlace nuevo.", extra=error.extra
             ) from error
         if error.code == "quote_approve_revision_mismatch":
             raise contract_error(
@@ -76,7 +80,8 @@ def public_portal_errors():
                 409, error.code, "Esta cotización ya fue respondida."
             ) from error
         raise contract_error(
-            422, error.code, error.public_detail or "La acción sobre la cotización fue rechazada."
+            409 if error.code in ('quote_consent_stale','quote_option_committed') else 422,
+            error.code, error.public_detail or "La acción sobre la cotización fue rechazada.", extra=error.extra
         ) from error
     except serializers.ValidationError as error:
         raise contract_error(
@@ -120,10 +125,14 @@ class ProjectQuoteLinkView(APIView):
     def get(self, request, project_id: UUID):
         with public_portal_errors(), documentary_scope(
             request, ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
-        ) as (_, _, org_id):
+        ) as (_, tenant, org_id):
+            output = service.list_approvals(org_id=org_id, project_id=project_id)
+            if tenant.active_organization.role == 'WORKSHOP_MANAGER':
+                for record in output:
+                    record.update(evidence=None, decided_by=None, decided_note=None)
             return Response(
                 ApprovalRecordSerializer(
-                    service.list_approvals(org_id=org_id, project_id=project_id),
+                    output,
                     many=True,
                 ).data
             )
@@ -218,6 +227,7 @@ class ProjectQuoteApproveView(APIView):
 
 
 @method_decorator(never_cache, name="dispatch")
+@method_decorator(gzip_page, name='dispatch')
 class PortalQuoteView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -246,13 +256,57 @@ class PortalQuoteDecisionView(APIView):
         responses={200: PortalQuoteSerializer, **ERRORS},
     )
     def post(self, request, token: str):
-        data = validate(DecideRequestSerializer, request.data)
         with public_portal_errors():
+            data = validate(DecideRequestSerializer, request.data)
             output = service.decide_quote(
                 token=token,
-                decision=str(data["decision"]),
-                decided_by=str(data["decided_by"]).strip(),
-                note=str(data.get("note") or "").strip() or None,
-                decided_rut=str(data.get("decided_rut") or "").strip() or None,
+                **data,
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[:1024],
             )
             return Response(output)
+
+
+@method_decorator(never_cache, name='dispatch')
+class PortalQuotePaymentView(APIView):
+    authentication_classes = []
+    throttle_classes = [PortalRateThrottle]
+    permission_classes = [AllowAny]
+
+    @extend_schema(operation_id='portal_quote_pay', request=PortalPayRequestSerializer,
+                   responses={200: PortalPayResultSerializer, **ERRORS})
+    def post(self, request, token: str):
+        from portal.payments import create
+        with public_portal_errors():
+            data = validate(PortalPayRequestSerializer, request.data)
+            return Response(create(token=token, **data))
+
+
+@method_decorator(never_cache, name='dispatch')
+class PortalPaymentReturnView(APIView):
+    authentication_classes = []
+    throttle_classes = [PortalRateThrottle]
+    permission_classes = [AllowAny]
+
+    @extend_schema(operation_id='portal_payment_return', parameters=[
+        OpenApiParameter('access', str, required=True), OpenApiParameter('redirect', bool)],
+        responses={200: PortalPayReturnSerializer, 302: None, **ERRORS})
+    def get(self, request, context_id: UUID):
+        from portal.payments import result
+        with public_portal_errors():
+            output = result(context_id=context_id, access=request.query_params.get('access', ''))
+            if request.query_params.get('redirect') == 'true':
+                return self._redirect(output)
+            return Response(output)
+
+    @extend_schema(operation_id='portal_payment_provider_return', request=None,
+        parameters=[OpenApiParameter('access', str, required=True)], responses={302: None, **ERRORS})
+    def post(self, request, context_id: UUID):
+        from portal.payments import result
+        with public_portal_errors():
+            return self._redirect(result(context_id=context_id, access=request.query_params.get('access', '')))
+
+    @staticmethod
+    def _redirect(output):
+        origin = (settings.DEKOPEN_PUBLIC_APP_URL or settings.BILLING_FRONTEND_ORIGIN).rstrip('/')
+        return HttpResponseRedirect(origin + output['portal_path'])

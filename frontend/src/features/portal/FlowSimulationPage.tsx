@@ -39,7 +39,9 @@ export function FlowSimulationPage({ returnMode = false }: { returnMode?: boolea
       const result = await flowSimulationConfirm(id, { token, outcome });
       if (result.status !== 200) throw new ApiError(result.status, result.data);
       await query.refetch();
-      navigate(`/pago/retorno?sim=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`);
+      if (result.data.portal_path) navigate(result.data.portal_path);
+      else
+        navigate(`/pago/retorno?sim=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`);
     } catch (error) {
       setMessage(actionErrorDetail(error, "No se completó la prueba. Solicite un enlace vigente."));
     } finally {
@@ -101,6 +103,9 @@ export function FlowSimulationPage({ returnMode = false }: { returnMode?: boolea
               <Link to={`/pago/simulado/${id}?token=${encodeURIComponent(token)}`}>
                 Volver a la prueba
               </Link>
+            )}
+            {query.data.portal_path && (
+              <Link to={query.data.portal_path}>Volver a su propuesta</Link>
             )}
           </>
         )}

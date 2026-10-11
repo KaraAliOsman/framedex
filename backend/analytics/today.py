@@ -33,17 +33,22 @@ def quotation_rows(org_id):
     with documentary_backend():
         return rows("""
             SELECT p.id,p.code,p.name,p.client_name,p.status::text,p.current_revision,
-                   v.id AS version_id,v.emitted_at,
+                   selected.id AS version_id,v.id AS offering_version_id,v.emitted_at,
                    v.snapshot_json->'project'->>'quotation_valid_until' AS valid_until,
-                   v.snapshot_json->'project'->>'total_price_gross' AS total,
-                   v.snapshot_json->'project'->>'currency' AS currency,
-                   v.snapshot_json->'project'->'commercial_terms' AS commercial_terms,
-                   a.status AS response_status,a.decided_note,a.decided_at,
+                   selected.snapshot_json->'project'->>'total_price_gross' AS total,
+                   selected.snapshot_json->'project'->>'currency' AS currency,
+                   selected.snapshot_json->'project'->'commercial_terms' AS commercial_terms,
+                   COALESCE(c.kind,a.status) AS response_status,d.kind AS decision_kind,
+                   COALESCE(d.evidence->>'note',a.decided_note) AS decided_note,COALESCE(c.decided_at,a.decided_at) AS decided_at,
                    a.view_count,a.last_viewed_at,a.expires_at,
                    a.created_at AS shared_at
             FROM public.projects p
             JOIN public.project_versions v ON v.project_id=p.id AND v.org_id=p.org_id
                  AND v.revision_code=p.current_revision
+            LEFT JOIN LATERAL private.quotation_choice(p.org_id,v.id) c ON true
+            JOIN public.project_versions selected ON selected.id=CASE WHEN c.kind='APPROVED' THEN c.selected_version_id ELSE v.id END
+                 AND selected.org_id=p.org_id
+            LEFT JOIN public.quote_decisions d ON d.org_id=p.org_id AND d.offering_version_id=v.id
             LEFT JOIN LATERAL (
                 SELECT
                   (array_agg(status ORDER BY (status='APPROVED') DESC,
@@ -68,7 +73,7 @@ def quote_public(row, today):
     expired = validity is not None and date.fromisoformat(validity) < today
     state = ("expired" if expired and row["status"] == "QUOTED" else
              "approved" if row["status"] in {"APPROVED", "IN_PRODUCTION", "COMPLETED"} else
-             "response" if row["response_status"] == "DECLINED" else
+             "response" if row["response_status"] in {"DECLINED", "CHANGES_REQUESTED"} else
              "unshared" if row["shared_at"] is None else
              "link_expired" if row["expires_at"] < datetime.now(timezone.utc) else "pending")
     return {
@@ -79,6 +84,7 @@ def quote_public(row, today):
         "view_count": int(row["view_count"] or 0),
         "last_viewed_at": row["last_viewed_at"].isoformat() if row["last_viewed_at"] else None,
         "response_note": row["decided_note"],
+        "decision_kind": row.get("decision_kind"),
         "total": row["total"], "currency": row["currency"],
         "source": "Total y vigencia de la revisión emitida; vistas y respuesta de sus enlaces vigentes.",
         "href": f"/projects/{row['id']}?section=quote",
@@ -173,10 +179,15 @@ def commercial_actions(org_id, today, role):
                 f"{item['client_name']} abrió la revisión y todavía no responde.",
                 "Revisar seguimiento", item["href"], source=item["source"]))
         if quote_attention(item, "response", today):
+            changes = item.get('decision_kind') != 'DECLINED'
             result.append(action("quote_response", item["project_id"], item["project_code"],
-                item["project_name"], "Revisa la respuesta del cliente",
+                item["project_name"], "Revisa los cambios solicitados" if changes else "Revisa el rechazo del cliente",
                 item["response_note"] or "El cliente rechazó la propuesta sin un motivo registrado.",
-                "Revisar cambios", item["href"], blocking=True, source=item["source"]))
+                "Revisar cambios" if changes else "Leer rechazo", item["href"], blocking=True, source=item["source"]))
+        if item['state'] == 'approved' and item.get('decision_kind') == 'APPROVED' and item['phase'] == 'APPROVED':
+            result.append(action('quote_approved', item['project_id'], item['project_code'], item['project_name'],
+                'Coordina la propuesta aceptada', 'La aceptación quedó registrada. Revisa la opción elegida, la medición final y el anticipo.',
+                'Leer aceptación', item['href'], source=item['source']))
         if item["state"] == "expired":
             result.append(action("quote_expired", item["project_id"], item["project_code"],
                 item["project_name"], "Renueva la cotización vencida",
@@ -206,6 +217,7 @@ def commercial_actions(org_id, today, role):
                 from projects.payments import collection_projection
                 projection = collection_projection(org_id=org_id, project_id=row["id"], today=today,
                     deal={"total": total, "currency": row["currency"], "version_id": row.get("version_id"),
+                          "offering_version_id": row.get('offering_version_id'),
                           "commercial_terms": row.get("commercial_terms") or {}}, payments=payments[str(row["id"])])
                 collected, balance = projection.collected, projection.balance
                 if balance > 0:

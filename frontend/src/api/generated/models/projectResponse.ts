@@ -31,6 +31,11 @@ export interface ProjectResponse {
   delivery_address?: string;
   notes_commercial?: string;
   notes_internal?: string;
+  /** @nullable */
+  accepted_version_id?: string | null;
+  /** @nullable */
+  accepted_revision?: string | null;
+  accepted_source?: string;
   id: string;
   code: string;
   status: ProjectResponseStatusEnum;

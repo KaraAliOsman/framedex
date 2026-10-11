@@ -603,3 +603,26 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   cero. Los históricos sin calendario conservan su lectura del ledger.
 - Cien posiciones usan ventana de alturas medidas. Home/End navegan identidades
   reales; filtro y vista no descartan la selección ya declarada.
+
+## P10 · propuesta y elección (2026-10-11)
+
+- Comparar ofrece las revisiones completas incluidas explícitamente en la
+  emisión. La oferta conserva su identidad; la elección aceptada es evidencia
+  aditiva y gobierna cobros, factura, compras y producción. Una sucesora abre
+  un borrador desde esa solución sin acreditar medidas ni precio nuevos.
+- El cliente acepta nombre, RUT y el texto exacto de solución/importe/condiciones.
+  Pedir cambios exige comentario y permite señalar una posición; rechazar
+  mantiene motivo opcional. La primera decisión prevalece entre enlaces.
+- «Llevar una propuesta reemplazada a la vigente» comienza desactivado y se
+  configura en Ajustes › General › Documentos. Se sella en la emisión; cambiar
+  hoy ese ajuste no concede acceso retroactivo a un enlace histórico.
+- Vista interior/técnica inicial, con Comercial, cambio de cara, zoom/pan y
+  ampliación elegibles en cada dibujo. La atribución DEKOPEN conserva el ajuste
+  de la organización; el emisor y su favicon tienen precedencia en el portal.
+- El pago exige oferta aprobada/vigente, saldo positivo y proveedor habilitado.
+  Conserva la configuración de simulación de P11 en Ajustes › Cobranza; USD
+  no recibe una conversión implícita para Flow. Un cobro preparado desde el
+  mismo enlace se continúa; no se crea otro después de recargar.
+- Una factura ya emitida de otra solución requiere conciliación antes de
+  aceptar una alternativa. La emisión y la decisión comparten el bloqueo
+  del acuerdo. Los documentos históricos conservan sus importes y bytes.

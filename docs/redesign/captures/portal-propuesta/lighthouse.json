@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-11T05:54:20.420Z",
+  "version": "13.5.0",
+  "mode": "Production Vite preview, real local backend and sealed twelve-position proposal. Lighthouse default simulated mobile throttling; viewport 390×844.",
+  "score": 81,
+  "metrics": {
+    "first-contentful-paint": {
+      "score": 0.48,
+      "numericValue": 3036.2875,
+      "displayValue": "3.0 s"
+    },
+    "largest-contentful-paint": {
+      "score": 0.46,
+      "numericValue": 4116.66,
+      "displayValue": "4.1 s"
+    },
+    "total-blocking-time": {
+      "score": 1,
+      "numericValue": 30,
+      "displayValue": "30 ms"
+    },
+    "cumulative-layout-shift": {
+      "score": 1,
+      "numericValue": 0.0001263016761320932,
+      "displayValue": "0"
+    },
+    "speed-index": {
+      "score": 0.94,
+      "numericValue": 3036.2875,
+      "displayValue": "3.0 s"
+    }
+  }
+}

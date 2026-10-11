@@ -8,9 +8,12 @@ from portal.views import (
     ProjectQuoteLinkView,
     ProjectQuoteLinkDeadlineView,
     ProjectQuoteLinkRegenerateView,
+    PortalQuotePaymentView, PortalPaymentReturnView,
 )
 
 urlpatterns = [
+    path('portal/payments/<uuid:context_id>/return/', PortalPaymentReturnView.as_view(), name='portal-payment-return'),
+    path('portal/quotes/<str:token>/pay/', PortalQuotePaymentView.as_view(), name='portal-quote-pay'),
     path("projects/<uuid:project_id>/quote-links/<uuid:approval_id>/deadline/", ProjectQuoteLinkDeadlineView.as_view(), name="project-quote-link-deadline"),
     path("projects/<uuid:project_id>/quote-links/<uuid:approval_id>/regenerate/", ProjectQuoteLinkRegenerateView.as_view(), name="project-quote-link-regenerate"),
     path(

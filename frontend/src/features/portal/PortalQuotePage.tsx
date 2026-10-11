@@ -1,828 +1,954 @@
-import { ValidatedForm } from "../../ui/FormValidation";
-import { FormEvent, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-
+import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/apiMutator";
-import { applyAppBrand } from "../../brand/head";
-import { portalQuoteDecide, portalQuoteRetrieve } from "../../api/generated/dekopen";
-import type { PortalPosition, PortalQuote } from "../../api/generated/models";
-import type { PositionDesign } from "../../api/generated/models";
-import { t, TranslationKey } from "../../i18n/es-CL";
-import { formatRevision, fmtMm } from "../../format";
-import { PositionThumb, THUMB_MEMBERS } from "../projects/PositionThumb";
-import type { OpeningLeafFact } from "../canvas/physicalOpenings";
 import {
-  addDecimal,
-  divideByInt,
-  divideDecimal,
-  formatDecimal,
-  multiplyDecimal,
-  parseDecimal,
-  roundDecimalToInt,
-  type DecimalValue,
-} from "../projects/decimal";
-import { reSkinMembers, withFinishMembers, type MemberGeometry } from "../canvas/members";
+  portalQuoteDecide,
+  portalQuotePay,
+  portalQuoteRetrieve,
+  portalPaymentReturn,
+} from "../../api/generated/dekopen";
+import type {
+  CommercialTerms,
+  PortalOption,
+  PortalOrganization,
+  PortalQuote,
+} from "../../api/generated/models";
+import { applyAppBrand } from "../../brand/head";
+import { formatDate, formatDateTime, formatRevision, isValidRut } from "../../format";
+import { DemoBadge, DimLoader, Money, StatusBadge, UnknownValue, ValidatedForm } from "../../ui";
+import { actionErrorDetail } from "../errors";
+import { ProposalDrawing, ProposalThumb } from "./proposalDrawing";
 import "./portal.css";
-import { formatDate, formatMoney } from "../money";
 
-const money = formatMoney;
-
-/** Sealed finish text → the closest renderable member surface — a Nogal foil
- * quote must not draw a white PVC window beside "Terminación: Nogal". */
-const FINISH_SURFACES: [RegExp, string][] = [
-  [/madera|nogal|roble|caoba|wengue|cedro|sapeli|rovere|nuss|wood|foil|foliad/i, "PVC_FOIL"],
-  [/antracit|grafito|negro|dark|black|bronce|bronze/i, "ALUMINIUM_ANTHRACITE"],
-  [/aluminio|aluminum|anodiz|natural/i, "ALUMINIUM"],
-];
-
-function positionMembers(
-  position: PortalPosition,
-  face: "interior" | "exterior" = "interior",
-): MemberGeometry {
-  if (position.resolved_finish)
-    return withFinishMembers(THUMB_MEMBERS, position.resolved_finish, face);
-  const text =
-    `${position.color_interior ?? ""} ${position.color_exterior ?? ""} ${position.finish ?? ""}`
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "");
-  for (const [pattern, material] of FINISH_SURFACES) {
-    if (pattern.test(text)) return { ...reSkinMembers(THUMB_MEMBERS, material), viewFace: face };
-  }
-  return { ...THUMB_MEMBERS, viewFace: face };
-}
-
-/** The contract error body carries a precise public detail for portal codes
- * (revoked / expired / superseded) — prefer it over a generic fallback. */
-function errorDetail(payload: unknown): string | null {
-  const detail = (payload as { error?: { detail?: unknown } } | null)?.error?.detail;
-  return typeof detail === "string" && detail !== "" ? detail : null;
-}
-
-function positionDesign(position: PortalPosition): PositionDesign {
-  return {
-    system_id: "",
-    nominal_width_mm: position.width_mm,
-    nominal_height_mm: position.height_mm,
-    // The sealed interior color drives the preview's finish semantics —
-    // exterior face coloring is conveyed separately in the facts line.
-    color: position.color_interior || "WHITE",
-    parametric_tree: position.parametric_tree,
-  };
-}
-
-const typologyKeys: Record<string, TranslationKey> = {
-  FIXED: "typology.fixed",
-  TURN: "typology.turn",
-  TILT_TURN: "typology.tiltTurn",
-  TILT: "typology.tilt",
-  SLIDING_2L: "typology.sliding2l",
-  SLIDING_3L: "typology.sliding3l",
-  SLIDING_4L: "typology.sliding4l",
-  SLIDING: "typology.sliding",
-  AWNING: "typology.awning",
-  DOOR_ENTRY: "typology.doorEntry",
-  DOOR_DOUBLE: "typology.doorDouble",
-  CORNER: "typology.corner",
-  BOW: "typology.bow",
-  FRAMELESS: "typology.frameless",
-  COMPOSITE: "typology.composite",
+type Decision = "APPROVED" | "CHANGES_REQUESTED" | "DECLINED";
+type Failure = { code: string; detail: string; organization?: PortalOrganization };
+const titles: Record<string, string> = {
+  APPROVED: "Propuesta aprobada",
+  CHANGES_REQUESTED: "Cambios solicitados",
+  DECLINED: "Propuesta rechazada",
+  PENDING: "Propuesta vigente",
 };
 
-/** discount_pct persists as a fraction (0.10 = 10 %) — never print it raw. */
-function pctLabel(raw: string | null | undefined): string {
-  const fraction = Number(raw);
-  if (!Number.isFinite(fraction)) return `${raw}%`;
-  const pct = fraction <= 1 ? fraction * 100 : fraction;
-  return `${pct.toFixed(2).replace(/\.?0+$/, "")}%`;
-}
-
-function typologyLabel(raw: string | null | undefined): string {
-  const key = raw ? typologyKeys[raw] : undefined;
-  return key ? t(key) : (raw ?? "");
-}
-
-/** Long location/index lists wrap horribly — first…last plus the count. */
-function compactList(values: string[], max = 6): string {
-  if (values.length === 0) return "—";
-  return values.length <= max
-    ? values.join(", ")
-    : `${values[0]} … ${values[values.length - 1]} (${values.length})`;
-}
-
-/** Identical openings collapse into one proposal card — a 15-unit block of
- * the same window reads as one group with its locations, not fifteen cards. */
-function groupPositions(positions: PortalPosition[]): {
-  key: string;
-  position: PortalPosition;
-  locations: string[];
-  indexes: string[];
-  quantity: number;
-  totalNet: DecimalValue | null;
-}[] {
-  const groups = new Map<
-    string,
-    {
-      key: string;
-      position: PortalPosition;
-      locations: string[];
-      indexes: string[];
-      quantity: number;
-      totalNet: DecimalValue | null;
-    }
-  >();
-  for (const position of positions) {
-    const key = JSON.stringify([
-      position.typology,
-      position.width_mm,
-      position.height_mm,
-      position.color_interior,
-      position.color_exterior,
-      position.glass_specs,
-      position.commercial_hardware,
-      position.resolved_finish,
-      position.price_net,
-      position.parametric_tree,
-      position.opening_leaves,
-      position.opening_measurements,
-    ]);
-    const group = groups.get(key);
-    const location = position.location_tag?.trim();
-    const index = position.position_index != null ? String(position.position_index) : null;
-    // Sealed money stays exact decimal end to end — group totals never
-    // round-trip through binary float before reaching the es-CL formatter.
-    const lineNet = position.price_net != null ? parseDecimal(position.price_net) : null;
-    if (group) {
-      if (location && !group.locations.includes(location)) group.locations.push(location);
-      if (index) group.indexes.push(index);
-      group.quantity += position.quantity ?? 1;
-      group.totalNet =
-        group.totalNet !== null && lineNet !== null
-          ? addDecimal(group.totalNet, lineNet)
-          : (group.totalNet ?? lineNet);
-    } else {
-      groups.set(key, {
-        key,
-        position,
-        locations: location ? [location] : [],
-        indexes: index ? [index] : [],
-        quantity: position.quantity ?? 1,
-        totalNet: lineNet,
-      });
-    }
-  }
-  return [...groups.values()];
-}
-
-function PositionGroupCard({
-  group,
-  currency,
-  taxRate,
-}: {
-  group: ReturnType<typeof groupPositions>[number];
-  currency: string;
-  // IVA-included line totals reconcile with the headline Total — a customer
-  // thinks in gross, so the card leads with it when the rate is derivable.
-  taxRate: DecimalValue | null;
-}): JSX.Element {
-  const { position } = group;
-  const [variant, setVariant] = useState<"studio" | "elevation">("studio");
-  const [face, setFace] = useState<"interior" | "exterior">("interior");
-  const specs = position.glass_specs ?? [];
-  const finished = position.finish ?? null;
-  const hardware = position.commercial_hardware ?? [];
-  const members = positionMembers(position, face);
-  const hasPrice = position.price_net != null && group.totalNet !== null;
-  const totalNet = group.totalNet;
-  const grossLine =
-    totalNet !== null && taxRate !== null
-      ? multiplyDecimal(totalNet, addDecimal({ numerator: 1n, denominator: 1n }, taxRate))
-      : null;
-  const locations =
-    group.locations.length > 0
-      ? compactList(group.locations)
-      : `Pos. ${compactList(group.indexes)}`;
+function Issuer({ organization }: { organization?: PortalOrganization }): JSX.Element {
+  const name = organization?.commercial_name || organization?.name || "Emisor sin identificar";
   return (
-    <article className="portal-position">
-      <div className="portal-position__thumb">
-        <PositionThumb
-          design={positionDesign(position)}
-          variant={variant}
-          members={members}
-          openingLeaves={(position.opening_leaves ?? []) as OpeningLeafFact[]}
-        />
-        <div className="portal-position__views" role="group" aria-label={t("portal.views")}>
-          <button
-            type="button"
-            className="portal-view-toggle"
-            data-active={variant === "studio"}
-            onClick={() => setVariant("studio")}
-          >
-            {t("portal.viewStudio")}
-          </button>
-          <button
-            type="button"
-            className="portal-view-toggle"
-            data-active={variant === "elevation"}
-            onClick={() => setVariant("elevation")}
-          >
-            {t("portal.viewTechnical")}
-          </button>
-        </div>
-        <div className="portal-position__faces" role="group" aria-label="Cara de la ventana">
-          <button
-            type="button"
-            aria-pressed={face === "interior"}
-            className="portal-face-toggle"
-            onClick={() => setFace("interior")}
-          >
-            Vista interior
-          </button>
-          <button
-            type="button"
-            aria-pressed={face === "exterior"}
-            className="portal-face-toggle"
-            onClick={() => setFace("exterior")}
-          >
-            Vista exterior
-          </button>
-        </div>
-        {position.resolved_finish &&
-          (position.resolved_finish.interior.approximate ||
-            position.resolved_finish.exterior.approximate) && (
-            <p>
-              Color aproximado; revise la muestra del fabricante.
-              {position.resolved_finish.interior.synthetic ? " · DEMO" : ""}
-            </p>
-          )}
-      </div>
-      <div className="portal-position__body">
-        <p className="portal-position__id">
-          {locations}
-          {group.quantity > 1 ? (
-            <span className="portal-position__count">×{group.quantity}</span>
-          ) : null}
-        </p>
-        <p className="portal-position__typology">{typologyLabel(position.typology)}</p>
-        <dl className="portal-position__facts">
-          <div>
-            <dt>{position.opening_measurements?.length ? "Producto" : t("portal.dims")}</dt>
-            <dd>
-              {fmtMm(position.width_mm)} × {fmtMm(position.height_mm)} mm
-            </dd>
-          </div>
-          {position.opening_measurements?.map((item) => (
-            <div key={item.module_index}>
-              <dt>Vano · marco {item.module_index}</dt>
-              <dd>
-                {fmtMm(item.width_mm)} × {fmtMm(item.height_mm)} mm · {item.rule_name}
-                {item.synthetic ? " · DEMO" : ""}
-              </dd>
-            </div>
-          ))}
-          <div>
-            <dt>{t("portal.qty")}</dt>
-            <dd>{group.quantity}</dd>
-          </div>
-          {specs.length > 0 ? (
-            <div>
-              <dt>{t("portal.glass")}</dt>
-              <dd>{specs.join(" · ")}</dd>
-            </div>
-          ) : null}
-          {finished ? (
-            <div>
-              <dt>{t("portal.finish")}</dt>
-              <dd>{finished}</dd>
-            </div>
-          ) : null}
-          {hardware.map((item, index) => (
-            <div key={index}>
-              <dt>Manilla y opciones{item.synthetic ? " · DEMO" : ""}</dt>
-              <dd>
-                {[item.handle_name, item.handle_color, ...item.options]
-                  .filter(Boolean)
-                  .join(" · ") || "Sin manilla de accionamiento"}
-              </dd>
-            </div>
-          ))}
-          {Number(position.discount_pct) > 0 ? (
-            <div>
-              <dt>{t("portal.discount")}</dt>
-              <dd>{pctLabel(position.discount_pct)}</dd>
-            </div>
-          ) : null}
-        </dl>
-        <p className="portal-position__price">
-          {hasPrice && group.quantity > 1 && totalNet !== null && (
-            <span className="portal-position__unit">
-              {t("portal.unitNet")}{" "}
-              {money(formatDecimal(divideByInt(totalNet, group.quantity)), currency)}
-            </span>
-          )}
-          <span>
-            {t("portal.lineNet")}{" "}
-            {hasPrice && totalNet !== null ? money(formatDecimal(totalNet), currency) : "—"}
-          </span>
-          <strong>
-            {hasPrice
-              ? grossLine !== null
-                ? money(roundDecimalToInt(grossLine), currency)
-                : totalNet !== null
-                  ? money(formatDecimal(totalNet), currency)
-                  : "—"
-              : "—"}
-            {taxRate !== null && hasPrice ? (
-              <span className="portal-position__taxincl"> {t("portal.taxIncluded")}</span>
-            ) : null}
-          </strong>
-        </p>
-      </div>
-    </article>
+    <div className="portal-issuer">
+      {organization?.brand_logo_url && (
+        <img src={organization.brand_logo_url} alt="Logo del fabricante" width={160} height={48} />
+      )}
+      <p className="portal-issuer-name">{name}</p>
+      {organization?.tax_id && <p className="technical-number">{organization.tax_id}</p>}
+      <Contact organization={organization} />
+    </div>
   );
 }
-
-export function PortalQuotePage(): JSX.Element {
-  const { token = "" } = useParams();
-  const [quote, setQuote] = useState<PortalQuote | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [rut, setRut] = useState("");
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [decideError, setDecideError] = useState<string | null>(null);
-
+function Contact({ organization }: { organization?: PortalOrganization }): JSX.Element {
+  return (
+    <address className="portal-contact">
+      {organization?.brand_address && <span>{organization.brand_address}</span>}
+      {organization?.brand_phone && (
+        <a href={`tel:${organization.brand_phone.replace(/[^+\d]/g, "")}`}>
+          {organization.brand_phone}
+        </a>
+      )}
+      {organization?.brand_email && (
+        <a href={`mailto:${organization.brand_email}`}>{organization.brand_email}</a>
+      )}
+      {!organization?.brand_phone && !organization?.brand_email && (
+        <span>Contacte al fabricante que le envió este enlace.</span>
+      )}
+    </address>
+  );
+}
+function useProposalHead(organization?: PortalOrganization, code?: string): void {
   useEffect(() => {
-    let active = true;
-    void (async () => {
-      try {
-        const response = await portalQuoteRetrieve(token);
-        if (!active) return;
-        if (response.status !== 200) {
-          // Revoked/expired/superseded links carry a precise public detail —
-          // a generic "check the link" would blame the customer's URL.
-          setError(
-            response.status === 404
-              ? t("portal.notFound")
-              : (errorDetail(response.data) ?? t("portal.loadError")),
-          );
-          return;
-        }
-        setQuote(response.data);
-      } catch (error) {
-        if (!active) return;
-        // apiMutator throws on non-OK — the link's real state (revoked 410,
-        // expired 410, gone 404) must surface, not a generic load error.
-        setError(
-          error instanceof ApiError
-            ? error.status === 404
-              ? t("portal.notFound")
-              : (errorDetail(error.payload) ?? t("portal.loadError"))
-            : t("portal.loadError"),
-        );
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [token]);
-
-  // The only page a customer ever sees carries the issuer's name in the tab.
-  useEffect(() => {
-    const previousTitle = document.title;
-    const links = [
+    const previousPortal = document.body.dataset.portalDocument;
+    document.body.dataset.portalDocument = "true";
+    const title = document.title;
+    const icons = [
       ...document.querySelectorAll<HTMLLinkElement>(
         'link[rel="icon"],link[rel="apple-touch-icon"],link[rel="manifest"]',
       ),
     ];
-    const saved = links.map((link) => ({
+    const saved = icons.map((link) => ({
       link,
       href: link.getAttribute("href"),
       type: link.getAttribute("type"),
     }));
-    const description = document.querySelector('meta[name="description"]');
-    const previousDescription = description?.getAttribute("content");
-    const themeColor = document.querySelector('meta[name="theme-color"]');
-    const previousColor = themeColor?.getAttribute("content");
-    const issuer = quote?.organization?.commercial_name || quote?.organization?.name || "";
-    document.title = issuer
-      ? `${issuer} · ${t("portal.proposalTitle")} · ${quote?.project_code ?? ""}`
-      : t("portal.proposalTitle");
-    for (const link of links) {
+    const issuer = organization?.commercial_name || organization?.name;
+    document.title = [issuer, "Cotización", code].filter(Boolean).join(" · ");
+    for (const link of icons) {
       if (link.rel === "manifest") link.removeAttribute("href");
       else {
-        link.setAttribute("href", quote?.organization?.brand_logo_url || "/portal-favicon.svg");
+        link.setAttribute("href", organization?.brand_logo_url || "/portal-favicon.svg");
         link.removeAttribute("type");
       }
     }
-    description?.setAttribute(
-      "content",
-      issuer ? `Cotización de ${issuer}` : t("portal.proposalTitle"),
-    );
-    if (quote?.organization?.brand_primary_color)
-      themeColor?.setAttribute("content", quote.organization.brand_primary_color);
     return () => {
-      document.title = previousTitle;
+      if (previousPortal) document.body.dataset.portalDocument = previousPortal;
+      else delete document.body.dataset.portalDocument;
+      document.title = title;
       for (const { link, href, type } of saved) {
         if (href) link.setAttribute("href", href);
         else link.removeAttribute("href");
         if (type) link.setAttribute("type", type);
         else link.removeAttribute("type");
       }
-      if (previousDescription) description?.setAttribute("content", previousDescription);
-      if (previousColor) themeColor?.setAttribute("content", previousColor);
       applyAppBrand(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
     };
-  }, [quote]);
+  }, [organization, code]);
+}
+function PriceSource({ option }: { option: PortalOption }): JSX.Element {
+  return (
+    <details className="portal-price-source">
+      <summary>¿De dónde sale el precio?</summary>
+      <p>{option.price_source}</p>
+      <p>
+        Los precios unitarios y de línea incluyen el impuesto sellado. Los ajustes se muestran por
+        separado para conservar el total de la revisión.
+      </p>
+      <details>
+        <summary>Detalles técnicos</summary>
+        <p>{formatRevision(option.revision_code)}</p>
+        <code>{option.snapshot_sha256}</code>
+      </details>
+    </details>
+  );
+}
+function ProposalState({ quote }: { quote: PortalQuote }): JSX.Element {
+  return (
+    <section className="portal-state" aria-label="Estado de la propuesta">
+      <StatusBadge data-status={quote.approval_status.toLowerCase()}>
+        {titles[quote.approval_status] || "Estado sin dato"}
+      </StatusBadge>
+      {quote.decided_at && (
+        <p>
+          Decisión registrada el{" "}
+          <time dateTime={quote.decided_at}>{formatDateTime(quote.decided_at)}</time> ·{" "}
+          {formatRevision(quote.selected_revision || quote.revision_code)}.
+        </p>
+      )}
+      {quote.approval_status === "APPROVED" ? (
+        <p>
+          El fabricante se contactará con usted para coordinar la medición final y el anticipo. La
+          solución aceptada conserva sus condiciones.
+        </p>
+      ) : quote.approval_status === "CHANGES_REQUESTED" ? (
+        <p>
+          El fabricante revisará su comentario y preparará una nueva propuesta. Este enlace conserva
+          su solicitud; no se iniciará un pago.
+        </p>
+      ) : quote.approval_status === "DECLINED" ? (
+        <p>Su rechazo quedó registrado. Si necesita otra propuesta, contacte al fabricante.</p>
+      ) : (
+        <p>Revise las posiciones, el importe y las condiciones antes de aceptar.</p>
+      )}
+    </section>
+  );
+}
+function Conditions({ option }: { option: PortalOption }): JSX.Element {
+  const terms = (option.commercial_terms ?? {}) as CommercialTerms;
+  return (
+    <section className="portal-section" aria-label="Condiciones y documentos">
+      <h2>Condiciones y documentos</h2>
+      <div className="portal-conditions">
+        <div>
+          <h3>Calendario de pagos</h3>
+          {option.payment_schedule.length ? (
+            <ol className="portal-schedule">
+              {option.payment_schedule.map((item, i) => (
+                <li key={i}>
+                  <strong>{String(item.label ?? "Hito sin nombre")}</strong>
+                  <Money
+                    value={typeof item.amount === "string" ? item.amount : null}
+                    currency={option.currency}
+                  />
+                  <span>
+                    {item.due_on
+                      ? formatDate(String(item.due_on))
+                      : item.due_event === "APPROVAL"
+                        ? "Al aprobar"
+                        : item.due_event === "DELIVERY"
+                          ? "Contra entrega completa con comprobante"
+                          : "Sin fecha declarada · acuerde el vencimiento con el fabricante"}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p>
+              {option.payment_terms ||
+                "Sin dato · el fabricante debe declarar el calendario de pagos."}
+            </p>
+          )}
+        </div>
+        <dl>
+          {(
+            [
+              ["delivery_text", "Plazo de entrega"],
+              ["installation_text", "Instalación"],
+              ["exclusions", "Exclusiones"],
+              ["warranty", "Garantía"],
+              ["jurisdiction", "Jurisdicción"],
+            ] as const
+          ).map(([key, label]) => (
+            <div key={key}>
+              <dt>{label}</dt>
+              <dd>
+                {terms[key] || (
+                  <UnknownValue cause="El fabricante no declaró esta condición; contáctelo antes de aceptar" />
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      {option.notes_commercial && <p className="portal-note">{option.notes_commercial}</p>}
+      {option.quote_pdf_url ? (
+        <a
+          className="portal-document-link"
+          href={option.quote_pdf_url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Descargar cotización · {formatRevision(option.revision_code)}
+        </a>
+      ) : (
+        <p>Sin PDF disponible · solicite al fabricante el documento de esta opción.</p>
+      )}
+    </section>
+  );
+}
+function PortalPayment({
+  quote,
+  token,
+  onRefresh,
+}: {
+  quote: PortalQuote;
+  token: string;
+  onRefresh: () => Promise<void>;
+}): JSX.Element {
+  const payableInput = (quote.payment?.balance ?? "").replace(/\.0+$/, "");
+  const [amount, setAmount] = useState(payableInput);
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [operationKey] = useState(() => crypto.randomUUID());
+  useEffect(() => setAmount(payableInput), [payableInput]);
+  const [search] = useSearchParams();
+  const context = search.get("pago") ?? "";
+  const access = search.get("access") ?? "";
+  const returning = Boolean(context && context !== "retorno" && access);
+  const result = useQuery({
+    queryKey: ["proposal-payment-return", context, access],
+    enabled: returning,
+    retry: false,
+    refetchInterval: (query) =>
+      ["DISPATCHING", "PENDING", "UNCERTAIN"].includes(query.state.data?.status ?? "")
+        ? 10000
+        : false,
+    queryFn: async () => {
+      const response = await portalPaymentReturn(context, { access });
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (!response.data.portal_path.startsWith(`/cotizacion/${token}?`))
+        throw new Error("El resultado pertenece a otro enlace del fabricante.");
+      return response.data;
+    },
+  });
+  useEffect(() => {
+    if (result.data?.status === "PAID") void onRefresh();
+  }, [result.data?.status, onRefresh]);
+  const paymentStates: Record<string, string> = {
+    PAID: result.data?.simulated
+      ? "Pago de prueba registrado; no se transfirió dinero."
+      : "Pago confirmado y registrado.",
+    FAILED: "El pago fue rechazado. El saldo no se descontó.",
+    CANCELLED: "El cobro fue cancelado. El saldo no se descontó.",
+    DISPATCHING: "El proveedor está preparando el cobro; todavía no hay un pago registrado.",
+    PENDING: "El proveedor aún no confirma el pago. Consultaremos nuevamente su resultado.",
+    UNCERTAIN: "La confirmación sigue en consulta. No repita el pago hasta verificar su resultado.",
+  };
+  return (
+    <section className="portal-section" aria-label="Pago de la propuesta">
+      <h2>Pago de la propuesta</h2>
+      {returning && (
+        <p role="status">
+          {result.isPending
+            ? "Consultando el resultado del pago…"
+            : result.isError
+              ? "No se pudo verificar el resultado. Contacte al fabricante antes de repetir el pago."
+              : (paymentStates[result.data.status] ??
+                "Estado del proveedor sin dato. Contacte al fabricante.")}
+        </p>
+      )}
+      {quote.payment ? (
+        <dl className="portal-payment-ledger">
+          <div>
+            <dt>Registrado</dt>
+            <dd>
+              <Money value={quote.payment.collected} currency={quote.currency} />
+            </dd>
+          </div>
+          <div>
+            <dt>Saldo</dt>
+            <dd>
+              <Money value={quote.payment.balance} currency={quote.currency} />
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <UnknownValue cause="No se pudo establecer un saldo; contacte al fabricante" />
+      )}
+      {quote.payment?.simulated && (
+        <p>El saldo incluye movimientos de prueba, sin dinero transferido.</p>
+      )}
+      {quote.payment_provider && quote.payment_url ? (
+        <div className="portal-pending-payment">
+          {quote.payment_provider === "SIMULATED" && (
+            <StatusBadge tone="neutral">Modo de prueba</StatusBadge>
+          )}
+          <p>
+            Ya hay un cobro preparado para esta propuesta. Continúe el mismo pago para evitar
+            duplicarlo.
+          </p>
+          <a className="primary-action portal-document-link" href={quote.payment_url}>
+            Continuar pago pendiente
+          </a>
+        </div>
+      ) : (
+        quote.payment_provider && (
+          <ValidatedForm
+            className="portal-pay-form"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (busy) return;
+              if (!/^\d+$/.test(amount) || !/[\w.+-]+@[^\s@]+\.[^\s@]+/.test(email)) {
+                setMessage("Indique un monto CLP entero positivo y su correo para el comprobante.");
+                return;
+              }
+              setBusy(true);
+              setMessage("");
+              try {
+                const result = await portalQuotePay(token, {
+                  amount,
+                  payer_email: email.trim(),
+                  operation_key: operationKey,
+                });
+                if (result.status !== 200) throw new ApiError(result.status, result.data);
+                window.location.assign(result.data.url);
+              } catch (error) {
+                setMessage(
+                  actionErrorDetail(
+                    error,
+                    "No se pudo preparar el cobro. Revise el saldo y vuelva a intentar.",
+                  ),
+                );
+                await onRefresh();
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {quote.payment_provider === "SIMULATED" && (
+              <StatusBadge tone="neutral">Modo de prueba</StatusBadge>
+            )}
+            <label htmlFor="portal-pay-amount">Monto a pagar (CLP)</label>
+            <input
+              id="portal-pay-amount"
+              inputMode="numeric"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={busy}
+            />
+            <p>
+              El monto no puede superar el saldo de{" "}
+              <Money value={quote.payment?.balance} currency={quote.currency} />.
+            </p>
+            <label htmlFor="portal-pay-email">Correo para el comprobante</label>
+            <input
+              id="portal-pay-email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={busy}
+            />
+            <button type="submit" className="primary-action" disabled={busy}>
+              {busy
+                ? "Preparando cobro…"
+                : quote.payment_provider === "SIMULATED"
+                  ? "Pagar en modo de prueba"
+                  : "Pagar con Flow"}
+            </button>
+            {message && <p role="alert">{message}</p>}
+          </ValidatedForm>
+        )
+      )}
+    </section>
+  );
+}
 
-  async function decide(decision: "APPROVED" | "DECLINED"): Promise<void> {
-    if (!name.trim() || busy) return;
-    if (decision === "DECLINED" && !note.trim()) return;
-    setBusy(true);
+export function PortalQuotePage(): JSX.Element {
+  const { token = "" } = useParams();
+  const [quote, setQuote] = useState<PortalQuote | null>(null);
+  const [failure, setFailure] = useState<Failure | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState("");
+  const [name, setName] = useState("");
+  const [rut, setRut] = useState("");
+  const [note, setNote] = useState("");
+  const [position, setPosition] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [fields, setFields] = useState<Record<string, string>>({});
+  const load = useCallback(async () => {
     try {
-      const response = await portalQuoteDecide(token, {
+      const result = await portalQuoteRetrieve(token);
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      setQuote(result.data);
+      setFailure(null);
+      setSelected((current) =>
+        result.data.approval_status === "PENDING" &&
+        result.data.options?.some((o) => o.revision_code === current)
+          ? current
+          : result.data.selected_revision || result.data.revision_code,
+      );
+    } catch (error) {
+      const payload = (error instanceof ApiError ? error.payload : null) as {
+        error?: { code?: string; detail?: string; organization?: PortalOrganization };
+      } | null;
+      setFailure({
+        code: payload?.error?.code || "connection",
+        detail:
+          payload?.error?.detail ||
+          "No se pudo consultar la cotización. Revise su conexión y vuelva a intentar.",
+        organization: payload?.error?.organization,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+  useEffect(() => {
+    setLoading(true);
+    setQuote(null);
+    setSelected("");
+    void load();
+  }, [load]);
+  useProposalHead(quote?.organization ?? failure?.organization, quote?.project_code);
+  const fallback: PortalOption | null = quote
+    ? {
+        revision_code: quote.selected_revision || quote.revision_code,
+        snapshot_sha256: quote.offering_sha256 || "",
+        currency: quote.currency,
+        total_price_gross: quote.total_price_gross,
+        display_total_gross: quote.display_total_gross ?? null,
+        rounding_adjustment: quote.rounding_adjustment ?? null,
+        price_cause:
+          quote.price_cause ??
+          "Esta revisión histórica necesita una proyección comercial nueva; contacte al fabricante.",
+        price_source: quote.price_source || "Revisión sellada",
+        consent_text: quote.consent_text ?? null,
+        positions: quote.positions,
+        extras: quote.extras,
+        payment_schedule: quote.payment_schedule ?? [],
+        commercial_terms: quote.commercial_terms,
+        quote_pdf_url: quote.quote_pdf_url,
+        payment_terms: quote.payment_terms,
+        notes_commercial: quote.notes_commercial,
+      }
+    : null;
+  const option = quote?.options?.find((o) => o.revision_code === selected) ?? fallback;
+  async function decide(decision: Decision): Promise<void> {
+    if (!quote || !option || busy) return;
+    const errors: Record<string, string> = {};
+    if (decision === "APPROVED") {
+      if (!name.trim()) errors.name = "Indique su nombre completo.";
+      if (!rut.trim() || !isValidRut(rut))
+        errors.rut = "Ingrese un RUT válido, con dígito verificador.";
+      if (!confirmed)
+        errors.confirmed = "Marque la aceptación de esta propuesta y sus condiciones.";
+    }
+    if (decision === "CHANGES_REQUESTED" && !note.trim())
+      errors.note = "Describa el cambio que necesita.";
+    setFields(errors);
+    if (Object.keys(errors).length) return;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await portalQuoteDecide(token, {
         decision,
         decided_by: name.trim(),
-        decided_rut: rut.trim() || undefined,
-        note: note.trim() || undefined,
+        decided_rut: rut.trim(),
+        note: note.trim(),
+        selected_revision: option.revision_code,
+        expected_offering_sha256: quote.offering_sha256 || "",
+        expected_selected_sha256: option.snapshot_sha256,
+        confirmed,
+        consent_text: option.consent_text ?? "",
+        position_id: position || null,
       });
-      if (response.status !== 200) {
-        throw new ApiError(response.status, response.data);
-      }
-      setQuote(response.data);
-      setDecideError(null);
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      setQuote(result.data);
+      setSelected(result.data.selected_revision || result.data.revision_code);
+      setConfirmed(false);
     } catch (error) {
-      // A failed decision must not erase the proposal — show the reason over
-      // the still-visible quote; a stale link re-fetches into the banner.
-      if (error instanceof ApiError && error.status === 409) {
-        void portalQuoteRetrieve(token).then((fresh) => {
-          if (fresh.status === 200) setQuote(fresh.data);
-        });
-      }
-      setDecideError(
-        error instanceof ApiError
-          ? (errorDetail(error.payload) ?? t("portal.decideError"))
-          : t("portal.decideError"),
+      setError(
+        actionErrorDetail(
+          error,
+          "No se registró la decisión. Revise los datos y vuelva a intentar.",
+        ),
       );
+      if (error instanceof ApiError && (error.status === 409 || error.status === 410)) {
+        setConfirmed(false);
+        await load();
+      }
     } finally {
       setBusy(false);
     }
   }
-
-  if (error !== null) {
+  if (loading)
     return (
-      <main className="portal-page">
+      <main className="portal-page" data-density="document">
         <section className="portal-card portal-card--narrow">
-          <h1>{t("portal.proposalTitle")}</h1>
-          <p role="alert">{error}</p>
+          <h1>Consultando su cotización</h1>
+          <DimLoader label="Consultando la propuesta sellada" />
         </section>
       </main>
     );
-  }
-
-  if (quote === null) {
+  if (failure) {
+    const title =
+      failure.code === "quote_revoked"
+        ? "Enlace revocado"
+        : failure.code === "quote_expired"
+          ? "Enlace vencido"
+          : failure.code === "quote_not_found"
+            ? "Cotización no encontrada"
+            : "No se pudo consultar la cotización";
     return (
-      <main className="portal-page">
-        <p role="status">{t("portal.loading")}</p>
+      <main className="portal-page" data-density="document">
+        <article className="portal-card portal-card--narrow">
+          <Issuer organization={failure.organization} />
+          <h1>{title}</h1>
+          <p role="alert">{failure.detail}</p>
+          <p>
+            {failure.code === "quote_not_found"
+              ? "Revise que el enlace esté completo o solicite al fabricante el enlace de su propuesta."
+              : "Solicite al fabricante un enlace vigente para continuar."}
+          </p>
+          {failure.code === "connection" && (
+            <button
+              type="button"
+              onClick={() => {
+                setLoading(true);
+                void load();
+              }}
+            >
+              Reintentar consulta
+            </button>
+          )}
+        </article>
       </main>
     );
   }
-
-  const decided = quote.approval_status !== "PENDING";
-  // Line-level IVA: net + tax are the sealed truth — the implied rate lets
-  // product cards show the gross the customer will actually pay.
-  const netTotal = quote.total_price_net ? parseDecimal(quote.total_price_net) : null;
-  const taxTotal = quote.total_price_tax ? parseDecimal(quote.total_price_tax) : null;
-  const taxRate =
-    netTotal !== null && taxTotal !== null && netTotal.numerator !== 0n
-      ? divideDecimal(taxTotal, netTotal)
-      : null;
-  const org = quote.organization;
-  const issuer =
-    org?.commercial_name ||
-    org?.name ||
-    (org?.brand_schema === 1 ? "Emisor sin identificar" : "DEKOPEN");
-  const issuerContact =
-    [org?.brand_address, org?.brand_phone, org?.brand_email]
-      .filter((part) => part != null && part !== "")
-      .join(" · ") || "";
-  const groups = groupPositions(quote.positions);
-  // The hero is the customer's own largest glazed unit — rendered, not stock.
-  const hero = groups.reduce<ReturnType<typeof groupPositions>[number] | null>((best, group) => {
-    const area = Number(group.position.width_mm) * Number(group.position.height_mm);
-    const bestArea = best ? Number(best.position.width_mm) * Number(best.position.height_mm) : -1;
-    return area > bestArea ? group : best;
-  }, null);
-
+  if (!quote || !option)
+    return (
+      <main className="portal-page" data-density="document">
+        <h1>Sin propuesta disponible</h1>
+        <p>Solicite al fabricante una cotización emitida.</p>
+      </main>
+    );
+  if (quote.superseded || quote.validity_expired)
+    return (
+      <main className="portal-page" data-density="document">
+        <article className="portal-card portal-card--narrow">
+          <Issuer organization={quote.organization} />
+          <h1>{quote.superseded ? "Cotización reemplazada" : "Cotización vencida"}</h1>
+          <p>
+            {quote.superseded
+              ? "Esta cotización fue reemplazada por una revisión nueva."
+              : "La vigencia de esta propuesta terminó. El fabricante debe emitir una cotización nueva."}
+          </p>
+          <p>
+            {quote.project_name} · {quote.project_code} · {formatRevision(quote.revision_code)}
+          </p>
+          {quote.approval_status !== "PENDING" && <ProposalState quote={quote} />}
+          <Contact organization={quote.organization} />
+          {quote.successor_path && quote.superseded && (
+            <Link className="portal-document-link" to={quote.successor_path}>
+              Consultar propuesta vigente
+            </Link>
+          )}
+        </article>
+      </main>
+    );
+  const pending = quote.approval_status === "PENDING";
   return (
-    <main
-      className="portal-page"
-      style={
-        {
-          "--portal-brand-color": org?.brand_primary_color ?? "var(--teal-800)",
-        } as React.CSSProperties
-      }
-    >
+    <main className="portal-page" data-density="document">
       <article className="portal-proposal">
-        <header className="portal-proposal__head">
-          <div className="portal-proposal__issuer">
-            {org?.brand_logo_url ? (
-              <img className="portal-proposal__logo" src={org.brand_logo_url} alt={issuer} />
-            ) : (
-              <p className="portal-proposal__org">{issuer}</p>
-            )}
-            {org?.tax_id ? <p className="portal-proposal__taxid">{org.tax_id}</p> : null}
-            {issuerContact ? <p className="portal-proposal__taxid">{issuerContact}</p> : null}
-          </div>
-          <div className="portal-proposal__refs">
-            <h1>{t("portal.proposalTitle")}</h1>
-            <p className="portal-proposal__ref">
-              {quote.project_name ? `${quote.project_name} · ` : ""}
-              {quote.project_code} · {formatRevision(quote.revision_code)} ·{" "}
-              <time dateTime={quote.emitted_at}>{formatDate(quote.emitted_at)}</time>
+        <header className="portal-proposal-head">
+          <Issuer organization={quote.organization} />
+          <div>
+            <p className="portal-kicker">Cotización · {quote.project_code}</p>
+            <h1>{quote.project_name || "Su obra"}</h1>
+            <p>
+              Para {quote.client_name || "cliente sin identificar"} ·{" "}
+              {formatRevision(quote.revision_code)}
             </p>
-            {quote.valid_until ? (
-              <p className="portal-proposal__ref">
-                {t("portal.validUntil")}{" "}
-                <time dateTime={quote.valid_until}>{formatDate(quote.valid_until)}</time>
-              </p>
-            ) : null}
+            <p>
+              Emitida el <time dateTime={quote.emitted_at}>{formatDate(quote.emitted_at)}</time>
+            </p>
           </div>
         </header>
-
-        {hero !== null ? (
-          <figure className="portal-proposal__hero">
-            <PositionThumb
-              design={positionDesign(hero.position)}
-              variant="studio"
-              members={positionMembers(hero.position)}
-            />
-            <figcaption>
-              {typologyLabel(hero.position.typology)} · {fmtMm(hero.position.width_mm)} ×{" "}
-              {fmtMm(hero.position.height_mm)} mm
-            </figcaption>
-          </figure>
-        ) : null}
-
-        <section className="portal-proposal__summary">
-          <dl className="portal-facts">
-            <div>
-              <dt>{t("portal.client")}</dt>
-              <dd>{quote.client_name}</dd>
-            </div>
-            <div>
-              <dt>{t("portal.validUntil")}</dt>
-              <dd>
-                <time dateTime={quote.valid_until ?? ""}>
-                  {quote.valid_until ? formatDate(quote.valid_until) : "—"}
-                </time>
-              </dd>
-            </div>
-          </dl>
-          <dl className="portal-totals">
-            {(quote.extras ?? []).map((item, index) => (
-              <div key={`${String(item.label)}-${index}`}>
-                <dt>{String(item.label ?? "")}</dt>
-                <dd>{money(String(item.amount ?? "0"), quote.currency)}</dd>
-              </div>
-            ))}
-            <div>
-              <dt>{t("portal.net")}</dt>
-              <dd>{money(quote.total_price_net, quote.currency)}</dd>
-            </div>
-            <div>
-              <dt>{t("portal.tax")}</dt>
-              <dd>{money(quote.total_price_tax, quote.currency)}</dd>
-            </div>
-            <div className="portal-totals__gross">
-              <dt>{t("portal.gross")}</dt>
-              <dd>{money(quote.total_price_gross, quote.currency)}</dd>
-            </div>
-          </dl>
+        <section className="portal-summary" aria-label="Resumen de la propuesta">
+          <div>
+            <h2>{formatRevision(option.revision_code)}</h2>
+            <p>
+              {quote.valid_until ? (
+                <>
+                  Válida hasta{" "}
+                  <time dateTime={quote.valid_until}>{formatDate(quote.valid_until)}</time>
+                  {quote.validity_days != null ? ` · quedan ${quote.validity_days} días` : ""}
+                </>
+              ) : (
+                <UnknownValue cause="El fabricante no declaró la vigencia" />
+              )}
+            </p>
+          </div>
+          <div>
+            <p>Total IVA incluido</p>
+            <p className="portal-total">
+              <Money
+                value={option.display_total_gross}
+                currency={option.currency}
+                cause={option.price_cause ?? undefined}
+              />
+            </p>
+          </div>
         </section>
-
-        {quote.positions.length > 0 ? (
-          <section className="portal-proposal__positions">
-            <h2>{t("portal.positions")}</h2>
-            <div className="portal-positions">
-              {groups.map((group) => (
-                <PositionGroupCard
-                  key={group.key}
-                  group={group}
-                  currency={quote.currency}
-                  taxRate={taxRate}
-                />
+        <ProposalState quote={quote} />
+        {quote.options && quote.options.length > 1 && (
+          <section className="portal-section" aria-label="Comparar alternativas">
+            <h2>Compare y elija su solución</h2>
+            <p>
+              Las alternativas son revisiones selladas completas. La aprobación, los cobros y la
+              fabricación usarán la solución que usted elija.
+            </p>
+            <div className="portal-options">
+              {quote.options.map((candidate) => (
+                <article
+                  className="portal-option"
+                  key={candidate.revision_code}
+                  data-selected={candidate.revision_code === selected}
+                >
+                  <h3>
+                    {formatRevision(candidate.revision_code)}
+                    {candidate.revision_code === quote.revision_code
+                      ? " · Propuesta principal"
+                      : " · Alternativa"}
+                  </h3>
+                  {Boolean(candidate.positions[0]?.parametric_tree) && (
+                    <>
+                      <ProposalThumb position={candidate.positions[0]!} />
+                      <p>Vista interior</p>
+                    </>
+                  )}
+                  <p>
+                    {candidate.positions[0]?.system_name || "Serie sellada"} ·{" "}
+                    {candidate.positions[0]?.finish || "Acabado sin dato"}
+                  </p>
+                  <p>{candidate.positions.length} posiciones</p>
+                  <p>
+                    <Money value={candidate.display_total_gross} currency={candidate.currency} />{" "}
+                    IVA incluido
+                  </p>
+                  {pending ? (
+                    <button
+                      type="button"
+                      aria-pressed={candidate.revision_code === selected}
+                      disabled={busy}
+                      onClick={() => {
+                        setSelected(candidate.revision_code);
+                        setPosition("");
+                        setConfirmed(false);
+                        setFields({});
+                      }}
+                    >
+                      {candidate.revision_code === selected
+                        ? "Opción elegida"
+                        : "Elegir esta opción"}
+                    </button>
+                  ) : (
+                    candidate.revision_code === selected && (
+                      <StatusBadge tone="success">Solución aceptada</StatusBadge>
+                    )
+                  )}
+                </article>
               ))}
             </div>
           </section>
-        ) : null}
-
-        {quote.notes_commercial ? (
-          <section className="portal-proposal__notes">
-            <h2>{t("portal.notes")}</h2>
-            <p>{quote.notes_commercial}</p>
-          </section>
-        ) : null}
-
-        {(quote.payment_terms || quote.payment) && (
-          <section className="portal-proposal__commercial">
-            {quote.payment_terms ? (
-              <div className="portal-terms">
-                <h3>{t("portal.terms")}</h3>
-                <p>{quote.payment_terms}</p>
-              </div>
-            ) : null}
-            {quote.payment ? (
-              <dl className="portal-payment">
-                <div>
-                  <dt>{t("portal.paymentLabel")}</dt>
-                  <dd>
-                    <span
-                      className={`portal-payment__state portal-payment__state--${quote.payment.status.toLowerCase()}`}
-                    >
-                      {t(
-                        quote.payment.status === "PAID"
-                          ? "portal.payment.PAID"
-                          : quote.payment.status === "PARTIAL"
-                            ? "portal.payment.PARTIAL"
-                            : "portal.payment.PENDING",
-                      )}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t("portal.collected")}</dt>
-                  <dd>{money(quote.payment.collected, quote.currency)}</dd>
-                </div>
-                <div>
-                  <dt>{t("portal.balance")}</dt>
-                  <dd>{money(quote.payment.balance, quote.currency)}</dd>
-                </div>
-              </dl>
-            ) : null}
-            {quote.payment_url && !quote.superseded && !quote.validity_expired ? (
-              <a
-                className="portal-pay"
-                href={quote.payment_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {quote.payment
-                  ? `${t("portal.payBalance")} ${money(quote.payment.balance, quote.currency)}`
-                  : t("portal.payNow")}
-              </a>
-            ) : null}
-          </section>
         )}
-
-        {quote.quote_pdf_url ? (
-          <a
-            className="portal-doc"
-            href={quote.quote_pdf_url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t("portal.openPdf")}
-          </a>
-        ) : null}
-
-        <ol className="portal-steps" aria-label={t("portal.stepsLabel")}>
-          <li className="portal-step" data-state="done">
-            {t("portal.stepProposal")}
-          </li>
-          <li
-            className="portal-step"
-            data-state={
-              quote.approval_status === "APPROVED"
-                ? "done"
-                : quote.approval_status === "DECLINED"
-                  ? "declined"
-                  : "current"
-            }
-          >
-            {t("portal.stepDecision")}
-          </li>
-          <li
-            className="portal-step"
-            data-state={quote.approval_status === "APPROVED" ? "current" : "pending"}
-          >
-            {t("portal.stepProduction")}
-          </li>
-        </ol>
-
-        {quote.superseded && (
-          <p className="portal-decided" role="status">
-            {t("portal.superseded")}
+        {option.price_cause && (
+          <p className="portal-blocked" role="status">
+            {option.price_cause}
           </p>
         )}
-        {decided ? (
-          <div
-            className="portal-decided"
-            data-state={quote.approval_status === "APPROVED" ? "approved" : "declined"}
-            role="status"
-          >
-            <p className="portal-decided__state">
-              {quote.approval_status === "APPROVED"
-                ? t("portal.wasApproved")
-                : t("portal.wasDeclined")}
-            </p>
-            <p>
-              {quote.approval_status === "APPROVED"
-                ? t("portal.wasApprovedDetail")
-                : t("portal.wasDeclinedDetail")}
-            </p>
-            {issuerContact ? <p className="portal-decided__contact">{issuerContact}</p> : null}
-          </div>
-        ) : quote.superseded ? null : quote.validity_expired ? (
-          <p className="portal-decided" role="status">
-            {t("portal.validityExpired")}
-          </p>
-        ) : (
-          <ValidatedForm
-            className="portal-decision"
-            onSubmit={(event: FormEvent<HTMLFormElement>) => {
-              event.preventDefault();
-              void decide("APPROVED");
-            }}
-          >
-            <h2>{t("portal.decisionTitle")}</h2>
-            <div className="portal-decision__recap">
-              <dl>
-                <div>
-                  <dt>{t("portal.decisionTotal")}</dt>
-                  <dd>{money(quote.total_price_gross, quote.currency)}</dd>
-                </div>
-                <div>
-                  <dt>{t("portal.project")}</dt>
-                  <dd>
-                    {quote.project_code} · {formatRevision(quote.revision_code)}
-                  </dd>
-                </div>
-                {quote.valid_until ? (
-                  <div>
-                    <dt>{t("portal.validUntil")}</dt>
-                    <dd>
-                      <time dateTime={quote.valid_until}>{formatDate(quote.valid_until)}</time>
-                    </dd>
+        <section className="portal-section" aria-label="Posiciones de la solución">
+          <h2>Lo que usted compra</h2>
+          <p>{formatRevision(option.revision_code)} · precios unitarios y de línea IVA incluido.</p>
+          <div className="portal-positions">
+            {option.positions.map((p) => (
+              <article className="portal-position" key={p.id} id={`posicion-${p.position_index}`}>
+                <header>
+                  <h3>
+                    Posición {p.position_index} · {p.location_tag || "Ubicación sin declarar"}
+                  </h3>
+                  {p.is_demo && (
+                    <DemoBadge source="Catálogo sintético; sin certificación técnica" />
+                  )}
+                </header>
+                <div className="portal-position-body">
+                  <ProposalDrawing position={p} />
+                  <div className="portal-position-spec">
+                    <dl>
+                      <div>
+                        <dt>Serie</dt>
+                        <dd>
+                          {p.system_name || (
+                            <UnknownValue cause="No consta la serie en la revisión" />
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Cantidad</dt>
+                        <dd className="technical-number">{p.quantity ?? "Sin dato"}</dd>
+                      </div>
+                      <div>
+                        <dt>Vidrio</dt>
+                        <dd>
+                          {p.glass_specs.join(" · ") || (
+                            <UnknownValue cause="No se declaró vidrio en esta posición" />
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Acabado</dt>
+                        <dd>
+                          {p.finish || (
+                            <UnknownValue cause="No se declaró acabado en esta posición" />
+                          )}
+                        </dd>
+                      </div>
+                      {p.commercial_hardware?.map((hardware, i) => (
+                        <div key={i}>
+                          <dt>Manilla y herrajes</dt>
+                          <dd>
+                            {[hardware.handle_name, hardware.handle_color, ...hardware.options]
+                              .filter(Boolean)
+                              .join(" · ") || "Sin manilla de accionamiento"}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <dl className="portal-position-prices">
+                      <div>
+                        <dt>Precio unitario</dt>
+                        <dd>
+                          <Money value={p.unit_price_gross} currency={option.currency} />
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Total de línea</dt>
+                        <dd>
+                          <Money value={p.line_price_gross} currency={option.currency} />
+                        </dd>
+                      </div>
+                    </dl>
+                    {p.unit_rounding_adjustment && Number(p.unit_rounding_adjustment) !== 0 && (
+                      <p>
+                        Ajuste por cantidad y redondeo:{" "}
+                        <Money value={p.unit_rounding_adjustment} currency={option.currency} />. Ya
+                        está incluido en el total de línea.
+                      </p>
+                    )}
+                    {pending && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPosition(p.id);
+                          document.getElementById("portal-note")?.focus();
+                        }}
+                      >
+                        Solicitar cambio en posición {p.position_index}
+                      </button>
+                    )}
                   </div>
-                ) : null}
-              </dl>
-              <p className="portal-decision__hint">{t("portal.approveHint")}</p>
-            </div>
-            <label htmlFor="portal-name">{t("portal.nameLabel")}</label>
-            <input
-              id="portal-name"
-              required
-              maxLength={255}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              disabled={busy}
-              autoComplete="name"
-            />
-            <label htmlFor="portal-rut">{t("portal.rutLabel")}</label>
-            <input
-              id="portal-rut"
-              maxLength={32}
-              value={rut}
-              onChange={(event) => setRut(event.target.value)}
-              disabled={busy}
-              placeholder={t("portal.rutPlaceholder")}
-            />
-            <label htmlFor="portal-note">{t("portal.noteLabel")}</label>
-            <textarea
-              id="portal-note"
-              maxLength={500}
-              rows={3}
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              disabled={busy}
-              placeholder={t("portal.notePlaceholder")}
-            />
-            {decideError !== null ? (
-              <p role="alert" className="portal-decision__error">
-                {decideError}
-              </p>
-            ) : null}
-            <div className="projects-actions">
-              <button className="primary-action" disabled={busy || !name.trim()}>
-                {t("portal.approve")}
-              </button>
-              <button
-                type="button"
-                disabled={busy || !name.trim() || !note.trim()}
-                onClick={() => void decide("DECLINED")}
-              >
-                {t("portal.requestChange")}
-              </button>
-            </div>
-            {!note.trim() ? (
-              <p className="portal-decision__notehint">{t("portal.noteRequired")}</p>
-            ) : null}
-          </ValidatedForm>
+                </div>
+              </article>
+            ))}
+          </div>
+          {!option.positions.length && (
+            <p>
+              Sin posiciones · solicite al fabricante una propuesta con el detalle de los vanos.
+            </p>
+          )}
+        </section>
+        {option.extras.length > 0 && (
+          <section className="portal-section">
+            <h2>Servicios y cargos declarados</h2>
+            <dl className="portal-extra-lines">
+              {option.extras.map((item, i) => (
+                <div key={i}>
+                  <dt>
+                    {String(item.label ?? "Servicio")} {Boolean(item.synthetic) && <DemoBadge />}
+                  </dt>
+                  <dd>
+                    <Money
+                      value={
+                        typeof item.line_price_gross === "string" ? item.line_price_gross : null
+                      }
+                      currency={option.currency}
+                    />
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
         )}
-
-        {org?.portal_attribution !== false ? (
-          <footer className="portal-proposal__brand">{t("portal.brand")}</footer>
-        ) : null}
+        {option.rounding_adjustment && Number(option.rounding_adjustment) !== 0 && (
+          <p>
+            Ajuste de moneda:{" "}
+            <Money value={option.rounding_adjustment} currency={option.currency} />. La suma de
+            posiciones, servicios, cargos y este ajuste conserva el total sellado.
+          </p>
+        )}
+        <PriceSource option={option} />
+        <Conditions option={option} />
+        {pending ? (
+          <section className="portal-section portal-decision-region" aria-label="Decidir propuesta">
+            <h2>Su decisión</h2>
+            <ValidatedForm
+              className="portal-decision"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void decide("APPROVED");
+              }}
+            >
+              <p>
+                {formatRevision(option.revision_code)} ·{" "}
+                <Money value={option.display_total_gross} currency={option.currency} /> IVA incluido
+              </p>
+              <label htmlFor="portal-name">Nombre completo</label>
+              <input
+                id="portal-name"
+                maxLength={255}
+                autoComplete="name"
+                value={name}
+                disabled={busy}
+                onChange={(e) => setName(e.target.value)}
+                aria-invalid={Boolean(fields.name)}
+                aria-describedby={fields.name ? "portal-name-error" : undefined}
+              />
+              {fields.name && (
+                <p id="portal-name-error" role="alert">
+                  {fields.name}
+                </p>
+              )}
+              <label htmlFor="portal-rut">RUT</label>
+              <input
+                id="portal-rut"
+                maxLength={32}
+                autoComplete="off"
+                value={rut}
+                disabled={busy}
+                onChange={(e) => setRut(e.target.value)}
+                aria-invalid={Boolean(fields.rut)}
+                aria-describedby={fields.rut ? "portal-rut-error" : undefined}
+              />
+              {fields.rut && (
+                <p id="portal-rut-error" role="alert">
+                  {fields.rut}
+                </p>
+              )}
+              <label className="portal-consent">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  disabled={busy || !option.consent_text}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                />
+                <span>
+                  {option.consent_text ||
+                    "La aceptación requiere un importe y condiciones completos del fabricante."}
+                </span>
+              </label>
+              {fields.confirmed && <p role="alert">{fields.confirmed}</p>}
+              <p>
+                Su nombre, RUT, fecha, IP y navegador se conservarán como evidencia de esta
+                decisión, junto con la revisión y su huella. El fabricante podrá consultarla; no se
+                publicará en este enlace.
+              </p>
+              <button
+                type="submit"
+                className="primary-action"
+                disabled={busy || Boolean(option.price_cause) || !option.consent_text}
+              >
+                {busy ? "Registrando decisión…" : "Aprobar propuesta"}
+              </button>
+              <hr />
+              <h3>Cambios o rechazo</h3>
+              <label htmlFor="portal-position">Posición a revisar (opcional)</label>
+              <select
+                id="portal-position"
+                value={position}
+                disabled={busy}
+                onChange={(e) => setPosition(e.target.value)}
+              >
+                <option value="">Propuesta completa</option>
+                {option.positions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    Posición {p.position_index} · {p.location_tag || "Sin ubicación"}
+                  </option>
+                ))}
+              </select>
+              <label htmlFor="portal-note">Comentario</label>
+              <textarea
+                id="portal-note"
+                maxLength={500}
+                rows={3}
+                value={note}
+                disabled={busy}
+                onChange={(e) => setNote(e.target.value)}
+                aria-invalid={Boolean(fields.note)}
+                aria-describedby="portal-note-help"
+              />
+              <p id="portal-note-help">Obligatorio para solicitar cambios; opcional al rechazar.</p>
+              {fields.note && <p role="alert">{fields.note}</p>}
+              <div className="portal-secondary-decisions">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void decide("CHANGES_REQUESTED")}
+                >
+                  Solicitar cambios
+                </button>
+                <button type="button" disabled={busy} onClick={() => void decide("DECLINED")}>
+                  Rechazar propuesta
+                </button>
+              </div>
+              {error && <p role="alert">{error}</p>}
+            </ValidatedForm>
+          </section>
+        ) : (
+          quote.approval_status === "APPROVED" && (
+            <PortalPayment quote={quote} token={token} onRefresh={load} />
+          )
+        )}
+        <footer className="portal-footer">
+          <Contact organization={quote.organization} />
+          {quote.organization.portal_attribution === true && <p>Generado con DEKOPEN</p>}
+        </footer>
       </article>
     </main>
   );

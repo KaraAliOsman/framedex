@@ -9,6 +9,13 @@ import type { LinkSourceEnum } from "./linkSourceEnum";
 import type { LinkStateEnum } from "./linkStateEnum";
 
 export interface ApprovalRecord {
+  evidence?: unknown | null;
+  /** @nullable */
+  selected_revision?: string | null;
+  /** @nullable */
+  decision_kind?: string | null;
+  /** @nullable */
+  position_index?: number | null;
   id: string;
   link_source?: LinkSourceEnum;
   status: string;
