@@ -133,3 +133,12 @@ La autoridad DEMO conserva su condición sintética. Un render no acredita
 un fabricante, rendimiento térmico ni montaje real. Los documentos emitidos
 no se reescriben. El portal histórico sin sección sellada muestra la
 aproximación explícita y no consulta Catálogo vivo para rellenarla.
+
+## Cierre de integración
+
+PR [#151](https://github.com/KaraAliOsman/framedex/pull/151), squash
+`ff210e7a439b861349d1d602c4137ebe4e65d0c8` en `integracion/v1`. Cuatro checks
+PASA sobre `6bd3ff012f7c411c4dc34cee4c879180e119295a`, [corrida de CI](https://github.com/KaraAliOsman/framedex/actions/runs/38180492649).
+El enlace temporal del fixture se revocó y el stack propio se detuvo.
+Copilot informó falta de cuota; CodeRabbit no revisa esta base. El pase
+editorial y la revisión de código propios se mantienen como evidencia.

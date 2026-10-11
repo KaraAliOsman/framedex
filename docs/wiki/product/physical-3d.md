@@ -3,7 +3,7 @@ type: synthesis
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: 86b79340bab710a9cc9f1336323fdd9393ce981b
+verified_ref: ff210e7a439b861349d1d602c4137ebe4e65d0c8
 sources:
   - docs/redesign/P19-ACEPTACION.md
   - scripts/generate_scene3d_fixtures.py

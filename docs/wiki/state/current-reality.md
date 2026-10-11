@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: 86b79340bab710a9cc9f1336323fdd9393ce981b
+verified_ref: ff210e7a439b861349d1d602c4137ebe4e65d0c8
 sources:
+  - P19 PR https://github.com/KaraAliOsman/framedex/pull/151, CI 4/4 sobre 6bd3ff012f7c411c4dc34cee4c879180e119295a, squash ff210e7a439b861349d1d602c4137ebe4e65d0c8, 2026-10-11
   - P19 código 94b5f151723207fa7b96a5a087a6906f471454d4, 40 fixtures, 68 tests y navegador propio, 2026-10-11
   - docs/redesign/P19-ACEPTACION.md
   - D08 PR https://github.com/KaraAliOsman/framedex/pull/150, CI 4/4 sobre b66ba1c68d24fb9ec34ae04da571866a238dd554, squash d6921a893fcc3b303fcd693bd934380e7227f3d0, 2026-10-11
