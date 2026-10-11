@@ -335,11 +335,20 @@ export const test = base.extend<{
             "project_edit_operations",
             `org_id=eq.${organizationId}&select=id`,
           );
-          // Applied edit history deliberately prevents tenant deletion. Keep
-          // that synthetic fixture until the isolated database gate drops its
-          // stack; never delete or disable immutable audit to clean up a test.
+          // Applied edit history deliberately prevents tenant deletion. Prove
+          // that protection, then retain the synthetic fixture until the
+          // isolated gate drops its stack; never disable immutable audit.
           if (history.length === 0) {
             await admin(`/rest/v1/tenancy_organizations?id=eq.${organizationId}`, "DELETE");
+          } else {
+            const retained = await fetch(
+              `${supabaseUrl}/rest/v1/tenancy_organizations?id=eq.${organizationId}`,
+              { method: "DELETE", headers, signal: AbortSignal.timeout(15_000) },
+            );
+            expect(retained.status).toBe(409);
+            const refusal = (await retained.json()) as { code: string; message: string };
+            expect(refusal.code).toBe("23503");
+            expect(refusal.message).toContain("project_edit_operations");
           }
         }
       } finally {
