@@ -3,13 +3,15 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { apiMutator } from "../../api/apiMutator";
+import { companyGet } from "../../api/generated/dekopen";
 import { t } from "../../i18n/es-CL";
-import { PricingPage } from "./PricingPage";
+import { PricingPage, PricingRulesSettings } from "./PricingPage";
 
 /** Pages under test render router Links (e.g. the demo-design shortcut). */
 const page = (ui: JSX.Element): JSX.Element => <MemoryRouter>{ui}</MemoryRouter>;
 
 vi.mock("../../api/generated/dekopen", () => ({
+  companyGet: vi.fn(),
   projectsList: vi.fn().mockResolvedValue({
     status: 200,
     data: {
@@ -51,11 +53,65 @@ vi.mock("../../api/apiMutator", () => ({ apiMutator: vi.fn(), ApiError: class ex
 beforeEach(() => {
   identity.id = "tenant-a";
   identity.role = "OWNER";
+  vi.mocked(companyGet)
+    .mockReset()
+    .mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: {
+        name: "Empresa",
+        tax_id: "76543210-3",
+        currency: "CLP",
+        base_currency: "CLP",
+        require_mfa: false,
+        updated_at: "2026-10-11T00:00:00Z",
+      },
+    });
   vi.mocked(apiMutator)
     .mockReset()
     .mockResolvedValue({ data: { items: [] } });
 });
 afterEach(cleanup);
+
+it.each([
+  { currency: "CLP" as const, expected: "$15.000 / m²" },
+  { currency: "USD" as const, expected: "US$ 15.000,00 / m²" },
+])("reads company $currency as authority for labor tariffs", async ({ currency, expected }) => {
+  vi.mocked(companyGet).mockResolvedValue({
+    status: 200,
+    headers: new Headers(),
+    data: {
+      name: "Empresa",
+      tax_id: "76543210-3",
+      currency,
+      base_currency: currency,
+      require_mfa: false,
+      updated_at: "2026-10-11T00:00:00Z",
+    },
+  });
+  vi.mocked(apiMutator).mockResolvedValue({
+    data: { items: [{ id: "rule", labor_rate_per_m2: "15000.00" }] },
+  });
+  render(page(<PricingRulesSettings orgId="tenant-a" />));
+  expect(await screen.findByText(expected)).toHaveClass("pricing-number");
+  expect(companyGet).toHaveBeenCalledWith(
+    expect.objectContaining({ headers: { "X-Organization-ID": "tenant-a" } }),
+  );
+});
+
+it("does not assign a silent currency when company authority fails", async () => {
+  vi.mocked(companyGet).mockRejectedValue(new Error("connection"));
+  vi.mocked(apiMutator).mockResolvedValue({
+    data: { items: [{ id: "rule", labor_rate_per_m2: "15000.00" }] },
+  });
+  render(page(<PricingRulesSettings orgId="tenant-a" />));
+  expect(await screen.findByText("Sin dato: falta consultar la moneda de empresa")).toBeVisible();
+  expect(screen.queryByText("$15.000 / m²")).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Revisar moneda de empresa" })).toHaveAttribute(
+    "href",
+    "/settings/general?section=company",
+  );
+});
 
 it.each(["ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER"])(
   "denies S09 to %s without fetching costs",

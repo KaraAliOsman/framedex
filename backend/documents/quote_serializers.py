@@ -46,3 +46,12 @@ class DocumentPreferencesSerializer(StrictSerializer):
     accent = serializers.ChoiceField(choices=["TEAL", "TEAL_DARK", "GRAPHITE"])
     legal_footer = serializers.CharField(max_length=240, allow_blank=True)
     commercial_terms = CommercialTermsSerializer()
+
+
+class DocumentPreferencesPatchSerializer(DocumentPreferencesSerializer):
+    """Save only the section edited by the user; preserve other sections."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False

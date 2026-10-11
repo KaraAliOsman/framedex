@@ -26,6 +26,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Empresa y clientes](product/company-customers.md) — fichas auditadas, obras, saldos por moneda, MFA e invitaciones y PDF vivo.
+
 - [Propuesta y acuerdo del cliente](product/customer-proposals.md) — elección sellada, evidencia privada, líneas con IVA y retorno de pago verificado.
 
 - [Centro de trabajo del proyecto](product/project-workspace.md) — elevaciones, lote revisado, orden físico, precio aplicado y fases con autoridad.

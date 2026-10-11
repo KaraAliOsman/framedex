@@ -143,7 +143,8 @@ def test_golden_path_emit_release_optimize_steps_dispatch(
         )
         assert optimization["unmapped_stock_skus"] == []
 
-        detail = production_service.get_work_order(org_id=org, order_id=order_id)
+        with as_user(wm):
+            detail = production_service.get_work_order(org_id=org, order_id=order_id)
         for step in detail["steps"]:
             with as_user(wm):
                 production_service.transition_step(
@@ -161,7 +162,8 @@ def test_golden_path_emit_release_optimize_steps_dispatch(
                     note=None,
                 )
 
-        detail = production_service.get_work_order(org_id=org, order_id=order_id)
+        with as_user(wm):
+            detail = production_service.get_work_order(org_id=org, order_id=order_id)
         assert str(detail["status"]) == "COMPLETED"
 
         with as_user(wm):
@@ -194,7 +196,7 @@ def test_golden_path_revision_immutable_after_change(
     frozen = _freeze(org, owner, project_id, operation_id)
     version_id = UUID(str(frozen["id"]))
 
-    with documentary_backend():
+    with as_user(owner), documentary_backend():
         snapshot_before = one(
             "SELECT snapshot_json::text AS snap FROM public.project_versions WHERE id=%s",
             [str(version_id)],

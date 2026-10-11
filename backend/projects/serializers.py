@@ -6,7 +6,7 @@ from rest_framework import serializers
 from projects.collection_serializers import CollectionIntegrationSerializer, CollectionMilestoneSerializer
 
 from projects.operation_serializers import DesignOperationSerializer
-from documents.quote_serializers import DocumentPreferencesSerializer
+from documents.quote_serializers import DocumentPreferencesSerializer, DocumentPreferencesPatchSerializer
 
 from engine_api.serializers import (
     EngineCalculateRequestSerializer,
@@ -14,6 +14,14 @@ from engine_api.serializers import (
     DecimalStringField,
 )
 from pricing.serializers import StrictSerializer
+from projects.client_serializers import (
+    ClientAddressSerializer, ClientAddressWriteSerializer,
+    ClientContactSerializer, ClientContactWriteSerializer,
+    ClientNoteSerializer, ClientMergeRecordSerializer,
+    ClientProjectHistorySerializer, ClientQuoteHistorySerializer,
+    ClientDocumentSerializer, ClientPaymentHistorySerializer, ClientBalanceSerializer,
+    ClientMergeFieldSerializer,
+)
 
 
 class ProjectWriteSerializer(StrictSerializer):
@@ -26,6 +34,7 @@ class ProjectWriteSerializer(StrictSerializer):
     client_comuna = serializers.CharField(max_length=20, required=False, allow_blank=True)
     client_address = serializers.CharField(max_length=70, required=False, allow_blank=True)
     client_id = serializers.UUIDField(required=False, allow_null=True)
+    client_address_id = serializers.UUIDField(required=False, allow_null=True)
     delivery_address = serializers.CharField(required=False, allow_blank=True)
     notes_commercial = serializers.CharField(required=False, allow_blank=True)
     notes_internal = serializers.CharField(required=False, allow_blank=True)
@@ -124,7 +133,10 @@ class ClientWriteSerializer(StrictSerializer):
     address = serializers.CharField(required=False, allow_blank=True)
     giro = serializers.CharField(max_length=80, required=False, allow_blank=True)
     comuna = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    notes = serializers.CharField(required=False, allow_blank=True)
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=4000)
+    party_kind = serializers.ChoiceField(choices=('PERSON','COMPANY','UNKNOWN'), required=False)
+    contacts = ClientContactWriteSerializer(many=True, required=False, max_length=1000)
+    addresses = ClientAddressWriteSerializer(many=True, required=False, max_length=1000)
 
 
 class ClientUpdateSerializer(ClientWriteSerializer):
@@ -143,10 +155,40 @@ class ClientResponseSerializer(serializers.Serializer):
     notes = serializers.CharField()
     is_active = serializers.BooleanField()
     updated_at = serializers.DateTimeField()
+    party_kind = serializers.ChoiceField(choices=('PERSON','COMPANY','UNKNOWN'), required=False)
+    merged_into_id = serializers.UUIDField(allow_null=True, required=False)
+    rut_valid = serializers.BooleanField(allow_null=True, required=False)
+    contacts = ClientContactSerializer(many=True, required=False)
+    addresses = ClientAddressSerializer(many=True, required=False)
 
 
 class ClientListResponseSerializer(serializers.Serializer):
     items = ClientResponseSerializer(many=True)
+
+
+class ClientDossierResponseSerializer(serializers.Serializer):
+    client = ClientResponseSerializer()
+    requested_id = serializers.UUIDField()
+    financial_access = serializers.BooleanField()
+    active_projects = serializers.IntegerField()
+    unknown_projects = serializers.IntegerField()
+    projects = ClientProjectHistorySerializer(many=True)
+    quotations = ClientQuoteHistorySerializer(many=True)
+    payments = ClientPaymentHistorySerializer(many=True)
+    documents = ClientDocumentSerializer(many=True)
+    balances = ClientBalanceSerializer(many=True)
+    notes = ClientNoteSerializer(many=True)
+    merges = ClientMergeRecordSerializer(many=True)
+
+
+class ClientMergePreviewSerializer(serializers.Serializer):
+    source = ClientResponseSerializer()
+    target = ClientResponseSerializer()
+    adopted_fields = ClientMergeFieldSerializer(many=True)
+    added_contacts = ClientContactSerializer(many=True)
+    added_addresses = ClientAddressSerializer(many=True)
+    blockers = serializers.ListField(child=serializers.CharField())
+    consequence = serializers.CharField()
 
 
 class ProjectVersionResponseSerializer(serializers.Serializer):
@@ -543,6 +585,7 @@ class DesignAssistResponseSerializer(serializers.Serializer):
 
 
 class OrgBrandingSerializer(serializers.Serializer):
+    updated_at = serializers.DateTimeField(required=False)
     """Org white-label identity rendered on emitted documents."""
 
     name = serializers.CharField()
@@ -565,7 +608,8 @@ class OrgBrandingSerializer(serializers.Serializer):
 
 
 class OrgBrandingWriteSerializer(StrictSerializer):
-    document_preferences = DocumentPreferencesSerializer(required=False)
+    document_preferences = DocumentPreferencesPatchSerializer(required=False)
+    expected_updated_at = serializers.DateTimeField(required=False)
     brand_primary_color = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
     document_attribution = serializers.BooleanField(required=False)
     portal_attribution = serializers.BooleanField(required=False)

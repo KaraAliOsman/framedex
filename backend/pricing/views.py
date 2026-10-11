@@ -108,8 +108,10 @@ def _preview_attempt(token, claims, organization_header, data, service=preview):
     with transaction.atomic(durable=True):
         with connection.cursor() as cursor:
             cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ')
-            cursor.execute("SELECT set_config('request.jwt.claims',%s,true)",
-                           [json.dumps(claims,separators=(',',':'),sort_keys=True)])
+            cursor.execute("SELECT set_config('request.jwt.claims',%s,true), "
+                           "set_config('request.jwt.claim.sub',%s,true)",
+                           [json.dumps(claims,separators=(',',':'),sort_keys=True),
+                            str(claims.get('sub') or '')])
             cursor.execute('SET LOCAL ROLE authenticated')
         tenant = resolve_tenant_context(MembershipRepository().list_active_for_user(token.user_id),
                                         organization_header)
@@ -234,7 +236,8 @@ class OptionsView(APIView):
                          'WHERE org_id=%s AND is_active ORDER BY context_code,pricing_mode',[org])
             rules = rows('SELECT minimum_margin_pct,default_margin_pct,maximum_margin_pct,discount_approval_pct '
                          'FROM public.pricing_rules WHERE org_id=%s',[org])
-        return Response(json.loads(json_text({'fx':fx,'commercial_lists':lists,'band':rules[0] if rules else None})))
+            currency = rows('SELECT coalesce(quotation_currency,currency) AS currency FROM public.tenancy_organizations WHERE id=%s',[org])[0]['currency']
+        return Response(json.loads(json_text({'fx':fx,'commercial_lists':lists,'band':rules[0] if rules else None,'default_currency':currency})))
 
 
 class AcknowledgeView(APIView):

@@ -1323,3 +1323,38 @@ Los gates locales completos y matrices finales están en `P10-ACEPTACION.md`.
 CodeRabbit omitió la revisión por configuración de rama y Devin Review por
 cuota; no se atribuyen como revisiones completas. Los procesos propios de
 P10 fueron detenidos; el stack se abrió después para la base visual de P22.
+
+### 2026-10-11 · P22, empresa y clientes con autoridad conservada
+
+Implementación `b27492b6`: fichas tipadas, RUT canónico, contactos/direcciones,
+notas y fusión auditada con bloqueo compartido/CAS. El recorrido crea empresa,
+obra con dirección Sur y emisión real; la fusión conserva el PDF byte a byte.
+La cuenta del motor separa monedas y faltantes. Nueve secciones consumen los
+permisos/dominos existentes, PDF real vivo y la guía ACTIVACION.
+
+`quotation_currency` mantiene la preferencia; `currency` conserva tarifas.
+USD→CLP mantiene reserva del 5 %; costos locales CLP cotizados en USD dividen
+por la observación declarada de pesos por dólar, sin inventar una reserva de
+importación. Once integraciones PostgreSQL comprueban consumo, permiso,
+concurrencia e invitación; el replay congelado coincide. El golden añade solo
+el caso CLP→USD y los anteriores mantienen bytes. 57 tests focales de motor,
+22 de tarifas y 28 del espacio de precios pasan.
+
+Invitación→SMTP sandbox→correo verificado→rol→desactivación y
+Empresa→Comercial→Documentos→cliente→obra→editor pasan. La vista previa
+conserva precio/moneda de la referencia y el borrador de Marca sobre CAS.
+Matriz final, gates completos y CI siguen su cierre; no se atribuye merge.
+
+### 2026-10-11 · P22, cierre local completo
+
+Cierre de código `68674c22ec1ffd303c572764bf472c6587d58d84`: cuatro gates PASA, 903 motor (+2 xfail), 1494 backend y 1013 frontend con golden byte check. Database Gate
+completo PASA: 1389 pgTAP, 530 integraciones, 19 E2E y upgrades
+poblados PostgreSQL 16. Las regresiones reales fijan/restauran la identidad
+individual/JSON y aíslan la proyección de cantidades entrantes del proveedor.
+Las 280 vistas finales pasan sin hallazgos; el navegador vuelve a comprobar
+dueño, estimador y operario. Los procesos propios están detenidos, sin
+borrar el fixture. CI/squash se registran al integrar.
+
+### 2026-10-11 · P22, observaciones de revisión verificadas
+
+Código `a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa`. La dirección explícita se desvincula en API/RLS; el directorio pagina y consulta saldo por lote con el motor. El endpoint de estación ya era upsert; crear/editar conserva identidad y código. Dieciséis integraciones focales y la regresión de creación/edición pasan. Las 36 vistas de formularios y las 40 rutas revalidadas no tienen hallazgos ni desbordes. Los cuatro gates pasan: 903 motor (+2 xfail), 1494 backend, 1014 frontend; Database Gate 1389 pgTAP, 535 integraciones, 19 E2E y once upgrades PG16. CI y squash siguen su cierre.

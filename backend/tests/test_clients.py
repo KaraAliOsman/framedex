@@ -14,7 +14,7 @@ def _row(**over):
     row = {
         "id": uuid4(),
         "name": "Constructora Andina",
-        "rut": "76.543.210-1",
+        "rut": "76.543.210-3",
         "email": "obras@andina.cl",
         "phone": "+56 2 2345 6789",
         "address": "Av. Providencia 1234, Santiago",
@@ -51,31 +51,36 @@ def test_create_client_inserts_and_returns_public(monkeypatch):
         calls.append((sql, parameters))
         if "INSERT INTO public.clients" in sql:
             return [{"id": "x"}]
-        return [row]
+        if "FROM public.clients" in sql:
+            return [row.copy()]
+        return []
 
+    monkeypatch.setattr(clients, "write", lambda query, parameters=(): calls.append((str(query), parameters)))
     monkeypatch.setattr(clients, "rows", fake_rows)
     result = clients.create_client(
         org,
         actor,
-        {"name": "Constructora Andina", "rut": "76.543.210-1", "email": "obras@andina.cl"},
+        {"name": "Constructora Andina", "rut": "76.543.210-3", "email": "obras@andina.cl"},
     )
-    insert = calls[0]
+    insert = next(call for call in calls if "INSERT INTO public.clients" in call[0])
     assert insert[1][0] == result["id"] or insert[1][1] == org
     assert insert[1][1] == org and insert[1][2] == actor
     # Blank optional fields are normalized to NULL (never '') so the
     # (org_id, rut) unique key treats them as absent.
-    assert insert[1][4] == "76.543.210-1"
+    assert insert[1][4] == "76.543.210-3"
     assert insert[1][6] is None  # phone
     assert result["name"] == "Constructora Andina"
 
 
 def test_create_client_rut_conflict_raises_409(monkeypatch):
     def dup(query, parameters=()):
-        raise IntegrityError("duplicate key")
+        if "INSERT INTO public.clients" in str(query):
+            raise IntegrityError("duplicate key")
+        return []
 
     monkeypatch.setattr(clients, "rows", dup)
     with pytest.raises(APIException) as raised:
-        clients.create_client(uuid4(), uuid4(), {"name": "X", "rut": "1-9"})
+        clients.create_client(uuid4(), uuid4(), {"name": "X", "rut": "76.543.210-3"})
     assert raised.value.status_code == 409
     assert raised.value.contract_code == "client_rut_conflict"
 
@@ -94,8 +99,11 @@ def test_update_client_is_sparse(monkeypatch):
     def fake_rows(query, parameters=()):
         sql = str(query)
         calls.append(sql)
-        return [row]
+        if "FROM public.clients" in sql:
+            return [row.copy()]
+        return []
 
+    monkeypatch.setattr(clients, "write", lambda query, parameters=(): calls.append(str(query)))
     monkeypatch.setattr(clients, "rows", fake_rows)
     clients.update_client(
         row["id"], uuid4(), {"expected_updated_at": row["updated_at"], "phone": "+56 9 111"}

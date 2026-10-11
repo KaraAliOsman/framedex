@@ -7,7 +7,7 @@ from typing import Literal
 from uuid import UUID
 
 AssuranceLevel = Literal["aal1", "aal2"]
-OrganizationRole = Literal["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER"]
+OrganizationRole = Literal["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER", "OPERATOR"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +38,7 @@ class Membership:
     organization_id: UUID
     organization_name: str
     role: OrganizationRole
+    require_mfa: bool = False
 
     def public_dict(self) -> dict[str, str]:
         return {

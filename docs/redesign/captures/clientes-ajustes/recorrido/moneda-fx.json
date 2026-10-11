@@ -1,0 +1,12 @@
+[
+  {
+    "flow": "precio USD real con autoridad explícita, conserva acuerdo CLP; no aplica ni emite",
+    "result": "PASA",
+    "currency": "USD",
+    "total": "582.20",
+    "source": "P22 DEMO · observación sintética a 900 pesos por dólar",
+    "availableRates": 1,
+    "selectOptions": 2,
+    "overflow": false
+  }
+]

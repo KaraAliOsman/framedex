@@ -82,6 +82,15 @@ def test_mode_one_materials_fx_and_no_early_rounding() -> None:
     assert finish_lines([CommercialLine(1, 1, D('100000'), price)], 'CLP', D('0')).project_net == D('153846')
 
 
+def test_local_clp_cost_to_usd_needs_observation_without_import_reserve() -> None:
+    assert convert_cost(D('123.45'), 'CLP', 'USD', D('900')) == D('0.13716666666666666666666666666666666666666666666666666666666666666666666666666667')
+    with pytest.raises(PricingError, match='missing_fx_authority'):
+        convert_cost(D('1'), 'CLP', 'USD')
+    for rate in (D('0'), D('-1'), D('NaN')):
+        with pytest.raises(PricingError, match='invalid_decimal'):
+            convert_cost(D('1'), 'CLP', 'USD', rate)
+
+
 def test_mode_one_is_margin_on_sale_not_markup() -> None:
     """The label «Margen sobre venta» is contractual: cost ÷ (1−margin).
     Cost 100 at 25 % sells at ≈133.33 — a 25 % MARKUP would sell at 125.

@@ -5,6 +5,13 @@
   gap: var(--space-24px);
   padding: var(--space-24px) var(--space-16px);
 }
+.onboarding a {
+  color: var(--interactive);
+}
+.onboarding a:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
 .onboarding-head {
   display: grid;
   gap: var(--space-8px);
@@ -34,7 +41,7 @@
   display: grid;
   gap: var(--space-8px);
 }
-.onboarding-card input {
+.onboarding-card input:not([type="checkbox"]) {
   min-width: 0;
   width: 100%;
 }
@@ -92,7 +99,7 @@
   .onboarding-card {
     padding: var(--space-16px);
   }
-  .onboarding input,
+  .onboarding input:not([type="checkbox"]),
   .onboarding .ui-button,
   .onboarding-system {
     min-height: var(--density-loose);

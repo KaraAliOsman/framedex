@@ -6,6 +6,7 @@ import { t } from "./i18n/es-CL";
 import { RouteErrorBoundary } from "./app/RouteErrorBoundary";
 import { ConnectionBoundary, RecoveryPage } from "./app/RecoveryPage";
 import { AuthCallbackPage } from "./auth/AuthCallbackPage";
+import { InvitationPage } from "./auth/InvitationPage";
 import { ReadyGuard, SessionGuard } from "./auth/AuthGuards";
 import { useAuthSession } from "./auth/AuthSessionProvider";
 import { LoginPage } from "./auth/LoginPage";
@@ -500,6 +501,7 @@ export function AppRoutes(): JSX.Element {
         />
         {/* Keep general settings and inventory entry addresses usable. */}
         <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
+        <Route path="/invitation" element={<InvitationPage />} />
         <Route
           path="/inventory"
           element={

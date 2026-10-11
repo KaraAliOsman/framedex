@@ -10,7 +10,10 @@ CREATE SCHEMA auth;
 -- contract so domain foreign keys and reviewer labels are exercised.
 CREATE TABLE auth.users (
     id UUID PRIMARY KEY,
-    raw_user_meta_data JSONB NOT NULL DEFAULT '{}'::JSONB
+    raw_user_meta_data JSONB NOT NULL DEFAULT '{}'::JSONB,
+    email TEXT,
+    email_confirmed_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ
 );
 
 CREATE FUNCTION auth.uid()

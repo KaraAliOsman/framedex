@@ -438,6 +438,17 @@ def blocked_event(*, org_id: UUID, actor_id: UUID, step_id: UUID):
 
 
 def _check_live(row: dict, message: dict):
+    if row["kind"] == "INVITATION":
+        active = rows(
+            "SELECT i.id FROM public.organization_invitations i "
+            "JOIN public.tenancy_memberships m ON m.org_id=i.org_id AND m.user_id=i.created_by "
+            "AND m.role='OWNER' AND m.is_active "
+            "WHERE i.org_id=%s AND i.id=%s AND i.accepted_at IS NULL "
+            "AND i.revoked_at IS NULL AND i.expires_at>now()",
+            [row["org_id"], message["invitation_id"]],
+        )
+        if not active:
+            raise ValueError("mail_invitation_inactive")
     if row["kind"] == "COLLECTION":
         from projects.collection_reminders import source
 
@@ -520,7 +531,7 @@ def dispatch(*, org_id: UUID, mail_id: UUID) -> dict:
             code = str(error) if isinstance(error, ValueError) else None
             preflight_error = (
                 code
-                if code in {"mail_quote_link_inactive", "mail_payment_voided", "mail_purchase_cancelled"}
+                if code in {"mail_quote_link_inactive", "mail_payment_voided", "mail_purchase_cancelled", "mail_invitation_inactive"}
                 else "mail_preflight_failed"
             )
         row = one(

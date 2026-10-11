@@ -51,7 +51,7 @@ def test_list_stock_returns_view_rows() -> None:
     def fake_rows(query, params=()):
         if "GROUP BY m.item_id" in query:
             return []
-        if "order_requirement_lines" in query:
+        if "private.stock_incoming" in query:
             return []
         return [stock_row]
 
@@ -91,7 +91,7 @@ def test_list_stock_incoming_keys_by_spec_variant() -> None:
     def fake_rows(query, params=()):
         if "GROUP BY m.item_id" in query:
             return []
-        if "order_requirement_lines" in query:
+        if "private.stock_incoming" in query:
             return [{"line_snapshot": line_snapshot, "open_qty": Decimal(2)}]
         return [stock_row]
 

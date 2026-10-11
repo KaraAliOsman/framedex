@@ -1,22 +1,37 @@
 import { useCallback, useEffect, useState } from "react";
 import { organizationBrandingGet, organizationBrandingSave } from "../../api/generated/dekopen";
-import type { DocumentPreferences } from "../../api/generated/models";
+import type {
+  DocumentPreferences,
+  DocumentPreferencesPatchRequest,
+} from "../../api/generated/models";
 import { ValidatedForm } from "../../ui/FormValidation";
-import { DimLoader } from "../../ui";
+import { DimLoader, useConfirm } from "../../ui";
+import { actionErrorDetail } from "../errors";
 import { CommercialTermsEditor, validCommercialTerms } from "./CommercialTermsEditor";
 import "./document-settings.css";
 
 export function DocumentSettings({
   orgId,
   canEdit,
+  section = "all",
+  onDraft,
+  onSaved,
 }: {
   orgId: string;
   canEdit: boolean;
+  section?: "all" | "commercial" | "documents" | "production";
+  onDraft?: (value: DocumentPreferences) => void;
+  onSaved?: () => void;
 }): JSX.Element {
   const [value, setValue] = useState<DocumentPreferences | null>(null);
+  const [expected, setExpected] = useState<string>();
+  const confirm = useConfirm();
   const [status, setStatus] = useState("Cargando preferencias de documentos…");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  useEffect(() => {
+    if (value) onDraft?.(value);
+  }, [value, onDraft]);
   const load = useCallback(async (): Promise<void> => {
     setStatus("Cargando preferencias de documentos…");
     setError(false);
@@ -24,6 +39,7 @@ export function DocumentSettings({
       const response = await organizationBrandingGet({ headers: { "X-Organization-ID": orgId } });
       if (response.status !== 200) throw new Error("read");
       setValue(response.data.document_preferences);
+      setExpected(response.data.updated_at);
       setStatus("");
     } catch {
       setStatus("No se pudieron cargar las preferencias. Revisa tu conexión y vuelve a intentar.");
@@ -35,10 +51,24 @@ export function DocumentSettings({
   }, [load]);
   return (
     <section className="settings-card document-settings" aria-label="Documentos">
-      <h3>Documentos</h3>
+      <h3>
+        {section === "commercial"
+          ? "Condiciones comerciales"
+          : section === "production"
+            ? "Etiquetas y retazos"
+            : "Documentos"}
+      </h3>
+      <p className="settings-defaults">
+        {section === "commercial"
+          ? "Valores sugeridos: vigencia de 15 días y 50 % al aprobar / 50 % contra entrega."
+          : section === "production"
+            ? "Valores sugeridos: etiquetas Carta y antigüedad máxima de retazos de 90 días."
+            : "Valor sugerido: papel Carta; pie sin atribución en documentos nuevos."}{" "}
+        Revísalos antes de guardar.
+      </p>
       <p>
         Estas preferencias se guardan en cada nueva revisión. El logo y los datos del emisor se
-        configuran en Identidad.
+        configuran en Empresa.
       </p>
       {!canEdit && (
         <p>
@@ -48,6 +78,11 @@ export function DocumentSettings({
       )}
       {!value && !error && <DimLoader label="Cargando preferencias de documentos" />}
       {status && <p role={error ? "alert" : "status"}>{status}</p>}
+      {error && (
+        <button type="button" onClick={() => void load()}>
+          Recargar preferencias
+        </button>
+      )}
       {!value && error && (
         <button type="button" className="secondary-action" onClick={() => void load()}>
           Reintentar
@@ -88,12 +123,40 @@ export function DocumentSettings({
               setError(true);
               return;
             }
+            if (
+              !(await confirm({
+                title: "Guardar preferencias",
+                body: "Estos ajustes se usarán en nuevas revisiones. Los documentos emitidos conservan sus condiciones y formato.",
+              }))
+            )
+              return;
             setBusy(true);
             setStatus("");
             setError(false);
             try {
+              const patch: DocumentPreferencesPatchRequest =
+                section === "commercial"
+                  ? {
+                      quotation_valid_days: value.quotation_valid_days,
+                      commercial_terms: value.commercial_terms,
+                    }
+                  : section === "production"
+                    ? {
+                        piece_label_paper: value.piece_label_paper,
+                        remnant_age_days: value.remnant_age_days,
+                        remnant_destination: value.remnant_destination,
+                      }
+                    : section === "documents"
+                      ? {
+                          paper: value.paper,
+                          accent: value.accent,
+                          legal_footer: value.legal_footer,
+                          quotation_preview_minutes: value.quotation_preview_minutes,
+                          portal_successor_link: value.portal_successor_link,
+                        }
+                      : value;
               const response = await organizationBrandingSave(
-                { document_preferences: value },
+                { document_preferences: patch, expected_updated_at: expected },
                 { headers: { "X-Organization-ID": orgId } },
               );
               if (response.status !== 200) {
@@ -106,10 +169,15 @@ export function DocumentSettings({
                 return;
               }
               setValue(response.data.document_preferences);
+              setExpected(response.data.updated_at);
               setStatus("Preferencias guardadas para nuevas emisiones.");
-            } catch {
+              onSaved?.();
+            } catch (error) {
               setStatus(
-                "No se pudieron guardar las preferencias. Revisa tu conexión y vuelve a intentar.",
+                actionErrorDetail(
+                  error,
+                  "No se pudieron guardar las preferencias. Revisa tu conexión y vuelve a intentar.",
+                ),
               );
               setError(true);
             } finally {
@@ -119,152 +187,186 @@ export function DocumentSettings({
         >
           <fieldset disabled={busy || !canEdit}>
             <legend>Formato de impresión</legend>
-            <label>
-              Papel
-              <select
-                aria-label="Papel"
-                value={value.paper}
-                onChange={(event) =>
-                  setValue({ ...value, paper: event.target.value as DocumentPreferences["paper"] })
-                }
-              >
-                <option value="LETTER">Carta</option>
-                <option value="OFICIO">Oficio</option>
-                <option value="A4">A4</option>
-              </select>
-            </label>
-            <label>
-              Papel de etiquetas de piezas
-              <select
-                aria-label="Papel de etiquetas de piezas"
-                value={value.piece_label_paper ?? "LETTER"}
-                onChange={(event) =>
-                  setValue({
-                    ...value,
-                    piece_label_paper: event.target
-                      .value as DocumentPreferences["piece_label_paper"],
-                  })
-                }
-              >
-                <option value="LETTER">Carta · grilla de etiquetas</option>
-                <option value="A4">A4 · grilla de etiquetas</option>
-                <option value="ROLL_100_50">Rollo térmico · 100 × 50 mm</option>
-              </select>
-            </label>
-            <label>
-              Destino de retazos recuperables
-              <input
-                aria-label="Destino de retazos recuperables"
-                maxLength={80}
-                required
-                value={value.remnant_destination ?? "Recepción de retazos"}
-                onChange={(event) =>
-                  setValue({ ...value, remnant_destination: event.target.value })
-                }
-              />
-              <small>
-                Se fija al optimizar. Los códigos se reservan antes del corte y entran al stock
-                cuando lo completas.
-              </small>
-            </label>
-            <label>
-              Alertar retazos a partir de (días)
-              <input
-                type="number"
-                min={1}
-                max={3650}
-                required
-                value={value.remnant_age_days ?? 90}
-                onChange={(event) =>
-                  setValue({ ...value, remnant_age_days: Number(event.target.value) })
-                }
-              />
-              <small>
-                La alerta conserva el material disponible; revisa su ubicación y estado.
-              </small>
-            </label>
-            <label>
-              Acento de impresión
-              <select
-                aria-label="Acento de impresión"
-                value={value.accent}
-                onChange={(event) =>
-                  setValue({
-                    ...value,
-                    accent: event.target.value as DocumentPreferences["accent"],
-                  })
-                }
-              >
-                <option value="TEAL">Verde técnico</option>
-                <option value="TEAL_DARK">Verde técnico oscuro</option>
-                <option value="GRAPHITE">Grafito</option>
-              </select>
-            </label>
-            <label>
-              Texto legal del pie
-              <textarea
-                maxLength={240}
-                value={value.legal_footer}
-                onChange={(event) => setValue({ ...value, legal_footer: event.target.value })}
-              />
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={value.portal_successor_link ?? false}
-                onChange={(event) =>
-                  setValue({ ...value, portal_successor_link: event.target.checked })
-                }
-              />
-              Permitir que un enlace reemplazado lleve a la propuesta vigente
-              <small>
-                Se sella al emitir. Permite consultar la nueva revisión a quien conserve un enlace
-                anterior; desactivado por defecto.
-              </small>
-            </label>
-            <label>
-              Vigencia comercial para cotizaciones nuevas (días)
-              <input
-                type="number"
-                min={1}
-                max={365}
-                step={1}
-                value={value.quotation_valid_days}
-                onChange={(event) =>
-                  setValue({ ...value, quotation_valid_days: event.target.valueAsNumber })
-                }
-              />
-              <small>
-                Se propone desde la fecha local de Chile. Puedes cambiarla antes de emitir; las
-                revisiones selladas conservan su fecha.
-              </small>
-            </label>
-            <label>
-              Vigencia de la revisión del PDF (minutos)
-              <input
-                type="number"
-                min={5}
-                max={60}
-                step={1}
-                value={value.quotation_preview_minutes}
-                onChange={(event) =>
-                  setValue({ ...value, quotation_preview_minutes: event.target.valueAsNumber })
-                }
-              />
-              <small>
-                Entre 5 y 60 minutos. Al vencer debes preparar y revisar otro PDF; la vigencia
-                comercial se declara por cotización.
-              </small>
-            </label>
+            {(section === "all" || section === "documents") && (
+              <>
+                <label>
+                  Papel
+                  <select
+                    aria-label="Papel"
+                    value={value.paper}
+                    onChange={(event) =>
+                      setValue({
+                        ...value,
+                        paper: event.target.value as DocumentPreferences["paper"],
+                      })
+                    }
+                  >
+                    <option value="LETTER">Carta</option>
+                    <option value="OFICIO">Oficio</option>
+                    <option value="A4">A4</option>
+                  </select>
+                </label>
+              </>
+            )}
+            {(section === "all" || section === "production") && (
+              <>
+                <label>
+                  Papel de etiquetas de piezas
+                  <select
+                    aria-label="Papel de etiquetas de piezas"
+                    value={value.piece_label_paper ?? "LETTER"}
+                    onChange={(event) =>
+                      setValue({
+                        ...value,
+                        piece_label_paper: event.target
+                          .value as DocumentPreferences["piece_label_paper"],
+                      })
+                    }
+                  >
+                    <option value="LETTER">Carta · grilla de etiquetas</option>
+                    <option value="A4">A4 · grilla de etiquetas</option>
+                    <option value="ROLL_100_50">Rollo térmico · 100 × 50 mm</option>
+                  </select>
+                </label>
+                <label>
+                  Destino de retazos recuperables
+                  <input
+                    aria-label="Destino de retazos recuperables"
+                    maxLength={80}
+                    required
+                    value={value.remnant_destination ?? "Recepción de retazos"}
+                    onChange={(event) =>
+                      setValue({ ...value, remnant_destination: event.target.value })
+                    }
+                  />
+                  <small>
+                    Se fija al optimizar. Los códigos se reservan antes del corte y entran al stock
+                    cuando lo completas.
+                  </small>
+                </label>
+                <label>
+                  Alertar retazos a partir de (días)
+                  <input
+                    type="number"
+                    min={1}
+                    aria-label="Alertar retazos a partir de (días)"
+                    max={3650}
+                    required
+                    value={value.remnant_age_days ?? 90}
+                    onChange={(event) =>
+                      setValue({ ...value, remnant_age_days: Number(event.target.value) })
+                    }
+                  />
+                  <small>
+                    La alerta conserva el material disponible; revisa su ubicación y estado.
+                  </small>
+                </label>
+              </>
+            )}
+            {(section === "all" || section === "documents") && (
+              <>
+                <label>
+                  Acento de impresión
+                  <select
+                    aria-label="Acento de impresión"
+                    value={value.accent}
+                    onChange={(event) =>
+                      setValue({
+                        ...value,
+                        accent: event.target.value as DocumentPreferences["accent"],
+                      })
+                    }
+                  >
+                    <option value="TEAL">Verde técnico</option>
+                    <option value="TEAL_DARK">Verde técnico oscuro</option>
+                    <option value="GRAPHITE">Grafito</option>
+                  </select>
+                </label>
+                <label>
+                  Texto legal del pie
+                  <textarea
+                    aria-label="Texto legal del pie"
+                    maxLength={240}
+                    value={value.legal_footer}
+                    onChange={(event) => setValue({ ...value, legal_footer: event.target.value })}
+                  />
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={value.portal_successor_link ?? false}
+                    onChange={(event) =>
+                      setValue({ ...value, portal_successor_link: event.target.checked })
+                    }
+                  />
+                  Permitir que un enlace reemplazado lleve a la propuesta vigente
+                  <small>
+                    Se sella al emitir. Permite consultar la nueva revisión a quien conserve un
+                    enlace anterior; desactivado por defecto.
+                  </small>
+                </label>
+              </>
+            )}
+            {(section === "all" || section === "commercial") && (
+              <>
+                <label>
+                  Vigencia comercial para cotizaciones nuevas (días)
+                  <input
+                    aria-label="Vigencia comercial para cotizaciones nuevas (días)"
+                    type="number"
+                    min={1}
+                    max={365}
+                    step={1}
+                    value={value.quotation_valid_days}
+                    onChange={(event) =>
+                      setValue({ ...value, quotation_valid_days: event.target.valueAsNumber })
+                    }
+                  />
+                  <small>
+                    Se propone desde la fecha local de Chile. Puedes cambiarla antes de emitir; las
+                    revisiones selladas conservan su fecha.
+                  </small>
+                </label>
+              </>
+            )}
+            {(section === "all" || section === "documents") && (
+              <>
+                <label>
+                  Vigencia de la revisión del PDF (minutos)
+                  <input
+                    type="number"
+                    min={5}
+                    max={60}
+                    step={1}
+                    value={value.quotation_preview_minutes}
+                    onChange={(event) =>
+                      setValue({ ...value, quotation_preview_minutes: event.target.valueAsNumber })
+                    }
+                  />
+                  <small>
+                    Entre 5 y 60 minutos. Al vencer debes preparar y revisar otro PDF; la vigencia
+                    comercial se declara por cotización.
+                  </small>
+                </label>
+              </>
+            )}
           </fieldset>
-          <CommercialTermsEditor
-            value={value.commercial_terms}
-            onChange={(commercial_terms) => setValue({ ...value, commercial_terms })}
-            disabled={busy || !canEdit}
-          />
+          {(section === "all" || section === "commercial") && (
+            <CommercialTermsEditor
+              value={value.commercial_terms}
+              onChange={(commercial_terms) => setValue({ ...value, commercial_terms })}
+              disabled={busy || !canEdit}
+            />
+          )}
           {canEdit && (
             <button type="submit" className="primary-action" disabled={busy}>
-              {busy ? "Guardando…" : "Guardar documentos"}
+              {busy
+                ? "Guardando…"
+                : section === "commercial"
+                  ? "Guardar condiciones"
+                  : section === "production"
+                    ? "Guardar producción"
+                    : "Guardar documentos"}
             </button>
           )}
         </ValidatedForm>

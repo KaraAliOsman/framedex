@@ -26,7 +26,9 @@ def tx_aborted() -> bool:
     return status is not None and int(status) == 3
 
 
-def _restore_role_and_claims(previous_role: str, previous_claims: str | None) -> None:
+def _restore_role_and_claims(
+    previous_role: str, previous_claims: str | None, previous_sub: str | None
+) -> None:
     """Undo a transaction-local role/claims switch. SET LOCAL survives
     savepoints, so without this the switched role leaks into the caller's
     outer transaction (e.g. a job worker's progress writes then run as
@@ -36,18 +38,20 @@ def _restore_role_and_claims(previous_role: str, previous_claims: str | None) ->
     with connection.cursor() as cursor:
         cursor.execute("SELECT set_config('role', %s, true)", [previous_role])
         cursor.execute(
-            "SELECT set_config('request.jwt.claims', %s, true)",
-            [previous_claims or ""],
+            "SELECT set_config('request.jwt.claims', %s, true), "
+            "set_config('request.jwt.claim.sub', %s, true)",
+            [previous_claims or "", previous_sub or ""],
         )
 
 
-def _current_role_and_claims(cursor) -> tuple[str, str | None]:
+def _current_role_and_claims(cursor) -> tuple[str, str | None, str | None]:
     cursor.execute(
         "SELECT current_setting('role', true), "
-        "current_setting('request.jwt.claims', true)"
+        "current_setting('request.jwt.claims', true), "
+        "current_setting('request.jwt.claim.sub', true)"
     )
-    role, claims = cursor.fetchone()
-    return str(role or "none"), (str(claims) if claims else None)
+    role, claims, sub = cursor.fetchone()
+    return str(role or "none"), (str(claims) if claims else None), (str(sub) if sub else None)
 
 
 @contextmanager
@@ -61,7 +65,7 @@ def catalog_backend() -> Iterator[None]:
         yield
         return
     with connection.cursor() as cursor:
-        previous_role, _ = _current_role_and_claims(cursor)
+        previous_role, _, _ = _current_role_and_claims(cursor)
         cursor.execute("SET LOCAL ROLE catalog_backend")
     try:
         yield
@@ -87,10 +91,11 @@ def worker_claims(claims: Mapping[str, object]) -> Iterator[None]:
         return
     claims_json = json.dumps(dict(claims), separators=(",", ":"), sort_keys=True)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT current_setting('request.jwt.claims', true)")
-        previous = cursor.fetchone()[0]
+        _, previous, previous_sub = _current_role_and_claims(cursor)
         cursor.execute(
-            "SELECT set_config('request.jwt.claims', %s, false)", [claims_json]
+            "SELECT set_config('request.jwt.claims', %s, false), "
+            "set_config('request.jwt.claim.sub', %s, false)",
+            [claims_json, str(claims.get('sub') or '')],
         )
     try:
         yield
@@ -98,8 +103,9 @@ def worker_claims(claims: Mapping[str, object]) -> Iterator[None]:
         if not tx_aborted():
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT set_config('request.jwt.claims', %s, false)",
-                    [str(previous) if previous else ""],
+                    "SELECT set_config('request.jwt.claims', %s, false), "
+                    "set_config('request.jwt.claim.sub', %s, false)",
+                    [previous or "", previous_sub or ""],
                 )
 
 
@@ -108,13 +114,17 @@ def authenticated_rls_context(claims: Mapping[str, object]) -> Iterator[None]:
     claims_json = json.dumps(dict(claims), separators=(",", ":"), sort_keys=True)
     with transaction.atomic():
         with connection.cursor() as cursor:
-            previous_role, previous_claims = _current_role_and_claims(cursor)
+            previous_role, previous_claims, previous_sub = _current_role_and_claims(cursor)
+            # Supabase's auth.uid() gives the individual sub GUC precedence.
+            # Pin it to the same verified identity, including on reused/nested
+            # connections, and restore both representations on exit.
             cursor.execute(
-                "SELECT set_config('request.jwt.claims', %s, true)",
-                [claims_json],
+                "SELECT set_config('request.jwt.claims', %s, true), "
+                "set_config('request.jwt.claim.sub', %s, true)",
+                [claims_json, str(claims.get('sub') or '')],
             )
             cursor.execute("SET LOCAL ROLE authenticated")
         try:
             yield
         finally:
-            _restore_role_and_claims(previous_role, previous_claims)
+            _restore_role_and_claims(previous_role, previous_claims, previous_sub)

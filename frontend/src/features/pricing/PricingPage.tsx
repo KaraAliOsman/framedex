@@ -12,6 +12,7 @@ import {
 } from "../../format";
 import { formatMoney } from "../money";
 import { apiMutator, ApiError } from "../../api/apiMutator";
+import { companyGet } from "../../api/generated/dekopen";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { DemoBadge, DeniedState, DimLoader, PageHeader, Tabs } from "../../ui";
 import { t } from "../../i18n/es-CL";
@@ -83,7 +84,7 @@ function pctDisplay(value: unknown): string {
 function renderFieldValue(
   field: Field,
   value: unknown,
-  refs?: { costLists?: Row[]; configurations?: Row[]; item?: Row },
+  refs?: { costLists?: Row[]; configurations?: Row[]; item?: Row; ruleCurrency?: string },
 ): string {
   if (value === undefined || value === null || value === "") return "Sin dato";
   const text = String(value);
@@ -103,6 +104,10 @@ function renderFieldValue(
     if (match) return `${match[3]}-${match[2]}-${match[1]}`;
   }
   if (field.type === "percent") return formatPercent(text, "fraction");
+  if (["labor_rate_per_m2", "installation_rate_per_m2"].includes(field.name))
+    return refs?.ruleCurrency
+      ? `${formatMoney(text, refs.ruleCurrency)} / m²`
+      : "Sin dato: falta consultar la moneda de empresa";
   if (field.options) return optionLabel(text);
   if (["unit_cost", "catalog_price", "price", "rate_per_m2"].includes(field.name)) {
     const authority =
@@ -332,10 +337,20 @@ export function PricingPage(): JSX.Element {
   return <PricingWorkspace key={org.id} orgId={org.id} />;
 }
 
-function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
+export function PricingRulesSettings({ orgId }: { orgId: string }): JSX.Element {
+  return <PricingWorkspace orgId={orgId} fixedResource="rules" />;
+}
+
+function PricingWorkspace({
+  orgId,
+  fixedResource,
+}: {
+  orgId: string;
+  fixedResource?: string;
+}): JSX.Element {
   const [searchParams] = useSearchParams();
   const [resource, setResource] = useState<string>(() => {
-    const section = searchParams.get("section");
+    const section = fixedResource ?? searchParams.get("section");
     return section && sections.some((name) => name === section) ? section : "cost-lists";
   });
   const [items, setItems] = useState<Row[]>([]);
@@ -347,6 +362,25 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [revision, setRevision] = useState(0);
+  const [ruleCurrency, setRuleCurrency] = useState<string>();
+  useEffect(() => {
+    if (resource !== "rules") return;
+    const controller = new AbortController();
+    setRuleCurrency(undefined);
+    void (async () => {
+      try {
+        const response = await companyGet({
+          headers: { "X-Organization-ID": orgId },
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted && response.status === 200)
+          setRuleCurrency(response.data.base_currency);
+      } catch {
+        // The amount cannot receive a currency until its authority is available.
+      }
+    })();
+    return () => controller.abort();
+  }, [orgId, resource, revision]);
   const lifetime = useRef<AbortController>(new AbortController());
   useEffect(() => {
     const controller = new AbortController();
@@ -472,19 +506,29 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <section className="pricing-page">
-      <PageHeader context={t("pricing.subtitle")} title={t("pricing.title")} />
-      <DemoCosts request={request} />
-      <Tabs
-        items={sections.map((name, index) => ({
-          disabled: busy,
-          id: name,
-          label: t(sectionLabels[index]!),
-        }))}
-        label={t("pricing.sections")}
-        onChange={setResource}
-        value={resource}
-      />
+      {!fixedResource && (
+        <>
+          <PageHeader context={t("pricing.subtitle")} title={t("pricing.title")} />
+          <DemoCosts request={request} />
+          <Tabs
+            items={sections.map((name, index) => ({
+              disabled: busy,
+              id: name,
+              label: t(sectionLabels[index]!),
+            }))}
+            label={t("pricing.sections")}
+            onChange={setResource}
+            value={resource}
+          />
+        </>
+      )}
       {message && <p role="alert">{message}</p>}
+      {resource === "rules" && (
+        <p className="settings-hint">
+          Las tarifas por m² conservan su moneda base: {ruleCurrency ?? "Sin dato"}.{" "}
+          <Link to="/settings/general?section=company">Revisar moneda de empresa</Link>
+        </p>
+      )}
       {busy && (
         <p className="price-loading" role="status">
           <DimLoader label={t("pricing.loading")} />
@@ -533,11 +577,19 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                   ).map((field) => (
                     <div key={field.name}>
                       <dt>{t(field.label)}</dt>
-                      <dd>
+                      <dd
+                        className={
+                          field.type === "percent" ||
+                          ["labor_rate_per_m2", "installation_rate_per_m2"].includes(field.name)
+                            ? "pricing-number"
+                            : undefined
+                        }
+                      >
                         {renderFieldValue(field, item[field.name], {
                           costLists,
                           configurations,
                           item,
+                          ruleCurrency,
                         })}
                       </dd>
                     </div>

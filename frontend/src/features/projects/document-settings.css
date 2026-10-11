@@ -55,6 +55,14 @@
   display: grid;
   gap: var(--space-1);
 }
+.document-settings label:has(> input[type="checkbox"]) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+.document-settings label:has(> input[type="checkbox"]) small {
+  grid-column: 2;
+}
 .commercial-milestone {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 120px auto;

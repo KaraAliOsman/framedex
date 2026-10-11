@@ -1,0 +1,360 @@
+{
+  "flows": [
+    "crear estación 201 → editar mismo código 200 y misma identidad",
+    "cancelar edición conserva creación independiente",
+    "editar dirección → desvincular dirección maestra → guardar → recargar"
+  ],
+  "views": 36,
+  "findings": 0,
+  "overflow": 0,
+  "records": [
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "owner",
+      "width": 1440,
+      "theme": "light",
+      "filename": "estacion-nueva-owner-1440-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "owner",
+      "width": 1440,
+      "theme": "light",
+      "filename": "estacion-editar-owner-1440-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "owner",
+      "width": 1440,
+      "theme": "dark",
+      "filename": "estacion-nueva-owner-1440-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "owner",
+      "width": 1440,
+      "theme": "dark",
+      "filename": "estacion-editar-owner-1440-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "owner",
+      "width": 1280,
+      "theme": "light",
+      "filename": "estacion-nueva-owner-1280-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "owner",
+      "width": 1280,
+      "theme": "light",
+      "filename": "estacion-editar-owner-1280-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "owner",
+      "width": 1280,
+      "theme": "dark",
+      "filename": "estacion-nueva-owner-1280-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "owner",
+      "width": 1280,
+      "theme": "dark",
+      "filename": "estacion-editar-owner-1280-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "owner",
+      "width": 1024,
+      "theme": "light",
+      "filename": "estacion-nueva-owner-1024-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "owner",
+      "width": 1024,
+      "theme": "light",
+      "filename": "estacion-editar-owner-1024-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "owner",
+      "width": 1024,
+      "theme": "dark",
+      "filename": "estacion-nueva-owner-1024-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "owner",
+      "width": 1024,
+      "theme": "dark",
+      "filename": "estacion-editar-owner-1024-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "manager",
+      "width": 1440,
+      "theme": "light",
+      "filename": "estacion-nueva-manager-1440-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "manager",
+      "width": 1440,
+      "theme": "light",
+      "filename": "estacion-editar-manager-1440-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "manager",
+      "width": 1440,
+      "theme": "dark",
+      "filename": "estacion-nueva-manager-1440-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "manager",
+      "width": 1440,
+      "theme": "dark",
+      "filename": "estacion-editar-manager-1440-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "manager",
+      "width": 1280,
+      "theme": "light",
+      "filename": "estacion-nueva-manager-1280-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "manager",
+      "width": 1280,
+      "theme": "light",
+      "filename": "estacion-editar-manager-1280-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "manager",
+      "width": 1280,
+      "theme": "dark",
+      "filename": "estacion-nueva-manager-1280-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "manager",
+      "width": 1280,
+      "theme": "dark",
+      "filename": "estacion-editar-manager-1280-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "manager",
+      "width": 1024,
+      "theme": "light",
+      "filename": "estacion-nueva-manager-1024-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "manager",
+      "width": 1024,
+      "theme": "light",
+      "filename": "estacion-editar-manager-1024-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "nueva",
+      "role": "manager",
+      "width": 1024,
+      "theme": "dark",
+      "filename": "estacion-nueva-manager-1024-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "estaciones",
+      "phase": "editar",
+      "role": "manager",
+      "width": 1024,
+      "theme": "dark",
+      "filename": "estacion-editar-manager-1024-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "owner",
+      "width": 1440,
+      "theme": "light",
+      "filename": "direccion-editada-owner-1440-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "owner",
+      "width": 1440,
+      "theme": "dark",
+      "filename": "direccion-editada-owner-1440-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "owner",
+      "width": 1280,
+      "theme": "light",
+      "filename": "direccion-editada-owner-1280-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "owner",
+      "width": 1280,
+      "theme": "dark",
+      "filename": "direccion-editada-owner-1280-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "owner",
+      "width": 1024,
+      "theme": "light",
+      "filename": "direccion-editada-owner-1024-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "owner",
+      "width": 1024,
+      "theme": "dark",
+      "filename": "direccion-editada-owner-1024-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "estimator",
+      "width": 1440,
+      "theme": "light",
+      "filename": "direccion-editada-estimator-1440-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "estimator",
+      "width": 1440,
+      "theme": "dark",
+      "filename": "direccion-editada-estimator-1440-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "estimator",
+      "width": 1280,
+      "theme": "light",
+      "filename": "direccion-editada-estimator-1280-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "estimator",
+      "width": 1280,
+      "theme": "dark",
+      "filename": "direccion-editada-estimator-1280-dark.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "estimator",
+      "width": 1024,
+      "theme": "light",
+      "filename": "direccion-editada-estimator-1024-light.png",
+      "findings": [],
+      "overflow": false
+    },
+    {
+      "surface": "direccion",
+      "role": "estimator",
+      "width": 1024,
+      "theme": "dark",
+      "filename": "direccion-editada-estimator-1024-dark.png",
+      "findings": [],
+      "overflow": false
+    }
+  ]
+}

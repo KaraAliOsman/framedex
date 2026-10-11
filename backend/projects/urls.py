@@ -35,6 +35,8 @@ from projects.views import (
     ProjectInvoiceDteEnvioView,
 )
 from projects.options import DesignOptionsView
+from projects.company_views import CompanyView,CompanyUsersView,CompanyUserView,CompanyInvitationsView,CompanyInvitationView,InvitationInspectView,InvitationAcceptView,CompanyNumberingView,CompanyPreviewView
+from projects.client_views import ClientDirectoryView, ClientDossierView, ClientNotesView, ClientMergePreviewView, ClientMergeView
 from projects.ops_registry import OperationsRegistryView, SimulateOpsView
 from projects.project_ops import ProjectOpsPreviewView, ProjectOpsApplyView, ProjectOpsUndoView, ProjectOpsStateView
 from projects.hardware import HardwarePreviewView
@@ -44,6 +46,20 @@ from projects.mounting import MountingRulesView, MountingPreviewView, Measuremen
 from projects.collection_views import CollectionSettingsView, FlowSimulationView, FiscalSimulationView, CollectionReminderView, CollectionReminderSendView
 
 urlpatterns = [
+    path("organization/company/",CompanyView.as_view()),
+    path("organization/users/",CompanyUsersView.as_view()),
+    path("organization/users/<uuid:identity>/",CompanyUserView.as_view()),
+    path("organization/invitations/",CompanyInvitationsView.as_view()),
+    path("organization/invitations/<uuid:identity>/",CompanyInvitationView.as_view()),
+    path("auth/invitation/",InvitationInspectView.as_view()),
+    path("auth/invitation/accept/",InvitationAcceptView.as_view()),
+    path("organization/numbering/",CompanyNumberingView.as_view()),
+    path("organization/document-preview/",CompanyPreviewView.as_view()),
+    path("clients/directory/", ClientDirectoryView.as_view()),
+    path("clients/<uuid:client_id>/dossier/", ClientDossierView.as_view()),
+    path("clients/<uuid:client_id>/notes/", ClientNotesView.as_view()),
+    path("clients/<uuid:client_id>/merge-preview/", ClientMergePreviewView.as_view()),
+    path("clients/<uuid:client_id>/merge/", ClientMergeView.as_view()),
     path("organization/collections/", CollectionSettingsView.as_view()),
     path("projects/<uuid:project_id>/collection-reminder/", CollectionReminderView.as_view()),
     path("projects/<uuid:project_id>/collection-reminder/send/", CollectionReminderSendView.as_view()),

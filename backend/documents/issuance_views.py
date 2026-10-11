@@ -87,8 +87,10 @@ def guided_with_retry(*, request, project_id, data, issuing):
                 with connection.cursor() as cursor:
                     cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
                     cursor.execute(
-                        "SELECT set_config('request.jwt.claims',%s,true)",
-                        [json.dumps(dict(token.claims), separators=(",", ":"), sort_keys=True)],
+                        "SELECT set_config('request.jwt.claims',%s,true), "
+                        "set_config('request.jwt.claim.sub',%s,true)",
+                        [json.dumps(dict(token.claims), separators=(",", ":"), sort_keys=True),
+                         str(token.claims.get('sub') or '')],
                     )
                     cursor.execute("SET LOCAL ROLE authenticated")
                 tenant = resolve_tenant_context(

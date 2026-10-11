@@ -10,7 +10,10 @@ import type { CommercialTermsRequest } from "./commercialTermsRequest";
 import type { PaperEnum } from "./paperEnum";
 import type { PieceLabelPaperEnum } from "./pieceLabelPaperEnum";
 
-export interface DocumentPreferencesRequest {
+/**
+ * Save only the section edited by the user; preserve other sections.
+ */
+export interface DocumentPreferencesPatchRequest {
   portal_successor_link?: boolean;
   piece_label_paper?: PieceLabelPaperEnum;
   /**
@@ -33,9 +36,9 @@ export interface DocumentPreferencesRequest {
    * @maximum 365
    */
   quotation_valid_days?: number;
-  paper: PaperEnum;
-  accent: AccentEnum;
+  paper?: PaperEnum;
+  accent?: AccentEnum;
   /** @maxLength 240 */
-  legal_footer: string;
-  commercial_terms: CommercialTermsRequest;
+  legal_footer?: string;
+  commercial_terms?: CommercialTermsRequest;
 }

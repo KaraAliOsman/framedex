@@ -58,12 +58,16 @@ def convert_cost(value: Decimal, source: str, target: str,
     quantum(target)
     if source == target:
         return value
-    if source != 'USD' or target != 'CLP' or observed_rate is None:
+    # The declared observation is always CLP per USD. Imported USD costs keep
+    # their established 5% reserve; a local CLP cost quoted in USD uses the
+    # explicit observation as divisor, without inventing a second surcharge.
+    if observed_rate is None:
         raise PricingError('missing_fx_authority')
     number(observed_rate, positive=True)
     with localcontext() as context:
         context.prec = 80
-        return value * observed_rate * D('1.05')
+        return (value * observed_rate * D('1.05') if source == 'USD'
+                else value / observed_rate)
 
 
 def direct_cost(materials: Sequence[Decimal], area_m2: Decimal, waste: Decimal,

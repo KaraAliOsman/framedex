@@ -18,22 +18,19 @@ class MembershipRepository:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT membership.org_id, organization.name, membership.role::text
-                FROM public.tenancy_memberships AS membership
-                JOIN public.tenancy_organizations AS organization
-                  ON organization.id = membership.org_id
-                WHERE membership.user_id = %s
-                  AND membership.is_active = TRUE
-                ORDER BY organization.name, membership.org_id
+                SELECT org_id,organization_name,role,require_mfa
+                FROM private.bootstrap_memberships(%s)
+                ORDER BY organization_name,org_id
                 """,
                 [user_id],
             )
-            rows: Sequence[tuple[object, object, object]] = cursor.fetchall()
+            rows: Sequence[tuple[object, object, object, object]] = cursor.fetchall()
         return tuple(
             Membership(
                 organization_id=_as_uuid(row[0]),
                 organization_name=str(row[1]),
                 role=cast(OrganizationRole, str(row[2])),
+                require_mfa=bool(row[3]),
             )
             for row in rows
         )
@@ -93,10 +90,11 @@ def resolve_tenant_context(
 
 
 def enforce_owner_mfa(context: TenantContext, aal: str) -> None:
-    if context.active_organization.role == "OWNER" and aal != "aal2":
+    owner = context.active_organization.role == "OWNER"
+    if (owner or context.active_organization.require_mfa) and aal != "aal2":
         raise contract_error(
             status.HTTP_403_FORBIDDEN,
             "mfa_required",
-            "OWNER requires aal2",
+            "OWNER requires aal2" if owner else "Tu organización requiere segundo factor.",
             error_extra={"required_aal": "aal2"},
         )

@@ -73,7 +73,15 @@ import type {
   ChangeResult,
   CheckoutInputRequest,
   CheckoutResult,
+  ClientDirectory,
+  ClientDirectoryParams,
+  ClientDossierResponse,
   ClientListResponse,
+  ClientMergePreview,
+  ClientMergePreviewRequestRequest,
+  ClientMergeRequestRequest,
+  ClientNote,
+  ClientNoteWriteRequest,
   ClientResponse,
   ClientWriteRequest,
   CloneProjectRequest,
@@ -96,6 +104,11 @@ import type {
   CollectionReminderSendRequest,
   CollectionSettingsRequestRequest,
   Commerce,
+  Company,
+  CompanyPreviewRequest,
+  CompanyUserWriteRequest,
+  CompanyUsers,
+  CompanyWriteRequest,
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
   DecideRequestRequest,
@@ -183,6 +196,10 @@ import type {
   InventoryMovementsParams,
   InventoryRemnantsParams,
   InventoryStock,
+  InvitationAccepted,
+  InvitationInspect,
+  InvitationTokenRequest,
+  InvitationWriteRequest,
   JobEnqueueRequest,
   JobRun,
   JobsListParams,
@@ -203,6 +220,7 @@ import type {
   MeasurementResponse,
   MountingPreviewRequest,
   MountingPreviewResponse,
+  NumberingList,
   OperationalSummary,
   OperationsRegistry,
   OperatorStation,
@@ -1965,6 +1983,170 @@ export const analyticsToday = async (
   return apiMutator<analyticsTodayResponse>(getAnalyticsTodayUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export type invitationInspectResponse200 = {
+  data: InvitationInspect;
+  status: 200;
+};
+
+export type invitationInspectResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type invitationInspectResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type invitationInspectResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type invitationInspectResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type invitationInspectResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type invitationInspectResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type invitationInspectResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type invitationInspectResponseSuccess = invitationInspectResponse200 & {
+  headers: Headers;
+};
+export type invitationInspectResponseError = (
+  | invitationInspectResponse400
+  | invitationInspectResponse401
+  | invitationInspectResponse403
+  | invitationInspectResponse404
+  | invitationInspectResponse409
+  | invitationInspectResponse422
+  | invitationInspectResponse503
+) & {
+  headers: Headers;
+};
+
+export type invitationInspectResponse =
+  invitationInspectResponseSuccess | invitationInspectResponseError;
+
+export const getInvitationInspectUrl = () => {
+  return `/api/v1/auth/invitation/`;
+};
+
+export const invitationInspect = async (
+  invitationTokenRequest: InvitationTokenRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<invitationInspectResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<invitationInspectResponse>(getInvitationInspectUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(invitationTokenRequest),
+  });
+};
+
+export type invitationAcceptResponse200 = {
+  data: InvitationAccepted;
+  status: 200;
+};
+
+export type invitationAcceptResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type invitationAcceptResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type invitationAcceptResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type invitationAcceptResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type invitationAcceptResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type invitationAcceptResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type invitationAcceptResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type invitationAcceptResponseSuccess = invitationAcceptResponse200 & {
+  headers: Headers;
+};
+export type invitationAcceptResponseError = (
+  | invitationAcceptResponse400
+  | invitationAcceptResponse401
+  | invitationAcceptResponse403
+  | invitationAcceptResponse404
+  | invitationAcceptResponse409
+  | invitationAcceptResponse422
+  | invitationAcceptResponse503
+) & {
+  headers: Headers;
+};
+
+export type invitationAcceptResponse =
+  invitationAcceptResponseSuccess | invitationAcceptResponseError;
+
+export const getInvitationAcceptUrl = () => {
+  return `/api/v1/auth/invitation/accept/`;
+};
+
+export const invitationAccept = async (
+  invitationTokenRequest: InvitationTokenRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<invitationAcceptResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<invitationAcceptResponse>(getInvitationAcceptUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(invitationTokenRequest),
   });
 };
 
@@ -6844,6 +7026,407 @@ export const clientsDeactivate = async (
   });
 };
 
+export type clientDossierResponse200 = {
+  data: ClientDossierResponse;
+  status: 200;
+};
+
+export type clientDossierResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientDossierResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientDossierResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientDossierResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientDossierResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientDossierResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientDossierResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientDossierResponseSuccess = clientDossierResponse200 & {
+  headers: Headers;
+};
+export type clientDossierResponseError = (
+  | clientDossierResponse400
+  | clientDossierResponse401
+  | clientDossierResponse403
+  | clientDossierResponse404
+  | clientDossierResponse409
+  | clientDossierResponse422
+  | clientDossierResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientDossierResponse = clientDossierResponseSuccess | clientDossierResponseError;
+
+export const getClientDossierUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/dossier/`;
+};
+
+export const clientDossier = async (
+  clientId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientDossierResponse> => {
+  return apiMutator<clientDossierResponse>(getClientDossierUrl(clientId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type clientMergeResponse200 = {
+  data: ClientResponse;
+  status: 200;
+};
+
+export type clientMergeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientMergeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientMergeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientMergeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientMergeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientMergeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientMergeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientMergeResponseSuccess = clientMergeResponse200 & {
+  headers: Headers;
+};
+export type clientMergeResponseError = (
+  | clientMergeResponse400
+  | clientMergeResponse401
+  | clientMergeResponse403
+  | clientMergeResponse404
+  | clientMergeResponse409
+  | clientMergeResponse422
+  | clientMergeResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientMergeResponse = clientMergeResponseSuccess | clientMergeResponseError;
+
+export const getClientMergeUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/merge/`;
+};
+
+export const clientMerge = async (
+  clientId: string,
+  clientMergeRequestRequest: ClientMergeRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientMergeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<clientMergeResponse>(getClientMergeUrl(clientId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientMergeRequestRequest),
+  });
+};
+
+export type clientMergePreviewResponse200 = {
+  data: ClientMergePreview;
+  status: 200;
+};
+
+export type clientMergePreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientMergePreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientMergePreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientMergePreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientMergePreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientMergePreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientMergePreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientMergePreviewResponseSuccess = clientMergePreviewResponse200 & {
+  headers: Headers;
+};
+export type clientMergePreviewResponseError = (
+  | clientMergePreviewResponse400
+  | clientMergePreviewResponse401
+  | clientMergePreviewResponse403
+  | clientMergePreviewResponse404
+  | clientMergePreviewResponse409
+  | clientMergePreviewResponse422
+  | clientMergePreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientMergePreviewResponse =
+  clientMergePreviewResponseSuccess | clientMergePreviewResponseError;
+
+export const getClientMergePreviewUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/merge-preview/`;
+};
+
+export const clientMergePreview = async (
+  clientId: string,
+  clientMergePreviewRequestRequest: ClientMergePreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientMergePreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<clientMergePreviewResponse>(getClientMergePreviewUrl(clientId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientMergePreviewRequestRequest),
+  });
+};
+
+export type clientNoteAddResponse201 = {
+  data: ClientNote;
+  status: 201;
+};
+
+export type clientNoteAddResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientNoteAddResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientNoteAddResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientNoteAddResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientNoteAddResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientNoteAddResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientNoteAddResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientNoteAddResponseSuccess = clientNoteAddResponse201 & {
+  headers: Headers;
+};
+export type clientNoteAddResponseError = (
+  | clientNoteAddResponse400
+  | clientNoteAddResponse401
+  | clientNoteAddResponse403
+  | clientNoteAddResponse404
+  | clientNoteAddResponse409
+  | clientNoteAddResponse422
+  | clientNoteAddResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientNoteAddResponse = clientNoteAddResponseSuccess | clientNoteAddResponseError;
+
+export const getClientNoteAddUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/notes/`;
+};
+
+export const clientNoteAdd = async (
+  clientId: string,
+  clientNoteWriteRequest: ClientNoteWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientNoteAddResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<clientNoteAddResponse>(getClientNoteAddUrl(clientId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientNoteWriteRequest),
+  });
+};
+
+export type clientDirectoryResponse200 = {
+  data: ClientDirectory;
+  status: 200;
+};
+
+export type clientDirectoryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientDirectoryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientDirectoryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientDirectoryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientDirectoryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientDirectoryResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientDirectoryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientDirectoryResponseSuccess = clientDirectoryResponse200 & {
+  headers: Headers;
+};
+export type clientDirectoryResponseError = (
+  | clientDirectoryResponse400
+  | clientDirectoryResponse401
+  | clientDirectoryResponse403
+  | clientDirectoryResponse404
+  | clientDirectoryResponse409
+  | clientDirectoryResponse422
+  | clientDirectoryResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientDirectoryResponse = clientDirectoryResponseSuccess | clientDirectoryResponseError;
+
+export const getClientDirectoryUrl = (params?: ClientDirectoryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/clients/directory/?${stringifiedParams}`
+    : `/api/v1/clients/directory/`;
+};
+
+export const clientDirectory = async (
+  params?: ClientDirectoryParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientDirectoryResponse> => {
+  return apiMutator<clientDirectoryResponse>(getClientDirectoryUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type mailExamplesResponse200 = {
   data: MailExample[];
   status: 200;
@@ -10231,6 +10814,239 @@ export const collectionSettingsSave = async (
   });
 };
 
+export type companyGetResponse200 = {
+  data: Company;
+  status: 200;
+};
+
+export type companyGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyGetResponseSuccess = companyGetResponse200 & {
+  headers: Headers;
+};
+export type companyGetResponseError = (
+  | companyGetResponse400
+  | companyGetResponse401
+  | companyGetResponse403
+  | companyGetResponse404
+  | companyGetResponse409
+  | companyGetResponse422
+  | companyGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyGetResponse = companyGetResponseSuccess | companyGetResponseError;
+
+export const getCompanyGetUrl = () => {
+  return `/api/v1/organization/company/`;
+};
+
+export const companyGet = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyGetResponse> => {
+  return apiMutator<companyGetResponse>(getCompanyGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type companySaveResponse200 = {
+  data: Company;
+  status: 200;
+};
+
+export type companySaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companySaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companySaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companySaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companySaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companySaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companySaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companySaveResponseSuccess = companySaveResponse200 & {
+  headers: Headers;
+};
+export type companySaveResponseError = (
+  | companySaveResponse400
+  | companySaveResponse401
+  | companySaveResponse403
+  | companySaveResponse404
+  | companySaveResponse409
+  | companySaveResponse422
+  | companySaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type companySaveResponse = companySaveResponseSuccess | companySaveResponseError;
+
+export const getCompanySaveUrl = () => {
+  return `/api/v1/organization/company/`;
+};
+
+export const companySave = async (
+  companyWriteRequest: CompanyWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companySaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companySaveResponse>(getCompanySaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyWriteRequest),
+  });
+};
+
+export type companyDocumentPreviewResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type companyDocumentPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyDocumentPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyDocumentPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyDocumentPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyDocumentPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyDocumentPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyDocumentPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyDocumentPreviewResponseSuccess = companyDocumentPreviewResponse200 & {
+  headers: Headers;
+};
+export type companyDocumentPreviewResponseError = (
+  | companyDocumentPreviewResponse400
+  | companyDocumentPreviewResponse401
+  | companyDocumentPreviewResponse403
+  | companyDocumentPreviewResponse404
+  | companyDocumentPreviewResponse409
+  | companyDocumentPreviewResponse422
+  | companyDocumentPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyDocumentPreviewResponse =
+  companyDocumentPreviewResponseSuccess | companyDocumentPreviewResponseError;
+
+export const getCompanyDocumentPreviewUrl = () => {
+  return `/api/v1/organization/document-preview/`;
+};
+
+export const companyDocumentPreview = async (
+  companyPreviewRequest: CompanyPreviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyDocumentPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companyDocumentPreviewResponse>(getCompanyDocumentPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyPreviewRequest),
+  });
+};
+
 export type organizationExtraPolicyResponse200 = {
   data: PolicyResponse;
   status: 200;
@@ -10381,6 +11197,159 @@ export const organizationExtraPolicySave = async (
     method: "PUT",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(policyWriteRequest),
+  });
+};
+
+export type companyInviteResponse201 = {
+  data: CompanyUsers;
+  status: 201;
+};
+
+export type companyInviteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyInviteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyInviteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyInviteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyInviteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyInviteResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyInviteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyInviteResponseSuccess = companyInviteResponse201 & {
+  headers: Headers;
+};
+export type companyInviteResponseError = (
+  | companyInviteResponse400
+  | companyInviteResponse401
+  | companyInviteResponse403
+  | companyInviteResponse404
+  | companyInviteResponse409
+  | companyInviteResponse422
+  | companyInviteResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyInviteResponse = companyInviteResponseSuccess | companyInviteResponseError;
+
+export const getCompanyInviteUrl = () => {
+  return `/api/v1/organization/invitations/`;
+};
+
+export const companyInvite = async (
+  invitationWriteRequest: InvitationWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyInviteResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companyInviteResponse>(getCompanyInviteUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(invitationWriteRequest),
+  });
+};
+
+export type companyInvitationRevokeResponse200 = {
+  data: CompanyUsers;
+  status: 200;
+};
+
+export type companyInvitationRevokeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyInvitationRevokeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyInvitationRevokeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyInvitationRevokeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyInvitationRevokeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyInvitationRevokeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyInvitationRevokeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyInvitationRevokeResponseSuccess = companyInvitationRevokeResponse200 & {
+  headers: Headers;
+};
+export type companyInvitationRevokeResponseError = (
+  | companyInvitationRevokeResponse400
+  | companyInvitationRevokeResponse401
+  | companyInvitationRevokeResponse403
+  | companyInvitationRevokeResponse404
+  | companyInvitationRevokeResponse409
+  | companyInvitationRevokeResponse422
+  | companyInvitationRevokeResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyInvitationRevokeResponse =
+  companyInvitationRevokeResponseSuccess | companyInvitationRevokeResponseError;
+
+export const getCompanyInvitationRevokeUrl = (identity: string) => {
+  return `/api/v1/organization/invitations/${identity}/`;
+};
+
+export const companyInvitationRevoke = async (
+  identity: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyInvitationRevokeResponse> => {
+  return apiMutator<companyInvitationRevokeResponse>(getCompanyInvitationRevokeUrl(identity), {
+    ...options,
+    method: "DELETE",
   });
 };
 
@@ -10606,6 +11575,230 @@ export const mountingRuleSave = async (
     method: "PUT",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(ruleWriteRequest),
+  });
+};
+
+export type companyNumberingResponse200 = {
+  data: NumberingList;
+  status: 200;
+};
+
+export type companyNumberingResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyNumberingResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyNumberingResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyNumberingResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyNumberingResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyNumberingResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyNumberingResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyNumberingResponseSuccess = companyNumberingResponse200 & {
+  headers: Headers;
+};
+export type companyNumberingResponseError = (
+  | companyNumberingResponse400
+  | companyNumberingResponse401
+  | companyNumberingResponse403
+  | companyNumberingResponse404
+  | companyNumberingResponse409
+  | companyNumberingResponse422
+  | companyNumberingResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyNumberingResponse =
+  companyNumberingResponseSuccess | companyNumberingResponseError;
+
+export const getCompanyNumberingUrl = () => {
+  return `/api/v1/organization/numbering/`;
+};
+
+export const companyNumbering = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyNumberingResponse> => {
+  return apiMutator<companyNumberingResponse>(getCompanyNumberingUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type companyUsersResponse200 = {
+  data: CompanyUsers;
+  status: 200;
+};
+
+export type companyUsersResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyUsersResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyUsersResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyUsersResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyUsersResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyUsersResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyUsersResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyUsersResponseSuccess = companyUsersResponse200 & {
+  headers: Headers;
+};
+export type companyUsersResponseError = (
+  | companyUsersResponse400
+  | companyUsersResponse401
+  | companyUsersResponse403
+  | companyUsersResponse404
+  | companyUsersResponse409
+  | companyUsersResponse422
+  | companyUsersResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyUsersResponse = companyUsersResponseSuccess | companyUsersResponseError;
+
+export const getCompanyUsersUrl = () => {
+  return `/api/v1/organization/users/`;
+};
+
+export const companyUsers = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyUsersResponse> => {
+  return apiMutator<companyUsersResponse>(getCompanyUsersUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type companyUserUpdateResponse200 = {
+  data: CompanyUsers;
+  status: 200;
+};
+
+export type companyUserUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyUserUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyUserUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyUserUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyUserUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyUserUpdateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyUserUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyUserUpdateResponseSuccess = companyUserUpdateResponse200 & {
+  headers: Headers;
+};
+export type companyUserUpdateResponseError = (
+  | companyUserUpdateResponse400
+  | companyUserUpdateResponse401
+  | companyUserUpdateResponse403
+  | companyUserUpdateResponse404
+  | companyUserUpdateResponse409
+  | companyUserUpdateResponse422
+  | companyUserUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyUserUpdateResponse =
+  companyUserUpdateResponseSuccess | companyUserUpdateResponseError;
+
+export const getCompanyUserUpdateUrl = (identity: string) => {
+  return `/api/v1/organization/users/${identity}/`;
+};
+
+export const companyUserUpdate = async (
+  identity: string,
+  companyUserWriteRequest: CompanyUserWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyUserUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companyUserUpdateResponse>(getCompanyUserUpdateUrl(identity), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyUserWriteRequest),
   });
 };
 
