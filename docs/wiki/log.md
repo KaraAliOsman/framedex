@@ -1282,3 +1282,7 @@ de duplicar. La limpieza exige rechazo 409/23503 del borrado con historial
 retenido y elimina solo su usuario; el stack aislado destruye sus fixtures
 al terminar. No se altera la retención ni se reduce cobertura.
 CI e integración todavía pendientes de registrarse. Véase P21-ACEPTACION.
+
+
+P21 PR https://github.com/KaraAliOsman/framedex/pull/146, CI 4/4 sobre 50a00fe9e509338cdee706459c17395119e036a8, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38110211964, squash 412029ac1ea688a0f5bf1d560ba9b2e99871fae6, 2026-10-11.
+R1–R20 PASA. Los procesos propios y el stack del gate están detenidos; el fixture persistente se conserva. CodeRabbit, Devin Review y Copilot omitieron su revisión por configuración o cuotas y no se atribuyen como revisión completa.

@@ -154,3 +154,10 @@ restantes conservan su propio encargo. No se conecta un servicio productivo
 ni se emite una nueva cotización en esta aceptación. La integración de precio,
 documentos, importación y producción conserva sus contratos sellados y el
 clic humano. Activación: [ACTIVACION.md](../operations/ACTIVACION.md).
+
+
+## Integración verificada
+
+PR [#146](https://github.com/KaraAliOsman/framedex/pull/146), squash `412029ac1ea688a0f5bf1d560ba9b2e99871fae6` en `integracion/v1`.
+Los cuatro checks de [CI](https://github.com/KaraAliOsman/framedex/actions/runs/38110211964) pasan sobre `50a00fe9e509338cdee706459c17395119e036a8`.
+Las revisiones automáticas externas fueron omitidas por sus proveedores; no se cuentan como revisión completa.

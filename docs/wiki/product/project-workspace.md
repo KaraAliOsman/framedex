@@ -1,9 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-10
+updated: 2026-10-11
 volatility: medium
+verified_ref: 412029ac1ea688a0f5bf1d560ba9b2e99871fae6
 sources:
+  - P21 PR https://github.com/KaraAliOsman/framedex/pull/146, CI 4/4 sobre 50a00fe9e509338cdee706459c17395119e036a8, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38110211964, squash 412029ac1ea688a0f5bf1d560ba9b2e99871fae6, 2026-10-11.
   - docs/cola/prompts/P21-proyecto-hub.md
   - docs/redesign/P21-ACEPTACION.md
   - backend/tests/integration/test_project_workspace.py

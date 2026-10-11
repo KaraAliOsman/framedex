@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: e309768b950539177f7f651d3d59237585e65baf
+verified_ref: 412029ac1ea688a0f5bf1d560ba9b2e99871fae6
 sources:
+  - P21 PR https://github.com/KaraAliOsman/framedex/pull/146, CI 4/4 sobre 50a00fe9e509338cdee706459c17395119e036a8, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38110211964, squash 412029ac1ea688a0f5bf1d560ba9b2e99871fae6, 2026-10-11.
   - P21 cierre local e309768b950539177f7f651d3d59237585e65baf, Database Gate completo y lint/tipos finales, 2026-10-11
   - P21 implementación 38bac104c8774dc0225fccec74e6089872701cb1, navegador y PostgreSQL focal, 2026-10-10
   - docs/redesign/P21-ACEPTACION.md
@@ -93,8 +94,9 @@ visible en 1.781,68–1.975,32 ms. Las 32 vistas oficiales, 31 interacciones y
 cinco estados pasan; PNG comprobados sin pérdida. R1–R20 PASA en proyecto.
 Las pruebas focales pasan 33 PostgreSQL y 36 frontend. Los gates completos
 pasan lint/tipos, 886 motor (+2 xfail), goldens byte, 1.476 backend,
-988 frontend y build. Database Gate y CI se registran al cerrar P21;
-aún no se acredita integración.
+989 frontend y build. Database Gate completo pasa 1.325 pgTAP, 502 integraciones,
+19 E2E y diez upgrades PG16. PR #146 integrado con cuatro checks verdes sobre
+`50a00fe9e509338cdee706459c17395119e036a8`; el squash es `412029ac1ea688a0f5bf1d560ba9b2e99871fae6`.
 
 Uw conserva Sin dato y el catálogo conserva DEMO. Véanse
 `docs/wiki/product/project-workspace.md` y `docs/redesign/P21-ACEPTACION.md`.
