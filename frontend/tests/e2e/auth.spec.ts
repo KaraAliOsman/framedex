@@ -144,7 +144,7 @@ async function openProjectPrices(page: Page): Promise<void> {
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === "/api/v1/pricing/workspace/",
   );
-  await page.getByRole("link", { name: "Cotizar proyecto", exact: true }).click();
+  await page.getByRole("button", { name: "Cotizar proyecto", exact: true }).click();
   const projected = await projection;
   expect(projected.status(), await projected.text()).toBe(200);
   expect((await projected.json()).workspace.positions.length).toBeGreaterThan(0);
@@ -535,9 +535,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: /Volver al proyecto/ }).click();
-  // React Query may serve the pre-save project from its fresh cache — the page
-  // would still show "Añadir vano" instead of the quote next-action. Reload to
-  // force the backend read that reflects the position just saved.
+  // Reload the cached project so the next action and price workspace use the
+  // position just persisted, rather than the collection before the save.
   await page.reload();
   await openProjectPrices(page);
   await expect(page.getByLabel("Proyecto", { exact: true })).toHaveCount(0);
@@ -655,9 +654,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: /Volver al proyecto/ }).click();
-  // React Query may serve the pre-save project from its fresh cache — the page
-  // would still show "Añadir vano" instead of the quote next-action. Reload to
-  // force the backend read that reflects the position just saved.
+  // Reload the cached project so the next action and price workspace use the
+  // position just persisted, rather than the collection before the save.
   await page.reload();
   await openProjectPrices(page);
   await prepareProjectPrice(page, "2026-09-19", "Aplicar cotización de la revisión B");
@@ -787,9 +785,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await expect(page.locator(".canvas-sheet .member-mullion")).toHaveCount(1);
   await expect(page.locator(".canvas-sheet .module-glass")).toHaveCount(2);
   await page.getByRole("link", { name: /Volver al proyecto/ }).click();
-  // React Query may serve the pre-save project from its fresh cache — the page
-  // would still show "Añadir vano" instead of the quote next-action. Reload to
-  // force the backend read that reflects the position just saved.
+  // Reload the cached project so the next action and price workspace use the
+  // position just persisted, rather than the collection before the save.
   await page.reload();
   await openProjectPrices(page);
   await prepareProjectPrice(page, "2026-09-19", "Precio de la fachada compuesta");
