@@ -331,7 +331,16 @@ export const test = base.extend<{
     } finally {
       try {
         if (organizationCreationAttempted) {
-          await admin(`/rest/v1/tenancy_organizations?id=eq.${organizationId}`, "DELETE");
+          const history = await readRows(
+            "project_edit_operations",
+            `org_id=eq.${organizationId}&select=id`,
+          );
+          // Applied edit history deliberately prevents tenant deletion. Keep
+          // that synthetic fixture until the isolated database gate drops its
+          // stack; never delete or disable immutable audit to clean up a test.
+          if (history.length === 0) {
+            await admin(`/rest/v1/tenancy_organizations?id=eq.${organizationId}`, "DELETE");
+          }
         }
       } finally {
         if (userId) {

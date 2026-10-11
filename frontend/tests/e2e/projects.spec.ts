@@ -357,18 +357,34 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   expect(
     await manual.readRows("project_positions", `project_id=eq.${project.id}&select=id`),
   ).toHaveLength(1);
-  const applied = await responseTo<{ project: ProjectResponse }>(
-    page,
-    "POST",
-    `${projectApi}operations/apply/`,
-    200,
-    () => page.getByRole("button", { name: "Aplicar cambios revisados", exact: true }).click(),
+  const applied = await responseTo<{
+    operation_id: string;
+    state: string;
+    project: ProjectResponse;
+  }>(page, "POST", `${projectApi}operations/apply/`, 200, () =>
+    page.getByRole("button", { name: "Aplicar cambios revisados", exact: true }).click(),
   );
   const copied = applied.project.positions!.find((item) => item.id !== saved.id)!;
   expect(copied.id).not.toBe(saved.id);
   expect(copied.design).toEqual(saved.design);
   expect(copied.bom).toEqual(saved.bom);
   expect(copied.measurements).toBeNull();
+  expect(applied.state).toBe("APPLIED");
+  const history = await manual.readRows(
+    "project_edit_operations",
+    `id=eq.${applied.operation_id}&org_id=eq.${manual.organizationId}` +
+      "&select=id,org_id,project_id,state,request,before_state,after_state",
+  );
+  expect(history).toHaveLength(1);
+  expect(history[0]).toMatchObject({
+    id: applied.operation_id,
+    org_id: manual.organizationId,
+    project_id: project.id,
+    state: "APPLIED",
+    request: [{ op: "duplicate_positions", position_ids: [saved.id] }],
+  });
+  expect((history[0]!.before_state as { positions: unknown[] }).positions).toHaveLength(1);
+  expect((history[0]!.after_state as { positions: unknown[] }).positions).toHaveLength(2);
   const copyRow = page
     .getByRole("listbox", { name: "Posiciones" })
     .getByRole("option")
@@ -399,7 +415,13 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
   const source = await responseTo<ProjectResponse>(page, "GET", projectApi, 200, freshRead);
   expect(source.position_count).toBe(2);
-  expect(source.positions!.find((item) => item.id === saved.id)).toEqual(saved);
+  expect(source.positions!.find((item) => item.id === saved.id)).toEqual({
+    ...saved,
+    // Project collection metadata is separate from the persisted design/BOM.
+    system_name: manual.systemName,
+    system_demo: true,
+    commercial: null,
+  });
 
   const clone = await responseTo<ProjectResponse>(page, "POST", `${projectApi}clone/`, 201, () =>
     page
