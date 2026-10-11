@@ -162,6 +162,8 @@ test("selecting an alternative resets consent and submits its sealed identity", 
     ),
   );
   expect(await screen.findByText("Propuesta aprobada")).toBeVisible();
+  expect(screen.getByText(/Para Ana/)).toHaveTextContent("Oferta · Revisión B");
+  expect(screen.getByRole("heading", { name: "Solución elegida · Revisión A" })).toBeVisible();
   expect(screen.queryByRole("button", { name: "Rechazar propuesta" })).not.toBeInTheDocument();
 });
 

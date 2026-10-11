@@ -1,0 +1,48 @@
+{
+  "implementation_ref": "08947c855b2339fa830058883cfa9c0d5a685c8c",
+  "final_presentation": "Offer B and selected solution A explicitly distinguished; 40 state views and 40 official views verified.",
+  "source_hash_format": "SHA-256; line endings normalized to LF",
+  "source_sha256": {
+    "engine/src/dekopen_engine/quotation.py": "c2924bb47d79ca4b9a7961b5bf5029864bb5e690ed910dbfcbbdcf56256e7588",
+    "backend/documents/agreements.py": "ae55052e1c3451ec7ee7ac57d58ec3ee2429d14050049f0fb1303452173db7ed",
+    "backend/portal/proposal_service.py": "1bcdb78c5cfdc176aa5be30e816570d337981c838cee19c5a9282ce5bcf3cd70",
+    "backend/portal/payments.py": "a5a2ecb2290b8d3858d256080f8c4d98c8c47fe765c3d148e063ff83d4efc370",
+    "backend/projects/accepted_quote.py": "3ecb1aeaec3055bd4601ba5002deb0eaf41fc3aac7f88ec84e1c9e4dbae1677c",
+    "backend/projects/invoices.py": "5ec8e3c991eae1ecb5397bf681a524697b6396237df20feea800d89470566591",
+    "backend/openapi.yaml": "f8ccc2da0a545e6069f81a51f2329521a73e5a7f625ffc95830a8a682e371bab",
+    "supabase/migrations/20270123000000_portal_decisions.sql": "d375f89732bb2f7d63c49e50d1b22ffb3b656fa4c2a16c55b0546f8fe3126568",
+    "supabase/tests/database/242_portal_decisions.test.sql": "be941ccd75fc1c844f906ed8919a531059c835c4c5e4f321fbd06f9bd983fce2",
+    "frontend/src/features/portal/PortalQuotePage.tsx": "818701b0c0321124c9f470fd10328a1f47a3760eba771625c2cf43689a302564",
+    "frontend/src/features/portal/ProposalDecision.test.tsx": "a663ad28d4d4ce9a961a681c91cc15b92ea96b5fefb7042a4bc8d44f13e6f31f"
+  },
+  "local_code_checks": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "test": "PASS",
+    "build": "PASS",
+    "engine_passed": 899,
+    "engine_existing_xfailed": 2,
+    "backend_passed": 1493,
+    "frontend_passed": 1002,
+    "frontend_files": 91,
+    "golden_byte_check": "PASS"
+  },
+  "local_database_gate": {
+    "result": "PASS",
+    "pgtap": 1350,
+    "pgtap_files": 92,
+    "integrations": 512,
+    "e2e": 19,
+    "postgres16_populated_upgrades": "PASS"
+  },
+  "evidence": {
+    "lighthouse": "lighthouse.json",
+    "states": "despues/estados/matriz.json",
+    "official_capture": "ux/report.json"
+  },
+  "limits": [
+    "Catalog and acceptance prices are DEMO.",
+    "Simulated payments do not move money.",
+    "Flow production, hosting and sender domain require external activation."
+  ]
+}

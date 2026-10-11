@@ -322,5 +322,41 @@
     "errors": [],
     "serious": [],
     "payment_button": 0
+  },
+  {
+    "state": "sucesora",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "sucesora",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "sucesora",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "sucesora",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
   }
 ]

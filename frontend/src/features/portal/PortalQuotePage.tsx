@@ -593,17 +593,21 @@ export function PortalQuotePage(): JSX.Element {
             <p className="portal-kicker">Cotización · {quote.project_code}</p>
             <h1>{quote.project_name || "Su obra"}</h1>
             <p>
-              Para {quote.client_name || "cliente sin identificar"} ·{" "}
+              Para {quote.client_name || "cliente sin identificar"} · Oferta ·{" "}
               {formatRevision(quote.revision_code)}
             </p>
             <p>
-              Emitida el <time dateTime={quote.emitted_at}>{formatDate(quote.emitted_at)}</time>
+              Oferta emitida el{" "}
+              <time dateTime={quote.emitted_at}>{formatDate(quote.emitted_at)}</time>
             </p>
           </div>
         </header>
         <section className="portal-summary" aria-label="Resumen de la propuesta">
           <div>
-            <h2>{formatRevision(option.revision_code)}</h2>
+            <h2>
+              {option.revision_code !== quote.revision_code ? "Solución elegida · " : ""}
+              {formatRevision(option.revision_code)}
+            </h2>
             <p>
               {quote.valid_until ? (
                 <>

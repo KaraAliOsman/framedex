@@ -54,8 +54,8 @@ se conservaron. Ninguna tarifa de aceptación se convirtió en precio productivo
 - [Antes](captures/portal-propuesta/antes/): vigente y reemplazada, escritorio
   y celular, ambos temas.
 - [Matriz de estados](captures/portal-propuesta/despues/estados/matriz.json):
-  36 vistas de vigente, aprobada, cambios, rechazada, revocada, expirada,
-  reemplazada, no encontrada y USD a 1440/390, claro/oscuro; cero desbordes,
+  40 vistas de vigente, aprobada, cambios, rechazada, revocada, expirada,
+  reemplazada, sucesora permitida, no encontrada y USD a 1440/390, claro/oscuro; cero desbordes,
   errores de ejecución o hallazgos axe serious/critical.
 - [Aprobada final](captures/portal-propuesta/despues/aprobada/matriz.json):
   los cuatro tamaños del contrato y ambos temas, después del pago.
@@ -108,6 +108,11 @@ Segunda ronda:
    conserva autoridad y política de caché. Los controles de formulario declaran
    su efecto de envío, y se borran tres aliases CSS que quedaron sin uso.
 
+La inspección final distingue «Oferta · Revisión B» de «Solución elegida ·
+Revisión A». La aceptación y el importe conservan A; la identidad del enlace
+y su fecha de emisión conservan B. Las 40 vistas y los detalles se repiten
+con ese texto, sin confundir el documento recibido con la elección acordada.
+
 Firma F11: una oferta reemplazada explica su estado y, con permiso sellado,
 lleva a la vigente sin habilitar pago. La idea del §8 funciona con comparación
 de revisiones reales, elección aceptada y cambio referido a la posición exacta.
@@ -142,8 +147,10 @@ de revisiones reales, elección aceptada y cambio referido a la posición exacta
 La integración registra los cuatro checks y el SHA del squash en `ESTADO.md`.
 Los cuatro gates de código locales pasan: 899 pruebas de motor y dos xfails
 preexistentes, golden byte check, 1.493 de backend y 1.002 de frontend, junto
-a lint, tipos y build. El gate completo de base de datos registra sus resultados
-en la evidencia de integración antes del merge.
+a lint, tipos y build. El gate completo de base de datos pasa con **1.350 pgTAP
+en 92 archivos, 512 integraciones y 19 E2E**, migraciones limpias y upgrades
+poblados en PostgreSQL 16. La corrección final de etiquetas repite los cuatro
+checks de código y la matriz de navegador; conserva el código SQL verificado.
 Las pruebas de motor incluyen golden CLP/USD revisado, cantidad/redondeo,
 servicios y autoridad inconsistente. Las pruebas de backend, frontend y RLS
 cubren contrato, consentimiento, aislamiento, carrera, opciones y retorno.
