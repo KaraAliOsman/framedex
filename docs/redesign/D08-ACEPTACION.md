@@ -1,6 +1,6 @@
 # D08 · Tipologías avanzadas
 
-Verificado sobre código `13e03a5f`, rama `codex/D08-tipologias-avanzadas`, con
+Verificado sobre código `9213655c`, rama `codex/D08-tipologias-avanzadas`, con
 Supabase/Auth propios, Django, worker y Chromium. La evidencia se conserva en
 [tipologías avanzadas](captures/tipologias-avanzadas/). CI y squash se registran
 al integrar; la comprobación local completa terminó con salida 0.
@@ -147,3 +147,9 @@ en español cuando falta completarlo. La planta limita el paso al vano plegable.
 Cuatro regresiones nuevas y seis pruebas focales pasan; los gates completos
 posteriores conservan motor/backend y suman 1076 pruebas frontend. Mypy sin
 caché verifica las 128 fuentes; el manifiesto v7 declara su retorno tipado.
+En Chromium pasan seis vistas de escritura (fracción larga tecla a tecla,
+signo, coma y borrador incompleto) sin publicar ninguna autoridad. El componente
+común con tres vanos conserva el recorrido HST y el polígono de pivote cuando
+se abre el paso. [Revisión](captures/tipologias-avanzadas/revision/validacion.json)
+conserva los resultados y las capturas con sus estilos reales. Catálogo repite
+ocho vistas `ux:capture` sin hallazgos. La evidencia total contiene 199 PNG.
