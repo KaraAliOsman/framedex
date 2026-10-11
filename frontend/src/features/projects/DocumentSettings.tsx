@@ -249,7 +249,7 @@ export function DocumentSettings({
                   <input
                     type="number"
                     min={1}
-                    aria-label="Vigencia comercial para cotizaciones nuevas (días)"
+                    aria-label="Alertar retazos a partir de (días)"
                     max={3650}
                     required
                     value={value.remnant_age_days ?? 90}
@@ -285,6 +285,7 @@ export function DocumentSettings({
                 <label>
                   Texto legal del pie
                   <textarea
+                    aria-label="Texto legal del pie"
                     maxLength={240}
                     value={value.legal_footer}
                     onChange={(event) => setValue({ ...value, legal_footer: event.target.value })}
@@ -311,6 +312,7 @@ export function DocumentSettings({
                 <label>
                   Vigencia comercial para cotizaciones nuevas (días)
                   <input
+                    aria-label="Vigencia comercial para cotizaciones nuevas (días)"
                     type="number"
                     min={1}
                     max={365}

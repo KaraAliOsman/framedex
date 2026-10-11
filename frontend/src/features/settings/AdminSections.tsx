@@ -20,6 +20,7 @@ import { actionErrorDetail } from "../errors";
 import { formatDate } from "../money";
 import {
   Button,
+  BlockedState,
   DeniedState,
   EmptyState,
   ErrorState,
@@ -120,9 +121,9 @@ export function CompanyCard({
                 );
                 if (r.status !== 200) throw new ApiError(r.status, r.data);
                 setDraft(r.data);
-                setMessage("Empresa guardada para nuevos trabajos.");
-                await auth.refreshContext();
                 onSaved?.(r.data, draft.updated_at);
+                await auth.refreshContext();
+                setMessage("Empresa guardada para nuevos trabajos.");
               } catch (error) {
                 setMessage(
                   actionErrorDetail(
@@ -618,7 +619,9 @@ export function DocumentPreview({
               aria-label="Obra"
               value={project}
               onChange={(event) => {
-                setProject(event.target.value);
+                const selected = event.target.value;
+                if (selected === project) return;
+                setProject(selected);
                 setVersion("");
               }}
             >
@@ -648,9 +651,13 @@ export function DocumentPreview({
               </select>
             </label>
           ) : (
-            <EmptyState
-              title="Sin revisión emitida"
-              body="Esta obra todavía no tiene un acuerdo sellado. Emite su cotización o elige otra obra."
+            <BlockedState
+              reason="Esta obra todavía no tiene una revisión emitida. El dueño o estimador debe revisar y emitir su cotización, o elegir otra obra."
+              action={
+                <Link className="ui-button" to={`/projects/${project}?section=documents`}>
+                  Preparar cotización de esta obra
+                </Link>
+              }
             />
           )}
         </>
