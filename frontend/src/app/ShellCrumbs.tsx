@@ -35,6 +35,8 @@ export function crumbsFor(
 
   if (section === "dashboard") return [{ label: t("crumb.dashboard") }];
   if (section === "production") return [{ label: t("crumb.production") }];
+  if (section === "dispatch") return [{ label: t("nav.dispatch") }];
+  if (section === "field") return [{ label: t("nav.field") }];
   if (section === "purchasing") return [{ label: t("crumb.purchasing") }];
   if (section === "inventory") return [{ label: t("nav.inventory") }];
   if (section === "quotes") return [{ label: t("nav.quotes") }];

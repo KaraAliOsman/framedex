@@ -157,6 +157,13 @@ import type {
   EvidenceRow,
   ExtrasPreviewRequestRequest,
   ExtrasPreviewResponse,
+  FieldAssetAccess,
+  FieldCommandRequest,
+  FieldReceipt,
+  FieldReviewRequest,
+  FieldReviewResponse,
+  FieldScheduleRequest,
+  FieldWorkspace,
   FinishPreviewRequestRequest,
   FinishPreviewResponse,
   FiscalSimulation,
@@ -14462,6 +14469,393 @@ export const productionCncWorkspace = async (
   return apiMutator<productionCncWorkspaceResponse>(getProductionCncWorkspaceUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export type fieldWorkspaceResponse200 = {
+  data: FieldWorkspace;
+  status: 200;
+};
+
+export type fieldWorkspaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldWorkspaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldWorkspaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldWorkspaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldWorkspaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldWorkspaceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldWorkspaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldWorkspaceResponseSuccess = fieldWorkspaceResponse200 & {
+  headers: Headers;
+};
+export type fieldWorkspaceResponseError = (
+  | fieldWorkspaceResponse400
+  | fieldWorkspaceResponse401
+  | fieldWorkspaceResponse403
+  | fieldWorkspaceResponse404
+  | fieldWorkspaceResponse409
+  | fieldWorkspaceResponse422
+  | fieldWorkspaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldWorkspaceResponse = fieldWorkspaceResponseSuccess | fieldWorkspaceResponseError;
+
+export const getFieldWorkspaceUrl = () => {
+  return `/api/v1/production/field/`;
+};
+
+export const fieldWorkspace = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldWorkspaceResponse> => {
+  return apiMutator<fieldWorkspaceResponse>(getFieldWorkspaceUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type fieldAssetAccessResponse200 = {
+  data: FieldAssetAccess;
+  status: 200;
+};
+
+export type fieldAssetAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldAssetAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldAssetAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldAssetAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldAssetAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldAssetAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldAssetAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldAssetAccessResponseSuccess = fieldAssetAccessResponse200 & {
+  headers: Headers;
+};
+export type fieldAssetAccessResponseError = (
+  | fieldAssetAccessResponse400
+  | fieldAssetAccessResponse401
+  | fieldAssetAccessResponse403
+  | fieldAssetAccessResponse404
+  | fieldAssetAccessResponse409
+  | fieldAssetAccessResponse422
+  | fieldAssetAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldAssetAccessResponse =
+  fieldAssetAccessResponseSuccess | fieldAssetAccessResponseError;
+
+export const getFieldAssetAccessUrl = (assetId: string) => {
+  return `/api/v1/production/field/assets/${assetId}/access/`;
+};
+
+export const fieldAssetAccess = async (
+  assetId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldAssetAccessResponse> => {
+  return apiMutator<fieldAssetAccessResponse>(getFieldAssetAccessUrl(assetId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type fieldScheduleResponse201 = {
+  data: FieldReceipt;
+  status: 201;
+};
+
+export type fieldScheduleResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldScheduleResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldScheduleResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldScheduleResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldScheduleResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldScheduleResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldScheduleResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldScheduleResponseSuccess = fieldScheduleResponse201 & {
+  headers: Headers;
+};
+export type fieldScheduleResponseError = (
+  | fieldScheduleResponse400
+  | fieldScheduleResponse401
+  | fieldScheduleResponse403
+  | fieldScheduleResponse404
+  | fieldScheduleResponse409
+  | fieldScheduleResponse422
+  | fieldScheduleResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldScheduleResponse = fieldScheduleResponseSuccess | fieldScheduleResponseError;
+
+export const getFieldScheduleUrl = () => {
+  return `/api/v1/production/field/schedule/`;
+};
+
+export const fieldSchedule = async (
+  fieldScheduleRequest: FieldScheduleRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldScheduleResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<fieldScheduleResponse>(getFieldScheduleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(fieldScheduleRequest),
+  });
+};
+
+export type fieldCommandResponse200 = {
+  data: FieldReceipt;
+  status: 200;
+};
+
+export type fieldCommandResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldCommandResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldCommandResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldCommandResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldCommandResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldCommandResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldCommandResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldCommandResponseSuccess = fieldCommandResponse200 & {
+  headers: Headers;
+};
+export type fieldCommandResponseError = (
+  | fieldCommandResponse400
+  | fieldCommandResponse401
+  | fieldCommandResponse403
+  | fieldCommandResponse404
+  | fieldCommandResponse409
+  | fieldCommandResponse422
+  | fieldCommandResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldCommandResponse = fieldCommandResponseSuccess | fieldCommandResponseError;
+
+export const getFieldCommandUrl = (visitId: string) => {
+  return `/api/v1/production/field/visits/${visitId}/commands/`;
+};
+
+export const fieldCommand = async (
+  visitId: string,
+  fieldCommandRequest: FieldCommandRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldCommandResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<fieldCommandResponse>(getFieldCommandUrl(visitId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(fieldCommandRequest),
+  });
+};
+
+export type fieldReviewResponse200 = {
+  data: FieldReviewResponse;
+  status: 200;
+};
+
+export type fieldReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldReviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldReviewResponseSuccess = fieldReviewResponse200 & {
+  headers: Headers;
+};
+export type fieldReviewResponseError = (
+  | fieldReviewResponse400
+  | fieldReviewResponse401
+  | fieldReviewResponse403
+  | fieldReviewResponse404
+  | fieldReviewResponse409
+  | fieldReviewResponse422
+  | fieldReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldReviewResponse = fieldReviewResponseSuccess | fieldReviewResponseError;
+
+export const getFieldReviewUrl = (visitId: string) => {
+  return `/api/v1/production/field/visits/${visitId}/review/`;
+};
+
+export const fieldReview = async (
+  visitId: string,
+  fieldReviewRequest: FieldReviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldReviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<fieldReviewResponse>(getFieldReviewUrl(visitId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(fieldReviewRequest),
   });
 };
 

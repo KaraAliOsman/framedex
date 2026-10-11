@@ -1,6 +1,7 @@
 from django.urls import path
 from production.glass_orders import ProductionGlassOrderView
 from production.hardware import VersionHardwarePickingView
+from production.field_views import FieldWorkspaceView, FieldScheduleView, FieldCommandView, FieldReviewView, FieldAssetAccessView
 
 from production.views import (
     OperatorStationView,
@@ -54,6 +55,11 @@ from production.views import (
 )
 
 urlpatterns = [
+    path('field/', FieldWorkspaceView.as_view()),
+    path('field/schedule/', FieldScheduleView.as_view()),
+    path('field/visits/<uuid:visit_id>/commands/', FieldCommandView.as_view()),
+    path('field/visits/<uuid:visit_id>/review/', FieldReviewView.as_view()),
+    path('field/assets/<uuid:asset_id>/access/', FieldAssetAccessView.as_view()),
     path("orders/<uuid:order_id>/cnc/preview/", CncPreviewView.as_view(), name="production-order-cnc-preview"),
     path("operator-station/", OperatorStationView.as_view(), name="production-operator-station"),
     path("orders/<uuid:order_id>/qc-remake/", ProductionQcRemakeView.as_view(), name="production-qc-remake"),

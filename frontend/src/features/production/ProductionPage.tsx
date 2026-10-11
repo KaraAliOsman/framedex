@@ -2,7 +2,7 @@ import { StatusBadge } from "../../ui/StatusBadge";
 import { ValidatedForm } from "../../ui/FormValidation";
 import { Wordmark } from "../../brand/Brand";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import {
   productionQcRemake,
@@ -24,7 +24,6 @@ import {
   productionOrderDispatchNoteDteEnvio,
   productionOrderDispatchNoteDteEnvioSend,
   productionOrderDxfExport,
-  productionOrderInstall,
   productionOrderLabels,
   productionOrderOptimize,
   productionOrderOptimizeCompare,
@@ -1059,10 +1058,6 @@ function ProductionOfficePage(): JSX.Element {
     void action(productionOrderDispatchNoteVoid(orderId, { reason }), orderId);
   }
 
-  function install(orderId: string): void {
-    void action(productionOrderInstall(orderId, { note: note || undefined }), orderId);
-  }
-
   function openConfirmForm(): void {
     setConfirmName(delivery?.contact_name ?? "");
     setConfirmRut("");
@@ -1503,14 +1498,9 @@ function ProductionOfficePage(): JSX.Element {
                       {canField &&
                       detail.status === "DISPATCHED" &&
                       (!delivery || delivery.status === "DELIVERED") ? (
-                        <button
-                          type="button"
-                          className="production-dispatch production-install"
-                          disabled={busy}
-                          onClick={() => install(detail.id)}
-                        >
-                          {t("production.installButton")}
-                        </button>
+                        <Link to="/field" className="production-dispatch production-install">
+                          Abrir instalación con foto y firma
+                        </Link>
                       ) : null}
                       {(detail.dispatch_notes?.length
                         ? detail.dispatch_notes

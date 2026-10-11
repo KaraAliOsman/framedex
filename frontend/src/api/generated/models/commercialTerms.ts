@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CommercialTermsWarrantyStart } from "./commercialTermsWarrantyStart";
 import type { PaymentMilestone } from "./paymentMilestone";
 
 export interface CommercialTerms {
@@ -17,6 +18,14 @@ export interface CommercialTerms {
   exclusions?: string;
   /** @maxLength 4000 */
   warranty?: string;
+  /**
+   * @minimum 1
+   * @maximum 36500
+   * @nullable
+   */
+  warranty_days?: number | null;
+  warranty_start?:
+    (typeof CommercialTermsWarrantyStart)[keyof typeof CommercialTermsWarrantyStart] | null;
   /** @maxLength 1000 */
   jurisdiction?: string;
 }

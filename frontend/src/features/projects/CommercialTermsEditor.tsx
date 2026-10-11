@@ -142,6 +142,43 @@ export function CommercialTermsEditor({
             ? "Completa plazo, instalación, exclusiones y garantía antes de revisar el PDF. La jurisdicción es opcional."
             : "Una condición vacía se omite del documento. Declara los plazos y alcances acordados, sin valores supuestos."}
         </p>
+        <label>
+          Plazo de garantía declarado · días
+          <input
+            type="number"
+            min={1}
+            max={36500}
+            value={value.warranty_days ?? ""}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                warranty_days: event.target.value ? Number(event.target.value) : null,
+                warranty_start: event.target.value ? value.warranty_start : null,
+              })
+            }
+          />
+        </label>
+        <label>
+          La garantía comienza con
+          <select
+            value={value.warranty_start ?? ""}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                warranty_start: (event.target.value || null) as CommercialTerms["warranty_start"],
+              })
+            }
+          >
+            <option value="">Sin declaración · no proyectar vencimiento</option>
+            <option value="APPROVAL">Aprobación del cliente</option>
+            <option value="DELIVERY">Entrega firmada</option>
+            <option value="INSTALLATION">Recepción de instalación</option>
+          </select>
+        </label>
+        <p>
+          Declara juntos plazo e inicio. Quedarán sellados en esta revisión; las revisiones
+          anteriores conservan sus condiciones.
+        </p>
       </details>
     </fieldset>
   );

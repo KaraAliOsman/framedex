@@ -23,7 +23,14 @@ class CommercialTermsSerializer(StrictSerializer):
     installation_text = serializers.CharField(max_length=1000, allow_blank=True, required=False)
     exclusions = serializers.CharField(max_length=4000, allow_blank=True, required=False)
     warranty = serializers.CharField(max_length=4000, allow_blank=True, required=False)
+    warranty_days = serializers.IntegerField(min_value=1, max_value=36500, required=False, allow_null=True)
+    warranty_start = serializers.ChoiceField(choices=("APPROVAL", "DELIVERY", "INSTALLATION"), required=False, allow_null=True)
     jurisdiction = serializers.CharField(max_length=1000, allow_blank=True, required=False)
+
+    def validate(self, value):
+        if bool(value.get("warranty_days")) != bool(value.get("warranty_start")):
+            raise serializers.ValidationError("Declara juntos el plazo de garantía y el hecho que lo inicia.")
+        return value
 
     def validate_payment_schedule(self, value):
         if len(value) > 12:

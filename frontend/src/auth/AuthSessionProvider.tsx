@@ -15,6 +15,7 @@ import { ApiError, configureApiAuthContext } from "../api/apiMutator";
 import { authMe } from "../api/generated/dekopen";
 import type { AuthMeResponse, Membership } from "../api/generated/models";
 import { useCanvasStore } from "../features/canvas/canvasStore";
+import { clearActor, clearScope } from "../features/field/outbox";
 import { t } from "../i18n/es-CL";
 import { telemetry } from "../telemetry/telemetry";
 import { supabase } from "./supabaseClient";
@@ -35,6 +36,7 @@ export type AuthSessionContextValue = {
   me: AuthMeResponse | null;
   memberships: Membership[];
   error: string | null;
+  networkUnavailable?: boolean;
   requestMagicLink(email: string): Promise<void>;
   selectOrganization(organizationId: string): Promise<void>;
   refreshContext(): Promise<void>;
@@ -77,6 +79,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
   const [me, setMe] = useState<AuthMeResponse | null>(null);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [networkUnavailable, setNetworkUnavailable] = useState(false);
   const sessionRef = useRef<Session | null>(null);
   const organizationRef = useRef<string | null>(null);
   const requestGeneration = useRef(0);
@@ -149,23 +152,38 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
         }
         const active = response.data.active_organization;
         if (active !== null) {
+          const outgoing = canvasIdentity.current;
+          if (
+            outgoing?.userId === current.user.id &&
+            outgoing.organizationId &&
+            outgoing.organizationId !== active.id
+          ) {
+            await clearScope({ actor: current.user.id, org: outgoing.organizationId });
+            if (!isCurrent()) return;
+          }
           transitionCanvasIdentity(current.user.id, active.id);
           organizationRef.current = active.id;
           window.localStorage.setItem(organizationStorageKey(current.user.id), active.id);
           telemetry.organization(active.id);
         }
         setMe(response.data);
+        setNetworkUnavailable(false);
         setMemberships(response.data.memberships);
         setStatus("ready");
         return;
       } catch (caught) {
         if (!isCurrent()) return;
         const code = caught instanceof ApiError ? errorCode(caught.payload) : null;
+        setNetworkUnavailable(
+          caught instanceof TypeError || (caught instanceof ApiError && caught.status >= 500),
+        );
         if (
           (code === "organization_access_denied" || code === "invalid_organization_id") &&
           organizationRef.current !== null &&
           attempt === 0
         ) {
+          await clearScope({ actor: current.user.id, org: organizationRef.current });
+          if (!isCurrent()) return;
           window.localStorage.removeItem(organizationStorageKey(current.user.id));
           organizationRef.current = null;
           continue;
@@ -216,9 +234,12 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
       if (!active) return;
       ++requestGeneration.current;
       transitionCanvasIdentity(nextSession?.user.id ?? null, null);
+      const previousActor = sessionRef.current?.user.id ?? meRef.current?.user.id;
+      if (previousActor && previousActor !== nextSession?.user.id) void clearActor(previousActor);
       sessionRef.current = nextSession;
       setSession(nextSession);
       if (nextSession === null) {
+        setNetworkUnavailable(false);
         organizationRef.current = null;
         setMe(null);
         setMemberships([]);
@@ -303,6 +324,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
       me,
       memberships,
       error,
+      networkUnavailable,
       async requestMagicLink(email: string) {
         if (supabase === null) {
           throw new Error("Supabase browser configuration is missing");
@@ -324,7 +346,28 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
         // stale_organization the moment the context flips — cancel them so
         // their rejections never reach a rendered error state.
         void queryClient.cancelQueries();
+        const departing = organizationRef.current;
+        const selectionGeneration = ++requestGeneration.current;
         transitionCanvasIdentity(current.user.id, organizationId);
+        if (departing !== null && departing !== organizationId) {
+          setStatus("resolving");
+          setMe(null);
+          meRef.current = null;
+          try {
+            await clearScope({ actor: current.user.id, org: departing });
+          } catch {
+            setError(
+              "No se pudo borrar la copia privada de terreno. Reintenta cambiar de organización.",
+            );
+            setStatus("error");
+            return;
+          }
+          if (
+            sessionRef.current?.access_token !== current.access_token ||
+            selectionGeneration !== requestGeneration.current
+          )
+            return;
+        }
         organizationRef.current = organizationId;
         window.localStorage.setItem(organizationStorageKey(current.user.id), organizationId);
         telemetry.organization(organizationId);
@@ -333,6 +376,8 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
       },
       refreshContext: loadContext,
       async signOut() {
+        const departingActor = sessionRef.current?.user.id;
+        if (departingActor) await clearActor(departingActor);
         ++requestGeneration.current;
         setStatus("resolving");
         if (supabase !== null) {
@@ -347,7 +392,16 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
         telemetry.reset();
       },
     }),
-    [error, loadContext, me, memberships, session, status, transitionCanvasIdentity],
+    [
+      error,
+      networkUnavailable,
+      loadContext,
+      me,
+      memberships,
+      session,
+      status,
+      transitionCanvasIdentity,
+    ],
   );
 
   return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;

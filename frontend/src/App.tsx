@@ -23,6 +23,9 @@ const DashboardPage = lazy(async () => ({
   default: (await import("./app/DashboardPage")).DashboardPage,
 }));
 const JobsPage = lazy(async () => ({ default: (await import("./app/JobsPage")).JobsPage }));
+const FieldPage = lazy(async () => ({
+  default: (await import("./features/field/FieldPage")).FieldPage,
+}));
 const SettingsPage = lazy(async () => ({
   default: (await import("./app/SettingsPage")).SettingsPage,
 }));
@@ -422,6 +425,26 @@ export function AppRoutes(): JSX.Element {
               <AppShell>
                 <Suspense fallback={<p role="status">{t("production.loading")}</p>}>
                   <ProductionPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
+        <Route
+          path="/field"
+          element={
+            <Suspense fallback={<DimLoader label="Cargando Terreno" />}>
+              <FieldPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dispatch"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<DimLoader label="Cargando despacho y postventa" />}>
+                  <FieldPage office />
                 </Suspense>
               </AppShell>
             </ReadyGuard>

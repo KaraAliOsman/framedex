@@ -1,8 +1,8 @@
 """Entity-level work, under caller claims and existing domain read roles.
 
-    Sealed quotations supply validity and sale. The payment ledger supplies
-    receipts; the pure engine computes the balance. No cost or private pricing
-    result is returned by this projection, including to estimators.
+Sealed quotations supply validity and sale. The payment ledger supplies
+receipts; the pure engine computes the balance. No cost or private pricing
+result is returned by this projection, including to estimators.
 """
 
 from collections import defaultdict
@@ -31,7 +31,8 @@ def local_today(org_id):
 
 def quotation_rows(org_id):
     with documentary_backend():
-        return rows("""
+        return rows(
+            """
             SELECT p.id,p.code,p.name,p.client_name,p.status::text,p.current_revision,
                    selected.id AS version_id,v.id AS offering_version_id,v.emitted_at,
                    v.snapshot_json->'project'->>'quotation_valid_until' AS valid_until,
@@ -65,27 +66,42 @@ def quotation_rows(org_id):
             ) a ON true
             WHERE p.org_id=%s AND p.status<>'CANCELLED'
             ORDER BY v.emitted_at DESC,p.code
-        """, [org_id])
+        """,
+            [org_id],
+        )
 
 
 def quote_public(row, today):
     validity = row["valid_until"]
     expired = validity is not None and date.fromisoformat(validity) < today
-    state = ("expired" if expired and row["status"] == "QUOTED" else
-             "approved" if row["status"] in {"APPROVED", "IN_PRODUCTION", "COMPLETED"} else
-             "response" if row["response_status"] in {"DECLINED", "CHANGES_REQUESTED"} else
-             "unshared" if row["shared_at"] is None else
-             "link_expired" if row["expires_at"] < datetime.now(timezone.utc) else "pending")
+    state = (
+        "expired"
+        if expired and row["status"] == "QUOTED"
+        else "approved"
+        if row["status"] in {"APPROVED", "IN_PRODUCTION", "COMPLETED"}
+        else "response"
+        if row["response_status"] in {"DECLINED", "CHANGES_REQUESTED"}
+        else "unshared"
+        if row["shared_at"] is None
+        else "link_expired"
+        if row["expires_at"] < datetime.now(timezone.utc)
+        else "pending"
+    )
     return {
-        "project_id": str(row["id"]), "project_code": row["code"], "project_name": row["name"],
-        "client_name": row["client_name"], "revision_code": row["current_revision"],
-        "state": state, "valid_until": validity,
+        "project_id": str(row["id"]),
+        "project_code": row["code"],
+        "project_name": row["name"],
+        "client_name": row["client_name"],
+        "revision_code": row["current_revision"],
+        "state": state,
+        "valid_until": validity,
         "phase": row["status"],
         "view_count": int(row["view_count"] or 0),
         "last_viewed_at": row["last_viewed_at"].isoformat() if row["last_viewed_at"] else None,
         "response_note": row["decided_note"],
         "decision_kind": row.get("decision_kind"),
-        "total": row["total"], "currency": row["currency"],
+        "total": row["total"],
+        "currency": row["currency"],
         "source": "Total y vigencia de la revisión emitida; vistas y respuesta de sus enlaces vigentes.",
         "href": f"/projects/{row['id']}?section=quote",
     }
@@ -96,24 +112,41 @@ def quotations(org_id, *, query="", attention="", phase="", currency="", offset=
     items = [quote_public(row, today) for row in quotation_rows(org_id)]
     needle = query.strip().casefold()
     if needle:
-        items = [item for item in items if needle in " ".join(
-            str(item[key]) for key in ("project_code", "project_name", "client_name", "revision_code")
-        ).casefold()]
+        items = [
+            item
+            for item in items
+            if needle
+            in " ".join(
+                str(item[key])
+                for key in ("project_code", "project_name", "client_name", "revision_code")
+            ).casefold()
+        ]
     if attention:
         items = [item for item in items if quote_attention(item, attention, today)]
     if phase:
         items = [item for item in items if item["phase"] == phase]
     if currency:
-        items = [item for item in items if item["currency"] == (None if currency == "unknown" else currency)]
-    return {"items": items[offset:offset + limit], "total": len(items), "offset": offset,
-            "limit": limit, "today": today.isoformat()}
+        items = [
+            item
+            for item in items
+            if item["currency"] == (None if currency == "unknown" else currency)
+        ]
+    return {
+        "items": items[offset : offset + limit],
+        "total": len(items),
+        "offset": offset,
+        "limit": limit,
+        "today": today.isoformat(),
+    }
 
 
 def quote_attention(item, kind, today):
     if kind == "expiring":
-        return (item["state"] in {"pending", "unshared", "link_expired"}
-                and item["valid_until"] is not None
-                and today <= date.fromisoformat(item["valid_until"]) <= today + timedelta(days=3))
+        return (
+            item["state"] in {"pending", "unshared", "link_expired"}
+            and item["valid_until"] is not None
+            and today <= date.fromisoformat(item["valid_until"]) <= today + timedelta(days=3)
+        )
     if kind == "viewed":
         return item["state"] == "pending" and item["view_count"] > 0
     if kind == "response":
@@ -121,23 +154,51 @@ def quote_attention(item, kind, today):
     return item["state"] == kind
 
 
-def action(kind, entity_id, code, name, title, reason, verb, href, *,
-           due_on=None, blocking=False, amount=None, currency=None, source=None, operation_id=None,
-           balance_total=None, balance_collected=None):
-    return {"key": f"{kind}:{entity_id}", "kind": kind, "entity_code": code,
-            "entity_name": name, "title": title, "reason": reason, "verb": verb, "href": href,
-            "due_on": due_on.isoformat() if due_on else None, "blocking": blocking,
-            "amount": str(amount) if amount is not None else None, "currency": currency,
-            "balance_total": str(balance_total) if balance_total is not None else None,
-            "balance_collected": str(balance_collected) if balance_collected is not None else None,
-            "source": source, "operation_id": str(operation_id) if operation_id else None}
+def action(
+    kind,
+    entity_id,
+    code,
+    name,
+    title,
+    reason,
+    verb,
+    href,
+    *,
+    due_on=None,
+    blocking=False,
+    amount=None,
+    currency=None,
+    source=None,
+    operation_id=None,
+    balance_total=None,
+    balance_collected=None,
+):
+    return {
+        "key": f"{kind}:{entity_id}",
+        "kind": kind,
+        "entity_code": code,
+        "entity_name": name,
+        "title": title,
+        "reason": reason,
+        "verb": verb,
+        "href": href,
+        "due_on": due_on.isoformat() if due_on else None,
+        "blocking": blocking,
+        "amount": str(amount) if amount is not None else None,
+        "currency": currency,
+        "balance_total": str(balance_total) if balance_total is not None else None,
+        "balance_collected": str(balance_collected) if balance_collected is not None else None,
+        "source": source,
+        "operation_id": str(operation_id) if operation_id else None,
+    }
 
 
 def price_actions(org_id, user_id, role):
     if role not in COMMERCIAL_ROLES:
         return []
     with commercial_backend():
-        operations = rows("""
+        operations = rows(
+            """
             SELECT o.id,o.project_id,p.code,p.name,o.state,o.reason,o.revision_code
             FROM public.pricing_operations o
             JOIN public.projects p ON p.id=o.project_id AND p.org_id=o.org_id
@@ -149,17 +210,32 @@ def price_actions(org_id, user_id, role):
                         SELECT 1 FROM public.pricing_attention_receipts r
                         WHERE r.org_id=o.org_id AND r.operation_id=o.id AND r.user_id=%s)))
             ORDER BY o.created_at,o.id
-        """, [org_id, role, user_id, user_id])
-    return [action(
-        "price_pending" if row["state"] == "PENDING" else "price_decision", row["id"],
-        row["code"], row["name"],
-        "Decide el acuerdo de precio" if row["state"] == "PENDING" else
-        "Precio aprobado" if row["state"] == "APPLIED" else "Precio rechazado",
-        row["reason"], "Revisar y decidir" if row["state"] == "PENDING" else "Leer decisión",
-        "/projects/" + str(row["project_id"]) + "/pricing?" + urlencode({"operation": row["id"]}),
-        blocking=row["state"] == "PENDING", operation_id=row["id"],
-        source="Operación de precio y recibo del solicitante; " + row["revision_code"],
-    ) for row in operations]
+        """,
+            [org_id, role, user_id, user_id],
+        )
+    return [
+        action(
+            "price_pending" if row["state"] == "PENDING" else "price_decision",
+            row["id"],
+            row["code"],
+            row["name"],
+            "Decide el acuerdo de precio"
+            if row["state"] == "PENDING"
+            else "Precio aprobado"
+            if row["state"] == "APPLIED"
+            else "Precio rechazado",
+            row["reason"],
+            "Revisar y decidir" if row["state"] == "PENDING" else "Leer decisión",
+            "/projects/"
+            + str(row["project_id"])
+            + "/pricing?"
+            + urlencode({"operation": row["id"]}),
+            blocking=row["state"] == "PENDING",
+            operation_id=row["id"],
+            source="Operación de precio y recibo del solicitante; " + row["revision_code"],
+        )
+        for row in operations
+    ]
 
 
 def commercial_actions(org_id, today, role):
@@ -168,39 +244,96 @@ def commercial_actions(org_id, today, role):
     quotes = [quote_public(row, today) for row in source_rows]
     for item in quotes:
         if quote_attention(item, "expiring", today):
-            result.append(action("quote_expiring", item["project_id"], item["project_code"],
-                item["project_name"], "Cierra la cotización antes de que venza",
-                "La vigencia comercial termina dentro de tres días. El enlace no extiende ese plazo.",
-                "Revisar cotización", item["href"], due_on=date.fromisoformat(item["valid_until"]),
-                source=item["source"]))
+            result.append(
+                action(
+                    "quote_expiring",
+                    item["project_id"],
+                    item["project_code"],
+                    item["project_name"],
+                    "Cierra la cotización antes de que venza",
+                    "La vigencia comercial termina dentro de tres días. El enlace no extiende ese plazo.",
+                    "Revisar cotización",
+                    item["href"],
+                    due_on=date.fromisoformat(item["valid_until"]),
+                    source=item["source"],
+                )
+            )
         if quote_attention(item, "viewed", today):
-            result.append(action("quote_viewed", item["project_id"], item["project_code"],
-                item["project_name"], "Contacta al cliente que vio la propuesta",
-                f"{item['client_name']} abrió la revisión y todavía no responde.",
-                "Revisar seguimiento", item["href"], source=item["source"]))
+            result.append(
+                action(
+                    "quote_viewed",
+                    item["project_id"],
+                    item["project_code"],
+                    item["project_name"],
+                    "Contacta al cliente que vio la propuesta",
+                    f"{item['client_name']} abrió la revisión y todavía no responde.",
+                    "Revisar seguimiento",
+                    item["href"],
+                    source=item["source"],
+                )
+            )
         if quote_attention(item, "response", today):
-            changes = item.get('decision_kind') != 'DECLINED'
-            result.append(action("quote_response", item["project_id"], item["project_code"],
-                item["project_name"], "Revisa los cambios solicitados" if changes else "Revisa el rechazo del cliente",
-                item["response_note"] or "El cliente rechazó la propuesta sin un motivo registrado.",
-                "Revisar cambios" if changes else "Leer rechazo", item["href"], blocking=True, source=item["source"]))
-        if item['state'] == 'approved' and item.get('decision_kind') == 'APPROVED' and item['phase'] == 'APPROVED':
-            result.append(action('quote_approved', item['project_id'], item['project_code'], item['project_name'],
-                'Coordina la propuesta aceptada', 'La aceptación quedó registrada. Revisa la opción elegida, la medición final y el anticipo.',
-                'Leer aceptación', item['href'], source=item['source']))
+            changes = item.get("decision_kind") != "DECLINED"
+            result.append(
+                action(
+                    "quote_response",
+                    item["project_id"],
+                    item["project_code"],
+                    item["project_name"],
+                    "Revisa los cambios solicitados"
+                    if changes
+                    else "Revisa el rechazo del cliente",
+                    item["response_note"]
+                    or "El cliente rechazó la propuesta sin un motivo registrado.",
+                    "Revisar cambios" if changes else "Leer rechazo",
+                    item["href"],
+                    blocking=True,
+                    source=item["source"],
+                )
+            )
+        if (
+            item["state"] == "approved"
+            and item.get("decision_kind") == "APPROVED"
+            and item["phase"] == "APPROVED"
+        ):
+            result.append(
+                action(
+                    "quote_approved",
+                    item["project_id"],
+                    item["project_code"],
+                    item["project_name"],
+                    "Coordina la propuesta aceptada",
+                    "La aceptación quedó registrada. Revisa la opción elegida, la medición final y el anticipo.",
+                    "Leer aceptación",
+                    item["href"],
+                    source=item["source"],
+                )
+            )
         if item["state"] == "expired":
-            result.append(action("quote_expired", item["project_id"], item["project_code"],
-                item["project_name"], "Renueva la cotización vencida",
-                "La revisión emitida conserva sus condiciones. Prepara una sucesora para renovarlas.",
-                "Preparar revisión", item["href"], due_on=date.fromisoformat(item["valid_until"]),
-                source=item["source"]))
+            result.append(
+                action(
+                    "quote_expired",
+                    item["project_id"],
+                    item["project_code"],
+                    item["project_name"],
+                    "Renueva la cotización vencida",
+                    "La revisión emitida conserva sus condiciones. Prepara una sucesora para renovarlas.",
+                    "Preparar revisión",
+                    item["href"],
+                    due_on=date.fromisoformat(item["valid_until"]),
+                    source=item["source"],
+                )
+            )
 
     if role == "OWNER":
         by_phase = defaultdict(list)
         unknown = defaultdict(int)
         with documentary_backend():
-            receipts = rows("SELECT project_id,amount,id,voided_at,simulated FROM public.project_payments "
-                            "WHERE org_id=%s AND voided_at IS NULL", [org_id])
+            receipts = rows(
+                "SELECT project_id,amount,id,voided_at,simulated FROM public.project_payments "
+                "WHERE org_id=%s AND voided_at IS NULL",
+                [org_id],
+            )
         payments = defaultdict(list)
         for row in receipts:
             payments[str(row["project_id"])].append(row)
@@ -215,36 +348,69 @@ def commercial_actions(org_id, today, role):
             by_phase[phase].append(total)
             if row["status"] != "QUOTED":
                 from projects.payments import collection_projection
-                projection = collection_projection(org_id=org_id, project_id=row["id"], today=today,
-                    deal={"total": total, "currency": row["currency"], "version_id": row.get("version_id"),
-                          "offering_version_id": row.get('offering_version_id'),
-                          "commercial_terms": row.get("commercial_terms") or {}}, payments=payments[str(row["id"])])
+
+                projection = collection_projection(
+                    org_id=org_id,
+                    project_id=row["id"],
+                    today=today,
+                    deal={
+                        "total": total,
+                        "currency": row["currency"],
+                        "version_id": row.get("version_id"),
+                        "offering_version_id": row.get("offering_version_id"),
+                        "commercial_terms": row.get("commercial_terms") or {},
+                    },
+                    payments=payments[str(row["id"])],
+                )
                 collected, balance = projection.collected, projection.balance
                 if balance > 0:
                     overdue = projection.overdue > 0 and not projection.includes_simulation
-                    result.append(action("receivable_overdue" if overdue else "receivable", row["id"], row["code"], row["name"],
-                        "Revisa el recordatorio de cobro vencido" if overdue else "Gestiona el saldo por cobrar",
-                        "El calendario sellado tiene cuotas vencidas. Revisa el mensaje preparado por la IA antes de enviarlo." if overdue else
-                        "La venta sellada tiene pagos pendientes. Sin un vencimiento cumplido, no se presenta como vencida.",
-                        "Abrir cobranza", f"/projects/{row['id']}?section=payments", amount=balance,
-                        currency=row["currency"], balance_total=total, balance_collected=collected,
-                        due_on=projection.oldest_due_on if overdue else None,
-                        source="Total sellado de " + row["current_revision"] +
-                        " menos pagos vigentes. No incluye recibos anulados."))
-        for (status, currency) in sorted(set(by_phase) | set(unknown), key=str):
+                    result.append(
+                        action(
+                            "receivable_overdue" if overdue else "receivable",
+                            row["id"],
+                            row["code"],
+                            row["name"],
+                            "Revisa el recordatorio de cobro vencido"
+                            if overdue
+                            else "Gestiona el saldo por cobrar",
+                            "El calendario sellado tiene cuotas vencidas. Revisa el mensaje preparado por la IA antes de enviarlo."
+                            if overdue
+                            else "La venta sellada tiene pagos pendientes. Sin un vencimiento cumplido, no se presenta como vencida.",
+                            "Abrir cobranza",
+                            f"/projects/{row['id']}?section=payments",
+                            amount=balance,
+                            currency=row["currency"],
+                            balance_total=total,
+                            balance_collected=collected,
+                            due_on=projection.oldest_due_on if overdue else None,
+                            source="Total sellado de "
+                            + row["current_revision"]
+                            + " menos pagos vigentes. No incluye recibos anulados.",
+                        )
+                    )
+        for status, currency in sorted(set(by_phase) | set(unknown), key=str):
             values = by_phase[(status, currency)]
-            pipeline.append({"phase": status, "currency": currency,
-                "amount": str(money_sum(values)) if values else None,
-                "count": len(values) + unknown[(status, currency)], "unknown_count": unknown[(status, currency)],
-                "href": "/quotes?" + urlencode({"phase": status, "currency": currency or "unknown"}),
-                "source": "Suma exacta del motor de los totales de las revisiones vigentes emitidas, "
-                          "separada por moneda. No son ingresos ni una nueva cotización."})
+            pipeline.append(
+                {
+                    "phase": status,
+                    "currency": currency,
+                    "amount": str(money_sum(values)) if values else None,
+                    "count": len(values) + unknown[(status, currency)],
+                    "unknown_count": unknown[(status, currency)],
+                    "href": "/quotes?"
+                    + urlencode({"phase": status, "currency": currency or "unknown"}),
+                    "source": "Suma exacta del motor de los totales de las revisiones vigentes emitidas, "
+                    "separada por moneda. No son ingresos ni una nueva cotización.",
+                }
+            )
     return result, pipeline
 
 
 def position_actions(org_id):
     with commercial_backend():
-        pending = rows("""
+        pending = rows(
+            """
         SELECT p.id,p.project_id,p.position_index,p.location_tag,pr.code,pr.name,
                p.system_id,p.parametric_tree,p.color_interior,survey.state AS survey_state
         FROM public.project_positions p
@@ -256,49 +422,80 @@ def position_actions(org_id):
         ) survey ON true
         WHERE p.org_id=%s AND pr.status='DRAFT'
           AND (survey.state<>'CONFIRMED' OR p.parametric_tree->>'version'='product-v2')
-    """, [org_id])
-    result = [action("position_blocked", row["id"], row["code"], row["name"],
-        "Confirma las medidas de fabricación", f"Posición {row['position_index']} · "
-        f"{row['location_tag'] or 'Sin ubicación'}: el levantamiento espera confirmación.",
-        "Confirmar medidas", f"/projects/{row['project_id']}/positions/{row['id']}/edit",
-        blocking=True, source="Última generación del levantamiento de la revisión actual.")
-        for row in pending if row['survey_state'] is not None and row['survey_state'] != 'CONFIRMED']
+    """,
+            [org_id],
+        )
+    result = [
+        action(
+            "position_blocked",
+            row["id"],
+            row["code"],
+            row["name"],
+            "Confirma las medidas de fabricación",
+            f"Posición {row['position_index']} · "
+            f"{row['location_tag'] or 'Sin ubicación'}: el levantamiento espera confirmación.",
+            "Confirmar medidas",
+            f"/projects/{row['project_id']}/positions/{row['id']}/edit",
+            blocking=True,
+            source="Última generación del levantamiento de la revisión actual.",
+        )
+        for row in pending
+        if row["survey_state"] is not None and row["survey_state"] != "CONFIRMED"
+    ]
     repository = SystemParamsRepository()
     authorities = {}
     for row in pending:
-        tree = decoded(row['parametric_tree'])
-        if tree.get('version') != 'product-v2':
+        tree = decoded(row["parametric_tree"])
+        if tree.get("version") != "product-v2":
             continue
         try:
-            system = row['system_id']
+            system = row["system_id"]
             if system not in authorities:
-                authorities[system] = (repository.load_visible(system,org_id),
-                                      repository.load_coupler_articles(system,org_id))
+                authorities[system] = (
+                    repository.load_visible(system, org_id),
+                    repository.load_coupler_articles(system, org_id),
+                )
             params, couplers = authorities[system]
-            evaluation = evaluate_assembly_from_api(product=parse_product_model(tree),
-                color=row['color_interior'],params=params,coupler_articles=couplers)
-            if evaluation.status.value == 'VALID':
+            evaluation = evaluate_assembly_from_api(
+                product=parse_product_model(tree),
+                color=row["color_interior"],
+                params=params,
+                coupler_articles=couplers,
+            )
+            if evaluation.status.value == "VALID":
                 continue
             # Engine reasons may contain English diagnostics, raw enums or
             # dimensions. The editor owns their positioned, formatted detail;
             # Hoy supplies a business cause and the exact resolver instead.
-            reason = ('La geometría o la combinación elegida no es válida. Revisa Qué falta en la posición.'
-                if evaluation.status.value == 'INVALID' else
-                'Faltan definiciones o autoridad técnica para fabricar el conjunto. Revisa Qué falta en la posición.')
+            reason = (
+                "La geometría o la combinación elegida no es válida. Revisa Qué falta en la posición."
+                if evaluation.status.value == "INVALID"
+                else "Faltan definiciones o autoridad técnica para fabricar el conjunto. Revisa Qué falta en la posición."
+            )
         except (SystemNotFound, UnsupportedCatalogContract, ValueError):
-            reason = 'El diseño guardado requiere revisar su serie y la autoridad técnica vigente.'
-        result.append(action('position_engine_blocked',row['id'],row['code'],row['name'],
-            'Completa la definición de fabricación',
-            f"Posición {row['position_index']} · {row['location_tag'] or 'Sin ubicación'}: {reason}",
-            'Revisar posición',f"/projects/{row['project_id']}/positions/{row['id']}/edit",
-            blocking=True,source='Evaluación del motor sobre el diseño guardado y el catálogo visible; no modifica la BOM ni una emisión.'))
+            reason = "El diseño guardado requiere revisar su serie y la autoridad técnica vigente."
+        result.append(
+            action(
+                "position_engine_blocked",
+                row["id"],
+                row["code"],
+                row["name"],
+                "Completa la definición de fabricación",
+                f"Posición {row['position_index']} · {row['location_tag'] or 'Sin ubicación'}: {reason}",
+                "Revisar posición",
+                f"/projects/{row['project_id']}/positions/{row['id']}/edit",
+                blocking=True,
+                source="Evaluación del motor sobre el diseño guardado y el catálogo visible; no modifica la BOM ni una emisión.",
+            )
+        )
     return result
 
 
 def workshop_actions(org_id, role, today):
     result = []
     with documentary_backend():
-        deliveries = rows("""
+        deliveries = rows(
+            """
             SELECT d.id,d.order_id,d.status,d.scheduled_date,d.address,d.installer_name,
                    o.order_code,o.status AS order_status
             FROM public.deliveries d
@@ -307,9 +504,12 @@ def workshop_actions(org_id, role, today):
               AND (d.status IN ('SCHEDULED','ON_ROUTE','FAILED')
                    OR (d.status='DELIVERED' AND o.status='DISPATCHED'))
             ORDER BY d.scheduled_date,o.order_code,d.id
-        """, [org_id, today])
+        """,
+            [org_id, today],
+        )
         if role in {"OWNER", "WORKSHOP_MANAGER", "OPERATOR"}:
-            orders = rows("""
+            orders = rows(
+                """
                 SELECT o.id,o.order_code,o.status::text,o.payload_json->>'remake_of' AS remake_of,
                     EXISTS(
                       SELECT 1 FROM jsonb_array_elements(COALESCE(
@@ -333,48 +533,204 @@ def workshop_actions(org_id, role, today):
                 WHERE o.org_id=%s AND o.order_type='WORKSHOP_OT'
                   AND o.status NOT IN ('CANCELLED','INSTALLED','DISPATCHED')
                 ORDER BY o.order_code
-            """, [org_id])
+            """,
+                [org_id],
+            )
         else:
             orders = []
     for row in deliveries:
         install = row["status"] == "DELIVERED"
-        result.append(action("installation" if install else "delivery", row["id"], row["order_code"],
-            row["address"], "Cierra la instalación" if install else "Completa la entrega comprometida",
-            row["address"] + (f" · {row['installer_name']}" if row["installer_name"] else ""),
-            "Abrir instalación" if install else "Abrir entrega",
-            "/production?" + urlencode({"order": row["order_id"]}), due_on=row["scheduled_date"],
-            blocking=row["status"] == "FAILED", source="Agenda de entrega y estado de la OT."))
+        result.append(
+            action(
+                "installation" if install else "delivery",
+                row["id"],
+                row["order_code"],
+                row["address"],
+                "Cierra la instalación" if install else "Completa la entrega comprometida",
+                row["address"] + (f" · {row['installer_name']}" if row["installer_name"] else ""),
+                "Abrir instalación" if install else "Abrir entrega",
+                "/production?" + urlencode({"order": row["order_id"]}),
+                due_on=row["scheduled_date"],
+                blocking=row["status"] == "FAILED",
+                source="Agenda de entrega y estado de la OT.",
+            )
+        )
     for row in orders:
         href = "/production?" + urlencode({"order": row["id"]})
         due = row["scheduled_date"]
         if row["status"] == "HOLD" or row["step_status"] == "BLOCKED":
-            result.append(action("work_order_blocked", row["id"], row["order_code"], "Orden de trabajo",
-                "Resuelve el bloqueo de la OT", row["note"] or "La estación mantiene la orden en espera.",
-                "Resolver bloqueo", href, due_on=due, blocking=True,
-                source="Estado de la OT y primera estación pendiente."))
-        elif row["short"] and row['status'] != 'COMPLETED':
-            result.append(action("work_order_shortage", row["id"], row["order_code"], "Orden de trabajo",
-                "Completa el material de la OT", "La reserva del plan de corte registra material faltante.",
-                "Revisar faltante", href, due_on=due, blocking=True,
-                source="Reservas de stock de la optimización del motor."))
+            result.append(
+                action(
+                    "work_order_blocked",
+                    row["id"],
+                    row["order_code"],
+                    "Orden de trabajo",
+                    "Resuelve el bloqueo de la OT",
+                    row["note"] or "La estación mantiene la orden en espera.",
+                    "Resolver bloqueo",
+                    href,
+                    due_on=due,
+                    blocking=True,
+                    source="Estado de la OT y primera estación pendiente.",
+                )
+            )
+        elif row["short"] and row["status"] != "COMPLETED":
+            result.append(
+                action(
+                    "work_order_shortage",
+                    row["id"],
+                    row["order_code"],
+                    "Orden de trabajo",
+                    "Completa el material de la OT",
+                    "La reserva del plan de corte registra material faltante.",
+                    "Revisar faltante",
+                    href,
+                    due_on=due,
+                    blocking=True,
+                    source="Reservas de stock de la optimización del motor.",
+                )
+            )
         elif not row["optimized"] and row["status"] in {"RELEASED", "IN_PROGRESS"}:
-            result.append(action("work_order_plan", row["id"], row["order_code"], "Orden de trabajo",
-                "Prepara el plan de corte", "La OT no tiene una optimización guardada.",
-                "Optimizar corte", href, due_on=due, blocking=True, source="Plan sellado de la OT."))
+            result.append(
+                action(
+                    "work_order_plan",
+                    row["id"],
+                    row["order_code"],
+                    "Orden de trabajo",
+                    "Prepara el plan de corte",
+                    "La OT no tiene una optimización guardada.",
+                    "Optimizar corte",
+                    href,
+                    due_on=due,
+                    blocking=True,
+                    source="Plan sellado de la OT.",
+                )
+            )
         elif row["status"] == "COMPLETED":
-            result.append(action("dispatch_ready", row["id"], row["order_code"], "Orden de trabajo",
-                "Prepara el despacho", "Las estaciones terminaron. " +
-                ("El embalaje está registrado." if row["packed"] else "Falta registrar el embalaje."),
-                "Preparar despacho", href, due_on=due, source="Estaciones de producción y embalaje."))
+            result.append(
+                action(
+                    "dispatch_ready",
+                    row["id"],
+                    row["order_code"],
+                    "Orden de trabajo",
+                    "Prepara el despacho",
+                    "Las estaciones terminaron. "
+                    + (
+                        "El embalaje está registrado."
+                        if row["packed"]
+                        else "Falta registrar el embalaje."
+                    ),
+                    "Preparar despacho",
+                    href,
+                    due_on=due,
+                    source="Estaciones de producción y embalaje.",
+                )
+            )
         elif row["label"]:
-            result.append(action("station_work", row["id"], row["order_code"], row["label"],
-                "Continúa en " + row["label"].lower(), "Es la primera estación pendiente de esta OT.",
-                "Abrir estación", href, due_on=due, source="Secuencia de estaciones del motor."))
+            result.append(
+                action(
+                    "station_work",
+                    row["id"],
+                    row["order_code"],
+                    row["label"],
+                    "Continúa en " + row["label"].lower(),
+                    "Es la primera estación pendiente de esta OT.",
+                    "Abrir estación",
+                    href,
+                    due_on=due,
+                    source="Secuencia de estaciones del motor.",
+                )
+            )
         if row["remake_of"]:
-            result.append(action("remake", row["id"], row["order_code"], "Reposición",
-                "Completa la reposición", "Una reposición abierta espera continuar su secuencia de fabricación.",
-                "Abrir reposición", href, due_on=due, blocking=True,
-                source="Vínculo inmutable con la OT de origen."))
+            result.append(
+                action(
+                    "remake",
+                    row["id"],
+                    row["order_code"],
+                    "Reposición",
+                    "Completa la reposición",
+                    "Una reposición abierta espera continuar su secuencia de fabricación.",
+                    "Abrir reposición",
+                    href,
+                    due_on=due,
+                    blocking=True,
+                    source="Vínculo inmutable con la OT de origen.",
+                )
+            )
+    return result
+
+
+def field_actions(org_id, today, role):
+    from production.field import warranty
+
+    result = []
+    with documentary_backend():
+        visits = rows(
+            "SELECT id,code,kind,planned_on,status,context_json FROM public.field_visits WHERE org_id=%s ORDER BY planned_on,id",
+            [org_id],
+        )
+        cases = rows(
+            "SELECT id,code,kind,description,created_at,visit_id FROM public.field_incidents WHERE org_id=%s AND status='OPEN' ORDER BY created_at,id",
+            [org_id],
+        )
+        for visit in visits:
+            context = decoded(visit["context_json"])
+            if visit["status"] in ("SCHEDULED", "ACTIVE") and visit["planned_on"] <= today:
+                verb = "Medir vano" if visit["kind"] == "MEASUREMENT" else "Abrir visita"
+                result.append(
+                    action(
+                        "field_visit",
+                        visit["id"],
+                        visit["code"],
+                        context["project_name"],
+                        verb,
+                        context["address"],
+                        verb,
+                        "/field?" + urlencode({"visit": visit["id"]}),
+                        due_on=visit["planned_on"],
+                        source="Fecha y responsable declarados en la visita de terreno.",
+                    )
+                )
+            if visit["status"] == "CLOSED":
+                for unit in context["units"]:
+                    if not unit.get("order_id"):
+                        continue
+                    coverage = warranty(org_id, context, unit["order_id"], unit["unit_index"])
+                    if coverage["expires_on"]:
+                        expiry = date.fromisoformat(coverage["expires_on"])
+                        if today <= expiry <= today + timedelta(days=30):
+                            result.append(
+                                action(
+                                    "field_warranty",
+                                    f"{visit['id']}:{unit['unit_index']}",
+                                    visit["code"],
+                                    context["project_name"],
+                                    "Revisa la garantía por vencer",
+                                    "El plazo declarado en la revisión aprobada llega a su vencimiento.",
+                                    "Abrir garantía",
+                                    "/field?" + urlencode({"visit": visit["id"]}),
+                                    due_on=expiry,
+                                    source="Declaración sellada y hecho de inicio; fecha proyectada por el motor.",
+                                )
+                            )
+        for case in cases:
+            result.append(
+                action(
+                    "field_incident",
+                    case["id"],
+                    case["code"],
+                    "Incidencia en obra",
+                    "Revisa la incidencia abierta",
+                    case["description"],
+                    "Diagnosticar",
+                    ("/field" if role == "INSTALLER" else "/dispatch")
+                    + "?"
+                    + urlencode({"view": "cases", "case": case["id"]}),
+                    due_on=case["created_at"].astimezone(ZoneInfo("America/Santiago")).date(),
+                    blocking=case["kind"] in ("DAMAGE", "MEASURE", "MISSING"),
+                    source="Reporte contextual de la unidad y evidencia privada de terreno.",
+                )
+            )
     return result
 
 
@@ -387,10 +743,18 @@ def daily_work(org_id, user_id, role):
         actions.extend(position_actions(org_id))
     if role in {"OWNER", "WORKSHOP_MANAGER", "INSTALLER", "OPERATOR"}:
         actions.extend(workshop_actions(org_id, role, today))
+    if role in {"OWNER", "WORKSHOP_MANAGER", "ESTIMATOR", "INSTALLER"}:
+        actions.extend(field_actions(org_id, today, role))
     ordered = queue_order(actions, today=today)
     for item in ordered:
         item["consequence"] = consequence(
             date.fromisoformat(item["due_on"]) if item["due_on"] else None,
-            today=today, blocking=item["blocking"])
-    return {"today": today.isoformat(), "actions": ordered, "pipeline": pipeline,
-            "source": "Compromisos vencidos, bloqueos, trabajo de hoy y seguimiento; orden determinista del motor."}
+            today=today,
+            blocking=item["blocking"],
+        )
+    return {
+        "today": today.isoformat(),
+        "actions": ordered,
+        "pipeline": pipeline,
+        "source": "Compromisos vencidos, bloqueos, trabajo de hoy y seguimiento; orden determinista del motor.",
+    }

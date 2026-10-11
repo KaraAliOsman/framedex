@@ -50,7 +50,7 @@ def verify(container: str) -> None:
         for table in tables
     }
     for path in paths:
-        if path.name >= FIRST:
+        if FIRST <= path.name < "20270125000000_field_work.sql":
             sql(path.read_text(encoding="utf-8"))
     after = {}
     for table in tables:

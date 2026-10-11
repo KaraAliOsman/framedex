@@ -1,5 +1,30 @@
 # Valores por defecto del programa DEKOPEN v1
 
+## Terreno y postventa · P23
+
+- Una OT mantiene una salida abierta; el saldo se agenda al cerrarla o
+  cancelarla. La visita conserva el viaje y verifica su carga antes de actuar.
+  Un servicio acredita una unidad con trabajo, foto y firma propios.
+- Cambiar de organización elimina la copia privada y los pendientes de la
+  organización anterior antes de resolver el nuevo acceso. La oficina mantiene
+  diagnóstico y cierre de postventa; el instalador registra evidencia.
+
+- Garantía inicial Sin dato: Comercial permite declarar días e inicio
+  (aprobación, entrega o instalación). Se sella con la revisión; texto libre
+  no se convierte en un plazo. Para entrega/instalación se usa el primer
+  comprobante firmado de cada unidad, nunca un servicio ni una acta posterior.
+- La oficina asigna día, franja Mañana/Tarde y equipo/vehículo por visita.
+  Carga y salida son hechos distintos; cancelar antes de salida libera bultos.
+  Después de salir corresponde el flujo de retorno con evidencia de Producción.
+- Una foto contextual acompaña medición, checklist e incidencia. La firma
+  del cliente se recoge con nombre/RUT sobre papel claro y genera ACT interno.
+  Un acta parcial conserva exactamente sus unidades; no acredita toda la OT.
+- La incidencia no autoriza un gasto o fabricación: jefe/dueño diagnostica,
+  confirma RM, compra adicional o visita de servicio y cierra con evidencia.
+- La copia privada permite registrar sin señal. El replay conserva UUID y
+  payload y exige acceso vigente; rechazos definitivos se pueden descartar,
+  respuestas inciertas permanecen. Salir/cambiar de actor borra su copia local.
+
 Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguientes deben mantener esta tabla cuando implementen o cambien un valor configurable.
 
 ## P08 · preparación, emisión y vigencias (2026-10-09)

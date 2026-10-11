@@ -2290,6 +2290,26 @@ def create_remake(
     *, org_id: UUID, order_id: UUID, actor_id: UUID, note: str | None = None,
     operation_key: UUID | None = None,
 ) -> dict[str, object]:
+    return _create_remake(org_id=org_id, order_id=order_id, actor_id=actor_id,
+                          note=note, operation_key=operation_key)
+
+
+def create_field_remake(*, org_id, order_id, actor_id, incident_id, unit_index, note):
+    """A supervisor replaces one damaged field unit without rewinding its OT."""
+    with transaction.atomic(), documentary_backend():
+        from production.field import live_role, SUPERVISORS, reject
+        if live_role(org_id, actor_id) not in SUPERVISORS:
+            reject("El jefe de taller autoriza la reposición.", "field_permission", 403)
+        case = one("SELECT * FROM public.field_incidents WHERE id=%s AND org_id=%s FOR UPDATE",
+                   [incident_id, org_id], "field_incident_not_found")
+        if (case['kind'] != 'DAMAGE' or case['status'] != 'OPEN'
+                or str(case['order_id']) != str(order_id) or case['unit_index'] != unit_index):
+            reject("La reposición requiere una incidencia de daño abierta en esa unidad.")
+        return _create_remake(org_id=org_id, order_id=order_id, actor_id=actor_id,
+                              note=note, field_case=case)
+
+
+def _create_remake(*, org_id, order_id, actor_id, note=None, operation_key=None, field_case=None):
     """Remake work order for a unit that failed QC: copies the sealed material
     projection and routing from a HOLD order into a new ``-RM-`` order. The
     unique release index excludes remakes (``remake_of`` in payload)."""
@@ -2305,8 +2325,10 @@ def create_remake(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
-        if str(source["status"]) != "HOLD":
+        if field_case is None and str(source["status"]) != "HOLD":
             raise DocumentaryError("remake_requires_hold")
+        if field_case is not None and str(source['status']) not in ('DISPATCHED', 'INSTALLED'):
+            raise DocumentaryError('field_remake_requires_dispatch')
         payload = _decoded(source["payload_json"])
         payload.pop("optimization", None)  # stale plan — re-optimize the remake
         payload.pop("cnc_export", None)
@@ -2317,12 +2339,17 @@ def create_remake(
         # clean and re-derives its own (a deactivated center lands below).
         payload.pop("blockers", None)
         payload["remake_of"] = str(source["id"])
+        if field_case is not None:
+            payload['quantity'] = 1
+            payload['field_incident'] = {'id': str(field_case['id']), 'code': field_case['code'],
+                                         'source_unit_index': field_case['unit_index']}
+            payload['remake_reason'] = {'note': note, 'incident_code': field_case['code']}
         if operation_key is not None:
             payload["qc_operation_key"] = str(operation_key)
         # Carry the QC failure forward: the remake order names WHICH unit
         # failed and why, so the floor doesn't re-derive it from the source
         # order's history (review PM-H3).
-        failure_rows = rows(
+        failure_rows = [] if field_case is not None else rows(
             """
             SELECT payload FROM public.production_step_events
             WHERE org_id = %s AND order_id = %s
@@ -4875,6 +4902,23 @@ def schedule_delivery(
             ],
         )
     return get_delivery(org_id=org_id, order_id=order_id)
+
+
+def cancel_scheduled_delivery(*, org_id: UUID, order_id: UUID, actor_id: UUID) -> None:
+    """Release an undispatched trip, preserving its schedule and audit evidence."""
+    with transaction.atomic(), documentary_backend():
+        role = one("SELECT private.field_actor_role(%s,%s) AS role", [org_id,actor_id])["role"]
+        if role not in ("OWNER", "WORKSHOP_MANAGER"):
+            raise DocumentaryError("documentary_permission_denied")
+        delivery = one(
+            "SELECT id FROM public.deliveries WHERE org_id=%s AND order_id=%s AND status='SCHEDULED' FOR UPDATE",
+            [org_id, order_id], "delivery_not_found",
+        )
+        rows("UPDATE public.deliveries SET status='FAILED',updated_at=now() WHERE id=%s RETURNING id", [delivery["id"]])
+        rows(
+            "INSERT INTO public.production_step_events(org_id,order_id,event,actor_id,payload) VALUES(%s,%s,'WO_DELIVERY_FAILED',%s,%s::jsonb) RETURNING id",
+            [org_id,order_id,actor_id,json.dumps({"delivery_id":str(delivery["id"]),"reason":"Salida cancelada antes del despacho"})],
+        )
 
 
 def transition_delivery(

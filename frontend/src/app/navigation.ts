@@ -35,6 +35,8 @@ const flow: NavGroup[] = [
       { to: "/purchasing", label: "nav.purchasing", roles: office },
       { to: "/inventory", label: "nav.inventory", roles: inventory },
       { to: "/production", label: "nav.production", roles: everyone },
+      { to: "/dispatch", label: "nav.dispatch", roles: office },
+      { to: "/field", label: "nav.field", roles: [...office, "INSTALLER"] },
     ],
   },
   {

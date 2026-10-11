@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CommercialTermsRequestWarrantyStart } from "./commercialTermsRequestWarrantyStart";
 import type { PaymentMilestoneRequest } from "./paymentMilestoneRequest";
 
 export interface CommercialTermsRequest {
@@ -17,6 +18,15 @@ export interface CommercialTermsRequest {
   exclusions?: string;
   /** @maxLength 4000 */
   warranty?: string;
+  /**
+   * @minimum 1
+   * @maximum 36500
+   * @nullable
+   */
+  warranty_days?: number | null;
+  warranty_start?:
+    | (typeof CommercialTermsRequestWarrantyStart)[keyof typeof CommercialTermsRequestWarrantyStart]
+    | null;
   /** @maxLength 1000 */
   jurisdiction?: string;
 }
