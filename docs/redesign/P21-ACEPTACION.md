@@ -111,18 +111,23 @@ muestra 1 500 × 1 200 → 1 300 × 1 200 mm y Δ neto de la simulación;
 se descarta sin persistir. La compresión verifica píxeles, modo y tamaño
 exactos de los PNG, no solo su legibilidad.
 
-## Verificación pendiente de cierre
+## Verificación local
 
 PostgreSQL focal pasa **33 pruebas** de proyecto/operaciones, incluyendo
 tenant, rol, catálogo, medición, orden, sellado y compatibilidad de firmas.
-El primer gate completo pasa lint, tipos, 886 motor (+2 xfail), goldens byte
-a byte y 1.476 backend; frontend detecta seis traducciones faltantes de las
-nuevas operaciones. Esa corrida no acredita un gate completo. Se corrigen
-las traducciones y se repiten los gates finales sin alterar los checks.
+La repetición final de `make lint typecheck test build` termina con código 0
+sobre la implementación `38bac104c8774dc0225fccec74e6089872701cb1`:
+886 pruebas del motor (+2 xfail preexistentes), goldens byte a byte,
+1.476 backend y **988 frontend**; tipos, fuente/API reproducibles y build
+pasan. Las traducciones de las nuevas operaciones pasan su contrato común.
+Ningún check ni detector se debilita. El build conserva la advertencia de
+tamaño del bloque 3D compartido; el centro de proyecto carga sus paneles
+secundarios bajo demanda.
 
-La rúbrica, los cinco estados, Database Gate y CI se completan y registran
-antes del merge. Los PNG anteriores y posteriores conservan la evidencia
-de los recorridos, sin tokens de autenticación ni valores de entorno.
+Database Gate y CI se registran antes del merge. Los 79 PNG anteriores y
+posteriores conservan los recorridos sin tokens de autenticación ni valores
+de entorno. Los procesos propios de aplicación quedan detenidos y el fixture
+se conserva; la puerta SQL usa un proyecto aislado diferente.
 
 ## Límites
 

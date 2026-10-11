@@ -1249,3 +1249,24 @@ Véase `docs/redesign/ED2-ACEPTACION.md`.
 
 ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.
 R1–R20 por superficie PASA. Las revisiones externas se omitieron por configuración/cuota y no se atribuyen como revisión completa. Servicios propios detenidos; fixture persistente conservado.
+
+### 2026-10-10 · P21, centro de trabajo del proyecto
+
+Implementación `38bac104c8774dc0225fccec74e6089872701cb1`: siete flujos
+visibles, elevaciones en lista/grilla, medidas en fila y operaciones de lote
+con preview/apply/undo. Metadatos opcionales sin backfill de históricos;
+precio desde resultado comercial aplicado, mediciones con consulta por lote
+y orden visual independiente de dirección física. La caché de cálculo
+vive dentro de cada operación y conserva la reserva de catálogo por destino.
+
+El recorrido de biblioteca/grupo/duplicar/color/deshacer/precio persiste
+seis posiciones y $1.925.201 con IVA. Treinta y una interacciones, 32 vistas
+oficiales y cinco estados pasan sin hallazgos ni desbordes; 79 PNG se
+comprueban y comprimen sin pérdida. Cinco contextos de cien posiciones
+miden 1.781,68–1.975,32 ms hasta selección visible, con cinco filas montadas.
+Las focales pasan 33 PostgreSQL y 36 frontend. Los gates completos pasan
+lint/tipos, 886 motor (+2 xfail), goldens byte, 1.476 backend, 988 frontend
+y build. Database Gate y CI pendientes de cierre; no se afirma integración.
+R1–R20 de proyecto PASA.
+El catálogo DEMO y Uw Sin dato conservan sus límites. Véase
+`docs/redesign/P21-ACEPTACION.md` y `product/project-workspace.md`.

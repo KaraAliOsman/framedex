@@ -213,7 +213,7 @@ export function ProjectOpsReview({
                         ? "Eliminar"
                         : "Cambiar"}
                   </strong>
-                  <span>
+                  <span className="project-number">
                     {description(change.before)} → {description(change.after)}
                   </span>
                   <span className="project-number">

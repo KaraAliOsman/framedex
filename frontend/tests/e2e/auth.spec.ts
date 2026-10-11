@@ -509,7 +509,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   const createdResponse = await creation;
   expect(createdResponse.status()).toBe(201);
   const draft = (await createdResponse.json()) as { id: string };
-  await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
+  await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
   await page.locator(".editor-system-chip").click();
@@ -566,7 +566,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   ).toContainText(formatMoney(quote.project_gross, "CLP"));
   await page.goto(`/projects/${draft.id}`);
   const projectGross = page
-    .locator(".project-facts__list dd")
+    .locator(".project-head__facts dd.project-number")
     .filter({ hasText: formatMoney(quote.project_gross, "CLP") });
   await expect(projectGross).toHaveCount(1);
   await expect(projectGross).toBeVisible();
@@ -644,14 +644,13 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
   await expect(page.getByText("Revisión B", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Volver a posiciones", exact: true }).click();
-  // The desk grid is select-then-act: pick the vano row so the side pane
-  // offers Abrir diseño.
+  await page.getByRole("tab", { name: "Posiciones", exact: true }).click();
+  // The collection opens the exact selected position with Enter.
   await page
-    .locator(".position-grid [role='option']")
+    .getByRole("listbox", { name: "Posiciones" })
+    .getByRole("option")
     .filter({ hasText: "Fijo comercial" })
-    .click();
-  await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
+    .press("Enter");
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
@@ -720,7 +719,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   );
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   const compositeProject = (await (await compositeCreation).json()) as { id: string };
-  await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
+  await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page.locator(".editor-system-chip").click();
   await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
@@ -778,10 +777,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.reload();
   await page.getByRole("link", { name: "Composite browser gate", exact: true }).click();
   await page
-    .locator(".position-grid [role='option']")
+    .getByRole("listbox", { name: "Posiciones" })
+    .getByRole("option")
     .filter({ hasText: "Fachada compuesta" })
-    .click();
-  await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
+    .press("Enter");
   // Scoped to the main canvas sheet — inspector previews and alternative
   // thumbnails render their own members on the same page. The bay division
   // draws a real mullion member between the two glass bays.
