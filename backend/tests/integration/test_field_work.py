@@ -462,8 +462,13 @@ def test_service_act_never_credits_installation_and_whole_order_needs_both_units
     assert one("SELECT status FROM orders WHERE id=%s", [order["id"]])["status"] == "DISPATCHED"
     with as_user(users["WORKSHOP_MANAGER"]):
         warranty_context={**visit["context"],"approved_at":"2026-10-01T10:00:00-03:00","warranty_terms":{"warranty_days":365,"warranty_start":"INSTALLATION"}}
-        assert field.warranty(org,warranty_context,order["id"],1)["expires_on"] is not None
-        assert field.warranty(org,warranty_context,order["id"],2)["expires_on"] is None
+        # Production callers project warranty under documentary_backend. The
+        # authenticated SQL role must still be unable to read the private act.
+        with pytest.raises(DatabaseError, match="permission denied"), transaction.atomic():
+            field.warranty(org, warranty_context, order["id"], 1)
+        with documentary_backend():
+            assert field.warranty(org,warranty_context,order["id"],1)["expires_on"] is not None
+            assert field.warranty(org,warranty_context,order["id"],2)["expires_on"] is None
         second = field.schedule(
             org,
             users["WORKSHOP_MANAGER"],

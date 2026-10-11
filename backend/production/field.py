@@ -502,6 +502,7 @@ def approval_date(org, version_id):
 
 
 def warranty(org, context, order_id, unit_index=None):
+    """Project sealed warranty facts inside the caller's documentary backend scope."""
     terms = context.get("warranty_terms") or {}
     days, event = terms.get("warranty_days"), terms.get("warranty_start")
     start = None
