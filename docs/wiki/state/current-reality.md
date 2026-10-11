@@ -3,10 +3,10 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: 9213655c
+verified_ref: d6921a893fcc3b303fcd693bd934380e7227f3d0
 sources:
-  - D08 revisión 9213655c, gates completos repetidos, mypy sin caché y navegador de escritura/planta; CI pendiente de cierre
-  - D08 código 13e03a5f, gates de código/navegador y Database Gate completo, 2026-10-11; CI pendiente de cierre
+  - D08 PR https://github.com/KaraAliOsman/framedex/pull/150, CI 4/4 sobre b66ba1c68d24fb9ec34ae04da571866a238dd554, squash d6921a893fcc3b303fcd693bd934380e7227f3d0, 2026-10-11
+  - D08 revisión 9213655c, gates completos repetidos, mypy sin caché y navegador de escritura/planta
   - https://github.com/KaraAliOsman/framedex/pull/149 · squash 331d2eeeec57dedd14577c4ffd5ce8079568bc44, CI 4/4 verde
   - P23 código 0eb58535f33b1537d22db56707ef3f1c7f3a0e0e, siete observaciones corregidas y gates repetidos, 2026-10-11
   - P23 código c0d12cd8ca8ad7c391ba8bbb350c2971418fd800, gates completos, navegador y PostgreSQL propio, 2026-10-11
@@ -94,8 +94,9 @@ sources:
 
 ## D08 · recetas avanzadas (11-10-2026)
 
-Verificado en `codex/D08-tipologias-avanzadas`, base `cf09d813`; cierre de CI
-y squash pendiente. Siete series DEMO v8 aportan catorce recetas HST/PSK,
+Integrado por [PR #150](https://github.com/KaraAliOsman/framedex/pull/150),
+squash `d6921a893fcc3b303fcd693bd934380e7227f3d0`, CI 4/4 verde sobre
+`b66ba1c6`. Siete series DEMO v8 aportan catorce recetas HST/PSK,
 plegables con/sin paso, pivotes, guillotinas y puerta corredera. El motor
 calcula corte/BOM/kit/planta; el sistema sin autoridad conserva causa y
 series compatibles sin ofrecer una receta ficticia. Guardar/preciar/emitir

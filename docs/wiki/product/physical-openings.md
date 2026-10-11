@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-11
 volatility: medium
-verified_ref: 13e03a5f
+verified_ref: d6921a893fcc3b303fcd693bd934380e7227f3d0
 sources:
   - docs/redesign/D08-ACEPTACION.md
   - engine/src/dekopen_engine/openings.py

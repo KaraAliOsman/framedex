@@ -2,8 +2,10 @@
 
 Verificado sobre código `9213655c`, rama `codex/D08-tipologias-avanzadas`, con
 Supabase/Auth propios, Django, worker y Chromium. La evidencia se conserva en
-[tipologías avanzadas](captures/tipologias-avanzadas/). CI y squash se registran
-al integrar; la comprobación local completa terminó con salida 0.
+[tipologías avanzadas](captures/tipologias-avanzadas/). Integrado por
+[PR #150](https://github.com/KaraAliOsman/framedex/pull/150), squash
+`d6921a893fcc3b303fcd693bd934380e7227f3d0`; CI 4/4 verde sobre `b66ba1c6`
+en la corrida `38174351774`. La comprobación local completa terminó con salida 0.
 
 ## Resultado y autoridad
 
