@@ -85,7 +85,7 @@ describe("SHOT-04 application routes", () => {
 
   it("opens the real project list from the authenticated shell", async () => {
     renderRoute("/dashboard", authValue("ready"));
-    expect(screen.getByTestId("app-shell")).toBeInTheDocument();
+    expect(await screen.findByTestId("app-shell")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Proyectos" })).toHaveAttribute("href", "/projects");
     fireEvent.click(screen.getByRole("link", { name: "Proyectos" }));
     expect(await screen.findByRole("heading", { name: "Todos los proyectos" })).toBeInTheDocument();
@@ -113,10 +113,10 @@ describe("SHOT-04 application routes", () => {
     expect(selector).toBeInTheDocument();
   });
 
-  it("switches and persists the dual theme", () => {
+  it("switches and persists the dual theme", async () => {
     window.localStorage.setItem("dekopen.theme", "light");
     renderRoute("/dashboard", authValue("ready"));
-    fireEvent.click(screen.getByRole("button", { name: "Cambiar tema" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Cambiar tema" }));
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(window.localStorage.getItem("dekopen.theme")).toBe("dark");
   });

@@ -682,7 +682,9 @@ function ProjectHeader({
           </dd>
         </div>
         <div>
-          <dt>Total con IVA · {formatRevision(project.current_revision)}</dt>
+          <dt>
+            Total con IVA · {formatRevision(project.accepted_revision || project.current_revision)}
+          </dt>
           <dd className="project-number">
             {project.pricing_current
               ? formatMoney(project.total_price_gross, project.currency)
@@ -690,7 +692,7 @@ function ProjectHeader({
           </dd>
           <dd>
             {project.pricing_current
-              ? "Fuente: precio aplicado del motor comercial"
+              ? project.accepted_source || "Fuente: precio aplicado del motor comercial"
               : "El borrador aún no tiene precio aplicado"}
           </dd>
         </div>

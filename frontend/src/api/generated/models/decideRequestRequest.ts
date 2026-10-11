@@ -9,13 +9,30 @@ import type { DecisionEnum } from "./decisionEnum";
 
 export interface DecideRequestRequest {
   decision: DecisionEnum;
-  /**
-   * @minLength 1
-   * @maxLength 255
-   */
-  decided_by: string;
+  /** @maxLength 255 */
+  decided_by?: string;
   /** @maxLength 32 */
   decided_rut?: string;
   /** @maxLength 500 */
   note?: string;
+  /**
+   * @minLength 1
+   * @pattern ^REV-[A-Z]+$
+   */
+  selected_revision: string;
+  /**
+   * @minLength 1
+   * @pattern ^[0-9a-f]{64}$
+   */
+  expected_offering_sha256: string;
+  /**
+   * @minLength 1
+   * @pattern ^[0-9a-f]{64}$
+   */
+  expected_selected_sha256: string;
+  confirmed?: boolean;
+  /** @maxLength 1000 */
+  consent_text?: string;
+  /** @nullable */
+  position_id?: string | null;
 }

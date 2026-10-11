@@ -1286,3 +1286,30 @@ CI e integración todavía pendientes de registrarse. Véase P21-ACEPTACION.
 
 P21 PR https://github.com/KaraAliOsman/framedex/pull/146, CI 4/4 sobre 50a00fe9e509338cdee706459c17395119e036a8, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38110211964, squash 412029ac1ea688a0f5bf1d560ba9b2e99871fae6, 2026-10-11.
 R1–R20 PASA. Los procesos propios y el stack del gate están detenidos; el fixture persistente se conserva. CodeRabbit, Devin Review y Copilot omitieron su revisión por configuración o cuotas y no se atribuyen como revisión completa.
+
+### 2026-10-11 · P10, propuesta y acuerdo privado
+
+Implementación `08947c855b2339fa830058883cfa9c0d5a685c8c`: la elección
+es evidencia aditiva ligada a oferta/solución/huellas, sin reescribir emisión.
+El resolver usa la versión completa para cobros, factura, compras, Hoy y
+producción. La sucesora exige medidas/precios nuevos. La prueba PostgreSQL
+de factura previa exige conciliación y conserva el documento original.
+
+El recorrido móvil acepta A en B por $4.446.954, pide cambios por posición,
+rechaza y completa un pago de prueba idempotente con retorno/reanudación.
+USD suma US$ 7.610,62 desde la autoridad del motor. Matrices 1440/390,
+los cuatro tamaños por dos temas y captura oficial pasan sin hallazgos;
+Lighthouse móvil de producción da 81 con throttling estándar. Dos rondas
+editoriales y R1–R20 PASA documentados en `P10-ACEPTACION.md`.
+Tarifas/preferencias restauradas, fixture conservado. El gate completo y
+CI aún requieren cierre; no se atribuye integración a esta entrada.
+
+### 2026-10-11 · P10, cierre local verificado
+
+Cierre `d0c9210bbebb92092e7099d0f06a1d93800ba4ee`: cuatro checks locales PASA; 899 motor y dos xfails
+preexistentes, 1.493 backend, 1.002 frontend y golden byte check. Database
+Gate completo PASA: 1.350 pgTAP, 512 integraciones, 19 E2E y upgrades
+poblados PostgreSQL 16. Las 40 vistas finales distinguen oferta B/elección A,
+y la captura oficial de 40 vistas no tiene hallazgos. Secret scan PASA.
+Los procesos propios están detenidos y el fixture se conserva. CI/squash
+siguen pendientes hasta su registro de integración.

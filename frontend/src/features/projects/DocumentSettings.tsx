@@ -209,6 +209,20 @@ export function DocumentSettings({
               />
             </label>
             <label>
+              <input
+                type="checkbox"
+                checked={value.portal_successor_link ?? false}
+                onChange={(event) =>
+                  setValue({ ...value, portal_successor_link: event.target.checked })
+                }
+              />
+              Permitir que un enlace reemplazado lleve a la propuesta vigente
+              <small>
+                Se sella al emitir. Permite consultar la nueva revisión a quien conserve un enlace
+                anterior; desactivado por defecto.
+              </small>
+            </label>
+            <label>
               Vigencia comercial para cotizaciones nuevas (días)
               <input
                 type="number"

@@ -9,6 +9,8 @@ import type { FlowSimulationEnvironmentEnum } from "./flowSimulationEnvironmentE
 import type { FlowSimulationStatusEnum } from "./flowSimulationStatusEnum";
 
 export interface FlowSimulation {
+  /** @nullable */
+  portal_path?: string | null;
   amount: string;
   status: FlowSimulationStatusEnum;
   environment: FlowSimulationEnvironmentEnum;

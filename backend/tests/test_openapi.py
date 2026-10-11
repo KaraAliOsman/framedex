@@ -131,6 +131,8 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/inventory/remnants/{remnant_id}/scrap/",
         "/api/v1/analytics/summary/",
         "/api/v1/portal/quotes/{token}/",
+        "/api/v1/portal/quotes/{token}/pay/",
+        "/api/v1/portal/payments/{context_id}/return/",
         "/api/v1/portal/quotes/{token}/decide/",
         "/api/v1/projects/{project_id}/quote-link/",
         "/api/v1/projects/flow/confirm/{link_id}/",
@@ -267,6 +269,15 @@ def test_collection_contract_distinguishes_user_authority_from_payer_capability(
     assert any(p["name"] == "token" and p["required"] for p in public["get"]["parameters"])
     schemas = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))["components"]["schemas"]
     assert "token" in schemas["FlowSimulationRequestRequest"]["required"]
+    for path, method in (("/api/v1/portal/quotes/{token}/pay/", "post"),
+                         ("/api/v1/portal/payments/{context_id}/return/", "get")):
+        assert paths[path][method]["security"] == [{}]
+    returning=paths["/api/v1/portal/payments/{context_id}/return/"]["get"]
+    assert any(p["name"]=="access" and p["required"] for p in returning["parameters"])
+    request=schemas["PortalPayRequestRequest"]
+    assert set(request["properties"])=={"amount","payer_email","operation_key"}
+    assert request["properties"]["operation_key"]["format"]=="uuid"
+    assert set(request["required"])=={"amount","payer_email","operation_key"}
 
 
 def test_engine_response_includes_shot06_and_excludes_inspector() -> None:

@@ -3,8 +3,11 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: 412029ac1ea688a0f5bf1d560ba9b2e99871fae6
+verified_ref: d0c9210bbebb92092e7099d0f06a1d93800ba4ee
 sources:
+  - P10 cierre local d0c9210bbebb92092e7099d0f06a1d93800ba4ee, cuatro checks de código, Database Gate completo y matrices finales, 2026-10-11
+  - P10 implementación 08947c855b2339fa830058883cfa9c0d5a685c8c, navegador, matrices y conciliación PostgreSQL focal, 2026-10-11
+  - docs/redesign/P10-ACEPTACION.md
   - P21 PR https://github.com/KaraAliOsman/framedex/pull/146, CI 4/4 sobre 50a00fe9e509338cdee706459c17395119e036a8, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38110211964, squash 412029ac1ea688a0f5bf1d560ba9b2e99871fae6, 2026-10-11.
   - P21 cierre local e309768b950539177f7f651d3d59237585e65baf, Database Gate completo y lint/tipos finales, 2026-10-11
   - P21 implementación 38bac104c8774dc0225fccec74e6089872701cb1, navegador y PostgreSQL focal, 2026-10-10
@@ -76,6 +79,31 @@ sources:
 ---
 
 # Current reality
+
+## P10 · propuesta y acuerdo del cliente (11-10-2026)
+
+La oferta vigente y la solución elegida mantienen identidades distintas.
+La evidencia aditiva privada gobierna cobros, factura, Hoy, compras y
+producción desde la versión completa sellada. Los documentos emitidos no
+cambian. Una factura de otra solución exige conciliación; su emisión y la
+decisión comparten el bloqueo del acuerdo. La sucesora abre un borrador
+desde la elección y exige revisar nuevas medidas/precios.
+
+El recorrido móvil compara A/B, acepta A con RUT/consentimiento, pide cambio
+referido a una posición y rechaza sin motivo obligatorio. Un pago fallido
+conserva el saldo; continuar el cobro preparado acredita una vez y retorna
+al portal correcto. La evidencia personal no aparece en el acceso público.
+CLP/USD y las doce líneas más servicios/ajustes coinciden con la cabecera.
+Las matrices y captura oficial no tienen nuevos hallazgos; Lighthouse móvil
+da 81. Los cuatro gates locales pasan: 899 motor (dos xfails preexistentes),
+1.493 backend y 1.002 frontend, golden byte check, lint, tipos y build. El
+gate completo verifica 1.350 pgTAP, 512 integraciones, 19 E2E y upgrades
+poblados en PostgreSQL 16. La oferta B y la elección A se distinguen en
+las 40 vistas finales. CI y squash se registran al integrar.
+
+Véase [propuesta y acuerdo](../product/customer-proposals.md) y
+`docs/redesign/P10-ACEPTACION.md`. Flow productivo y catálogo certificado
+dependen de activación/evidencia externa; la simulación no mueve dinero.
 
 ## P21 · centro de trabajo del proyecto (10-10-2026)
 

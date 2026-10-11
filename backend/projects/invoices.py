@@ -109,9 +109,11 @@ def _sealed_deal(
         )
     else:
         version = rows(
-            "SELECT id,revision_code,snapshot_json::text AS snapshot_json "
-            "FROM public.project_versions "
-            "WHERE org_id=%s AND project_id=%s ORDER BY emitted_at DESC,id DESC LIMIT 1",
+            "SELECT v.id,v.revision_code,v.snapshot_json::text AS snapshot_json "
+            "FROM (SELECT * FROM public.project_versions WHERE org_id=%s AND project_id=%s "
+            "ORDER BY emitted_at DESC,id DESC LIMIT 1) offered "
+            "LEFT JOIN LATERAL private.quotation_choice(offered.org_id,offered.id) c ON c.kind='APPROVED' "
+            "JOIN public.project_versions v ON v.id=COALESCE(c.selected_version_id,offered.id) AND v.org_id=offered.org_id",
             [str(org_id), str(project_id)],
         )
     if not version:
@@ -150,6 +152,8 @@ def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID, document_kind=
     object_key: str | None = None
     try:
         with transaction.atomic(), documentary_backend():
+            from documents.agreements import lock_quote
+            lock_quote(org_id, project_id_s)
             deal = _sealed_deal(org_id, UUID(project_id_s))
             if deal is None:
                 raise contract_error(

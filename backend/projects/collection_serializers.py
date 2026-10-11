@@ -35,6 +35,7 @@ class FlowSimulationRequestSerializer(StrictSerializer):
 
 
 class FlowSimulationSerializer(serializers.Serializer):
+    portal_path = serializers.CharField(allow_null=True, required=False)
     amount = serializers.CharField()
     status = serializers.ChoiceField(choices=("PENDING", "PAID", "FAILED", "EXPIRED", "CANCELLED"))
     environment = serializers.ChoiceField(choices=("simulated",))

@@ -14,6 +14,7 @@
  * * `REVOKED` - REVOKED
  * * `APPROVED` - APPROVED
  * * `DECLINED` - DECLINED
+ * * `CHANGES_REQUESTED` - CHANGES_REQUESTED
  */
 export type LinkStateEnum = (typeof LinkStateEnum)[keyof typeof LinkStateEnum];
 
@@ -25,4 +26,5 @@ export const LinkStateEnum = {
   REVOKED: "REVOKED",
   APPROVED: "APPROVED",
   DECLINED: "DECLINED",
+  CHANGES_REQUESTED: "CHANGES_REQUESTED",
 } as const;

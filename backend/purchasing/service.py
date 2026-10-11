@@ -60,20 +60,30 @@ def _array(value: object, code: str) -> list[object]:
     return parsed
 
 
-def _version(version_id: UUID, org_id: UUID) -> dict[str, object]:
+def _version(version_id: UUID, org_id: UUID, *, for_purchase=False) -> dict[str, object]:
     version = one(
         "SELECT version.id,version.project_id,version.org_id,version.revision_code,"
         "version.authority_version,version.bom_hash,version.snapshot_sha256,"
         "version.production_allowed,version.documentary_complete,version.emitted_at,"
-        "project.code AS project_code "
+        "project.code AS project_code,c.selected_version_id AS accepted_version_id "
         "FROM public.project_versions version JOIN public.projects project "
         "ON project.id=version.project_id AND project.org_id=version.org_id "
+        "LEFT JOIN public.project_versions offered ON offered.org_id=project.org_id AND offered.project_id=project.id AND offered.revision_code=project.current_revision "
+        "LEFT JOIN LATERAL private.quotation_choice(project.org_id,offered.id) c ON c.kind='APPROVED' "
         "WHERE version.id=%s AND version.org_id=%s",
         [version_id, org_id],
         "project_version_not_found",
     )
     if version["authority_version"] not in ("SHOT09_V1", "SHOT10_V1"):
         raise DocumentaryError("legacy_version_not_eligible")
+    if for_purchase:
+        from documents.agreements import lock_quote
+        lock_quote(org_id,version['project_id'])
+        # Re-read after the shared lock: a decision may have committed while
+        # this purchase waited. Reading history itself remains available.
+        version = _version(version_id,org_id)
+        if version.get('accepted_version_id') and str(version['accepted_version_id']) != str(version_id):
+            raise DocumentaryError('quote_solution_not_selected', detail='Esta revisión no es la solución aceptada por el cliente. Abre la revisión elegida antes de confirmar una compra.')
     return version
 
 
@@ -481,7 +491,7 @@ def confirm_order_type_batch(
     if not confirmed:
         raise DocumentaryError("order_batch_confirmation_required")
     with documentary_backend():
-        version = _version(version_id, org_id)
+        version = _version(version_id, org_id, for_purchase=True)
         labels = _trace_labels(version_id, org_id)
         with connection.cursor() as cursor:
             cursor.execute(
@@ -722,7 +732,7 @@ def send_order(
         raise DocumentaryError("order_send_confirmation_required")
     with documentary_backend():
         order = one(
-            "SELECT id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
+            "SELECT id,project_version_id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
             "FROM public.orders WHERE id=%s AND org_id=%s FOR UPDATE",
             [order_id, org_id],
             "order_not_found",
@@ -733,6 +743,8 @@ def send_order(
             return {key: str(value) for key, value in order.items()}
         if order["status"] != "DRAFT":
             raise DocumentaryError("order_state_invalid")
+        if order.get('project_version_id'):
+            _version(order['project_version_id'], org_id, for_purchase=True)
         sent_at = datetime.now(timezone.utc)
         if sent_to is not None:
             sent_to = str(sent_to).strip() or None

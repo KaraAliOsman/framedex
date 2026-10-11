@@ -72,6 +72,7 @@ class QuotationIndexItemSerializer(serializers.Serializer):
     view_count = serializers.IntegerField()
     last_viewed_at = serializers.DateTimeField(allow_null=True)
     response_note = serializers.CharField(allow_null=True)
+    decision_kind = serializers.CharField(allow_null=True, required=False)
     total = serializers.CharField(allow_null=True)
     currency = serializers.CharField(allow_null=True)
     source = serializers.CharField()

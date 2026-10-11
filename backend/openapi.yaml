@@ -9506,6 +9506,143 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/portal/payments/{context_id}/return/:
+    get:
+      operationId: portal_payment_return
+      parameters:
+      - in: query
+        name: access
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: context_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: redirect
+        schema:
+          type: boolean
+      tags:
+      - v1
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalPayReturn'
+          description: ''
+        '302':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: portal_payment_provider_return
+      parameters:
+      - in: query
+        name: access
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: context_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - {}
+      responses:
+        '302':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/portal/quotes/{token}/:
     get:
       operationId: portal_quote_retrieve
@@ -9601,6 +9738,80 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PortalQuote'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/portal/quotes/{token}/pay/:
+    post:
+      operationId: portal_quote_pay
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalPayRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PortalPayRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PortalPayRequestRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalPayResult'
           description: ''
         '400':
           content:
@@ -22725,6 +22936,17 @@ components:
     ApprovalRecord:
       type: object
       properties:
+        evidence:
+          nullable: true
+        selected_revision:
+          type: string
+          nullable: true
+        decision_kind:
+          type: string
+          nullable: true
+        position_index:
+          type: integer
+          nullable: true
         id:
           type: string
         link_source:
@@ -25250,7 +25472,7 @@ components:
           $ref: '#/components/schemas/DecisionEnum'
         decided_by:
           type: string
-          minLength: 1
+          default: ''
           maxLength: 255
         decided_rut:
           type: string
@@ -25258,9 +25480,33 @@ components:
         note:
           type: string
           maxLength: 500
+        selected_revision:
+          type: string
+          minLength: 1
+          pattern: ^REV-[A-Z]+$
+        expected_offering_sha256:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-f]{64}$
+        expected_selected_sha256:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-f]{64}$
+        confirmed:
+          type: boolean
+          default: false
+        consent_text:
+          type: string
+          maxLength: 1000
+        position_id:
+          type: string
+          format: uuid
+          nullable: true
       required:
-      - decided_by
       - decision
+      - expected_offering_sha256
+      - expected_selected_sha256
+      - selected_revision
     DecimalSeparatorEnum:
       enum:
       - .
@@ -25272,10 +25518,12 @@ components:
     DecisionEnum:
       enum:
       - APPROVED
+      - CHANGES_REQUESTED
       - DECLINED
       type: string
       description: |-
         * `APPROVED` - APPROVED
+        * `CHANGES_REQUESTED` - CHANGES_REQUESTED
         * `DECLINED` - DECLINED
     Delivery:
       type: object
@@ -26257,6 +26505,8 @@ components:
     DocumentPreferences:
       type: object
       properties:
+        portal_successor_link:
+          type: boolean
         piece_label_paper:
           $ref: '#/components/schemas/PieceLabelPaperEnum'
         remnant_destination:
@@ -26291,6 +26541,8 @@ components:
     DocumentPreferencesRequest:
       type: object
       properties:
+        portal_successor_link:
+          type: boolean
         piece_label_paper:
           $ref: '#/components/schemas/PieceLabelPaperEnum'
         remnant_destination:
@@ -27862,6 +28114,9 @@ components:
     FlowSimulation:
       type: object
       properties:
+        portal_path:
+          type: string
+          nullable: true
         amount:
           type: string
         status:
@@ -29972,6 +30227,7 @@ components:
       - REVOKED
       - APPROVED
       - DECLINED
+      - CHANGES_REQUESTED
       type: string
       description: |-
         * `ACTIVE` - ACTIVE
@@ -29981,6 +30237,7 @@ components:
         * `REVOKED` - REVOKED
         * `APPROVED` - APPROVED
         * `DECLINED` - DECLINED
+        * `CHANGES_REQUESTED` - CHANGES_REQUESTED
     LocalOriginEnum:
       enum:
       - TOP_LEFT
@@ -35549,6 +35806,14 @@ components:
       required:
       - label
       - share
+    PaymentProviderEnum:
+      enum:
+      - FLOW
+      - SIMULATED
+      type: string
+      description: |-
+        * `FLOW` - FLOW
+        * `SIMULATED` - SIMULATED
     PaymentReceipt:
       type: object
       properties:
@@ -36002,6 +36267,73 @@ components:
       - rule_name
       - synthetic
       - width_mm
+    PortalOption:
+      type: object
+      properties:
+        quote_pdf_url:
+          type: string
+          nullable: true
+        payment_terms:
+          type: string
+          nullable: true
+        notes_commercial:
+          type: string
+          nullable: true
+        revision_code:
+          type: string
+        snapshot_sha256:
+          type: string
+        currency:
+          type: string
+        total_price_gross:
+          type: string
+          nullable: true
+        display_total_gross:
+          type: string
+          nullable: true
+        rounding_adjustment:
+          type: string
+          nullable: true
+        price_cause:
+          type: string
+          nullable: true
+        price_source:
+          type: string
+        consent_text:
+          type: string
+          nullable: true
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalPosition'
+        extras:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        commercial_terms: {}
+        payment_schedule:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - commercial_terms
+      - consent_text
+      - currency
+      - display_total_gross
+      - extras
+      - notes_commercial
+      - payment_schedule
+      - payment_terms
+      - positions
+      - price_cause
+      - price_source
+      - quote_pdf_url
+      - revision_code
+      - rounding_adjustment
+      - snapshot_sha256
+      - total_price_gross
     PortalOrganization:
       type: object
       properties:
@@ -36041,9 +36373,56 @@ components:
       - commercial_name
       - name
       - tax_id
+    PortalPayRequestRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,0})?$
+        payer_email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+      required:
+      - amount
+      - operation_key
+      - payer_email
+    PortalPayResult:
+      type: object
+      properties:
+        url:
+          type: string
+        simulated:
+          type: boolean
+      required:
+      - simulated
+      - url
+    PortalPayReturn:
+      type: object
+      properties:
+        portal_path:
+          type: string
+        status:
+          type: string
+        simulated:
+          type: boolean
+        amount:
+          type: string
+      required:
+      - amount
+      - portal_path
+      - simulated
+      - status
     PortalPayment:
       type: object
       properties:
+        simulated:
+          type: boolean
         status:
           type: string
         collected:
@@ -36057,6 +36436,19 @@ components:
     PortalPosition:
       type: object
       properties:
+        system_name:
+          type: string
+        is_demo:
+          type: boolean
+        unit_price_gross:
+          type: string
+          nullable: true
+        line_price_gross:
+          type: string
+          nullable: true
+        unit_rounding_adjustment:
+          type: string
+          nullable: true
         opening_leaves:
           type: array
           items: {}
@@ -36129,6 +36521,45 @@ components:
     PortalQuote:
       type: object
       properties:
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalOption'
+        selected_revision:
+          type: string
+        offering_sha256:
+          type: string
+        display_total_gross:
+          type: string
+          nullable: true
+        rounding_adjustment:
+          type: string
+          nullable: true
+        price_cause:
+          type: string
+          nullable: true
+        price_source:
+          type: string
+        consent_text:
+          type: string
+          nullable: true
+        commercial_terms: {}
+        payment_schedule:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        payment_provider:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/PaymentProviderEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        validity_days:
+          type: integer
+          nullable: true
+        successor_path:
+          type: string
+          nullable: true
         schema:
           type: string
         organization:
@@ -38154,6 +38585,15 @@ components:
           type: string
         notes_internal:
           type: string
+        accepted_version_id:
+          type: string
+          format: uuid
+          nullable: true
+        accepted_revision:
+          type: string
+          nullable: true
+        accepted_source:
+          type: string
         id:
           type: string
           format: uuid
@@ -38778,6 +39218,9 @@ components:
           format: date-time
           nullable: true
         response_note:
+          type: string
+          nullable: true
+        decision_kind:
           type: string
           nullable: true
         total:

@@ -36,6 +36,7 @@ class CommercialTermsSerializer(StrictSerializer):
 
 
 class DocumentPreferencesSerializer(StrictSerializer):
+    portal_successor_link = serializers.BooleanField(required=False)
     piece_label_paper = serializers.ChoiceField(choices=["LETTER", "A4", "ROLL_100_50"], required=False)
     remnant_destination = serializers.CharField(max_length=80, allow_blank=False, required=False)
     remnant_age_days = serializers.IntegerField(min_value=1, max_value=3650, required=False)

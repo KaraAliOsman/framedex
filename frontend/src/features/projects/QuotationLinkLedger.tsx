@@ -11,6 +11,7 @@ const labels: Record<string, string> = {
   REVOKED: "Revocado",
   APPROVED: "Aprobado",
   DECLINED: "Cambios solicitados",
+  CHANGES_REQUESTED: "Cambios solicitados",
 };
 
 function Deadline({
@@ -91,7 +92,9 @@ export function QuotationLinkLedger({
                 <div className="quotation-link__title">
                   <strong>{formatRevision(link.revision_code)}</strong>
                   <StatusBadge showIcon={false} data-status={state.toLowerCase()}>
-                    {labels[state] ?? "Sin dato"}
+                    {state === "DECLINED" && link.decision_kind === "DECLINED"
+                      ? "Rechazado"
+                      : (labels[state] ?? "Sin dato")}
                   </StatusBadge>
                   <span>
                     {link.link_source === "DOCUMENT" ? "QR del PDF" : "Enlace regenerado"}
@@ -114,9 +117,63 @@ export function QuotationLinkLedger({
                   ) : null}
                   {link.decided_at ? (
                     <li>
-                      {link.status === "DECLINED" ? "Cambios solicitados" : "Aprobado"} por{" "}
-                      {link.decided_by} · {formatDateTime(link.decided_at)}
+                      {link.status === "CHANGES_REQUESTED" ||
+                      (link.status === "DECLINED" && !link.decision_kind)
+                        ? "Cambios solicitados"
+                        : link.status === "DECLINED"
+                          ? "Rechazado"
+                          : "Aprobado"}
+                      {link.decided_by ? ` por ${link.decided_by}` : ""} ·{" "}
+                      {formatDateTime(link.decided_at)}
+                      {link.selected_revision && (
+                        <p>
+                          Solución elegida: {formatRevision(link.selected_revision)}
+                          {link.position_index ? ` · posición ${link.position_index}` : ""}
+                        </p>
+                      )}
                       {link.decided_note ? <blockquote>{link.decided_note}</blockquote> : null}
+                      {Boolean(link.evidence) && (
+                        <details>
+                          <summary>Evidencia de la decisión</summary>
+                          <dl>
+                            {(["name", "rut", "consent", "ip_address", "user_agent"] as const).map(
+                              (key) => (
+                                <div key={key}>
+                                  <dt>
+                                    {
+                                      {
+                                        name: "Nombre",
+                                        rut: "RUT",
+                                        consent: "Aceptación",
+                                        ip_address: "IP",
+                                        user_agent: "Navegador",
+                                      }[key]
+                                    }
+                                  </dt>
+                                  <dd>
+                                    {String(
+                                      (link.evidence as Record<string, unknown>)[key] || "Sin dato",
+                                    )}
+                                  </dd>
+                                </div>
+                              ),
+                            )}
+                            <div>
+                              <dt>Fecha y hora</dt>
+                              <dd>{formatDateTime(link.decided_at)}</dd>
+                            </div>
+                          </dl>
+                          <details>
+                            <summary>Detalles técnicos</summary>
+                            <code>
+                              {String(
+                                (link.evidence as Record<string, unknown>).selected_sha256 ||
+                                  "Sin huella",
+                              )}
+                            </code>
+                          </details>
+                        </details>
+                      )}
                     </li>
                   ) : null}
                   {link.revoked_at ? <li>Revocado · {formatDateTime(link.revoked_at)}</li> : null}

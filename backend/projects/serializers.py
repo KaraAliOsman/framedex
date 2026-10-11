@@ -165,6 +165,9 @@ class ProjectVersionResponseSerializer(serializers.Serializer):
 
 
 class ProjectResponseSerializer(ProjectWriteSerializer):
+    accepted_version_id = serializers.UUIDField(required=False, allow_null=True)
+    accepted_revision = serializers.CharField(required=False, allow_null=True)
+    accepted_source = serializers.CharField(required=False)
     id = serializers.UUIDField()
     code = serializers.CharField()
     status = serializers.ChoiceField(

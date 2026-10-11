@@ -1,5 +1,8 @@
 """Capabilities must recheck live revocation, including a previously cached 410."""
 
+import gzip
+import json
+
 import pytest
 from rest_framework.test import APIRequestFactory
 
@@ -22,7 +25,9 @@ def test_public_portal_never_caches_success_or_error(monkeypatch, code, decision
     monkeypatch.setattr("portal.service.decide_quote", retrieve)
     factory = APIRequestFactory()
     request = (
-        factory.post("/", {"decision": "APPROVED", "decided_by": "Cliente"}, format="json")
+        factory.post("/", {"decision": "APPROVED", "decided_by": "Cliente",
+            'decided_rut':'12.345.678-5','confirmed':True,'consent_text':'Acepto esta propuesta',
+            'selected_revision':'REV-A','expected_offering_sha256':'a'*64,'expected_selected_sha256':'a'*64}, format="json")
         if decision else factory.get("/")
     )
     response = view.as_view()(request, token="fixture-capability")
@@ -31,3 +36,15 @@ def test_public_portal_never_caches_success_or_error(monkeypatch, code, decision
     assert "no-cache" in response["Cache-Control"]
     assert "private" in response["Cache-Control"]
     assert "Expires" in response
+
+
+def test_large_proposal_compresses_transport_without_caching_or_changing_data(monkeypatch):
+    monkeypatch.setattr(PortalQuoteView, "throttle_classes", [])
+    sealed = {"approval_status": "APPROVED", "positions": [{"location_tag": "Estar norte " * 100}]}
+    monkeypatch.setattr("portal.service.portal_quote", lambda *args, **kwargs: sealed)
+    response = PortalQuoteView.as_view()(APIRequestFactory().get("/", HTTP_ACCEPT_ENCODING="gzip"), token="fixture-capability")
+    response.render()
+    assert response["Content-Encoding"] == "gzip"
+    assert "Accept-Encoding" in response["Vary"]
+    assert "no-store" in response["Cache-Control"] and "private" in response["Cache-Control"]
+    assert json.loads(gzip.decompress(response.content)) == sealed

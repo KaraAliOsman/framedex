@@ -1,14 +1,10 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type PropsWithChildren } from "react";
 import { createBrowserRouter, Navigate, Route, RouterProvider, Routes } from "react-router-dom";
 
 import { t } from "./i18n/es-CL";
 
-import { AppShell } from "./app/AppShell";
 import { RouteErrorBoundary } from "./app/RouteErrorBoundary";
 import { ConnectionBoundary, RecoveryPage } from "./app/RecoveryPage";
-import { DashboardPage } from "./app/DashboardPage";
-import { JobsPage } from "./app/JobsPage";
-import { SettingsPage } from "./app/SettingsPage";
 import { AuthCallbackPage } from "./auth/AuthCallbackPage";
 import { ReadyGuard, SessionGuard } from "./auth/AuthGuards";
 import { useAuthSession } from "./auth/AuthSessionProvider";
@@ -16,9 +12,48 @@ import { LoginPage } from "./auth/LoginPage";
 import { MfaPage } from "./auth/MfaPage";
 import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
 import { consumeReturnTo } from "./auth/returnTo";
-import { LandingPage } from "./features/landing/LandingPage";
-import { AboutPage } from "./brand/AboutPage";
 import { homeFor } from "./app/navigation";
+import { DimLoader } from "./ui/Signature";
+
+// Public proposals should not fetch the estimator's shell, assistant and
+// settings before they can show the manufacturer's document.
+const LazyAppShell = lazy(async () => ({ default: (await import("./app/AppShell")).AppShell }));
+const DashboardPage = lazy(async () => ({
+  default: (await import("./app/DashboardPage")).DashboardPage,
+}));
+const JobsPage = lazy(async () => ({ default: (await import("./app/JobsPage")).JobsPage }));
+const SettingsPage = lazy(async () => ({
+  default: (await import("./app/SettingsPage")).SettingsPage,
+}));
+const LazyLandingPage = lazy(async () => ({
+  default: (await import("./features/landing/LandingPage")).LandingPage,
+}));
+const LazyAboutPage = lazy(async () => ({
+  default: (await import("./brand/AboutPage")).AboutPage,
+}));
+
+function LandingPage(): JSX.Element {
+  return (
+    <Suspense fallback={<DimLoader label="Cargando el inicio" />}>
+      <LazyLandingPage />
+    </Suspense>
+  );
+}
+function AboutPage(): JSX.Element {
+  return (
+    <Suspense fallback={<DimLoader label="Cargando datos de la aplicación" />}>
+      <LazyAboutPage />
+    </Suspense>
+  );
+}
+
+function AppShell({ children }: PropsWithChildren): JSX.Element {
+  return (
+    <Suspense fallback={<DimLoader label="Cargando su espacio de trabajo" />}>
+      <LazyAppShell>{children}</LazyAppShell>
+    </Suspense>
+  );
+}
 
 export const DEV_ONLY_ROUTE_PATHS = [
   "/projects/demo/positions/g1/edit",

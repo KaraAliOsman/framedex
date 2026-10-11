@@ -95,3 +95,69 @@ def representative_index(dimensions: Sequence[tuple[Decimal, Decimal]]) -> int:
     with localcontext() as context:
         context.prec = 80
         return max(range(len(dimensions)), key=lambda index: dimensions[index][0] * dimensions[index][1])
+
+
+@dataclass(frozen=True)
+class GrossQuotationInput:
+    key: str
+    quantity: int
+    net: Decimal
+
+
+@dataclass(frozen=True)
+class GrossQuotationLine:
+    key: str
+    quantity: int
+    net: Decimal
+    gross: Decimal
+    unit_gross: Decimal
+    unit_adjustment: Decimal
+
+
+@dataclass(frozen=True)
+class GrossQuotation:
+    lines: tuple[GrossQuotationLine, ...]
+    sealed_gross: Decimal
+    display_gross: Decimal
+    rounding_adjustment: Decimal
+
+
+def gross_quotation(
+    entries: Sequence[GrossQuotationInput], *, currency: str,
+    sealed_net: Decimal, sealed_tax: Decimal, sealed_gross: Decimal,
+) -> GrossQuotation:
+    """Distribute the sealed tax without repricing or assuming a tax rate.
+
+    Positions, services and declared charges remain separate selling lines.
+    Currency rounding is explicit at unit and document level. Fractional
+    historical amounts keep their exact debt; the display never rewrites it.
+    """
+    number(sealed_net)
+    number(sealed_tax)
+    number(sealed_gross)
+    display_gross = quantize_currency(sealed_gross, currency)
+    if not entries:
+        raise PricingError("quotation_lines_incomplete")
+    keys: set[str] = set()
+    for entry in entries:
+        if (not isinstance(entry.key, str) or not entry.key.strip() or entry.key in keys
+            or isinstance(entry.quantity, bool) or not isinstance(entry.quantity, int)
+            or entry.quantity < 1):
+            raise PricingError("invalid_positions")
+        keys.add(entry.key)
+        number(entry.net)
+    with localcontext() as context:
+        context.prec = 80
+        if (sum((entry.net for entry in entries), ZERO) != sealed_net
+            or sealed_net + sealed_tax != sealed_gross
+            or (sealed_net == ZERO and sealed_tax != ZERO)):
+            raise PricingError("quotation_price_authority_inconsistent")
+        lines = []
+        for entry in entries:
+            tax = sealed_tax * entry.net / sealed_net if sealed_net else ZERO
+            gross = quantize_currency(entry.net + tax, currency)
+            unit = quantize_currency(gross / entry.quantity, currency)
+            lines.append(GrossQuotationLine(entry.key, entry.quantity, entry.net, gross,
+                                           unit, gross - unit * entry.quantity))
+        return GrossQuotation(tuple(lines), sealed_gross, display_gross,
+                              display_gross - sum((line.gross for line in lines), ZERO))

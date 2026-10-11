@@ -23,7 +23,7 @@ def fraction(**kwargs):
 class StrictSerializer(serializers.Serializer):
     def to_internal_value(self, data):
         if not isinstance(data,dict) or set(data)-set(self.fields):
-            raise serializers.ValidationError('Unknown input fields')
+            raise serializers.ValidationError({'non_field_errors': ['Unknown input fields']})
         return super().to_internal_value(data)
 
 
