@@ -15,7 +15,7 @@ import { ApiError, configureApiAuthContext } from "../api/apiMutator";
 import { authMe } from "../api/generated/dekopen";
 import type { AuthMeResponse, Membership } from "../api/generated/models";
 import { useCanvasStore } from "../features/canvas/canvasStore";
-import { clearActor } from "../features/field/outbox";
+import { clearActor, clearScope } from "../features/field/outbox";
 import { t } from "../i18n/es-CL";
 import { telemetry } from "../telemetry/telemetry";
 import { supabase } from "./supabaseClient";
@@ -152,6 +152,15 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
         }
         const active = response.data.active_organization;
         if (active !== null) {
+          const outgoing = canvasIdentity.current;
+          if (
+            outgoing?.userId === current.user.id &&
+            outgoing.organizationId &&
+            outgoing.organizationId !== active.id
+          ) {
+            await clearScope({ actor: current.user.id, org: outgoing.organizationId });
+            if (!isCurrent()) return;
+          }
           transitionCanvasIdentity(current.user.id, active.id);
           organizationRef.current = active.id;
           window.localStorage.setItem(organizationStorageKey(current.user.id), active.id);
@@ -173,6 +182,8 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
           organizationRef.current !== null &&
           attempt === 0
         ) {
+          await clearScope({ actor: current.user.id, org: organizationRef.current });
+          if (!isCurrent()) return;
           window.localStorage.removeItem(organizationStorageKey(current.user.id));
           organizationRef.current = null;
           continue;
@@ -335,7 +346,28 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
         // stale_organization the moment the context flips — cancel them so
         // their rejections never reach a rendered error state.
         void queryClient.cancelQueries();
+        const departing = organizationRef.current;
+        const selectionGeneration = ++requestGeneration.current;
         transitionCanvasIdentity(current.user.id, organizationId);
+        if (departing !== null && departing !== organizationId) {
+          setStatus("resolving");
+          setMe(null);
+          meRef.current = null;
+          try {
+            await clearScope({ actor: current.user.id, org: departing });
+          } catch {
+            setError(
+              "No se pudo borrar la copia privada de terreno. Reintenta cambiar de organización.",
+            );
+            setStatus("error");
+            return;
+          }
+          if (
+            sessionRef.current?.access_token !== current.access_token ||
+            selectionGeneration !== requestGeneration.current
+          )
+            return;
+        }
         organizationRef.current = organizationId;
         window.localStorage.setItem(organizationStorageKey(current.user.id), organizationId);
         telemetry.organization(organizationId);

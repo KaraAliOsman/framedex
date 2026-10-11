@@ -16,6 +16,7 @@ type Copy = Scope & { key: string; workspace: Workspace; savedAt: number };
 const DATABASE = "dekopen-field-v1";
 const locked = new Map<string, Promise<void>>();
 const actorGeneration = new Map<string, number>();
+const scopeGeneration = new Map<string, number>();
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -60,11 +61,14 @@ async function run<T>(
 function scopeKey(scope: Scope): string {
   return `${scope.actor}:${scope.org}`;
 }
+function generation(scope: Scope): string {
+  return `${actorGeneration.get(scope.actor) ?? 0}:${scopeGeneration.get(scopeKey(scope)) ?? 0}`;
+}
 export async function saveCopy(scope: Scope, workspace: Workspace): Promise<void> {
-  const generation = actorGeneration.get(scope.actor);
+  const stamp = generation(scope);
   // Only physical agenda/evidence. Office choice lists are fetched live.
   await run("copies", "readwrite", (store) =>
-    generation !== actorGeneration.get(scope.actor)
+    stamp !== generation(scope)
       ? store.get(scopeKey(scope))
       : store.put({
           ...scope,
@@ -84,7 +88,7 @@ export async function pending(scope: Scope): Promise<Pending[]> {
     .sort((a, b) => a.savedAt - b.savedAt || a.key.localeCompare(b.key));
 }
 export async function enqueue(scope: Scope, visitId: string, command: Command): Promise<Pending> {
-  const generation = actorGeneration.get(scope.actor);
+  const stamp = generation(scope);
   const value = {
     ...scope,
     key: `${scopeKey(scope)}:${command.operation_key}`,
@@ -94,9 +98,9 @@ export async function enqueue(scope: Scope, visitId: string, command: Command): 
   };
   // add, never put: an operation key cannot overwrite earlier evidence.
   await run("commands", "readwrite", (store) =>
-    generation !== actorGeneration.get(scope.actor) ? store.get(value.key) : store.add(value),
+    stamp !== generation(scope) ? store.get(value.key) : store.add(value),
   );
-  if (generation !== actorGeneration.get(scope.actor))
+  if (stamp !== generation(scope))
     throw new Error("La sesión cambió. Abre tu agenda antes de registrar otro trabajo.");
   return value;
 }
@@ -116,6 +120,14 @@ export function detail(error: unknown): string {
 }
 export async function clearActor(actor: string): Promise<void> {
   actorGeneration.set(actor, (actorGeneration.get(actor) ?? 0) + 1);
+  await clearMatching((value) => value.actor === actor);
+}
+export async function clearScope(scope: Scope): Promise<void> {
+  const key = scopeKey(scope);
+  scopeGeneration.set(key, (scopeGeneration.get(key) ?? 0) + 1);
+  await clearMatching((value) => value.actor === scope.actor && value.org === scope.org);
+}
+async function clearMatching(matches: (value: Scope) => boolean): Promise<void> {
   const db = await open();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(["copies", "commands"], "readwrite");
@@ -124,13 +136,17 @@ export async function clearActor(actor: string): Promise<void> {
       request.onsuccess = () => {
         const cursor = request.result;
         if (!cursor) return;
-        if (cursor.value.actor === actor) cursor.delete();
+        if (matches(cursor.value)) cursor.delete();
         cursor.continue();
       };
     }
     tx.oncomplete = () => resolve();
     tx.onabort = () =>
-      reject(new Error("No se pudo borrar la copia privada de terreno. Reintenta cerrar sesión."));
+      reject(
+        new Error(
+          "No se pudo borrar la copia privada de terreno. Reintenta salir de la organización.",
+        ),
+      );
   });
   db.close();
 }

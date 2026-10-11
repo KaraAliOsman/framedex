@@ -187,6 +187,7 @@ class FieldCommandView(APIView):
     def post(self, request, visit_id):
         data = validate(FieldCommandSerializer, request.data)
         with (
+            field.asset_transaction(),
             public_production_errors(),
             documentary_scope(request, field.READERS) as (token, _, org),
         ):

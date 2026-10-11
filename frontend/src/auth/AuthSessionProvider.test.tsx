@@ -10,6 +10,8 @@ import * as pricingTransport from "../api/apiMutator";
 import { authMe } from "../api/generated/dekopen";
 import { CommercialPricingPage } from "../features/pricing/PricingPage";
 import { useCanvasStore } from "../features/canvas/canvasStore";
+import { clearActor, enqueue, pending, readCopy, saveCopy } from "../features/field/outbox";
+import type { Workspace } from "../features/field/types";
 import { telemetry } from "../telemetry/telemetry";
 import { AuthSessionProvider, useAuthSession } from "./AuthSessionProvider";
 
@@ -157,7 +159,8 @@ function expectResetCanvas(): void {
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  await clearActor("unit-user");
   vi.clearAllMocks();
   window.localStorage.clear();
   fake.callback = null;
@@ -170,6 +173,38 @@ beforeEach(() => {
 });
 
 describe("authoritative session and active-organization boundary", () => {
+  it("erases the outgoing tenant's photos and agenda before the next context resolves", async () => {
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    const scope = { actor: "unit-user", org: "org-A" };
+    await saveCopy(scope, {
+      role: "INSTALLER",
+      visits: [],
+      incidents: [],
+      projects: [],
+      assignees: [],
+    } as Workspace);
+    await enqueue(scope, "visit-A", {
+      operation_key: "private-photo-A",
+      kind: "INCIDENT",
+      photo_b64: "private",
+    });
+    let finishB: ((value: Awaited<ReturnType<typeof authMe>>) => void) | undefined;
+    vi.mocked(authMe).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishB = resolve;
+        }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Select B" }));
+    await waitFor(() => expect(finishB).toBeDefined());
+    expect(await pending(scope)).toEqual([]);
+    expect(await readCopy(scope)).toBeUndefined();
+    expect(screen.getByTestId("status")).toHaveTextContent("resolving");
+    expect(screen.getByTestId("active-org")).toBeEmptyDOMElement();
+    await act(async () => finishB?.(result("org-B")));
+    await waitFor(() => expect(screen.getByTestId("active-org")).toHaveTextContent("org-B"));
+  });
   it("resolves a session without copying its access token into a second store", async () => {
     mount();
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
@@ -248,6 +283,7 @@ describe("authoritative session and active-organization boundary", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Select B" }));
     expectResetCanvas();
+    await waitFor(() => expect(finishB).toBeDefined());
     await act(async () => finishB?.(result("org-B")));
     await waitFor(() => expect(screen.getByTestId("active-org")).toHaveTextContent("org-B"));
   });
@@ -363,6 +399,7 @@ describe("authoritative session and active-organization boundary", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Select draft B" }));
     expectResetCanvas();
+    await waitFor(() => expect(finishB).toBeDefined());
     await act(async () => finishB?.(result("org-B")));
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
     await waitFor(() =>

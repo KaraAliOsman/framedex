@@ -2,6 +2,13 @@
 
 ## Terreno y postventa · P23
 
+- Una OT mantiene una salida abierta; el saldo se agenda al cerrarla o
+  cancelarla. La visita conserva el viaje y verifica su carga antes de actuar.
+  Un servicio acredita una unidad con trabajo, foto y firma propios.
+- Cambiar de organización elimina la copia privada y los pendientes de la
+  organización anterior antes de resolver el nuevo acceso. La oficina mantiene
+  diagnóstico y cierre de postventa; el instalador registra evidencia.
+
 - Garantía inicial Sin dato: Comercial permite declarar días e inicio
   (aprobación, entrega o instalación). Se sella con la revisión; texto libre
   no se convierte en un plazo. Para entrega/instalación se usa el primer

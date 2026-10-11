@@ -2349,7 +2349,7 @@ def _create_remake(*, org_id, order_id, actor_id, note=None, operation_key=None,
         # Carry the QC failure forward: the remake order names WHICH unit
         # failed and why, so the floor doesn't re-derive it from the source
         # order's history (review PM-H3).
-        failure_rows = rows(
+        failure_rows = [] if field_case is not None else rows(
             """
             SELECT payload FROM public.production_step_events
             WHERE org_id = %s AND order_id = %s

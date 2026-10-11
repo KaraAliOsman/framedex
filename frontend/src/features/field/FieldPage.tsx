@@ -667,6 +667,9 @@ function Planner({
           <legend>
             {kind === "MEASUREMENT" ? "Posiciones por medir" : "Bultos reales de la revisión"}
           </legend>
+          {kind === "SERVICE" && (
+            <p>Una unidad por servicio: su trabajo, foto y firma quedan juntos.</p>
+          )}
           {choices.length === 0 && (
             <p>Sin unidades disponibles · completa Embalaje o elige otra revisión.</p>
           )}
@@ -687,7 +690,7 @@ function Planner({
                             (u) => u.position_id !== c.position_id || u.unit_index !== c.unit_index,
                           )
                         : [
-                            ...units,
+                            ...(kind === "SERVICE" ? [] : units),
                             {
                               position_id: c.position_id,
                               unit_index: c.unit_index,

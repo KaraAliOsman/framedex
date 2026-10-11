@@ -1,7 +1,16 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { configureApiAuthContext } from "../../api/apiMutator";
-import { clearActor, discardRejected, enqueue, flush, pending, readCopy, saveCopy } from "./outbox";
+import {
+  clearActor,
+  clearScope,
+  discardRejected,
+  enqueue,
+  flush,
+  pending,
+  readCopy,
+  saveCopy,
+} from "./outbox";
 import type { Workspace } from "./types";
 
 const scope = { actor: "field-actor", org: "field-org" };
@@ -30,6 +39,24 @@ beforeEach(async () => {
 });
 
 describe("durable field commands", () => {
+  it("clears only the outgoing tenant and ignores its late failed receipt", async () => {
+    const next = { ...scope, org: "next-org" };
+    await enqueue(scope, "visit-A", command);
+    await enqueue(next, "visit-B", command);
+    vi.mocked(fetch).mockImplementationOnce(async () => {
+      await clearScope(scope);
+      throw new TypeError("Late reply from outgoing tenant");
+    });
+    await expect(
+      flush(
+        scope,
+        () => true,
+        async () => {},
+      ),
+    ).rejects.toThrow();
+    expect(await pending(scope)).toEqual([]);
+    expect(await pending(next)).toHaveLength(1);
+  });
   it("never restores personal evidence when a lost reply arrives after logout", async () => {
     await enqueue(scope, "visit", command);
     vi.mocked(fetch).mockImplementationOnce(async () => {

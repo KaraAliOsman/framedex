@@ -105,7 +105,7 @@ unidad exacta, no la última acta ni un servicio. El cálculo de plazo es puro
 y tiene golden. Emitir un acta parcial no acredita toda la OT.
 
 La copia IndexedDB pertenece a actor+organización y se elimina al salir o
-cambiar de actor. No guarda costos, elecciones de oficina ni URLs firmadas.
+cambiar de actor u organización. No guarda costos, elecciones de oficina ni URLs firmadas.
 La lectura directa de SQL concede metadatos, con RLS; el JSON sellado solo
 se proyecta desde la API. El payload JSON de un acta se decodifica antes
 de filtrar la autoridad comercial, incluso cuando el driver lo entrega como texto.
@@ -127,3 +127,31 @@ los adaptadores existentes. Las decisiones se registran en
 
 Código `c0d12cd8ca8ad7c391ba8bbb350c2971418fd800`: lint, typecheck, test y build PASA. 914 tests de motor (+2 xfail preexistentes), 1494 backend, 1026 frontend; golden anteriores intactos y byte check PASA. Database Gate completo: 1427 pgTAP en 94 archivos, 549 integraciones, 19 Auth E2E y doce programas de upgrades poblados PostgreSQL 16. Las concesiones ambientales de Supabase se revocan antes de asignar lectura al navegador; RLS y triggers conservan su autoridad. Los procesos propios están detenidos y el fixture se conserva. CI y squash se registran al integrar.
 La comprobación de garantía usa el mismo ámbito privado que workspace/Hoy; la regresión exige además que su consulta directa desde authenticated sea denegada. Los permisos del navegador permanecen limitados a metadatos.
+
+## Correcciones de la revisión del PR
+
+Las siete observaciones publicadas se verificaron contra el código. La agenda
+conserva el identificador del viaje y rechaza otra salida abierta de la misma
+OT, incluso con unidades disjuntas. Salida, entrega y cancelación verifican
+ese identificador, estado y carga bajo bloqueo; una modificación desde
+Producción no permite cancelar otro saldo.
+
+Un servicio agenda una unidad por visita: trabajo, foto y acta acreditan la
+misma unidad. El selector sustituye la selección anterior y explica la causa.
+Las comprobaciones, medidas y datos de incidencia se validan antes de subir
+la foto. Los archivos nuevos tienen una dirección propia del intento; una
+excepción del renderer, SQL o cierre de la transacción HTTP los compensa sin
+borrar evidencia sellada. La regresión conserva fotos anteriores byte a byte.
+
+Una RM de terreno conserva su diagnóstico aunque la OT tenga una falla QC
+anterior. El instalador registra evidencia; diagnóstico, cancelación de
+salidas y cierre de postventa permanecen en oficina. La autorización precede
+también al replay. La garantía consulta la aprobación inmutable de la revisión
+elegida, incluida una visita de medición agendada antes del acuerdo. No cambia
+el contrato P10: aprobar después de liberar producción sigue rechazado.
+
+Cambiar de organización elimina agenda y fotos pendientes de la organización
+anterior antes de resolver la siguiente. Las respuestas tardías no restauran
+esa copia; otra organización y otro actor conservan su propio ámbito. Las
+regresiones ejercitan IndexedDB y el componente de sesión de la app, con el segundo
+contexto aún sin resolver.

@@ -47,9 +47,16 @@ incidencias y fechas de garantía desde esas autoridades.
 La preferencia inicial de garantía es Sin dato. El emisor declara días e
 inicio en Comercial antes de aprobar; no se interpreta texto libre.
 La copia local se limita a actor+organización y se elimina al salir/cambiar
-de actor. El service worker guarda solo recursos públicos; evidencia y
+de actor u organización. El service worker guarda solo recursos públicos; evidencia y
 sesión no entran en su caché. Sin señal, el teléfono conserva su última
 asignación descargada; el servidor vuelve a validar antes de sincronizar.
+
+La visita de despacho conserva el viaje exacto. Una segunda salida abierta
+de la misma OT se rechaza hasta cerrar o cancelar la primera; el saldo se
+agenda después. Un servicio acredita una unidad. La RM de terreno conserva
+su diagnóstico frente a un QC antiguo; el instalador no diagnostica ni cierra
+casos de oficina. La garantía resuelve la aprobación real de la revisión,
+aunque la visita se haya agendado antes de esa aprobación.
 
 HTTPS, Storage privado, roles y autoridad real de catálogo se conectan según
 [ACTIVACION](../../operations/ACTIVACION.md). DEMO permanece sintético.

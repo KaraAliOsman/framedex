@@ -198,9 +198,15 @@ def test_invalid_image_rolls_back_and_evidence_cannot_be_rewritten(documentary_t
         )
 
 
-def dispatched(org, users, *, delivered=True, send=True):
+def dispatched(org, users, *, delivered=True, send=True, approval_link=False):
     project, position, operation = _seed_project(org, users["OWNER"])
     frozen = _freeze(org, users["OWNER"], project, operation)
+    if approval_link:
+        from portal import service as portal
+        from backend.tests.integration.test_proposal_v2 import response
+        with as_user(users["OWNER"]):
+            frozen["test_approval_token"] = portal.share_quote(org_id=org, project_id=project, actor_id=users["OWNER"], role="OWNER")["token"]
+        portal.decide_quote(**response(frozen["test_approval_token"]))
     with as_user(users["WORKSHOP_MANAGER"]):
         service.release_production(
             org_id=org, version_id=UUID(frozen["id"]), actor_id=users["WORKSHOP_MANAGER"]
@@ -298,6 +304,11 @@ def test_mobile_chain_partial_reception_and_field_remake_preserve_source(documen
     original = one("SELECT status,payload_json FROM orders WHERE id=%s", [order["id"]])
     assert original["status"] == "DISPATCHED"  # Unit 2 still has no installation act.
     with as_user(users["WORKSHOP_MANAGER"]):
+        with documentary_backend():
+            rows(
+                "INSERT INTO production_step_events(org_id,order_id,event,actor_id,payload) VALUES(%s,%s,'QC_CHECK',%s,%s::jsonb) RETURNING id",
+                [org, order["id"], users["WORKSHOP_MANAGER"], json_text({"qc_result": "FAIL", "qc_item": "glazing", "note": "Falla antigua de taller ya resuelta"})],
+            )
         solved = field.command(
             org,
             users["WORKSHOP_MANAGER"],
@@ -316,6 +327,7 @@ def test_mobile_chain_partial_reception_and_field_remake_preserve_source(documen
             [solved["result"]["resolution"]["remake_order_id"]],
         )
         payload = decoded(remake["payload_json"])
+        assert payload["remake_reason"] == {"note": "Reponer una unidad dañada conservando la fuente", "incident_code": incident["result"]["incident"]["code"]}
         assert payload["quantity"] == 1 and payload["field_incident"]["source_unit_index"] == 1
         assert (
             not {"optimization", "packing", "cnc_export", "dxf_export", "operations_export"}
@@ -433,7 +445,7 @@ def test_service_act_never_credits_installation_and_whole_order_needs_both_units
     documentary_tenant,
 ):
     org, _, users, _ = documentary_tenant
-    body, visit, order, _ = dispatched(org, users)
+    body, visit, order, frozen = dispatched(org, users, approval_link=True)
     service_body = {
         **body,
         "operation_key": uuid4(),
@@ -461,7 +473,8 @@ def test_service_act_never_credits_installation_and_whole_order_needs_both_units
         ))
     assert one("SELECT status FROM orders WHERE id=%s", [order["id"]])["status"] == "DISPATCHED"
     with as_user(users["WORKSHOP_MANAGER"]):
-        warranty_context={**visit["context"],"approved_at":"2026-10-01T10:00:00-03:00","warranty_terms":{"warranty_days":365,"warranty_start":"INSTALLATION"}}
+        assert frozen["test_approval_token"]
+        warranty_context={**visit["context"],"approved_at":None,"warranty_terms":{"warranty_days":365,"warranty_start":"INSTALLATION"}}
         # Production callers project warranty under documentary_backend. The
         # authenticated SQL role must still be unable to read the private act.
         with pytest.raises(DatabaseError, match="permission denied"), transaction.atomic():
@@ -577,9 +590,16 @@ def test_additive_customer_choice_is_warranty_authority(documentary_tenant):
     from portal.service import decide_quote
 
     org, _, users, _ = documentary_tenant
-    _, _, version, token = issue(org, users["OWNER"])
+    project, position, version, token = issue(org, users["OWNER"])
     with as_user(users["WORKSHOP_MANAGER"]):
         assert field.approval_date(org, version) is None
+        visit = field.schedule(org, users["WORKSHOP_MANAGER"], {
+            "operation_key": uuid4(), "project_id": project, "project_version_id": version,
+            "kind": "MEASUREMENT", "assigned_to": users["INSTALLER"],
+            "planned_on": date(2026, 10, 11), "team": "Medición antes del acuerdo",
+            "units": [{"position_id": position, "unit_index": 1}],
+        })["visit"]
+        assert visit["context"]["approved_at"] is None
     decide_quote(**response(token))
     with as_user(users["WORKSHOP_MANAGER"]):
         approved = field.approval_date(org, version)
@@ -587,8 +607,8 @@ def test_additive_customer_choice_is_warranty_authority(documentary_tenant):
         result = field.warranty(
             org,
             {
+                **visit["context"],
                 "warranty_terms": {"warranty_days": 365, "warranty_start": "APPROVAL"},
-                "approved_at": approved,
             },
             None,
         )
@@ -788,6 +808,9 @@ def test_service_diagnosis_signed_visit_and_close_do_not_install_another_unit(do
     unit = visit["context"]["units"][0]
     with as_user(users["INSTALLER"]):
         incident = field.command(org,users["INSTALLER"],visit["id"],{"operation_key":uuid4(),"kind":"INCIDENT","position_id":UUID(unit["position_id"]),"unit_index":1,"incident_kind":"ADJUSTMENT","note":"Regular cierre de la hoja","photo_b64":PHOTO})["result"]["incident"]
+        with pytest.raises(ContractAPIException) as error:
+            field.command(org,users["INSTALLER"],visit["id"],{"operation_key":uuid4(),"kind":"DIAGNOSE","incident_id":incident["id"],"note":"Diagnóstico no autorizado"})
+        assert error.value.status_code == 403
     with as_user(users["WORKSHOP_MANAGER"]):
         field.command(org,users["WORKSHOP_MANAGER"],visit["id"],{"operation_key":uuid4(),"kind":"DIAGNOSE","incident_id":incident["id"],"note":"Ajustar el herraje sellado"})
         resolved = field.command(org,users["WORKSHOP_MANAGER"],visit["id"],{"operation_key":uuid4(),"kind":"RESOLVE","incident_id":incident["id"],"resolution_kind":"SERVICE","note":"Visita de regulación","planned_on":date(2026,10,12),"assigned_to":users["INSTALLER"],"confirmed":True})
@@ -795,6 +818,9 @@ def test_service_diagnosis_signed_visit_and_close_do_not_install_another_unit(do
         with pytest.raises(ContractAPIException, match="Cierra la visita"):
             field.command(org,users["WORKSHOP_MANAGER"],visit["id"],{"operation_key":uuid4(),"kind":"CLOSE","incident_id":incident["id"],"note":"Regulación completada"})
     with as_user(users["INSTALLER"]):
+        with pytest.raises(ContractAPIException) as error:
+            field.command(org,users["INSTALLER"],visit["id"],{"operation_key":uuid4(),"kind":"CLOSE","incident_id":incident["id"],"note":"Cierre no autorizado"})
+        assert error.value.status_code == 403
         receipt = {"operation_key":uuid4(),"kind":"RECEIVE","receiver_name":"Cliente DEMO","receiver_rut":"12.345.678-5","signature_b64":PHOTO,"photo_b64":PHOTO,"note":"Herraje regulado y verificado","confirmed":True}
         first = field.command(org,users["INSTALLER"],service_id,receipt)
         assert first == field.command(org,users["INSTALLER"],service_id,receipt)
@@ -821,3 +847,60 @@ def test_cancelled_predeparture_trip_releases_units_and_qr_identity_is_exact(doc
         replacement=field.schedule(org,users["WORKSHOP_MANAGER"],{**body,"operation_key":uuid4()})
         assert replacement["visit"]["id"]!=visit["id"]
         assert one("SELECT count(*) AS n FROM deliveries WHERE order_id=%s AND status='SCHEDULED'",[unit["order_id"]])["n"]==1
+
+
+def test_disjoint_delivery_visits_cannot_overwrite_a_bound_trip(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    body, visit, order, _ = dispatched(org, users, send=False)
+    before = one("SELECT id,unit_indexes,status FROM deliveries WHERE order_id=%s", [order["id"]])
+    assert visit["context"]["delivery_trips"][str(order["id"])] == str(before["id"])
+    with as_user(users["WORKSHOP_MANAGER"]):
+        with pytest.raises(ContractAPIException) as error:
+            field.schedule(org, users["WORKSHOP_MANAGER"], {**body, "operation_key": uuid4(), "units": [{**body["units"][0], "unit_index": 2}]})
+        assert error.value.status_code == 409
+        assert one("SELECT id,unit_indexes,status FROM deliveries WHERE order_id=%s", [order["id"]]) == before
+        service.schedule_delivery(org_id=org, order_id=order["id"], actor_id=users["WORKSHOP_MANAGER"], scheduled_date="2026-10-11", time_window="AM", address="Obra Norte", unit_indexes=[2])
+        with pytest.raises(ContractAPIException) as error:
+            field.command(org, users["WORKSHOP_MANAGER"], visit["id"], {"operation_key": uuid4(), "kind": "CANCEL"})
+        assert error.value.status_code == 409
+        assert one("SELECT unit_indexes,status FROM deliveries WHERE id=%s", [before["id"]]) == {"unit_indexes": [2], "status": "SCHEDULED"}
+
+
+def test_service_schedule_requires_one_accredited_unit(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    body, _, _, _ = dispatched(org, users)
+    with as_user(users["WORKSHOP_MANAGER"]), pytest.raises(ContractAPIException, match="una unidad"):
+        field.schedule(org, users["WORKSHOP_MANAGER"], {**body, "operation_key": uuid4(), "kind": "SERVICE", "units": [body["units"][0], {**body["units"][0], "unit_index": 2}]})
+    assert rows("SELECT id FROM field_visits WHERE org_id=%s AND kind='SERVICE'", [org]) == []
+
+
+def test_validation_precedes_upload_and_renderer_failure_compensates_only_new_assets(documentary_tenant, monkeypatch):
+    from production import field_pdf
+    org, _, users, _ = documentary_tenant
+    _, visit, _, _ = dispatched(org, users)
+    unit = visit["context"]["units"][0]
+    delivered_assets = dict(Storage.values)
+    with as_user(users["INSTALLER"]):
+        with pytest.raises(ContractAPIException, match="cinco comprobaciones"):
+            field.command(org, users["INSTALLER"], visit["id"], {"operation_key": uuid4(), "kind": "CHECK", "position_id": UUID(unit["position_id"]), "unit_index": 1, "scan": unit["label_code"], "photo_b64": PHOTO, "checks": {"installed": True}})
+    assert Storage.values == delivered_assets
+    checked(org, users, visit)
+    earlier = dict(Storage.values)
+    def failed_render(*args):
+        raise RuntimeError("Injected PDF failure")
+    monkeypatch.setattr(field_pdf, "render_field_act", failed_render)
+    with as_user(users["INSTALLER"]), pytest.raises(RuntimeError, match="Injected PDF failure"):
+        field.command(org, users["INSTALLER"], visit["id"], receive_body())
+    assert Storage.values == earlier
+    assert rows("SELECT id FROM field_assets WHERE visit_id=%s AND kind IN ('ACT','SIGNATURE')", [visit["id"]]) == []
+
+
+def test_outer_http_transaction_failure_compensates_private_photo(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    _, visit, position, survey = new_measurement(org, users)
+    with pytest.raises(RuntimeError, match="Outer commit"), field.asset_transaction(), as_user(users["INSTALLER"]):
+        field.command(org, users["INSTALLER"], visit["id"], cmd(position, measurements=[survey]))
+        assert Storage.values
+        raise RuntimeError("Outer commit failure")
+    assert Storage.values == {}
+    assert rows("SELECT id FROM field_assets WHERE visit_id=%s", [visit["id"]]) == []

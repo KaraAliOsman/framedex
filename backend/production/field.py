@@ -6,11 +6,13 @@ material or accept a motor rectification. A QR is an address, never authority.
 
 from copy import deepcopy
 from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime
 from decimal import Decimal
 from hashlib import sha256
 from io import BytesIO
 import base64
+import logging
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
@@ -28,6 +30,35 @@ from projects.clients import validate_rut
 READERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER")
 SUPERVISORS = ("OWNER", "WORKSHOP_MANAGER")
 CHECKS = ("installed", "levelled", "sealed", "adjusted", "clean")
+_uploads: ContextVar[list[str] | None] = ContextVar("field_uploads", default=None)
+logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def asset_transaction():
+    """Compensate only this request's new objects after SQL/renderer failure.
+
+    The HTTP boundary encloses the outer RLS commit; direct commands enclose
+    their own transaction. Nested commands share the same request inventory.
+    Each upload has an attempt-specific key, so cleanup cannot erase an
+    already sealed object or another actor's upload.
+    """
+    if _uploads.get() is not None:
+        yield
+        return
+    pending_uploads: list[str] = []
+    token = _uploads.set(pending_uploads)
+    try:
+        yield
+    except Exception:
+        for object_key in reversed(pending_uploads):
+            try:
+                SupabaseDocumentStorage().delete_object(object_key)
+            except Exception:
+                logger.error("field_upload_cleanup_failed: %s", object_key)
+        raise
+    finally:
+        _uploads.reset(token)
 
 
 @contextmanager
@@ -318,6 +349,8 @@ def schedule(org, actor, data):
             reject(
                 "El estimador se asigna a mediciones; elige un responsable de terreno para esta visita."
             )
+        if data["kind"] == "SERVICE" and len(data["units"]) != 1:
+            reject("Agenda una unidad por servicio para acreditar su trabajo y su foto.")
         context = _context(org, data)
         # Do not allow overlapping live visits for the same physical unit.
         rows(
@@ -341,6 +374,17 @@ def schedule(org, actor, data):
                 409,
             )
         if data["kind"] == "DELIVERY":
+            order_ids = {u["order_id"] for u in context["units"]}
+            if any(
+                order_ids & {u["order_id"] for u in decoded(v["context_json"])["units"]}
+                for v in previous
+            ):
+                reject(
+                    "Esta OT ya tiene una salida abierta. Cierra o cancela su viaje antes de agendar el saldo.",
+                    "field_delivery_overlap",
+                    409,
+                )
+            context["delivery_trips"] = {}
             grouped = {}
             for unit in context["units"]:
                 grouped.setdefault(unit["order_id"], []).append(unit["unit_index"])
@@ -356,6 +400,11 @@ def schedule(org, actor, data):
                     unit_indexes=indexes,
                     notes=f"Vehículo: {data.get('vehicle') or 'Sin dato'}",
                 )
+                trip = one(
+                    "SELECT id FROM public.deliveries WHERE org_id=%s AND order_id=%s AND status='SCHEDULED' FOR UPDATE",
+                    [org, order_id],
+                )
+                context["delivery_trips"][order_id] = str(trip["id"])
         visit = one(
             "INSERT INTO public.field_visits(org_id,project_id,project_version_id,assigned_to,code,kind,planned_on,team,vehicle,context_json,created_by) "
             "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s) RETURNING *",
@@ -507,7 +556,8 @@ def warranty(org, context, order_id, unit_index=None):
     days, event = terms.get("warranty_days"), terms.get("warranty_start")
     start = None
     # A sealed warranty needs approved commercial authority, not just issuance.
-    approved_at = context.get("approved_at")
+    version_id = context.get("project_version_id")
+    approved_at = approval_date(org, version_id) if version_id else context.get("approved_at")
     if approved_at and event == "APPROVAL":
         start = datetime.fromisoformat(approved_at) if isinstance(approved_at, str) else approved_at
     elif approved_at and order_id and event == "DELIVERY":
@@ -572,7 +622,11 @@ def image_bytes(raw, *, signature=False):
 
 def _asset(org, actor, visit, unit, kind, content, media, key, payload):
     digest = sha256(content).hexdigest()
-    object_key = f"{org}/field/{visit['id']}/{kind.lower()}/{key}/{digest}.{'pdf' if kind == 'ACT' else 'png' if media == 'image/png' else 'jpg'}"
+    object_key = f"{org}/field/{visit['id']}/{kind.lower()}/{key}/{uuid4()}/{digest}.{'pdf' if kind == 'ACT' else 'png' if media == 'image/png' else 'jpg'}"
+    uploads = _uploads.get()
+    if uploads is None:
+        raise RuntimeError("Field assets require an enclosing asset transaction")
+    uploads.append(object_key)
     SupabaseDocumentStorage().upload_immutable(object_key, content, media)
     return one(
         "INSERT INTO public.field_assets(org_id,visit_id,position_id,unit_index,kind,storage_object_key,media_type,file_sha256,byte_size,payload_json,created_by) "
@@ -694,17 +748,19 @@ def _receipt(org, actor, key, visit_id, fingerprint, output):
 
 
 def command(org, actor, visit_id, data):
-    with transaction.atomic(), documentary_backend():
+    with asset_transaction(), transaction.atomic(), documentary_backend():
         # Authorization and assignment precede even a replay after close.
         visit, role = visit_row(org, visit_id, actor, lock=True)
         action = data["kind"]
-        if action in ("RESOLVE", "DEPART") and role not in SUPERVISORS:
+        if action in ("RESOLVE", "DEPART", "CLOSE") and role not in SUPERVISORS:
             reject(
-                "El dueño o jefe de taller autoriza remakes, compras y servicios.",
+                "El dueño o jefe de taller autoriza salidas, soluciones y cierres de postventa.",
                 "field_permission",
                 403,
             )
-        if action in ("CANCEL", "DIAGNOSE", "CLOSE") and role == "INSTALLER" and action == "CANCEL":
+        if action in ("CANCEL", "DIAGNOSE") and role == "INSTALLER":
+            reject("La oficina diagnostica incidencias y cancela visitas.", "field_permission", 403)
+        if action == "CANCEL" and role == "ESTIMATOR" and visit["kind"] != "MEASUREMENT":
             reject("El encargado cancela las salidas.", "field_permission", 403)
         if role == "ESTIMATOR" and action not in ("MEASURE", "DIAGNOSE", "INCIDENT", "CANCEL"):
             reject(
@@ -752,8 +808,6 @@ def command(org, actor, visit_id, data):
                 if any(e["kind"] == "DEPART" for e in _events(org, visit_id)):
                     reject("El vehículo ya salió. La carga queda conservada en su guía.")
                 payload["loaded"] = True
-            else:
-                payload["photo"] = _photo(org, actor, visit, unit, data)
             if action == "CHECK":
                 checks = data.get("checks") or {}
                 if set(checks) != set(CHECKS) or not all(
@@ -810,6 +864,11 @@ def command(org, actor, visit_id, data):
                 ):
                     reject("Elige el tipo de incidencia.")
                 piece = scan_unit(unit, data["scan"], org) if data.get("scan") else None
+                if not data.get("note"):
+                    reject("Describe qué ocurrió en esta posición.")
+            if action != "LOAD":
+                payload["photo"] = _photo(org, actor, visit, unit, data)
+            if action == "INCIDENT":
                 case = one(
                     "INSERT INTO public.field_incidents(org_id,visit_id,order_id,position_id,code,kind,unit_index,piece_identity,description,evidence_json,created_by) "
                     "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s) RETURNING id,code",
@@ -900,6 +959,7 @@ def command(org, actor, visit_id, data):
                 )
             if visit["kind"] == "DELIVERY":
                 for order_id in sorted({u["order_id"] for u in visit["context_json"]["units"]}):
+                    _bound_trip(org, visit, order_id, "SCHEDULED")
                     service.cancel_scheduled_delivery(org_id=org, order_id=UUID(order_id), actor_id=actor)
             rows(
                 "UPDATE public.field_visits SET status='CANCELLED' WHERE org_id=%s AND id=%s RETURNING id",
@@ -920,6 +980,24 @@ def command(org, actor, visit_id, data):
         return public(output)
 
 
+def _bound_trip(org, visit, order_id, status):
+    source = one(
+        "SELECT payload_json FROM public.orders WHERE org_id=%s AND id=%s FOR UPDATE",
+        [org, order_id],
+    )
+    trip_id = (visit["context_json"].get("delivery_trips") or {}).get(order_id)
+    trip = one(
+        "SELECT id,status,unit_indexes FROM public.deliveries WHERE org_id=%s AND order_id=%s AND id=%s FOR UPDATE",
+        [org, order_id, trip_id],
+        "delivery_not_found",
+    )
+    expected = {u["unit_index"] for u in visit["context_json"]["units"] if u["order_id"] == order_id}
+    actual = service._delivery_unit_set(trip, service._manifest_unit_indexes(decoded(source["payload_json"])))
+    if trip["status"] != status or actual != expected:
+        reject("El viaje o su carga cambió. Revisa la visita antes de continuar.", "field_trip_changed", 409)
+    return trip
+
+
 def depart(org, actor, visit, data):
     if visit["kind"] != "DELIVERY" or not data.get("confirmed"):
         reject("Revisa la carga y confirma la salida del vehículo.")
@@ -934,6 +1012,8 @@ def depart(org, actor, visit, data):
             reject("Escanea y confirma cada bulto de la carga antes de emitir la guía.")
         grouped.setdefault(unit["order_id"], []).append(unit["unit_index"])
     notes = []
+    for order_id in sorted(grouped):
+        _bound_trip(org, visit, order_id, "SCHEDULED")
     for order_id, indexes in sorted(grouped.items()):
         order = service.dispatch_work_order(
             org_id=org,
@@ -966,20 +1046,9 @@ def deliver(org, actor, visit, data):
     for unit in visit["context_json"]["units"]:
         grouped.setdefault(unit["order_id"], set()).add(unit["unit_index"])
     sealed = []
-    for order_id, indexes in sorted(grouped.items()):
-        trip = one(
-            "SELECT id,unit_indexes FROM public.deliveries WHERE org_id=%s AND order_id=%s AND status='ON_ROUTE' FOR UPDATE",
-            [org, order_id],
-            "delivery_not_found",
-        )
-        manifest = one(
-            "SELECT payload_json FROM public.orders WHERE org_id=%s AND id=%s", [org, order_id]
-        )
-        actual = service._delivery_unit_set(
-            trip, service._manifest_unit_indexes(decoded(manifest["payload_json"]))
-        )
-        if actual != indexes:
-            reject("La carga del viaje cambió. Revisa la visita y sus bultos antes de firmar.")
+    for order_id in sorted(grouped):
+        _bound_trip(org, visit, order_id, "ON_ROUTE")
+    for order_id in sorted(grouped):
         result = confirm_delivery(
             org_id=org,
             order_id=UUID(order_id),
@@ -1040,6 +1109,10 @@ def receive(org, actor, visit, data):
         if matching:
             checks.append(matching[-1]["payload_json"])
     if visit["kind"] == "SERVICE":
+        if len(units) != 1:
+            reject("Agenda una unidad por servicio para acreditar su trabajo y su foto.")
+        if not data.get("note"):
+            reject("Describe el servicio realizado antes de pedir la firma.")
         unit = units[0]
         checks = [
             {
@@ -1049,8 +1122,6 @@ def receive(org, actor, visit, data):
                 "note": data.get("note"),
             }
         ]
-        if not data.get("note"):
-            reject("Describe el servicio realizado antes de pedir la firma.")
     sig = _asset(
         org,
         actor,
