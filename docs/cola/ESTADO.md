@@ -33,7 +33,7 @@
 | P21 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/146 | 412029ac1ea688a0f5bf1d560ba9b2e99871fae6 | CI 4/4 verde; biblioteca/lote/F4 y precio aplicado, cien posiciones en 1.781,68–1.975,32 ms; 1.325 pgTAP, 502 integraciones, 19 E2E y diez upgrades PG16; rúbrica PASA. |
 | P10 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/147 | 8c8bda1c70c70fddd6f45ae0401efea03a725bb8 | CI 4/4 verde; acuerdo aditivo, solución elegida y pago recuperable; 1.350 pgTAP, 512 integraciones, 19 E2E y upgrades PG16; 40 estados, Lighthouse 81 y rúbrica PASA. |
 | P22 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/148 | e317edb9b76b4346e33aa3b60b4783b4cc2f0a99 | CI 4/4 verde; ficha/RUT/fusión, PDF vivo, MFA/invitación y moneda/FX con autoridad; 1,389 pgTAP, 535 integraciones, 19 E2E y upgrades PG16; 356 capturas verificadas sin hallazgos y rúbrica PASA. |
-| P23 | 3 | en curso |  |  |  |
+| P23 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/149 | 331d2eeeec57dedd14577c4ffd5ce8079568bc44 | CI 4/4 verde; despacho/terreno/postventa, replay privado y actas selladas; 1,427 pgTAP, 553 integraciones, 19 E2E y doce upgrades PG16; 40 vistas sin hallazgos y rúbrica PASA. |
 | D08 | 3 | pendiente |  |  |  |
 | P19 | 3 | pendiente |  |  |  |
 | P18 | 3 | pendiente |  |  |  |

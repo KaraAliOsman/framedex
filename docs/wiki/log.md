@@ -1394,3 +1394,7 @@ Código `c0d12cd8ca8ad7c391ba8bbb350c2971418fd800`. 914 motor (+2 xfail), 1494 b
 ### 2026-10-11 · P23, cierre de revisión
 
 Código `0eb58535f33b1537d22db56707ef3f1c7f3a0e0e`. Siete observaciones corregidas; 914 motor (+2 xfail), 1494 backend, 1028 frontend; 1427 pgTAP, 553 integraciones, 19 Auth E2E y doce upgrades PG16 PASA. 40 vistas finales y ocho de servicio sin hallazgos; 94 PNG pixel idénticos. Viaje ligado, servicio por unidad, compensación de archivos, diagnóstico humano, garantía de aprobación inmutable y limpieza de organización tienen regresiones.
+
+### 2026-10-11 · P23 integrado
+
+https://github.com/KaraAliOsman/framedex/pull/149, squash `331d2eeeec57dedd14577c4ffd5ce8079568bc44` en `integracion/v1`. Cuatro checks de CI verdes y gates locales completos; rúbrica R1–R20 PASA. Despacho, medición, instalación, acta privada inmutable y diagnóstico humano enlazan unidad, revisión y piezas. Cola offline y permisos de lectura privada verificados. Procesos propios detenidos; fixture conservado.

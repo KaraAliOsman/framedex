@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: 0eb58535f33b1537d22db56707ef3f1c7f3a0e0e
+verified_ref: 331d2eeeec57dedd14577c4ffd5ce8079568bc44
 sources:
+  - https://github.com/KaraAliOsman/framedex/pull/149 · squash 331d2eeeec57dedd14577c4ffd5ce8079568bc44, CI 4/4 verde
   - P23 código 0eb58535f33b1537d22db56707ef3f1c7f3a0e0e, siete observaciones corregidas y gates repetidos, 2026-10-11
   - P23 código c0d12cd8ca8ad7c391ba8bbb350c2971418fd800, gates completos, navegador y PostgreSQL propio, 2026-10-11
   - P22 PR https://github.com/KaraAliOsman/framedex/pull/148, CI 4/4 sobre f55db702b6f24b39da3f6b279a895833758461a4, squash e317edb9b76b4346e33aa3b60b4783b4cc2f0a99, 2026-10-11
@@ -91,7 +92,7 @@ sources:
 
 ## P23 · despacho, terreno y postventa (11-10-2026)
 
-Código `0eb58535f33b1537d22db56707ef3f1c7f3a0e0e` verificado con cuatro gates locales y Database Gate PASA; CI/squash en cierre. Agenda por fecha/equipo, carga y salida/GD se enlazan con
+Código `0eb58535f33b1537d22db56707ef3f1c7f3a0e0e` verificado con cuatro gates locales y Database Gate PASA; CI 4/4 verde; PR #149 integrado en `331d2eeeec57dedd14577c4ffd5ce8079568bc44`. Agenda por fecha/equipo, carga y salida/GD se enlazan con
 la obra y su unidad. Instalador: QR → checklist/foto → incidencia → nombre/
 RUT/firma → ACT privado inmutable. Jefe: diagnóstico → RM, compra adicional
 o servicio con resultado verificable. Una recepción parcial no acredita toda
