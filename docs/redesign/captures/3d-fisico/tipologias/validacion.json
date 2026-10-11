@@ -1,0 +1,402 @@
+[
+  {
+    "name": "TURN-LEFT-INWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "TURN-RIGHT-INWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "TILT_TURN-LEFT-INWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "TILT_TURN-RIGHT-INWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "TURN-LEFT-OUTWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "FRENCH-LEFT",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOOR-LEFT-INWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOUBLE-DOOR-LEFT-INWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOOR-LEFT-OUTWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOUBLE-DOOR-LEFT-OUTWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "TURN-RIGHT-OUTWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "FRENCH-RIGHT",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOOR-RIGHT-INWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOUBLE-DOOR-RIGHT-INWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOOR-RIGHT-OUTWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOUBLE-DOOR-RIGHT-OUTWARD",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "TILT",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "TOP-HUNG",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "FIXED-FRAME",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": false,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "FIXED-SASH",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": false,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DOOR-SIDELIGHT",
+    "source": "engine/tests/golden_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_HST/A",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_HST/C",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_PSK/XO",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_PLEGABLE/3+0-SIN-PASO",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_PLEGABLE/3+0-PASO",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_PLEGABLE/2+1-SIN-PASO",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_PLEGABLE/2+1-PASO",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_PIVOT_V/EJE-30",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_PIVOT_H/EJE-30",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_GUILLOTINA/SIMPLE-MUELLES",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_GUILLOTINA/DOBLE-MUELLES",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_GUILLOTINA/SIMPLE-CONTRAPESOS",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_GUILLOTINA/DOBLE-CONTRAPESOS",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "DEMO_PUERTA_CORREDERA/XO",
+    "source": "engine/tests/golden_advanced_openings.json",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "Corredera 2 hojas-interior",
+    "source": "engine/tests/fixtures/symbols/cases.json (P05 layout evaluated by D03 motor)",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "Corredera 3 hojas-interior",
+    "source": "engine/tests/fixtures/symbols/cases.json (P05 layout evaluated by D03 motor)",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "Corredera 4 hojas-interior",
+    "source": "engine/tests/fixtures/symbols/cases.json (P05 layout evaluated by D03 motor)",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "O X X O · encuentro-interior",
+    "source": "engine/tests/fixtures/symbols/cases.json (P05 layout evaluated by D03 motor)",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  },
+  {
+    "name": "O X X O · separan-interior",
+    "source": "engine/tests/fixtures/symbols/cases.json (P05 layout evaluated by D03 motor)",
+    "render": "PASA",
+    "closed": true,
+    "open": true,
+    "exterior": true,
+    "explode": true,
+    "errors": []
+  }
+]

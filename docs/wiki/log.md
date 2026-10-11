@@ -1433,3 +1433,23 @@ y se limita el paso al vano correspondiente. Cuatro regresiones nuevas pasan;
 gates completos repetidos: 1006 motor (+2 xfail), 1544 backend, 1076 frontend,
 lint/tipos/build y mypy sin caché en las 128 fuentes. No cambió SQL ni RLS.
 Aceptación y evidencia de escritura/planta se enlazan al cerrar el PR.
+
+### 2026-10-11 · P19, representación física 3D
+
+Visor y render comercial reciben hechos motor/sellados y comparten poses,
+cámara, luces y material. Se eliminó la textura aleatoria; apertura por hoja,
+paquetes rígidos, paso independiente y despiece axial con guías. Cuarenta
+fixtures y 68 tests, bicolor, foliado aproximado, reducción de movimiento y
+recuperación de contexto pasan. Las correderas simples no emiten hechos D03:
+se conserva el layout/travel de P05 en su decodificador visual. El portal no
+consulta Catálogo vivo; sección/herraje sin autoridad siguen aproximados.
+Las decisiones y la interpretación física del volumen cerrado se registran;
+la aceptación distingue la validación local del CI/squash de cierre.
+
+### 2026-10-11 · P19, gates locales de cierre
+
+Las lecturas compartidas de estudio se hacen explícitas para la guarda sin
+cambiar los cuatro tokens. Se repitieron autoridad/estados y paridad en
+navegador sobre 86b79340. Gates completos: lint/tipos/build PASA, motor 1006
+(+2 xfail), backend 1544 y frontend 1122 en 98 archivos; goldens y fixtures
+reproducibles. Sin cambios de API/SQL/RLS. CI y squash se registran al integrar.

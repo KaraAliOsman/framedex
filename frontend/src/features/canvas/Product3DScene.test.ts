@@ -43,6 +43,35 @@ function splitModule(offsetMm = 450): IntentNode {
 }
 
 describe("buildScene3D", () => {
+  it("uses explicit sliding travel even when it contradicts the slot heuristic", () => {
+    const product = wrapTreeAsProduct(
+      {
+        id: "slider",
+        type: "BAY",
+        opening_type: "SLIDING",
+        glass_thickness_mm: "4",
+        sliding_layout: {
+          tracks: 2,
+          panels: [
+            { slot: "S1", kind: "MOVING", track: 0, travel: "RIGHT" },
+            { slot: "S2", kind: "MOVING", track: 1, travel: "LEFT" },
+            { slot: "S3", kind: "FIXED", track: null },
+          ],
+        },
+      },
+      "1800",
+      "1400",
+    );
+    const module = buildScene3D(product, members).modules[0]!;
+    const second = module.leaves[1]!;
+    expect(second.dir).toBe(-1);
+    expect(second.travel).toBeGreaterThan(0);
+    const panes = module.solids.filter(
+      (s) => s.leafId === second.leafId && s.kind === "box",
+    ) as BoxSolid[];
+    for (const pane of panes)
+      expect(pane.center[0] - pane.size[0] / 2 - second.travel).toBeGreaterThanOrEqual(60);
+  });
   it("builds a frame ring plus a glass leaf for a fixed module", () => {
     const product = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 1400, angleDeg: 0 });
     const scene = buildScene3D(product, members);
@@ -387,7 +416,7 @@ describe("buildScene3D", () => {
     expect(verticals[3]).toBeCloseTo(1104, 5);
   });
 
-  it("opens a two-leaf slider by sliding one leaf over the other", () => {
+  it("keeps both moving leaves independently operable on their own tracks", () => {
     const base = makeBowProduct({ moduleCount: 1, widthMm: 1200, heightMm: 1400, angleDeg: 0 });
     const bay: IntentNode = {
       id: "b1",
@@ -411,15 +440,16 @@ describe("buildScene3D", () => {
       assembly: { modules: [module], couplings: [] },
     } as ProductJson;
     const scene = buildScene3D(product, members);
-    // Both leaves translating swaps their slots and reveals no aperture;
-    // only the inner-rail leaf carries a slide motion (one pitch over).
+    // Each control operates one leaf; its neighbour can remain closed.
     const slides = scene.modules[0]!.leaves.filter((leaf) => leaf.kind === "slide");
-    expect(slides).toHaveLength(1);
+    expect(slides).toHaveLength(2);
     expect(slides[0]!.leafId).toBe("b1:0");
     // leaf0 (60..672, leafW 612) slides right until its edge meets the bay
     // edge at 1140 — travel 468 stacks it on leaf1's slot, opening the
     // left half of the aperture.
     expect(slides[0]!.travel).toBeCloseTo(468, 5);
+    expect(slides[1]!.travel).toBeCloseTo(468, 5);
+    expect(slides.map((leaf) => leaf.dir)).toEqual([1, -1]);
   });
 
   it("wraps an operable panel door's infill in a sash", () => {

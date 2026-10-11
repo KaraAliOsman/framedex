@@ -62,7 +62,7 @@
   border: 1px solid var(--theme-border-subtle);
   bottom: 0.75rem;
   box-shadow: var(--shadow-raise);
-  height: 22rem;
+  height: 28rem;
   left: 0.75rem;
   position: absolute;
   width: 30rem;
@@ -78,8 +78,77 @@
   align-items: center;
   border-bottom: 1px solid var(--theme-border-subtle);
   display: flex;
+  flex-wrap: wrap;
   gap: 0.25rem;
   padding: 0.3rem 0.5rem;
+}
+.model3d-view {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  min-height: 360px;
+  min-width: 0;
+}
+.model3d-inset.model3d-inset--expanded {
+  top: 3.5rem;
+  right: 0.75rem;
+  width: auto;
+  height: auto;
+  max-height: none;
+}
+.assembly-canvas--3d-expanded > .advanced-plan-pane,
+.assembly-canvas--3d-expanded > .assembly-plan-pane,
+.assembly-canvas--3d-expanded > .plan-toggle {
+  display: none;
+}
+.model3d-view .model3d-canvas {
+  flex: 1;
+  min-height: 200px;
+}
+.model3d-canvas canvas:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: -2px;
+}
+.model3d-leaves {
+  position: relative;
+}
+.model3d-leaves summary {
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.model3d-leaf-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: min(320px, 60vw);
+  max-height: 160px;
+  overflow: auto;
+  padding: var(--space-2);
+  background: var(--surface-panel);
+  border: 1px solid var(--theme-border-strong);
+  z-index: var(--z-popover);
+}
+.model3d-leaf-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+}
+.model3d-leaf-row span {
+  flex: 1;
+}
+.model3d-toolbar button[aria-pressed="true"] {
+  border-color: var(--theme-accent);
+  color: var(--theme-accent-ink);
+}
+.portal-drawing-sheet .model3d-view {
+  height: 480px;
+  border: 1px solid var(--theme-border-subtle);
+}
+.portal-drawing-sheet .model3d-toolbar button,
+.portal-drawing-sheet .model3d-leaves summary {
+  min-height: 40px;
 }
 .model3d-toolbar button {
   background: transparent;
@@ -144,6 +213,9 @@
   display: flex;
   justify-content: center;
   min-height: 12rem;
+  flex-direction: column;
+  padding: var(--space-3);
+  gap: var(--space-2);
 }
 .model3d-fallback__text {
   color: var(--theme-text-secondary);

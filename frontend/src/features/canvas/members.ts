@@ -32,6 +32,7 @@ export interface MemberGeometry {
   viewFace?: FinishFace;
   frame: MemberSpec;
   sash: MemberSpec;
+  profileFor?(role: string): MemberSpec | null;
   mullionV: MemberSpec | null;
   mullionH: MemberSpec | null;
   threshold: MemberSpec | null;
@@ -117,6 +118,7 @@ export function resolveMembers(
     kits.set(item.sku, item);
   }
   const signature = JSON.stringify({
+    profiles: options?.profiles ?? [],
     beads: [...beads.entries()],
     couplers: [...couplers.entries()],
     // The kit's declared contents, not just its sku — a contents update
@@ -128,6 +130,11 @@ export function resolveMembers(
   const rebate = Number(options?.rebate_depth_mm);
   const sashOverlap = Number(options?.sash_overlap_mm);
   const base: MemberGeometry = {
+    profileFor(role) {
+      return options?.profiles.some((profile) => profile.role === role)
+        ? member(options, role, FALLBACK.sash)
+        : null;
+    },
     frame: member(options, "FRAME", FALLBACK.frame),
     sash: member(
       options,
@@ -194,6 +201,7 @@ export function withFinishMembers(
     mullionV: spec(base.mullionV),
     mullionH: spec(base.mullionH),
     threshold: spec(base.threshold),
+    profileFor: (role) => spec(base.profileFor?.(role) ?? null),
     beadSpecFor: (thickness) => spec(base.beadSpecFor(thickness)),
     couplerFor: (sku) => spec(base.couplerFor(sku)),
     signature: JSON.stringify([base.signature, finish, face]),

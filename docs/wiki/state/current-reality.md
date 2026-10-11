@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: d6921a893fcc3b303fcd693bd934380e7227f3d0
+verified_ref: 86b79340bab710a9cc9f1336323fdd9393ce981b
 sources:
+  - P19 código 94b5f151723207fa7b96a5a087a6906f471454d4, 40 fixtures, 68 tests y navegador propio, 2026-10-11
+  - docs/redesign/P19-ACEPTACION.md
   - D08 PR https://github.com/KaraAliOsman/framedex/pull/150, CI 4/4 sobre b66ba1c68d24fb9ec34ae04da571866a238dd554, squash d6921a893fcc3b303fcd693bd934380e7227f3d0, 2026-10-11
   - D08 revisión 9213655c, gates completos repetidos, mypy sin caché y navegador de escritura/planta
   - https://github.com/KaraAliOsman/framedex/pull/149 · squash 331d2eeeec57dedd14577c4ffd5ce8079568bc44, CI 4/4 verde
@@ -91,6 +93,28 @@ sources:
 ---
 
 # Current reality
+
+## P19 · representación física 3D (11-10-2026)
+
+El editor usa hechos del motor D03/D08; el portal usa la revisión sellada.
+Visor, PNG y miniaturas comparten poses rígidas, cámaras, acabado, luz y
+conversión de color. Apertura por hoja, HST/PSK por fases, paso independiente,
+pivotes/guillotina y despiece axial con guías pasan 68 tests y 40 fixtures.
+Las correderas simples conservan el layout/travel de P05: su cálculo
+histórico no emite hechos de hoja. Las otras aperturas sin evaluación
+quedan Sin dato y no se sustituyen por una hoja ficticia.
+
+Los 14 recorridos editor/portal pasan en los anchos/temas del contrato,
+incluido portal 390 px; 16 vistas oficiales sin hallazgos, errores o
+desbordes. Bicolor, foliado aproximado, cinco estados, recuperación gráfica
+y reducción de movimiento pasan. Los 281 PNG comprimidos conservan píxeles.
+Diseño, BOM y precio persisten byte iguales después de controles/guardado.
+
+Límites explícitos: sección/herraje esquemáticos donde falta geometría
+sellada; DEMO no certifica fabricante; el muro no acredita montaje. Una
+hoja giratoria sobresale del volumen cerrado sin perder eje ni longitud.
+El portal no consulta Catálogo vivo y DOC-01 mantiene SVG/bytes emitidos.
+Gates locales y CI/squash se registran separadamente en la aceptación.
 
 ## D08 · recetas avanzadas (11-10-2026)
 

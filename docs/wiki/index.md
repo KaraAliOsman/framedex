@@ -20,6 +20,7 @@ Content-oriented map of durable project knowledge.
 - [Physical openings](product/physical-openings.md) — sourced motion, active/passive compositions, handles and immutable legacy transport.
 - [Advanced openings](product/advanced-openings.md) — sourced HST/PSK/folding/pivot/vertical-slide recipes, exact cuts/BOM/kits and motor-derived plan.
 - [Opening drawings](product/opening-drawings.md) — single DIN grammar, declared travel/view, exact contours and dimension gutters.
+- [Representación física 3D](product/physical-3d.md) — poses rígidas, hojas independientes, bicolor sellado y render común con límites explícitos.
 - [Hardware classes](product/hardware-classes.md) — exact component expansion, handles/options, sealed picking and declared machining gaps.
 - [Color finishes](product/color-finishes.md) — sourced room/street faces, exact surcharges, color-specific stock and sealed rendering.
 - [Accessories and services](product/accessories-services.md) — geometry-derived quantities, real extra BOM/cuts and revision-bound commercial sublines.

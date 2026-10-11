@@ -23,7 +23,7 @@ const NOOP = () => {};
  * opening glyphs; catalog face widths only exist inside the editor. */
 export const THUMB_MEMBERS = resolveMembers(undefined);
 
-function designProduct(design: PositionDesign): ProductJson {
+export function designProduct(design: PositionDesign): ProductJson {
   const tree = design.parametric_tree;
   if (isProductModel(tree)) return tree;
   return wrapTreeAsProduct(tree as IntentNode, design.nominal_width_mm, design.nominal_height_mm);
@@ -137,7 +137,12 @@ export function PositionThumb({
             <LazyStudioImage
               product={product}
               members={members}
-              options={{ width: 360, height: 300, inside: members.viewFace !== "exterior" }}
+              options={{
+                width: 360,
+                height: 300,
+                inside: members.viewFace !== "exterior",
+                openingFacts,
+              }}
               alt={t("projects.positionThumb")}
               className="position-thumb"
             />

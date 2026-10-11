@@ -2122,6 +2122,16 @@ export function AssemblyEditor({
     inputs,
   );
   const drawingEvaluation = previewReady ? openingPreview.evaluation : evaluation;
+  const openingFacts3d = useMemo(
+    () =>
+      Object.fromEntries(
+        (drawingEvaluation?.modules ?? []).map((item) => [
+          item.module_id,
+          (item.result?.opening_leaves ?? []) as OpeningLeafFact[],
+        ]),
+      ),
+    [drawingEvaluation],
+  );
   const issues = evaluation?.issues ?? [];
   const glassChecks = useGlassChecks(organizationId, product, options, evaluation);
   const [viewFace, setViewFace] = useState<"interior" | "exterior">("interior");
@@ -2178,6 +2188,7 @@ export function AssemblyEditor({
     : drawingEvaluation;
   const [operationIssues, setOperationIssues] = useState<ProductIssue[]>([]);
   const [view3dOpen, setView3dOpen] = useState(false);
+  const [view3dExpanded, setView3dExpanded] = useState(false);
   const [operationBusy, setOperationBusy] = useState(false);
   const [operationMessage, setOperationMessage] = useState("");
   /** Queued prompt for the assistant — "" means focus only. Every "…with
@@ -3051,7 +3062,7 @@ export function AssemblyEditor({
         </div>
       )}
       <div
-        className="assembly-canvas"
+        className={`assembly-canvas${view3dOpen && view3dExpanded ? " assembly-canvas--3d-expanded" : ""}`}
         onDoubleClick={(event) => {
           if ((event.target as Element).closest("[role='button'][aria-label^='Paño']"))
             showInspector("opening");
@@ -3327,9 +3338,20 @@ export function AssemblyEditor({
             </section>
           )}
           {view3dOpen ? (
-            <div className="model3d-inset" role="complementary" aria-label={t("assembly.view3d")}>
+            <div
+              className={`model3d-inset${view3dExpanded ? " model3d-inset--expanded" : ""}`}
+              role="complementary"
+              aria-label={t("assembly.view3d")}
+            >
               <div className="plan-inset__header">
                 <span>{t("assembly.view3d")}</span>
+                <button
+                  type="button"
+                  aria-pressed={view3dExpanded}
+                  onClick={() => setView3dExpanded((value) => !value)}
+                >
+                  {view3dExpanded ? "Reducir 3D" : "Ampliar 3D"}
+                </button>
                 <button
                   type="button"
                   aria-label={t("assembly.hide3d")}
@@ -3350,6 +3372,7 @@ export function AssemblyEditor({
                   product={product}
                   members={members}
                   plan={evaluation?.plan ?? null}
+                  openingFacts={openingFacts3d}
                   selection={selection}
                   onSelectModule={pickModule}
                   onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
