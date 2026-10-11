@@ -3,8 +3,9 @@ type: concept
 status: active
 updated: 2026-10-11
 volatility: medium
-verified_ref: 68674c22ec1ffd303c572764bf472c6587d58d84
+verified_ref: a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa
 sources:
+  - P22 revisión a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa, gates completos y tres recorridos reales, 2026-10-11
   - backend/projects/clients.py
   - backend/projects/client_history.py
   - backend/projects/company.py
@@ -27,6 +28,19 @@ ficha y organización. Facturación y entrega son campos distintos. El dossier
 sigue aliases y consulta la elección aceptada de P10, revisiones, ledger y
 documentos reales. El motor agrega saldos con Decimal por moneda; una obra
 sin importe acreditado conserva «Sin dato» y no aporta cero a una suma.
+
+Una edición explícita del texto de entrega desvincula la dirección maestra,
+incluso si la API parcial conserva el mismo selector o se escribe con RLS.
+Seleccionar otra dirección vuelve a copiarla; las revisiones selladas se
+conservan. El directorio filtra, cuenta y pagina en SQL, y carga contactos y
+direcciones de la página por lote. Solo el filtro de saldo consulta acuerdos
+y pagos por lote y usa las proyecciones del motor por moneda, sin descargar
+documentos ni sustituir los importes desconocidos. La regresión real verifica
+mil coincidencias, aliases y el límite de consultas.
+
+Las estaciones se crean o actualizan por su código dentro de la organización.
+Editar conserva ese código, la misma identidad y el número de filas; cancelar
+restaura el formulario de creación. El guardado anuncia que quedará activa.
 
 Ajustes presenta una sección por tarea. Identidad legal, usuarios y política
 de acceso son del dueño; marca y condiciones pertenecen a dueño/estimador.

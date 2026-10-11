@@ -1354,3 +1354,7 @@ individual/JSON y aíslan la proyección de cantidades entrantes del proveedor.
 Las 280 vistas finales pasan sin hallazgos; el navegador vuelve a comprobar
 dueño, estimador y operario. Los procesos propios están detenidos, sin
 borrar el fixture. CI/squash se registran al integrar.
+
+### 2026-10-11 · P22, observaciones de revisión verificadas
+
+Código `a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa`. La dirección explícita se desvincula en API/RLS; el directorio pagina y consulta saldo por lote con el motor. El endpoint de estación ya era upsert; crear/editar conserva identidad y código. Dieciséis integraciones focales y la regresión de creación/edición pasan. Las 36 vistas de formularios y las 40 rutas revalidadas no tienen hallazgos ni desbordes. Los cuatro gates pasan: 903 motor (+2 xfail), 1494 backend, 1014 frontend; Database Gate 1389 pgTAP, 535 integraciones, 19 E2E y once upgrades PG16. CI y squash siguen su cierre.

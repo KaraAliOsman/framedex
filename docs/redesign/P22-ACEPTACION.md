@@ -123,6 +123,30 @@ Firma: PDF real sobre papel, con cajetín/huella y marca en preparación. La ide
 del §8 funciona: estados comprobados de adaptadores e instrucciones que se
 leen de ACTIVACION, más valores sugeridos editables y confirmados en el alta.
 
+## Observaciones de revisión del PR
+
+La dirección editada se conserva en API parcial, con el mismo selector y en
+escritura directa bajo RLS: el cambio explícito desvincula la dirección maestra.
+Seleccionar otra dirección vuelve a copiar su texto. Editar una revisión nueva
+conserva el snapshot y la huella de la anterior. Las tres variantes fallaban
+antes de la corrección y pasan con PostgreSQL real.
+
+El endpoint de estaciones ya era un upsert por `(org_id, code)`. La observación
+de que siempre creaba una fila no se reproduce: devuelve 201 al crear y 200
+al actualizar, con el mismo ID. El formulario ahora conserva el código al
+editar y ofrece cancelar; la regresión comprueba identidad y número de filas.
+
+El directorio filtra, cuenta y pagina en SQL; los contactos/direcciones se
+cargan por lote únicamente para la página. El filtro de saldo lee acuerdos
+y pagos por lote y sigue usando el motor con Decimal y monedas separadas.
+La prueba de mil coincidencias exige consultas acotadas, página final y offset
+vacío; la de fusión contrasta aliases, obras activas y saldo con el dossier.
+Las 16 integraciones focales y la regresión del formulario de estación pasan.
+Los [recorridos de revisión](captures/clientes-ajustes/revision/recorridos.json)
+registran tres flujos reales y 36 vistas en ambos temas y 1440/1280/1024,
+sin hallazgos ni desbordes. La matriz `ux:capture` revalida además las rutas
+de Producción y Clientes por rol, tema y los cuatro tamaños del contrato.
+
 ## Rúbrica editorial
 
 | Ítem | Resultado | Evidencia |
@@ -150,18 +174,7 @@ leen de ACTIVACION, más valores sugeridos editables y confirmados en el alta.
 
 ## Validación y límites
 
-Los cuatro gates completos sobre `4409f0a681552e4c7ae9406bd10a775af800da8a` pasan:
-lint, tipos, build, 903 tests de motor (+2 xfail preexistentes),
-1494 de backend y 1013 de frontend. Golden byte check
-PASA; el caso CLP→USD es aditivo y los golden anteriores conservan sus bytes.
-Los cambios posteriores hasta `68674c22ec1ffd303c572764bf472c6587d58d84` seleccionan Documentos
-en Auth E2E y exigen que `client_address_id` siga NULL en la igualdad estricta
-de la fila histórica del upgrade de vidrio. Lint de frontend (ESLint + tsc),
-ruff del upgrade y formato pasan. Database Gate completo sobre esa revisión PASA: 1389 pgTAP
-en 93 archivos, 530 integraciones, 19 Auth E2E
-y once programas de upgrades poblados PostgreSQL 16. El registro
-[validacion.json](captures/clientes-ajustes/validacion.json) conserva refs,
-recuentos y hashes de los logs locales. La CI se verifica antes del squash.
+Los cuatro gates completos sobre `a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa` pasan: lint, tipos, build, 903 tests de motor (+2 xfail preexistentes), 1494 de backend y 1014 de frontend. Golden byte check PASA; los golden anteriores conservan sus bytes. Database Gate completo sobre la misma revisión PASA: 1389 pgTAP en 93 archivos, 535 integraciones, 19 Auth E2E y once programas de upgrades poblados PostgreSQL 16. Las 280 vistas de aceptación se conservan; la revisión revalida otras 40 rutas y 36 vistas de los formularios afectados. El [registro de validación](captures/clientes-ajustes/validacion.json) conserva refs, recuentos y hashes de logs locales. La CI se verifica antes del squash.
 
 La identidad fija y restaura tanto el JWT JSON como el subject individual
 que prioriza PostgreSQL. Incluye contextos anidados, workers y transacciones

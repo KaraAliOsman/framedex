@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: 68674c22ec1ffd303c572764bf472c6587d58d84
+verified_ref: a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa
 sources:
+  - P22 revisión a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa, gates completos y tres recorridos reales, 2026-10-11
   - P22 cierre 68674c22ec1ffd303c572764bf472c6587d58d84, cuatro gates completos, Database Gate, identidad Auth real y navegador por rol, 2026-10-11
   - P22 presentación final 5dee5684, FX real del motor, 280 vistas sin hallazgos y lectura móvil con etiquetas, 2026-10-11
   - P22 implementación b27492b6, navegador y once integraciones PostgreSQL focales, 2026-10-11
@@ -103,12 +104,7 @@ replay sellado. El caso nuevo CLP→USD tiene golden; los anteriores no cambian.
 El dueño conserva MFA obligatorio y puede exigirlo a todos. Invitación cifra
 su capability, verifica correo vivo y requiere aceptación; desactivar conserva
 auditoría. El recorrido completo de correo sandbox/acceso y el alta inicial
-hasta primera obra/editor pasan. Once pruebas PostgreSQL focales, 57 de motor
-comercial/golden, 22 de tarifas y 28 de espacio de precios pasan. La suite
-completa verifica 903 motor (+2 xfail), 1.494 backend y 1.013 frontend;
-golden, lint, tipos y build pasan. La corrección posterior de presentación
-pasa otra vez lint, tipos, build y 28 tests de Precios. Las 280 vistas finales
-no tienen hallazgos, desbordes, errores HTTP ni consola. El cierre repite los cuatro gates y Database Gate completo: 1389 pgTAP, 530 integraciones, 19 E2E y upgrades PG16 PASA. La identidad JWT individual y JSON se fija/restaura en solicitudes y workers; el material en camino tiene proyección física por rol sin acceso a órdenes privadas. CI y squash siguen su cierre; P22 está en curso. Véase [empresa y clientes](../product/company-customers.md).
+hasta primera obra/editor pasan. La revisión final verifica 903 motor (+2 xfail), 1494 backend y 1014 frontend; golden, lint, tipos y build PASA. Las 280 vistas de aceptación se conservan y 76 capturas de revisión revalidan los formularios/rutas afectados, sin hallazgos, desbordes, errores HTTP ni consola. La dirección explícita se desvincula en API/RLS; el directorio pagina y consulta saldo por lote con las proyecciones del motor. Las estaciones ya usaban upsert por código; editar conserva su identidad y cancelar restaura el alta. Dieciséis integraciones focales pasan. Database Gate completo: 1389 pgTAP, 535 integraciones, 19 E2E y once upgrades PG16 PASA. La identidad JWT individual y JSON se fija/restaura en solicitudes y workers; el material en camino tiene proyección física por rol sin acceso a órdenes privadas. CI y squash siguen su cierre; P22 está en curso. Véase [empresa y clientes](../product/company-customers.md).
 
 ## P10 · propuesta y acuerdo del cliente (11-10-2026)
 

@@ -638,6 +638,11 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   históricos. RUT distintos no vacíos requieren corregir la identidad.
 - La dirección elegida de la obra se copia al proyecto. Facturación y entrega
   permanecen separadas; editar o fusionar la ficha no cambia documentos emitidos.
+  Editar explícitamente el texto de entrega la deja independiente en esa obra;
+  elegir otra dirección vuelve a copiarla. La API parcial y RLS aplican la misma regla.
+- Una estación se identifica por su código dentro de la organización. La edición
+  conserva ese código y usa el upsert existente; un código nuevo se declara en
+  el formulario de creación. Guardar deja la estación activa y declara ese efecto.
 - El dueño configura identidad legal, moneda, usuarios y seguridad; dueño y
   estimador mantienen marca y condiciones. El segundo factor del dueño sigue
   obligatorio. Exigirlo a todos comienza desactivado y se aplica en API y RLS.
