@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-11
 volatility: medium
-verified_ref: codex/D08-tipologias-avanzadas
+verified_ref: 13e03a5f
 sources:
   - engine/src/dekopen_engine/advanced_openings.py
   - engine/tests/golden_advanced_openings.json

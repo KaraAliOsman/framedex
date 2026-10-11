@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-06
+updated: 2026-10-11
 volatility: medium
-verified_ref: 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd
+verified_ref: 13e03a5f
 sources:
+  - docs/redesign/D08-ACEPTACION.md
   - engine/src/dekopen_engine/openings.py
   - engine/src/dekopen_engine/models.py
   - engine/tests/golden_openings.json

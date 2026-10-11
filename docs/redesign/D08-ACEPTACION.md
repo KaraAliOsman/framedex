@@ -1,9 +1,9 @@
 # D08 · Tipologías avanzadas
 
-Verificado desde `cf09d813`, rama `codex/D08-tipologias-avanzadas`, con
+Verificado sobre código `13e03a5f`, rama `codex/D08-tipologias-avanzadas`, con
 Supabase/Auth propios, Django, worker y Chromium. La evidencia se conserva en
 [tipologías avanzadas](captures/tipologias-avanzadas/). CI y squash se registran
-al integrar; los gates pendientes no se atribuyen como aprobados.
+al integrar; la comprobación local completa terminó con salida 0.
 
 ## Resultado y autoridad
 
@@ -132,7 +132,10 @@ Véase [decisiones](../decisions/valores-por-defecto.md).
 
 Lint, typecheck, test y build locales PASA: motor 1006 (+2 xfail históricos),
 backend 1544 y frontend 1072. Golden check byte a byte PASA.
-Database Gate: 1451 pgTAP y 554 integraciones PASA; la corrida completa
-se repite después de actualizar la lista E2E de series y separar la
-regeneración API de los procesos de navegador. Auth E2E/PG16 y CI se
-registran al confirmar su resultado.
+Database Gate completo PASA: 95 archivos / 1451 pgTAP, 554 integraciones,
+19 Auth E2E y trece programas de upgrade poblado PostgreSQL 16, incluido
+D08 y la comprobación final de terreno. Teardown propio PASA, salida 0.
+La primera corrida encontró una lista E2E de series anterior a v8 y una
+regeneración API concurrente con Vite. Se actualizó la expectativa de las
+siete series y se separaron ambos procesos; la corrida completa posterior
+pasó sin debilitar checks ni timeouts. CI se registra al integrar.

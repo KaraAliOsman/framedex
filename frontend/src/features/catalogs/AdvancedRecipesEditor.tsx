@@ -130,7 +130,7 @@ export function AdvancedRecipesEditor({
     <fieldset className="catalog-group">
       <legend>Esquemas avanzados con fuente</legend>
       <p>
-        Declare las medidas, perfiles y movimientos desde el documento del fabricante. El motor
+        Declara las medidas, perfiles y movimientos desde el documento del fabricante. El motor
         valida la composición y sus herrajes al guardar.
       </p>
       {recipes.map((recipe, at) => (
