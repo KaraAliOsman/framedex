@@ -6,6 +6,18 @@
     "margin": "0.2",
     "requires_approval": true
   },
+  "currency": {
+    "clp_per_usd": "900",
+    "cost": "2.58",
+    "currency": "USD",
+    "gross": "14.17",
+    "installation": "0.5",
+    "labor": "1",
+    "materials": "1",
+    "net": "11.91",
+    "source": "CLP",
+    "tax": "2.26"
+  },
   "projects": [
     {
       "cascade": {

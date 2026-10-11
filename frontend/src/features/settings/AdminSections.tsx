@@ -87,7 +87,8 @@ export function CompanyCard({
       <h3>Identidad legal y moneda</h3>
       <p>
         Estos datos identifican al emisor de documentos nuevos. La moneda se propone al calcular;
-        los acuerdos emitidos conservan su moneda.
+        los acuerdos emitidos conservan su moneda. Las tarifas de trabajo conservan su moneda base
+        {draft?.base_currency ? ` ${draft.base_currency}` : ""}.
       </p>
       {!canEdit && <p>El dueño puede cambiar la identidad legal y la política de acceso.</p>}
       {message && <p role="status">{message}</p>}

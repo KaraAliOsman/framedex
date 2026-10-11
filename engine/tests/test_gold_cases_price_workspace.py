@@ -7,11 +7,17 @@ import pytest
 from dekopen_engine.commercial import CommercialLine, PricingError, finish_lines
 from dekopen_engine.price_workspace import cascade, comparison, composition, policy
 from dekopen_engine.commercial import direct_cost
-from engine.tests.workspace_cases import workspace_cases
+from engine.tests.workspace_cases import workspace_cases, currency_case
 
 
 def test_workspace_12_100_cascade_and_canonical_delta_golden() -> None:
     assert workspace_cases() == json.loads(Path(__file__).with_name('golden_price_workspace.json').read_text())
+
+
+def test_local_cost_to_usd_uses_declared_observation_and_rounds_once_golden() -> None:
+    assert currency_case() == {'source':'CLP', 'currency':'USD', 'clp_per_usd':'900',
+        'materials':'1', 'labor':'1', 'installation':'0.5', 'cost':'2.58',
+        'net':'11.91', 'tax':'2.26', 'gross':'14.17'}
 
 
 def test_quantity_three_rounds_once_at_line_not_display_unit() -> None:

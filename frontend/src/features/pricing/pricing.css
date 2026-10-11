@@ -414,6 +414,10 @@
   margin: 0;
   overflow-wrap: break-word;
 }
+.pricing-page .pricing-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
 .pricing-page table {
   width: 100%;
   border-collapse: collapse;
@@ -597,6 +601,13 @@
 
 .pricing-fix {
   font-weight: 600;
+}
+.pricing-page a {
+  color: var(--interactive);
+}
+.pricing-page a:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
 }
 .pricing-demo-costs {
   border-block: 1px solid var(--border);

@@ -89,7 +89,7 @@ class FrozenPricingRepository:
         rate = None
         if currency != self.currency:
             found = [row for row in self.bundle['fx'] if str(row['id']) == self.fx_id
-                     and row['base_currency'] == currency and row['quote_currency'] == self.currency]
+                     and row['base_currency'] == 'USD' and row['quote_currency'] == 'CLP']
             if len(found) != 1:
                 raise PricingError('incomplete_repricing_evidence')
             rate = Decimal(str(found[0]['observed_rate']))

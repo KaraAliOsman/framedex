@@ -2,6 +2,16 @@
   display: grid;
   gap: var(--space-4);
 }
+.customers a {
+  color: var(--interactive);
+}
+.customers a:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.customers .ui-button:disabled {
+  color: var(--text-secondary);
+}
 .customers :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   min-height: var(--control-height);
   border: 1px solid var(--theme-border);

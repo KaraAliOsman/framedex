@@ -5,6 +5,13 @@
   gap: var(--space-24px);
   padding: var(--space-24px) var(--space-16px);
 }
+.onboarding a {
+  color: var(--interactive);
+}
+.onboarding a:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
 .onboarding-head {
   display: grid;
   gap: var(--space-8px);

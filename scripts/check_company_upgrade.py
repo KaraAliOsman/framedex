@@ -42,6 +42,7 @@ def verify(container: str) -> None:
             ('{ORG}','Legacy B','76543210-1',NULL,NULL,NULL,'19800000-0000-4000-8000-000000000003');
     """)
     tables = ("clients", "projects", "project_versions", "pricing_operations", "mail_outbox")
+    currency = sql(f"SELECT currency FROM public.tenancy_organizations WHERE id='{ORG}'")
     before = {
         table: sql(
             f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY id),'[]') FROM public.{table} t WHERE org_id='{ORG}'"
@@ -64,12 +65,14 @@ def verify(container: str) -> None:
             f"SELECT coalesce(jsonb_agg(to_jsonb(t){added} ORDER BY id),'[]') FROM public.{table} t WHERE org_id='{ORG}'"
         )
     assert before == after, "P22 changed historical client/project/document/price/mail evidence"
+    assert currency == sql(f"SELECT currency FROM public.tenancy_organizations WHERE id='{ORG}'"), "P22 reinterpreted base-currency authority"
     sql(f"""DO $$ BEGIN
       IF (SELECT count(*) FROM public.clients WHERE org_id='{ORG}' AND party_kind='UNKNOWN' AND merged_into_id IS NULL)<>2
         OR (SELECT count(*) FROM public.client_contacts WHERE org_id='{ORG}' AND email='legacy@example.test' AND is_primary)<>1
         OR (SELECT count(*) FROM public.client_notes WHERE org_id='{ORG}' AND is_legacy AND body='Legacy note' AND author_label='Autor no registrado · nota histórica')<>1
       THEN RAISE EXCEPTION 'Legacy type, contact or authorship was inferred or lost'; END IF;
       IF (SELECT require_mfa FROM public.tenancy_organizations WHERE id='{ORG}') THEN RAISE EXCEPTION 'MFA silently enabled'; END IF;
+      IF (SELECT quotation_currency IS NOT NULL FROM public.tenancy_organizations WHERE id='{ORG}') THEN RAISE EXCEPTION 'Quotation currency silently overridden'; END IF;
     END $$;""")
     print(
         "  P22 populated PG16 upgrade: colliding historical RUTs, unknown type, contacts/notes and sealed evidence preserved PASS",

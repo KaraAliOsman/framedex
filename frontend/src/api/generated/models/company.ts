@@ -11,6 +11,7 @@ export interface Company {
   name: string;
   tax_id: string;
   currency: CurrencyEnum;
+  readonly base_currency: CurrencyEnum;
   require_mfa: boolean;
   updated_at: string;
 }

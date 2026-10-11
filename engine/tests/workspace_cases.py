@@ -4,7 +4,7 @@ from decimal import Decimal, localcontext
 from collections.abc import Mapping
 from typing import Any
 
-from dekopen_engine.commercial import CommercialLine, direct_cost, finish_lines, unit_price, PricingMode
+from dekopen_engine.commercial import CommercialLine, convert_cost, direct_cost, finish_lines, unit_price, PricingMode
 from dekopen_engine.price_workspace import (DRIVERS, cascade, composition, explain,
     policy, undiscounted_lines)
 
@@ -61,7 +61,21 @@ def replay_case() -> dict[str,Any]:
                              for item in result['contributions']]}
 
 
+def currency_case() -> dict[str,Any]:
+    materials = convert_cost(D(900), 'CLP', 'USD', D(900))
+    labor = convert_cost(D(900), 'CLP', 'USD', D(900))
+    installation = convert_cost(D(450), 'CLP', 'USD', D(900))
+    cost = direct_cost([materials], D(1), D('.08'), labor, installation)
+    price = unit_price(PricingMode.COST_PLUS_MARGIN, cost=cost, margin=D('.35'),
+                      area=D(1), width=D(1000), height=D(1000))
+    result = finish_lines([CommercialLine(1, 3, cost, price)], 'USD', D('.19'))
+    return {'source':'CLP', 'currency':'USD', 'clp_per_usd':'900',
+            'materials':str(materials), 'labor':str(labor), 'installation':str(installation),
+            'cost':str(cost), 'net':str(result.project_net), 'tax':str(result.project_tax),
+            'gross':str(result.project_gross)}
+
+
 def workspace_cases() -> dict[str,Any]:
     return {'projects':[project_case(count,currency) for count in (12,100) for currency in ('CLP','USD')],
-            'replay':replay_case(),
+            'replay':replay_case(), 'currency':currency_case(),
             'approval':policy(cost=D(80),net=D(100),minimum=D('.25'),maximum=D('.60'),discount=D(0),discount_limit=D('.10')) | {'margin':'0.2'}}

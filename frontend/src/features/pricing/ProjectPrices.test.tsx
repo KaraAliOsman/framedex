@@ -218,6 +218,17 @@ it("consumes the company currency in a new motor projection", async () => {
   expect(JSON.parse(String(calls("workspace/")[0]?.[1].body))).toMatchObject({ currency: "USD" });
   fireEvent.click(screen.getByText("Moneda y autoridades"));
   expect(screen.getByLabelText("Moneda")).toHaveValue("USD");
+  fireEvent.change(screen.getByLabelText("Fecha de costos"), { target: { value: "2026-10-09" } });
+  expect(screen.getByRole("option", { name: /USD → CLP.*900.*09-10-2026/ })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Tipo de cambio registrado"), {
+    target: { value: "fx-a" },
+  });
+  await waitFor(() =>
+    expect(JSON.parse(String(calls("workspace/").at(-1)?.[1].body))).toMatchObject({
+      currency: "USD",
+      fx_snapshot_id: "fx-a",
+    }),
+  );
 });
 
 it("keeps the applied project currency after the company default changes", async () => {

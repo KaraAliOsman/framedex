@@ -1,7 +1,10 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path=public,private,auth,extensions,pg_temp;
-SELECT plan(26);
+SELECT plan(29);
+SELECT has_column('public','tenancy_organizations','quotation_currency','Quotation preference has distinct currency authority');
+SELECT ok(NOT has_column_privilege('authenticated','public.tenancy_organizations','quotation_currency','UPDATE'),'Browser cannot bypass owner confirmation of preferred currency');
+SELECT ok(NOT has_function_privilege('anon','private.company_settings(uuid)','EXECUTE'),'Company currency authority needs verified authentication');
 SELECT has_column('public','tenancy_organizations','require_mfa','Tenant can require second factor');
 SELECT has_table('public','client_contacts','Contacts have their own identity');
 SELECT has_table('public','client_addresses','Work addresses differ from billing address');

@@ -63,9 +63,9 @@
 }
 .payments-form label {
   display: grid;
-  gap: 4px;
-  font-size: var(--text-s, 12px);
-  color: var(--ink-muted);
+  gap: var(--space-1);
+  font-size: var(--type-dense);
+  color: var(--theme-text-secondary);
 }
 .payments-form-wide {
   grid-column: 1 / -1;
@@ -198,7 +198,8 @@
     .settings-user,
     .settings-invite,
     .settings-preview,
-    .settings-station-form
+    .settings-station-form,
+    .payments-form
   )
   :is(input:not([type="checkbox"]), select, textarea) {
   min-height: var(--control-height);
@@ -210,7 +211,7 @@
   font: inherit;
   padding: var(--space-2);
 }
-.settings :is(select, textarea):focus-visible {
+.settings :is(input, select, textarea):focus-visible {
   outline: 2px solid var(--theme-accent);
   outline-offset: 2px;
 }

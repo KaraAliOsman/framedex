@@ -26818,12 +26818,17 @@ components:
           type: string
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
+        base_currency:
+          allOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          readOnly: true
         require_mfa:
           type: boolean
         updated_at:
           type: string
           format: date-time
       required:
+      - base_currency
       - currency
       - name
       - require_mfa

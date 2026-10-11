@@ -84,6 +84,7 @@ class CompanySerializer(serializers.Serializer):
     name = serializers.CharField()
     tax_id = serializers.CharField()
     currency = serializers.ChoiceField(choices=("CLP", "USD"))
+    base_currency = serializers.ChoiceField(choices=("CLP", "USD"), read_only=True)
     require_mfa = serializers.BooleanField()
     updated_at = serializers.DateTimeField()
 

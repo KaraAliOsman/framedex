@@ -93,7 +93,7 @@ class PricingRepository:
             snapshot = one(
                 'SELECT * FROM public.pricing_fx_snapshots WHERE id=%s AND org_id=%s '
                 'AND effective_date=%s AND base_currency=%s AND quote_currency=%s',
-                [self.fx_id,self.org_id,self.effective_date,currency,self.currency],
+                [self.fx_id,self.org_id,self.effective_date,'USD','CLP'],
                 'missing_fx_authority')
             self.authorities.append({'fx': snapshot})
         return convert_cost(value,currency,self.currency,

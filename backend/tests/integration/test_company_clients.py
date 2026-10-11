@@ -1,6 +1,6 @@
 """P22: actual tenant authority, preserved dossiers and verified invitations."""
 
-from datetime import timedelta
+from datetime import date, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal as D
 from uuid import uuid4
@@ -21,10 +21,11 @@ from backend.tests.integration.test_shot09_documentary import (
     as_user,
     _seed_project,
     _freeze,
+    _tenant,
     documentary_committed_tenant as documentary_committed_tenant,
 )
 from documents.repository import documentary_backend, decoded
-from pricing.repository import one, rows, write
+from pricing.repository import admin_write, commercial_backend, one, rows, write
 from projects import clients, client_history, company, org_branding, service
 
 pytestmark = pytest.mark.rls_integration
@@ -476,6 +477,8 @@ def test_company_currency_proposes_new_prices_without_reinterpreting_sealed_mone
             },
         )
         assert company.get_company(org)["currency"] == "USD"
+        assert company.get_company(org)["base_currency"] == "CLP"
+        assert one("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [org])["currency"] == "CLP"
         assert service.project_public(org, service.project_row(org, project))["currency"] == "CLP"
         token = VerifiedSupabaseToken(
             "test",
@@ -492,6 +495,67 @@ def test_company_currency_proposes_new_prices_without_reinterpreting_sealed_mone
     assert sealed == one(
         "SELECT snapshot_sha256 FROM public.project_versions WHERE id=%s", [version["id"]]
     )
+
+
+@pytest.mark.parametrize(("base", "preferred", "labor", "installation"), [
+    ("USD", "CLP", "8505", "17010"), ("CLP", "USD", "0.01", "0.02"),
+])
+def test_preferred_currency_consumes_base_labor_with_declared_fx(people, base, preferred, labor, installation):
+    from pricing.service import preview
+
+    org, _, users, _ = people
+    project, _, _ = _seed_project(org, users["OWNER"], apply_pricing=False)
+    # This new fixture declares its process rates; the CLP material list retains
+    # its own currency. A preference must never reinterpret either authority.
+    write("UPDATE public.tenancy_organizations SET currency=%s WHERE id=%s", [base, org])
+    with as_user(users["OWNER"]):
+        admin_write("rules", org, {"labor_rate_per_m2": D("9"), "installation_rate_per_m2": D("18")},
+                    "P22 explicitly declared synthetic process rates",
+                    one("SELECT id FROM public.pricing_rules WHERE org_id=%s", [org])["id"])
+        before = company.get_company(org)
+        company.save_company(
+            org,
+            {
+                **{key: before[key] for key in ("name", "tax_id", "require_mfa")},
+                "currency": preferred,
+                "expected_updated_at": before["updated_at"],
+            },
+        )
+        assert company.get_company(org)["base_currency"] == base
+        fx = admin_write(
+            "fx", org,
+            {"base_currency": "USD", "quote_currency": "CLP",
+             "observed_rate": D("900"), "observed_date": date(2026, 9, 10),
+             "effective_date": date(2026, 9, 10), "source": "P22 synthetic FX fixture"},
+            "P22 declared rate for process costs",
+        )
+        request = {
+            "project_id": project, "pricing_mode": "COST_PLUS_MARGIN",
+            "currency": company.get_company(org)["currency"],
+            "effective_date": date(2026, 9, 10), "context_code": "DEFAULT",
+            "discount_pct": D("0"), "target_margin": D("0.35"),
+            "segment": "RETAIL", "confirmed": False,
+            "reason": "P22 new calculation with preferred currency", "_actor_id": users["OWNER"],
+        }
+        from dekopen_engine.commercial import PricingError
+
+        with pytest.raises(PricingError, match="missing_fx_authority"), commercial_backend():
+            preview(org, _tenant(org, "OWNER"), request)
+        with commercial_backend():
+            result = preview(org, _tenant(org, "OWNER"), {**request, "fx_snapshot_id": fx["id"]})
+        assert result["currency"] == preferred
+        assert D(result["positions_breakdown"][0]["labor_rate_per_m2"]) == D(labor)
+        assert D(result["positions_breakdown"][0]["installation_rate_per_m2"]) == D(installation)
+        assert D(result["rules"]["labor_rate_per_m2"]) == D("9")
+        assert any(item.get("organization_currency") == base for item in result["authorities"])
+        assert any(item.get("fx", {}).get("id") == fx["id"] for item in result["authorities"])
+        from pricing.workspace import replay_state, _reprice
+
+        stored = decoded(one("SELECT input_snapshot FROM public.pricing_operations WHERE id=%s", [result["id"]])["input_snapshot"])
+        state = replay_state(stored["replay"])
+        frozen_result = _reprice(org, state, state, state)
+        assert frozen_result["net"] == D(str(result["project_net"]))
+        assert frozen_result["total"] == D(str(result["project_gross"]))
 
 
 def test_direct_child_edit_and_merge_serialize_without_lost_changes(documentary_committed_tenant):

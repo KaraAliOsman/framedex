@@ -1,5 +1,10 @@
 BEGIN;
 
+-- The preferred quotation currency does not reinterpret existing labor/installation
+-- tariffs, which retain the organization's established base-currency authority.
+ALTER TABLE public.tenancy_organizations ADD COLUMN quotation_currency public.currency_code;
+GRANT SELECT(quotation_currency) ON public.tenancy_organizations TO authenticated,documentary_backend,pricing_backend;
+
 -- No direct member can change legal identity, membership or invitation evidence.
 CREATE TABLE public.organization_invitations (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -45,10 +50,10 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION private.require_company_owner(uuid) FROM PUBLIC;
 
-CREATE FUNCTION private.company_settings(p_org uuid) RETURNS TABLE(name text,tax_id text,currency text,require_mfa boolean,updated_at timestamptz)
+CREATE FUNCTION private.company_settings(p_org uuid) RETURNS TABLE(name text,tax_id text,currency text,base_currency text,require_mfa boolean,updated_at timestamptz)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$ BEGIN
  IF NOT p_org IN(SELECT private.current_user_org_ids()) OR NOT private.company_assurance(p_org) THEN RAISE EXCEPTION 'company_access_denied' USING ERRCODE='42501'; END IF;
- RETURN QUERY SELECT o.name::text,o.tax_id::text,o.currency::text,o.require_mfa,o.updated_at FROM public.tenancy_organizations o WHERE o.id=p_org;
+ RETURN QUERY SELECT o.name::text,o.tax_id::text,coalesce(o.quotation_currency,o.currency)::text,o.currency::text,o.require_mfa,o.updated_at FROM public.tenancy_organizations o WHERE o.id=p_org;
 END $$;
 
 CREATE FUNCTION private.save_company(p_org uuid,p_name text,p_tax text,p_currency text,p_mfa boolean,p_expected timestamptz) RETURNS void
@@ -59,10 +64,10 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$ DECLARE old_value jso
  IF (old_value->>'updated_at')::timestamptz IS DISTINCT FROM p_expected THEN RAISE EXCEPTION 'company_stale_edit'; END IF;
  IF length(btrim(p_name)) NOT BETWEEN 1 AND 255 OR length(p_tax)>50 THEN RAISE EXCEPTION 'company_invalid'; END IF;
  IF p_tax IS DISTINCT FROM old_value->>'tax_id' AND NOT private.client_rut_valid(p_tax) THEN RAISE EXCEPTION 'company_rut_invalid'; END IF;
- UPDATE public.tenancy_organizations SET name=btrim(p_name),tax_id=btrim(p_tax),currency=p_currency::public.currency_code,require_mfa=p_mfa,updated_at=clock_timestamp() WHERE id=p_org;
+ UPDATE public.tenancy_organizations SET name=btrim(p_name),tax_id=btrim(p_tax),quotation_currency=p_currency::public.currency_code,require_mfa=p_mfa,updated_at=clock_timestamp() WHERE id=p_org;
  INSERT INTO public.organization_admin_events(org_id,actor_id,action,before_record,after_record)
- SELECT p_org,auth.uid(),'COMPANY',jsonb_build_object('name',old_value->'name','tax_id',old_value->'tax_id','currency',old_value->'currency','require_mfa',old_value->'require_mfa'),
- jsonb_build_object('name',o.name,'tax_id',o.tax_id,'currency',o.currency,'require_mfa',o.require_mfa) FROM public.tenancy_organizations o WHERE o.id=p_org;
+ SELECT p_org,auth.uid(),'COMPANY',jsonb_build_object('name',old_value->'name','tax_id',old_value->'tax_id','currency',coalesce(old_value->>'quotation_currency',old_value->>'currency'),'require_mfa',old_value->'require_mfa'),
+ jsonb_build_object('name',o.name,'tax_id',o.tax_id,'currency',coalesce(o.quotation_currency,o.currency),'require_mfa',o.require_mfa) FROM public.tenancy_organizations o WHERE o.id=p_org;
 END $$;
 
 CREATE FUNCTION private.company_users(p_org uuid) RETURNS TABLE(id uuid,email text,role text,is_active boolean,updated_at timestamptz)

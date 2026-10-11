@@ -1450,7 +1450,8 @@ export function ProjectPrices({
                         .filter(
                           (item) =>
                             item.effective_date === controls.effective_date &&
-                            item.quote_currency === controls.currency,
+                            (item.quote_currency === controls.currency ||
+                              item.base_currency === controls.currency),
                         )
                         .map((item) => (
                           <option key={item.id} value={item.id}>
@@ -1461,6 +1462,10 @@ export function ProjectPrices({
                         ))}
                     </select>
                   </label>
+                  <p className="field-hint">
+                    La tasa declara pesos por dólar. Costos USD a CLP incluyen reserva del 5 %;
+                    costos CLP a USD se dividen por esa tasa. La revisión conserva la fuente.
+                  </p>
                 </details>
                 <label>
                   Motivo
