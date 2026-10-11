@@ -230,7 +230,8 @@ function ProjectMetadataForm({
             </select>
             <small>
               La dirección elegida se copia a la obra y su cotización. Editar la ficha del cliente
-              no cambia lo emitido.
+              no cambia lo emitido. Si editas el texto de la dirección, queda independiente en esta
+              obra.
             </small>
           </label>
         )}

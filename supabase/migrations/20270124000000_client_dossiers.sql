@@ -297,7 +297,12 @@ CREATE FUNCTION private.project_work_address() RETURNS trigger
 LANGUAGE plpgsql SET search_path='' AS $$ DECLARE a public.client_addresses;
 BEGIN
  IF NEW.client_address_id IS NULL THEN RETURN NEW; END IF;
- IF TG_OP='UPDATE' AND NEW.client_id IS NOT DISTINCT FROM OLD.client_id AND NEW.client_address_id IS NOT DISTINCT FROM OLD.client_address_id AND NEW.delivery_address IS NOT DISTINCT FROM OLD.delivery_address THEN RETURN NEW; END IF;
+ IF TG_OP='UPDATE' AND NEW.client_id IS NOT DISTINCT FROM OLD.client_id AND NEW.client_address_id IS NOT DISTINCT FROM OLD.client_address_id THEN
+  -- Preserve the copied snapshot when the master changes; an explicit text
+  -- edit becomes an independent work address, including direct RLS writes.
+  IF NEW.delivery_address IS DISTINCT FROM OLD.delivery_address THEN NEW.client_address_id:=NULL; END IF;
+  RETURN NEW;
+ END IF;
  SELECT * INTO a FROM public.client_addresses WHERE id=NEW.client_address_id AND org_id=NEW.org_id AND client_id=NEW.client_id AND is_active FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'client_address_not_available'; END IF;
  NEW.delivery_address:=a.address||CASE WHEN length(btrim(a.comuna))>0 THEN ', '||a.comuna ELSE '' END;

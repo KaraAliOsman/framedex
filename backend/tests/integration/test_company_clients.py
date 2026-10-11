@@ -10,6 +10,8 @@ from io import BytesIO
 from pypdf import PdfReader
 import pytest
 from django.db import DatabaseError, transaction, close_old_connections
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -95,6 +97,73 @@ def test_rut_is_validated_and_canonical_duplicates_are_tenant_scoped(people):
         assert client_history.directory(other, {"q": "76.543.210-3"}, commercial=True)["total"] == 1
 
 
+@pytest.mark.parametrize("mode", ["api_sparse", "api_same_selection", "direct_sql"])
+def test_explicit_work_address_edit_detaches_selection_and_survives_reload(people, mode):
+    org, _, users, _ = people
+    client = customer(org, users["OWNER"])
+    with as_user(users["OWNER"]):
+        project = service.create_project(org, users["OWNER"], {
+            "name": "Acceso posterior", "client_id": client["id"],
+            "client_name": client["name"], "client_address_id": client["addresses"][1]["id"],
+        })
+        assert project["delivery_address"] == "Camino Sur 1550, Puente Alto"
+        address = "Camino Sur 1550, acceso posterior, Puente Alto"
+        if mode == "direct_sql":
+            write("UPDATE public.projects SET delivery_address=%s WHERE org_id=%s AND id=%s",
+                  [address, org, project["id"]])
+        else:
+            data = {"expected_updated_at": service.project_row(org, project["id"])["updated_at"], "delivery_address": address}
+            if mode == "api_same_selection":
+                data["client_address_id"] = project["client_address_id"]
+            service.update_project(org, project["id"], data)
+        saved = service.project_row(org, project["id"])
+        assert saved["delivery_address"] == address
+        assert saved["client_address_id"] is None
+        # Selecting another master address deliberately replaces the override.
+        selected = service.update_project(org, project["id"], {
+            "expected_updated_at": saved["updated_at"],
+            "client_address_id": client["addresses"][0]["id"],
+        })
+        assert selected["delivery_address"] == "Av. Norte 220, Providencia"
+
+
+def test_directory_paginates_thousand_matches_with_bounded_queries(people):
+    org, _, users, _ = people
+    with as_user(users["OWNER"]):
+        write("INSERT INTO public.clients(org_id,created_by,name) "
+              "SELECT %s,%s,'Escala '||lpad(n::text,4,'0') FROM generate_series(1,1000) n",
+              [org, users["OWNER"]])
+        with CaptureQueriesContext(connection) as captured:
+            page = client_history.directory(org, {"q": "Escala", "limit": 50}, commercial=True)
+        assert page["total"] == 1000 and page["next_offset"] == 50
+        assert len(page["items"]) == 50 and page["items"][0]["name"] == "Escala 0001"
+        assert not any(item["has_active_projects"] for item in page["items"])
+        assert len(captured) <= 20, f"Directory made {len(captured)} queries for one page"
+        last = client_history.directory(org, {"q": "Escala", "limit": 50, "offset": 990}, commercial=True)
+        assert len(last["items"]) == 10 and last["next_offset"] is None
+        empty = client_history.directory(org, {"q": "Escala", "offset": 1001}, commercial=True)
+        assert empty["total"] == 1000 and not empty["items"]
+        with CaptureQueriesContext(connection) as captured:
+            balance = client_history.directory(org, {"q": "Escala", "with_balance": True}, commercial=True)
+        assert balance["total"] == 0 and not balance["items"]
+        assert len(captured) <= 35
+
+
+def test_station_upsert_edits_same_identity_and_preserves_row_count(people):
+    from production.service import create_work_center, list_work_centers
+
+    org, _, users, _ = people
+    with as_user(users["OWNER"]):
+        original, created = create_work_center(org_id=org, code="CUT-01", name="Corte",
+                                               kind="CUT", display_order=1)
+        assert created
+        updated, created = create_work_center(org_id=org, code="CUT-01", name="Corte norte",
+                                              kind="CUT", display_order=4)
+        assert not created and updated["id"] == original["id"]
+        assert updated["name"] == "Corte norte" and updated["display_order"] == 4
+        assert len(list_work_centers(org_id=org)["centers"]) == 1
+
+
 def test_merge_preserves_snapshots_children_notes_and_unknown_money(people):
     org, _, users, _ = people
     source = customer(org, users["OWNER"], rut="76.543.210-3")
@@ -174,6 +243,11 @@ def test_merge_preserves_snapshots_children_notes_and_unknown_money(people):
         assert str(dossier["notes"][0]["id"]) == str(note["id"])
         assert len(merged["addresses"]) == 2 and all(a["origin_id"] for a in merged["addresses"])
         assert merged["rut"] == source["rut"]
+        directory = client_history.directory(org, {"q": "Maitenes", "with_active_projects": True,
+                                                   "with_balance": True}, commercial=True)
+        assert directory["total"] == 1 and directory["items"][0]["id"] == target["id"]
+        assert directory["items"][0]["has_active_projects"]
+        assert str(unknown["id"]) in {str(p["id"]) for p in dossier["projects"]}
     assert sealed == one(
         "SELECT snapshot_json,snapshot_sha256 FROM public.project_versions WHERE id=%s",
         [version["id"]],
@@ -188,6 +262,17 @@ def test_merge_preserves_snapshots_children_notes_and_unknown_money(people):
         clients.update_client(
             org, source["id"], {"expected_updated_at": timezone.now(), "name": "Otro"}
         )
+    with as_user(users["OWNER"]):
+        service.start_successor(org, project, "REV-A")
+        current = service.project_row(org, project)
+        revised = service.update_project(org, project, {
+            "expected_updated_at": current["updated_at"],
+            "delivery_address": "Camino Sur 1550, acceso posterior, Puente Alto",
+        })
+        assert revised["client_address_id"] is None
+        assert "acceso posterior" in revised["delivery_address"]
+    assert sealed == one("SELECT snapshot_json,snapshot_sha256 FROM public.project_versions WHERE id=%s",
+                         [version["id"]])
 
 
 def test_child_edit_invalidates_merge_review_and_distinct_ruts_block(people):

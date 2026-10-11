@@ -401,6 +401,13 @@ def update_project(org_id, project_id, data):
             values["client_address_id"] = None
     if "client_address_id" in data:
         values["client_address_id"] = data["client_address_id"]
+    # A saved master address is a snapshot, not a live override. Editing the
+    # text detaches that selection unless another address is being selected.
+    if ("delivery_address" in data
+            and data["delivery_address"] != (current.get("delivery_address") or "")
+            and str(data.get("client_address_id", current.get("client_address_id")))
+            == str(current.get("client_address_id"))):
+        values["client_address_id"] = None
     if not values:
         return project_public(org_id, current, detail=True)
     query = sql.SQL(

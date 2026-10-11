@@ -231,6 +231,10 @@
   display: grid;
   gap: var(--space-1);
 }
+.settings-station-form h4 {
+  flex-basis: 100%;
+  margin: 0;
+}
 .settings-user strong {
   overflow-wrap: anywhere;
   align-self: center;

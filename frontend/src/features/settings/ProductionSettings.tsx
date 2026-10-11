@@ -25,6 +25,7 @@ export function ProductionSettings({
     [name, setName] = useState(""),
     [kind, setKind] = useState<WorkCenterRequestKindEnum>("CUT"),
     [order, setOrder] = useState(0),
+    [editingCode, setEditingCode] = useState<string | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const query = useQuery({
@@ -60,7 +61,9 @@ export function ProductionSettings({
             {center.name} · {centerKindLabel(center.kind)} · {center.active ? "Activa" : "Inactiva"}
             {canEdit && (
               <Button
+                disabled={busy}
                 onClick={() => {
+                  setEditingCode(center.code);
                   setCode(center.code);
                   setName(center.name);
                   setKind(center.kind as WorkCenterRequestKindEnum);
@@ -85,8 +88,8 @@ export function ProductionSettings({
               if (
                 busy ||
                 !(await confirm({
-                  title: "Guardar estación",
-                  body: `${name} estará disponible para ${centerKindLabel(kind)}. Las OT emitidas conservan su ruta.`,
+                  title: editingCode ? "Guardar cambios de estación" : "Guardar estación",
+                  body: `${name} estará activa para ${centerKindLabel(kind)}. Las OT emitidas conservan su ruta.`,
                 }))
               )
                 return;
@@ -94,12 +97,13 @@ export function ProductionSettings({
               setMessage("");
               try {
                 await productionWorkCentersCreate(
-                  { code, name, kind, display_order: order },
+                  { code: editingCode ?? code, name, kind, display_order: order },
                   options,
                 );
                 await query.refetch();
                 setCode("");
                 setName("");
+                setEditingCode(null);
                 setMessage("Estación guardada.");
               } catch (error) {
                 setMessage(
@@ -114,14 +118,20 @@ export function ProductionSettings({
             })();
           }}
         >
+          <h4>{editingCode ? "Editar estación" : "Nueva estación"}</h4>
           <label>
             Código de estación
             <input
+              aria-label="Código de estación"
               required
               maxLength={50}
               value={code}
+              readOnly={editingCode !== null}
               onChange={(event) => setCode(event.target.value)}
             />
+            {editingCode && (
+              <span className="field-hint">El código conserva la identidad de la estación.</span>
+            )}
           </label>
           <label>
             Nombre
@@ -156,8 +166,23 @@ export function ProductionSettings({
             />
           </label>
           <Button type="submit" disabled={busy}>
-            Guardar estación
+            {editingCode ? "Guardar cambios" : "Guardar estación"}
           </Button>
+          {editingCode && (
+            <Button
+              disabled={busy}
+              onClick={() => {
+                setEditingCode(null);
+                setCode("");
+                setName("");
+                setKind("CUT");
+                setOrder(0);
+                setMessage("");
+              }}
+            >
+              Cancelar edición
+            </Button>
+          )}
         </ValidatedForm>
       )}
       {message && <p role="status">{message}</p>}

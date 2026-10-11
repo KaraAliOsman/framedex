@@ -4,8 +4,9 @@ import json
 from dataclasses import asdict
 from decimal import Decimal
 
-from dekopen_engine.collections import CollectionPayment
+from dekopen_engine.collections import CollectionPayment, collection_summary
 from dekopen_engine.customer_accounts import customer_accounts
+from django.utils import timezone
 from documents.repository import documentary_backend
 from pricing.repository import rows
 from projects import clients, payments
@@ -196,47 +197,101 @@ def dossier(org_id, client_id):
     }
 
 
+def _balance_clients(org_id, identities):
+    """Two batch reads, then the same engine account projection as the dossier.
+
+    The directory needs balances only: due dates, documents and full dossier
+    histories cannot affect that predicate and need not be fetched. Unknown
+    totals never become zero; currencies remain separate, including aliases.
+    """
+    if not identities:
+        return []
+    with documentary_backend():
+        projects = rows(
+            "WITH RECURSIVE family(root_id,id) AS ("
+            "SELECT id,id FROM public.clients WHERE org_id=%s AND id=ANY(%s::uuid[]) "
+            "UNION ALL SELECT f.root_id,c.id FROM public.clients c JOIN family f "
+            "ON c.merged_into_id=f.id WHERE c.org_id=%s) "
+            "SELECT f.root_id,p.id,p.total_price_gross,sealed.total AS sealed_total,"
+            "sealed.currency AS sealed_currency,applied.currency AS applied_currency,"
+            "applied.present AS has_applied,org.currency AS org_currency "
+            "FROM family f JOIN public.projects p ON p.client_id=f.id AND p.org_id=%s "
+            "LEFT JOIN public.tenancy_organizations org ON org.id=p.org_id "
+            "LEFT JOIN LATERAL (SELECT v.snapshot_json#>>'{project,total_price_gross}' AS total,"
+            "v.snapshot_json#>>'{project,currency}' AS currency FROM ("
+            "SELECT id,org_id FROM public.project_versions WHERE org_id=p.org_id AND project_id=p.id "
+            "ORDER BY emitted_at DESC,id DESC LIMIT 1) offered "
+            "LEFT JOIN LATERAL private.quotation_choice(offered.org_id,offered.id) choice "
+            "ON choice.kind='APPROVED' JOIN public.project_versions v "
+            "ON v.id=COALESCE(choice.selected_version_id,offered.id) AND v.org_id=offered.org_id) sealed ON true "
+            "LEFT JOIN LATERAL (SELECT currency,true AS present "
+            "FROM private.applied_pricing_currency(p.org_id,p.id)) applied ON sealed.total IS NULL",
+            [org_id, identities, org_id, org_id],
+        )
+        ledger = rows(
+            "SELECT id,project_id,amount,voided_at,simulated FROM public.project_payments "
+            "WHERE org_id=%s AND project_id=ANY(%s::uuid[])",
+            [org_id, list({str(p["id"]) for p in projects})],
+        ) if projects else []
+    by_project = {}
+    for payment in ledger:
+        by_project.setdefault(str(payment["project_id"]), []).append(CollectionPayment(
+            str(payment["id"]), Decimal(str(payment["amount"])),
+            payment["voided_at"] is None, bool(payment["simulated"]),
+        ))
+    accounts = {}
+    today = timezone.localdate()
+    for project in projects:
+        if project["sealed_total"] is not None:
+            total, currency = project["sealed_total"], project["sealed_currency"] or "CLP"
+        elif project["has_applied"]:
+            total = project["total_price_gross"]
+            currency = project["applied_currency"] or project["org_currency"] or "CLP"
+        else:
+            continue
+        ledger = by_project.get(str(project["id"]), [])
+        summary = collection_summary(total=Decimal(str(total)), currency=currency,
+                                     milestones=(), payments=ledger, today=today)
+        accounts.setdefault(str(project["root_id"]), []).append((currency, summary, ledger))
+    return [identity for identity, entries in accounts.items()
+            if any(account.balance > 0 for account in customer_accounts(entries))]
+
+
 def directory(org_id, data, *, commercial):
     needle = data.get("q", "").strip()
-    all_rows = rows(
-        "SELECT id,name,rut,is_active,merged_into_id,updated_at FROM public.clients WHERE org_id=%s "
-        "AND (name ILIKE %s OR private.client_rut_key(rut) LIKE %s) ORDER BY is_active DESC,name,id",
-        [org_id, "%" + needle + "%", "%" + clients.rut_key(needle) + "%"],
+
+    def pattern(text):
+        return "%" + text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+    # Search and active-project filtering happen before LIMIT. Alias ancestry
+    # is one set-based query; contacts/addresses are loaded only for the page.
+    prefix = (
+        "WITH RECURSIVE family(root_id,id) AS (SELECT id,id FROM public.clients WHERE org_id=%s "
+        "UNION ALL SELECT f.root_id,c.id FROM public.clients c JOIN family f "
+        "ON c.merged_into_id=f.id WHERE c.org_id=%s), matches AS ("
+        "SELECT c.*,EXISTS(SELECT 1 FROM public.projects p JOIN family f ON p.client_id=f.id "
+        "WHERE p.org_id=%s AND f.root_id=c.id AND p.status NOT IN('COMPLETED','CANCELLED')) "
+        "AS has_active_projects FROM public.clients c WHERE c.org_id=%s "
+        "AND (c.name ILIKE %s OR private.client_rut_key(c.rut) LIKE %s) "
+        "AND (%s OR c.merged_into_id IS NULL)) "
     )
-    items = []
-    for row in all_rows:
-        family = aliases(org_id, row["id"])
-        active = rows(
-            "SELECT EXISTS(SELECT 1 FROM public.projects WHERE org_id=%s AND client_id=ANY(%s::uuid[]) "
-            "AND status NOT IN('COMPLETED','CANCELLED')) AS active",
-            [org_id, family],
-        )[0]["active"]
-        balance = (
-            any(
-                Decimal(item["balance"]) > 0
-                for item in account_history(org_id, row["id"])["balances"]
-            )
-            if commercial and data.get("with_balance")
-            else None
-        )
-        if data.get("with_active_projects") and not active:
-            continue
-        if data.get("with_balance") and not balance:
-            continue
-        if not data.get("include_merged") and row["merged_into_id"]:
-            continue
-        items.append({**row, "has_active_projects": active})
+    parameters = [org_id, org_id, org_id, org_id, pattern(needle), pattern(clients.rut_key(needle)),
+                  bool(data.get("include_merged"))]
+    condition = "WHERE (%s=false OR has_active_projects)"
+    parameters.append(bool(data.get("with_active_projects")))
+    if data.get("with_balance"):
+        candidates = rows(prefix + "SELECT id FROM matches " + condition, parameters)
+        identities = _balance_clients(org_id, [str(p["id"]) for p in candidates]) if commercial else []
+        condition += " AND id=ANY(%s::uuid[])"
+        parameters.append(identities)
+    total = rows(prefix + "SELECT count(*) AS total FROM matches " + condition, parameters)[0]["total"]
     offset, limit = data.get("offset", 0), data.get("limit", 50)
-    page = items[offset : offset + limit]
-    result = [
-        {
-            **clients.client_public(org_id, row["id"]),
-            "has_active_projects": row["has_active_projects"],
-        }
-        for row in page
-    ]
+    page = rows(prefix + "SELECT * FROM matches " + condition + " ORDER BY is_active DESC,name,id LIMIT %s OFFSET %s",
+                [*parameters, limit, offset])
+    children = clients.child_lists(org_id, [item["id"] for item in page])
     return {
-        "items": result,
-        "total": len(items),
-        "next_offset": offset + limit if offset + limit < len(items) else None,
+        "items": [{**clients._public(item), **children[str(item["id"])],
+                   "has_active_projects": item["has_active_projects"]} for item in page],
+        "total": total,
+        "next_offset": offset + limit if offset + limit < total else None,
     }
