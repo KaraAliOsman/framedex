@@ -757,9 +757,12 @@ function PositionWorkspace({
     // it smaller than that can land a leaf under the hardware minimum (a
     // 1000 mm "Dos hojas" makes two ~440 mm sashes). Floor at nominal so a
     // starter always produces what its thumbnail promised.
-    const nominal = starterNominalSize(definition.key);
+    const nominal = definition.nominal ?? starterNominalSize(definition.key);
     const nextProduct = sourcedStarter(
-      definition.build(Math.max(widthMm, nominal.widthMm), Math.max(heightMm, nominal.heightMm)),
+      definition.build(
+        definition.recipeCode ? nominal.widthMm : Math.max(widthMm, nominal.widthMm),
+        definition.recipeCode ? nominal.heightMm : Math.max(heightMm, nominal.heightMm),
+      ),
       options.data,
     );
     const store = useCanvasStore.getState();

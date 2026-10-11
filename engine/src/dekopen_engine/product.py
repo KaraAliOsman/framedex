@@ -1191,13 +1191,14 @@ def _evaluate_contour_module(
         return None, issues, None
 
     opening = leaf.opening_type or BayOpeningType.FIXED
-    if opening is not BayOpeningType.FIXED:
+    if (opening is not BayOpeningType.FIXED or leaf.opening is not None
+            and (leaf.opening.movement.value != "FIXED" or leaf.opening.fixed_in_sash)):
         issues.append(
             ProductIssue(
                 code=IssueCode.CONTOUR_OPENING_UNSUPPORTED.value,
                 severity=Severity.WARNING,
                 target=target,
-                params={"opening": opening.value},
+                params={"opening": leaf.opening.movement.value if leaf.opening is not None else opening.value},
             )
         )
         # The frame is still buildable; the operable leaf is not (v1).
@@ -1569,13 +1570,14 @@ def _evaluate_frameless_module(
         return None, issues
 
     opening = leaf.opening_type or BayOpeningType.FIXED
-    if opening is not BayOpeningType.FIXED:
+    if (opening is not BayOpeningType.FIXED or leaf.opening is not None
+            and (leaf.opening.movement.value != "FIXED" or leaf.opening.fixed_in_sash)):
         issues.append(
             ProductIssue(
                 code=IssueCode.FRAMELESS_OPENING_UNSUPPORTED.value,
                 severity=Severity.WARNING,
                 target=target,
-                params={"opening": opening.value},
+                params={"opening": leaf.opening.movement.value if leaf.opening is not None else opening.value},
             )
         )
     if leaf.panel_article_sku is not None:
@@ -1869,6 +1871,25 @@ def frameless_module_computation(
 
 
 def evaluate_product(
+    product: ProductModel,
+    params: SystemParams,
+    *,
+    coupler_articles: dict[str, EffectiveProfileArticle] | None = None,
+    is_foiled: bool = False,
+    finish: str | None = None,
+) -> ProductEvaluation:
+    from decimal import localcontext
+    from .advanced_openings import ADVANCED_GEOMETRY_CONTEXT, has_advanced_opening
+
+    if any(has_advanced_opening(module.tree) for module in product.assembly.modules):
+        with localcontext(ADVANCED_GEOMETRY_CONTEXT):
+            return _evaluate_product(product, params, coupler_articles=coupler_articles,
+                                     is_foiled=is_foiled, finish=finish)
+    return _evaluate_product(product, params, coupler_articles=coupler_articles,
+                             is_foiled=is_foiled, finish=finish)
+
+
+def _evaluate_product(
     product: ProductModel,
     params: SystemParams,
     *,

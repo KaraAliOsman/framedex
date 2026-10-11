@@ -2,6 +2,13 @@ import type { KitResponse } from "../../api/generated/models";
 import { domainLabel } from "../../i18n/domainLabels";
 import { decimalInputValue } from "../../decimal";
 import type { Capability } from "../canvas/physicalOpenings";
+import { AdvancedRecipesEditor } from "./AdvancedRecipesEditor";
+
+const requiresRecipe = (cap: Pick<Capability, "movement" | "use">): boolean =>
+  ["LIFT_SLIDE", "PARALLEL_SLIDE", "FOLD", "PIVOT_V", "PIVOT_H", "VERTICAL_SLIDE"].includes(
+    cap.movement,
+  ) ||
+  (cap.movement === "SLIDE" && cap.use === "DOOR");
 
 export type PairedRule = {
   meeting_overlap_mm: string;
@@ -19,11 +26,17 @@ export function openingAuthorityProblem(
     const name = `Capacidad ${index + 1}`;
     if (!cap.source.trim()) return `${name}: falta la fuente del fabricante.`;
     if (!cap.hinge_sides.length) return `${name}: elige al menos un lado de bisagras.`;
+    if (requiresRecipe(cap) && !cap.advanced_recipes?.length)
+      return `${name}: declara un esquema avanzado con fuente.`;
     if (cap.movement !== "FIXED" && !cap.hardware_kit_skus.length)
       return `${name}: elige los herrajes compatibles de la fuente.`;
     if (["ACTIVE", "PASSIVE"].includes(cap.leaf_role) && !paired)
       return `${name}: declara el encuentro con inversor y su fuente.`;
-    if (cap.movement !== "FIXED" && cap.movement !== "SLIDE" && cap.leaf_role !== "PASSIVE") {
+    if (
+      cap.movement !== "FIXED" &&
+      (cap.movement !== "SLIDE" || requiresRecipe(cap)) &&
+      cap.leaf_role !== "PASSIVE"
+    ) {
       const rule = cap.handle_rule;
       if (!rule || !rule.source.trim()) return `${name}: declara la regla de manilla y su fuente.`;
       if (
@@ -66,10 +79,21 @@ export function OpeningCapabilitiesEditor({
     family === "FACADE_FIXED"
       ? ["FIXED"]
       : family === "DOOR"
-        ? ["FIXED", "TURN"]
+        ? ["FIXED", "TURN", "SLIDE", "FOLD"]
         : family === "SLIDING"
-          ? ["FIXED", "SLIDE"]
-          : ["FIXED", "TURN", "TILT", "TILT_TURN", "TOP_HUNG"];
+          ? ["FIXED", "SLIDE", "VERTICAL_SLIDE"]
+          : family === "LIFT_SLIDE"
+            ? ["FIXED", "LIFT_SLIDE"]
+            : [
+                "FIXED",
+                "TURN",
+                "TILT",
+                "TILT_TURN",
+                "TOP_HUNG",
+                "PARALLEL_SLIDE",
+                "PIVOT_V",
+                "PIVOT_H",
+              ];
   function patch(index: number, values: Partial<Capability>): void {
     onChange(capabilities.map((cap, i) => (i === index ? { ...cap, ...values } : cap)));
   }
@@ -77,7 +101,9 @@ export function OpeningCapabilitiesEditor({
     patch(index, {
       movement,
       hinge_sides:
-        movement === "FIXED" || movement === "SLIDE"
+        movement === "FIXED" ||
+        movement === "SLIDE" ||
+        requiresRecipe({ movement, use: family === "DOOR" ? "DOOR" : "WINDOW" })
           ? ["NONE"]
           : movement === "TILT"
             ? ["BOTTOM"]
@@ -89,6 +115,7 @@ export function OpeningCapabilitiesEditor({
       fixed_in_sash: false,
       hardware_kit_skus: [],
       handle_rule: null,
+      advanced_recipes: [],
     });
   }
   function handle(index: number, values: Partial<NonNullable<Capability["handle_rule"]>>): void {
@@ -235,78 +262,86 @@ export function OpeningCapabilitiesEditor({
               ))}
             </fieldset>
           )}
-          {cap.movement !== "FIXED" && cap.movement !== "SLIDE" && cap.leaf_role !== "PASSIVE" && (
-            <>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={cap.handle_rule !== null}
-                  onChange={(event) =>
-                    patch(index, {
-                      handle_rule: event.target.checked
-                        ? {
-                            vertical_reference: "CENTER",
-                            default_height_mm: null,
-                            minimum_from_top_mm: "",
-                            minimum_from_bottom_mm: "",
-                            closing_edge_offset_mm: "",
-                            source: "",
-                          }
-                        : null,
-                    })
-                  }
-                />
-                Declarar regla de manilla
-              </label>
-              {cap.handle_rule && (
-                <div className="catalog-fields">
-                  <label>
-                    <span>Referencia de altura</span>
-                    <select
-                      value={cap.handle_rule.vertical_reference}
-                      onChange={(event) =>
-                        handle(index, {
-                          vertical_reference: event.target.value,
-                          default_height_mm: event.target.value === "CENTER" ? null : "",
-                        })
-                      }
-                    >
-                      <option value="CENTER">Centro de la hoja</option>
-                      <option value="LEAF_BOTTOM">Borde inferior de la hoja</option>
-                      <option value="LEAF_TOP">Borde superior de la hoja</option>
-                    </select>
-                  </label>
-                  {cap.handle_rule.vertical_reference !== "CENTER" &&
-                    input(
-                      "Altura de fuente · mm",
-                      cap.handle_rule.default_height_mm ?? "",
-                      (value) => handle(index, { default_height_mm: value }),
+          {cap.movement !== "FIXED" &&
+            (cap.movement !== "SLIDE" || requiresRecipe(cap)) &&
+            cap.leaf_role !== "PASSIVE" && (
+              <>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={cap.handle_rule !== null}
+                    onChange={(event) =>
+                      patch(index, {
+                        handle_rule: event.target.checked
+                          ? {
+                              vertical_reference: "CENTER",
+                              default_height_mm: null,
+                              minimum_from_top_mm: "",
+                              minimum_from_bottom_mm: "",
+                              closing_edge_offset_mm: "",
+                              source: "",
+                            }
+                          : null,
+                      })
+                    }
+                  />
+                  Declarar regla de manilla
+                </label>
+                {cap.handle_rule && (
+                  <div className="catalog-fields">
+                    <label>
+                      <span>Referencia de altura</span>
+                      <select
+                        value={cap.handle_rule.vertical_reference}
+                        onChange={(event) =>
+                          handle(index, {
+                            vertical_reference: event.target.value,
+                            default_height_mm: event.target.value === "CENTER" ? null : "",
+                          })
+                        }
+                      >
+                        <option value="CENTER">Centro de la hoja</option>
+                        <option value="LEAF_BOTTOM">Borde inferior de la hoja</option>
+                        <option value="LEAF_TOP">Borde superior de la hoja</option>
+                      </select>
+                    </label>
+                    {cap.handle_rule.vertical_reference !== "CENTER" &&
+                      input(
+                        "Altura de fuente · mm",
+                        cap.handle_rule.default_height_mm ?? "",
+                        (value) => handle(index, { default_height_mm: value }),
+                        true,
+                      )}
+                    {input(
+                      "Margen superior · mm",
+                      cap.handle_rule.minimum_from_top_mm,
+                      (value) => handle(index, { minimum_from_top_mm: value }),
                       true,
                     )}
-                  {input(
-                    "Margen superior · mm",
-                    cap.handle_rule.minimum_from_top_mm,
-                    (value) => handle(index, { minimum_from_top_mm: value }),
-                    true,
-                  )}
-                  {input(
-                    "Margen inferior · mm",
-                    cap.handle_rule.minimum_from_bottom_mm,
-                    (value) => handle(index, { minimum_from_bottom_mm: value }),
-                    true,
-                  )}
-                  {input(
-                    "Distancia al borde de cierre · mm",
-                    cap.handle_rule.closing_edge_offset_mm,
-                    (value) => handle(index, { closing_edge_offset_mm: value }),
-                    true,
-                  )}
-                  {input("Fuente de manilla", cap.handle_rule.source, (value) =>
-                    handle(index, { source: value }),
-                  )}
-                </div>
-              )}
-            </>
+                    {input(
+                      "Margen inferior · mm",
+                      cap.handle_rule.minimum_from_bottom_mm,
+                      (value) => handle(index, { minimum_from_bottom_mm: value }),
+                      true,
+                    )}
+                    {input(
+                      "Distancia al borde de cierre · mm",
+                      cap.handle_rule.closing_edge_offset_mm,
+                      (value) => handle(index, { closing_edge_offset_mm: value }),
+                      true,
+                    )}
+                    {input("Fuente de manilla", cap.handle_rule.source, (value) =>
+                      handle(index, { source: value }),
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          {requiresRecipe(cap) && (
+            <AdvancedRecipesEditor
+              capability={cap}
+              onChange={(advanced_recipes) => patch(index, { advanced_recipes })}
+            />
           )}
           <button
             type="button"

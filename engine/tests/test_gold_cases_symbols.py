@@ -2,16 +2,34 @@
 import json
 from decimal import Decimal as D
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from dekopen_engine.drawing import dimension_chains
 from dekopen_engine.geometry import calculate_geometry, sliding_travel, validate_sliding_layout
 from dekopen_engine.models import Opening, ParametricNode, SlidingLayout, SystemParams
-from dekopen_engine.symbols import opening_symbol_lines
+from dekopen_engine.symbols import SymbolTravel, opening_symbol_lines
 
 CASES = json.loads((Path(__file__).parent / "fixtures/symbols/cases.json").read_text(encoding="utf-8"))
+ADVANCED = json.loads((Path(__file__).parent / "fixtures/symbols/advanced.json").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("case", ADVANCED, ids=lambda case: case["name"])
+def test_advanced_symbols_keep_catalog_axes_and_travel(case: dict[str, Any]) -> None:
+    for leaf, expected in zip(case["leaves"], case["expected"], strict=True):
+        data = leaf["advanced"]
+        lines = opening_symbol_lines(Opening.model_validate_json(json.dumps(leaf["opening"])),
+            x=D(leaf["x_mm"]), y=D(leaf["y_mm"]), width=D(leaf["width_mm"]), height=D(leaf["height_mm"]),
+            mirror=False, exterior=case["view"] == "exterior", travel=cast(SymbolTravel | None, data["travel"]),
+            axis_x=D(data["pivot_x_mm"]) if data["pivot_x_mm"] is not None else None,
+            axis_y=D(data["pivot_y_mm"]) if data["pivot_y_mm"] is not None else None,
+            closing_side=leaf["handle"]["side"] if leaf["handle"] else None)
+        actual = [{"symbol": line.symbol, "dashed": line.dashed,
+                   "points": [[D(case["total_width_mm"])-x if case["view"] == "exterior" else x, y] for x, y in line.points]}
+                  for line in lines]
+        frozen = [{**line, "points": [[D(x), D(y)] for x, y in line["points"]]} for line in expected["lines"]]
+        assert actual == frozen
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case["name"])

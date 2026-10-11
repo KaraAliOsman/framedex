@@ -38,7 +38,8 @@ sellada, por lo que no combina hojas de distinta autoridad.
 
 ## Intención y límites
 
-Un fabricante debe leer movimiento, cierre y vista sin ambigüedad. Los fixtures
-reservados de movimientos avanzados son gramática; D08 aporta capacidad real.
+Un fabricante debe leer movimiento, cierre y vista sin ambigüedad. D08 añade
+28 fixtures interior/exterior de recetas avanzadas con autoridad del motor,
+planta y manillas; véase [tipologías avanzadas](advanced-openings.md).
 P06 mantiene bow, P07 el portal comercial y P09/P13 la composición documental.
 Catálogo DEMO y orden de carriles no acreditan datos de un proveedor.

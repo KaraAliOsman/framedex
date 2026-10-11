@@ -24,21 +24,24 @@ from dekopen_engine.glass_composition import (
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import PricingRepository, commercial_backend, json_text, rows
 from pricing.serializers import StrictSerializer
+from catalogs.serializers import decimal_field
 
 
 class GlassPreviewInputSerializer(StrictSerializer):
     system_id = serializers.UUIDField()
     product = serializers.JSONField()
     processing = serializers.JSONField(required=False)
-    width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"), required=False)
-    height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"), required=False)
+    # These are engine outputs, including exact fractional divisions. Their
+    # precision is not the two-decimal scale of a user-entered nominal vano.
+    width_mm = decimal_field(None, None, min_value=Decimal("0.01"), required=False)
+    height_mm = decimal_field(None, None, min_value=Decimal("0.01"), required=False)
     opening_type = serializers.CharField(required=False)
     opening_use = serializers.ChoiceField(choices=["WINDOW", "DOOR"], required=False, allow_null=True)
     is_sidelight = serializers.BooleanField(required=False, default=False)
     sill_height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0"), required=False, allow_null=True)
     hardware_sku = serializers.CharField(required=False, allow_null=True)
-    leaf_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0"), required=False, allow_null=True)
-    previous_infill_kg = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0"), required=False, allow_null=True)
+    leaf_weight_kg = decimal_field(None, None, min_value=Decimal("0"), required=False, allow_null=True)
+    previous_infill_kg = decimal_field(None, None, min_value=Decimal("0"), required=False, allow_null=True)
     technical_sku = serializers.CharField(required=False)
 
 

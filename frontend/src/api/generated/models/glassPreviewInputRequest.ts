@@ -11,9 +11,7 @@ export interface GlassPreviewInputRequest {
   system_id: string;
   product: unknown;
   processing?: unknown;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
   width_mm?: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
   height_mm?: string;
   /** @minLength 1 */
   opening_type?: string;
@@ -31,15 +29,9 @@ export interface GlassPreviewInputRequest {
    * @nullable
    */
   hardware_sku?: string | null;
-  /**
-   * @nullable
-   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
-   */
+  /** @nullable */
   leaf_weight_kg?: string | null;
-  /**
-   * @nullable
-   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
-   */
+  /** @nullable */
   previous_infill_kg?: string | null;
   /** @minLength 1 */
   technical_sku?: string;

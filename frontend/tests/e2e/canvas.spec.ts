@@ -149,7 +149,14 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
     "DEMO_ALU_CORREDERA",
     "DEMO_ALU_PRACTICABLE",
     "DEMO_CORREDERA_60",
+    "DEMO_GUILLOTINA",
+    "DEMO_HST",
+    "DEMO_PIVOT_H",
+    "DEMO_PIVOT_V",
+    "DEMO_PLEGABLE",
+    "DEMO_PSK",
     "DEMO_PUERTA_70",
+    "DEMO_PUERTA_CORREDERA",
   ]);
   const discovered = systemsPayload.systems.filter(
     (system) => system.code === "DEMO_60" && system.is_demo,

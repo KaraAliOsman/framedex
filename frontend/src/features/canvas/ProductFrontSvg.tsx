@@ -587,7 +587,7 @@ function Bay({
   // panels glaze their slot directly like a fixed bay.
   if (
     node.opening &&
-    node.opening.movement !== "SLIDE" &&
+    (node.opening.movement !== "SLIDE" || Boolean(node.opening_recipe_code)) &&
     (node.opening.movement !== "FIXED" || node.opening.fixed_in_sash)
   ) {
     const leaves = physicalFacts.leaves.filter((leaf) => leaf.bay_id === node.id);
@@ -609,22 +609,39 @@ function Bay({
               y = physicalFacts.y + Number(leaf.y_mm);
             const width = Number(leaf.width_mm),
               height = Number(leaf.height_mm);
-            const thickness = members.sash.faceWidthMm;
+            const thickness = leaf.advanced
+              ? Number(leaf.advanced.profile_face_mm)
+              : members.sash.faceWidthMm;
+            const glass = leaf.advanced
+              ? {
+                  x: physicalFacts.x + Number(leaf.advanced.glass_x_mm),
+                  y: physicalFacts.y + Number(leaf.advanced.glass_y_mm),
+                  w: Number(leaf.advanced.glass_width_mm),
+                  h: Number(leaf.advanced.glass_height_mm),
+                }
+              : {
+                  x: x + thickness + bead,
+                  y: y + thickness + bead,
+                  w: Math.max(width - (thickness + bead) * 2, 0),
+                  h: Math.max(height - (thickness + bead) * 2, 0),
+                };
             return (
               <g key={leaf.leaf_id ?? "single"} data-physical-leaf={leaf.leaf_id ?? "single"}>
                 <title>
                   {leaf.opening.leaf_role === "PASSIVE"
                     ? "Hoja pasiva con falleba"
-                    : physicalLabel(leaf.opening, leaf.use)}
+                    : (leaf.advanced?.recipe_name ?? physicalLabel(leaf.opening, leaf.use))}
                 </title>
-                <Member
-                  x={x}
-                  y={y}
-                  w={width}
-                  h={height}
-                  surface={sashSurface}
-                  className="member-sash"
-                />
+                {thickness > 0 && (
+                  <Member
+                    x={x}
+                    y={y}
+                    w={width}
+                    h={height}
+                    surface={sashSurface}
+                    className="member-sash"
+                  />
+                )}
                 <rect
                   className="member-bead"
                   x={x + thickness}
@@ -634,16 +651,29 @@ function Bay({
                 />
                 <rect
                   className="module-glass"
-                  x={x + thickness + bead}
-                  y={y + thickness + bead}
-                  width={Math.max(width - (thickness + bead) * 2, 0)}
-                  height={Math.max(height - (thickness + bead) * 2, 0)}
+                  data-engine-glass={leaf.advanced ? "true" : undefined}
+                  x={glass.x}
+                  y={glass.y}
+                  width={glass.w}
+                  height={glass.h}
                 />
                 <g className="opening-glyph">
                   <OpeningSymbol
                     opening={leaf.opening}
                     view={members.viewFace}
                     mirror={false}
+                    travel={leaf.advanced?.travel}
+                    axis={{
+                      x:
+                        leaf.advanced?.pivot_x_mm != null
+                          ? physicalFacts.x + Number(leaf.advanced.pivot_x_mm)
+                          : null,
+                      y:
+                        leaf.advanced?.pivot_y_mm != null
+                          ? physicalFacts.y + Number(leaf.advanced.pivot_y_mm)
+                          : null,
+                      closingSide: leaf.handle?.side,
+                    }}
                     x={x}
                     y={y}
                     width={width}

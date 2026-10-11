@@ -58,8 +58,9 @@ La constitución §3.6 prevalece sobre el vértice inverso del tablero históric
 iconos. El estimador debe reconocer la apertura en el dibujo y elegir únicamente
 lo que admite su sistema. P04/P05 continúan el rediseño integral del editor.
 
-Los movimientos avanzados están declarados para D08 y todavía no se ofrecen
-como capacidad fabricable. Los kits, medidas y precios DEMO no acreditan un
+D08 incorpora recetas explícitas, cortes/BOM/kits y planta para los movimientos
+avanzados, conservando el contrato físico de D03; véase
+[tipologías avanzadas](advanced-openings.md). Los kits, medidas y precios DEMO no acreditan un
 catálogo comercial. La puerta con lateral de 2 200 mm conserva el bloqueo R05
 cuando falta inercia estructural: una carga ficticia de prueba no certifica viento.
 D04 amplía reglas y selección de herrajes sobre este contrato.

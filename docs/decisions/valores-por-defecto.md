@@ -684,3 +684,23 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - Empresa, Comercial y Documentos se confirman antes del primer proyecto. Papel,
   vigencia y plantillas mantienen los defaults de la constitución; el PDF vivo
   usa una revisión real y nunca inventa una obra o importe de ejemplo.
+
+## D08 · tipologías avanzadas (2026-10-11)
+
+- Una apertura avanzada exige receta con fuente en Catálogo, perfiles y kits
+  compatibles. No existe un default físico en Ajustes que permita omitir
+  esa autoridad. El dueño/técnico puede publicar otra receta por el flujo P16.
+- HST ofrece A/C en el fixture; G/K solo aparecen si una fuente los declara.
+  Paquete, paso, eje desplazado, balance, elevación y recorrido se configuran
+  en la receta. Una hoja fija no lleva kit; el paso conserva cierre independiente.
+- Siete series nuevas DEMO v8, sin backfill de las series v1–v7. Las políticas
+  mixtas adicionales se publican como nueva versión sin duplicar las reglas
+  anteriores ni alterar revisiones emitidas. La migración contiene su autoridad.
+- Geometría avanzada y agregación usan contexto Decimal local de 80 dígitos,
+  redondeo estable y sin depender del contexto ambiental. Guardar/preciar/emitir
+  preserva el mismo resultado; los históricos mantienen su contexto anterior.
+- La planta abre visible y explica discontinuo cerrado/continuo abierto;
+  mostrar/ocultar se elige en el editor. Comercial omite cotas; técnica y PDF
+  comparten hojas/manillas del motor. P19 incorpora la física avanzada en 3D.
+- Fuentes y precios del fixture siguen DEMO; ni el dibujo ni un ensayo local
+  acreditan catálogo de fabricante, viento de obra o certificación industrial.

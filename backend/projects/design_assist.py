@@ -53,7 +53,7 @@ Operaciones:
 - equalize_widths: anchos iguales.
 - equalize_angles: ángulos iguales entre uniones.
 - set_coupling_angle {coupling, angle_deg}: ángulo de una unión (0 = recto).
-- set_opening {module, opening, opening_use, hinged_layout?}: copie una opción de catalog.opening_choices con su objeto físico y composición; nunca invente dirección, rol, manilla o herraje. Si el catálogo no declara opciones estructuradas, use solo catalog.openings.
+- set_opening {module, opening, opening_use, opening_recipe_code?, hinged_layout?}: copie una opción de catalog.opening_choices con su objeto físico y composición; en aperturas avanzadas copie también el código de receta. Nunca invente dirección, rol, manilla o herraje. Si el catálogo no declara opciones estructuradas, use solo catalog.openings.
 - set_glass {module, sku}: vidrio del catálogo.
 - set_glass_thickness {module, mm}: espesor del catálogo.
 - set_panel {module, sku|null}: panel del catálogo, null lo quita.
@@ -169,6 +169,14 @@ def _opening_choices(params: SystemParams) -> list[dict[str, Any]]:
                 fixed_in_sash=cap.fixed_in_sash, hinge_side=hinge)
             data: dict[str, Any] = {"opening": opening.model_dump(mode="json"),
                 "opening_use": cap.use.value, "source": cap.source}
+            if cap.advanced_recipes:
+                for recipe in cap.advanced_recipes:
+                    choice = {**data, "opening_recipe_code": recipe.code, "source": recipe.source}
+                    node = ParametricNode.model_validate_json(json.dumps({"id": "choice", "type": "BAY",
+                        **{key: value for key, value in choice.items() if key != "source"}}))
+                    normalize_opening_tree(node, params)
+                    choices.append({**choice, "label": recipe.name})
+                continue
             if cap.leaf_role.value == "ACTIVE":
                 opposite = HingeSide.RIGHT if hinge is HingeSide.LEFT else HingeSide.LEFT
                 passive = next((other for other in params.opening_capabilities
@@ -921,11 +929,13 @@ def _validate_ops(
                 try:
                     node = ParametricNode.model_validate_json(json.dumps({"id": "assistant", "type": NodeType.BAY,
                         "opening": item["opening"], "opening_use": item.get("opening_use", "WINDOW"),
-                        "hinged_layout": item.get("hinged_layout"), "sliding_layout": item.get("sliding_layout")}))
+                        "hinged_layout": item.get("hinged_layout"), "sliding_layout": item.get("sliding_layout"),
+                        "opening_recipe_code": item.get("opening_recipe_code")}))
                     normalize_opening_tree(node, catalog["params"])
                     accepted.append({"op": name, "module": ref, "opening": node.opening.model_dump(mode="json"),
                         "opening_use": node.opening_use.value, "hinged_layout": node.hinged_layout.model_dump(mode="json") if node.hinged_layout else None,
-                        "sliding_layout": node.sliding_layout.model_dump(mode="json") if node.sliding_layout else None})
+                        "sliding_layout": node.sliding_layout.model_dump(mode="json") if node.sliding_layout else None,
+                        "opening_recipe_code": node.opening_recipe_code})
                 except ValueError:
                     rejected.append(reject(item, "apertura_incompatible_con_sistema"))
             elif ref is not None and isinstance(item.get("opening"), str) and item["opening"] in OPENINGS and item["opening"] in catalog.get("openings", OPENINGS):

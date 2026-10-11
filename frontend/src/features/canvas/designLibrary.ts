@@ -1,4 +1,12 @@
 import type { TranslationKey } from "../../i18n/es-CL";
+import { t } from "../../i18n/es-CL";
+import type { DesignOptions } from "../../api/generated/models";
+import {
+  choicePatch,
+  openingChoices,
+  type OpeningLeafFact,
+  type AdvancedPreview,
+} from "./physicalOpenings";
 import type { IntentNode, Opening } from "./intentEditing";
 import { declareSlidingTravel, SLIDING_PRESETS } from "./intentEditing";
 import {
@@ -26,7 +34,54 @@ export interface StarterDefinition {
   key: string;
   titleKey: TranslationKey;
   hintKey: TranslationKey;
+  title?: string;
+  hint?: string;
+  nominal?: { widthMm: number; heightMm: number };
+  previewLeaves?: OpeningLeafFact[];
+  recipeCode?: string;
   build(widthMm: number, heightMm: number): ProductJson;
+}
+
+export const starterTitle = (definition: StarterDefinition): string =>
+  definition.title ?? t(definition.titleKey);
+export const starterHint = (definition: StarterDefinition): string =>
+  definition.hint ?? t(definition.hintKey);
+export const starterSize = (definition: StarterDefinition): { widthMm: number; heightMm: number } =>
+  definition.nominal ?? starterNominalSize(definition.key);
+
+/** Catalog recipes create intent; every preview coordinate comes from the engine. */
+export function catalogStarters(options?: DesignOptions): StarterDefinition[] {
+  const previews = (options?.advanced_previews ?? []) as unknown as AdvancedPreview[];
+  return openingChoices(options)
+    .filter((choice) => choice.recipe)
+    .map((choice) => {
+      const recipe = choice.recipe!;
+      const preview = previews.find(
+        (item) =>
+          item.recipe_code === recipe.code &&
+          item.movement === choice.opening.movement &&
+          item.use === choice.use,
+      );
+      return {
+        key: `advanced-${choice.id}`,
+        titleKey: "assembly.starter.fixed",
+        hintKey: "assembly.starter.fixedHint",
+        title: recipe.name,
+        hint: preview?.reason || "Receta del catálogo · medidas iniciales declaradas",
+        nominal: {
+          widthMm: Number(recipe.starter_width_mm),
+          heightMm: Number(recipe.starter_height_mm),
+        },
+        recipeCode: recipe.code,
+        previewLeaves: preview?.opening_leaves ?? [],
+        build: (w, h) =>
+          wrapTreeAsProduct(
+            { id: crypto.randomUUID(), type: "BAY", ...choicePatch(choice) },
+            String(w),
+            String(h),
+          ),
+      };
+    });
 }
 
 /** Coupled pair of two independent bays joined by a coupler. */

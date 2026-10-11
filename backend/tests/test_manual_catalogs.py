@@ -70,6 +70,12 @@ def test_kit_opening_choices_match_current_operable_engine():
         "SLIDING",
         "AWNING",
         "DOOR",
+        "LIFT_SLIDE",
+        "PARALLEL_SLIDE",
+        "FOLD",
+        "PIVOT_V",
+        "PIVOT_H",
+        "VERTICAL_SLIDE",
     }
 
 

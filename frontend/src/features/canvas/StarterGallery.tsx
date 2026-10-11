@@ -1,8 +1,23 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import type { DesignOptions, ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
-import { STARTER_DEFINITIONS, starterNominalSize, type StarterDefinition } from "./designLibrary";
+import {
+  STARTER_DEFINITIONS,
+  catalogStarters,
+  starterSize,
+  starterTitle,
+  starterHint,
+  type StarterDefinition,
+} from "./designLibrary";
+import {
+  physicalLabel,
+  choiceMatches,
+  openingChoices,
+  type OpeningLeafFact,
+  type AdvancedAvailability,
+} from "./physicalOpenings";
 import type { MemberGeometry } from "./members";
 import { ProductFrontSvg } from "./ProductFrontSvg";
 import type { ProductJson } from "./productEditing";
@@ -11,6 +26,10 @@ import { compatibleCouplers } from "./couplerAuthority";
 
 function family(product: ProductJson): string {
   if (product.assembly.modules.length > 1) return "Conjuntos";
+  const advanced = intentBays(product.assembly.modules[0]!.tree).find(
+    (bay) => bay.opening_recipe_code,
+  );
+  if (advanced?.opening) return physicalLabel(advanced.opening, advanced.opening_use ?? "WINDOW");
   const openings = intentBays(product.assembly.modules[0]!.tree).map(
     (bay) => bay.opening_type ?? "FIXED",
   );
@@ -28,14 +47,22 @@ const NOOP = () => {};
 function StarterThumb({
   product,
   members,
+  leaves = [],
 }: {
   product: ProductJson;
   members: MemberGeometry;
+  leaves?: OpeningLeafFact[];
 }): JSX.Element {
   return (
     <ProductFrontSvg
       product={product}
       members={members}
+      openingFacts={{
+        [product.assembly.modules[0]!.id]: leaves.map((leaf) => ({
+          ...leaf,
+          bay_id: product.assembly.modules[0]!.tree.id,
+        })),
+      }}
       selectedId={null}
       issues={NO_ISSUES}
       disabled
@@ -68,13 +95,14 @@ export function StarterGallery({
 }): JSX.Element {
   const previews = useMemo(
     () =>
-      STARTER_DEFINITIONS.map((definition) => {
-        const { widthMm, heightMm } = starterNominalSize(definition.key);
+      [...STARTER_DEFINITIONS, ...catalogStarters(options)].map((definition) => {
+        const { widthMm, heightMm } = starterSize(definition);
         return { definition, product: definition.build(widthMm, heightMm) };
       }),
-    [],
+    [options],
   );
   const [query, setQuery] = useState("");
+  const [availability, setAvailability] = useState<AdvancedAvailability | null>(null);
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const compatible = previews.filter(
@@ -101,13 +129,15 @@ export function StarterGallery({
         (!allowedOpenings ||
           product.assembly.modules.every((module) =>
             intentBays(module.tree).every((bay) =>
-              allowedOpenings.includes(bay.opening_type ?? "FIXED"),
+              bay.opening_recipe_code
+                ? openingChoices(options).some((choice) => choiceMatches(bay, choice))
+                : allowedOpenings.includes(bay.opening_type ?? "FIXED"),
             ),
           )),
     );
     if (!needle) return compatible;
     return compatible.filter(({ definition }) =>
-      `${t(definition.titleKey)} ${t(definition.hintKey)}`.toLowerCase().includes(needle),
+      `${starterTitle(definition)} ${starterHint(definition)}`.toLowerCase().includes(needle),
     );
   }, [previews, query, allowedOpenings, options]);
   return (
@@ -138,15 +168,19 @@ export function StarterGallery({
                       <button
                         type="button"
                         className="starter-card"
-                        aria-label={`${t(definition.titleKey)} · ${t(definition.hintKey)}`}
+                        aria-label={`${starterTitle(definition)} · ${starterHint(definition)}`}
                         disabled={disabled}
                         onClick={() => onPick(definition)}
                       >
                         <span className="starter-thumb">
-                          <StarterThumb product={product} members={members} />
+                          <StarterThumb
+                            product={product}
+                            members={members}
+                            leaves={definition.previewLeaves}
+                          />
                         </span>
-                        <span className="starter-card-title">{t(definition.titleKey)}</span>
-                        <span className="starter-card-hint">{t(definition.hintKey)}</span>
+                        <span className="starter-card-title">{starterTitle(definition)}</span>
+                        <span className="starter-card-hint">{starterHint(definition)}</span>
                       </button>
                     </div>
                   ))}
@@ -154,6 +188,40 @@ export function StarterGallery({
             </section>
           ))}
         </div>
+      )}
+      {Boolean(options?.advanced_availability?.length) && (
+        <details className="advanced-availability">
+          <summary>Elegir una apertura avanzada · series y datos necesarios</summary>
+          <div className="advanced-availability-choices">
+            {(options!.advanced_availability as unknown as AdvancedAvailability[]).map((item) => (
+              <button
+                type="button"
+                key={`${item.use}-${item.movement}`}
+                aria-pressed={
+                  availability?.movement === item.movement && availability?.use === item.use
+                }
+                onClick={() => setAvailability(item)}
+              >
+                {item.label} · {item.available ? "Disponible" : "Sin dato"}
+              </button>
+            ))}
+          </div>
+          {availability && (
+            <div role="status">
+              <p>
+                <strong>{availability.label}</strong> · {availability.reason}
+              </p>
+              <p>
+                {availability.compatible_systems.length
+                  ? `Series que la permiten: ${availability.compatible_systems.join("; ")}.`
+                  : "No hay una serie visible con esta autoridad declarada."}
+              </p>
+              {!availability.available && (
+                <Link to="/catalogs/systems">Completar autoridad en Catálogo</Link>
+              )}
+            </div>
+          )}
+        </details>
       )}
     </div>
   );

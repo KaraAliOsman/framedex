@@ -150,6 +150,11 @@ class Opening(EngineModel):
         elif self.movement is OpeningMovement.TOP_HUNG:
             if self.hinge_side is not HingeSide.TOP or self.direction is not OpeningDirection.OUTWARD:
                 raise ValueError("La proyectante lleva bisagras arriba y abre hacia afuera.")
+        elif self.movement in (OpeningMovement.LIFT_SLIDE, OpeningMovement.PARALLEL_SLIDE,
+                OpeningMovement.FOLD, OpeningMovement.PIVOT_V, OpeningMovement.PIVOT_H,
+                OpeningMovement.VERTICAL_SLIDE):
+            if self.hinge_side is not HingeSide.NONE or self.leaf_role is not LeafRole.SINGLE:
+                raise ValueError("El movimiento avanzado declara su eje y composición en la receta.")
         return self
 
 
@@ -207,6 +212,117 @@ class OpeningHandleRule(EngineModel):
         return self
 
 
+class AdvancedPanel(EngineModel):
+    """One panel in a sourced recipe, ordered in the interior elevation."""
+
+    slot: str = Field(min_length=1, max_length=32)
+    kind: Literal["MOVING", "FIXED"]
+    share: Decimal = Field(gt=0, le=1)
+    fixed_in_sash: bool
+    track: int | None = Field(ge=0, le=15)
+    plane_offset_mm: Decimal
+    travel: Literal["LEFT", "RIGHT", "UP", "DOWN"] | None
+    travel_fraction: Decimal = Field(ge=0, le=1)
+    closing_side: HingeSide
+    pivot_fraction: Decimal | None = Field(default=None, gt=0, lt=1)
+    fold_group: str | None = None
+    fold_index: int | None = Field(default=None, ge=0, le=15)
+    stack_side: Literal["LEFT", "RIGHT"] | None = None
+    pass_through: bool = False
+    balance: Literal["SPRING", "COUNTERWEIGHT"] | None = None
+
+
+class AdvancedOpeningRecipe(EngineModel):
+    """Catalog authority, never an executable formula or an editable drawing."""
+
+    schema_version: Literal[1] = 1
+    code: str = Field(min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=160)
+    scheme: str = Field(min_length=1, max_length=32)
+    source: str = Field(min_length=1)
+    synthetic: bool
+    distribution_axis: Literal["X", "Y"]
+    panels: tuple[AdvancedPanel, ...] = Field(min_length=1, max_length=16)
+    leaf_profile_role: Literal["SASH", "SLIDING_SASH", "DOOR_SASH"]
+    # Insets are signed: a negative inset declares overlap over the clear frame.
+    inset_left_mm: Decimal
+    inset_right_mm: Decimal
+    inset_top_mm: Decimal
+    inset_bottom_mm: Decimal
+    meeting_overlap_mm: Decimal = Field(ge=0)
+    meeting_gap_mm: Decimal = Field(ge=0)
+    glazing_deduction_width_mm: Decimal = Field(ge=0)
+    glazing_deduction_height_mm: Decimal = Field(ge=0)
+    threshold_height_mm: Decimal | None = Field(default=None, gt=0)
+    rail_profile_role: Literal["RAIL"] | None = None
+    rail_count: int = Field(ge=0, le=16)
+    rail_sides: tuple[Literal["TOP", "BOTTOM", "LEFT", "RIGHT"], ...]
+    rail_end_deduction_mm: Decimal = Field(ge=0)
+    interlock_required: bool
+    interlock_end_deduction_mm: Decimal = Field(ge=0)
+    lift_mm: Decimal | None = Field(default=None, gt=0)
+    parallel_offset_mm: Decimal | None = Field(default=None, gt=0)
+    opening_angle_deg: Decimal = Field(gt=0, le=90)
+    packet_pitch_mm: Decimal | None = Field(default=None, gt=0)
+    hardware_kit_skus: tuple[str, ...] = Field(min_length=1)
+    pass_through_hardware_kit_skus: tuple[str, ...] = ()
+    min_leaf_width_mm: Decimal = Field(gt=0)
+    max_leaf_width_mm: Decimal = Field(gt=0)
+    min_leaf_height_mm: Decimal = Field(gt=0)
+    max_leaf_height_mm: Decimal = Field(gt=0)
+    max_leaf_weight_kg: Decimal = Field(gt=0)
+    starter_width_mm: Decimal = Field(gt=0)
+    starter_height_mm: Decimal = Field(gt=0)
+
+    @model_validator(mode="after")
+    def declared_composition(self) -> AdvancedOpeningRecipe:
+        if sum((panel.share for panel in self.panels), Decimal(0)) != Decimal(1):
+            raise ValueError("Las proporciones de la receta deben cubrir exactamente el vano.")
+        if len({panel.slot for panel in self.panels}) != len(self.panels):
+            raise ValueError("Los paneles de la receta deben tener direcciones distintas.")
+        if len(set(self.hardware_kit_skus)) != len(self.hardware_kit_skus):
+            raise ValueError("Los herrajes de la receta no se repiten.")
+        if (self.min_leaf_width_mm > self.max_leaf_width_mm
+                or self.min_leaf_height_mm > self.max_leaf_height_mm):
+            raise ValueError("Los límites de la receta están invertidos.")
+        if not any(panel.kind == "MOVING" for panel in self.panels):
+            raise ValueError("La receta avanzada necesita al menos una hoja móvil.")
+        if (self.rail_profile_role is None) != (self.rail_count == 0):
+            raise ValueError("Las guías declaran perfil y cantidad juntos.")
+        if len(self.rail_sides) != self.rail_count:
+            raise ValueError("Cada guía declara su borde físico.")
+        for panel in self.panels:
+            if panel.kind == "FIXED" and (panel.track is not None or panel.travel is not None
+                    or panel.travel_fraction != 0 or panel.closing_side is not HingeSide.NONE
+                    or panel.pivot_fraction is not None or panel.fold_group is not None
+                    or panel.fold_index is not None or panel.stack_side is not None
+                    or panel.pass_through or panel.balance is not None):
+                raise ValueError("Un fijo no declara movimiento, manilla ni balance.")
+            if panel.kind == "MOVING" and (panel.fixed_in_sash or panel.closing_side is HingeSide.NONE):
+                raise ValueError("La hoja móvil declara su borde de cierre.")
+            if (panel.travel is None) != (panel.travel_fraction == 0):
+                raise ValueError("El recorrido declara dirección y fracción juntos.")
+        moving = [panel for panel in self.panels if panel.kind == "MOVING"]
+        start = Decimal(0)
+        for panel in self.panels:
+            shift = panel.travel_fraction * (-1 if panel.travel in ("LEFT", "UP") else 1)
+            if panel.travel is not None and (start + shift < 0 or start + panel.share + shift > 1):
+                raise ValueError("El recorrido declarado atraviesa una jamba del vano.")
+            start += panel.share
+        for left, right in zip(self.panels, self.panels[1:]):
+            if (left.kind == right.kind == "MOVING" and left.travel is not None
+                    and right.travel is not None and left.track == right.track):
+                raise ValueError("Dos hojas móviles adyacentes no comparten carril.")
+        tracks = {panel.track: panel.plane_offset_mm for panel in moving if panel.track is not None}
+        if (any(tracks[panel.track] != panel.plane_offset_mm for panel in moving if panel.track is not None)
+                or len(set(tracks.values())) != len(tracks)):
+            raise ValueError("Cada carril requiere su plano físico distinto.")
+        if (bool(self.pass_through_hardware_kit_skus) != any(panel.pass_through for panel in self.panels)
+                or len(set(self.pass_through_hardware_kit_skus)) != len(self.pass_through_hardware_kit_skus)):
+            raise ValueError("La hoja de paso declara sus herrajes específicos.")
+        return self
+
+
 class OpeningCapability(EngineModel):
     use: OpeningUse
     movement: OpeningMovement
@@ -217,13 +333,15 @@ class OpeningCapability(EngineModel):
     hardware_kit_skus: tuple[str, ...] = ()
     handle_rule: OpeningHandleRule | None = None
     source: str = Field(min_length=1)
+    advanced_recipes: tuple[AdvancedOpeningRecipe, ...] = ()
 
     @model_validator(mode="after")
     def declared_hardware(self) -> OpeningCapability:
         for hinge in self.hinge_sides:
             Opening(movement=self.movement, hinge_side=hinge, direction=self.direction,
                     leaf_role=self.leaf_role, fixed_in_sash=self.fixed_in_sash)
-        if self.use is OpeningUse.DOOR and self.movement not in (OpeningMovement.FIXED, OpeningMovement.TURN):
+        if self.use is OpeningUse.DOOR and self.movement not in (OpeningMovement.FIXED, OpeningMovement.TURN,
+                OpeningMovement.SLIDE, OpeningMovement.FOLD):
             raise ValueError("La capacidad de puerta debe declarar un giro o un fijo lateral.")
         if self.movement is OpeningMovement.FIXED:
             if self.hardware_kit_skus or self.handle_rule is not None:
@@ -239,7 +357,16 @@ class OpeningCapability(EngineModel):
             raise ValueError("Las bisagras de la capacidad están duplicadas.")
         if len(self.hardware_kit_skus) != len(set(self.hardware_kit_skus)):
             raise ValueError("Los herrajes de la capacidad están duplicados.")
+        from dekopen_engine.advanced_openings import validate_capability_recipes
+        validate_capability_recipes(self)
         return self
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_recipes(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = handler(self)
+        if "advanced_recipes" not in self.model_fields_set:
+            value.pop("advanced_recipes", None)
+        return value
 
 
 class SlidingPanelKind(str, Enum):
@@ -925,6 +1052,12 @@ class SystemParams(EngineModel):
     def family_parameters(self) -> "SystemParams":
         signatures: set[tuple[OpeningUse, OpeningMovement, OpeningDirection, LeafRole, bool, HingeSide]] = set()
         for capability in self.opening_capabilities:
+            from dekopen_engine.advanced_openings import capability_family, validate_recipe_bindings
+            validate_recipe_bindings(capability, self)
+            family = capability_family(capability.movement, capability.use)
+            if (self.system_family is not None and family is not None
+                    and family is not self.system_family):
+                raise ValueError("La capacidad física no corresponde a la familia del sistema.")
             for hinge in capability.hinge_sides:
                 signature = (capability.use, capability.movement, capability.direction,
                              capability.leaf_role, capability.fixed_in_sash, hinge)
@@ -963,6 +1096,7 @@ class ParametricNode(EngineModel):
     opening_type: BayOpeningType | None = None
     opening: Opening | None = None
     opening_use: OpeningUse | None = None
+    opening_recipe_code: str | None = Field(default=None, min_length=1, max_length=64)
     hinged_layout: HingedLayout | None = None
     glass_thickness_mm: Decimal | None = None
     glass_spec: str | None = None
@@ -996,7 +1130,7 @@ class ParametricNode(EngineModel):
     @model_serializer(mode="wrap")
     def preserve_legacy_presence(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result: dict[str, Any] = handler(self)
-        for key in ("opening", "opening_use", "hinged_layout", "hardware_selection", "extras", "extra_context"):
+        for key in ("opening", "opening_use", "opening_recipe_code", "hinged_layout", "hardware_selection", "extras", "extra_context"):
             if key not in self.model_fields_set:
                 result.pop(key, None)
         return result
@@ -1092,6 +1226,53 @@ class LeafOpeningFact(EngineModel):
     height_mm: Decimal
     handle: OpeningHandleFact | None
     source: str
+    advanced: AdvancedLeafFact | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_historical_fact(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = handler(self)
+        if "advanced" not in self.model_fields_set:
+            value.pop("advanced", None)
+        return value
+
+
+class OpeningPlanPoint(EngineModel):
+    x_mm: Decimal
+    depth_mm: Decimal
+
+
+class AdvancedLeafFact(EngineModel):
+    recipe_code: str
+    recipe_name: str
+    scheme: str
+    source: str
+    synthetic: bool
+    kind: Literal["MOVING", "FIXED"]
+    profile_role: str
+    profile_face_mm: Decimal
+    glass_x_mm: Decimal
+    glass_y_mm: Decimal
+    glass_width_mm: Decimal
+    glass_height_mm: Decimal
+    track: int | None
+    plane_offset_mm: Decimal
+    travel: Literal["LEFT", "RIGHT", "UP", "DOWN"] | None
+    travel_mm: Decimal
+    lift_mm: Decimal | None
+    parallel_offset_mm: Decimal | None
+    pivot_x_mm: Decimal | None
+    pivot_y_mm: Decimal | None
+    opening_angle_deg: Decimal
+    fold_group: str | None
+    fold_index: int | None
+    stack_side: Literal["LEFT", "RIGHT"] | None
+    pass_through: bool
+    pass_open_plan: tuple[OpeningPlanPoint, OpeningPlanPoint] | None
+    packet_pitch_mm: Decimal | None
+    balance: Literal["SPRING", "COUNTERWEIGHT"] | None
+    closed_plan: tuple[OpeningPlanPoint, OpeningPlanPoint]
+    open_plan: tuple[OpeningPlanPoint, OpeningPlanPoint]
+    open_plan_polygon: tuple[OpeningPlanPoint, ...] = ()
 
 
 class EngineResult(EngineModel):

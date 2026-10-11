@@ -29,6 +29,12 @@ export interface OperationSetOpening {
   opening_use?: OpeningUseEnum;
   /** @nullable */
   hinged_layout?: OperationSetOpeningHingedLayout;
+  /**
+   * @minLength 1
+   * @maxLength 160
+   * @nullable
+   */
+  opening_recipe_code?: string | null;
   /** @nullable */
   sliding_layout?: OperationSetOpeningSlidingLayout;
   base_sig?: string;

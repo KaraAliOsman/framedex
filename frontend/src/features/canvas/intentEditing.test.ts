@@ -217,6 +217,7 @@ describe("rectangular intent", () => {
     expect(baySpec(bay)).toEqual({
       opening: null,
       opening_use: null,
+      opening_recipe_code: null,
       hinged_layout: null,
       opening_type: "FIXED",
       sliding_layout: null,

@@ -24,6 +24,8 @@ from engine.tests.workspace_cases import workspace_cases
 from engine.tests.assembly_cases import assembly_cases
 from engine.tests.collection_cases import public_cases as collection_cases
 from engine.tests.warranty_cases import warranty_cases
+from engine.tests.advanced_cases import advanced_cases
+from engine.tests.advanced_symbol_cases import generated_reservations, generated_advanced_symbols, SYMBOL_DIR
 
 SNAPSHOT = Path(__file__).resolve().parents[1] / "tests" / "golden_example.json"
 FAMILY_SNAPSHOT = SNAPSHOT.with_name("golden_catalog_families.json")
@@ -40,6 +42,11 @@ WORKSPACE_SNAPSHOT = SNAPSHOT.with_name("golden_price_workspace.json")
 ASSEMBLY_SNAPSHOT = SNAPSHOT.with_name("golden_assemblies.json")
 COLLECTION_SNAPSHOT = SNAPSHOT.with_name("golden_collections.json")
 WARRANTY_SNAPSHOT = SNAPSHOT.with_name('golden_warranty.json')
+ADVANCED_SNAPSHOT = SNAPSHOT.with_name("golden_advanced_openings.json")
+
+
+def generated_advanced_bytes() -> bytes:
+    return (json.dumps(advanced_cases(), ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False)+"\n").encode("utf-8")
 
 
 def generated_warranty_bytes() -> bytes:
@@ -149,6 +156,11 @@ def main() -> None:
     parser.add_argument("--check", action="store_true", help="Compare bytes; never rewrite")
     args = parser.parse_args()
     if args.check:
+        if ((SYMBOL_DIR/"advanced.json").read_bytes() != generated_advanced_symbols()
+                or (SYMBOL_DIR/"cases.json").read_bytes() != generated_reservations()):
+            raise SystemExit("Advanced drawing golden drift: run make goldgen and review the diff")
+        if not ADVANCED_SNAPSHOT.is_file() or ADVANCED_SNAPSHOT.read_bytes() != generated_advanced_bytes():
+            raise SystemExit("Advanced opening golden byte drift: run make goldgen and review the diff")
         if not WARRANTY_SNAPSHOT.is_file() or WARRANTY_SNAPSHOT.read_bytes()!=generated_warranty_bytes():
             raise SystemExit('Warranty golden byte drift: run make goldgen and review the diff')
         if not COLLECTION_SNAPSHOT.is_file() or COLLECTION_SNAPSHOT.read_bytes() != generated_collection_bytes():
@@ -180,6 +192,9 @@ def main() -> None:
         if not QUOTATION_SNAPSHOT.is_file() or QUOTATION_SNAPSHOT.read_bytes() != generated_quotation_bytes():
             raise SystemExit("Quotation golden byte drift: run make goldgen and review the diff")
     else:
+        (SYMBOL_DIR/"advanced.json").write_bytes(generated_advanced_symbols())
+        (SYMBOL_DIR/"cases.json").write_bytes(generated_reservations())
+        ADVANCED_SNAPSHOT.write_bytes(generated_advanced_bytes())
         WARRANTY_SNAPSHOT.write_bytes(generated_warranty_bytes())
         COLLECTION_SNAPSHOT.write_bytes(generated_collection_bytes())
         ASSEMBLY_SNAPSHOT.write_bytes(generated_assembly_bytes())

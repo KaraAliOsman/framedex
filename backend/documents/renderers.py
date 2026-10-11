@@ -442,7 +442,10 @@ def _num(value: object) -> Decimal:
 
 
 def _pt(value: Decimal) -> str:
-    return format(value.normalize(), "f")
+    # Decimal.normalize() consumes the caller's context and can round a
+    # sourced fractional glass dimension. Strip redundant zeros as text.
+    text = format(value, "f")
+    return text.rstrip("0").rstrip(".") if "." in text else text
 
 
 # Drawing palettes — the technical elevation (workshop/docs) keeps the
@@ -484,9 +487,11 @@ def _commercial_palette(position: dict[str, object], face: str = "interior") -> 
 
 def _opening_symbol_svg(opening: Opening, x: Decimal, y: Decimal, width: Decimal,
                         height: Decimal, pal: dict[str, str | None], *,
-                        exterior: bool = False, travel: SlidingTravel | None = None) -> str:
+                        exterior: bool = False, travel=None, axis_x: Decimal | None = None,
+                        axis_y: Decimal | None = None, closing_side: str | None = None) -> str:
     lines = opening_symbol_lines(opening, x=x, y=y, width=width, height=height,
-                                 exterior=exterior, mirror=False, travel=travel)
+                                 exterior=exterior, mirror=False, travel=travel,
+                                 axis_x=axis_x, axis_y=axis_y, closing_side=closing_side)
     stroke = _pt(min(width, height) / Decimal("120"))
     result = []
     for line in lines:
@@ -514,7 +519,17 @@ def _physical_leaf_svg(fact: dict[str, object], out: list[str],
     out.append(f'<g {attrs}><rect x="{_pt(x)}" y="{_pt(y)}" width="{_pt(width)}" '
                f'height="{_pt(height)}" fill="{pal["bay_fill"]}" stroke="{pal["bay_edge"]}" '
                f'stroke-width="{stroke}"/>')
-    out.append(_opening_symbol_svg(opening, x, y, width, height, pal, exterior=exterior))
+    advanced = fact.get("advanced")
+    if isinstance(advanced, dict):
+        gx, gy = origin[0]+_num(advanced["glass_x_mm"]), origin[1]+_num(advanced["glass_y_mm"])
+        out.append(f'<rect data-engine-glass="true" x="{_pt(gx)}" y="{_pt(gy)}" '
+            f'width="{_pt(_num(advanced["glass_width_mm"]))}" height="{_pt(_num(advanced["glass_height_mm"]))}" '
+            f'fill="{pal["bay_fill"]}" stroke="{pal["bay_edge"]}" stroke-width="{stroke}"/>')
+    out.append(_opening_symbol_svg(opening, x, y, width, height, pal, exterior=exterior,
+        travel=advanced.get("travel") if isinstance(advanced, dict) else None,
+        axis_x=origin[0]+_num(advanced["pivot_x_mm"]) if isinstance(advanced, dict) and advanced.get("pivot_x_mm") is not None else None,
+        axis_y=origin[1]+_num(advanced["pivot_y_mm"]) if isinstance(advanced, dict) and advanced.get("pivot_y_mm") is not None else None,
+        closing_side=fact["handle"].get("side") if isinstance(fact.get("handle"), dict) else None))
     handle = fact.get("handle")
     if isinstance(handle, dict):
         hx, hy = x + _num(handle["x_mm"]), y + _num(handle["y_mm"])
@@ -596,7 +611,7 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             )
     structured = node.get("opening")
     if isinstance(structured, dict) and not node.get("opening_type"):
-        if structured.get("movement") != "SLIDE":
+        if structured.get("movement") != "SLIDE" or node.get("opening_recipe_code"):
             facts = (physical or {}).get(str(node.get("id")), [])
             if not facts and (structured.get("movement") != "FIXED" or structured.get("fixed_in_sash")):
                 raise DocumentaryError("frozen_opening_geometry_missing")
@@ -2473,6 +2488,9 @@ def _product_caption(position: dict[str, object]) -> str:
         return _TYPOLOGY_ES.get(raw, raw)
     doors = [bay for bay in bays if bay.get("opening_use") == "DOOR" and bay["opening"]["movement"] != "FIXED"]
     if doors:
+        motion = doors[0]["opening"]["movement"]
+        if motion in ("FOLD", "SLIDE"):
+            return "Puerta plegable" if motion == "FOLD" else "Puerta corredera"
         if any(bay["opening"]["movement"] == "FIXED" for bay in bays):
             return "Puerta con lateral fijo"
         return "Puerta doble" if doors[0].get("hinged_layout") else "Puerta simple"
@@ -2484,7 +2502,9 @@ def _product_caption(position: dict[str, object]) -> str:
     opening = bay["opening"]
     return {"FIXED": "Fijo en hoja" if opening.get("fixed_in_sash") else "Fijo en marco",
         "TURN": "Abatible", "TILT": "Banderola", "TILT_TURN": "Oscilobatiente",
-        "TOP_HUNG": "Proyectante", "SLIDE": "Corredera"}[opening["movement"]]
+        "TOP_HUNG": "Proyectante", "SLIDE": "Corredera", "LIFT_SLIDE": "Elevable-corredera (HST)",
+        "PARALLEL_SLIDE": "Osciloparalela (PSK)", "FOLD": "Plegable", "PIVOT_V": "Pivotante vertical",
+        "PIVOT_H": "Pivotante horizontal", "VERTICAL_SLIDE": "Guillotina"}[opening["movement"]]
 
 
 def _opening_labels(tree: dict[str, object]) -> list[str]:
