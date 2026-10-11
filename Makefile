@@ -22,6 +22,7 @@ lint:
 	$(NPM) run format:check
 	$(PY) scripts/check_generated_api.py
 	$(PY) scripts/generate_opening_symbols.py --check
+	$(PY) scripts/generate_scene3d_fixtures.py --check
 	$(PY) scripts/check_guards.py
 
 typecheck:

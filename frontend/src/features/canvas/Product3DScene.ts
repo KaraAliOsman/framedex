@@ -8,7 +8,8 @@ import { bayHardwareColor } from "./finishHardware";
 import type { ContourJson, ProductJson, ProductModuleJson } from "./productEditing";
 import { modulePrimaryBay, resolveStacks } from "./productEditing";
 import type { IntentNode } from "./intentEditing";
-import { resolvedSlidingLayout } from "./intentEditing";
+import { resolvedSlidingLayout, slidingTravel } from "./intentEditing";
+import type { OpeningLeafFact } from "./physicalOpenings";
 import { insetContourPoints } from "./contourGeometry";
 import { frontLayout } from "./ProductFrontSvg";
 import type { MemberGeometry, MemberSpec } from "./members";
@@ -142,13 +143,18 @@ export type Solid3D = BoxSolid | ShapeSolid | PrismSolid | ProfileSolid;
  * `travel`. */
 export interface LeafMotion {
   leafId: string;
-  kind: "swing" | "tilt" | "slide" | "tilt_turn";
+  kind: "swing" | "tilt" | "slide" | "tilt_turn" | "fold" | "vertical_slide";
   pivot: number;
   dir: number;
   travel: number;
   /** TILT_TURN only: the bottom-edge y the leaf tips about in the TILT
    * pose — `pivot` stays the side hinge for the TURN pose. */
   tiltPivot?: number;
+  pivotDepth?: number;
+  /** Sealed/evaluated motor authority, in module coordinates (y down). */
+  fact?: OpeningLeafFact;
+  moduleHeight?: number;
+  label?: string;
 }
 
 export interface ModuleScene {
@@ -1257,15 +1263,10 @@ function leafSolids(
           solid.hardwareColor = bayHardwareColor(members, bay);
       }
       tagLeaf(solids, leafFrom, leafId);
-      // Presentation only: a leaf slides toward its neighbouring slot(s),
-      // capped to stay inside the bay — the product declares no travel.
-      // On a two-leaf slider both leaves moving at once just swap slots
-      // and reveal nothing; physically one leaf (the inner-rail sash)
-      // slides over the other to open half the bay.
-      const allMoving2 =
-        sliding.panels.length === 2 && sliding.panels.every((p) => p.kind === "MOVING");
-      if (!(allMoving2 && index === 1)) {
-        const dir = index * 2 < sliding.panels.length ? 1 : -1;
+      // Every moving leaf keeps its own control. Explicit travel wins;
+      // historical rows use the same decoder as the elevation.
+      {
+        const dir = slidingTravel(panel, index, sliding.panels.length) === "RIGHT" ? 1 : -1;
         const room = dir > 0 ? region.x + region.w - leafX - leafW : leafX - region.x;
         leaves.push({
           leafId,
@@ -1273,6 +1274,8 @@ function leafSolids(
           pivot: 0,
           dir,
           travel: Math.max(0, Math.min(pitch, room)),
+          label: `Hoja ${index + 1}`,
+          pivotDepth: z0,
         });
       }
     });
@@ -1432,6 +1435,239 @@ function leafSolids(
     glassZ + glassT,
     members.beadSpecFor(bay.glass_thickness_mm ?? null),
   );
+}
+
+/** Build closed rigid leaves from the engine facts. Dimensions/handle/elevation
+ * come from the motor; undeclared section and hardware silhouettes stay schematic.
+ * Opening never changes these solids or the manufacturing snapshot. */
+function physicalLeafSolids(
+  solids: Solid3D[],
+  leaves: LeafMotion[],
+  module: ProductModuleJson,
+  bay: IntentNode,
+  facts: OpeningLeafFact[],
+  members: MemberGeometry,
+  depth: number,
+): void {
+  const owner = `${module.id}/${bay.id}`;
+  const moduleHeight = Number(module.height_mm);
+  const declaredT = Number(bay.glass_thickness_mm);
+  const glassT = Number.isFinite(declaredT) && declaredT > 0 ? declaredT : GLASS_DEFAULT_MM;
+  facts.forEach((fact, index) => {
+    const advanced = fact.advanced;
+    const movement = fact.opening.movement;
+    const moving = movement !== "FIXED";
+    const inSash = moving || fact.opening.fixed_in_sash;
+    const leafId = `${bay.id}:${fact.leaf_id ?? index}`;
+    const region: Region = {
+      x: Number(fact.x_mm),
+      y: moduleHeight - Number(fact.y_mm) - Number(fact.height_mm),
+      w: Number(fact.width_mm),
+      h: Number(fact.height_mm),
+    };
+    const from = solids.length;
+    const spec =
+      advanced && members.profileFor
+        ? (members.profileFor(advanced.profile_role) ?? members.sash)
+        : members.sash;
+    const face = inSash
+      ? Number(advanced?.profile_face_mm ?? spec.faceWidthMm)
+      : members.beadFor(bay.glass_thickness_mm ?? null);
+    const sashD = Number(spec.section?.depth_mm) || depth * 0.45;
+    // The motor plan's plane is the leaf reference plane; all rotations use it.
+    const plane = advanced ? Number(advanced.plane_offset_mm) : depth / 2;
+    const z0 = plane - sashD / 2;
+    const glassZ = plane - glassT / 2;
+    if (inSash) memberBarRing(solids, owner, "sash", spec, region, face, sashD, z0);
+    const glazing: Region = advanced
+      ? {
+          x: Number(advanced.glass_x_mm),
+          y: moduleHeight - Number(advanced.glass_y_mm) - Number(advanced.glass_height_mm),
+          w: Number(advanced.glass_width_mm),
+          h: Number(advanced.glass_height_mm),
+        }
+      : { x: region.x + face, y: region.y + face, w: region.w - 2 * face, h: region.h - 2 * face };
+    if (bay.panel_article_sku) {
+      solids.push(
+        box(
+          owner,
+          "panel",
+          members.frame.material,
+          glazing.x,
+          glazing.y,
+          glassZ,
+          glazing.w,
+          glazing.h,
+          glassT,
+        ),
+      );
+    } else {
+      glassInfill(
+        solids,
+        owner,
+        glazing.x,
+        glazing.y,
+        glassZ,
+        glazing.w,
+        glazing.h,
+        glassT,
+        bay.glass_spec,
+      );
+    }
+    // Beads follow the motor's glazing rectangle even when the leaf has
+    // unequal side insets. No reconstruction of the recipe's glass arithmetic.
+    const bead = members.beadFor(bay.glass_thickness_mm ?? null);
+    gasketAndBead(
+      solids,
+      owner,
+      {
+        x: glazing.x - bead,
+        y: glazing.y - bead,
+        w: glazing.w + 2 * bead,
+        h: glazing.h + 2 * bead,
+      },
+      bead,
+      inSash ? z0 + sashD : depth,
+      glassZ + glassT,
+      members.beadSpecFor(bay.glass_thickness_mm ?? null),
+    );
+    if (fact.handle) {
+      const handleX = region.x + Number(fact.handle.x_mm);
+      const handleY = moduleHeight - Number(fact.y_mm) - Number(fact.handle.y_mm);
+      const hardwareFrom = solids.length;
+      const zFace = z0 + sashD;
+      if (["SLIDE", "LIFT_SLIDE", "PARALLEL_SLIDE", "VERTICAL_SLIDE"].includes(movement)) {
+        // HST spindle is at the declared motor handle point. Its grip is
+        // schematic; the lever is not shifted below the declared height.
+        slidingPull(solids, owner, "recessed_pull", handleX, handleY, zFace, face, true);
+        if (movement === "LIFT_SLIDE" || movement === "PARALLEL_SLIDE")
+          leverOnFace(solids, owner, handleX, handleY, zFace, 1, true);
+      } else if (fact.use === "DOOR") {
+        doorLeverSet(solids, owner, handleX, handleY, region.y, zFace, z0, true, true);
+      } else if (fact.handle.side === "TOP" || fact.handle.side === "BOTTOM") {
+        centreLever(solids, owner, handleX, handleY, zFace, true);
+      } else {
+        leverOnFace(solids, owner, handleX, handleY, zFace, 1, true);
+      }
+      for (const solid of solids.slice(hardwareFrom))
+        solid.hardwareColor = bayHardwareColor(members, bay);
+    }
+    if (moving && ["LEFT", "RIGHT", "TOP", "BOTTOM"].includes(fact.opening.hinge_side)) {
+      // Schematic hinge silhouettes on the declared axis; no manufacturer
+      // count or envelope is asserted by this visualization.
+      const side = fact.opening.hinge_side;
+      const x = side === "RIGHT" ? region.x + region.w : region.x;
+      for (const fraction of [0.2, 0.8]) {
+        if (side === "LEFT" || side === "RIGHT")
+          hingeAt(
+            solids,
+            owner,
+            x - 5,
+            region.y + region.h * fraction,
+            plane - 5,
+            70,
+            side === "LEFT" ? 1 : -1,
+            fact.use === "DOOR",
+            true,
+          );
+        else
+          solids.push({
+            ...box(
+              owner,
+              "hinge",
+              "STEEL",
+              region.x + region.w * fraction - 35,
+              (side === "TOP" ? region.y + region.h : region.y) - 5,
+              plane - 5,
+              70,
+              10,
+              10,
+            ),
+            approximate: true,
+          });
+      }
+    }
+    if (moving) {
+      tagLeaf(solids, from, leafId);
+      const side = fact.opening.hinge_side;
+      const inward = fact.opening.direction === "INWARD" ? 1 : -1;
+      const kind: LeafMotion["kind"] =
+        movement === "FOLD"
+          ? "fold"
+          : movement === "VERTICAL_SLIDE"
+            ? "vertical_slide"
+            : ["SLIDE", "LIFT_SLIDE", "PARALLEL_SLIDE"].includes(movement)
+              ? "slide"
+              : movement === "TILT_TURN"
+                ? "tilt_turn"
+                : ["TILT", "TOP_HUNG", "BOTTOM_HUNG", "PIVOT_H"].includes(movement)
+                  ? "tilt"
+                  : "swing";
+      const panel = resolvedSlidingLayout(bay)?.panels[index];
+      const travelDirection =
+        advanced?.travel ?? (panel ? slidingTravel(panel, index, facts.length) : null);
+      // Historical SLIDE has no numeric travel authority: contain its
+      // reference pose in the declared bay, exactly as the legacy decoder.
+      const minX = Math.min(...facts.map((f) => Number(f.x_mm)));
+      const maxX = Math.max(...facts.map((f) => Number(f.x_mm) + Number(f.width_mm)));
+      const travel = advanced
+        ? Number(advanced.travel_mm)
+        : Math.max(0, travelDirection === "LEFT" ? region.x - minX : maxX - region.x - region.w);
+      leaves.push({
+        leafId,
+        kind,
+        pivot:
+          side === "RIGHT"
+            ? region.x + region.w
+            : side === "TOP"
+              ? region.y + region.h
+              : side === "BOTTOM"
+                ? region.y
+                : region.x,
+        pivotDepth: plane,
+        dir:
+          kind === "slide"
+            ? travelDirection === "LEFT"
+              ? -1
+              : 1
+            : kind === "tilt"
+              ? side === "TOP"
+                ? -inward
+                : inward
+              : (side === "RIGHT" ? 1 : -1) * inward,
+        travel,
+        tiltPivot: region.y,
+        fact,
+        moduleHeight,
+        label: `Hoja ${index + 1}${fact.opening.leaf_role === "PASSIVE" ? " · pasiva" : ""}`,
+      });
+    }
+  });
+  const planes = [
+    ...new Set(
+      facts
+        .filter((f) => f.advanced?.track !== null && f.advanced?.track !== undefined)
+        .map((f) => f.advanced!.plane_offset_mm),
+    ),
+  ];
+  for (const plane of planes) {
+    const x = Math.min(...facts.map((f) => Number(f.x_mm)));
+    const right = Math.max(...facts.map((f) => Number(f.x_mm) + Number(f.width_mm)));
+    solids.push({
+      ...box(
+        owner,
+        "track",
+        "ALUMINIUM",
+        x,
+        0,
+        Number(plane) - TRACK_MM / 2,
+        right - x,
+        TRACK_MM,
+        TRACK_MM,
+      ),
+      approximate: true,
+    });
+  }
 }
 
 /** The glazing seat around a pane: the bead ring straddles the glass edge
@@ -1683,6 +1919,7 @@ export function buildScene3D(
   product: ProductJson,
   members: MemberGeometry,
   plan?: PlanGeometry | null,
+  openingFacts: Record<string, OpeningLeafFact[]> = {},
 ): Scene3D {
   const { rects, joints, columns } = frontLayout(product);
   const frameT = members.frame.faceWidthMm;
@@ -1804,7 +2041,11 @@ export function buildScene3D(
       const sillLeaves = out.leaves
         .filter((leaf) => leaf.region.y <= frameT + 0.5)
         .sort((a, b) => a.region.x - b.region.x);
-      if (sillLeaves.some((leaf) => leaf.node.opening_type === "DOOR_ENTRY")) {
+      if (
+        sillLeaves.some(
+          (leaf) => leaf.node.opening_type === "DOOR_ENTRY" || leaf.node.opening_use === "DOOR",
+        )
+      ) {
         const thresholdW = Math.min(members.threshold?.faceWidthMm ?? frameT, h / 4);
         const thresholdSpec = members.threshold ?? members.frame;
         memberBar(
@@ -1865,7 +2106,7 @@ export function buildScene3D(
               depth,
             );
           }
-          if (leaf.node.opening_type === "DOOR_ENTRY") {
+          if (leaf.node.opening_type === "DOOR_ENTRY" || leaf.node.opening_use === "DOOR") {
             memberBar(
               solids,
               module.id,
@@ -1965,7 +2206,24 @@ export function buildScene3D(
         });
       }
       for (const leaf of out.leaves) {
-        leafSolids(solids, leaves, module, leaf.node, leaf.region, members, depth, diagnostics);
+        const facts = openingFacts[module.id]?.filter((fact) => fact.bay_id === leaf.node.id) ?? [];
+        if (facts.length > 0) {
+          physicalLeafSolids(solids, leaves, module, leaf.node, facts, members, depth);
+        } else if (
+          leaf.node.opening &&
+          leaf.node.opening.movement !== "FIXED" &&
+          !(leaf.node.opening.movement === "SLIDE" && leaf.node.opening_use !== "DOOR")
+        ) {
+          diagnostics.push({
+            code: "opening_authority_missing",
+            owner: `${module.id}/${leaf.node.id}`,
+            values: {
+              what: "Sin dato: falta la evaluación de las hojas. Evalúa el vano o solicita la revisión al fabricante.",
+            },
+          });
+        } else {
+          leafSolids(solids, leaves, module, leaf.node, leaf.region, members, depth, diagnostics);
+        }
       }
     }
 

@@ -6,7 +6,23 @@ import type { ProductJson } from "./productEditing";
 import { buildScene3D, type Scene3D, type Solid3D } from "./Product3DScene";
 import { solidToGeometry } from "./scene3dGeometry";
 import { finishGeometryMaterials, prepareFinishTextures } from "./finishMaterials3d";
-import { foilGrainTexture, runLength, solidMaterial } from "./materials3d";
+import { solidMaterial } from "./materials3d";
+import type { OpeningLeafFact } from "./physicalOpenings";
+import { explodeDistance, explodeLayer, moduleLeafPoses, type LeafPoseState } from "./poses3d";
+import {
+  cameraShot,
+  poseMatrix,
+  STUDIO_LIGHTS,
+  STUDIO_BACKGROUND,
+  STUDIO_GROUND,
+  STUDIO_TONE_MAPPING,
+  STUDIO_WALL,
+  studioColor,
+  studioEnvironment,
+  wallBoxes,
+  type CameraPreset,
+  type CameraShot,
+} from "./studioRig3d";
 import type { MemberGeometry } from "./members";
 import { webglAvailable } from "./webglAvailable";
 
@@ -22,6 +38,12 @@ export type StudioOptions = {
   height?: number;
   /** Interior/exterior face — matches the orbit view's inside toggle. */
   inside?: boolean;
+  preset?: CameraPreset;
+  camera?: CameraShot;
+  openingFacts?: Record<string, OpeningLeafFact[]>;
+  states?: Record<string, Record<string, LeafPoseState>>;
+  explode?: boolean;
+  wall?: boolean;
 };
 
 const RENDER_W = 640;
@@ -46,6 +68,7 @@ function getRenderer(): THREE.WebGLRenderer | null {
       preserveDrawingBuffer: true,
     });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = STUDIO_TONE_MAPPING;
   } catch {
     renderer = "unavailable";
   }
@@ -67,7 +90,10 @@ function solidMesh(solid: Solid3D): THREE.Mesh | null {
       solid.kind === "box" ? new THREE.BoxGeometry(...solid.size) : solidToGeometry(solid);
     if (!geometry) return null;
     if (solid.kind === "box") geometry.translate(...solid.center);
-    return new THREE.Mesh(geometry, finishGeometryMaterials(geometry, solid.finish));
+    return withSchematicEdges(
+      new THREE.Mesh(geometry, finishGeometryMaterials(geometry, solid.finish)),
+      solid,
+    );
   }
   const mat = new THREE.MeshStandardMaterial({
     color: solid.hardwareColor
@@ -81,20 +107,32 @@ function solidMesh(solid: Solid3D): THREE.Mesh | null {
     transparent: material.transparent,
     opacity: material.opacity,
     depthWrite: !material.glass,
-    // Foil members keep their grain in the commercial render too — the
-    // same texture map the orbit view applies (§7 of the fidelity pass).
-    map: material.grain ? foilGrainTexture(material.grain, runLength(solid)) : null,
   });
   if (solid.kind === "box") {
     const geo = new THREE.BoxGeometry(solid.size[0], solid.size[1], solid.size[2]);
     geo.translate(solid.center[0], solid.center[1], solid.center[2]);
-    return new THREE.Mesh(geo, mat);
+    return withSchematicEdges(new THREE.Mesh(geo, mat), solid);
   }
   const geo = solidToGeometry(solid);
-  return geo ? new THREE.Mesh(geo, mat) : null;
+  return geo ? withSchematicEdges(new THREE.Mesh(geo, mat), solid) : null;
 }
 
-function buildThreeScene(scene: Scene3D): THREE.Group {
+function withSchematicEdges(mesh: THREE.Mesh, solid: Solid3D): THREE.Mesh {
+  if (solid.approximate && ["box", "profile"].includes(solid.kind)) {
+    mesh.geometry.computeBoundingBox();
+    const center = mesh.geometry.boundingBox!.getCenter(new THREE.Vector3());
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(mesh.geometry, 15),
+      new THREE.LineBasicMaterial({ color: tokenColor("--model3d-edge", "gray") }),
+    );
+    edges.scale.setScalar(1.002);
+    edges.position.copy(center.multiplyScalar(1 - 1.002));
+    mesh.add(edges);
+  }
+  return mesh;
+}
+
+export function buildThreeScene(scene: Scene3D, options: StudioOptions = {}): THREE.Group {
   const root = new THREE.Group();
   const inner = new THREE.Group();
   inner.position.set(-scene.center[0], -scene.center[1], -scene.center[2]);
@@ -102,9 +140,17 @@ function buildThreeScene(scene: Scene3D): THREE.Group {
     const group = new THREE.Group();
     group.position.set(...module.position);
     group.rotation.y = module.rotationY;
+    const poses = moduleLeafPoses(
+      module,
+      options.explode ? {} : (options.states?.[module.moduleId] ?? {}),
+    );
     for (const solid of module.solids) {
       const mesh = solidMesh(solid);
-      if (mesh) group.add(mesh);
+      if (!mesh) continue;
+      const pose = solid.leafId ? poses[solid.leafId] : null;
+      if (pose) mesh.applyMatrix4(poseMatrix(pose));
+      if (options.explode) mesh.position.z += explodeLayer(solid) * explodeDistance(module.depth);
+      group.add(mesh);
     }
     inner.add(group);
   }
@@ -112,7 +158,23 @@ function buildThreeScene(scene: Scene3D): THREE.Group {
     const mesh = solidMesh(solid);
     if (mesh) inner.add(mesh);
   }
+  if (options.wall)
+    for (const box of wallBoxes(scene)) {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(...box.size),
+        new THREE.MeshStandardMaterial({ color: studioColor(STUDIO_WALL), roughness: 0.92 }),
+      );
+      mesh.position.set(...box.center);
+      inner.add(mesh);
+    }
   root.add(inner);
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(scene.radius * 5, scene.radius * 4),
+    new THREE.MeshStandardMaterial({ color: studioColor(STUDIO_GROUND), roughness: 0.95 }),
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = scene.bounds.min[1] - scene.center[1] - 2;
+  root.add(ground);
   return root;
 }
 
@@ -185,51 +247,49 @@ export function renderStudioImage(
     return hit;
   }
 
-  const scene3d = buildScene3D(product, members, plan);
+  const scene3d = buildScene3D(product, members, plan, options.openingFacts);
   const scene = new THREE.Scene();
-  const radius = scene3d.radius || 1;
-  // Studio rig: soft ambient + key/fill so chamfers and glass read.
-  scene.add(new THREE.AmbientLight(0xffffff, 0.62));
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.55);
-  keyLight.position.set(radius * 1.2, radius * 1.8, radius * 1.5);
-  scene.add(keyLight);
-  const fill = new THREE.DirectionalLight(0xdfe9ee, 0.5);
-  fill.position.set(-radius, radius * 0.6, -radius);
-  scene.add(fill);
-  const rim = new THREE.DirectionalLight(0xffffff, 0.28);
-  rim.position.set(0, -radius * 0.5, radius * 0.8);
-  scene.add(rim);
-
-  const root = buildThreeScene(scene3d);
-  // World +z is the room face; the street view rotates the model 180°.
-  if (!options.inside) root.rotation.y = Math.PI;
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  for (const source of STUDIO_LIGHTS) {
+    const light = new THREE.DirectionalLight(0xffffff, source.intensity);
+    light.position.set(...source.position);
+    scene.add(light);
+  }
+  const disposeEnvironment = studioEnvironment(gl, scene);
+  const root = buildThreeScene(scene3d, options);
   scene.add(root);
-  scene.background = new THREE.Color(tokenColor("--model3d-backdrop", "rgb(238,241,242)"));
-
-  const distance = radius * 2.35;
-  const camera = new THREE.PerspectiveCamera(40, width / height, 1, distance * 10);
-  // 3/4 product shot: slightly above, to the right — the commercial view.
-  camera.position.set(distance * 0.42, radius * 0.5, distance);
-  camera.lookAt(0, 0, 0);
+  scene.background = new THREE.Color(studioColor(STUDIO_BACKGROUND));
+  const shot =
+    options.camera ??
+    cameraShot(
+      scene3d,
+      options.preset ?? (options.inside === false ? "exterior" : "interior"),
+      width / height,
+      options.explode,
+      options.states,
+    );
+  const camera = new THREE.PerspectiveCamera(shot.fov, width / height, 1, scene3d.radius * 30);
+  camera.position.set(...shot.position);
+  camera.lookAt(...shot.target);
 
   gl.setSize(width, height, false);
   gl.render(scene, camera);
   const url = gl.domElement.toDataURL("image/png");
 
   root.traverse((node) => {
-    if (node instanceof THREE.Mesh) {
+    if (node instanceof THREE.Mesh || node instanceof THREE.LineSegments) {
       node.geometry.dispose();
       const materials = (
         Array.isArray(node.material) ? node.material : [node.material]
       ) as THREE.MeshStandardMaterial[];
-      // texture.dispose() isn't covered by material.dispose() — cloned
-      // grain maps would leak across every render pass.
+      // Declared finish maps are cloned per material and disposed with it.
       for (const mat of materials) {
         mat.map?.dispose();
         mat.dispose();
       }
     }
   });
+  disposeEnvironment();
   // LRU eviction — Map order is insertion order, so the first key is the
   // oldest render; clearing the whole map forces on-screen cards to re-render.
   while (cache.size >= CACHE_LIMIT) {
@@ -263,7 +323,7 @@ export function StudioImage({
   const memoOptions = useMemo(
     () => options ?? {},
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [options?.inside, options?.width, options?.height],
+    [options],
   );
   const theme = useDocumentTheme();
   useEffect(() => {

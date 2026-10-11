@@ -4,6 +4,10 @@ import type { FinishColor, ResolvedFinish } from "../../api/generated/models";
 const textures = new Map<string, THREE.Texture>();
 const pending = new Map<string, Promise<void>>();
 
+export function finishTextureAvailable(path: string): boolean {
+  return textures.has(path);
+}
+
 export async function prepareFinishTextures(finish?: ResolvedFinish): Promise<void> {
   const paths = [
     finish?.interior.texture_path,

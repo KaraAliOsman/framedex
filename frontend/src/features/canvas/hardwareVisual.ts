@@ -21,7 +21,11 @@ import type { MemberGeometry } from "./members";
 export type Region = { x: number; y: number; w: number; h: number };
 
 export type SceneDiagnosticCode =
-  "kit_unknown" | "handle_out_of_range" | "handle_datum_unsupported" | "hardware_convention";
+  | "kit_unknown"
+  | "handle_out_of_range"
+  | "handle_datum_unsupported"
+  | "hardware_convention"
+  | "opening_authority_missing";
 
 export interface SceneDiagnostic {
   code: SceneDiagnosticCode;

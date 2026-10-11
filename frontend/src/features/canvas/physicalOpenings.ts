@@ -1,5 +1,30 @@
 import type { IntentNode, Opening as LegacyOpening } from "./intentEditing";
 import type { DesignOptions } from "../../api/generated/models";
+import type { ProductJson } from "./productEditing";
+
+/** Group the sealed assembly facts without looking up a live catalog. */
+export function openingFactsByModule(
+  product: ProductJson,
+  leaves: OpeningLeafFact[],
+): Record<string, OpeningLeafFact[]> {
+  return Object.fromEntries(
+    product.assembly.modules.map((module) => [
+      module.id,
+      leaves
+        .filter(
+          (leaf) =>
+            leaf.bay_id.startsWith(module.id + "|") ||
+            (product.assembly.modules.length === 1 && !leaf.bay_id.includes("|")),
+        )
+        .map((leaf) => ({
+          ...leaf,
+          bay_id: leaf.bay_id.startsWith(module.id + "|")
+            ? leaf.bay_id.slice(module.id.length + 1)
+            : leaf.bay_id,
+        })),
+    ]),
+  );
+}
 
 export type PhysicalOpening = {
   movement:
