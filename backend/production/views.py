@@ -179,18 +179,24 @@ class ProductionReleaseView(APIView):
         return Response(output, status=201 if output["created"] else 200)
 
 
+class ProductionOrdersQuerySerializer(serializers.Serializer):
+    project_id = serializers.UUIDField(required=False)
+
+
 class ProductionOrderListView(APIView):
     @extend_schema(
         operation_id="production_orders",
-        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        parameters=[ACTIVE_ORGANIZATION_HEADER, ProductionOrdersQuerySerializer],
         request=None,
         responses={200: ProductionOrderListSerializer, **ERRORS},
         tags=["production"],
     )
     def get(self, request):
+        query = validate(ProductionOrdersQuerySerializer, request.query_params)
         with public_production_errors():
             with documentary_scope(request, _READERS) as (_, tenant, org_id):
-                output = service.list_production_orders(org_id=org_id, actor_role=str(tenant.active_organization.role))
+                output = service.list_production_orders(org_id=org_id, actor_role=str(tenant.active_organization.role),
+                    project_id=query.get("project_id"))
         return Response(output)
 
 

@@ -7,6 +7,7 @@
  */
 import type { EngineCalculateResponse } from "./engineCalculateResponse";
 import type { PositionDesign } from "./positionDesign";
+import type { PositionPlacement } from "./positionPlacement";
 
 export interface PositionResponse {
   id: string;
@@ -22,4 +23,9 @@ export interface PositionResponse {
   bom: EngineCalculateResponse;
   updated_at: string;
   measurements?: unknown | null;
+  display_order?: number;
+  placement?: PositionPlacement;
+  system_name?: string;
+  system_demo?: boolean;
+  commercial?: unknown | null;
 }

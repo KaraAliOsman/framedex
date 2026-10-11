@@ -11924,6 +11924,11 @@ paths:
           format: uuid
         description: Active organization; validated against the JWT user's active
           memberships.
+      - in: query
+        name: project_id
+        schema:
+          type: string
+          format: uuid
       tags:
       - production
       security:
@@ -25780,6 +25785,11 @@ components:
       - $ref: '#/components/schemas/OperationAddPosition'
       - $ref: '#/components/schemas/OperationDuplicatePosition'
       - $ref: '#/components/schemas/OperationRemovePosition'
+      - $ref: '#/components/schemas/OperationDuplicatePositions'
+      - $ref: '#/components/schemas/OperationAddDesignPosition'
+      - $ref: '#/components/schemas/OperationRemovePositions'
+      - $ref: '#/components/schemas/OperationSetPositions'
+      - $ref: '#/components/schemas/OperationReorderPositions'
       - $ref: '#/components/schemas/OperationApplyToPositions'
       - $ref: '#/components/schemas/OperationPrepareEmit'
       - $ref: '#/components/schemas/OperationPrepareRelease'
@@ -25833,6 +25843,11 @@ components:
           add_position: '#/components/schemas/OperationAddPosition'
           duplicate_position: '#/components/schemas/OperationDuplicatePosition'
           remove_position: '#/components/schemas/OperationRemovePosition'
+          duplicate_positions: '#/components/schemas/OperationDuplicatePositions'
+          add_design_position: '#/components/schemas/OperationAddDesignPosition'
+          remove_positions: '#/components/schemas/OperationRemovePositions'
+          set_positions: '#/components/schemas/OperationSetPositions'
+          reorder_positions: '#/components/schemas/OperationReorderPositions'
           apply_to_positions: '#/components/schemas/OperationApplyToPositions'
           prepare_emit: '#/components/schemas/OperationPrepareEmit'
           prepare_release: '#/components/schemas/OperationPrepareRelease'
@@ -25885,6 +25900,11 @@ components:
       - $ref: '#/components/schemas/OperationAddPositionRequest'
       - $ref: '#/components/schemas/OperationDuplicatePositionRequest'
       - $ref: '#/components/schemas/OperationRemovePositionRequest'
+      - $ref: '#/components/schemas/OperationDuplicatePositionsRequest'
+      - $ref: '#/components/schemas/OperationAddDesignPositionRequest'
+      - $ref: '#/components/schemas/OperationRemovePositionsRequest'
+      - $ref: '#/components/schemas/OperationSetPositionsRequest'
+      - $ref: '#/components/schemas/OperationReorderPositionsRequest'
       - $ref: '#/components/schemas/OperationApplyToPositionsRequest'
       - $ref: '#/components/schemas/OperationPrepareEmitRequest'
       - $ref: '#/components/schemas/OperationPrepareReleaseRequest'
@@ -25938,6 +25958,11 @@ components:
           add_position: '#/components/schemas/OperationAddPositionRequest'
           duplicate_position: '#/components/schemas/OperationDuplicatePositionRequest'
           remove_position: '#/components/schemas/OperationRemovePositionRequest'
+          duplicate_positions: '#/components/schemas/OperationDuplicatePositionsRequest'
+          add_design_position: '#/components/schemas/OperationAddDesignPositionRequest'
+          remove_positions: '#/components/schemas/OperationRemovePositionsRequest'
+          set_positions: '#/components/schemas/OperationSetPositionsRequest'
+          reorder_positions: '#/components/schemas/OperationReorderPositionsRequest'
           apply_to_positions: '#/components/schemas/OperationApplyToPositionsRequest'
           prepare_emit: '#/components/schemas/OperationPrepareEmitRequest'
           prepare_release: '#/components/schemas/OperationPrepareReleaseRequest'
@@ -30307,6 +30332,11 @@ components:
       - add_position
       - duplicate_position
       - remove_position
+      - duplicate_positions
+      - add_design_position
+      - remove_positions
+      - set_positions
+      - reorder_positions
       - apply_to_positions
       - prepare_emit
       - prepare_release
@@ -30359,6 +30389,11 @@ components:
         * `add_position` - add_position
         * `duplicate_position` - duplicate_position
         * `remove_position` - remove_position
+        * `duplicate_positions` - duplicate_positions
+        * `add_design_position` - add_design_position
+        * `remove_positions` - remove_positions
+        * `set_positions` - set_positions
+        * `reorder_positions` - reorder_positions
         * `apply_to_positions` - apply_to_positions
         * `prepare_emit` - prepare_emit
         * `prepare_release` - prepare_release
@@ -30448,6 +30483,93 @@ components:
       description: |-
         * `WINDOW` - WINDOW
         * `DOOR` - DOOR
+    OperationAddDesignPosition:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationAddDesignPositionOpEnum'
+        system_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        product:
+          type: object
+        glass_sku:
+          type: string
+          minLength: 1
+          maxLength: 160
+        color:
+          type: string
+          minLength: 1
+          maxLength: 100
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - system_id
+      - product
+      - glass_sku
+      - color
+      - location
+      - quantity
+    OperationAddDesignPositionOpEnum:
+      type: string
+      enum:
+      - add_design_position
+    OperationAddDesignPositionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationAddDesignPositionOpEnum'
+        system_id:
+          type: string
+          minLength: 1
+          maxLength: 160
+        product:
+          type: object
+        glass_sku:
+          type: string
+          minLength: 1
+          maxLength: 160
+        color:
+          type: string
+          minLength: 1
+          maxLength: 100
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+      required:
+      - op
+      - system_id
+      - product
+      - glass_sku
+      - color
+      - location
+      - quantity
     OperationAddPosition:
       type: object
       additionalProperties: false
@@ -30873,6 +30995,55 @@ components:
       - position_id
       - count
       - location
+    OperationDuplicatePositions:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationDuplicatePositionsOpEnum'
+        position_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - position_ids
+    OperationDuplicatePositionsOpEnum:
+      type: string
+      enum:
+      - duplicate_positions
+    OperationDuplicatePositionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationDuplicatePositionsOpEnum'
+        position_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+      required:
+      - op
+      - position_ids
     OperationEqualizeAngles:
       type: object
       additionalProperties: false
@@ -31446,6 +31617,55 @@ components:
       required:
       - op
       - position_id
+    OperationRemovePositions:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemovePositionsOpEnum'
+        position_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - position_ids
+    OperationRemovePositionsOpEnum:
+      type: string
+      enum:
+      - remove_positions
+    OperationRemovePositionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationRemovePositionsOpEnum'
+        position_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+      required:
+      - op
+      - position_ids
     OperationRemoveUnit:
       type: object
       additionalProperties: false
@@ -31487,6 +31707,55 @@ components:
       required:
       - op
       - module
+    OperationReorderPositions:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationReorderPositionsOpEnum'
+        position_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - position_ids
+    OperationReorderPositionsOpEnum:
+      type: string
+      enum:
+      - reorder_positions
+    OperationReorderPositionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationReorderPositionsOpEnum'
+        position_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+      required:
+      - op
+      - position_ids
     OperationResize:
       type: object
       additionalProperties: false
@@ -33158,6 +33427,97 @@ components:
       - op
       - module
       - sku
+    OperationSetPositions:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetPositionsOpEnum'
+        position_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+        placement:
+          type: object
+          additionalProperties: false
+          properties:
+            floor:
+              type: string
+              maxLength: 80
+            room:
+              type: string
+              maxLength: 80
+            axis:
+              type: string
+              maxLength: 80
+        base_sig:
+          type: string
+        description:
+          type: string
+        result:
+          type: object
+          additionalProperties: true
+        context_effect:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - op
+      - position_ids
+    OperationSetPositionsOpEnum:
+      type: string
+      enum:
+      - set_positions
+    OperationSetPositionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        op:
+          $ref: '#/components/schemas/OperationSetPositionsOpEnum'
+        position_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+        location:
+          type: string
+          minLength: 1
+          maxLength: 100
+        placement:
+          type: object
+          additionalProperties: false
+          properties:
+            floor:
+              type: string
+              maxLength: 80
+            room:
+              type: string
+              maxLength: 80
+            axis:
+              type: string
+              maxLength: 80
+      required:
+      - op
+      - position_ids
     OperationSetQuantity:
       type: object
       additionalProperties: false
@@ -36010,6 +36370,30 @@ components:
       - reinforcement_cut_policy_id
       - structural_inputs
       - workshop_annotations
+    PositionPlacement:
+      type: object
+      properties:
+        floor:
+          type: string
+          maxLength: 80
+        room:
+          type: string
+          maxLength: 80
+        axis:
+          type: string
+          maxLength: 80
+    PositionPlacementRequest:
+      type: object
+      properties:
+        floor:
+          type: string
+          maxLength: 80
+        room:
+          type: string
+          maxLength: 80
+        axis:
+          type: string
+          maxLength: 80
     PositionResponse:
       type: object
       properties:
@@ -36041,6 +36425,16 @@ components:
           format: date-time
         measurements:
           nullable: true
+        display_order:
+          type: integer
+        placement:
+          $ref: '#/components/schemas/PositionPlacement'
+        system_name:
+          type: string
+        system_demo:
+          type: boolean
+        commercial:
+          nullable: true
       required:
       - bom
       - design
@@ -36070,6 +36464,8 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
+        placement:
+          $ref: '#/components/schemas/PositionPlacementRequest'
         expected_updated_at:
           type: string
           format: date-time
@@ -36095,6 +36491,8 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
+        placement:
+          $ref: '#/components/schemas/PositionPlacementRequest'
       required:
       - design
       - location_tag
@@ -37793,6 +38191,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProjectVersionResponse'
+        quotation_valid_until:
+          type: string
+          format: date
+          nullable: true
+        quotation_validity_source:
+          type: string
       required:
       - client_name
       - code

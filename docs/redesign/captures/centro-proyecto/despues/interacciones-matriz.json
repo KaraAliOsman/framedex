@@ -1,0 +1,240 @@
+[
+  {
+    "case": "medidas/reordenar/flechas/Enter/Supr/diff/aplicar/deshacer",
+    "result": "PASS"
+  },
+  {
+    "case": "list",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "list-1440-light.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "grid",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "grid-1440-light.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "Producción",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Documentos",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Actividad",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "list",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "list-1440-dark.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "grid",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "grid-1440-dark.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "Producción",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Documentos",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Actividad",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "list",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "list-1280-light.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "grid",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "grid-1280-light.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "Producción",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Documentos",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Actividad",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "list",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "list-1280-dark.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "grid",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "grid-1280-dark.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "Producción",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Documentos",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Actividad",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "list",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "list-1024-light.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "grid",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "grid-1024-light.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "Producción",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Documentos",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Actividad",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "list",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "list-1024-dark.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "grid",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "grid-1024-dark.png",
+    "overflow": false,
+    "findings": [],
+    "errors": []
+  },
+  {
+    "case": "Producción",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Documentos",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "case": "Actividad",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": []
+  }
+]

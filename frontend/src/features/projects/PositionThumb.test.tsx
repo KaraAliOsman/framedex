@@ -29,6 +29,8 @@ describe("sealed portal elevation", () => {
         <PositionThumb design={design} openingLeaves={[leaf]} />,
       );
       const symbol = container.querySelector('[data-hinge="LEFT"] [data-symbol="turn"]')!;
+      expect(container.querySelector('[role="button"]')).toBeNull();
+      expect(container.querySelector(".add-handle")).toBeNull();
       expect(symbol).not.toBeNull();
       expect(symbol.hasAttribute("stroke-dasharray")).toBe(false);
       expect(container.querySelector(".handle-lever")).not.toBeNull();

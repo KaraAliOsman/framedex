@@ -1,0 +1,417 @@
+{
+  "official": [
+    {
+      "matrix": "ux-final",
+      "views": 16,
+      "findings": 0,
+      "overflow": 0,
+      "http": 0,
+      "console": 0
+    },
+    {
+      "matrix": "ux-precio",
+      "views": 16,
+      "findings": 0,
+      "overflow": 0,
+      "http": 0,
+      "console": 0
+    }
+  ],
+  "png_lossless": [
+    {
+      "image": "antes/cien-posiciones.png",
+      "before": 878230,
+      "after": 878230
+    },
+    {
+      "image": "antes/posiciones-1024-dark.png",
+      "before": 189254,
+      "after": 189254
+    },
+    {
+      "image": "antes/posiciones-1024-light.png",
+      "before": 195044,
+      "after": 195044
+    },
+    {
+      "image": "antes/posiciones-1440-dark.png",
+      "before": 214850,
+      "after": 214850
+    },
+    {
+      "image": "antes/posiciones-1440-light.png",
+      "before": 219028,
+      "after": 219028
+    },
+    {
+      "image": "despues/Actividad-1024-dark.png",
+      "before": 92020,
+      "after": 92020
+    },
+    {
+      "image": "despues/Actividad-1024-light.png",
+      "before": 92421,
+      "after": 92421
+    },
+    {
+      "image": "despues/Actividad-1280-dark.png",
+      "before": 114131,
+      "after": 114131
+    },
+    {
+      "image": "despues/Actividad-1280-light.png",
+      "before": 113814,
+      "after": 113814
+    },
+    {
+      "image": "despues/Actividad-1440-dark.png",
+      "before": 115429,
+      "after": 115429
+    },
+    {
+      "image": "despues/Actividad-1440-light.png",
+      "before": 115059,
+      "after": 115059
+    },
+    {
+      "image": "despues/cien-posiciones.png",
+      "before": 217742,
+      "after": 217742
+    },
+    {
+      "image": "despues/diff-medidas.png",
+      "before": 481902,
+      "after": 481902
+    },
+    {
+      "image": "despues/Documentos-1024-dark.png",
+      "before": 70978,
+      "after": 70978
+    },
+    {
+      "image": "despues/Documentos-1024-light.png",
+      "before": 71526,
+      "after": 71526
+    },
+    {
+      "image": "despues/Documentos-1280-dark.png",
+      "before": 92901,
+      "after": 92901
+    },
+    {
+      "image": "despues/Documentos-1280-light.png",
+      "before": 92467,
+      "after": 92467
+    },
+    {
+      "image": "despues/Documentos-1440-dark.png",
+      "before": 94420,
+      "after": 94420
+    },
+    {
+      "image": "despues/Documentos-1440-light.png",
+      "before": 93898,
+      "after": 93898
+    },
+    {
+      "image": "despues/grid-1024-dark.png",
+      "before": 372018,
+      "after": 372018
+    },
+    {
+      "image": "despues/grid-1024-light.png",
+      "before": 374209,
+      "after": 374209
+    },
+    {
+      "image": "despues/grid-1280-dark.png",
+      "before": 272074,
+      "after": 272074
+    },
+    {
+      "image": "despues/grid-1280-light.png",
+      "before": 271299,
+      "after": 271299
+    },
+    {
+      "image": "despues/grid-1440-dark.png",
+      "before": 394845,
+      "after": 394845
+    },
+    {
+      "image": "despues/grid-1440-light.png",
+      "before": 395282,
+      "after": 395282
+    },
+    {
+      "image": "despues/list-1024-dark.png",
+      "before": 409026,
+      "after": 409026
+    },
+    {
+      "image": "despues/list-1024-light.png",
+      "before": 404547,
+      "after": 404547
+    },
+    {
+      "image": "despues/list-1280-dark.png",
+      "before": 452055,
+      "after": 452055
+    },
+    {
+      "image": "despues/list-1280-light.png",
+      "before": 446687,
+      "after": 446687
+    },
+    {
+      "image": "despues/list-1440-dark.png",
+      "before": 448645,
+      "after": 448645
+    },
+    {
+      "image": "despues/list-1440-light.png",
+      "before": 451750,
+      "after": 451750
+    },
+    {
+      "image": "despues/lote-color.png",
+      "before": 363047,
+      "after": 363047
+    },
+    {
+      "image": "despues/medida-en-fila.png",
+      "before": 460616,
+      "after": 460616
+    },
+    {
+      "image": "despues/precio-aplicado.png",
+      "before": 225118,
+      "after": 225118
+    },
+    {
+      "image": "despues/Producci\u00f3n-1024-dark.png",
+      "before": 69041,
+      "after": 69041
+    },
+    {
+      "image": "despues/Producci\u00f3n-1024-light.png",
+      "before": 69588,
+      "after": 69588
+    },
+    {
+      "image": "despues/Producci\u00f3n-1280-dark.png",
+      "before": 90923,
+      "after": 90923
+    },
+    {
+      "image": "despues/Producci\u00f3n-1280-light.png",
+      "before": 90560,
+      "after": 90560
+    },
+    {
+      "image": "despues/Producci\u00f3n-1440-dark.png",
+      "before": 92446,
+      "after": 92446
+    },
+    {
+      "image": "despues/Producci\u00f3n-1440-light.png",
+      "before": 91907,
+      "after": 91907
+    },
+    {
+      "image": "despues/total-final.png",
+      "before": 281727,
+      "after": 281727
+    },
+    {
+      "image": "despues/vacio.png",
+      "before": 128891,
+      "after": 128891
+    },
+    {
+      "image": "estados/bloqueado-precio-aplicado.png",
+      "before": 245487,
+      "after": 245487
+    },
+    {
+      "image": "estados/cargando.png",
+      "before": 17009,
+      "after": 17009
+    },
+    {
+      "image": "estados/error.png",
+      "before": 22808,
+      "after": 22808
+    },
+    {
+      "image": "estados/sin-permiso.png",
+      "before": 19191,
+      "after": 19191
+    },
+    {
+      "image": "estados/vacio.png",
+      "before": 100892,
+      "after": 100892
+    },
+    {
+      "image": "ux-final/proyecto-detalle__ESTIMATOR__dark__1024x768.png",
+      "before": 409026,
+      "after": 409026
+    },
+    {
+      "image": "ux-final/proyecto-detalle__ESTIMATOR__dark__1280x800.png",
+      "before": 452055,
+      "after": 452055
+    },
+    {
+      "image": "ux-final/proyecto-detalle__ESTIMATOR__dark__1440x900.png",
+      "before": 448645,
+      "after": 448645
+    },
+    {
+      "image": "ux-final/proyecto-detalle__ESTIMATOR__dark__390x844.png",
+      "before": 411730,
+      "after": 411730
+    },
+    {
+      "image": "ux-final/proyecto-detalle__ESTIMATOR__light__1024x768.png",
+      "before": 414287,
+      "after": 414287
+    },
+    {
+      "image": "ux-final/proyecto-detalle__ESTIMATOR__light__1280x800.png",
+      "before": 456566,
+      "after": 456566
+    },
+    {
+      "image": "ux-final/proyecto-detalle__ESTIMATOR__light__1440x900.png",
+      "before": 451750,
+      "after": 451750
+    },
+    {
+      "image": "ux-final/proyecto-detalle__ESTIMATOR__light__390x844.png",
+      "before": 411906,
+      "after": 411906
+    },
+    {
+      "image": "ux-final/proyecto-detalle__WORKSHOP_MANAGER__dark__1024x768.png",
+      "before": 400321,
+      "after": 400321
+    },
+    {
+      "image": "ux-final/proyecto-detalle__WORKSHOP_MANAGER__dark__1280x800.png",
+      "before": 436801,
+      "after": 436801
+    },
+    {
+      "image": "ux-final/proyecto-detalle__WORKSHOP_MANAGER__dark__1440x900.png",
+      "before": 433975,
+      "after": 433975
+    },
+    {
+      "image": "ux-final/proyecto-detalle__WORKSHOP_MANAGER__dark__390x844.png",
+      "before": 397945,
+      "after": 397945
+    },
+    {
+      "image": "ux-final/proyecto-detalle__WORKSHOP_MANAGER__light__1024x768.png",
+      "before": 403818,
+      "after": 403818
+    },
+    {
+      "image": "ux-final/proyecto-detalle__WORKSHOP_MANAGER__light__1280x800.png",
+      "before": 442641,
+      "after": 442641
+    },
+    {
+      "image": "ux-final/proyecto-detalle__WORKSHOP_MANAGER__light__1440x900.png",
+      "before": 438828,
+      "after": 438828
+    },
+    {
+      "image": "ux-final/proyecto-detalle__WORKSHOP_MANAGER__light__390x844.png",
+      "before": 398441,
+      "after": 398441
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__ESTIMATOR__dark__1024x768.png",
+      "before": 258492,
+      "after": 258492
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__ESTIMATOR__dark__1280x800.png",
+      "before": 284491,
+      "after": 284491
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__ESTIMATOR__dark__1440x900.png",
+      "before": 284850,
+      "after": 284850
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__ESTIMATOR__dark__390x844.png",
+      "before": 251345,
+      "after": 251345
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__ESTIMATOR__light__1024x768.png",
+      "before": 257519,
+      "after": 257519
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__ESTIMATOR__light__1280x800.png",
+      "before": 285305,
+      "after": 285305
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__ESTIMATOR__light__1440x900.png",
+      "before": 284964,
+      "after": 284964
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__ESTIMATOR__light__390x844.png",
+      "before": 250109,
+      "after": 250109
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__WORKSHOP_MANAGER__dark__1024x768.png",
+      "before": 249441,
+      "after": 249441
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__WORKSHOP_MANAGER__dark__1280x800.png",
+      "before": 274761,
+      "after": 274761
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__WORKSHOP_MANAGER__dark__1440x900.png",
+      "before": 274093,
+      "after": 274093
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__WORKSHOP_MANAGER__dark__390x844.png",
+      "before": 241011,
+      "after": 241011
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__WORKSHOP_MANAGER__light__1024x768.png",
+      "before": 248732,
+      "after": 248732
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__WORKSHOP_MANAGER__light__1280x800.png",
+      "before": 275462,
+      "after": 275462
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__WORKSHOP_MANAGER__light__1440x900.png",
+      "before": 274265,
+      "after": 274265
+    },
+    {
+      "image": "ux-precio/proyecto-detalle__WORKSHOP_MANAGER__light__390x844.png",
+      "before": 240670,
+      "after": 240670
+    }
+  ]
+}

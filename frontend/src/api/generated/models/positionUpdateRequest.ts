@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { PositionDesignRequest } from "./positionDesignRequest";
+import type { PositionPlacementRequest } from "./positionPlacementRequest";
 
 export interface PositionUpdateRequest {
   /** @maxLength 120 */
@@ -22,5 +23,6 @@ export interface PositionUpdateRequest {
    * @maxLength 1000
    */
   measurement_reason?: string;
+  placement?: PositionPlacementRequest;
   expected_updated_at: string;
 }

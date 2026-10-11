@@ -586,3 +586,20 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   procedencia conservan estados con texto e icono.
 - No se agregan preferencias de negocio en este pase. Todas las fuentes y
   configuraciones existentes conservan su autoridad y sus ajustes.
+
+## P21 · centro de trabajo del estimador (2026-10-10)
+
+- Lista inicial, con grilla y agrupación por piso/recinto/eje elegibles en
+  la colección. Agrupar no asigna ubicaciones ausentes. El orden visual
+  conserva el número físico usado en documentos, producción y QR.
+- Nueva posición exige revisión del motor; serie, vidrio y acabado se eligen
+  entre autoridades visibles. Copiar geometría no copia evidencia de medición
+  ni precio comercial aplicado de la posición original.
+- Precio de fila y total de cabecera se leen del resultado aplicado de la
+  revisión. Antes de aplicarlo muestran «Sin dato»; el diff declara su precio
+  indicativo. Vigencia ausente no recibe quince días silenciosos en cabecera.
+- El anticipo usa el primer hito del calendario sellado; un abono insuficiente
+  mantiene la acción de anticipo. Sin consulta de cobros no se supone saldo
+  cero. Los históricos sin calendario conservan su lectura del ledger.
+- Cien posiciones usan ventana de alturas medidas. Home/End navegan identidades
+  reales; filtro y vista no descartan la selección ya declarada.

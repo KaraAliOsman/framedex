@@ -114,6 +114,24 @@ def measurement_public(org_id, position_id, design, revision):
     return {**record,'current':record['binding']==binding(design)} if record else None
 
 
+def bulk_measurements_public(org_id, positions, revision):
+    """Same latest evidence as the scalar reader with one tenant-scoped query."""
+    from uuid import UUID
+    from pricing.service import decoded
+    designs = {str(item['id']): item['design'] for item in positions}
+    with extra_backend():
+        records = rows("SELECT DISTINCT ON(position_id) position_id,id,generation,measurements::text,binding,state,actor_id,reason,created_at,price_change::text "
+            "FROM public.position_measurements WHERE org_id=%s AND position_id=ANY(%s) AND revision_code=%s "
+            "ORDER BY position_id,generation DESC", [org_id, [UUID(identity) for identity in designs], revision])
+    result = {}
+    for record in records:
+        identity = str(record.pop('position_id'))
+        result[identity] = {**record, 'measurements': decoded(record['measurements']),
+            'price_change': decoded(record['price_change']) if record['price_change'] else None,
+            'current': record['binding'] == binding(designs[identity])}
+    return result
+
+
 def append_measurement(org_id, position, revision, evidence, state, reason, price_change=None):
     from projects.service import position_public
     design = position_public(position)['design']

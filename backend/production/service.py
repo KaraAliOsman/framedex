@@ -1021,7 +1021,8 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         }
 
 
-def list_production_orders(*, org_id: UUID, actor_role: str | None = None) -> dict[str, object]:
+def list_production_orders(*, org_id: UUID, actor_role: str | None = None,
+                           project_id: UUID | None = None) -> dict[str, object]:
     with documentary_backend():
         orders = rows(
         """
@@ -1063,10 +1064,11 @@ def list_production_orders(*, org_id: UUID, actor_role: str | None = None) -> di
         LEFT JOIN public.projects p ON p.id = o.project_id AND p.org_id = o.org_id
         LEFT JOIN public.production_steps s ON s.order_id = o.id
         WHERE o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
+          AND (%s::uuid IS NULL OR o.project_id=%s::uuid)
         GROUP BY o.id, p.id ORDER BY o.created_at DESC
         LIMIT 300
         """,
-        [actor_role or "", str(org_id)],
+        [actor_role or "", str(org_id), project_id, project_id],
     )
     return {"orders": [{
         **_public_order(order, include_payload=True),

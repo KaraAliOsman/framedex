@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { OperationAddDesignPosition } from "./operationAddDesignPosition";
 import type { OperationAddPosition } from "./operationAddPosition";
 import type { OperationAddStackedUnit } from "./operationAddStackedUnit";
 import type { OperationAddUnit } from "./operationAddUnit";
@@ -12,6 +13,7 @@ import type { OperationApplyToPositions } from "./operationApplyToPositions";
 import type { OperationClearGlassThickness } from "./operationClearGlassThickness";
 import type { OperationDuplicateModule } from "./operationDuplicateModule";
 import type { OperationDuplicatePosition } from "./operationDuplicatePosition";
+import type { OperationDuplicatePositions } from "./operationDuplicatePositions";
 import type { OperationEqualizeAngles } from "./operationEqualizeAngles";
 import type { OperationEqualizeBays } from "./operationEqualizeBays";
 import type { OperationEqualizeWidths } from "./operationEqualizeWidths";
@@ -25,7 +27,9 @@ import type { OperationPrepareRelease } from "./operationPrepareRelease";
 import type { OperationRemoveCoupling } from "./operationRemoveCoupling";
 import type { OperationRemoveDivider } from "./operationRemoveDivider";
 import type { OperationRemovePosition } from "./operationRemovePosition";
+import type { OperationRemovePositions } from "./operationRemovePositions";
 import type { OperationRemoveUnit } from "./operationRemoveUnit";
+import type { OperationReorderPositions } from "./operationReorderPositions";
 import type { OperationResize } from "./operationResize";
 import type { OperationResizeSeam } from "./operationResizeSeam";
 import type { OperationSetBaySize } from "./operationSetBaySize";
@@ -48,6 +52,7 @@ import type { OperationSetModuleTree } from "./operationSetModuleTree";
 import type { OperationSetModuleWidth } from "./operationSetModuleWidth";
 import type { OperationSetOpening } from "./operationSetOpening";
 import type { OperationSetPanel } from "./operationSetPanel";
+import type { OperationSetPositions } from "./operationSetPositions";
 import type { OperationSetQuantity } from "./operationSetQuantity";
 import type { OperationSetSlidingLayout } from "./operationSetSlidingLayout";
 import type { OperationSetSystem } from "./operationSetSystem";
@@ -102,6 +107,11 @@ export type DesignOperation =
   | OperationAddPosition
   | OperationDuplicatePosition
   | OperationRemovePosition
+  | OperationDuplicatePositions
+  | OperationAddDesignPosition
+  | OperationRemovePositions
+  | OperationSetPositions
+  | OperationReorderPositions
   | OperationApplyToPositions
   | OperationPrepareEmit
   | OperationPrepareRelease

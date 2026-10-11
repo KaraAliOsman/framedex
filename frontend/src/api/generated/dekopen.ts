@@ -255,6 +255,7 @@ import type {
   ProductionOrderList,
   ProductionOrderPieceLabelsParams,
   ProductionOrderTrace,
+  ProductionOrdersParams,
   ProductionPieceTrace,
   ProductionPrep,
   ProductionRelease,
@@ -13318,14 +13319,27 @@ export type productionOrdersResponseError = (
 export type productionOrdersResponse =
   productionOrdersResponseSuccess | productionOrdersResponseError;
 
-export const getProductionOrdersUrl = () => {
-  return `/api/v1/production/orders/`;
+export const getProductionOrdersUrl = (params?: ProductionOrdersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/production/orders/?${stringifiedParams}`
+    : `/api/v1/production/orders/`;
 };
 
 export const productionOrders = async (
+  params?: ProductionOrdersParams,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<productionOrdersResponse> => {
-  return apiMutator<productionOrdersResponse>(getProductionOrdersUrl(), {
+  return apiMutator<productionOrdersResponse>(getProductionOrdersUrl(params), {
     ...options,
     method: "GET",
   });

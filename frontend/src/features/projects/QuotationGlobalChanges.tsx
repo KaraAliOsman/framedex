@@ -37,16 +37,20 @@ export function QuotationGlobalChanges({
   orgId,
   canWrite,
   onChanged,
+  initialSelection,
+  expanded = false,
 }: {
   project: ProjectResponse;
   orgId: string;
   canWrite: boolean;
   onChanged: () => Promise<unknown>;
+  initialSelection?: string[];
+  expanded?: boolean;
 }): JSX.Element {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(expanded);
   const [kind, setKind] = useState<Kind>("glass");
-  const [selection, setSelection] = useState<string[]>([]);
-  const [all, setAll] = useState(true);
+  const [selection, setSelection] = useState<string[]>(initialSelection ?? []);
+  const [all, setAll] = useState(!initialSelection?.length);
   const [systemId, setSystemId] = useState(project.positions?.[0]?.design.system_id ?? "");
   const [value, setValue] = useState("");
   const [preview, setPreview] = useState<ProjectOpsPreviewResponse | null>(null);
@@ -245,6 +249,7 @@ export function QuotationGlobalChanges({
             <label>
               Cambiar
               <select
+                aria-label="Cambiar"
                 value={kind}
                 onChange={(event) => {
                   setKind(event.target.value as Kind);
@@ -262,6 +267,7 @@ export function QuotationGlobalChanges({
               <label>
                 Catálogo de referencia
                 <select
+                  aria-label="Catálogo de referencia"
                   value={systemId}
                   onChange={(event) => {
                     setSystemId(event.target.value);
@@ -319,6 +325,13 @@ export function QuotationGlobalChanges({
                     ? "Caras y acabado"
                     : "Nueva serie"}
                 <select
+                  aria-label={
+                    kind === "glass"
+                      ? "Vidrio del catálogo"
+                      : kind === "finish"
+                        ? "Caras y acabado"
+                        : "Nueva serie"
+                  }
                   value={value}
                   onChange={(event) => {
                     setValue(event.target.value);
@@ -394,6 +407,10 @@ export function QuotationGlobalChanges({
               <p>
                 Se modificarán {preview.diff.length} posiciones. Precio indicativo por posición,
                 incluida su cantidad; la emisión usará el precio aplicado.
+              </p>
+              <p>
+                Δ de Uw: Sin dato · faltan autoridades térmicas de perfiles, vidrio y separador.{" "}
+                <Link to="/catalog">Revisar fuentes del catálogo</Link>
               </p>
               {preview.simulations.map((raw, index) => {
                 const simulation = raw as PriceSimulation;
