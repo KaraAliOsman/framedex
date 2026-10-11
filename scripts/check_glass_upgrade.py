@@ -81,7 +81,12 @@ def verify(container: str) -> None:
         prior = {row["id"]: row for row in json.loads(before[table])}
         current = {row["id"]: row for row in json.loads(after[table])}
         assert prior.keys() <= current.keys()
-        assert all(current[key] == row for key, row in prior.items()), table
+        for key, row in prior.items():
+            # The full historical row stays exact; P21's two new fields have
+            # explicit read-fallback defaults, never a fabricated placement.
+            expected = ({**row, "display_order": None, "placement": {}}
+                        if table == "project_positions" else row)
+            assert current[key] == expected, table
     recipes = json.loads(sql("SELECT jsonb_agg(jsonb_build_object('sku',g.technical_sku,'status',c.status,'product',c.product,'reason',c.review_reason)) "
         "FROM public.catalog_glass_compositions c JOIN public.glass_purchase_mappings g ON g.id=c.mapping_id "
         "WHERE g.technical_sku LIKE 'UP-D02-%';"))
