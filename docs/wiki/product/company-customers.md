@@ -3,8 +3,9 @@ type: concept
 status: active
 updated: 2026-10-11
 volatility: medium
-verified_ref: a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa
+verified_ref: e317edb9b76b4346e33aa3b60b4783b4cc2f0a99
 sources:
+  - P22 PR https://github.com/KaraAliOsman/framedex/pull/148, CI 4/4 sobre f55db702b6f24b39da3f6b279a895833758461a4, squash e317edb9b76b4346e33aa3b60b4783b4cc2f0a99, 2026-10-11
   - P22 revisión a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa, gates completos y tres recorridos reales, 2026-10-11
   - backend/projects/clients.py
   - backend/projects/client_history.py

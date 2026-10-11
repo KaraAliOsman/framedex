@@ -204,3 +204,6 @@ no cambia la base de tarifas y no altera secuencias. El visor nativo blanco
 del headless-shell conserva la limitación documentada en Evidencia visual;
 Chromium completo y el PDF descargado sí muestran el documento real.
 Los procesos propios están detenidos y el fixture persistente se conserva.
+
+PR [#148](https://github.com/KaraAliOsman/framedex/pull/148) integrado con squash `e317edb9b76b4346e33aa3b60b4783b4cc2f0a99`. Los cuatro checks
+requeridos pasan sobre `f55db702b6f24b39da3f6b279a895833758461a4`.

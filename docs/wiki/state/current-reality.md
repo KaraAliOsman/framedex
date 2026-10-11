@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa
+verified_ref: e317edb9b76b4346e33aa3b60b4783b4cc2f0a99
 sources:
+  - P22 PR https://github.com/KaraAliOsman/framedex/pull/148, CI 4/4 sobre f55db702b6f24b39da3f6b279a895833758461a4, squash e317edb9b76b4346e33aa3b60b4783b4cc2f0a99, 2026-10-11
   - P22 revisión a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa, gates completos y tres recorridos reales, 2026-10-11
   - P22 cierre 68674c22ec1ffd303c572764bf472c6587d58d84, cuatro gates completos, Database Gate, identidad Auth real y navegador por rol, 2026-10-11
   - P22 presentación final 5dee5684, FX real del motor, 280 vistas sin hallazgos y lectura móvil con etiquetas, 2026-10-11
@@ -104,7 +105,7 @@ replay sellado. El caso nuevo CLP→USD tiene golden; los anteriores no cambian.
 El dueño conserva MFA obligatorio y puede exigirlo a todos. Invitación cifra
 su capability, verifica correo vivo y requiere aceptación; desactivar conserva
 auditoría. El recorrido completo de correo sandbox/acceso y el alta inicial
-hasta primera obra/editor pasan. La revisión final verifica 903 motor (+2 xfail), 1494 backend y 1014 frontend; golden, lint, tipos y build PASA. Las 280 vistas de aceptación se conservan y 76 capturas de revisión revalidan los formularios/rutas afectados, sin hallazgos, desbordes, errores HTTP ni consola. La dirección explícita se desvincula en API/RLS; el directorio pagina y consulta saldo por lote con las proyecciones del motor. Las estaciones ya usaban upsert por código; editar conserva su identidad y cancelar restaura el alta. Dieciséis integraciones focales pasan. Database Gate completo: 1389 pgTAP, 535 integraciones, 19 E2E y once upgrades PG16 PASA. La identidad JWT individual y JSON se fija/restaura en solicitudes y workers; el material en camino tiene proyección física por rol sin acceso a órdenes privadas. CI y squash siguen su cierre; P22 está en curso. Véase [empresa y clientes](../product/company-customers.md).
+hasta primera obra/editor pasan. La revisión final verifica 903 motor (+2 xfail), 1494 backend y 1014 frontend; golden, lint, tipos y build PASA. Las 280 vistas de aceptación se conservan y 76 capturas de revisión revalidan los formularios/rutas afectados, sin hallazgos, desbordes, errores HTTP ni consola. La dirección explícita se desvincula en API/RLS; el directorio pagina y consulta saldo por lote con las proyecciones del motor. Las estaciones ya usaban upsert por código; editar conserva su identidad y cancelar restaura el alta. Dieciséis integraciones focales pasan. Database Gate completo: 1389 pgTAP, 535 integraciones, 19 E2E y once upgrades PG16 PASA. La identidad JWT individual y JSON se fija/restaura en solicitudes y workers; el material en camino tiene proyección física por rol sin acceso a órdenes privadas. CI 4/4 PASA; PR #148 integrado con squash `e317edb9b76b4346e33aa3b60b4783b4cc2f0a99`. Véase [empresa y clientes](../product/company-customers.md).
 
 ## P10 · propuesta y acuerdo del cliente (11-10-2026)
 

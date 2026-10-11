@@ -1358,3 +1358,14 @@ borrar el fixture. CI/squash se registran al integrar.
 ### 2026-10-11 · P22, observaciones de revisión verificadas
 
 Código `a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa`. La dirección explícita se desvincula en API/RLS; el directorio pagina y consulta saldo por lote con el motor. El endpoint de estación ya era upsert; crear/editar conserva identidad y código. Dieciséis integraciones focales y la regresión de creación/edición pasan. Las 36 vistas de formularios y las 40 rutas revalidadas no tienen hallazgos ni desbordes. Los cuatro gates pasan: 903 motor (+2 xfail), 1494 backend, 1014 frontend; Database Gate 1389 pgTAP, 535 integraciones, 19 E2E y once upgrades PG16. CI y squash siguen su cierre.
+
+### 2026-10-11 · P22 integrado
+
+PR [#148](https://github.com/KaraAliOsman/framedex/pull/148) integrado en `integracion/v1` con squash
+`e317edb9b76b4346e33aa3b60b4783b4cc2f0a99`. Los cuatro checks requeridos pasan sobre
+`f55db702b6f24b39da3f6b279a895833758461a4`. Los gates completos, 356 capturas y el pase editorial
+R1–R20 están documentados en `P22-ACEPTACION.md`. Identidad verificada,
+proyección privada de stock y fusión conservan sus regresiones reales.
+Los procesos propios están detenidos y el fixture se conserva.
+
+CodeRabbit omitió la revisión por configuración de la rama; Copilot la omitió por cuota. No se atribuyen como revisiones completas.
