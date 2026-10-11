@@ -438,7 +438,7 @@ export function Projection({
                 <th>{labels[key]}</th>
                 {key === "margin" ? (
                   <>
-                    <td>
+                    <td data-label="Actual">
                       <Amount
                         value={row.current}
                         currency={currency}
@@ -448,7 +448,7 @@ export function Projection({
                         formula="Margen de la operación aplicada"
                       />
                     </td>
-                    <td>
+                    <td data-label="Propuesto">
                       <Amount
                         value={row.proposed}
                         currency={currency}
@@ -458,7 +458,7 @@ export function Projection({
                         formula="Margen calculado por el motor"
                       />
                     </td>
-                    <td>
+                    <td data-label="Δ">
                       <Amount
                         value={row.delta_pp}
                         currency={currency}
@@ -471,7 +471,7 @@ export function Projection({
                   </>
                 ) : (
                   <>
-                    <td>
+                    <td data-label="Actual">
                       <Amount
                         value={row.current}
                         currency={currency}
@@ -480,7 +480,7 @@ export function Projection({
                         formula="Autoridad de la última operación aplicada"
                       />
                     </td>
-                    <td>
+                    <td data-label="Propuesto">
                       <Amount
                         value={row.proposed}
                         currency={currency}
@@ -492,7 +492,7 @@ export function Projection({
                         formula={`Motor · ${labels[key]} propuesto`}
                       />
                     </td>
-                    <td>
+                    <td data-label="Δ">
                       <Amount
                         value={row.delta}
                         currency={currency}

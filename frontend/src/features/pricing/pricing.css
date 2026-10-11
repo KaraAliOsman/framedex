@@ -640,6 +640,43 @@
 }
 
 @media (max-width: 700px) {
+  .price-comparison,
+  .price-comparison tbody {
+    display: block;
+  }
+  .price-comparison thead {
+    display: none;
+  }
+  .price-comparison tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: 1px solid var(--border-default);
+    padding: var(--space-2) 0;
+  }
+  .price-comparison tr > th {
+    grid-column: 1 / -1;
+  }
+  .price-comparison tr > th,
+  .price-comparison tr > td {
+    border: 0;
+    padding: var(--space-1);
+  }
+  .price-comparison td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: var(--type-dense);
+    margin-bottom: var(--space-1);
+  }
+  .price-comparison .price-amount {
+    flex-wrap: wrap;
+    max-width: 100%;
+    white-space: normal;
+  }
+  .price-comparison .price-amount > span {
+    white-space: nowrap;
+  }
   .price-positions > .price-position-table,
   .price-position-table > tbody,
   .price-position-table > tbody > tr {
