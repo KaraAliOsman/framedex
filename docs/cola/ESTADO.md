@@ -32,7 +32,7 @@
 | ED2 | ED2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/145 | fa3731843dbfbd75d00024e95f4986a3616a8747 | CI 4/4 verde; 224 vistas finales sin hallazgos/desbordes, cuatro personas y MiMo real; guardas 69/187 → 45/139 y rúbrica por superficie PASA. |
 | P21 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/146 | 412029ac1ea688a0f5bf1d560ba9b2e99871fae6 | CI 4/4 verde; biblioteca/lote/F4 y precio aplicado, cien posiciones en 1.781,68–1.975,32 ms; 1.325 pgTAP, 502 integraciones, 19 E2E y diez upgrades PG16; rúbrica PASA. |
 | P10 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/147 | 8c8bda1c70c70fddd6f45ae0401efea03a725bb8 | CI 4/4 verde; acuerdo aditivo, solución elegida y pago recuperable; 1.350 pgTAP, 512 integraciones, 19 E2E y upgrades PG16; 40 estados, Lighthouse 81 y rúbrica PASA. |
-| P22 | 3 | pendiente |  |  |  |
+| P22 | 3 | en curso |  |  |  |
 | P23 | 3 | pendiente |  |  |  |
 | D08 | 3 | pendiente |  |  |  |
 | P19 | 3 | pendiente |  |  |  |
