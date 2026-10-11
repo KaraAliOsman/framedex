@@ -16,16 +16,22 @@ export const STUDIO_LIGHTS = [
   { position: [-3000, 2000, -4000] as Vec3, intensity: 0.6 },
   { position: [0, -2000, 2500] as Vec3, intensity: 0.25 },
 ];
-export const STUDIO_BACKGROUND = "--studio-background";
-export const STUDIO_GROUND = "--studio-ground";
-export const STUDIO_WALL = "--studio-wall";
-export const STUDIO_GUIDE = "--studio-guide";
+export const STUDIO_BACKGROUND = "background";
+export const STUDIO_GROUND = "ground";
+export const STUDIO_WALL = "wall";
+export const STUDIO_GUIDE = "guide";
 export const STUDIO_TONE_MAPPING = THREE.ACESFilmicToneMapping;
 
-export function studioColor(token: string): string {
-  return typeof document === "undefined"
-    ? "white"
-    : getComputedStyle(document.documentElement).getPropertyValue(token).trim() || "white";
+export function studioColor(token: "background" | "ground" | "wall" | "guide"): string {
+  if (typeof document === "undefined") return "white";
+  const style = getComputedStyle(document.documentElement);
+  const colors = {
+    background: style.getPropertyValue("--studio-background"),
+    ground: style.getPropertyValue("--studio-ground"),
+    wall: style.getPropertyValue("--studio-wall"),
+    guide: style.getPropertyValue("--studio-guide"),
+  };
+  return colors[token].trim() || "white";
 }
 
 export function poseMatrix(pose: Pose3D): THREE.Matrix4 {
