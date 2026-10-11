@@ -1,0 +1,294 @@
+[
+  {
+    "case": "demo_hst-a",
+    "model": "DEKOPEN Agente™",
+    "ops": [
+      {
+        "base_sig": "2c5f94d3",
+        "bay": "b1",
+        "description": "Cambia la apertura de un paño o todos los paños del módulo según el catálogo.",
+        "module": "single",
+        "op": "set_opening",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "NONE",
+          "leaf_role": "SINGLE",
+          "movement": "LIFT_SLIDE"
+        },
+        "opening_recipe_code": "C",
+        "opening_use": "WINDOW",
+        "result": {
+          "assembly": {
+            "couplings": [],
+            "modules": [
+              {
+                "height_mm": "2200.00",
+                "id": "single",
+                "tree": {
+                  "door_handedness": null,
+                  "glass_article_sku": "DEMO_HST-GLASS-SAFE",
+                  "glass_product": {
+                    "authority_id": "018b35ca-ad90-5fea-a3a2-0c4bcb66ec2e",
+                    "billing": {
+                      "bars_per_crossing_sku": "DEMO_HST-GLASS-CROSS",
+                      "bars_per_m_sku": "DEMO_HST-GLASS-BAR",
+                      "drilling_sku": "DEMO_HST-GLASS-DRILL",
+                      "minimum_area_m2": "0.35",
+                      "polishing_sku": "DEMO_HST-GLASS-POLISH",
+                      "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                      "tempering_sku": "DEMO_HST-GLASS-TEMPER"
+                    },
+                    "composition": {
+                      "layers": [
+                        {
+                          "interlayers": [
+                            {
+                              "density_kg_m3": "1070",
+                              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                              "thickness_mm": "0.38",
+                              "type": "PVB"
+                            }
+                          ],
+                          "kind": "PANE",
+                          "plies": [
+                            {
+                              "coating_face": null,
+                              "color": "CLEAR",
+                              "supplier_sku": null,
+                              "thickness_mm": "3",
+                              "type": "FLOAT"
+                            },
+                            {
+                              "coating_face": null,
+                              "color": "CLEAR",
+                              "supplier_sku": null,
+                              "thickness_mm": "3",
+                              "type": "FLOAT"
+                            }
+                          ]
+                        },
+                        {
+                          "gas": "AIR",
+                          "kind": "CHAMBER",
+                          "sealant": null,
+                          "spacer": "ALUMINIUM",
+                          "width_mm": "13.62"
+                        },
+                        {
+                          "interlayers": [],
+                          "kind": "PANE",
+                          "plies": [
+                            {
+                              "coating_face": null,
+                              "color": "CLEAR",
+                              "supplier_sku": null,
+                              "thickness_mm": "4",
+                              "type": "TEMPERED"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "limits": {
+                      "max_area_m2": null,
+                      "max_aspect_ratio": "8",
+                      "max_height_mm": "3000",
+                      "max_width_mm": "3000",
+                      "min_height_mm": "100",
+                      "min_width_mm": "100",
+                      "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico"
+                    },
+                    "name": "DEMO · Termopanel laminado de seguridad",
+                    "properties": {
+                      "light_transmittance": null,
+                      "safety_class": {
+                        "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                        "value": "B"
+                      },
+                      "solar_factor": null,
+                      "ug": null,
+                      "weight_kg_m2": null
+                    },
+                    "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                    "synthetic": true
+                  },
+                  "glass_spec": "3+3 PVB 0,38 / 13,62 aire aluminio / 4 templado",
+                  "glass_thickness_mm": "24.00",
+                  "handle_height_mm": null,
+                  "hardware_selection": null,
+                  "hardware_set_sku": null,
+                  "hinged_layout": null,
+                  "id": "149b3245-196e-4889-a01f-911107d04338",
+                  "opening": {
+                    "direction": "INWARD",
+                    "fixed_in_sash": false,
+                    "hinge_side": "NONE",
+                    "leaf_role": "SINGLE",
+                    "movement": "LIFT_SLIDE"
+                  },
+                  "opening_recipe_code": "C",
+                  "opening_type": null,
+                  "opening_use": "WINDOW",
+                  "panel_article_sku": null,
+                  "sliding_layout": null,
+                  "type": "BAY"
+                },
+                "width_mm": "3000.00"
+              }
+            ]
+          },
+          "version": "product-v2"
+        }
+      }
+    ],
+    "rejected": [],
+    "result": "PASA"
+  },
+  {
+    "case": "demo_plegable-3-0-sin-paso",
+    "model": "DEKOPEN Agente™",
+    "ops": [
+      {
+        "base_sig": "903a3ade",
+        "bay": "b1",
+        "description": "Cambia la apertura de un paño o todos los paños del módulo según el catálogo.",
+        "module": "single",
+        "op": "set_opening",
+        "opening": {
+          "direction": "INWARD",
+          "fixed_in_sash": false,
+          "hinge_side": "NONE",
+          "leaf_role": "SINGLE",
+          "movement": "FOLD"
+        },
+        "opening_recipe_code": "3+0-PASO",
+        "opening_use": "DOOR",
+        "result": {
+          "assembly": {
+            "couplings": [],
+            "modules": [
+              {
+                "height_mm": "2200.00",
+                "id": "single",
+                "tree": {
+                  "door_handedness": null,
+                  "glass_article_sku": "DEMO_PLEGABLE-GLASS-SAFE",
+                  "glass_product": {
+                    "authority_id": "7b66ba3a-a231-510a-a314-acf9e88e2f7e",
+                    "billing": {
+                      "bars_per_crossing_sku": "DEMO_PLEGABLE-GLASS-CROSS",
+                      "bars_per_m_sku": "DEMO_PLEGABLE-GLASS-BAR",
+                      "drilling_sku": "DEMO_PLEGABLE-GLASS-DRILL",
+                      "minimum_area_m2": "0.35",
+                      "polishing_sku": "DEMO_PLEGABLE-GLASS-POLISH",
+                      "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                      "tempering_sku": "DEMO_PLEGABLE-GLASS-TEMPER"
+                    },
+                    "composition": {
+                      "layers": [
+                        {
+                          "interlayers": [
+                            {
+                              "density_kg_m3": "1070",
+                              "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                              "thickness_mm": "0.38",
+                              "type": "PVB"
+                            }
+                          ],
+                          "kind": "PANE",
+                          "plies": [
+                            {
+                              "coating_face": null,
+                              "color": "CLEAR",
+                              "supplier_sku": null,
+                              "thickness_mm": "3",
+                              "type": "FLOAT"
+                            },
+                            {
+                              "coating_face": null,
+                              "color": "CLEAR",
+                              "supplier_sku": null,
+                              "thickness_mm": "3",
+                              "type": "FLOAT"
+                            }
+                          ]
+                        },
+                        {
+                          "gas": "AIR",
+                          "kind": "CHAMBER",
+                          "sealant": null,
+                          "spacer": "ALUMINIUM",
+                          "width_mm": "13.62"
+                        },
+                        {
+                          "interlayers": [],
+                          "kind": "PANE",
+                          "plies": [
+                            {
+                              "coating_face": null,
+                              "color": "CLEAR",
+                              "supplier_sku": null,
+                              "thickness_mm": "4",
+                              "type": "TEMPERED"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "limits": {
+                      "max_area_m2": null,
+                      "max_aspect_ratio": "8",
+                      "max_height_mm": "3000",
+                      "max_width_mm": "3000",
+                      "min_height_mm": "100",
+                      "min_width_mm": "100",
+                      "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico"
+                    },
+                    "name": "DEMO · Termopanel laminado de seguridad",
+                    "properties": {
+                      "light_transmittance": null,
+                      "safety_class": {
+                        "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                        "value": "B"
+                      },
+                      "solar_factor": null,
+                      "ug": null,
+                      "weight_kg_m2": null
+                    },
+                    "source": "DEMO · ficha sintética DEKOPEN D02 · no certifica NCh 135 ni rendimiento térmico",
+                    "synthetic": true
+                  },
+                  "glass_spec": "3+3 PVB 0,38 / 13,62 aire aluminio / 4 templado",
+                  "glass_thickness_mm": "24.00",
+                  "handle_height_mm": null,
+                  "hardware_selection": null,
+                  "hardware_set_sku": null,
+                  "hinged_layout": null,
+                  "id": "5ed5af81-438e-466d-8a25-7cd95bea3a8f",
+                  "opening": {
+                    "direction": "INWARD",
+                    "fixed_in_sash": false,
+                    "hinge_side": "NONE",
+                    "leaf_role": "SINGLE",
+                    "movement": "FOLD"
+                  },
+                  "opening_recipe_code": "3+0-PASO",
+                  "opening_type": null,
+                  "opening_use": "DOOR",
+                  "panel_article_sku": null,
+                  "sliding_layout": null,
+                  "type": "BAY"
+                },
+                "width_mm": "2400.00"
+              }
+            ]
+          },
+          "version": "product-v2"
+        }
+      }
+    ],
+    "rejected": [],
+    "result": "PASA"
+  }
+]

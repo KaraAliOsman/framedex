@@ -16,6 +16,8 @@ import type { ProfileChoice } from "./profileChoice";
 import type { SystemDimensionalLimit } from "./systemDimensionalLimit";
 
 export interface DesignOptions {
+  advanced_availability?: unknown[];
+  advanced_previews?: unknown[];
   extra_definitions?: unknown[];
   finish_authority?: FinishAuthority | null;
   system_id: string;

@@ -10,6 +10,32 @@ from dekopen_engine.models import Opening, SlidingTravel
 from documents.renderers import _opening_symbol_svg, _PAL_TECH, _physical_leaf_svg, _position_svg
 
 CASES = json.loads((Path(__file__).resolve().parents[2] / "engine/tests/fixtures/symbols/cases.json").read_text(encoding="utf-8"))
+ADVANCED = json.loads((Path(__file__).resolve().parents[2] / "engine/tests/fixtures/symbols/advanced.json").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("fixture", ADVANCED, ids=lambda fixture: fixture["name"])
+def test_advanced_pdf_elevation_plan_and_public_privacy(fixture):
+    from documents.advanced_drawing import plan_annotations
+    from portal.service import _sealed_positions
+    for leaf, expected in zip(fixture["leaves"], fixture["expected"], strict=True):
+        out = []
+        _physical_leaf_svg(leaf, out, _PAL_TECH, (D(0), D(0)), fixture["view"] == "exterior")
+        root = ET.fromstring(''.join(out))
+        paths = root.findall('path[@data-symbol]')
+        assert [path.get('data-symbol') for path in paths] == [line['symbol'] for line in expected['lines']]
+        for path, line in zip(paths, expected['lines'], strict=True):
+            numbers = [D(number) for number in re.findall(r"-?\d+(?:\.\d+)?", path.get('d'))]
+            actual = [[D(fixture['total_width_mm'])-x if fixture['view']=='exterior' else x,y] for x,y in zip(numbers[::2],numbers[1::2], strict=True)]
+            assert [[value.quantize(D('0.001')) for value in point] for point in actual] == [[D(value).quantize(D('0.001')) for value in point] for point in line['points']]
+        glass = root.find('rect[@data-engine-glass]')
+        assert D(glass.get('width')) == D(leaf['advanced']['glass_width_mm'])
+    fragment, _, _ = plan_annotations(fixture['leaves'], x=D(0), y=D(1500), font=D(20), color='black', exterior=fixture['view']=='exterior')
+    assert 'data-engine-plan="open_plan"' in fragment
+    position = {'id':'p', 'width_mm':fixture['total_width_mm'], 'height_mm':'2200', 'opening_leaves':fixture['leaves']}
+    public = _sealed_positions({'snapshot_json':{'positions':[position]}})[0]['opening_leaves']
+    assert [leaf['advanced']['open_plan'] for leaf in public] == [leaf['advanced']['open_plan'] for leaf in fixture['leaves']]
+    assert all(leaf['advanced']['source']=='Revisión emitida' for leaf in public)
+    assert 'sin certificación' not in json.dumps(public, ensure_ascii=False)
 
 
 @pytest.mark.parametrize("fixture", CASES, ids=lambda fixture: fixture["name"])

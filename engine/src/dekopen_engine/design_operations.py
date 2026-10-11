@@ -108,6 +108,7 @@ REGISTRY = [
     spec("set_opening", "Cambia la apertura de un paño o todos los paños del módulo según el catálogo.",
          {**TARGET, "opening": {"oneOf": [choice(*(v.value for v in BayOpeningType)), {"type": "object"}]},
           "opening_use": choice("WINDOW", "DOOR"), "hinged_layout": {"type": ["object", "null"]},
+          "opening_recipe_code": optional(REF),
           "sliding_layout": {"type": ["object", "null"]}}, ["module", "opening"],
          {"module": "m1", "bay": "b2", "opening": "TILT_TURN_LEFT"}),
     spec("flip_handing", "Invierte bisagras y cierre conservando movimiento y dirección.", TARGET, ["bay"], {"bay": "b1"}),
@@ -371,9 +372,13 @@ def _opening(node: dict[str, Any], value: Any, params: SystemParams, op: dict[st
     node.update(opening_type=value if isinstance(value, str) else None, opening=value if isinstance(value, dict) else None,
                 opening_use=op.get("opening_use", "WINDOW") if isinstance(value, dict) else None,
                 hinged_layout=op.get("hinged_layout"), sliding_layout=op.get("sliding_layout"))
+    if isinstance(value, dict) and op.get("opening_recipe_code") is not None:
+        node["opening_recipe_code"] = op["opening_recipe_code"]
+    else:
+        node.pop("opening_recipe_code", None)
     parsed = ParametricNode.model_validate_json(json.dumps(node))
     physical = node_opening(parsed)
-    if physical.movement is OpeningMovement.SLIDE:
+    if physical.movement is OpeningMovement.SLIDE and not parsed.opening_recipe_code:
         layout = resolved_sliding_layout(parsed)
         node["sliding_layout"] = {"tracks": layout.tracks, "panels": [
             {**panel.model_dump(mode="json"), "travel": (

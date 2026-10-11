@@ -41,6 +41,11 @@ def validate_family(root: ParametricNode, params: SystemParams) -> None:
     while pending:
         node = pending.pop()
         pending.extend(node.children)
+        from dekopen_engine.advanced_openings import requires_recipe, resolve_recipe
+        from dekopen_engine.openings import node_use
+        if node.opening is not None and requires_recipe(node.opening.movement, node_use(node)):
+            resolve_recipe(node, params)
+            continue
         opening = geometry_opening_type(node)
         if opening is not None and opening not in allowed:
             compatible = [family.value for family, choices in FAMILY_OPENINGS.items()

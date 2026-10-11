@@ -126,9 +126,17 @@ def annotations(tree: object, *, x: Decimal, y: Decimal, width: Decimal,
             plan_y = inside + step * 3
     if sliding:
         text(x, plan_y, "Orden de carriles: convención de dibujo")
+    if include_sliding_plan and any(isinstance(leaf.get("advanced"), dict) for leaf in handles):
+        from documents.advanced_drawing import plan_annotations
+        advanced, advanced_right, advanced_bottom = plan_annotations(handles, x=x, y=plan_y+step,
+            font=font, color=color, exterior=exterior)
+        out.append(advanced)
+        right = max(right, advanced_right-x)
+        bottom = max(bottom, advanced_bottom-y)
+        plan_y = advanced_bottom+step
     next_vertical = vertical_offset + h_levels + 2 + len(handles) + len(facts.authored_handles)
     next_bottom = (int((plan_y - gutter_y) / step) + 2
-                   if sliding
+                   if sliding or any(isinstance(leaf.get("advanced"), dict) for leaf in handles)
                    else bottom_offset + v_levels + 2)
     if assembly_totals is not None:
         total_width, total_height = assembly_totals

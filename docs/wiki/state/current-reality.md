@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: 331d2eeeec57dedd14577c4ffd5ce8079568bc44
+verified_ref: 9213655c
 sources:
+  - D08 revisión 9213655c, gates completos repetidos, mypy sin caché y navegador de escritura/planta; CI pendiente de cierre
+  - D08 código 13e03a5f, gates de código/navegador y Database Gate completo, 2026-10-11; CI pendiente de cierre
   - https://github.com/KaraAliOsman/framedex/pull/149 · squash 331d2eeeec57dedd14577c4ffd5ce8079568bc44, CI 4/4 verde
   - P23 código 0eb58535f33b1537d22db56707ef3f1c7f3a0e0e, siete observaciones corregidas y gates repetidos, 2026-10-11
   - P23 código c0d12cd8ca8ad7c391ba8bbb350c2971418fd800, gates completos, navegador y PostgreSQL propio, 2026-10-11
@@ -89,6 +91,24 @@ sources:
 ---
 
 # Current reality
+
+## D08 · recetas avanzadas (11-10-2026)
+
+Verificado en `codex/D08-tipologias-avanzadas`, base `cf09d813`; cierre de CI
+y squash pendiente. Siete series DEMO v8 aportan catorce recetas HST/PSK,
+plegables con/sin paso, pivotes, guillotinas y puerta corredera. El motor
+calcula corte/BOM/kit/planta; el sistema sin autoridad conserva causa y
+series compatibles sin ofrecer una receta ficticia. Guardar/preciar/emitir
+conserva el contexto Decimal local y la BOM exacta. Los históricos no se
+reescriben y los goldens anteriores permanecen byte idénticos.
+
+84 vistas de recetas, cinco estados, Catálogo y portal sellado pasan;
+32 vistas oficiales sin hallazgos. MiMo real propone dos recetas tipadas.
+DOC-01 real contiene catorce posiciones en ocho páginas Carta. Catálogo y
+medición siguen sintéticos explícitos; no se certifica fabricante ni obra.
+P19 continúa la cinemática 3D. Véase
+[tipologías avanzadas](../product/advanced-openings.md) y
+[aceptación D08](../../redesign/D08-ACEPTACION.md).
 
 ## P23 · despacho, terreno y postventa (11-10-2026)
 

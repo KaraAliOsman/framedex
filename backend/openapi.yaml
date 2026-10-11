@@ -28424,6 +28424,12 @@ components:
     DesignOptions:
       type: object
       properties:
+        advanced_availability:
+          type: array
+          items: {}
+        advanced_previews:
+          type: array
+          items: {}
         extra_definitions:
           type: array
           items: {}
@@ -31044,11 +31050,9 @@ components:
         width_mm:
           type: string
           format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
         height_mm:
           type: string
           format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
         opening_type:
           type: string
           minLength: 1
@@ -31072,12 +31076,10 @@ components:
         leaf_weight_kg:
           type: string
           format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
           nullable: true
         previous_infill_kg:
           type: string
           format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
           nullable: true
         technical_sku:
           type: string
@@ -32543,18 +32545,30 @@ components:
       enum:
       - AWNING
       - DOOR
+      - FOLD
+      - LIFT_SLIDE
+      - PARALLEL_SLIDE
+      - PIVOT_H
+      - PIVOT_V
       - SLIDING
       - TILT
       - TILT_TURN
       - TURN
+      - VERTICAL_SLIDE
       type: string
       description: |-
         * `AWNING` - AWNING
         * `DOOR` - DOOR
+        * `FOLD` - FOLD
+        * `LIFT_SLIDE` - LIFT_SLIDE
+        * `PARALLEL_SLIDE` - PARALLEL_SLIDE
+        * `PIVOT_H` - PIVOT_H
+        * `PIVOT_V` - PIVOT_V
         * `SLIDING` - SLIDING
         * `TILT` - TILT
         * `TILT_TURN` - TILT_TURN
         * `TURN` - TURN
+        * `VERTICAL_SLIDE` - VERTICAL_SLIDE
     KitResponse:
       type: object
       description: |-
@@ -36249,6 +36263,11 @@ components:
         hinged_layout:
           type: object
           nullable: true
+        opening_recipe_code:
+          type: string
+          minLength: 1
+          maxLength: 160
+          nullable: true
         sliding_layout:
           type: object
           nullable: true
@@ -36306,6 +36325,11 @@ components:
           $ref: '#/components/schemas/OpeningUseEnum'
         hinged_layout:
           type: object
+          nullable: true
+        opening_recipe_code:
+          type: string
+          minLength: 1
+          maxLength: 160
           nullable: true
         sliding_layout:
           type: object

@@ -80,14 +80,20 @@ def preview_hardware(org_id, data):
     root = automatic(original).model_copy(update={"width_mm": data["width_mm"], "height_mm": data["height_mm"]})
     if target is None:
         raise contract_error(400, "hardware_bay_missing", "El vano ya no existe. Selecciona una hoja del diseño actual.")
+    from dekopen_engine.advanced_openings import resolve_recipe
+    recipe = resolve_recipe(target, params)
+    # A passage kit and a folding kit are disjoint authored classes. A global
+    # bay override must not silently replace one leaf's specific mechanism.
+    recipe_selects_each_leaf = recipe is not None and any(panel.pass_through for panel in recipe.panels)
     computation = compute_geometry(root, params, diagnostic=True, diagnose_catalog_limits=True, finish=data["color"])
-    leaves = [leaf for leaf in computation.leaves if leaf.bay_id == data["bay_id"]]
+    leaves = [leaf for leaf in computation.leaves if leaf.bay_id == data["bay_id"]
+              and (leaf.opening is None or leaf.opening.movement.value != "FIXED")]
     result = []
     division = None
     for leaf in leaves:
         catalog_failures = [str(error) for error in computation.catalog_violations
             if error.params.get("bay") == leaf.bay_id]
-        editable = leaf.opening is None or leaf.opening.leaf_role.value != "PASSIVE"
+        editable = not recipe_selects_each_leaf and (leaf.opening is None or leaf.opening.leaf_role.value != "PASSIVE")
         selected_sku = target.hardware_set_sku if editable else None
         if selected_sku is None and leaf.selected_kit is not None:
             selected_sku = leaf.selected_kit.sku

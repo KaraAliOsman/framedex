@@ -7,10 +7,11 @@ from dekopen_engine.models import (
     OpeningDirection, OpeningHandleFact, OpeningMovement, OpeningUse, ParametricNode,
     SystemParams, HardwareResolution,
 )
+from dekopen_engine.advanced_openings import ADVANCED_MOVEMENTS, ADVANCED_NAMES
 
 IMPLEMENTED_MOVEMENTS = frozenset({OpeningMovement.FIXED, OpeningMovement.TURN,
     OpeningMovement.TILT, OpeningMovement.TILT_TURN, OpeningMovement.TOP_HUNG,
-    OpeningMovement.SLIDE})
+    OpeningMovement.SLIDE}) | ADVANCED_MOVEMENTS
 
 _LEGACY_MOTIONS = {
     BayOpeningType.FIXED: (OpeningMovement.FIXED, HingeSide.NONE),
@@ -146,7 +147,8 @@ def normalize_opening_tree(node: ParametricNode, params: SystemParams) -> Parame
     children = [normalize_opening_tree(child, params) for child in node.children]
     updated = node.model_copy(update={"children": children}) if children else node
     if updated.opening is None:
-        if updated.hinged_layout is not None or updated.opening_use is not None:
+        if (updated.hinged_layout is not None or updated.opening_use is not None
+                or updated.opening_recipe_code is not None):
             raise OpeningCapabilityError("Declara la apertura estructurada de la composición.", bay=node.id)
         return updated
     opening, use = node_opening(updated), node_use(updated)
@@ -155,6 +157,10 @@ def normalize_opening_tree(node: ParametricNode, params: SystemParams) -> Parame
     if updated.opening_type is not None:
         legacy_from_opening(opening, use=use, legacy_hint=updated.opening_type)
     resolve_capability(updated, params)
+    from dekopen_engine.advanced_openings import resolve_recipe
+    recipe = resolve_recipe(updated, params)
+    if recipe is not None:
+        return updated
     if updated.opening_type is not None:
         return updated
     if updated.hinged_layout is not None:
@@ -186,13 +192,14 @@ def geometry_opening_type(node: ParametricNode) -> BayOpeningType | None:
 
 def handle_fact(opening: Opening, capability: OpeningCapability, *, width_mm: Decimal,
                 height_mm: Decimal, requested_height_mm: Decimal | None = None,
-                hardware_resolution: HardwareResolution | None = None) -> OpeningHandleFact | None:
+                hardware_resolution: HardwareResolution | None = None,
+                closing_side: HingeSide | None = None) -> OpeningHandleFact | None:
     rule = capability.handle_rule
     if rule is None:
         if requested_height_mm is not None:
             raise ValueError("Esta hoja no tiene una manilla de accionamiento.")
         return None
-    side = {HingeSide.LEFT: HingeSide.RIGHT, HingeSide.RIGHT: HingeSide.LEFT,
+    side = closing_side or {HingeSide.LEFT: HingeSide.RIGHT, HingeSide.RIGHT: HingeSide.LEFT,
             HingeSide.TOP: HingeSide.BOTTOM, HingeSide.BOTTOM: HingeSide.TOP}.get(opening.hinge_side)
     if side is None:  # Sliding hardware uses its own slot/track authority.
         return None
@@ -248,7 +255,9 @@ def opening_label(opening: Opening, use: OpeningUse = OpeningUse.WINDOW,
     if opening.movement is OpeningMovement.TOP_HUNG:
         return "Proyectante hacia afuera"
     if opening.movement is OpeningMovement.SLIDE:
-        return "Corredera"
+        return "Puerta corredera" if use is OpeningUse.DOOR else "Corredera"
+    if opening.movement in ADVANCED_NAMES:
+        return ADVANCED_NAMES[opening.movement]
     kind = "Puerta simple" if use is OpeningUse.DOOR else (
         "Oscilobatiente" if opening.movement is OpeningMovement.TILT_TURN else "Abatible")
     direction = "hacia adentro" if opening.direction is OpeningDirection.INWARD else "hacia afuera"

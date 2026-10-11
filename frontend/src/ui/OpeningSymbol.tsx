@@ -11,6 +11,7 @@ export function OpeningSymbol({
   view = "interior",
   travel,
   mirror = true,
+  axis,
 }: {
   opening: PhysicalOpening;
   x: number;
@@ -18,10 +19,11 @@ export function OpeningSymbol({
   width: number;
   height: number;
   view?: "interior" | "exterior";
-  travel?: "LEFT" | "RIGHT" | null;
+  travel?: "LEFT" | "RIGHT" | "UP" | "DOWN" | null;
   mirror?: boolean;
+  axis?: { x?: number | null; y?: number | null; closingSide?: string };
 }): JSX.Element {
-  const lines = openingSymbolLines(opening, { x, y, width, height }, view, travel, mirror);
+  const lines = openingSymbolLines(opening, { x, y, width, height }, view, travel, mirror, axis);
   return (
     <g
       className="opening-glyph"

@@ -1,4 +1,4 @@
-import { fmtMm, formatDecimal, parseLocaleNumber } from "../../format";
+import { fmtMm, formatDecimal, parseLocaleNumber, quantize } from "../../format";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import "./canvas.css";
@@ -34,6 +34,7 @@ import { useRegisterDesignOpsBridge } from "../assistant/assistantContext";
 import { Link } from "react-router-dom";
 import type { DesignOperation } from "../../api/generated/models";
 import { AssemblyPlanPane } from "./AssemblyPlanPane";
+import { AdvancedPlanPane } from "./AdvancedPlanPane";
 import { compatibleCouplers } from "./couplerAuthority";
 import { assemblyIssueDestination } from "./assemblyIssueNavigation";
 import { EditorPriceChip } from "./EditorPriceChip";
@@ -936,8 +937,12 @@ function LeafFacts({
 }) {
   const result = evaluation?.modules.find((item) => item.module_id === module.id)?.result;
   const facts = (result?.opening_leaves ?? []) as OpeningLeafFact[];
-  const leaf = facts.find((item) => item.bay_id === bay.id);
-  const hardware = result?.hardware_items.find((item) => item.bay_id === bay.id);
+  const leaf =
+    facts.find((item) => item.bay_id === bay.id && item.opening.movement !== "FIXED") ??
+    facts.find((item) => item.bay_id === bay.id);
+  const hardware = result?.hardware_items.find(
+    (item) => item.bay_id === bay.id && (!leaf?.leaf_id || item.leaf_id === leaf.leaf_id),
+  );
   const kit = options?.hardware_kits.find((item) => item.sku === hardware?.kit_sku);
   const resolved = hardware?.resolution as HardwareResolution | null | undefined;
   const glass = options?.glass_specs.find((item) => item.sku === bay.glass_article_sku);
@@ -971,7 +976,7 @@ function LeafFacts({
           <dt>Hoja · ancho</dt>
           <dd>
             {leaf || resolved
-              ? `${fmtMm(leaf?.width_mm ?? resolved?.width_mm)} mm`
+              ? `${fmtMm(quantize(leaf?.width_mm ?? resolved?.width_mm, 2))} mm`
               : visualOpening(bay) === "FIXED"
                 ? "No requiere · paño fijo"
                 : "Sin dato · calcula el marco"}
@@ -981,7 +986,7 @@ function LeafFacts({
           <dt>Hoja · alto</dt>
           <dd>
             {leaf || resolved
-              ? `${fmtMm(leaf?.height_mm ?? resolved?.height_mm)} mm`
+              ? `${fmtMm(quantize(leaf?.height_mm ?? resolved?.height_mm, 2))} mm`
               : visualOpening(bay) === "FIXED"
                 ? "No requiere · paño fijo"
                 : "Sin dato · calcula el marco"}
@@ -3358,6 +3363,22 @@ export function AssemblyEditor({
             </button>
           )}
         </div>
+        {planOpen &&
+          (drawingEvaluation?.modules ?? []).some((item) =>
+            (item.result?.opening_leaves as unknown as OpeningLeafFact[] | undefined)?.some(
+              (leaf) => leaf.advanced,
+            ),
+          ) && (
+            <AdvancedPlanPane
+              facts={Object.fromEntries(
+                (drawingEvaluation?.modules ?? []).map((item) => [
+                  item.module_id,
+                  (item.result?.opening_leaves ?? []) as unknown as OpeningLeafFact[],
+                ]),
+              )}
+              onHide={() => setPlanOpen(false)}
+            />
+          )}
         {couplings.length > 0 && planEvaluation?.plan && planOpen && (
           <AssemblyPlanPane
             plan={planEvaluation.plan}
@@ -3398,11 +3419,15 @@ export function AssemblyEditor({
             />
           </div>
         )}
-        {couplings.length > 0 && planOpen === false && (
-          <button className="plan-toggle" type="button" onClick={() => setPlanOpen(true)}>
-            Mostrar planta acoplada
-          </button>
-        )}
+        {(couplings.length > 0 ||
+          modules.some((module) =>
+            intentBays(module.tree).some((bay) => bay.opening_recipe_code),
+          )) &&
+          planOpen === false && (
+            <button className="plan-toggle" type="button" onClick={() => setPlanOpen(true)}>
+              Mostrar planta acoplada
+            </button>
+          )}
       </div>
       {contextMenu && (
         <div

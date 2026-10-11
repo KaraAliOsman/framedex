@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-from dekopen_engine.models import HingeSide, LeafRole, Opening, OpeningDirection, OpeningMovement, SlidingTravel
+from dekopen_engine.models import HingeSide, LeafRole, Opening, OpeningDirection, OpeningMovement
 from dekopen_engine.symbols import SYMBOL_TEMPLATES, symbol_names
 
 
@@ -12,11 +12,11 @@ def source() -> str:
     motions = {}
     for motion in OpeningMovement:
         for hinge in (HingeSide.LEFT, HingeSide.RIGHT, HingeSide.NONE):
-            for travel in (None, SlidingTravel.LEFT, SlidingTravel.RIGHT):
+            for travel in (None, "LEFT", "RIGHT", "UP", "DOWN"):
                 # Deliberately diagram-only: these are not catalogue capabilities.
                 opening = Opening.model_construct(movement=motion, hinge_side=hinge,
                     direction=OpeningDirection.INWARD, leaf_role=LeafRole.SINGLE, fixed_in_sash=False)
-                motions[f"{motion.value}/{hinge.value}/{travel.value if travel else ''}"] = symbol_names(opening, travel)
+                motions[f"{motion.value}/{hinge.value}/{travel or ''}"] = symbol_names(opening, travel)
     return ("// Generated from dekopen_engine.symbols; do not edit.\n"
             + "export const symbolTemplates = " + json.dumps(SYMBOL_TEMPLATES, indent=2) + " as const;\n"
             + "export const symbolMotions: Record<string, readonly (keyof typeof symbolTemplates)[]> = "

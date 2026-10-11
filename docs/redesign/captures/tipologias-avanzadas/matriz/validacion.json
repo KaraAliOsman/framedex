@@ -1,0 +1,842 @@
+[
+  {
+    "key": "demo_hst-a",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-c",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_psk-xo",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-sin-paso",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-paso",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-sin-paso",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-paso",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_v-eje-30",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_h-eje-30",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-muelles",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-muelles",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-contrapesos",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-contrapesos",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_puerta_corredera-xo",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-a",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-c",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_psk-xo",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-sin-paso",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-paso",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-sin-paso",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-paso",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_v-eje-30",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_h-eje-30",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-muelles",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-muelles",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-contrapesos",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-contrapesos",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_puerta_corredera-xo",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-a",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-c",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_psk-xo",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-sin-paso",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-paso",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-sin-paso",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-paso",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_v-eje-30",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_h-eje-30",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-muelles",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-muelles",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-contrapesos",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-contrapesos",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_puerta_corredera-xo",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-a",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-c",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_psk-xo",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-sin-paso",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-paso",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-sin-paso",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-paso",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_v-eje-30",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_h-eje-30",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-muelles",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-muelles",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-contrapesos",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-contrapesos",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_puerta_corredera-xo",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-a",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-c",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_psk-xo",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-sin-paso",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-paso",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-sin-paso",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-paso",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_v-eje-30",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_h-eje-30",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-muelles",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-muelles",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-contrapesos",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-contrapesos",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_puerta_corredera-xo",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-a",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_hst-c",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_psk-xo",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-sin-paso",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-3-0-paso",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-sin-paso",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_plegable-2-1-paso",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_v-eje-30",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_pivot_h-eje-30",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-muelles",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-muelles",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-simple-contrapesos",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_guillotina-doble-contrapesos",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  },
+  {
+    "key": "demo_puerta_corredera-xo",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "price": "MOTOR",
+    "hardware": "PASA",
+    "result": "PASA"
+  }
+]

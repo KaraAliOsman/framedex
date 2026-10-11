@@ -152,7 +152,7 @@ def _new_position(org_id, op, next_index):
         "width_mm": op["dims"]["width_mm"], "height_mm": op["dims"]["height_mm"],
         "tree": {"id": "bay", "type": "BAY", "opening_type": "FIXED"}}]}}
     opening = {key: value for key, value in choice.items() if key in {
-        "opening", "opening_use", "hinged_layout", "sliding_layout"}} if choice else {"opening": op["template"]}
+        "opening", "opening_use", "opening_recipe_code", "hinged_layout", "sliding_layout"}} if choice else {"opening": op["template"]}
     result = simulate_ops(org_id, product, [{"op": "set_opening", "module": "single", **opening},
         {"op": "set_glass", "module": "single", "sku": op["glass_sku"]}], op["system_id"], finish)
     if not result["valid"]:

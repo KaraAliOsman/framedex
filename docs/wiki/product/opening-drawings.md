@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-08
+updated: 2026-10-11
 volatility: medium
-verified_ref: 52f3ee8102753727b7ba9e568ec18593b5d269d3
+verified_ref: 13e03a5f
 sources:
+  - docs/redesign/D08-ACEPTACION.md
   - P05 PR #131, CI run 37861454814 on 10805d86, squash 52f3ee81, 2026-10-08
   - engine/src/dekopen_engine/symbols.py
   - engine/src/dekopen_engine/drawing.py
@@ -38,7 +39,8 @@ sellada, por lo que no combina hojas de distinta autoridad.
 
 ## Intención y límites
 
-Un fabricante debe leer movimiento, cierre y vista sin ambigüedad. Los fixtures
-reservados de movimientos avanzados son gramática; D08 aporta capacidad real.
+Un fabricante debe leer movimiento, cierre y vista sin ambigüedad. D08 añade
+28 fixtures interior/exterior de recetas avanzadas con autoridad del motor,
+planta y manillas; véase [tipologías avanzadas](advanced-openings.md).
 P06 mantiene bow, P07 el portal comercial y P09/P13 la composición documental.
 Catálogo DEMO y orden de carriles no acreditan datos de un proveedor.

@@ -107,13 +107,15 @@ def evaluate_hardware_candidates(
                 violations.append(("option", "Este kit histórico no declara opciones ni modelos de manilla. Selecciona una clase con autoridad de catálogo."))
             exact = with_hardware_weight(base_weight, kit, params)
         total = exact.total_weight_kg
-        normalized = ("DOOR" if opening_use is OpeningUse.DOOR else
+        normalized = ("DOOR" if opening_use is OpeningUse.DOOR and physical_opening.movement is OpeningMovement.TURN else
             "AWNING" if physical_opening.movement is OpeningMovement.TOP_HUNG else
             "SLIDING" if physical_opening.movement is OpeningMovement.SLIDE else
             physical_opening.movement.value) if physical_opening is not None else normalize_opening_type(opening)
+        from dekopen_engine.advanced_openings import requires_recipe
+        advanced = physical_opening is not None and requires_recipe(physical_opening.movement, opening_use)
         candidates.append(HardwareCandidateEvaluation(
             kit=kit, opening_match=kit.opening_type == normalized,
-            rail_match=(kit.rail_type is params.rail_type if params.uses_legacy_rules
+            rail_match=(True if advanced else kit.rail_type is params.rail_type if params.uses_legacy_rules
                         else kit.rail_type is sliding_parameters(params).rail_type
                         if opening in SLIDING_OPENINGS else True),
             width_match=kit.min_leaf_width_mm <= width_mm <= kit.max_leaf_width_mm,

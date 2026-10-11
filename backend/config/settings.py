@@ -167,7 +167,8 @@ SPECTACULAR_SETTINGS = {
         "CollectionMilestoneStatusEnum": ["PENDING", "DUE", "OVERDUE", "PAID"],
         "FiscalSimulationStatusEnum": ["ACCEPTED", "WARNINGS", "REJECTED"],
         "VerticalReferenceEnum": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"],
-        "KitOpeningTypeEnum": ["AWNING", "DOOR", "SLIDING", "TILT", "TILT_TURN", "TURN"],
+        "KitOpeningTypeEnum": ["AWNING", "DOOR", "SLIDING", "TILT", "TILT_TURN", "TURN",
+            "LIFT_SLIDE", "PARALLEL_SLIDE", "FOLD", "PIVOT_V", "PIVOT_H", "VERTICAL_SLIDE"],
         "ImportOpeningTypeEnum": [
             "AWNING", "DOOR_ENTRY", "FIXED", "SLIDING_2L",
             "TILT_TURN_LEFT", "TILT_TURN_RIGHT", "TURN_LEFT", "TURN_RIGHT",

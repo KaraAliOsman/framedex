@@ -40,8 +40,9 @@ export function openingSymbolLines(
   opening: PhysicalOpening,
   rect: { x: number; y: number; width: number; height: number },
   view: "interior" | "exterior" = "interior",
-  travel?: "LEFT" | "RIGHT" | null,
+  travel?: "LEFT" | "RIGHT" | "UP" | "DOWN" | null,
   mirror = true,
+  axis?: { x?: number | null; y?: number | null; closingSide?: string },
 ): SymbolLine[] {
   // Apply integer ratios from the generated Decimal grammar. Multiplying by
   // a binary approximation of 0.35 would produce 489.999… instead of 490 mm.
@@ -52,15 +53,22 @@ export function openingSymbolLines(
     return origin + (extent * (invert ? denominator - numerator : numerator)) / denominator;
   };
   const key = `${opening.movement}/${["LEFT", "RIGHT"].includes(opening.hinge_side) ? opening.hinge_side : "NONE"}/${travel ?? ""}`;
-  const names = symbolMotions[key] ?? [];
+  const names =
+    opening.movement === "FOLD" && axis?.closingSide === "LEFT"
+      ? (["fold_right"] as const)
+      : (symbolMotions[key] ?? []);
   const sliding = ["SLIDE", "LIFT_SLIDE", "PARALLEL_SLIDE", "VERTICAL_SLIDE"].includes(
     opening.movement,
   );
   return names.map((symbol) => ({
     symbol,
     points: symbolTemplates[symbol].map(([px, py]) => [
-      coordinate(rect.x, rect.width, px, view === "exterior" && mirror),
-      coordinate(rect.y, rect.height, py),
+      symbol === "pivot_v" && axis?.x != null
+        ? view === "exterior" && mirror
+          ? rect.x * 2 + rect.width - axis.x
+          : axis.x
+        : coordinate(rect.x, rect.width, px, view === "exterior" && mirror),
+      symbol === "pivot_h" && axis?.y != null ? axis.y : coordinate(rect.y, rect.height, py),
     ]),
     dashed: !sliding && (opening.direction === "OUTWARD") !== (view === "exterior"),
   }));

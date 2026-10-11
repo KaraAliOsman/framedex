@@ -1,13 +1,14 @@
 """Additive v7 synthetic joint authorities; v1-v6 remain unchanged."""
 
 from copy import deepcopy
+from typing import Any
 
 from backend.catalogs.demo_extras import extra_manifest
 
 SOURCE = "Acopladores sintéticos DEKOPEN v7; semilla 20270113; sin certificación"
 
 
-def coupling_manifest():
+def coupling_manifest() -> list[dict[str, Any]]:
     records = deepcopy(extra_manifest())
     for record in records:
         code, params = record["code"], record["params"]

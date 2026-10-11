@@ -344,7 +344,14 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
                 "handle": ({**{key: leaf["handle"].get(key) for key in (
                     "side", "x_mm", "y_mm", "height_from_bottom_mm", "minimum_height_from_bottom_mm",
                     "maximum_height_from_bottom_mm", "minimum_from_top_mm", "maximum_from_top_mm")},
-                    "source": "Revisión emitida"} if isinstance(leaf.get("handle"), dict) else None)}
+                    "source": "Revisión emitida"} if isinstance(leaf.get("handle"), dict) else None),
+                **({"advanced": {**{key: leaf["advanced"].get(key) for key in (
+                    "recipe_code", "recipe_name", "scheme", "synthetic", "kind", "profile_role", "profile_face_mm",
+                    "glass_x_mm", "glass_y_mm", "glass_width_mm", "glass_height_mm", "track", "plane_offset_mm",
+                    "travel", "travel_mm", "lift_mm", "parallel_offset_mm", "pivot_x_mm", "pivot_y_mm",
+                    "opening_angle_deg", "fold_group", "fold_index", "stack_side", "pass_through", "pass_open_plan",
+                    "packet_pitch_mm", "balance", "closed_plan", "open_plan", "open_plan_polygon")},
+                    "source": "Revisión emitida"}} if isinstance(leaf.get("advanced"), dict) else {})}
                 for leaf in value.get("opening_leaves") or []],
         })
     return positions

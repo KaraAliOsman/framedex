@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-06
+updated: 2026-10-11
 volatility: medium
-verified_ref: 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd
+verified_ref: 13e03a5f
 sources:
+  - docs/redesign/D08-ACEPTACION.md
   - engine/src/dekopen_engine/openings.py
   - engine/src/dekopen_engine/models.py
   - engine/tests/golden_openings.json
@@ -58,8 +59,9 @@ La constitución §3.6 prevalece sobre el vértice inverso del tablero históric
 iconos. El estimador debe reconocer la apertura en el dibujo y elegir únicamente
 lo que admite su sistema. P04/P05 continúan el rediseño integral del editor.
 
-Los movimientos avanzados están declarados para D08 y todavía no se ofrecen
-como capacidad fabricable. Los kits, medidas y precios DEMO no acreditan un
+D08 incorpora recetas explícitas, cortes/BOM/kits y planta para los movimientos
+avanzados, conservando el contrato físico de D03; véase
+[tipologías avanzadas](advanced-openings.md). Los kits, medidas y precios DEMO no acreditan un
 catálogo comercial. La puerta con lateral de 2 200 mm conserva el bloqueo R05
 cuando falta inercia estructural: una carga ficticia de prueba no certifica viento.
 D04 amplía reglas y selección de herrajes sobre este contrato.

@@ -31,8 +31,70 @@ export type OpeningChoice = {
   use: "WINDOW" | "DOOR";
   layout?: HingedLayout;
   source: string;
+  recipe?: AdvancedRecipe;
+};
+export type PlanPoint = { x_mm: string; depth_mm: string };
+export type AdvancedLeafFact = {
+  recipe_code: string;
+  recipe_name: string;
+  scheme: string;
+  source: string;
+  synthetic: boolean;
+  kind: "MOVING" | "FIXED";
+  profile_role: string;
+  profile_face_mm: string;
+  glass_x_mm: string;
+  glass_y_mm: string;
+  glass_width_mm: string;
+  glass_height_mm: string;
+  track: number | null;
+  plane_offset_mm: string;
+  travel: "LEFT" | "RIGHT" | "UP" | "DOWN" | null;
+  travel_mm: string;
+  lift_mm: string | null;
+  parallel_offset_mm: string | null;
+  pivot_x_mm: string | null;
+  pivot_y_mm: string | null;
+  opening_angle_deg: string;
+  fold_group: string | null;
+  fold_index: number | null;
+  stack_side: "LEFT" | "RIGHT" | null;
+  pass_through: boolean;
+  pass_open_plan: [PlanPoint, PlanPoint] | null;
+  packet_pitch_mm: string | null;
+  balance: "SPRING" | "COUNTERWEIGHT" | null;
+  closed_plan: [PlanPoint, PlanPoint];
+  open_plan: [PlanPoint, PlanPoint];
+  open_plan_polygon?: PlanPoint[];
+};
+export type AdvancedRecipe = {
+  code: string;
+  name: string;
+  scheme: string;
+  source: string;
+  synthetic: boolean;
+  starter_width_mm: string;
+  starter_height_mm: string;
+};
+export type AdvancedPreview = {
+  recipe_code: string;
+  movement: string;
+  use: string;
+  opening_leaves: OpeningLeafFact[];
+  glass_sku: string | null;
+  reason: string;
+};
+export type AdvancedAvailability = {
+  movement: string;
+  use: string;
+  label: string;
+  available: boolean;
+  reason: string;
+  compatible_systems: string[];
+  schemes: string[];
 };
 export type OpeningLeafFact = {
+  advanced?: AdvancedLeafFact | null;
   bay_id: string;
   leaf_id: string | null;
   opening: PhysicalOpening;
@@ -55,6 +117,7 @@ export type OpeningLeafFact = {
   } | null;
 };
 export type Capability = {
+  advanced_recipes?: AdvancedRecipe[];
   use: "WINDOW" | "DOOR";
   movement: PhysicalOpening["movement"];
   direction: PhysicalOpening["direction"];
@@ -78,7 +141,7 @@ export function visualOpening(node: IntentNode): LegacyOpening {
   if (!node.opening) return node.opening_type ?? "FIXED";
   const physical = node.opening;
   if (physical.movement === "FIXED") return "FIXED";
-  if (physical.movement === "SLIDE") return "SLIDING";
+  if (["SLIDE", "LIFT_SLIDE", "PARALLEL_SLIDE"].includes(physical.movement)) return "SLIDING";
   if (node.opening_use === "DOOR") return node.hinged_layout ? "DOOR_DOUBLE" : "DOOR_ENTRY";
   if (["TILT", "TOP_HUNG"].includes(physical.movement)) return "AWNING";
   return `${physical.movement === "TILT_TURN" ? "TILT_TURN" : "TURN"}_${physical.hinge_side === "LEFT" ? "LEFT" : "RIGHT"}` as LegacyOpening;
@@ -88,7 +151,16 @@ export function physicalLabel(opening: PhysicalOpening, use: string = "WINDOW"):
   if (opening.movement === "FIXED") return opening.fixed_in_sash ? "Fijo en hoja" : "Fijo en marco";
   if (opening.movement === "TILT") return "Solo abatimiento (banderola)";
   if (opening.movement === "TOP_HUNG") return "Proyectante hacia afuera";
-  if (opening.movement === "SLIDE") return "Corredera";
+  if (opening.movement === "SLIDE") return use === "DOOR" ? "Puerta corredera" : "Corredera";
+  const advancedNames: Partial<Record<PhysicalOpening["movement"], string>> = {
+    LIFT_SLIDE: "Elevable-corredera (HST)",
+    PARALLEL_SLIDE: "Osciloparalela (PSK)",
+    FOLD: "Plegable",
+    PIVOT_V: "Pivotante vertical",
+    PIVOT_H: "Pivotante horizontal",
+    VERTICAL_SLIDE: "Guillotina",
+  };
+  if (advancedNames[opening.movement]) return advancedNames[opening.movement]!;
   const kind =
     use === "DOOR"
       ? "Puerta simple"
@@ -109,6 +181,14 @@ export function openingChoices(options: DesignOptions | undefined): OpeningChoic
   const choices: OpeningChoice[] = [];
   for (const cap of caps) {
     if (cap.leaf_role === "PASSIVE") continue;
+    if (
+      (["LIFT_SLIDE", "PARALLEL_SLIDE", "FOLD", "PIVOT_V", "PIVOT_H", "VERTICAL_SLIDE"].includes(
+        cap.movement,
+      ) ||
+        (cap.movement === "SLIDE" && cap.use === "DOOR")) &&
+      !cap.advanced_recipes?.length
+    )
+      continue;
     for (const side of cap.hinge_sides) {
       const opening: PhysicalOpening = {
         movement: cap.movement,
@@ -126,6 +206,18 @@ export function openingChoices(options: DesignOptions | undefined): OpeningChoic
         label: physicalLabel(opening, cap.use),
         source: cap.source,
       };
+      if (cap.advanced_recipes?.length) {
+        for (const recipe of cap.advanced_recipes) {
+          choices.push({
+            ...choice,
+            id: `${choice.id}-${recipe.code}`,
+            label: recipe.name,
+            source: recipe.source,
+            recipe,
+          });
+        }
+        continue;
+      }
       if (cap.leaf_role === "ACTIVE") {
         const passive = caps.find(
           (other) =>
@@ -158,13 +250,15 @@ export function choicePatch(choice: OpeningChoice): Partial<IntentNode> {
     opening_type: null,
     opening: choice.opening,
     opening_use: choice.use,
+    opening_recipe_code: choice.recipe?.code ?? null,
     hinged_layout: choice.layout ?? null,
     hardware_set_sku: null,
+    hardware_selection: null,
     handle_height_mm: null,
     door_handedness: null,
     panel_article_sku: null,
     sliding_layout:
-      choice.opening.movement === "SLIDE"
+      choice.opening.movement === "SLIDE" && !choice.recipe
         ? {
             tracks: 2,
             panels: [
@@ -185,6 +279,7 @@ export function choiceMatches(bay: IntentNode, choice: OpeningChoice): boolean {
       (key) => physical[key] === choice.opening[key],
     ) &&
     (bay.opening_use ?? "WINDOW") === choice.use &&
+    (bay.opening_recipe_code ?? null) === (choice.recipe?.code ?? null) &&
     Boolean(bay.hinged_layout) === Boolean(choice.layout),
   );
 }
@@ -196,7 +291,20 @@ export function structuredOpeningPatch(value: unknown): Partial<IntentNode> | nu
     if (!raw || typeof raw !== "object") return false;
     const opening = raw as PhysicalOpening;
     return (
-      ["FIXED", "TURN", "TILT", "TILT_TURN", "TOP_HUNG", "SLIDE"].includes(opening.movement) &&
+      [
+        "FIXED",
+        "TURN",
+        "TILT",
+        "TILT_TURN",
+        "TOP_HUNG",
+        "SLIDE",
+        "LIFT_SLIDE",
+        "PARALLEL_SLIDE",
+        "FOLD",
+        "PIVOT_V",
+        "PIVOT_H",
+        "VERTICAL_SLIDE",
+      ].includes(opening.movement) &&
       ["LEFT", "RIGHT", "TOP", "BOTTOM", "NONE"].includes(opening.hinge_side) &&
       ["INWARD", "OUTWARD"].includes(opening.direction) &&
       ["SINGLE", "ACTIVE", "PASSIVE"].includes(opening.leaf_role) &&
@@ -205,6 +313,20 @@ export function structuredOpeningPatch(value: unknown): Partial<IntentNode> | nu
   }
   if (!physical(data.opening) || !["DOOR", "WINDOW"].includes(String(data.opening_use)))
     return null;
+  const advanced =
+    ["LIFT_SLIDE", "PARALLEL_SLIDE", "FOLD", "PIVOT_V", "PIVOT_H", "VERTICAL_SLIDE"].includes(
+      data.opening.movement,
+    ) ||
+    (data.opening.movement === "SLIDE" && data.opening_use === "DOOR");
+  if (
+    advanced &&
+    (typeof data.opening_recipe_code !== "string" ||
+      !data.opening_recipe_code.trim() ||
+      data.hinged_layout ||
+      data.sliding_layout)
+  )
+    return null;
+  if (!advanced && data.opening_recipe_code) return null;
   const layout = data.hinged_layout as HingedLayout | null | undefined;
   if (
     layout &&
@@ -229,9 +351,11 @@ export function structuredOpeningPatch(value: unknown): Partial<IntentNode> | nu
     opening: data.opening,
     opening_type: null,
     opening_use: data.opening_use as "DOOR" | "WINDOW",
+    opening_recipe_code: advanced ? String(data.opening_recipe_code) : null,
     hinged_layout: layout ?? null,
     sliding_layout: sliding ?? null,
     hardware_set_sku: null,
+    hardware_selection: null,
     handle_height_mm: null,
     door_handedness: null,
   };

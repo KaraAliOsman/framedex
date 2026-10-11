@@ -111,6 +111,7 @@ export type IntentNode = {
   opening_type?: Opening | null;
   opening?: PhysicalOpening | null;
   opening_use?: "WINDOW" | "DOOR" | null;
+  opening_recipe_code?: string | null;
   hinged_layout?: HingedLayout | null;
   sliding_layout?: SlidingLayout | null;
   glass_thickness_mm?: string | null;
@@ -215,6 +216,7 @@ export function changeOpening(tree: IntentNode, bayId: string, opening: Opening)
     opening_type: opening,
     opening: null,
     opening_use: null,
+    opening_recipe_code: null,
     hinged_layout: null,
   };
   if (opening === "DOOR_ENTRY") {
@@ -343,6 +345,7 @@ const BAY_SPEC_KEYS = [
   "opening_type",
   "opening",
   "opening_use",
+  "opening_recipe_code",
   "hinged_layout",
   "sliding_layout",
   "glass_thickness_mm",
@@ -386,6 +389,7 @@ export function applyBaySpec(
     delete spec.opening_type;
     delete spec.opening;
     delete spec.opening_use;
+    delete spec.opening_recipe_code;
     delete spec.hinged_layout;
     delete spec.door_handedness;
     delete spec.sliding_layout;
@@ -407,5 +411,15 @@ export function updateBay(tree: IntentNode, bayId: string, patch: Partial<Intent
 export function singleBayTemplate(tree: IntentNode, bayId: string, opening: Opening): IntentNode {
   if (!OPENINGS.includes(opening)) throw new Error("unsupported_opening");
   const bay = omitDimensions(selectedBay(tree, bayId));
-  return { ...bay, opening_type: opening, opening: null, opening_use: null, hinged_layout: null };
+  return {
+    ...bay,
+    opening_type: opening,
+    opening: null,
+    opening_use: null,
+    opening_recipe_code: null,
+    hinged_layout: null,
+    sliding_layout: null,
+    hardware_set_sku: null,
+    hardware_selection: null,
+  };
 }

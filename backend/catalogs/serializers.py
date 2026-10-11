@@ -29,7 +29,7 @@ KIT_OPENING_TYPES = sorted(
         normalize_opening_type(opening)
         for opening in SUPPORTED_OPENING_TYPES
         if opening is not BayOpeningType.FIXED
-    } | {"TILT"}
+    } | {"TILT", "LIFT_SLIDE", "PARALLEL_SLIDE", "FOLD", "PIVOT_V", "PIVOT_H", "VERTICAL_SLIDE"}
 )
 
 
@@ -224,10 +224,11 @@ class SystemWriteSerializer(StrictSerializer):
         if family is not None:
             for capability in effective.get("opening_capabilities") or []:
                 movement, use = capability["movement"], capability["use"]
+                from dekopen_engine.advanced_openings import capability_family
+                from dekopen_engine.models import OpeningMovement, OpeningUse
+                expected = capability_family(OpeningMovement(movement), OpeningUse(use))
                 if ((use == "DOOR") != (family == "DOOR") or
-                    family == "FACADE_FIXED" and movement != "FIXED" or
-                    family in ("SLIDING", "LIFT_SLIDE") and movement not in ("FIXED", "SLIDE", "LIFT_SLIDE") or
-                    family == "CASEMENT" and movement in ("SLIDE", "LIFT_SLIDE")):
+                    expected is not None and expected.value != family):
                     raise serializers.ValidationError({"opening_capabilities": "La capacidad no corresponde a esta familia de sistema."})
             if any(effective.get(key) is not None for key in legacy):
                 raise serializers.ValidationError({key: "Este parámetro vive en la ficha de corredera."

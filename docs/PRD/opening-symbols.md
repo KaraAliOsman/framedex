@@ -55,8 +55,13 @@ en ambos lados, también cuando una etiqueta mide más que el segmento.
 
 Trapecio, triángulo, arco rebajado y medio punto usan el contorno real y su
 inset para marco/vidrio, con papel claro. Un arco válido no certifica curvado:
-el gate de fabricación conserva las autoridades pendientes. Los movimientos
-avanzados reservados en este muestrario no habilitan D08 ni una fabricación.
+el gate de fabricación conserva las autoridades pendientes. Los diagramas
+reservados históricos de este muestrario siguen siendo gramática. D08 añade
+28 fixtures de recetas con autoridad del motor en `fixtures/symbols/advanced.json`:
+HST A/C, PSK, cuatro plegables, ambos pivotes, cuatro guillotinas y puerta
+corredera, en interior/exterior. Capacidad, recorrido y manilla se obtienen
+del catálogo de la serie; el símbolo aislado nunca habilita fabricación.
+Los fixtures DEMO no certifican un catálogo ni un fabricante.
 
 ## Muestrario ilustrado
 

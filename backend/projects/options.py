@@ -19,6 +19,7 @@ from dekopen_engine.openings import opening_label
 from dekopen_engine.models import Opening
 from engine_api.finish_serializers import FinishAuthoritySerializer
 from catalogs.serializers import CouplerRuleSerializer
+from projects.advanced_options import advanced_availability, advanced_previews
 
 
 class ProfileChoiceSerializer(serializers.Serializer):
@@ -116,6 +117,8 @@ class PanelChoiceSerializer(serializers.Serializer):
 
 
 class DesignOptionsSerializer(serializers.Serializer):
+    advanced_availability = serializers.ListField(child=serializers.JSONField(), required=False)
+    advanced_previews = serializers.ListField(child=serializers.JSONField(), required=False)
     extra_definitions = serializers.ListField(child=serializers.JSONField(),required=False)
     finish_authority = FinishAuthoritySerializer(allow_null=True, required=False)
     system_id = serializers.UUIDField()
@@ -188,6 +191,8 @@ class DesignOptionsView(APIView):
                     "relative_price": relative.get(item["technical_sku"], "Sin dato · falta precio vigente")})
             return response(
                 {
+                    "advanced_availability": advanced_availability(params),
+                    "advanced_previews": advanced_previews(params, glass_choices),
                     "system_id": system_id,
                     "extra_definitions": [public_definition(item)
                         for item in params.extra_authority.definitions if item.scope == "POSITION"] if params.extra_authority else [],

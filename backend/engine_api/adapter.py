@@ -64,7 +64,7 @@ _NODE_FIELDS = {
     "mullion_profile_sku",
     "children",
     "opening_type",
-    "opening", "opening_use", "hinged_layout",
+    "opening", "opening_use", "opening_recipe_code", "hinged_layout",
     "glass_thickness_mm",
     "glass_spec",
     "glass_article_sku",
@@ -148,6 +148,7 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         "glass_article_sku",
         "panel_article_sku",
         "hardware_set_sku",
+        "opening_recipe_code",
     ):
         if field_name in raw and raw[field_name] is not None:
             if not isinstance(raw[field_name], str):

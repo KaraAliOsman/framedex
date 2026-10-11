@@ -1389,3 +1389,47 @@ IF EXISTS (SELECT 1 FROM information_schema.columns
     ON CONFLICT (id) DO NOTHING;
 END IF;
 END $p06_seed$;
+
+-- D08 generated documentary seed; see scripts/generate_demo_advanced.py.
+DO $d08_seed$ BEGIN
+IF EXISTS (SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='hardware_kits'
+      AND column_name='class_authority') THEN
+    INSERT INTO public.inspector_rule_configs(id,system_id,org_id,rule_id,params)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v8/'||s.code||'/inspection/'||r.rule_id),
+        s.id,NULL,r.rule_id,r.params
+    FROM public.profile_systems s CROSS JOIN public.inspector_rule_configs r
+    WHERE s.is_global AND s.is_demo AND s.version=8 AND s.org_id IS NULL AND s.code IN ('DEMO_HST','DEMO_PSK','DEMO_PLEGABLE','DEMO_PIVOT_V','DEMO_PIVOT_H','DEMO_GUILLOTINA','DEMO_PUERTA_CORREDERA')
+      AND r.system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND r.org_id IS NULL
+    ON CONFLICT (id) DO NOTHING;
+
+
+    INSERT INTO public.manufacturing_placement_policies(id,system_id,org_id,version,authority)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v8/'||s.code||'/manufacturing_placement_policies'),
+        s.id,NULL,p.version,jsonb_set(p.authority,'{policy_id}',to_jsonb(s.code||'_DEMO_V8'))
+    FROM public.profile_systems s CROSS JOIN LATERAL (
+        SELECT version,authority FROM public.manufacturing_placement_policies
+        WHERE system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND org_id IS NULL
+        ORDER BY version DESC,id LIMIT 1
+    ) p
+    WHERE s.is_global AND s.is_demo AND s.version=8 AND s.org_id IS NULL AND s.code IN ('DEMO_HST','DEMO_PSK','DEMO_PLEGABLE','DEMO_PIVOT_V','DEMO_PIVOT_H','DEMO_GUILLOTINA','DEMO_PUERTA_CORREDERA')
+    ON CONFLICT (id) DO NOTHING;
+
+
+    INSERT INTO public.handle_requirement_policies(id,system_id,org_id,version,authority)
+    SELECT uuid_generate_v5(uuid_ns_url(),
+        'https://dekopen.local/catalog/v8/'||s.code||'/handle_requirement_policies'),
+        s.id,NULL,p.version,jsonb_set(p.authority,'{policy_id}',to_jsonb(s.code||'_DEMO_V8'))
+    FROM public.profile_systems s CROSS JOIN LATERAL (
+        SELECT version,authority FROM public.handle_requirement_policies
+        WHERE system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753' AND org_id IS NULL
+        ORDER BY version DESC,id LIMIT 1
+    ) p
+    WHERE s.is_global AND s.is_demo AND s.version=8 AND s.org_id IS NULL AND s.code IN ('DEMO_HST','DEMO_PSK','DEMO_PLEGABLE','DEMO_PIVOT_V','DEMO_PIVOT_H','DEMO_GUILLOTINA','DEMO_PUERTA_CORREDERA')
+    ON CONFLICT (id) DO NOTHING;
+END IF;
+END $d08_seed$;
+
+INSERT INTO public.reinforcement_cut_policies(id,system_id,org_id,version,authority) SELECT uuid_generate_v5('6ba7b811-9dad-11d1-80b4-00c04fd430c8','https://dekopen.local/catalog/v8/'||s.code||'/threshold-reinforcement'),p.system_id,p.org_id,9,jsonb_set(p.authority,'{rules}',p.authority->'rules'||(SELECT coalesce(jsonb_agg(r),'[]'::JSONB) FROM jsonb_array_elements('[{"role": "FRAME", "profile_angle_left": 45, "profile_angle_right": 90, "reinforcement_angle_left": 90, "reinforcement_angle_right": 90, "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "FRAME", "profile_angle_left": 90, "profile_angle_right": 45, "reinforcement_angle_left": 90, "reinforcement_angle_right": 90, "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}]'::JSONB) r WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements(p.authority->'rules') existing WHERE existing->>'role'=r->>'role' AND (existing->>'profile_angle_left')::NUMERIC=(r->>'profile_angle_left')::NUMERIC AND (existing->>'profile_angle_right')::NUMERIC=(r->>'profile_angle_right')::NUMERIC)))||jsonb_build_object('policy_id',s.code||'_REFUERZO_UMBRAL_DEMO_V8','version',9) FROM public.reinforcement_cut_policies p JOIN public.profile_systems s ON s.id=p.system_id WHERE s.version=8 AND p.version=8 AND s.code IN ('DEMO_HST','DEMO_PLEGABLE','DEMO_PUERTA_CORREDERA') ON CONFLICT DO NOTHING;

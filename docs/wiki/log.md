@@ -1398,3 +1398,38 @@ Código `0eb58535f33b1537d22db56707ef3f1c7f3a0e0e`. Siete observaciones corregid
 ### 2026-10-11 · P23 integrado
 
 https://github.com/KaraAliOsman/framedex/pull/149, squash `331d2eeeec57dedd14577c4ffd5ce8079568bc44` en `integracion/v1`. Cuatro checks de CI verdes y gates locales completos; rúbrica R1–R20 PASA. Despacho, medición, instalación, acta privada inmutable y diagnóstico humano enlazan unidad, revisión y piezas. Cola offline y permisos de lectura privada verificados. Procesos propios detenidos; fixture conservado.
+
+### 2026-10-11 · D08, autoridad y recorrido avanzados
+
+Rama `codex/D08-tipologias-avanzadas`, base `cf09d813`. Siete series DEMO v8
+y catorce recetas calculan corte/BOM/kits/vidrio/planta con Decimal. Biblioteca,
+Catálogo estructurado, IA/operaciones y renderer común usan la misma autoridad.
+Los históricos y los goldens anteriores permanecen intactos; el contexto local
+de 80 dígitos elimina divergencias entre guardar/preciar/emitir. El paso plegable
+mantiene cierre independiente y un fijo no recibe herrajes.
+
+Catorce guardados/recargas, 84 vistas, cinco estados, dos propuestas MiMo reales,
+DOC-01 de ocho páginas Carta y portal de catorce posiciones pasan. Matrices
+oficiales: 32 vistas sin hallazgos. Se verifican falta de capacidad en serie
+básica, plantas y leyenda final en una copia editable; no se modifica la revisión
+sellada. Los datos permanecen DEMO. Gates locales/CI y squash se registran al
+cerrar; P19 continúa la física 3D y P18 la autoridad térmica.
+
+### 2026-10-11 · D08, gates locales completos
+
+Código `13e03a5f9f42116381a9c86f390cdbb200b60c3d`. Lint, typecheck, test y build
+PASA: 1006 motor (+2 xfail históricos), 1544 backend y 1072 frontend; golden
+byte check PASA. Database Gate completo: 1451 pgTAP en 95 archivos, 554
+integraciones, 19 Auth E2E y trece programas de upgrade poblado PostgreSQL 16.
+La expectativa E2E incluye las siete series v8 y la regeneración API se separa
+del navegador; la repetición completa sale 0 sin debilitar checks. 189 PNG
+conservan sus píxeles. Procesos propios detenidos; CI/squash siguen su cierre.
+
+### 2026-10-11 · D08, correcciones de revisión
+
+El PR #150 detectó pérdida de borradores decimales y un modo paso que cerraba
+otros vanos. Se conserva el texto de fuente hasta blur, se valida sin redondear
+y se limita el paso al vano correspondiente. Cuatro regresiones nuevas pasan;
+gates completos repetidos: 1006 motor (+2 xfail), 1544 backend, 1076 frontend,
+lint/tipos/build y mypy sin caché en las 128 fuentes. No cambió SQL ni RLS.
+Aceptación y evidencia de escritura/planta se enlazan al cerrar el PR.

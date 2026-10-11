@@ -125,7 +125,7 @@ export function ProjectPositionLibrary({
               disabled={busy}
               onPick={(choice) => {
                 setDefinition(choice);
-                const nominal = starterNominalSize(choice.key);
+                const nominal = choice.nominal ?? starterNominalSize(choice.key);
                 setWidth(String(nominal.widthMm));
                 setHeight(String(nominal.heightMm));
               }}

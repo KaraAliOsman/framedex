@@ -60,6 +60,9 @@ def derive_typology(tree: Mapping[str, object]) -> str:
         return "COMPOSITE"
     if isinstance(node.get("opening"), Mapping) and not node.get("opening_type"):
         physical = Opening.model_validate_json(json.dumps(node["opening"]))
+        from dekopen_engine.advanced_openings import requires_recipe
+        if requires_recipe(physical.movement, OpeningUse(str(node.get("opening_use") or "WINDOW"))):
+            return "COMPOSITE"
         if node.get("hinged_layout") or physical.fixed_in_sash:
             return "COMPOSITE"
         # Commercial buckets retain their historical tariff contract; the
