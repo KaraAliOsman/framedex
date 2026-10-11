@@ -52,6 +52,8 @@ nuevo y la firma sobre papel se verifican sin reemplazar esos documentos.
 sellado: una página Carta, QR de 22 mm y franja Mañana en español. La tabla
 de bultos reúne los totales cuando hay varias unidades; se quitó el resumen
 duplicado que enviaba la firma a una segunda página.
+El QR final también se decodifica desde los píxeles del PDF a 110 dpi y
+reconcilia exactamente OT y unidad.
 
 ## Pase editorial, dos rondas
 
@@ -104,6 +106,9 @@ y tiene golden. Emitir un acta parcial no acredita toda la OT.
 
 La copia IndexedDB pertenece a actor+organización y se elimina al salir o
 cambiar de actor. No guarda costos, elecciones de oficina ni URLs firmadas.
+La lectura directa de SQL concede metadatos, con RLS; el JSON sellado solo
+se proyecta desde la API. El payload JSON de un acta se decodifica antes
+de filtrar la autoridad comercial, incluso cuando el driver lo entrega como texto.
 El service worker solo conserva código/fuentes y la página `/field`; nunca
 API, Auth, evidencia ni capacidades. Revocar acceso impide sincronizar y
 abrir recursos nuevos; una copia ya descargada puede verse sin señal hasta

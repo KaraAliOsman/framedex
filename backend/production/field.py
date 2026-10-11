@@ -409,11 +409,14 @@ def visit_public(visit):
             },
             "context": phone(context),
             "events": phone(_events(visit["org_id"], visit["id"])),
-            "assets": rows(
-                "SELECT id,position_id,unit_index,kind,file_sha256,created_at,payload_json FROM public.field_assets "
-                "WHERE org_id=%s AND visit_id=%s ORDER BY created_at",
-                [visit["org_id"], visit["id"]],
-            ),
+            "assets": [
+                {**asset, "payload_json": decoded(asset["payload_json"])}
+                for asset in rows(
+                    "SELECT id,position_id,unit_index,kind,file_sha256,created_at,payload_json FROM public.field_assets "
+                    "WHERE org_id=%s AND visit_id=%s ORDER BY created_at",
+                    [visit["org_id"], visit["id"]],
+                )
+            ],
         }
     ))
 

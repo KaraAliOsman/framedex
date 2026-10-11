@@ -452,6 +452,13 @@ def test_service_act_never_credits_installation_and_whole_order_needs_both_units
     checked(org, users, visit)
     with as_user(users["INSTALLER"]):
         field.command(org, users["INSTALLER"], visit["id"], receive_body())
+        workspace = field.workspace(org, users["INSTALLER"])
+        for item in workspace["visits"]:
+            assert all(isinstance(a["payload_json"], dict) for a in item["assets"])
+        serialized = json_text(workspace)
+        assert all(f'"{name}"' not in serialized for name in (
+            "document_preferences", "cost_rate", "selling_rate", "total_cost", "total_price"
+        ))
     assert one("SELECT status FROM orders WHERE id=%s", [order["id"]])["status"] == "DISPATCHED"
     with as_user(users["WORKSHOP_MANAGER"]):
         warranty_context={**visit["context"],"approved_at":"2026-10-01T10:00:00-03:00","warranty_terms":{"warranty_days":365,"warranty_start":"INSTALLATION"}}

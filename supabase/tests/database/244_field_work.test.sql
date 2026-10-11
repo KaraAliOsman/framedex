@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path=public,private,auth,extensions,pg_temp;
-SELECT plan(33);
+SELECT plan(38);
 SELECT has_table('public','field_visits','Physical visit has tenant identity');
 SELECT has_table('public','field_events','Field commands are append-only evidence');
 SELECT has_table('public','field_incidents','Post-sale case retains the source');
@@ -18,6 +18,11 @@ SELECT ok(NOT has_table_privilege('anon','public.field_visits','SELECT'),'Anonym
 SELECT ok(NOT has_table_privilege('anon','public.field_assets','SELECT'),'Anonymous has no personal evidence');
 SELECT ok(NOT has_table_privilege('authenticated','public.field_events','INSERT'),'Browser cannot forge evidence directly');
 SELECT ok(NOT has_table_privilege('authenticated','public.field_incidents','UPDATE'),'Browser cannot rewrite the source');
+SELECT ok(NOT has_column_privilege('authenticated','public.field_visits','context_json','SELECT'),'Browser cannot read raw sealed commercial context');
+SELECT ok(NOT has_column_privilege('authenticated','public.field_events','payload_json','SELECT'),'Browser cannot bypass event projection');
+SELECT ok(NOT has_column_privilege('authenticated','public.field_incidents','evidence_json','SELECT'),'Browser cannot bypass incident evidence projection');
+SELECT ok(NOT has_column_privilege('authenticated','public.field_assets','payload_json','SELECT'),'Browser cannot read raw act payload');
+SELECT ok(NOT has_column_privilege('authenticated','public.field_receipts','response_json','SELECT'),'Browser cannot read an unprojected receipt');
 SELECT ok(NOT has_table_privilege('documentary_backend','public.field_events','UPDATE'),'HTTP edge cannot edit the audit');
 SELECT ok(NOT has_table_privilege('documentary_backend','public.field_assets','DELETE'),'HTTP edge cannot erase acta');
 SELECT ok(NOT has_table_privilege('documentary_backend','public.field_receipts','UPDATE'),'HTTP edge cannot rewrite receipts');

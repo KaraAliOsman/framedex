@@ -137,7 +137,19 @@ DO $$ DECLARE t text; BEGIN
  EXECUTE format('CREATE POLICY field_backend ON public.%1$I TO documentary_backend USING(EXISTS(SELECT 1 FROM public.field_visits v WHERE v.id=%1$I.visit_id AND v.org_id=%1$I.org_id AND private.field_access(v.org_id,v.assigned_to))) WITH CHECK(EXISTS(SELECT 1 FROM public.field_visits v WHERE v.id=%1$I.visit_id AND v.org_id=%1$I.org_id AND private.field_access(v.org_id,v.assigned_to)))',t);
  END IF;
  EXECUTE format('REVOKE ALL ON public.%I FROM anon,authenticated,documentary_backend',t);
- EXECUTE format('GRANT SELECT ON public.%I TO authenticated',t);
+ -- Public metadata may be read through RLS. Sealed context/evidence/receipts
+ -- are projected by the HTTP edge; raw JSON can contain commercial authority.
+ IF t='field_visits' THEN
+ EXECUTE 'GRANT SELECT(id,org_id,project_id,project_version_id,assigned_to,kind,code,planned_on,team,vehicle,status,created_at,created_by) ON public.field_visits TO authenticated';
+ ELSIF t='field_events' THEN
+ EXECUTE 'GRANT SELECT(id,org_id,visit_id,sequence,kind,created_at,actor_id) ON public.field_events TO authenticated';
+ ELSIF t='field_incidents' THEN
+ EXECUTE 'GRANT SELECT(id,org_id,visit_id,order_id,position_id,unit_index,piece_identity,code,kind,description,status,diagnosis,created_at,created_by) ON public.field_incidents TO authenticated';
+ ELSIF t='field_assets' THEN
+ EXECUTE 'GRANT SELECT(id,org_id,visit_id,position_id,unit_index,kind,file_sha256,created_at) ON public.field_assets TO authenticated';
+ ELSE
+ EXECUTE 'GRANT SELECT(org_id,actor_id,operation_key,visit_id,request_hash,created_at) ON public.field_receipts TO authenticated';
+ END IF;
  EXECUTE format('GRANT SELECT,INSERT ON public.%I TO documentary_backend',t);
  EXECUTE format('GRANT ALL ON public.%I TO service_role',t);
  EXECUTE format('REVOKE ALL ON public.%I FROM anon',t);
