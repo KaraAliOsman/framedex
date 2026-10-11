@@ -1356,16 +1356,17 @@ def test_artifact_replay_validates_active_org_for_multi_membership_user(
     frozen = _freeze(other, dual_user, project_id, operation_id)
     version_id = UUID(frozen["id"])
     monkeypatch.setattr("documents.artifacts.SupabaseDocumentStorage", FakeStorage)
-    artifact, created = generate_artifact(
-        org_id=other, actor_id=dual_user, role="WORKSHOP_MANAGER",
-        project_version_id=version_id, order_id=None,
-        document_type="DOC-03", file_format="PDF",
-    )
+    with as_user(dual_user):
+        artifact, created = generate_artifact(
+            org_id=other, actor_id=dual_user, role="WORKSHOP_MANAGER",
+            project_version_id=version_id, order_id=None,
+            document_type="DOC-03", file_format="PDF",
+        )
     assert created is True
     uploads_after_create = FakeStorage.upload_calls
     # Same user, active organization A, foreign scope identifiers from B: the
     # occupied slot must never bypass active-org/version authority validation.
-    with pytest.raises(DocumentaryError):
+    with as_user(dual_user), pytest.raises(DocumentaryError):
         generate_artifact(
             org_id=org, actor_id=dual_user, role="WORKSHOP_MANAGER",
             project_version_id=version_id, order_id=None,
@@ -1392,11 +1393,12 @@ def test_artifact_replay_validates_active_org_for_multi_membership_user(
     )
     assert access.status_code == 404, access.content
     # The same user can still replay under the artifact's real organization.
-    replayed, replayed_created = generate_artifact(
-        org_id=other, actor_id=dual_user, role="WORKSHOP_MANAGER",
-        project_version_id=version_id, order_id=None,
-        document_type="DOC-03", file_format="PDF",
-    )
+    with as_user(dual_user):
+        replayed, replayed_created = generate_artifact(
+            org_id=other, actor_id=dual_user, role="WORKSHOP_MANAGER",
+            project_version_id=version_id, order_id=None,
+            document_type="DOC-03", file_format="PDF",
+        )
     assert replayed_created is False and replayed["id"] == artifact["id"]
 
 
@@ -1418,15 +1420,16 @@ def test_artifact_replay_rejects_order_bound_to_a_different_version(
         order_y = _order_for_type(
             org, users["WORKSHOP_MANAGER"], version_y, "SUPPLIER_GLASS_PO"
         )
-    artifact, created = generate_artifact(
-        org_id=org, actor_id=users["WORKSHOP_MANAGER"], role="WORKSHOP_MANAGER",
-        project_version_id=version_y, order_id=order_y,
-        document_type="DOC-02", file_format="XLSX",
-    )
+    with as_user(users["WORKSHOP_MANAGER"]):
+        artifact, created = generate_artifact(
+            org_id=org, actor_id=users["WORKSHOP_MANAGER"], role="WORKSHOP_MANAGER",
+            project_version_id=version_y, order_id=order_y,
+            document_type="DOC-02", file_format="XLSX",
+        )
     assert created is True
     # The DOC-02/XLSX slot for order_y is occupied; replaying it bound to
     # version_x must reject instead of returning the existing artifact.
-    with pytest.raises(DocumentaryError, match="order_not_found"):
+    with as_user(users["WORKSHOP_MANAGER"]), pytest.raises(DocumentaryError, match="order_not_found"):
         generate_artifact(
             org_id=org, actor_id=users["WORKSHOP_MANAGER"], role="WORKSHOP_MANAGER",
             project_version_id=version_x, order_id=order_y,
@@ -1450,10 +1453,11 @@ def test_artifact_replay_rejects_order_bound_to_a_different_version(
     assert response.status_code in (403, 404), response.content
     assert artifact["id"] not in response.content.decode()
     # A consistent replay still resolves the existing artifact idempotently.
-    replayed, replayed_created = generate_artifact(
-        org_id=org, actor_id=users["WORKSHOP_MANAGER"], role="WORKSHOP_MANAGER",
-        project_version_id=version_y, order_id=order_y,
-        document_type="DOC-02", file_format="XLSX",
-    )
+    with as_user(users["WORKSHOP_MANAGER"]):
+        replayed, replayed_created = generate_artifact(
+            org_id=org, actor_id=users["WORKSHOP_MANAGER"], role="WORKSHOP_MANAGER",
+            project_version_id=version_y, order_id=order_y,
+            document_type="DOC-02", file_format="XLSX",
+        )
     assert replayed_created is False and replayed["id"] == artifact["id"]
     assert FakeStorage.upload_calls == 1

@@ -328,7 +328,8 @@ def test_deadline_is_shared_by_portal_and_mail_and_regeneration_is_idempotent(
         assert regenerated["path"] == replay["path"]
     with transaction.atomic(), portal.portal_backend():
         assert portal._approval_for_token(regenerated["token"])["status"] == "PENDING"
-    assert len(rows("SELECT id FROM customer_approvals WHERE project_id=%s", [project])) == 2
+    with as_user(owner):
+        assert len(rows("SELECT id FROM customer_approvals WHERE project_id=%s", [project])) == 2
     assert len(FakeStorage.uploads) == 2
 
 

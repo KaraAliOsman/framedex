@@ -12,7 +12,7 @@ from backend.tests.integration.test_shot08_pricing import (
 from pricing.repository import one, rows
 from documents.repository import documentary_backend
 from backend.tests.integration.test_shot09_documentary import (
-    documentary_tenant as documentary_tenant, _seed_project, _freeze,
+    documentary_tenant as documentary_tenant, _seed_project, _freeze, as_user,
 )
 
 pytestmark = pytest.mark.rls_integration
@@ -127,5 +127,5 @@ def test_quotation_follow_up_and_pipeline_read_only_current_sealed_revision(docu
     assert successor.status_code == 201, successor.data
     assert read(client,org,'/analytics/quotations/')['items'] == []
     assert not any(a['kind'].startswith('quote_') for a in read(client,org,'/analytics/today/')['actions'])
-    with documentary_backend():
+    with as_user(owner), documentary_backend():
         assert one('SELECT snapshot_json::text AS evidence FROM project_versions WHERE id=%s', [version['id']]) == before
