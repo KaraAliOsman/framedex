@@ -553,9 +553,25 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
     project_tax: string;
   };
   await expect(page.getByText("Precio aplicado al proyecto.", { exact: true })).toBeVisible();
+  const restoredReading = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/pricing/workspace/" &&
+      (response.request().postDataJSON() as { project_id: string }).project_id === draft.id,
+  );
   await page.reload();
   await page.getByRole("button", { name: "Actualizar historial", exact: true }).click();
   await expect(page.locator(".price-history").getByText("Aplicado", { exact: true })).toBeVisible();
+  const restored = await restoredReading;
+  expect(restored.status(), await restored.text()).toBe(200);
+  const currentReading = (await restored.json()) as {
+    workspace: { comparison: { total: { current: string } } };
+  };
+  expect(currentReading.workspace.comparison.total.current).toBe(quote.project_gross);
+  await expect(page.getByRole("region", { name: "Lectura de precios" })).not.toHaveAttribute(
+    "aria-busy",
+    "true",
+  );
   await expect(
     page
       .locator(".price-comparison tbody tr")

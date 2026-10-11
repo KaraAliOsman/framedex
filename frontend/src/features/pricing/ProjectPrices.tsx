@@ -1198,6 +1198,7 @@ export function ProjectPrices({
               <Projection operation={displayed} owner={owner} />
             ) : (
               !loading &&
+              !calculating &&
               !error &&
               !emptyProject && <p>Sin dato: el proyecto todavía no tiene un precio calculado.</p>
             )}
