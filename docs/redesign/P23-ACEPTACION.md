@@ -122,3 +122,8 @@ certificación ni autoridad técnica real. No se conectó una ruta automática
 de vehículo ni una emisión fiscal productiva: se preserva la GD interna y
 los adaptadores existentes. Las decisiones se registran en
 [valores por defecto](../decisions/valores-por-defecto.md).
+
+## Gates locales finales
+
+Código `c0d12cd8ca8ad7c391ba8bbb350c2971418fd800`: lint, typecheck, test y build PASA. 914 tests de motor (+2 xfail preexistentes), 1494 backend, 1026 frontend; golden anteriores intactos y byte check PASA. Database Gate completo: 1427 pgTAP en 94 archivos, 549 integraciones, 19 Auth E2E y doce programas de upgrades poblados PostgreSQL 16. Las concesiones ambientales de Supabase se revocan antes de asignar lectura al navegador; RLS y triggers conservan su autoridad. Los procesos propios están detenidos y el fixture se conserva. CI y squash se registran al integrar.
+La comprobación de garantía usa el mismo ámbito privado que workspace/Hoy; la regresión exige además que su consulta directa desde authenticated sea denegada. Los permisos del navegador permanecen limitados a metadatos.

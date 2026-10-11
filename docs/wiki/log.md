@@ -1386,3 +1386,7 @@ podía recrear un pendiente después de logout: la actualización ahora exige
 su existencia en la misma transacción IndexedDB y tiene regresión real.
 ACT de servicio y preview de GD final caben en una página Carta; la primera
 emisión del ensayo permanece histórica. Gates/CI y squash se registran al cerrar.
+
+### 2026-10-11 · P23, gates locales completos
+
+Código `c0d12cd8ca8ad7c391ba8bbb350c2971418fd800`. 914 motor (+2 xfail), 1494 backend, 1026 frontend; 1427 pgTAP, 549 integraciones, 19 Auth E2E y doce upgrades PG16 PASA. La lista OpenAPI mantiene igualdad exacta e incluye los cinco endpoints de terreno. Se revocan concesiones ambientales antes de asignar lectura al navegador. Matrices finales: 40 vistas sin hallazgos/desbordes y 86 PNG pixel idénticos. Procesos propios detenidos; CI y squash se registran al integrar.

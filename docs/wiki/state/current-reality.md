@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: e317edb9b76b4346e33aa3b60b4783b4cc2f0a99
+verified_ref: c0d12cd8ca8ad7c391ba8bbb350c2971418fd800
 sources:
+  - P23 código c0d12cd8ca8ad7c391ba8bbb350c2971418fd800, gates completos, navegador y PostgreSQL propio, 2026-10-11
   - P22 PR https://github.com/KaraAliOsman/framedex/pull/148, CI 4/4 sobre f55db702b6f24b39da3f6b279a895833758461a4, squash e317edb9b76b4346e33aa3b60b4783b4cc2f0a99, 2026-10-11
   - P22 revisión a3bffc10c4ea43f9bec221a47ecaaefbe2b15bfa, gates completos y tres recorridos reales, 2026-10-11
   - P22 cierre 68674c22ec1ffd303c572764bf472c6587d58d84, cuatro gates completos, Database Gate, identidad Auth real y navegador por rol, 2026-10-11
@@ -89,8 +90,7 @@ sources:
 
 ## P23 · despacho, terreno y postventa (11-10-2026)
 
-Verificado en `codex/P23-terreno-postventa`, base `c7cbb218`, todavía en
-cierre de gates/CI. Agenda por fecha/equipo, carga y salida/GD se enlazan con
+Código `c0d12cd8ca8ad7c391ba8bbb350c2971418fd800` verificado con cuatro gates locales y Database Gate PASA; CI/squash en cierre. Agenda por fecha/equipo, carga y salida/GD se enlazan con
 la obra y su unidad. Instalador: QR → checklist/foto → incidencia → nombre/
 RUT/firma → ACT privado inmutable. Jefe: diagnóstico → RM, compra adicional
 o servicio con resultado verificable. Una recepción parcial no acredita toda
