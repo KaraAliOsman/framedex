@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: c0d12cd8ca8ad7c391ba8bbb350c2971418fd800
+verified_ref: 0eb58535f33b1537d22db56707ef3f1c7f3a0e0e
 sources:
+  - P23 código 0eb58535f33b1537d22db56707ef3f1c7f3a0e0e, siete observaciones corregidas y gates repetidos, 2026-10-11
   - P23 código c0d12cd8ca8ad7c391ba8bbb350c2971418fd800, gates completos, navegador y PostgreSQL propio, 2026-10-11
   - backend/production/field.py
   - backend/purchasing/field_purchase.py

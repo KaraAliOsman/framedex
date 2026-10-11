@@ -125,8 +125,9 @@ los adaptadores existentes. Las decisiones se registran en
 
 ## Gates locales finales
 
-Código `c0d12cd8ca8ad7c391ba8bbb350c2971418fd800`: lint, typecheck, test y build PASA. 914 tests de motor (+2 xfail preexistentes), 1494 backend, 1026 frontend; golden anteriores intactos y byte check PASA. Database Gate completo: 1427 pgTAP en 94 archivos, 549 integraciones, 19 Auth E2E y doce programas de upgrades poblados PostgreSQL 16. Las concesiones ambientales de Supabase se revocan antes de asignar lectura al navegador; RLS y triggers conservan su autoridad. Los procesos propios están detenidos y el fixture se conserva. CI y squash se registran al integrar.
-La comprobación de garantía usa el mismo ámbito privado que workspace/Hoy; la regresión exige además que su consulta directa desde authenticated sea denegada. Los permisos del navegador permanecen limitados a metadatos.
+Código `0eb58535f33b1537d22db56707ef3f1c7f3a0e0e`: lint, typecheck, test y build PASA. 914 tests de motor (+2 xfail preexistentes), 1494 backend, 1028 frontend; golden anteriores intactos y byte check PASA. Database Gate completo: 1427 pgTAP en 94 archivos, 553 integraciones, 19 Auth E2E y doce programas de upgrades poblados PostgreSQL 16. Las concesiones ambientales de Supabase se revocan antes de asignar lectura al navegador; RLS y triggers conservan su autoridad. Las 40 vistas finales y ocho de revisión no tienen hallazgos, desbordes, errores HTTP ni consola. 94 PNG comprimidos conservan píxeles exactos. Procesos propios detenidos; fixture conservado. CI y squash se registran al integrar.
+
+La consulta directa de garantía desde authenticated continúa denegada; la API usa el ámbito privado. Las 18 integraciones de terreno y 23 pruebas focales de sesión/cola cubren las siete observaciones.
 
 ## Correcciones de la revisión del PR
 

@@ -1390,3 +1390,7 @@ emisión del ensayo permanece histórica. Gates/CI y squash se registran al cerr
 ### 2026-10-11 · P23, gates locales completos
 
 Código `c0d12cd8ca8ad7c391ba8bbb350c2971418fd800`. 914 motor (+2 xfail), 1494 backend, 1026 frontend; 1427 pgTAP, 549 integraciones, 19 Auth E2E y doce upgrades PG16 PASA. La lista OpenAPI mantiene igualdad exacta e incluye los cinco endpoints de terreno. Se revocan concesiones ambientales antes de asignar lectura al navegador. Matrices finales: 40 vistas sin hallazgos/desbordes y 86 PNG pixel idénticos. Procesos propios detenidos; CI y squash se registran al integrar.
+
+### 2026-10-11 · P23, cierre de revisión
+
+Código `0eb58535f33b1537d22db56707ef3f1c7f3a0e0e`. Siete observaciones corregidas; 914 motor (+2 xfail), 1494 backend, 1028 frontend; 1427 pgTAP, 553 integraciones, 19 Auth E2E y doce upgrades PG16 PASA. 40 vistas finales y ocho de servicio sin hallazgos; 94 PNG pixel idénticos. Viaje ligado, servicio por unidad, compensación de archivos, diagnóstico humano, garantía de aprobación inmutable y limpieza de organización tienen regresiones.
