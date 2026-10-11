@@ -8,7 +8,7 @@ import pytest
 from tests.integration.test_shot09_documentary import (
     documentary_tenant as documentary_tenant,_seed_project,_freeze,_eligibility_data,as_user)
 from tests.integration.test_shot08_pricing import owner_client
-from documents.repository import one,rows,documentary_backend
+from documents.repository import one,rows,documentary_backend,decoded
 from purchasing.service import create_eligibility,allocate_requirement,purchasing_state,confirm_order_type_batch
 from production.service import release_production
 from authentication.rls import authenticated_rls_context
@@ -79,8 +79,16 @@ def test_released_needs_purchase_replay_and_exact_receipt_trace(documentary_tena
     assert move['lot_code']=='LOTE-15' and move['rack_location']=='A-15'
     assert move['supplier_document']=='GUIA-15' and move['received_on']=='2026-10-10'
     assert move['order_code'].startswith('OC-') and move['receipt_code'].startswith('REC-')
-    # Authenticated cannot read documentary requirement lines. The stock API
-    # deliberately crosses to documentary_backend for incoming orders.
+    # Stock readers receive only the guarded physical projection. They cannot
+    # read supplier orders/requirements or another tenant's incoming stock.
+    with authenticated_rls_context({'sub':str(users['ESTIMATOR']),'role':'authenticated','aal':'aal2'}):
+        incoming=rows('SELECT * FROM private.stock_incoming(%s)',[org])
+        assert incoming and any(Decimal(str(row['open_qty']))>0 for row in incoming)
+        assert all(set(decoded(row['line_snapshot']))=={'purchasing_sku','category','unit','physical_stock_identity','specification'} for row in incoming)
+        assert not rows('SELECT * FROM private.stock_incoming(%s)',[other])
+        assert not rows("SELECT id FROM orders WHERE org_id=%s AND order_type<>'WORKSHOP_OT'",[org])
+    with authenticated_rls_context({'sub':str(users['INSTALLER']),'role':'authenticated','aal':'aal2'}):
+        assert not rows('SELECT * FROM private.stock_incoming(%s)',[org])
     with authenticated_rls_context({'sub':str(users['ESTIMATOR']),'role':'authenticated','aal':'aal2'}),pytest.raises(DatabaseError),transaction.atomic():
         rows('SELECT id FROM order_requirement_lines WHERE org_id=%s',[org])
     overflow={'receipt_key':'P15-overflow','lines':[{'order_line_id':line['id'],

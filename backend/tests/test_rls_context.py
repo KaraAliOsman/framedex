@@ -22,10 +22,10 @@ class RecordingCursor:
     def execute(self, sql: str, params: object = None) -> None:
         self.calls.append((sql, params))
 
-    def fetchone(self) -> tuple[str, str | None]:
+    def fetchone(self) -> tuple[str, str | None, str | None]:
         # Mimics Postgres answering the role/claims probe — the context
         # manager restores these captured values on exit.
-        return ("none", None)
+        return ("none", None, None)
 
 
 class RecordingConnection:
@@ -50,12 +50,18 @@ def test_verified_claims_and_authenticated_role_are_transaction_local(
 
     assert cursor.calls[0][0] == (
         "SELECT current_setting('role', true), "
-        "current_setting('request.jwt.claims', true)"
+        "current_setting('request.jwt.claims', true), "
+        "current_setting('request.jwt.claim.sub', true)"
     )
-    assert cursor.calls[1][0] == "SELECT set_config('request.jwt.claims', %s, true)"
+    assert cursor.calls[1][0] == (
+        "SELECT set_config('request.jwt.claims', %s, true), "
+        "set_config('request.jwt.claim.sub', %s, true)"
+    )
     assert json.loads(cursor.calls[1][1][0]) == claims
+    assert cursor.calls[1][1][1] == claims['sub']
     assert cursor.calls[2] == ("SET LOCAL ROLE authenticated", None)
     # The switch is restored on exit — SET LOCAL is transaction-scoped, so a
     # savepoint never rolls it back for the caller.
     assert cursor.calls[3][0] == "SELECT set_config('role', %s, true)"
     assert cursor.calls[3][1] == ["none"]
+    assert cursor.calls[4][1] == ["", ""]

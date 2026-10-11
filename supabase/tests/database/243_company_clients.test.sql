@@ -1,7 +1,10 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path=public,private,auth,extensions,pg_temp;
-SELECT plan(29);
+SELECT plan(32);
+SELECT ok(NOT has_function_privilege('anon','private.stock_incoming(uuid)','EXECUTE'),'Incoming stock projection rejects anonymous access');
+SELECT ok(has_function_privilege('authenticated','private.stock_incoming(uuid)','EXECUTE'),'Stock reader can invoke guarded physical projection');
+SELECT ok(NOT has_table_privilege('authenticated','public.order_requirement_lines','SELECT'),'Incoming quantities never grant supplier line access');
 SELECT has_column('public','tenancy_organizations','quotation_currency','Quotation preference has distinct currency authority');
 SELECT ok(NOT has_column_privilege('authenticated','public.tenancy_organizations','quotation_currency','UPDATE'),'Browser cannot bypass owner confirmation of preferred currency');
 SELECT ok(NOT has_function_privilege('anon','private.company_settings(uuid)','EXECUTE'),'Company currency authority needs verified authentication');

@@ -20,7 +20,7 @@ from rest_framework.test import APIClient
 
 from ai_gateway.context import REQUIRED_REFS, build_context
 from authentication.jwt_verifier import AuthServerTokenVerifier
-from authentication.rls import authenticated_rls_context
+from authentication.rls import authenticated_rls_context, worker_claims
 from authentication.tenancy import MembershipRepository, resolve_tenant_context
 from authentication.types import VerifiedSupabaseToken
 from backend.tests.test_engine_api import g1_request, g4_request
@@ -173,6 +173,48 @@ def test_verified_claims_auth_uid_and_role_then_commit_cleanup(real_rows: RLSFix
         assert user_id == token.user_id
         assert role == "authenticated"
         assert json.loads(claims) == token.claims
+    assert_no_context()
+
+
+@pytest.mark.parametrize('context_kind', ['request', 'worker'])
+def test_verified_identity_overrides_and_restores_stale_individual_claim(
+    real_rows: RLSFixtures, context_kind: str
+) -> None:
+    """A previous identity must not override a newly verified JWT on a reused connection."""
+    current = real_rows.tokens['A']
+    stale = real_rows.tokens['B']
+    with transaction.atomic():
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT set_config('request.jwt.claim.sub',%s,true)", [str(stale.user_id)])
+        context = authenticated_rls_context if context_kind == 'request' else worker_claims
+        with context(current.claims):
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT auth.uid(), auth.jwt()->>\'sub\'')
+                uid, subject = cursor.fetchone()
+            assert uid == current.user_id and subject == str(current.user_id)
+            memberships = MembershipRepository().list_active_for_user(current.user_id)
+            assert {item.organization_id for item in memberships} == {real_rows.organizations['A']}
+            assert MembershipRepository().list_active_for_user(stale.user_id) == ()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT current_setting('request.jwt.claim.sub',true)")
+            assert cursor.fetchone()[0] == str(stale.user_id)
+        transaction.set_rollback(True)
+    # Worker settings are session-local; release the test's connection rather
+    # than leaving its synthetic previous identity on the shared pool.
+    connection.close()
+    assert_no_context()
+
+
+def test_nested_verified_identities_restore_individual_and_json_claims(real_rows: RLSFixtures) -> None:
+    first, second = real_rows.tokens['A'], real_rows.tokens['B']
+    with authenticated_rls_context(first.claims):
+        with authenticated_rls_context(second.claims):
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT auth.uid(), auth.jwt()->>\'sub\'')
+                assert cursor.fetchone() == (second.user_id, str(second.user_id))
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT auth.uid(), auth.jwt()->>\'sub\'')
+            assert cursor.fetchone() == (first.user_id, str(first.user_id))
     assert_no_context()
 
 
