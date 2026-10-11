@@ -60,11 +60,16 @@ async function screenshot(page: Page, info: TestInfo, name: string): Promise<voi
   await info.attach(name, { path, contentType: "image/png" });
 }
 
-/** The desk grid is select-then-act: click the vano's row so the side pane
- * offers its actions, then return the action link inside it. */
+/** Secondary position details live in the drawer; the main collection keeps
+ * its selection and the editor opens the exact physical position. */
 async function card(page: Page, location: string, action: string) {
-  await page.locator(".position-grid [role='option']").filter({ hasText: location }).click();
-  return page.locator(".project-desk__side").getByRole("link", { name: action, exact: true });
+  await page
+    .getByRole("listbox", { name: "Posiciones" })
+    .getByRole("option")
+    .filter({ hasText: location })
+    .click();
+  await page.getByRole("button", { name: "Ficha de posición", exact: true }).click();
+  return page.getByRole("dialog").getByRole("link", { name: action, exact: true });
 }
 
 test("SHOT-10 real project core path and visual evidence", async ({ page, manual }, info) => {
@@ -123,10 +128,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   const projectApi = `/api/v1/projects/${project.id}/`;
   await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
   await expect(page.getByRole("heading", { level: 1 })).toContainText(projectName);
-  await expect(page.getByRole("link", { name: "Añadir vano" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Agregar vanos", exact: true })).toBeVisible();
   await screenshot(page, info, "01-project-created");
 
-  await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
+  await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina original");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
 
@@ -339,17 +344,65 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   await back();
   await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
-  await responseTo(page, "GET", positionApi, 200, () =>
-    card(page, "Cocina original", "Duplicar vano").then((link) => link.click()),
+  await page.getByLabel(`Seleccionar posición ${saved.position_index}`, { exact: true }).check();
+  const proposal = await responseTo<{ diff: { kind: string }[] }>(
+    page,
+    "POST",
+    `${projectApi}operations/preview/`,
+    200,
+    () => page.getByRole("button", { name: "Duplicar lote", exact: true }).click(),
   );
-  await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
+  expect(proposal.diff).toHaveLength(1);
+  expect(proposal.diff[0]!.kind).toBe("add");
+  expect(
+    await manual.readRows("project_positions", `project_id=eq.${project.id}&select=id`),
+  ).toHaveLength(1);
+  const applied = await responseTo<{
+    operation_id: string;
+    state: string;
+    project: ProjectResponse;
+  }>(page, "POST", `${projectApi}operations/apply/`, 200, () =>
+    page.getByRole("button", { name: "Aplicar cambios revisados", exact: true }).click(),
+  );
+  const copied = applied.project.positions!.find((item) => item.id !== saved.id)!;
+  expect(copied.id).not.toBe(saved.id);
+  expect(copied.design).toEqual(saved.design);
+  expect(copied.bom).toEqual(saved.bom);
+  expect(copied.measurements).toBeNull();
+  expect(applied.state).toBe("APPLIED");
+  const history = await manual.readRows(
+    "project_edit_operations",
+    `id=eq.${applied.operation_id}&org_id=eq.${manual.organizationId}` +
+      "&select=id,org_id,project_id,state,request,before_state,after_state",
+  );
+  expect(history).toHaveLength(1);
+  expect(history[0]).toMatchObject({
+    id: applied.operation_id,
+    org_id: manual.organizationId,
+    project_id: project.id,
+    state: "APPLIED",
+    request: [{ op: "duplicate_positions", position_ids: [saved.id] }],
+  });
+  expect((history[0]!.before_state as { positions: unknown[] }).positions).toHaveLength(1);
+  expect((history[0]!.after_state as { positions: unknown[] }).positions).toHaveLength(2);
+  const copyRow = page
+    .getByRole("listbox", { name: "Posiciones" })
+    .getByRole("option")
+    .filter({
+      has: page.getByLabel(`Seleccionar posición ${copied.position_index}`, { exact: true }),
+    });
+  await responseTo(page, "GET", `/api/v1/positions/${copied.id}/`, 200, () =>
+    copyRow.press("Enter"),
+  );
+  await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina duplicada");
+  await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
 
   const duplicate = await responseTo<PositionResponse>(
     page,
-    "POST",
-    `${projectApi}positions/`,
-    201,
+    "PUT",
+    `/api/v1/positions/${copied.id}/`,
+    200,
     save,
   );
   expect(duplicate.id).not.toBe(saved.id);
@@ -362,7 +415,13 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
   const source = await responseTo<ProjectResponse>(page, "GET", projectApi, 200, freshRead);
   expect(source.position_count).toBe(2);
-  expect(source.positions!.find((item) => item.id === saved.id)).toEqual(saved);
+  expect(source.positions!.find((item) => item.id === saved.id)).toEqual({
+    ...saved,
+    // Project collection metadata is separate from the persisted design/BOM.
+    system_name: manual.systemName,
+    system_demo: true,
+    commercial: null,
+  });
 
   const clone = await responseTo<ProjectResponse>(page, "POST", `${projectApi}clone/`, 201, () =>
     page
@@ -398,7 +457,9 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     () => page.reload(),
   );
   expect(reopenedClone.positions).toEqual(clone.positions);
-  await expect(page.locator(".position-grid [role='option']")).toHaveCount(2);
+  await expect(page.getByRole("listbox", { name: "Posiciones" }).getByRole("option")).toHaveCount(
+    2,
+  );
   await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
   await screenshot(page, info, "04-reopened-draft-clone");
 

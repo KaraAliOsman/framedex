@@ -3,7 +3,7 @@
 from copy import deepcopy
 from decimal import Decimal, ROUND_HALF_UP
 import re
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from django.db import connection
 from psycopg import sql
@@ -73,6 +73,8 @@ POSITION_COLUMNS = (
     "price_net",
     "discount_pct",
     "updated_at",
+    "display_order",
+    "placement",
 )
 
 
@@ -182,6 +184,8 @@ def position_public(row, *, org_id=None):
         "discount_pct": str(row["discount_pct"]),
         "design": design,
         "bom": {**safe, "calculation_hash": expected},
+        "display_order": row.get("display_order") or row["position_index"],
+        "placement": decoded(row.get("placement") or {}),
     }
     if org_id is not None:
         from projects.mounting import measurement_public
@@ -191,14 +195,28 @@ def position_public(row, *, org_id=None):
 
 
 def positions(org_id, project_id):
-    return [
-        position_public(row, org_id=org_id)
+    values = [
+        position_public(row)
         for row in rows(
             f"SELECT {','.join(POSITION_COLUMNS)} FROM public.project_positions "
-            "WHERE org_id=%s AND project_id=%s ORDER BY position_index",
+            "WHERE org_id=%s AND project_id=%s ORDER BY COALESCE(display_order,position_index),position_index",
             [org_id, project_id],
         )
     ]
+    if not values:
+        return values
+    from projects.mounting import bulk_measurements_public
+    revision = project_row(org_id, project_id)["current_revision"]
+    measurements = bulk_measurements_public(org_id, values, revision)
+    systems = {str(item["id"]): item for item in rows(
+        "SELECT id,name,is_demo FROM public.profile_systems WHERE id=ANY(%s)",
+        [list({UUID(str(item["design"]["system_id"])) for item in values})])}
+    for item in values:
+        item["measurements"] = measurements.get(str(item["id"]))
+        system = systems.get(str(item["design"]["system_id"]))
+        item["system_name"] = system["name"] if system else "Sin dato · revisa el catálogo de la serie"
+        item["system_demo"] = bool(system and system["is_demo"])
+    return values
 
 
 def project_versions(org_id, project_id):
@@ -250,6 +268,28 @@ def project_public(org_id, row, *, detail=False, authority=_UNSET,
     if detail:
         value["positions"] = positions(org_id, row["id"])
         value["versions"] = project_versions(org_id, row["id"])
+        with documentary_backend():
+            validity = rows("SELECT snapshot_json#>>'{project,quotation_valid_until}' AS valid_until "
+                "FROM public.project_versions WHERE project_id=%s AND org_id=%s AND revision_code=%s",
+                [row["id"], org_id, row["current_revision"]])
+            sealed_validity = bool(validity)
+            if not validity:
+                validity = rows("SELECT quotation_valid_until AS valid_until FROM public.project_documentary_inputs "
+                    "WHERE project_id=%s AND org_id=%s", [row["id"], org_id])
+        value["quotation_valid_until"] = validity[0]["valid_until"] if validity else None
+        value["quotation_validity_source"] = ("Fuente: cotización sellada de esta revisión" if sealed_validity
+            else "Fuente: preparación guardada; revisa la fecha antes de emitir" if validity
+            else "Sin fecha guardada en esta revisión")
+        commercial = {}
+        if authority:
+            with commercial_backend():
+                result = rows("SELECT result->'workspace'->'positions' AS lines FROM public.pricing_operations WHERE id=%s AND org_id=%s",
+                              [authority["id"], org_id])
+            lines = decoded(result[0]["lines"]) if result and result[0]["lines"] else []
+            commercial = {line["position_index"]: {"unit_net": line.get("unit_price"),
+                "line_net": line.get("line_net"), "source": "Precio aplicado de esta revisión; motor comercial."} for line in lines}
+        for item in value["positions"]:
+            item["commercial"] = commercial.get(item["position_index"])
     return value
 
 
@@ -494,7 +534,7 @@ def _typology(tree):
 
 
 def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=True,
-                  create_id=None, create_index=None):
+                  create_id=None, create_index=None, calculation_cache=None):
     editable(org_id, project_id)
     current = None
     if position_id:
@@ -515,7 +555,15 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
     with connection.cursor() as cursor:
         cursor.execute("SELECT private.reserve_catalog_authority(%s,%s)",
                        [design["system_id"], org_id])
-    bom = calculate_design(org_id, design)
+    # Internal batch cache lasts only for this atomic operation. Each target
+    # still reserves catalog authority; identical inputs reuse only motor output.
+    calculation_key = (str(org_id), documentary_canonical_json_v1(design))
+    if calculation_cache is None:
+        bom = calculate_design(org_id, design)
+    else:
+        if calculation_key not in calculation_cache:
+            calculation_cache[calculation_key] = calculate_design(org_id, design)
+        bom = calculation_cache[calculation_key]
     values = [
         data["location_tag"],
         data["quantity"],
@@ -536,6 +584,9 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
             "WHERE id=%s AND org_id=%s RETURNING id",
             [*values, position_id, org_id],
         )
+        if "placement" in data:
+            rows("UPDATE public.project_positions SET placement=%s::jsonb WHERE id=%s AND org_id=%s RETURNING id",
+                 [json_text(data["placement"]), position_id, org_id])
     else:
         index = rows(
             "SELECT COALESCE(MAX(position_index),0)+1 AS next_index "
@@ -550,9 +601,9 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
         rows(
             "INSERT INTO public.project_positions(location_tag,quantity,typology,system_id,"
             "width_mm,height_mm,color_interior,color_exterior,parametric_tree,bom_snapshot,"
-            "id,project_id,org_id,position_index) "
-            "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id",
-            [*values, position_id, project_id, org_id, index],
+            "id,project_id,org_id,position_index,placement,display_order) "
+            "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s,%s,%s,%s::jsonb,%s) RETURNING id",
+            [*values, position_id, project_id, org_id, index, json_text(data.get("placement", {})), index],
         )
     rows(
         "UPDATE public.projects SET updated_at=clock_timestamp() WHERE id=%s AND org_id=%s "
@@ -562,6 +613,25 @@ def save_position(org_id, project_id, data, *, position_id=None, apply_defaults=
     from projects.mounting import save_measurements
     save_measurements(org_id,position_row(org_id,position_id),data)
     return position_public(position_row(org_id, position_id), org_id=org_id)
+
+
+def save_position_metadata(org_id, project_id, position):
+    """Presentation edits never replace a saved BOM or its catalog authority."""
+    editable(org_id, project_id)
+    current = position_row(org_id, UUID(str(position["id"])), lock=True)
+    if str(current["project_id"]) != str(project_id):
+        missing()
+    expected = position["updated_at"]
+    if isinstance(expected, str):
+        from datetime import datetime
+        expected = datetime.fromisoformat(expected)
+    unchanged(current, expected)
+    rows("UPDATE public.project_positions SET location_tag=%s,quantity=%s,placement=%s::jsonb,"
+         "display_order=%s,updated_at=clock_timestamp() WHERE id=%s AND org_id=%s RETURNING id",
+         [position["location_tag"], position["quantity"], json_text(position.get("placement", {})),
+          position.get("display_order", position["position_index"]), position["id"], org_id])
+    rows("UPDATE public.projects SET updated_at=clock_timestamp() WHERE id=%s AND org_id=%s RETURNING id",
+         [project_id, org_id])
 
 
 def delete_position(org_id, position_id, expected):
@@ -732,6 +802,7 @@ def clone_project(org_id, actor_id, project_id, data):
         _assert_live_matches_version(org_id, project_id, latest)
     source_positions = positions(org_id, project_id)
     metadata = {key: source[key] or "" for key in METADATA}
+    metadata["client_id"] = source.get("client_id")
     metadata["name"] = data.get("name", "Copia de " + source["name"][:246])
     copied = create_project(org_id, actor_id, metadata)
     for position in source_positions:
@@ -740,6 +811,7 @@ def clone_project(org_id, actor_id, project_id, data):
                 "location_tag": position["location_tag"] or "",
                 "quantity": position["quantity"],
                 "design": deepcopy(position["design"]),
+                "placement": position.get("placement", {}),
             }
         )
         serializer.is_valid(raise_exception=True)

@@ -378,7 +378,7 @@ function ProductionOfficePage(): JSX.Element {
     // Independent feeds: a 500 on the station queue (or prep) must not blank
     // the order list — each call settles on its own.
     const [response, prepResponse, queueResponse] = await Promise.all([
-      productionOrders({ signal }),
+      productionOrders(undefined, { signal }),
       productionPrep({ signal }).catch(() => null),
       productionStationQueue({ signal }).catch(() => null),
     ]);

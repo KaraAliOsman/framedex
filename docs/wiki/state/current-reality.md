@@ -1,10 +1,13 @@
 ---
 type: state
 status: active
-updated: 2026-10-10
+updated: 2026-10-11
 volatility: high
-verified_ref: fa3731843dbfbd75d00024e95f4986a3616a8747
+verified_ref: e309768b950539177f7f651d3d59237585e65baf
 sources:
+  - P21 cierre local e309768b950539177f7f651d3d59237585e65baf, Database Gate completo y lint/tipos finales, 2026-10-11
+  - P21 implementación 38bac104c8774dc0225fccec74e6089872701cb1, navegador y PostgreSQL focal, 2026-10-10
+  - docs/redesign/P21-ACEPTACION.md
   - ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.
   - ED2 metadatos b18b6506e55152702c37fdc0c7c6f3df21ff2d0f, matriz final y gates de presentación, 2026-10-10
   - ED2 implementación 0ab8b7204ac250c0bd8d118fdab041c22b5892b3, navegador, 2026-10-10
@@ -72,6 +75,29 @@ sources:
 ---
 
 # Current reality
+
+## P21 · centro de trabajo del proyecto (10-10-2026)
+
+Verificado sobre `38bac104c8774dc0225fccec74e6089872701cb1` en el stack
+propio `framedex-cola`. Encabezado con cliente, dirección, próxima acción,
+vigencia y precio aplicado; siete pestañas visibles y elevaciones reales
+en lista/grilla. Las nuevas operaciones de biblioteca, duplicar, eliminar,
+ordenar y metadatos comparten preview/apply/undo con concurrencia y reintento.
+El orden no cambia el número físico; la copia no hereda mediciones ni precio.
+Los metadatos de revisión cerrada permanecen protegidos en Postgres/RLS.
+
+El recorrido real agrega tres posiciones, agrupa por piso, duplica a seis,
+cambia color con diff/deshacer y aplica $1.925.201 con IVA desde el motor.
+Las cien posiciones montan cinco filas; cinco contextos miden hasta selección
+visible en 1.781,68–1.975,32 ms. Las 32 vistas oficiales, 31 interacciones y
+cinco estados pasan; PNG comprobados sin pérdida. R1–R20 PASA en proyecto.
+Las pruebas focales pasan 33 PostgreSQL y 36 frontend. Los gates completos
+pasan lint/tipos, 886 motor (+2 xfail), goldens byte, 1.476 backend,
+988 frontend y build. Database Gate y CI se registran al cerrar P21;
+aún no se acredita integración.
+
+Uw conserva Sin dato y el catálogo conserva DEMO. Véanse
+`docs/wiki/product/project-workspace.md` y `docs/redesign/P21-ACEPTACION.md`.
 
 ## ED2 · lectura conjunta de la ola 2 (10-10-2026)
 

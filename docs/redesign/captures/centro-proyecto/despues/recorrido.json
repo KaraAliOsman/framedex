@@ -1,0 +1,157 @@
+{
+  "project_code": "P-000645",
+  "positions": 6,
+  "finish": {
+    "combination": {
+      "code": "RAL7016",
+      "interior": "RAL7016",
+      "exterior": "RAL7016",
+      "base": null,
+      "reinforcement_required": false,
+      "reinforcement_stock_code": "WHITE",
+      "glass_clearance_mm": "5",
+      "max_position_width_mm": null,
+      "max_position_height_mm": null,
+      "max_leaf_width_mm": null,
+      "max_leaf_height_mm": null,
+      "extra_lead_days": 0,
+      "surcharge": {
+        "kind": "PERCENT",
+        "amount": "12.5",
+        "currency": "CLP",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+      },
+      "allowed_handle_colors": [
+        "WHITE",
+        "BLACK"
+      ],
+      "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+      "synthetic": true
+    },
+    "interior": {
+      "code": "RAL7016",
+      "manufacturer_code": "DEMO-RAL7016",
+      "name": "Gris antracita RAL 7016",
+      "kind": "RAL",
+      "linear_rgb": [
+        "0.034",
+        "0.042",
+        "0.044"
+      ],
+      "gloss": "0.30",
+      "texture_path": null,
+      "approximate": true,
+      "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+      "synthetic": true
+    },
+    "exterior": {
+      "code": "RAL7016",
+      "manufacturer_code": "DEMO-RAL7016",
+      "name": "Gris antracita RAL 7016",
+      "kind": "RAL",
+      "linear_rgb": [
+        "0.034",
+        "0.042",
+        "0.044"
+      ],
+      "gloss": "0.30",
+      "texture_path": null,
+      "approximate": true,
+      "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+      "synthetic": true
+    },
+    "base": null,
+    "profile_skus": {
+      "DEMO_ALU_PRACTICABLE-JQ-10": "COMPRA-V5-DEMO_ALU_PRACTICABLE-JQ-10-RAL7016",
+      "DEMO_ALU_PRACTICABLE-MARCO": "COMPRA-V5-DEMO_ALU_PRACTICABLE-MARCO-RAL7016"
+    },
+    "handle_colors": [
+      {
+        "code": "WHITE",
+        "manufacturer_code": "DEMO-MANILLA-WHITE",
+        "name": "Blanco",
+        "kind": "RAL",
+        "linear_rgb": [
+          "0.78",
+          "0.79",
+          "0.76"
+        ],
+        "gloss": "0.30",
+        "texture_path": null,
+        "approximate": true,
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "synthetic": true
+      },
+      {
+        "code": "BLACK",
+        "manufacturer_code": "DEMO-MANILLA-BLACK",
+        "name": "Negro",
+        "kind": "RAL",
+        "linear_rgb": [
+          "0.012",
+          "0.014",
+          "0.015"
+        ],
+        "gloss": "0.30",
+        "texture_path": null,
+        "approximate": true,
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "synthetic": true
+      }
+    ]
+  },
+  "price_gross": "1925201.00",
+  "price_source": "Motor comercial aplicado",
+  "lines": [
+    {
+      "number": 1,
+      "commercial": {
+        "unit_net": "269636.3403",
+        "line_net": "269636",
+        "source": "Precio aplicado de esta revisión; motor comercial."
+      }
+    },
+    {
+      "number": 2,
+      "commercial": {
+        "unit_net": "269636.3403",
+        "line_net": "269636",
+        "source": "Precio aplicado de esta revisión; motor comercial."
+      }
+    },
+    {
+      "number": 3,
+      "commercial": {
+        "unit_net": "269636.3403",
+        "line_net": "269636",
+        "source": "Precio aplicado de esta revisión; motor comercial."
+      }
+    },
+    {
+      "number": 4,
+      "commercial": {
+        "unit_net": "269636.3403",
+        "line_net": "269636",
+        "source": "Precio aplicado de esta revisión; motor comercial."
+      }
+    },
+    {
+      "number": 5,
+      "commercial": {
+        "unit_net": "269636.3403",
+        "line_net": "269636",
+        "source": "Precio aplicado de esta revisión; motor comercial."
+      }
+    },
+    {
+      "number": 6,
+      "commercial": {
+        "unit_net": "269636.3403",
+        "line_net": "269636",
+        "source": "Precio aplicado de esta revisión; motor comercial."
+      }
+    }
+  ],
+  "flow": "biblioteca/agrupación/duplicación/color/deshacer/reaplicar/precio/total: PASS",
+  "continuation": "Precio retoma los cambios persistidos en la misma obra; el intento anterior no aplicó precio."
+}

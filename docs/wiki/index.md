@@ -26,6 +26,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Centro de trabajo del proyecto](product/project-workspace.md) — elevaciones, lote revisado, orden físico, precio aplicado y fases con autoridad.
+
 - [Autoridad física CNC](product/cnc-authority.md) — origen, sección/montaje, confirmación y evidencia inmutable.
 
 - [Cobranza y documentos de cobro](product/collections.md) — calendario sellado, recibos, enlaces verificados, simulación fiscal y recordatorio humano.

@@ -52,6 +52,11 @@
  * * `add_position` - add_position
  * * `duplicate_position` - duplicate_position
  * * `remove_position` - remove_position
+ * * `duplicate_positions` - duplicate_positions
+ * * `add_design_position` - add_design_position
+ * * `remove_positions` - remove_positions
+ * * `set_positions` - set_positions
+ * * `reorder_positions` - reorder_positions
  * * `apply_to_positions` - apply_to_positions
  * * `prepare_emit` - prepare_emit
  * * `prepare_release` - prepare_release
@@ -106,6 +111,11 @@ export const NameEnum = {
   add_position: "add_position",
   duplicate_position: "duplicate_position",
   remove_position: "remove_position",
+  duplicate_positions: "duplicate_positions",
+  add_design_position: "add_design_position",
+  remove_positions: "remove_positions",
+  set_positions: "set_positions",
+  reorder_positions: "reorder_positions",
   apply_to_positions: "apply_to_positions",
   prepare_emit: "prepare_emit",
   prepare_release: "prepare_release",

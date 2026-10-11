@@ -35,7 +35,18 @@ def _plain(value):
 
 
 def signature(value):
-    return hashlib.sha256(json.dumps(_plain(value), sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+    value = _plain(value)
+    # Additive read projections and neutral defaults cannot stale a pre-P21
+    # proposal/undo. A declared grouping or a changed order still participates.
+    if isinstance(value, dict):
+        for position in value.get("positions", []):
+            for field in ("system_name", "system_demo", "commercial"):
+                position.pop(field, None)
+            if not position.get("placement"):
+                position.pop("placement", None)
+            if position.get("display_order") == position.get("position_index"):
+                position.pop("display_order", None)
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
 
 
 def snapshot(org_id, project_id):
@@ -60,13 +71,39 @@ def _position(after, identity):
     return found
 
 
+def _targets(after, identities):
+    if len(set(identities)) != len(identities):
+        raise OperationError("batch_duplicate_targets", "Una posición aparece más de una vez. Revisa la selección.")
+    return [_position(after, identity) for identity in identities]
+
+
+def _copy_position(after, source, location=None):
+    duplicate = deepcopy(source)
+    duplicate.update(id=str(uuid4()), position_index=max((p["position_index"] for p in after), default=0) + 1,
+        display_order=max((p.get("display_order", p["position_index"]) for p in after), default=0) + 1,
+        location_tag=source["location_tag"] if location is None else location, source_position_id=source["id"])
+    # A copied geometry is not a survey of the new physical opening.
+    duplicate["measurements"] = None
+    duplicate["commercial"] = None
+    after.append(duplicate)
+
+
+def _edit_values(position):
+    return (position["location_tag"], position["quantity"], position["design"],
+            position.get("placement", {}), position.get("display_order", position["position_index"]))
+
+
 def _product(position):
     design = position["design"]
     return product_from_position({"parametric_tree": design["parametric_tree"],
         "width_mm": design["nominal_width_mm"], "height_mm": design["nominal_height_mm"]})
 
 
-def _design_edit(org_id, position, ops):
+def _design_edit(org_id, position, ops, cache=None):
+    cache_key = signature({"design": position["design"], "ops": ops})
+    if cache is not None and cache_key in cache:
+        position["design"], result = deepcopy(cache[cache_key])
+        return result
     # Wildcards expand against the actual graph before entering the engine.
     from dekopen_engine.design_operations import as_product, handled_leaf_keys, walk
     from dekopen_engine.geometry import compute_geometry
@@ -97,6 +134,8 @@ def _design_edit(org_id, position, ops):
         diagnoses = [issue.get("message") for issue in result["issues"] if issue.get("message")]
         raise OperationError("simulation_invalid", "El motor rechaza la geometría propuesta. " + " ".join(diagnoses))
     position["design"] = _plain(design_from_product(result["product"], result["system_id"], result["color"]))
+    if cache is not None:
+        cache[cache_key] = deepcopy((position["design"], result))
     return result
 
 
@@ -121,6 +160,20 @@ def _new_position(org_id, op, next_index):
     return {"id": identity, "position_index": next_index, "location_tag": op["location"], "quantity": op.get("quantity", 1),
             "design": _plain(design_from_product(result["product"], op["system_id"], finish)),
             "opening_type": op["template"], "width_mm": op["dims"]["width_mm"], "height_mm": op["dims"]["height_mm"]}
+
+
+def _new_design_position(org_id, op, next_index):
+    catalog = catalog_for(org_id, op["system_id"])
+    if op["glass_sku"] not in catalog["glass_skus"] or op["color"] not in catalog["params"].finishes:
+        raise OperationError("catalog_selection_invalid", "Elige vidrio y acabado disponibles para esta serie.")
+    try:
+        design = design_from_product(op["product"], op["system_id"], op["color"])
+    except (TypeError, ValueError, KeyError) as error:
+        raise OperationError("product_invalid", "La receta no contiene un diseño completo. Vuelve a elegirla en la biblioteca.") from error
+    position = {"id": str(uuid4()), "position_index": next_index, "display_order": next_index,
+                "location_tag": op["location"], "quantity": op["quantity"], "placement": {}, "design": _plain(design)}
+    _design_edit(org_id, position, [{"op": "set_glass", "module": "*", "sku": op["glass_sku"]}])
+    return position
 
 
 def _position_view(org_id, position, cache):
@@ -174,17 +227,41 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
     ops = [validate_operation(op) for op in raw_ops]
     before = snapshot(org_id, project_id)
     after = deepcopy(before["positions"])
+    design_cache = {}
     for op in ops:
         name = op["op"]
         if name == "add_position":
             after.append(_new_position(org_id, op, max((p["position_index"] for p in after), default=0) + 1))
+        elif name == "add_design_position":
+            after.append(_new_design_position(org_id, op, max((p["position_index"] for p in after), default=0) + 1))
         elif name == "duplicate_position":
             source = _position(after, op["position_id"])
             for _ in range(op["count"]):
-                duplicate = deepcopy(source)
-                duplicate.update(id=str(uuid4()), position_index=max((p["position_index"] for p in after), default=0) + 1,
-                                 location_tag=op["location"], source_position_id=source["id"])
-                after.append(duplicate)
+                _copy_position(after, source, op["location"])
+        elif name in {"duplicate_positions", "remove_positions", "set_positions", "reorder_positions"}:
+            targets = _targets(after, op["position_ids"])
+            if name == "duplicate_positions":
+                for source in targets:
+                    _copy_position(after, source)
+            elif name == "remove_positions":
+                for target in targets:
+                    after.remove(target)
+            elif name == "reorder_positions":
+                if len(targets) != len(after):
+                    raise OperationError("reorder_incomplete", "Incluye cada posición del proyecto una sola vez para reordenar.")
+                after = targets
+                for index, target in enumerate(after, start=1):
+                    target["display_order"] = index
+            else:
+                if not any(field in op for field in ("quantity", "location", "placement")):
+                    raise OperationError("batch_change_missing", "Elige cantidad, ubicación, piso, recinto o eje para preparar el cambio.")
+                for target in targets:
+                    if "quantity" in op:
+                        target["quantity"] = op["quantity"]
+                    if "location" in op:
+                        target["location_tag"] = op["location"]
+                    if "placement" in op:
+                        target["placement"] = {**target.get("placement", {}), **op["placement"]}
         elif name == "remove_position":
             after.remove(_position(after, op["position_id"]))
         elif name in {"set_quantity", "set_location"}:
@@ -200,7 +277,7 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
                 raise OperationError("batch_no_targets", "Ninguna posición coincide con el filtro.")
             for position in wanted:
                 try:
-                    _design_edit(org_id, position, op["ops"])
+                    _design_edit(org_id, position, op["ops"], design_cache)
                 except OperationError as error:
                     raise OperationError(error.code, f"Posición {position['position_index']} · {position['location_tag'] or 'Sin ubicación'}: {error}") from error
         else:
@@ -209,13 +286,18 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
             raise OperationError("batch_too_large", "Divide el trabajo en lotes de hasta cien posiciones.")
     # Every changed design goes through the canonical save gate before a preview exists.
     original = {p["id"]: p for p in before["positions"]}
+    validated_designs = set()
     for position in after:
         if position["id"] not in original or position["design"] != original[position["id"]]["design"]:
-            service.calculate_design(org_id, validate(PositionWriteSerializer, {key: position[key] for key in ("location_tag", "quantity", "design")})["design"])
+            data = validate(PositionWriteSerializer, {key: position[key] for key in ("location_tag", "quantity", "design")})
+            key = signature(position["design"])
+            if key not in validated_designs:
+                service.calculate_design(org_id, data["design"])
+                validated_designs.add(key)
     diff = []
     for position in before["positions"]:
         changed = next((p for p in after if p["id"] == position["id"]), None)
-        if changed is None or any(changed[key] != position[key] for key in ("location_tag", "quantity", "design")):
+        if changed is None or _edit_values(changed) != _edit_values(position):
             diff.append({"kind": "remove" if changed is None else "change", "index": position["position_index"], "before": position, "after": changed})
     for position in after:
         if position["id"] not in original:
@@ -229,21 +311,28 @@ def preview_project_operations(org_id, user_id, project_id, raw_ops):
 def _save(org_id, project_id, before, after):
     existing = {p["id"]: p for p in before["positions"]}
     wanted = {p["id"]: p for p in after}
+    calculation_cache = {}
     for identity, position in existing.items():
         if identity not in wanted:
             service.delete_position(org_id, UUID(identity), datetime.fromisoformat(position["updated_at"]))
     for position in after:
         source = existing.get(position["id"])
-        if source and all(position[key] == source[key] for key in ("location_tag", "quantity", "design")):
+        if source and _edit_values(position) == _edit_values(source):
+            continue
+        if source and position["design"] == source["design"]:
+            service.save_position_metadata(org_id, project_id, {**position, "updated_at": source["updated_at"]})
             continue
         data = {key: position[key] for key in ("location_tag", "quantity", "design")}
+        data["placement"] = position.get("placement", {})
         if source:
             data["expected_updated_at"] = source["updated_at"]
             data = validate(PositionUpdateSerializer, data)
-            service.save_position(org_id, project_id, data, position_id=UUID(position["id"]), apply_defaults=False)
+            saved = service.save_position(org_id, project_id, data, position_id=UUID(position["id"]), apply_defaults=False, calculation_cache=calculation_cache)
         else:
             data = validate(PositionWriteSerializer, data)
-            service.save_position(org_id, project_id, data, create_id=UUID(position["id"]), create_index=position["position_index"], apply_defaults=False)
+            saved = service.save_position(org_id, project_id, data, create_id=UUID(position["id"]), create_index=position["position_index"], apply_defaults=False, calculation_cache=calculation_cache)
+        if saved["display_order"] != position.get("display_order", position["position_index"]):
+            service.save_position_metadata(org_id, project_id, {**position, "updated_at": saved["updated_at"]})
 
 
 def apply_project_operations(org_id, user_id, project_id, data):

@@ -1232,7 +1232,7 @@ def test_release_denies_estimator(monkeypatch) -> None:
 def test_orders_list_allows_installer(monkeypatch) -> None:
     client, _, _ = _client_with_scope(monkeypatch, "INSTALLER")
     monkeypatch.setattr(
-        service, "list_production_orders", lambda *, org_id, actor_role: {"orders": []}
+        service, "list_production_orders", lambda *, org_id, actor_role, project_id=None: {"orders": []}
     )
     response = client.get("/api/v1/production/orders/")
     assert response.status_code == 200

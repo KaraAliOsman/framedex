@@ -2297,7 +2297,7 @@ export function ProductFrontContent({
       <ExteriorTextContext.Provider value={members.viewFace === "exterior"}>
         {/* overall width chain — untranslated so it always clears the
           tallest silhouette point (arc crowns sit at viewBox y ≥ 0). */}
-        {hideOverallWidth === false && (
+        {!preview && hideOverallWidth === false && (
           <>
             <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
             <SvgDim
@@ -2319,33 +2319,37 @@ export function ProductFrontContent({
         {/* the drawing band lifts for arc overshoot: sill stays shared. */}
         <g transform={`translate(0 ${lift})`}>
           {/* height chain */}
-          <DimRun
-            marks={
-              elevation && dimLevel === "technical" ? [-lift, height + front.dip] : [0, height]
-            }
-            edge={0}
-            at={-160}
-            vertical={true}
-          />
-          <g transform={`rotate(-90 ${-160} ${midY})`}>
-            <SvgDim
-              x={-160}
-              y={midY}
-              value={
-                elevation && dimLevel === "technical" ? elevation.height_mm : height.toFixed(2)
-              }
-              label={
-                front.lift > 0 && dimLevel !== "technical"
-                  ? "Alto hasta arranque del arco"
-                  : t("assembly.height")
-              }
-              disabled={disabled || (dimLevel === "technical" && front.lift > 0)}
-              onCommit={onCommitHeight}
-            />
-          </g>
+          {!preview && (
+            <>
+              <DimRun
+                marks={
+                  elevation && dimLevel === "technical" ? [-lift, height + front.dip] : [0, height]
+                }
+                edge={0}
+                at={-160}
+                vertical={true}
+              />
+              <g transform={`rotate(-90 ${-160} ${midY})`}>
+                <SvgDim
+                  x={-160}
+                  y={midY}
+                  value={
+                    elevation && dimLevel === "technical" ? elevation.height_mm : height.toFixed(2)
+                  }
+                  label={
+                    front.lift > 0 && dimLevel !== "technical"
+                      ? "Alto hasta arranque del arco"
+                      : t("assembly.height")
+                  }
+                  disabled={disabled || (dimLevel === "technical" && front.lift > 0)}
+                  onCommit={onCommitHeight}
+                />
+              </g>
+            </>
+          )}
           {/* per-column width chain — stacked members share the column span
             (design/technical only: overview keeps the overall W/H). */}
-          {dimLevel !== "overview" && (
+          {!preview && dimLevel !== "overview" && (
             <>
               <DimRun
                 marks={columns.flatMap((column) => [column.x, column.x + column.w])}
@@ -2398,20 +2402,24 @@ export function ProductFrontContent({
               exterior={members.viewFace === "exterior"}
             />
           )}
-          <AddHandle
-            x={-70}
-            y={midY}
-            label={t("assembly.addUnitLeft")}
-            disabled={disabled}
-            onAdd={() => onAddUnit("left")}
-          />
-          <AddHandle
-            x={totalW + 70}
-            y={midY}
-            label={t("assembly.addUnitRight")}
-            disabled={disabled}
-            onAdd={() => onAddUnit("right")}
-          />
+          {!preview && (
+            <>
+              <AddHandle
+                x={-70}
+                y={midY}
+                label={t("assembly.addUnitLeft")}
+                disabled={disabled}
+                onAdd={() => onAddUnit("left")}
+              />
+              <AddHandle
+                x={totalW + 70}
+                y={midY}
+                label={t("assembly.addUnitRight")}
+                disabled={disabled}
+                onAdd={() => onAddUnit("right")}
+              />
+            </>
+          )}
           {rects.map(({ module, x, w: layoutWidth, sill, h }) => {
             const w = Number(module.width_mm);
             const ratio = layoutWidth / w;

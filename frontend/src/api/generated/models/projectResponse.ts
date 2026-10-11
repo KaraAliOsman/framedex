@@ -47,4 +47,7 @@ export interface ProjectResponse {
   updated_at: string;
   positions?: PositionResponse[];
   versions?: ProjectVersionResponse[];
+  /** @nullable */
+  quotation_valid_until?: string | null;
+  quotation_validity_source?: string;
 }

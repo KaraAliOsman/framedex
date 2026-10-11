@@ -105,8 +105,11 @@ def verify(container: str) -> None:
         else:
             assert position["system_id"] == SYSTEM and position["bom"] == response, (key, position)
             assert position["outcome"] == {"mixed": "MIXED_FAMILIES", "commercial": "PRESERVED_COMMERCIAL", "issued": "PRESERVED_ISSUED"}[key]
+    # P21 adds exactly these presentation defaults. Compare the complete row:
+    # every historical field and any unexpected new column must still match.
     sql("DO $$ BEGIN IF EXISTS(SELECT 1 FROM d01_before b JOIN public.project_positions p ON p.id=b.id "
-        "WHERE b.value - ARRAY['system_id','bom_snapshot'] IS DISTINCT FROM to_jsonb(p) - ARRAY['system_id','bom_snapshot']) "
+        "WHERE (b.value || jsonb_build_object('display_order',NULL,'placement','{}'::jsonb)) "
+        "- ARRAY['system_id','bom_snapshot'] IS DISTINCT FROM to_jsonb(p) - ARRAY['system_id','bom_snapshot']) "
         "THEN RAISE EXCEPTION 'D01 changed unrelated position fields'; END IF; "
         "IF EXISTS(SELECT 1 FROM d01_inputs_before b JOIN public.position_documentary_inputs p ON p.id=b.id "
         "WHERE b.calculation_hash=p.calculation_hash) THEN RAISE EXCEPTION 'D01 left stale documentary identity'; END IF; END $$;")

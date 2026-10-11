@@ -74,12 +74,19 @@ def validate_measurement_input(value, design):
         raise serializers.ValidationError(str(error)) from error
 
 
+class PositionPlacementSerializer(StrictSerializer):
+    floor = serializers.CharField(max_length=80, allow_blank=True, required=False)
+    room = serializers.CharField(max_length=80, allow_blank=True, required=False)
+    axis = serializers.CharField(max_length=80, allow_blank=True, required=False)
+
+
 class PositionWriteSerializer(StrictSerializer):
     location_tag = serializers.CharField(max_length=120, allow_blank=True)
     quantity = serializers.IntegerField(min_value=1, max_value=2147483647)
     design = PositionDesignSerializer()
     measurements = serializers.JSONField(required=False)
     measurement_reason = serializers.CharField(max_length=1000, required=False)
+    placement = PositionPlacementSerializer(required=False)
 
     def validate_measurements(self, value):
         return validate_measurement_input(value, self.initial_data.get('design'))
@@ -102,6 +109,11 @@ class PositionResponseSerializer(serializers.Serializer):
     bom = EngineCalculateResponseSerializer()
     updated_at = serializers.DateTimeField()
     measurements = serializers.JSONField(allow_null=True, required=False)
+    display_order = serializers.IntegerField(required=False)
+    placement = PositionPlacementSerializer(required=False)
+    system_name = serializers.CharField(required=False)
+    system_demo = serializers.BooleanField(required=False)
+    commercial = serializers.JSONField(allow_null=True, required=False)
 
 
 class ClientWriteSerializer(StrictSerializer):
@@ -176,6 +188,8 @@ class ProjectResponseSerializer(ProjectWriteSerializer):
     updated_at = serializers.DateTimeField()
     positions = PositionResponseSerializer(many=True, required=False)
     versions = ProjectVersionResponseSerializer(many=True, required=False)
+    quotation_valid_until = serializers.DateField(allow_null=True, required=False)
+    quotation_validity_source = serializers.CharField(required=False)
 
 
 class ProjectListResponseSerializer(serializers.Serializer):

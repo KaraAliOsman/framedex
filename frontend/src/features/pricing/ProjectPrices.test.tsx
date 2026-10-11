@@ -256,6 +256,25 @@ it("reads actual margin difference in percentage points", async () => {
   render(page());
   expect(await screen.findByText("−15,0 pp")).toBeInTheDocument();
 });
+it("keeps the first motor projection pending without asserting that no price exists", async () => {
+  const pending = deferred();
+  workspace = () => pending.promise;
+  render(page());
+  await waitFor(() => expect(calls("workspace/")).toHaveLength(1));
+  const reading = screen.getByRole("region", { name: "Lectura de precios" });
+  expect(reading).toHaveAttribute("aria-busy", "true");
+  expect(within(reading).getByText(/El motor está recalculando/)).toBeInTheDocument();
+  expect(
+    within(reading).queryByText(/todavía no tiene un precio calculado/),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Aplicar" })).toBeDisabled();
+  await act(async () => pending.resolve(operation()));
+  await screen.findByRole("heading", { name: "Actual y propuesto" });
+  expect(reading).not.toHaveAttribute("aria-busy");
+  expect(
+    within(reading).queryByText(/todavía no tiene un precio calculado/),
+  ).not.toBeInTheDocument();
+});
 it("keeps a positioned missing-cost failure and a resolver link without a zero-price substitute", async () => {
   workspace = async () => {
     throw new ApiError(422, { error: { detail: "Vano 4 · falta costo vigente del vidrio." } });

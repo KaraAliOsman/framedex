@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { OperationAddDesignPositionRequest } from "./operationAddDesignPositionRequest";
 import type { OperationAddPositionRequest } from "./operationAddPositionRequest";
 import type { OperationAddStackedUnitRequest } from "./operationAddStackedUnitRequest";
 import type { OperationAddUnitRequest } from "./operationAddUnitRequest";
@@ -12,6 +13,7 @@ import type { OperationApplyToPositionsRequest } from "./operationApplyToPositio
 import type { OperationClearGlassThicknessRequest } from "./operationClearGlassThicknessRequest";
 import type { OperationDuplicateModuleRequest } from "./operationDuplicateModuleRequest";
 import type { OperationDuplicatePositionRequest } from "./operationDuplicatePositionRequest";
+import type { OperationDuplicatePositionsRequest } from "./operationDuplicatePositionsRequest";
 import type { OperationEqualizeAnglesRequest } from "./operationEqualizeAnglesRequest";
 import type { OperationEqualizeBaysRequest } from "./operationEqualizeBaysRequest";
 import type { OperationEqualizeWidthsRequest } from "./operationEqualizeWidthsRequest";
@@ -25,7 +27,9 @@ import type { OperationPrepareReleaseRequest } from "./operationPrepareReleaseRe
 import type { OperationRemoveCouplingRequest } from "./operationRemoveCouplingRequest";
 import type { OperationRemoveDividerRequest } from "./operationRemoveDividerRequest";
 import type { OperationRemovePositionRequest } from "./operationRemovePositionRequest";
+import type { OperationRemovePositionsRequest } from "./operationRemovePositionsRequest";
 import type { OperationRemoveUnitRequest } from "./operationRemoveUnitRequest";
+import type { OperationReorderPositionsRequest } from "./operationReorderPositionsRequest";
 import type { OperationResizeRequest } from "./operationResizeRequest";
 import type { OperationResizeSeamRequest } from "./operationResizeSeamRequest";
 import type { OperationSetBaySizeRequest } from "./operationSetBaySizeRequest";
@@ -48,6 +52,7 @@ import type { OperationSetModuleTreeRequest } from "./operationSetModuleTreeRequ
 import type { OperationSetModuleWidthRequest } from "./operationSetModuleWidthRequest";
 import type { OperationSetOpeningRequest } from "./operationSetOpeningRequest";
 import type { OperationSetPanelRequest } from "./operationSetPanelRequest";
+import type { OperationSetPositionsRequest } from "./operationSetPositionsRequest";
 import type { OperationSetQuantityRequest } from "./operationSetQuantityRequest";
 import type { OperationSetSlidingLayoutRequest } from "./operationSetSlidingLayoutRequest";
 import type { OperationSetSystemRequest } from "./operationSetSystemRequest";
@@ -102,6 +107,11 @@ export type DesignOperationRequest =
   | OperationAddPositionRequest
   | OperationDuplicatePositionRequest
   | OperationRemovePositionRequest
+  | OperationDuplicatePositionsRequest
+  | OperationAddDesignPositionRequest
+  | OperationRemovePositionsRequest
+  | OperationSetPositionsRequest
+  | OperationReorderPositionsRequest
   | OperationApplyToPositionsRequest
   | OperationPrepareEmitRequest
   | OperationPrepareReleaseRequest

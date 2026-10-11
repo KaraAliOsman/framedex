@@ -1,0 +1,38 @@
+{
+  "records": [
+    {
+      "state": "cargando",
+      "overflow": false
+    },
+    {
+      "state": "error",
+      "overflow": false
+    },
+    {
+      "state": "error-recuperado",
+      "result": "PASS"
+    },
+    {
+      "state": "bloqueado-precio-aplicado",
+      "overflow": false
+    },
+    {
+      "state": "vacio",
+      "overflow": false
+    },
+    {
+      "state": "sin-permiso",
+      "overflow": false
+    }
+  ],
+  "injections": [
+    "retención de GET para carga",
+    "503 para error"
+  ],
+  "mutations": 0,
+  "real_states": [
+    "vacío de fixture",
+    "rol instalador sin acceso",
+    "precio aplicado protege edición"
+  ]
+}

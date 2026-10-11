@@ -1,0 +1,32 @@
+{
+  "definition": "navigation to enabled first selection, including explicit click and selected count; screenshots excluded",
+  "runs": [
+    {
+      "run": 1,
+      "interactive_and_selection_ms": 1975.3198000000002,
+      "mounted": 5
+    },
+    {
+      "run": 2,
+      "interactive_and_selection_ms": 1781.6780999999996,
+      "mounted": 5
+    },
+    {
+      "run": 3,
+      "interactive_and_selection_ms": 1800.9507999999996,
+      "mounted": 5
+    },
+    {
+      "run": 4,
+      "interactive_and_selection_ms": 1904.5658999999996,
+      "mounted": 5
+    },
+    {
+      "run": 5,
+      "interactive_and_selection_ms": 1803.8706000000002,
+      "mounted": 5
+    }
+  ],
+  "max_ms": 1975.3198000000002,
+  "keyboard": "End/Home focus: PASS"
+}
