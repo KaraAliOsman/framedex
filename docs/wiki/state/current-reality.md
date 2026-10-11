@@ -1,10 +1,11 @@
 ---
 type: state
 status: active
-updated: 2026-10-10
+updated: 2026-10-11
 volatility: high
-verified_ref: 38bac104c8774dc0225fccec74e6089872701cb1
+verified_ref: e309768b950539177f7f651d3d59237585e65baf
 sources:
+  - P21 cierre local e309768b950539177f7f651d3d59237585e65baf, Database Gate completo y lint/tipos finales, 2026-10-11
   - P21 implementación 38bac104c8774dc0225fccec74e6089872701cb1, navegador y PostgreSQL focal, 2026-10-10
   - docs/redesign/P21-ACEPTACION.md
   - ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.

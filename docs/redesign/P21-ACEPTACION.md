@@ -3,7 +3,7 @@
 Base `76249e5a`, rama `codex/P21-centro-proyecto`. El proyecto deja la pila de
 acordeones y el riel duplicado de datos: encabezado con fuente, siete flujos
 visibles y una colección de elevaciones reales que permite editar la obra.
-La verificación de CI y Database Gate se registra al cerrar este encargo.
+Database Gate local completo PASA; la verificación de CI se registra al integrar.
 
 ## Recorrido y autoridad
 
@@ -124,7 +124,25 @@ Ningún check ni detector se debilita. El build conserva la advertencia de
 tamaño del bloque 3D compartido; el centro de proyecto carga sus paneles
 secundarios bajo demanda.
 
-Database Gate y CI se registran antes del merge. Los 79 PNG anteriores y
+Database Gate sobre `e309768b` pasa **1.325 pgTAP en 91 archivos**, **502
+integraciones**, **19 E2E** y diez verificaciones de upgrades poblados PG16.
+Los checks finales de fuente y tipos pasan sobre las correcciones E2E. La
+primera repetición completa encontró el selector de la acción Precio, una
+proyección de posición que incorpora metadatos del sistema y el intento de
+borrar un fixture con auditoría retenida. Las pruebas ahora verifican la
+proyección exacta, el before/after persistido del lote y el rechazo 409/23503
+del borrado; la auditoría no se borra ni se modifica para limpiar la prueba.
+La recarga de Precio espera la proyección del motor, comprueba el monto actual
+antes de leer la tabla y mantiene el estado de cálculo pendiente sin anunciar
+una ausencia de precio. Su regresión de frontend retiene la respuesta hasta
+comprobar cargador, bloqueo de Aplicar y ausencia del mensaje contradictorio.
+La repetición completa de los cuatro gates pasa 886 motor (+2 xfail),
+1.476 backend, 989 frontend, goldens byte a byte y build sobre ese código.
+El upgrade D01/D02 compara la fila histórica completa más los dos campos
+aditivos esperados: `display_order=null` y `placement={}`. Todos los campos
+anteriores y cualquier columna nueva inesperada siguen en la comparación.
+Ningún caso ni aserción de autoridad se elimina. CI se registra antes del
+merge. Los 79 PNG anteriores y
 posteriores conservan los recorridos sin tokens de autenticación ni valores
 de entorno. Los procesos propios de aplicación quedan detenidos y el fixture
 se conserva; la puerta SQL usa un proyecto aislado diferente.

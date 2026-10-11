@@ -1270,3 +1270,15 @@ y build. Database Gate y CI pendientes de cierre; no se afirma integración.
 R1–R20 de proyecto PASA.
 El catálogo DEMO y Uw Sin dato conservan sus límites. Véase
 `docs/redesign/P21-ACEPTACION.md` y `product/project-workspace.md`.
+
+
+### 2026-10-11 · P21, puerta completa de base de datos
+
+Código `e309768b950539177f7f651d3d59237585e65baf`: 1.325 pgTAP/91 archivos, 502 integraciones,
+19 E2E y diez upgrades poblados PostgreSQL 16 PASA. Lint y tipos finales
+también pasan. Las correcciones E2E conservan precios/PDF/revisiones,
+comparan la proyección exacta y comprueban la auditoría real antes/después
+de duplicar. La limpieza exige rechazo 409/23503 del borrado con historial
+retenido y elimina solo su usuario; el stack aislado destruye sus fixtures
+al terminar. No se altera la retención ni se reduce cobertura.
+CI e integración todavía pendientes de registrarse. Véase P21-ACEPTACION.
