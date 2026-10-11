@@ -395,20 +395,23 @@ async function main(): Promise<void> {
       for (const role of roles.filter((item) => selectedRoles.has(item))) {
         if (!route.public) await signIn(role);
         for (const theme of THEMES) {
-          await Promise.all(
-            VIEWPORTS.map(async (viewport) => {
-              const context = await prepareContext(
-                browser,
-                role,
-                theme,
-                viewport,
-                Boolean(route.public),
-              );
-              records.push(await captureRoute(context, route, role, theme, viewport.id, outDir));
-              console.log(`${records.length}: ${route.id} ${role} ${theme} ${viewport.id}`);
-              await context.close();
-            }),
-          );
+          const captures = VIEWPORTS.map((viewport) => async () => {
+            const context = await prepareContext(
+              browser,
+              role,
+              theme,
+              viewport,
+              Boolean(route.public),
+            );
+            records.push(await captureRoute(context, route, role, theme, viewport.id, outDir));
+            console.log(`${records.length}: ${route.id} ${role} ${theme} ${viewport.id}`);
+            await context.close();
+          });
+          if (process.env.DEKOPEN_UX_SERIAL === "1") {
+            for (const capture of captures) await capture();
+          } else {
+            await Promise.all(captures.map((capture) => capture()));
+          }
           await writeFile(
             path.join(outDir, "records.partial.json"),
             JSON.stringify(records, null, 2),

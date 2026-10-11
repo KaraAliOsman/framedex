@@ -580,7 +580,7 @@ export function Projection({
       />
       <h3>Posiciones</h3>
       <div className="price-positions" tabIndex={0} aria-label="Tabla de posiciones">
-        <table>
+        <table className="price-position-table">
           <thead>
             <tr>
               {[
@@ -600,20 +600,24 @@ export function Projection({
           <tbody>
             {value.positions.map((line) => (
               <Fragment key={line.position_index}>
-                <tr>
-                  <th>{line.position_index}</th>
-                  <td>
-                    {line.location || "Sin ubicación"}
-                    <small>{labels[line.typology] ?? "Composición"}</small>
+                <tr className="price-position-reading">
+                  <th data-label="Posición">{line.position_index}</th>
+                  <td data-label="Ubicación y tipología">
+                    <span>
+                      {line.location || "Sin ubicación"}
+                      <small>{labels[line.typology] ?? "Composición"}</small>
+                    </span>
                   </td>
-                  <td>
-                    {fmtMm(line.width_mm)} × {fmtMm(line.height_mm)} mm
-                    <small>
-                      {line.quantity} {line.quantity === 1 ? "unidad" : "unidades"}
-                    </small>
+                  <td data-label="Medidas · cantidad">
+                    <span>
+                      {fmtMm(line.width_mm)} × {fmtMm(line.height_mm)} mm
+                      <small>
+                        {line.quantity} {line.quantity === 1 ? "unidad" : "unidades"}
+                      </small>
+                    </span>
                   </td>
                   {owner && operation.costs_visible && (
-                    <td>
+                    <td data-label="Costo unitario">
                       <Amount
                         value={line.unit_cost}
                         currency={currency}
@@ -623,7 +627,7 @@ export function Projection({
                       />
                     </td>
                   )}
-                  <td>
+                  <td data-label="Precio unitario">
                     <Amount
                       value={line.unit_price}
                       currency={currency}
@@ -632,7 +636,7 @@ export function Projection({
                       formula="Precio unitario calculado; lectura a cuatro decimales"
                     />
                   </td>
-                  <td>
+                  <td data-label="Neto línea">
                     <Amount
                       value={line.line_net}
                       currency={currency}
@@ -642,7 +646,7 @@ export function Projection({
                     />
                   </td>
                   {owner && operation.costs_visible && (
-                    <td>
+                    <td data-label="Margen">
                       <Amount
                         value={line.margin}
                         currency={currency}
@@ -653,7 +657,7 @@ export function Projection({
                       />
                     </td>
                   )}
-                  <td>
+                  <td data-label="Δ neto">
                     <Amount
                       value={line.delta}
                       currency={currency}
@@ -1423,6 +1427,7 @@ export function ProjectPrices({
                   <label>
                     Moneda
                     <select
+                      aria-label="Moneda"
                       value={controls.currency}
                       onChange={(event) => update("currency", event.target.value)}
                     >
@@ -1442,6 +1447,10 @@ export function ProjectPrices({
                   <label>
                     Tipo de cambio registrado
                     <select
+                      aria-label="Tipo de cambio registrado"
+                      title={
+                        options?.fx.find((item) => item.id === controls.fx_snapshot_id)?.source
+                      }
                       value={controls.fx_snapshot_id}
                       onChange={(event) => update("fx_snapshot_id", event.target.value)}
                     >
@@ -1456,12 +1465,17 @@ export function ProjectPrices({
                         .map((item) => (
                           <option key={item.id} value={item.id}>
                             {item.base_currency} → {item.quote_currency} ·{" "}
-                            {formatDecimal(item.observed_rate, 8)} ·{" "}
-                            {formatDate(item.observed_date)}
+                            {fmtMm(item.observed_rate)} · {formatDate(item.observed_date)}
                           </option>
                         ))}
                     </select>
                   </label>
+                  {options?.fx.find((item) => item.id === controls.fx_snapshot_id)?.source && (
+                    <p className="field-hint">
+                      Fuente:{" "}
+                      {options.fx.find((item) => item.id === controls.fx_snapshot_id)?.source}
+                    </p>
+                  )}
                   <p className="field-hint">
                     La tasa declara pesos por dólar. Costos USD a CLP incluyen reserva del 5 %;
                     costos CLP a USD se dividen por esa tasa. La revisión conserva la fuente.

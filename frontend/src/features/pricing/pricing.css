@@ -638,3 +638,43 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+@media (max-width: 700px) {
+  .price-positions > .price-position-table,
+  .price-position-table > tbody,
+  .price-position-table > tbody > tr {
+    display: block;
+    width: 100%;
+  }
+  .price-position-table > thead {
+    display: none;
+  }
+  .price-position-table > tbody > .price-position-reading {
+    border-bottom: 1px solid var(--border-default);
+    padding: var(--space-2) 0;
+  }
+  .price-position-table > tbody > .price-position-reading > th,
+  .price-position-table > tbody > .price-position-reading > td {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    align-items: start;
+    gap: var(--space-2);
+    width: auto;
+    border: 0;
+    text-align: right;
+  }
+  .price-position-reading > [data-label]::before {
+    content: attr(data-label);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: var(--type-dense);
+    text-align: left;
+  }
+  .price-position-reading .price-amount {
+    justify-content: flex-end;
+  }
+  .price-position-table > tbody > tr > td[colspan] {
+    display: block;
+    width: auto;
+  }
+}
