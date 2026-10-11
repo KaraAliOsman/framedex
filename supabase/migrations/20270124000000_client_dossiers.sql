@@ -65,7 +65,7 @@ REVOKE ALL ON FUNCTION private.client_rut_key(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION private.client_rut_key(text) TO authenticated, documentary_backend, service_role;
 CREATE FUNCTION private.client_rut_valid(value text) RETURNS boolean
 LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
-DECLARE key text:=private.client_rut_key(value); body text; tally integer:=0; i integer; result integer;
+DECLARE key text:=private.client_rut_key(value); body text; tally integer:=0; result integer;
 BEGIN
  IF key IS NULL OR key !~ '^[0-9]{5,8}[0-9K]$' THEN RETURN false; END IF;
  body:=left(key,length(key)-1);

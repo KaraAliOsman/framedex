@@ -71,7 +71,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$ DECLARE old_value jso
 END $$;
 
 CREATE FUNCTION private.company_users(p_org uuid) RETURNS TABLE(id uuid,email text,role text,is_active boolean,updated_at timestamptz)
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$ BEGIN
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='' AS $$ BEGIN
  PERFORM private.require_company_owner(p_org);
  RETURN QUERY SELECT m.id,coalesce(u.email,'Identidad no disponible')::text,m.role::text,m.is_active,m.updated_at
  FROM public.tenancy_memberships m LEFT JOIN auth.users u ON u.id=m.user_id WHERE m.org_id=p_org ORDER BY m.is_active DESC,u.email,m.id;
@@ -129,7 +129,7 @@ END $$;
 
 -- A verified user can inspect/accept their capability before acquiring membership.
 CREATE FUNCTION private.inspect_company_invitation(p_digest text) RETURNS TABLE(organization_name text,email text,role text,expires_at timestamptz,accepted boolean)
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$ BEGIN
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='' AS $$ BEGIN
  RETURN QUERY SELECT o.name::text,i.email,i.role::text,i.expires_at,coalesce(i.accepted_by=auth.uid(),false)
  FROM public.organization_invitations i JOIN public.tenancy_organizations o ON o.id=i.org_id JOIN auth.users u ON u.id=auth.uid()
  WHERE i.token_digest=p_digest AND i.revoked_at IS NULL AND u.email_confirmed_at IS NOT NULL AND u.deleted_at IS NULL AND lower(u.email)=i.email
