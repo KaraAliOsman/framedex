@@ -410,3 +410,28 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 6. Importar o fusionar clientes requiere identidad revisada. Conserve contactos
    y direcciones de obra; pruebe una entrega distinta de facturación. No use
    tarifas, RUT, usuarios ni capacidades del fixture como datos productivos.
+
+## Despacho, terreno y postventa (P23)
+
+1. Sirva frontend/API por HTTPS. Compruebe `/field-worker.js` y recarga de
+   `/field` con red interrumpida después de abrir una agenda. El worker guarda
+   código/fuentes; nunca cachee API, Auth, Storage ni documentos privados en
+   el proxy/CDN. Pruebe la publicación de una nueva versión con la cola pendiente.
+2. Mantenga Storage privado y el worker de documentos activo. Abra un acta
+   firmada desde el usuario autorizado y compruebe denegación con otro tenant
+   o instalador sin asignación. La URL firmada no es una asignación de trabajo.
+3. Cree usuarios INSTALLER con correo verificado, MFA cuando la empresa lo
+   exige y asignación explícita. Desde Despacho planifique fecha/franja/equipo,
+   registre QR de bultos y confirme salida. En el teléfono abra la agenda antes
+   de ir a una obra sin señal; cierre la sesión al cambiar de responsable.
+4. Declare garantía real en Comercial (días e inicio) antes de emitir; no use
+   el texto libre como fecha. Compruebe recepción parcial de unidades y garantía
+   por la entrega/instalación firmada de cada unidad. El acta de servicio no
+   acredita instalación. Catálogo DEMO no acredita la autoridad del proveedor.
+5. Recorra: entrega → instalación/foto → incidencia → firma/ACT → diagnóstico
+   humano → RM, compra adicional o servicio → cierre. Pruebe una medición con
+   diff y borrador correctivo preservando la revisión aprobada. Interrumpa una
+   respuesta tras guardar, reintente y compruebe un único recibo/resultado.
+6. Las copias locales guardan fotos/firmas hasta sincronizar. Use teléfonos
+   protegidos; una revocación no elimina una copia de un dispositivo sin red.
+   Compruebe cierre de sesión y bloqueo del replay con acceso revocado.

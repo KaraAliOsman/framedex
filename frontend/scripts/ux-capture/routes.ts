@@ -5,6 +5,7 @@ export type FixtureRefs = {
   positionId: string;
   clientId: string;
   orderId?: string;
+  fieldVisitId?: string;
   quoteTokens: {
     vigente: string;
     aprobada: string;
@@ -45,6 +46,20 @@ export const FIXTURE_USERS: Record<UxRole, { email: string; password: string }> 
 
 export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
   return [
+    { id: "despacho-agenda", path: "/dispatch", roles: ["WORKSHOP_MANAGER"] },
+    { id: "despacho-plan", path: "/dispatch?view=plan", roles: ["WORKSHOP_MANAGER"] },
+    { id: "despacho-postventa", path: "/dispatch?view=cases", roles: ["WORKSHOP_MANAGER"] },
+    { id: "terreno-agenda", path: "/field", roles: ["INSTALLER"], workshop: true },
+    ...(refs.fieldVisitId
+      ? [
+          {
+            id: "terreno-posicion",
+            path: `/field?visit=${refs.fieldVisitId}`,
+            roles: ["INSTALLER"] as UxRole[],
+            workshop: true,
+          },
+        ]
+      : []),
     { id: "inicio", path: "/", roles: ["ESTIMATOR"], public: true },
     { id: "login", path: "/login", roles: ["ESTIMATOR"], public: true },
     {

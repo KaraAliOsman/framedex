@@ -212,7 +212,7 @@ def _unclaimed_requirements(version_id: UUID, org_id: UUID,
         for row in rows(
             "SELECT requirement_line_id, SUM(quantity - released_qty) AS covered_qty "
             "FROM public.order_requirement_lines "
-            "WHERE project_version_id=%s AND org_id=%s "
+            "WHERE project_version_id=%s AND org_id=%s AND field_authorization_id IS NULL "
             "GROUP BY requirement_line_id",
             [version_id, org_id],
         )
@@ -250,6 +250,11 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
         requirements = [
             _line_snapshot(item, labels) for item in _requirements(version_id, org_id)
         ]
+        from dekopen_engine.inventory import purchase_source_ledger
+        source_snapshot = _object(one("SELECT snapshot_json FROM public.project_versions WHERE org_id=%s AND id=%s", [org_id,version_id])["snapshot_json"], "invalid_frozen_revision_snapshot")
+        source_ledger = purchase_source_ledger(source_snapshot)
+        for requirement in requirements:
+            requirement["source_position_ids"] = sorted({source_ledger[source][0] for source in requirement["source_trace"] if source in source_ledger})
         eligibilities = rows(
             "SELECT id,order_type::text,supplier_identity,supplier_name,supplier_details::text,"
             "eligible_requirement_keys::text,evidence::text,version,content_hash,created_at "
@@ -309,7 +314,7 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             for row in rows(
                 "SELECT requirement_line_id, SUM(quantity - released_qty) AS covered_qty "
                 "FROM public.order_requirement_lines "
-                "WHERE project_version_id=%s AND org_id=%s "
+                "WHERE project_version_id=%s AND org_id=%s AND field_authorization_id IS NULL "
                 "GROUP BY requirement_line_id",
                 [version_id, org_id],
             )
@@ -487,6 +492,7 @@ def confirm_order_type_batch(
     order_type: str, confirmed: bool,
     quantities: dict[str, Decimal] | None = None,
     unit_prices: dict[str, Decimal | None] | None = None,
+    field_replacement: dict | None = None,
 ) -> tuple[list[dict[str, object]], bool]:
     if not confirmed:
         raise DocumentaryError("order_batch_confirmation_required")
@@ -506,13 +512,38 @@ def confirm_order_type_batch(
         )
         # Requirements already claimed by a live order line stay claimed — a
         # re-confirm only covers lines released by a cancellation.
-        requirement_rows = _unclaimed_requirements(version_id, org_id, order_type)
+        requirement_rows = (
+            [{**r, 'open_qty': r['quantity']} for r in _requirements(version_id, org_id, order_type)]
+            if field_replacement is not None else _unclaimed_requirements(version_id, org_id, order_type)
+        )
+        if field_replacement is not None:
+            # This is an additional, explicitly reviewed physical loss. It
+            # never releases or edits the original purchasing claims.
+            from production.field import live_role, SUPERVISORS, reject
+            if live_role(org_id, actor_id) not in SUPERVISORS:
+                reject('El jefe de taller autoriza material adicional.', 'field_permission', 403)
+            case = one("SELECT * FROM public.field_incidents WHERE org_id=%s AND id=%s FOR UPDATE",
+                       [org_id, field_replacement['id']], 'field_incident_not_found')
+            if case['kind'] != 'MISSING' or case['status'] != 'OPEN' or quantities is None:
+                reject('La compra adicional requiere un faltante abierto y una cantidad confirmada.')
+            offered = {str(r['id']): r for r in requirement_rows}
+            from dekopen_engine.inventory import purchase_source_ledger
+            source_snapshot = _object(one("SELECT snapshot_json FROM public.project_versions WHERE org_id=%s AND id=%s", [org_id,version_id])["snapshot_json"], "invalid_frozen_revision_snapshot")
+            source_ledger = purchase_source_ledger(source_snapshot)
+            if any(rid not in offered or not any(entry in source_ledger and source_ledger[entry][0] == str(case['position_id']) for entry in
+                   _array(offered[rid]['source_trace'], 'invalid_purchase_requirement')) for rid in quantities):
+                reject('El requerimiento no pertenece a la posición del faltante.')
         if quantities is not None:
             offered={str(r['id']):r for r in requirement_rows}
             if any(rid not in offered or qty<=0 or qty>Decimal(str(offered[rid]['open_qty']))
                    for rid,qty in quantities.items()):
                 raise DocumentaryError('purchase_choice_invalid')
             requirement_rows=[{**offered[rid],'open_qty':qty} for rid,qty in quantities.items()]
+        if field_replacement is not None:
+            for requirement in requirement_rows:
+                authorization = one("INSERT INTO public.field_purchase_authorizations(org_id,visit_id,incident_id,requirement_line_id,quantity,created_by) "
+                    "VALUES(%s,%s,%s,%s,%s,%s) RETURNING id", [org_id,field_replacement['visit_id'],field_replacement['id'],requirement['id'],requirement['open_qty'],actor_id])
+                requirement['field_authorization_id'] = authorization['id']
         attempt = 1
         if existing_batch:
             # Idempotent while the batch covers the type and nothing was
@@ -593,6 +624,7 @@ def confirm_order_type_batch(
             "order_type": order_type,
             "attempt": attempt,
             "allocations": allocation_preimage,
+            **({'field_incident': str(field_replacement['id'])} if field_replacement is not None else {}),
         })
         confirmed_at = datetime.now(timezone.utc)
         batch = one(
@@ -620,6 +652,9 @@ def confirm_order_type_batch(
                 _line_snapshot(item, labels, quantity_override=item.get("open_qty"))
                 for item, _ in values
             ]
+            if field_replacement is not None:
+                for line in line_snapshots:
+                    line['field_incident'] = {'id': str(field_replacement['id']), 'code': field_replacement['code']}
             if unit_prices is not None:
                 for line in line_snapshots:
                     line['unit_price']=unit_prices.get(line['id'])
@@ -682,6 +717,8 @@ def confirm_order_type_batch(
                 "allocation_identity": allocation_identity,
                 "supplier_eligibility": eligibility_snapshot,
                 "lines": line_snapshots,
+                **({'field_incident': {'id': str(field_replacement['id']), 'code': field_replacement['code']}}
+                   if field_replacement is not None else {}),
                 # Issuer identity for the letterhead — sealed with the order so
                 # re-renders keep the same branding.
                 "organization": org_branding.branding_for_snapshot(org_id=org_id),
@@ -709,12 +746,12 @@ def confirm_order_type_batch(
                 one(
                     "INSERT INTO public.order_requirement_lines("
                     "order_id,requirement_line_id,project_id,project_version_id,org_id,order_type,"
-                    "bom_hash,revision_snapshot_sha256,quantity,line_snapshot,line_hash) "
-                    "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s) RETURNING id",
+                    "bom_hash,revision_snapshot_sha256,quantity,line_snapshot,line_hash,field_authorization_id) "
+                    "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) RETURNING id",
                     [order_id, requirement_row["id"], version["project_id"], version_id,
                      org_id, order_type, version["bom_hash"], version["snapshot_sha256"],
                      line["quantity"], documentary_canonical_json_v1(line).decode("utf-8"),
-                     line_hash],
+                     line_hash, requirement_row.get('field_authorization_id')],
                 )
             outputs.append({
                 "id": str(order_id), "order_code": order_code, "order_type": order_type,

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ValidatedForm } from "../../ui";
+import jsQR from "jsqr";
 
 type Detector = { detect: (source: HTMLVideoElement) => Promise<{ rawValue: string }[]> };
 type DetectorConstructor = new (options: { formats: string[] }) => Detector;
@@ -21,9 +22,9 @@ export function PieceScanner({
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
   const Detector = (window as Window & { BarcodeDetector?: DetectorConstructor }).BarcodeDetector;
-  const available = !!Detector && !!navigator.mediaDevices?.getUserMedia;
+  const available = !!navigator.mediaDevices?.getUserMedia;
   useEffect(() => {
-    if (!camera || !Detector) return;
+    if (!camera) return;
     let active = true,
       stream: MediaStream | undefined,
       timer: ReturnType<typeof setTimeout>;
@@ -38,11 +39,22 @@ export function PieceScanner({
         if (!video.current) return;
         video.current.srcObject = media;
         await video.current.play();
-        const detector = new Detector({ formats: ["qr_code"] });
+        const detector = Detector ? new Detector({ formats: ["qr_code"] }) : null;
+        const frame = document.createElement("canvas");
+        const pixels = frame.getContext("2d", { willReadFrequently: true });
         const scan = async () => {
           if (!active || !video.current) return;
           try {
-            const hits = await detector.detect(video.current);
+            let hits: { rawValue: string }[] = [];
+            if (detector) hits = await detector.detect(video.current);
+            else if (pixels && video.current.videoWidth) {
+              frame.width = video.current.videoWidth;
+              frame.height = video.current.videoHeight;
+              pixels.drawImage(video.current, 0, 0);
+              const data = pixels.getImageData(0, 0, frame.width, frame.height);
+              const result = jsQR(data.data, data.width, data.height);
+              if (result) hits = [{ rawValue: result.data }];
+            }
             if (!active) return;
             if (hits[0]?.rawValue) {
               onScanRef.current(hits[0].rawValue);

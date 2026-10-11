@@ -43,7 +43,7 @@ def public_rules(org_id, system_id):
             for item in rules_for(org_id,system_id)]
 
 
-def derive_design(org_id, design, surveys):
+def derive_design(org_id, design, surveys, *, sealed_rules=None):
     """The preview and save boundary run the same exact derivation."""
     design = deepcopy(design)
     tree = design['parametric_tree']
@@ -60,12 +60,22 @@ def derive_design(org_id, design, surveys):
     for survey in surveys:
         # Immutable revisions are resolved by tenant AND series, including a
         # pinned older revision. Never substitute another series' stored rule.
-        with extra_backend():
-            found = rows('SELECT rule::text FROM public.mounting_rules WHERE org_id=%s AND system_id=%s AND code=%s AND revision=%s',
-                         [org_id,design['system_id'],survey.rule_code,survey.rule_revision])
-        if not found:
-            raise contract_error(409,'mounting_rule_stale','La regla no está declarada para esta serie. Recarga Vano y montaje.')
-        rule = MountingRule.model_validate_json(found[0]['rule'])
+        if sealed_rules is None:
+            with extra_backend():
+                found = rows('SELECT rule::text FROM public.mounting_rules WHERE org_id=%s AND system_id=%s AND code=%s AND revision=%s',
+                             [org_id,design['system_id'],survey.rule_code,survey.rule_revision])
+            if not found:
+                raise contract_error(409,'mounting_rule_stale','La regla no está declarada para esta serie. Recarga Vano y montaje.')
+            rule = MountingRule.model_validate_json(found[0]['rule'])
+        else:
+            # Internal field-only authority: the scheduler resolved these
+            # tenant/series/revision rules into an immutable visit context.
+            # No public mounting endpoint accepts this argument.
+            found = next((r for r in sealed_rules if r['revision']==survey.rule_revision and
+                          r['rule']['code']==survey.rule_code),None)
+            if not found:
+                raise contract_error(409,'mounting_rule_stale','La regla no está en la visita sellada. Agenda con la autoridad actual.')
+            rule = MountingRule.model_validate_json(json_text(found['rule']))
         try:
             validate_mounting_extras(rule,params.extra_authority)
             result = derive_fabrication(survey,rule)

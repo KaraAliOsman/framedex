@@ -112,6 +112,8 @@ tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .voided-banner { border: 1.5pt solid #991B1B; color: #991B1B; padding: 3mm 5mm; margin: 3mm 0; break-inside: avoid; }
 .voided-banner p { margin: 0; } .voided-title { font-size: 16pt; font-weight: 700; letter-spacing: 2pt; margin-bottom: 1.5mm; }
 .muted { color: #727D82; } .signature { height: 15mm; border-bottom: 0.5pt solid #465158; margin-top: 6mm; }
+.dispatch-unit-label { display: inline-block; width: 44mm; vertical-align: top; margin: 2mm; overflow-wrap: anywhere; }
+.dispatch-qr, .dispatch-qr svg { width: 22mm; height: 22mm; }
 .signoff { break-inside: avoid; }
 .keep { break-inside: avoid; }
 .sign-row { display: flex; gap: 8mm; margin-top: 3mm; margin-bottom: 6mm; }
@@ -2317,8 +2319,8 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
             f"<strong>Dirección de entrega:</strong> {escape(_value(delivery.get('address')))}"
         )
     window = str(delivery.get("time_window") or "")
-    window_es = {"AM": "AM", "PM": "PM", "JORNADA": "Jornada completa"}.get(
-        window, window
+    window_es = {"AM": "Mañana", "PM": "Tarde", "JORNADA": "Jornada completa"}.get(
+        window, "Sin dato · horario no declarado" if window else ""
     )
     if delivery.get("scheduled_date"):
         when = f"{escape(_cldate(str(delivery['scheduled_date'])))}"
@@ -2342,6 +2344,15 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
     if delivery_lines:
         body += "<p>" + "<br>".join(delivery_lines) + "</p>"
     if units:
+        import segno
+
+        addresses = []
+        for unit in units:
+            label = _value(unit.get("label_code"))
+            qr = unit.get("qr_value") or f"DEKOPEN|{order.get('code')}|{label}|{unit.get('unit_index')}"
+            image = segno.make(qr, error="m").svg_inline(border=4, scale=3, omitsize=True)
+            addresses.append(f'<div class="dispatch-unit-label"><div class="dispatch-qr">{image}</div><p class="dimension">{escape(label)}</p></div>')
+        body += '<h2>Carga identificada</h2><p class="muted">Cada QR abre el bulto exacto de esta orden. Revise la etiqueta antes de descargar.</p>' + ''.join(addresses)
         body += (
             "<h2>Bultos</h2>"
             + _table(
@@ -2357,7 +2368,11 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
                         unit.get("fittings"),
                     ]
                     for unit in units
-                ],
+                ] + (
+                    [["Total", *(totals.get(key) for key in (
+                        "profiles", "reinforcements", "glasses", "panels", "hardware", "fittings"
+                    ))]] if len(units) > 1 else []
+                ),
                 ["", "dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
             )
         )
@@ -2369,23 +2384,19 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
     note = _value(dispatch.get("note"))
     if note != "—":
         body += f"<p><strong>Nota:</strong> {escape(note)}</p>"
-    body += (
-        "<h2>Resumen de contenido</h2>"
-        + _table(
-            ["Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes", "Accesorios"],
-            [
-                [
-                    totals.get("profiles"),
-                    totals.get("reinforcements"),
-                    totals.get("glasses"),
-                    totals.get("panels"),
-                    totals.get("hardware"),
-                    totals.get("fittings"),
-                ]
-            ],
-            ["dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
+    if not units:
+        body += (
+            "<h2>Resumen de contenido</h2>"
+            + _table(
+                ["Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes", "Accesorios"],
+                [[totals.get(key) for key in (
+                    "profiles", "reinforcements", "glasses", "panels", "hardware", "fittings"
+                )]],
+                ["dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
+            )
         )
-        + "<div class=\"signoff\"><div class=\"signature\"></div>"
+    body += (
+        "<div class=\"signoff\"><div class=\"signature\"></div>"
         + "<p class=\"muted\">Despachado por / Recibido conforme</p></div></main>"
     )
     return body

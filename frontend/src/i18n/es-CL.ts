@@ -1762,6 +1762,8 @@ export const messages = {
   "purchasing.orderTypePanel": "Paneles",
   "nav.purchasing": "Compras",
   "nav.production": "Producción",
+  "nav.dispatch": "Despacho y postventa",
+  "nav.field": "Terreno",
   "nav.assistant": "Asistente",
   "nav.jobs": "Trabajos",
 

@@ -87,6 +87,27 @@ sources:
 
 # Current reality
 
+## P23 · despacho, terreno y postventa (11-10-2026)
+
+Verificado en `codex/P23-terreno-postventa`, base `c7cbb218`, todavía en
+cierre de gates/CI. Agenda por fecha/equipo, carga y salida/GD se enlazan con
+la obra y su unidad. Instalador: QR → checklist/foto → incidencia → nombre/
+RUT/firma → ACT privado inmutable. Jefe: diagnóstico → RM, compra adicional
+o servicio con resultado verificable. Una recepción parcial no acredita toda
+la OT; una visita de servicio no acredita instalación de otras unidades.
+
+La medición de tres puntos/foto produce diff del motor y borrador correctivo
+sin reescribir la fuente aprobada. Garantía exige condiciones selladas y
+primer hecho firmado por unidad, con la elección real de P10. Catorce
+integraciones PostgreSQL y 21 tests focales de Auth/IndexedDB pasan. El
+replay tras respuesta perdida produce una incidencia en dos solicitudes;
+la regresión tardía tras logout conserva borrado de evidencia personal.
+Las 40 vistas finales tienen cero hallazgos/desbordes, ambos temas y cuatro
+tamaños; 86 PNG verificados idénticos después de comprimir. ACT de servicio
+y preview de GD final caben en una página Carta; PDFs emitidos del primer
+ensayo permanecen históricos. Véase [terreno](../product/field-work.md) y
+[aceptación P23](../../redesign/P23-ACEPTACION.md).
+
 ## P22 · empresa, clientes y ajustes (11-10-2026)
 
 La ficha tiene identidad explícita, contactos, direcciones de obra y notas

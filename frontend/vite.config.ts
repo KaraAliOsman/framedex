@@ -1,6 +1,8 @@
 import { defineConfig } from "vitest/config";
+import { fieldWorker } from "./scripts/fieldWorker";
 
 export default defineConfig({
+  plugins: [fieldWorker()],
   build: {
     outDir: "dist",
     rolldownOptions: {

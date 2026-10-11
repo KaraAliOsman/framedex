@@ -110,10 +110,10 @@ export function ConnectionBoundary({ children }: PropsWithChildren): JSX.Element
   }, []);
   return (
     <>
-      <div className="connection-content" hidden={!online}>
+      <div className="connection-content" hidden={!online && window.location.pathname !== "/field"}>
         {children}
       </div>
-      {!online ? (
+      {!online && window.location.pathname !== "/field" ? (
         <RecoveryPage
           kind="offline"
           retrying={checking}

@@ -1369,3 +1369,20 @@ proyección privada de stock y fusión conservan sus regresiones reales.
 Los procesos propios están detenidos y el fixture se conserva.
 
 CodeRabbit omitió la revisión por configuración de la rama; Copilot la omitió por cuota. No se atribuyen como revisiones completas.
+
+### 2026-10-11 · P23, terreno y postventa verificados
+
+Rama `codex/P23-terreno-postventa`, base `c7cbb218`. Agenda, carga/GD,
+entrega, QR de unidad, checklist/foto, daño, acta y decisión RM pasan en
+Chromium móvil. Servicio firmado/cerrado y medición de tres puntos con
+diff del motor/borrador correctivo pasan; la fuente conserva sus bytes.
+La respuesta perdida tras commit se reintenta con el mismo UUID: dos
+requests, una incidencia. La caché pública no incluye API/Auth/Storage.
+
+Catorce integraciones PostgreSQL verifican replay, aislamiento, membresía/
+MFA vivos, evidencia inmutable, recepción parcial, capacidad adicional de OC,
+servicio y garantía por unidad. La revisión detectó una respuesta tardía que
+podía recrear un pendiente después de logout: la actualización ahora exige
+su existencia en la misma transacción IndexedDB y tiene regresión real.
+ACT de servicio y preview de GD final caben en una página Carta; la primera
+emisión del ensayo permanece histórica. Gates/CI y squash se registran al cerrar.

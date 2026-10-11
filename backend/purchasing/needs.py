@@ -92,7 +92,7 @@ def proposal(*, org_id: UUID) -> dict:
                 "SELECT l.requirement_line_id,SUM(l.quantity-l.released_qty) AS qty, "
                 "SUM(CASE WHEN o.status='DRAFT' THEN l.quantity-l.released_qty ELSE 0 END) AS draft "
                 "FROM public.order_requirement_lines l JOIN public.orders o ON o.id=l.order_id AND o.org_id=l.org_id "
-                "WHERE l.org_id=%s AND l.project_version_id=%s GROUP BY l.requirement_line_id", [str(org_id), version_id])
+                "WHERE l.org_id=%s AND l.project_version_id=%s AND l.field_authorization_id IS NULL GROUP BY l.requirement_line_id", [str(org_id), version_id])
             committed = {str(r['requirement_line_id']): Decimal(str(r['qty'])) for r in claims}
             drafts = {str(r['requirement_line_id']): Decimal(str(r['draft'])) for r in claims}
             allocated = {str(a['requirement_line_id']): a for a in rows(

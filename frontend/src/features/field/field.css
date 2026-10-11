@@ -1,0 +1,207 @@
+.field-page {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  max-width: 100%;
+  color: var(--text-primary);
+  background: var(--bg-app);
+  font-size: var(--type-body);
+  line-height: var(--line-body);
+}
+.field-page a {
+  color: var(--interactive);
+  display: inline-flex;
+  align-items: center;
+  overflow-wrap: anywhere;
+}
+.field-page :is(input, select, textarea) {
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  font: inherit;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  padding: var(--space-2);
+}
+.field-page input[type="checkbox"] {
+  accent-color: var(--interactive-fill);
+}
+.field-page :is(input, select, textarea, button, summary, a):focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.field-page input[type="file"] {
+  width: 100%;
+}
+.field-page input::file-selector-button {
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  padding: var(--space-2);
+  min-height: 44px;
+  font: inherit;
+}
+.field-page .signature-pad-canvas {
+  max-width: 100%;
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  background: var(--surface-sheet);
+  touch-action: none;
+}
+.field-page input,
+.field-page select,
+.field-page textarea,
+.field-page button,
+.field-page summary,
+.field-page a {
+  min-height: 44px;
+}
+.field-page input,
+.field-page select,
+.field-page textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+.field-page label {
+  display: grid;
+  gap: var(--space-2);
+}
+.field-page h1 {
+  font-size: var(--type-title-l);
+}
+.field-page h2 {
+  font-size: var(--type-title-m);
+}
+.field-page header,
+.field-nav,
+.field-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.field-page header {
+  justify-content: space-between;
+}
+.field-agenda {
+  display: grid;
+  gap: var(--space-3);
+}
+.field-visit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-default);
+  padding: var(--space-3) 0;
+}
+.field-visit-row p {
+  margin: var(--space-1) 0;
+  overflow-wrap: anywhere;
+}
+.field-unit {
+  display: grid;
+  gap: var(--space-3);
+  border-top: 1px solid var(--border-default);
+  padding: var(--space-4) 0;
+  min-width: 0;
+}
+.field-unit-code {
+  font: 500 var(--type-display) / var(--line-display) var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.field-drawing {
+  max-width: 480px;
+  background: var(--surface-sheet);
+  border: 1px solid var(--border-default);
+  padding: var(--space-3);
+}
+.field-checks {
+  display: grid;
+  gap: var(--space-2);
+}
+.field-checks label {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  min-height: 44px;
+}
+.field-checks input {
+  min-height: 24px;
+  width: 24px;
+}
+.field-form {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 680px;
+  min-width: 0;
+}
+.field-survey {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.field-copy {
+  border-left: 2px solid var(--mark);
+  padding: var(--space-3);
+  background: var(--surface-card);
+}
+.field-pending {
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  overflow-wrap: anywhere;
+}
+.field-preview-photo {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+.field-case {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-default);
+}
+.field-case p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.field-tools button[aria-pressed="true"] {
+  background: var(--surface-selected);
+  border-color: var(--interactive);
+  outline: 1px solid var(--interactive);
+}
+.field-plan {
+  display: grid;
+  gap: var(--space-3);
+}
+.field-office {
+  font-size: var(--type-body);
+}
+.field-office input,
+.field-office select,
+.field-office button,
+.field-office summary,
+.field-office a {
+  min-height: 32px;
+}
+.field-office .field-checks label {
+  min-height: 32px;
+}
+.field-case > button {
+  justify-self: start;
+}
+@media (min-width: 1024px) {
+  .field-agenda {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .field-office .field-plan > .field-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 850px;
+  }
+  .field-office .field-plan fieldset {
+    grid-column: 1 / -1;
+  }
+}

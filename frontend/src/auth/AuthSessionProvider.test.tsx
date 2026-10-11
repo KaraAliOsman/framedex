@@ -1,3 +1,4 @@
+import "fake-indexeddb/auto";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -67,6 +68,7 @@ function Probe(): JSX.Element {
     <>
       <span data-testid="status">{auth.status}</span>
       <span data-testid="active-org">{auth.me?.active_organization?.id ?? ""}</span>
+      <span data-testid="network-unavailable">{String(auth.networkUnavailable)}</span>
       <button onClick={() => void auth.selectOrganization("org-B")}>Select B</button>
       <button onClick={() => void auth.requestMagicLink("fixture@example.com")}>Magic link</button>
       <button onClick={() => void auth.signOut()}>Sign out</button>
@@ -401,5 +403,17 @@ describe("authoritative session and active-organization boundary", () => {
       },
     });
     expect(capture).toHaveBeenCalledWith("auth_magic_link_requested");
+  });
+  it("distinguishes transport failure from denied authority for a scoped offline copy", async () => {
+    vi.mocked(authMe).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("error"));
+    expect(screen.getByTestId("network-unavailable")).toHaveTextContent("true");
+    vi.mocked(authMe).mockRejectedValueOnce(
+      new ApiError(403, { error: { code: "no_active_membership" } }),
+    );
+    act(() => fake.callback?.("TOKEN_REFRESHED", session));
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("no_membership"));
+    expect(screen.getByTestId("network-unavailable")).toHaveTextContent("false");
   });
 });

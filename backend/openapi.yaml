@@ -12995,6 +12995,380 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/field/:
+    get:
+      operationId: fieldWorkspace
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - field
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldWorkspace'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/field/assets/{asset_id}/access/:
+    get:
+      operationId: fieldAssetAccess
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: asset_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - field
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldAssetAccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/field/schedule/:
+    post:
+      operationId: fieldSchedule
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - field
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FieldScheduleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FieldScheduleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FieldScheduleRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldReceipt'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/field/visits/{visit_id}/commands/:
+    post:
+      operationId: fieldCommand
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: visit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - field
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FieldCommandRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FieldCommandRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FieldCommandRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldReceipt'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/field/visits/{visit_id}/review/:
+    post:
+      operationId: fieldReview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: visit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - field
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FieldReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FieldReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FieldReviewRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldReviewResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/glass-orders/:
     get:
       operationId: production_glass_order
@@ -26784,6 +27158,16 @@ components:
         warranty:
           type: string
           maxLength: 4000
+        warranty_days:
+          type: integer
+          maximum: 36500
+          minimum: 1
+          nullable: true
+        warranty_start:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/WarrantyStartEnum'
+          - $ref: '#/components/schemas/NullEnum'
         jurisdiction:
           type: string
           maxLength: 1000
@@ -26806,6 +27190,16 @@ components:
         warranty:
           type: string
           maxLength: 4000
+        warranty_days:
+          type: integer
+          maximum: 36500
+          minimum: 1
+          nullable: true
+        warranty_start:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/WarrantyStartEnum'
+          - $ref: '#/components/schemas/NullEnum'
         jurisdiction:
           type: string
           maxLength: 1000
@@ -29591,6 +29985,359 @@ components:
       - suggestions
       - target_module_id
       - total_price
+    FieldAssetAccess:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        signed_url:
+          type: string
+          format: uri
+        file_sha256:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - expires_in
+      - file_sha256
+      - id
+      - signed_url
+    FieldChecksRequest:
+      type: object
+      properties:
+        installed:
+          type: boolean
+        levelled:
+          type: boolean
+        sealed:
+          type: boolean
+        adjusted:
+          type: boolean
+        clean:
+          type: boolean
+      required:
+      - adjusted
+      - clean
+      - installed
+      - levelled
+      - sealed
+    FieldCommandKindEnum:
+      enum:
+      - LOAD
+      - DEPART
+      - DELIVER
+      - CHECK
+      - MEASURE
+      - INCIDENT
+      - RECEIVE
+      - DIAGNOSE
+      - RESOLVE
+      - CLOSE
+      - CANCEL
+      type: string
+      description: |-
+        * `LOAD` - LOAD
+        * `DEPART` - DEPART
+        * `DELIVER` - DELIVER
+        * `CHECK` - CHECK
+        * `MEASURE` - MEASURE
+        * `INCIDENT` - INCIDENT
+        * `RECEIVE` - RECEIVE
+        * `DIAGNOSE` - DIAGNOSE
+        * `RESOLVE` - RESOLVE
+        * `CLOSE` - CLOSE
+        * `CANCEL` - CANCEL
+    FieldCommandRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/FieldCommandKindEnum'
+        position_id:
+          type: string
+          format: uuid
+        unit_index:
+          type: integer
+          maximum: 10000
+          minimum: 1
+        scan:
+          type: string
+          maxLength: 3000
+        note:
+          type: string
+          maxLength: 2000
+        photo_b64:
+          type: string
+          minLength: 1
+          maxLength: 2000000
+        signature_b64:
+          type: string
+          minLength: 1
+          maxLength: 270000
+        checks:
+          $ref: '#/components/schemas/FieldChecksRequest'
+        measurements:
+          type: array
+          items: {}
+          maxItems: 20
+        incident_kind:
+          $ref: '#/components/schemas/IncidentKindEnum'
+        incident_id:
+          type: string
+          format: uuid
+        confirmed:
+          type: boolean
+          default: false
+        receiver_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        receiver_rut:
+          type: string
+          minLength: 1
+          maxLength: 30
+        resolution_kind:
+          $ref: '#/components/schemas/ResolutionKindEnum'
+        requirement_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          maximum: 10000
+          minimum: 1
+        planned_on:
+          type: string
+          format: date
+        assigned_to:
+          type: string
+          format: uuid
+        team:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+      - kind
+      - operation_key
+    FieldReceipt:
+      type: object
+      properties:
+        applied:
+          type: boolean
+        visit:
+          $ref: '#/components/schemas/FieldVisit'
+        operation_key:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        result: {}
+      required:
+      - applied
+      - visit
+    FieldReviewRequest:
+      type: object
+      properties:
+        measurement_event_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        confirmed:
+          type: boolean
+          default: false
+        proposal_token:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required:
+      - measurement_event_id
+      - reason
+    FieldReviewResponse:
+      type: object
+      properties:
+        design: {}
+        measurements:
+          type: array
+          items: {}
+        price_change: {}
+        applied:
+          type: boolean
+        revision_code:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+          nullable: true
+        project_code:
+          type: string
+          nullable: true
+        proposal_token:
+          type: string
+        scope:
+          type: string
+      required:
+      - applied
+      - design
+      - measurements
+      - price_change
+      - project_code
+      - project_id
+      - proposal_token
+      - revision_code
+    FieldScheduleKindEnum:
+      enum:
+      - DELIVERY
+      - MEASUREMENT
+      - INSTALLATION
+      - SERVICE
+      type: string
+      description: |-
+        * `DELIVERY` - DELIVERY
+        * `MEASUREMENT` - MEASUREMENT
+        * `INSTALLATION` - INSTALLATION
+        * `SERVICE` - SERVICE
+    FieldScheduleRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        project_version_id:
+          type: string
+          format: uuid
+          nullable: true
+        kind:
+          $ref: '#/components/schemas/FieldScheduleKindEnum'
+        assigned_to:
+          type: string
+          format: uuid
+        planned_on:
+          type: string
+          format: date
+        team:
+          type: string
+          minLength: 1
+          maxLength: 120
+        vehicle:
+          type: string
+          maxLength: 120
+        address:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        units:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldUnitChoiceRequest'
+      required:
+      - assigned_to
+      - kind
+      - operation_key
+      - planned_on
+      - project_id
+      - team
+      - units
+    FieldUnitChoiceRequest:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        unit_index:
+          type: integer
+          maximum: 10000
+          minimum: 1
+        order_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - position_id
+      - unit_index
+    FieldVisit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        project_version_id:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_to:
+          type: string
+          format: uuid
+        kind:
+          type: string
+        planned_on:
+          type: string
+          format: date
+        team:
+          type: string
+        vehicle:
+          type: string
+          nullable: true
+        status:
+          type: string
+        context: {}
+        events:
+          type: array
+          items: {}
+        assets:
+          type: array
+          items: {}
+      required:
+      - assets
+      - assigned_to
+      - code
+      - context
+      - events
+      - id
+      - kind
+      - planned_on
+      - project_id
+      - project_version_id
+      - status
+      - team
+      - vehicle
+    FieldWorkspace:
+      type: object
+      properties:
+        role:
+          type: string
+        visits:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldVisit'
+        incidents:
+          type: array
+          items: {}
+        projects:
+          type: array
+          items: {}
+        assignees:
+          type: array
+          items: {}
+      required:
+      - assignees
+      - incidents
+      - projects
+      - role
+      - visits
     FinishAuthority:
       type: object
       properties:
@@ -31164,6 +31911,22 @@ components:
           format: binary
       required:
       - file
+    IncidentKindEnum:
+      enum:
+      - DAMAGE
+      - MEASURE
+      - MISSING
+      - ADJUSTMENT
+      - WARRANTY
+      - SERVICE
+      type: string
+      description: |-
+        * `DAMAGE` - DAMAGE
+        * `MEASURE` - MEASURE
+        * `MISSING` - MISSING
+        * `ADJUSTMENT` - ADJUSTMENT
+        * `WARRANTY` - WARRANTY
+        * `SERVICE` - SERVICE
     IndTrasladoEnum:
       enum:
       - 1
@@ -41925,6 +42688,16 @@ components:
       - confirmed
       - expected_operation_id
       - reason
+    ResolutionKindEnum:
+      enum:
+      - REMAKE
+      - PURCHASE
+      - SERVICE
+      type: string
+      description: |-
+        * `REMAKE` - REMAKE
+        * `PURCHASE` - PURCHASE
+        * `SERVICE` - SERVICE
     ResolvedFinish:
       type: object
       properties:
@@ -43990,6 +44763,16 @@ components:
       - lots
       - plan
       - trial_ends_at
+    WarrantyStartEnum:
+      enum:
+      - APPROVAL
+      - DELIVERY
+      - INSTALLATION
+      type: string
+      description: |-
+        * `APPROVAL` - APPROVAL
+        * `DELIVERY` - DELIVERY
+        * `INSTALLATION` - INSTALLATION
     WithdrawRequest:
       type: object
       properties:

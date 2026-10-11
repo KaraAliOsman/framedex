@@ -34,7 +34,10 @@ function TodayWorkspace(): JSX.Element {
         headingId="page-title"
         context={org.name}
         actions={
-          <Link className="ui-button" to={workshop ? "/production" : "/projects"}>
+          <Link
+            className="ui-button"
+            to={org.role === "INSTALLER" ? "/field" : workshop ? "/production" : "/projects"}
+          >
             {org.role === "INSTALLER"
               ? "Abrir despachos e instalaciones"
               : workshop
