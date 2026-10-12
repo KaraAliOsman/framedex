@@ -1,10 +1,11 @@
 ---
 type: concept
 status: active
-updated: 2026-10-11
+updated: 2026-10-12
 volatility: medium
-verified_ref: 5b786e7af6555b7fdb8e40399a604c3c909d94dc
+verified_ref: d3b86003d69e29089e62463f9f80af7fd0c5dc78
 sources:
+  - https://github.com/KaraAliOsman/framedex/pull/152 · squash d3b86003d69e29089e62463f9f80af7fd0c5dc78, CI 4/4 verde
   - engine/src/dekopen_engine/thermal.py
   - backend/projects/thermal.py
   - supabase/migrations/20270127000000_thermal_authority.sql

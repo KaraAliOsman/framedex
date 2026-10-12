@@ -1472,3 +1472,7 @@ Gates completos verdes; motor 1052 (+2 xfail), backend 1551, frontend 1131,
 558 integraciones, 19 E2E, 1451 pgTAP +16 térmicos suplementarios y upgrades
 PG16. El certificado real, revisión profesional y alcance de edificio no
 se atribuyen al fixture. CI y squash quedan por registrar al integrar.
+
+## 2026-10-12 · P18 integrado
+PR #152 mergeado en d3b86003d69e29089e62463f9f80af7fd0c5dc78 con los cuatro checks verdes. Uw, OGUC, alternativa revisada y anexo sellado conservan sus límites y fuentes; ver product/thermal-authority.md y docs/redesign/P18-ACEPTACION.md. El stack propio se detuvo antes de continuar P24.
+

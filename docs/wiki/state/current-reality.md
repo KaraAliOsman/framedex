@@ -1,10 +1,11 @@
 ---
 type: state
 status: active
-updated: 2026-10-11
+updated: 2026-10-12
 volatility: high
-verified_ref: 5b786e7af6555b7fdb8e40399a604c3c909d94dc
+verified_ref: d3b86003d69e29089e62463f9f80af7fd0c5dc78
 sources:
+  - P18 PR https://github.com/KaraAliOsman/framedex/pull/152; squash d3b86003d69e29089e62463f9f80af7fd0c5dc78, cuatro checks verdes, 2026-10-12
   - P18 código 5b786e7af6555b7fdb8e40399a604c3c909d94dc; gates completos, 57 casos focales, PostgreSQL y navegador, 2026-10-11
   - docs/redesign/P18-ACEPTACION.md
   - P19 PR https://github.com/KaraAliOsman/framedex/pull/151, CI 4/4 sobre 6bd3ff012f7c411c4dc34cee4c879180e119295a, squash ff210e7a439b861349d1d602c4137ebe4e65d0c8, 2026-10-11

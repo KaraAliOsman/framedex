@@ -36,7 +36,7 @@
 | P23 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/149 | 331d2eeeec57dedd14577c4ffd5ce8079568bc44 | CI 4/4 verde; despacho/terreno/postventa, replay privado y actas selladas; 1,427 pgTAP, 553 integraciones, 19 E2E y doce upgrades PG16; 40 vistas sin hallazgos y rúbrica PASA. |
 | D08 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/150 | d6921a893fcc3b303fcd693bd934380e7227f3d0 | CI 4/4 verde; catorce recetas, cortes/BOM/kits y planta; 1.451 pgTAP, 554 integraciones, 19 E2E y trece upgrades PG16; 199 capturas verificadas y rúbrica PASA. |
 | P19 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/151 | ff210e7a439b861349d1d602c4137ebe4e65d0c8 | CI 4/4 verde; 40 tipologías, 68 poses, bicolor sellado y render común; 281 PNG y rúbrica PASA. |
-| P18 | 3 | en curso |  |  |  |
+| P18 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/152 | d3b86003d69e29089e62463f9f80af7fd0c5dc78 | CI 4/4 verde; Uw/OGUC con áreas visibles, autoridad ligada al espécimen y anexo inmutable; 1.467 pgTAP, 558 integraciones, 19 E2E, 69 PNG y rúbrica PASA. |
 | P24 | 4 | pendiente |  |  |  |
 | P20 | 5 | pendiente |  |  |  |
 
@@ -83,3 +83,9 @@ Medidas, estados, capacidades y tablas móviles comparten reglas; Inventario del
 Estimador/PDF/enlace, dueño/MiMo revisado, compra/recepción parcial/RT y taller/etiquetas/CNC pasan sin duplicar decisiones.
 Capturas clave: `docs/redesign/captures/ed2/`; 224 antes y después, cero hallazgos finales; baseline 69/187 → 45/139.
 Riesgos: bow Solo cotización, catálogo DEMO, integración financiera sandbox, autoridad térmica y validación industrial ausentes; la ola 3 conserva esos límites.
+
+Ola 3 cerrada: P21, P10, P22, P23, D08, P19 y P18 integrados con CI 4/4 verde.
+Proyecto, acuerdo, empresa, terreno, aperturas avanzadas, 3D y térmica comparten revisión y autoridad selladas.
+Uw usa áreas visibles; la alternativa mínima pasa por diff y deshacer; revocar una fuente conserva informe y PDF emitidos.
+Capturas clave: `docs/redesign/captures/termico-oguc/`, `aperturas-avanzadas/`, `representacion-3d/` y `terreno-postventa/`.
+Riesgos: catálogo DEMO, adaptadores financieros sandbox, datos reales de fabricante y validación industrial requieren activación; P24 y P20 continúan la aceptación.
