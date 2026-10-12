@@ -1,6 +1,6 @@
 """P22: actual tenant authority, preserved dossiers and verified invitations."""
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal as D
 from uuid import uuid4
@@ -522,7 +522,10 @@ def test_section_patch_is_consumed_and_preview_keeps_sealed_numbers(people):
         from documents.service import _prepared_valid_until
 
         with documentary_backend():
-            assert _prepared_valid_until({}, org) == timezone.localdate() + timedelta(days=23)
+            from zoneinfo import ZoneInfo
+
+            expected_today = datetime.now(ZoneInfo("America/Santiago")).date()
+            assert _prepared_valid_until({}, org) == expected_today + timedelta(days=23)
         content = company.preview(
             org,
             {
@@ -539,7 +542,7 @@ def test_section_patch_is_consumed_and_preview_keeps_sealed_numbers(people):
     assert D(str(PdfReader(BytesIO(content)).pages[0].mediabox.width)).quantize(D("0.01")) == D(
         "595.28"
     )
-    assert (timezone.localdate() + timedelta(days=23)).strftime("%d-%m-%Y") in text
+    assert (expected_today + timedelta(days=23)).strftime("%d-%m-%Y") in text
     assert before == one(
         "SELECT snapshot_json,snapshot_sha256 FROM public.project_versions WHERE id=%s",
         [version["id"]],
