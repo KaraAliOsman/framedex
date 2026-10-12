@@ -1087,7 +1087,10 @@ function PositionWorkspace({
         </div>
       )}
       <div className="position-body">
-        <div className="position-workspace">
+        <div className="position-workspace" role="region" aria-labelledby="position-design-title">
+          <h2 id="position-design-title" className="visually-hidden">
+            Diseño de la posición
+          </h2>
           <AssemblyEditor
             organizationId={orgId}
             couplerSkus={options.data?.coupler_skus ?? []}
