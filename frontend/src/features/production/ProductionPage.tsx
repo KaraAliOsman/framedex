@@ -71,6 +71,7 @@ import { fmtMm } from "../../format";
 import { formatDate } from "../money";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
 import { domainLabels } from "../../i18n/domainLabels";
+import { fiscalLabels } from "../projects/FiscalSimulationPanel";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { PLAN_REQUIRED_CODES, STEP_STOCK_KINDS } from "./labels";
 
@@ -1354,7 +1355,7 @@ function ProductionOfficePage(): JSX.Element {
             ) : null}
             {role !== "INSTALLER" && prepVersions.length > 0 ? (
               <section className="production-prep" aria-label={t("production.prepTitle")}>
-                <h3>{t("production.prepTitle")}</h3>
+                <h2>{t("production.prepTitle")}</h2>
                 <ul>
                   {prepVersions.map((version) => (
                     <li key={version.version_id}>
@@ -1582,7 +1583,7 @@ function ProductionOfficePage(): JSX.Element {
                                 title={`${t("production.envioStatus")} · ${envio.track_id ?? ""}`}
                                 onClick={() => void openDispatchEnvio(detail.id)}
                               >
-                                {`${t("production.envioStatus")} · ${envio.status}`}
+                                {`${t("production.envioStatus")} · ${fiscalLabels[envio.status] ?? "Por verificar"}`}
                               </button>
                             ) : canWrite ? (
                               <button

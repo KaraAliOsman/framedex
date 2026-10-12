@@ -25,6 +25,27 @@ def test_reviewed_accessory_goldens() -> None:
     detail = frozen["exact-partition"]
     assert D(detail["base_net"])+sum((D(row["net"]) for row in detail["sublines"]),D(0)) == D(210001)
     assert len(frozen["extra-members"]) == 3
+    bicolor = frozen["bicolor-auxiliary-profiles"]
+    auxiliary = [cut for cut in bicolor["profile_cuts"] if cut.get("extra_code") in {"SILL", "FRAME_EXTENSION", "COVER_TRIM"}]
+    assert len(auxiliary) == 7
+    assert all(cut["commercial_sku"].endswith("WHITE_WALNUT") for cut in auxiliary)
+    assert sum(piece["qty"] for piece in bicolor["reinforcements"]) == 4
+    assert all(not piece.get("extra_code") for piece in bicolor["reinforcements"])
+
+
+@pytest.mark.parametrize("role", ["SILL", "FRAME_EXTENSION", "COVER_TRIM"])
+def test_bicolor_keeps_explicit_auxiliary_reinforcement_authority(role: str) -> None:
+    from dekopen_engine.finishes import finish_article, resolve_finish
+    from dekopen_engine.models import ProfileRole
+
+    params, _ = extra_context()
+    article = params.effective_profile_articles[ProfileRole(role)]
+    selected = resolve_finish(params, "WHITE_WALNUT")
+    assert finish_article(article, selected).reinforcement_rule is None
+    rule = params.effective_profile_articles[ProfileRole.FRAME].reinforcement_rule
+    assert rule is not None
+    declared = article.model_copy(update={"reinforcement_rule": rule})
+    assert finish_article(declared, selected).reinforcement_rule == rule
 
 
 def test_extension_is_a_real_cut_piece_and_synthetic_trace() -> None:

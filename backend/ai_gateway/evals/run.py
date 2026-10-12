@@ -30,7 +30,7 @@ from uuid import UUID, uuid4, uuid5, NAMESPACE_URL
 import yaml
 
 from ai_gateway.evals.outcomes import canonical, classify, evaluate, summarize
-from ai_gateway.evals.facts import engine_accepted, frame_bar_count, priced_winner
+from ai_gateway.evals.facts import common_glass_sku, engine_accepted, frame_bar_count, priced_winner, product_from_design
 from ai_gateway.evals.redaction import redact_report
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -48,6 +48,10 @@ def load_cases() -> list[dict]:
     if len(cases) != 26 or len({c["id"] for c in cases}) != 26:
         raise ValueError("The owner suite must contain exactly 26 unique cases")
     return cases
+
+
+def fixture_role(case: dict) -> str:
+    return "WORKSHOP_MANAGER" if case["view"] == "factory" else "ESTIMATOR"
 
 
 def fixture_project(items: list[dict]) -> UUID:
@@ -181,6 +185,27 @@ def _request(client: Any, method: str, path: str, data: dict | None = None) -> t
     return response.status_code, response.json()
 
 
+def editable_sandbox_project(client: Any, project: dict, case: dict) -> dict:
+    """Use the human workflow inside the rollback-only setup, never edit a seal."""
+    if case["view"] != "editor" and case["id"] not in {"J01", "J02", "J03"}:
+        return project
+    current = project
+    if current["status"] != "DRAFT":
+        status, current = _request(client, "post", f"projects/{current['id']}/successor/", {
+            "confirmed": True, "expected_current_revision": current["current_revision"],
+        })
+        if status not in {200, 201}:
+            raise RuntimeError("sandbox_successor_setup_failed")
+    if current.get("current_pricing_operation_id"):
+        status, current = _request(client, "post", f"projects/{current['id']}/reset-pricing/", {
+            "expected_operation_id": current["current_pricing_operation_id"],
+            "reason": "Preparar copia editable de evaluación local; la transacción se revierte.",
+        })
+        if status != 200:
+            raise RuntimeError("sandbox_pricing_reset_failed")
+    return current
+
+
 def _setup_product(source: dict, setup: str) -> dict:
     tree = source["design"]["parametric_tree"]
 
@@ -302,11 +327,13 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
     with authenticated_rls_context(claims):
         catalog = _catalog(UUID(position["design"]["system_id"]), ORG_ID)
         params = SystemParamsRepository().load_visible(UUID(position["design"]["system_id"]), ORG_ID)
+        targets = [p for p in project["positions"] if
+                   any(t in p["location_tag"].lower() for t in ("segundo piso", "2º piso", "piso 2"))]
+        target_catalogs = [_catalog(UUID(p["design"]["system_id"]), ORG_ID) for p in targets]
     truth: dict = {
         "glass_recipes": catalog["glass_recipes"],
-        "existing_sku": sorted(catalog["glass_skus"])[0] if catalog["glass_skus"] else None,
-        "second_floor_ids": [p["id"] for p in project["positions"] if
-                             any(t in p["location_tag"].lower() for t in ("segundo piso", "2º piso", "piso 2"))],
+        "existing_sku": common_glass_sku(target_catalogs),
+        "second_floor_ids": [p["id"] for p in targets],
         "position_three": next((p for p in project["positions"] if p["position_index"] == 3), None),
         "quote_path": f"/projects/{project_id}/pricing",
         "most_expensive": None,
@@ -323,9 +350,14 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
         cursor.execute("SELECT id, order_code, payload_json FROM public.orders "
                        "WHERE org_id=%s AND order_type='WORKSHOP_OT' ORDER BY order_code", [ORG_ID])
         orders = cursor.fetchall()
-    truth["work_order_code"] = str(orders[0][1]) if orders else None
-    if orders:
-        order_payload = orders[0][2]
+    production = _claims_context(claims, "production", {})
+    visible_order_ids = {row["id"] for row in production.get("work_orders", [])}
+    visible_orders = [order for order in orders if str(order[0]) in visible_order_ids]
+    selected_order = next((order for order in visible_orders if frame_bar_count(
+        json.loads(order[2]) if isinstance(order[2], str) else order[2]) is not None), None)
+    truth["work_order_code"] = str(selected_order[1]) if selected_order else None
+    if selected_order:
+        order_payload = selected_order[2]
         if isinstance(order_payload, str):
             order_payload = json.loads(order_payload)
         truth["frame_bars"] = frame_bar_count(order_payload)
@@ -343,7 +375,6 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
         truth["sliding_compatibility_engine"] = compatibility
         truth["sliding_supported"] = (engine_accepted(compatibility)
             if physical_sliding_supported(kitchen, params) else False)
-    production = _claims_context(claims, "production", {})
     truth["blocked_orders"] = [o for o in production.get("work_orders", []) if o.get("status") == "BLOCKED"]
     # Manager-only inventory coverage must not be inferred through estimator RLS.
     purchase = _claims_context(claims, "purchase_plan", {})
@@ -364,7 +395,14 @@ def _ground_truth(client: Any, claims: dict, project: dict, position: dict,
         truth["right_leaf_weight"] = None
         if status == 200:
             truth["engine_result"] = engine
-            for module in engine.get("modules") or []:
+            # HTTP display serializers round kg to two decimals. Agent tools
+            # expose the exact engine calculation; judge that same authority.
+            from projects.ops_registry import calculate_product
+            with authenticated_rls_context(claims):
+                exact = calculate_product(ORG_ID, product, position["design"]["system_id"],
+                                          position["design"]["color"])
+            truth["exact_engine_result"] = exact
+            for module in exact.get("modules") or []:
                 for leaf in (module.get("result") or {}).get("leaf_weights") or []:
                     if leaf.get("bay_id") == "eval-right":
                         truth["right_leaf_weight"] = leaf.get("total_weight_kg")
@@ -380,7 +418,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
     recorder = Recorder(agent.gateway.invoke)
     started = time.perf_counter()
     output: dict = {"id": case["id"], "view": case["view"], "request": case["request"],
-                    "expected": case["expected"], "provider": provider}
+                    "expected": case["expected"], "provider": provider, "actor_role": fixture_role(case)}
     result: dict = {}
     error_code = ""
     before: dict = {}
@@ -395,6 +433,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
             status, project = _request(client, "get", f"projects/{project_id}/")
             if status != 200 or len(project.get("positions") or []) != 12:
                 raise RuntimeError("local_fixture_requires_twelve_positions")
+            project = editable_sandbox_project(client, project, case)
             position = project["positions"][0]
             before = _setup_product(position, case.get("setup", "fixed"))
             after, wire = apply_copy(before, [])
@@ -411,7 +450,10 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
                 if status != 200:
                     raise RuntimeError("sandbox_position_setup_failed")
                 position = saved
-            truth = _ground_truth(client, claims, project, position, before, case)
+            # The live agent receives the canvas wire, which expands physical
+            # openings. Legacy shorthand preserves historical rounded masses;
+            # compare against the same engine input the provider actually sees.
+            truth = _ground_truth(client, claims, project, position, wire, case)
             request = case["request"].replace("[SKU existente]", truth["existing_sku"] or "[SKU existente]")
             request = request.replace("[código]", truth["work_order_code"] or "[código]")
             output["resolved_request"] = request
@@ -476,6 +518,23 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
                     truth["project_application_ok"] = True
                     truth["project_positions"] = applied_project["positions"]
                     truth["original_position_ids"] = [p["id"] for p in project["positions"]]
+                    if case["expected"] == "kitchen_position":
+                        from authentication.rls import authenticated_rls_context
+                        from engine_api.repository import SystemParamsRepository
+                        originals = set(truth["original_position_ids"])
+                        proposed = [p for p in applied_project["positions"] if p["id"] not in originals]
+                        engines = []
+                        for added in proposed:
+                            design = added["design"]
+                            value = product_from_design(design)
+                            envelope = _engine_copy(client, value, design)
+                            with authenticated_rls_context(claims):
+                                params = SystemParamsRepository().load_visible(UUID(design["system_id"]), ORG_ID)
+                            engines.append({"position_id": added["id"], "engine": envelope,
+                                            "physical_sliding": physical_sliding_supported(value, params)})
+                        truth["new_position_engines"] = engines
+                        truth["sliding_supported"] = bool(engines) and all(
+                            item["physical_sliding"] and engine_accepted(item["engine"]) for item in engines)
                     output["sandbox_project"] = applied_project
                 truth["batch_application_ok"] = batch_ok
                 output["sandbox_batch_results"] = batch_results
@@ -556,17 +615,24 @@ def main() -> int:
         os.environ["AI_GATEWAY_MOCK_ENABLED"] = "1"
     model = "deterministic-eval" if provider == "MOCK" else os.environ.get(
         f"AI_GATEWAY_{provider}_MODEL", str(route[1]))
-    response = httpx.post(
-        f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/token?grant_type=password",
-        headers={"apikey": settings.SUPABASE_ANON_KEY},
-        json={"email": "demo-estimator@fixture.dekopen.local", "password": "Demo-Fixture-2026!"}, timeout=15,
-    )
-    if response.status_code != 200:
-        parser.error("Local estimator fixture login failed; run scripts/dev_fixture.py")
-    access_token = response.json()["access_token"]
-    verified = get_token_verifier().verify(access_token)
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}", HTTP_X_ORGANIZATION_ID=str(ORG_ID))
+    actors = {}
+    for role, account in (("ESTIMATOR", "estimator"), ("WORKSHOP_MANAGER", "manager")):
+        response = httpx.post(
+            f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/token?grant_type=password",
+            headers={"apikey": settings.SUPABASE_ANON_KEY},
+            json={"email": f"demo-{account}@fixture.dekopen.local", "password": "Demo-Fixture-2026!"}, timeout=15,
+        )
+        if response.status_code != 200:
+            parser.error(f"Local {role} fixture login failed; run scripts/dev_fixture.py")
+        access_token = response.json()["access_token"]
+        verified = get_token_verifier().verify(access_token)
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}", HTTP_X_ORGANIZATION_ID=str(ORG_ID))
+        context_status, identity = _request(client, "get", "auth/me/")
+        if context_status != 200 or (identity.get("active_organization") or {}).get("role") != role:
+            parser.error(f"Local {role} fixture must have its live tenant membership")
+        actors[role] = (client, verified.claims)
+    client, _ = actors["ESTIMATOR"]
     status, listing = _request(client, "get", "projects/")
     if status != 200:
         parser.error("The estimator fixture cannot read its projects")
@@ -587,7 +653,8 @@ def main() -> int:
     physical_before = _physical_usage_counts()
     results = []
     for case in cases:
-        result = run_case(case, client=client, claims=verified.claims, provider=provider, model=model,
+        case_client, claims = actors[fixture_role(case)]
+        result = run_case(case, client=case_client, claims=claims, provider=provider, model=model,
                           project_id=project_id)
         results.append(result)
         print(f"{case['id']}: {'PASA' if result['passed'] else result['failure']} "

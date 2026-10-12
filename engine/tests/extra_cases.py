@@ -38,7 +38,11 @@ def extra_cases() -> dict[str, Any]:
     prices = price_facts(params.extra_authority,computation.result.extras)
     authority = ExtraAuthority(schema_version=1,definitions=[installation()],source="Ensayo")
     services = project_lines(authority,[ExtraSelection(code="INSTALL")],[(D(1500),D(1400),2)])
+    bicolor = compute_geometry(node.model_copy(update={"extras": [*node.extras,
+        ExtraSelection(code="COVER_TRIM")]}), params, finish="WHITE_WALNUT")
+    assert bicolor.result
     return {"geometric-bom":computation.result.model_dump(mode="json"),
+        "bicolor-auxiliary-profiles":bicolor.result.model_dump(mode="json"),
         "extra-members":[member.model_dump(mode="json") for member in computation.manufacturing_trace.members if member.assembly == "EXTRA"],
         "sublines":[item.model_dump(mode="json") for item in prices],
         "project-perimeter":[item.model_dump(mode="json") for item in services],

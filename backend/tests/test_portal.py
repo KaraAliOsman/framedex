@@ -31,6 +31,22 @@ def _roles(monkeypatch):
     monkeypatch.setattr('portal.payments.provider_scope',_atomic)
     monkeypatch.setattr('portal.payments.rows',lambda *a,**k:[])
     monkeypatch.setattr('portal.proposal_service.resolve_option',lambda org,offer,rev:(offer,json.loads(offer['snapshot_json'])))
+    # The request-local resolver is the new persistence seam. These unit
+    # fixtures still substitute SQL only; real hash/inclusion checks run in
+    # test_offered_options and the PostgreSQL proposal integration suite.
+    class FakeOfferedOptions:
+        def __init__(self, org, offering):
+            self.org = org
+            self.offering = service._bound_version({
+                'org_id': org, 'project_version_id': offering['id'],
+                'project_id': offering['project_id']})
+            self.snapshot = json.loads(self.offering['snapshot_json'])
+
+        def resolve(self, revision):
+            from portal.proposal_service import resolve_option
+            return resolve_option(self.org, self.offering, revision)
+
+    monkeypatch.setattr('portal.proposal_service.OfferedOptions', FakeOfferedOptions)
 
 
 def test_share_quote_mints_hashed_token(monkeypatch) -> None:

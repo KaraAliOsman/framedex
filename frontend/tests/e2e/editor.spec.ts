@@ -274,7 +274,9 @@ test("P06 bow is created in seven interactions, survives exact reload and synchr
   expect((await evaluation).request().postDataJSON().product).toEqual(product);
   await page.getByRole("button", { name: "Módulo 2 en planta", exact: true }).click();
   await expect(page.locator(".front-module.is-selected")).toHaveCount(1);
-  expect(await page.locator(".front-module.is-selected").getAttribute("aria-label")).toContain(
+  await expect(page.locator(".front-module.is-selected")).toHaveAttribute("aria-label", "Módulo 2");
+  await expect(page.locator(".front-module.is-selected")).toHaveAttribute(
+    "data-module-id",
     product.assembly.modules[1].id,
   );
   await page.locator(".front-module").first().click();

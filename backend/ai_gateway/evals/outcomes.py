@@ -73,6 +73,21 @@ def _position_bays(position: dict) -> list[dict]:
     return [node for node in nodes(product) if node.get("type") == "BAY"]
 
 
+def _kitchen_matches(position: dict) -> bool:
+    design = position.get("design") or {}
+    bays = _position_bays(position)
+    physical = len(bays) == 1 and (
+        bays[0].get("opening_type") == "SLIDING_2L" or (
+            bays[0].get("opening", {}).get("movement") == "SLIDE"
+            and bays[0].get("sliding_layout", {}).get("tracks") == 2
+            and [(p.get("kind"), p.get("track")) for p in
+                 bays[0].get("sliding_layout", {}).get("panels", [])] == [("MOVING", 0), ("MOVING", 1)]))
+    return ((physical if design else position.get("opening_type") == "SLIDING_2L")
+            and _exact_decimal(design.get("nominal_width_mm", position.get("width_mm")), "1600")
+            and _exact_decimal(design.get("nominal_height_mm", position.get("height_mm")), "1100")
+            and "cocina" in str(position.get("location_tag") or position.get("location") or "").lower())
+
+
 def _narrative(result: dict) -> str:
     return " ".join([
         str(result.get("reply") or ""),
@@ -280,11 +295,8 @@ def evaluate(case: dict, *, before: dict, after: dict, result: dict,
         if expectation == "kitchen_position":
             check("context_available", truth.get("sliding_supported") is not None,
                   "sliding compatibility evaluated by the selected catalog/engine", truth.get("sliding_supported"))
-            valid = [p for p in proposed if p.get("opening_type") == "SLIDING_2L"
-                     and _exact_decimal(p.get("width_mm"), "1600")
-                     and _exact_decimal(p.get("height_mm"), "1100")
-                     and "cocina" in str(p.get("location_tag") or p.get("location") or "").lower()]
-            check("new_position_or_incompatibility", (bool(valid) and truth.get("sliding_supported") is True) or (
+            valid = [p for p in proposed if _kitchen_matches(p)]
+            check("new_position_or_incompatibility", (len(proposed) == len(valid) == 1 and truth.get("sliding_supported") is True) or (
                 truth.get("sliding_supported") is False and not proposed and not ops
                 and bool(re.search(r"incompat|no admite", text))))
         else:

@@ -2450,13 +2450,14 @@ export function ProductFrontContent({
               />
             </>
           )}
-          {rects.map(({ module, x, w: layoutWidth, sill, h }) => {
+          {rects.map(({ module, x, w: layoutWidth, sill, h }, moduleIndex) => {
             const w = Number(module.width_mm);
             const ratio = layoutWidth / w;
             const top = height - sill - h;
             return (
               <g
                 key={module.id}
+                data-module-id={module.id}
                 transform={
                   projected ? `translate(${x} 0) scale(${ratio} 1) translate(${-x} 0)` : undefined
                 }
@@ -2464,9 +2465,10 @@ export function ProductFrontContent({
                 {...(preview
                   ? { role: "presentation", "aria-hidden": true }
                   : {
-                      role: "button",
-                      "aria-label": `${t("assembly.module")} ${module.id}`,
-                      "aria-pressed": module.id === selectedId,
+                      role: "group",
+                      "aria-label": `${t("assembly.module")} ${moduleIndex + 1}`,
+                      "aria-current": module.id === selectedId ? "true" : undefined,
+                      "aria-keyshortcuts": "Enter Space",
                       tabIndex: disabled ? -1 : 0,
                       onClick: (event) =>
                         divideTool

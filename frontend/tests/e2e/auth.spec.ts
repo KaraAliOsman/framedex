@@ -407,7 +407,7 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
     .getByRole("button", { name: "Documentos", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Documentos", exact: true, level: 3 }),
+    page.getByRole("heading", { name: "Documentos", exact: true, level: 2 }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar documentos", exact: true })).toBeVisible();
   for (const route of ["Proyectos", "Clientes", "Inicio"]) {
@@ -666,8 +666,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("tab", { name: "Posiciones", exact: true }).click();
   // The collection opens the exact selected position with Enter.
   await page
-    .getByRole("listbox", { name: "Posiciones" })
-    .getByRole("option")
+    .getByRole("list", { name: "Posiciones" })
+    .getByRole("listitem")
     .filter({ hasText: "Fijo comercial" })
     .press("Enter");
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
@@ -795,8 +795,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.reload();
   await page.getByRole("link", { name: "Composite browser gate", exact: true }).click();
   await page
-    .getByRole("listbox", { name: "Posiciones" })
-    .getByRole("option")
+    .getByRole("list", { name: "Posiciones" })
+    .getByRole("listitem")
     .filter({ hasText: "Fachada compuesta" })
     .press("Enter");
   // Scoped to the main canvas sheet — inspector previews and alternative

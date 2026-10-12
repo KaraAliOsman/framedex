@@ -441,7 +441,11 @@ function Agenda({
                 <p className="ui-value">
                   {v.code} · <DateOnly value={v.planned_on} />
                 </p>
-                <h2>{v.context.project_name}</h2>
+                <h2>
+                  {v.context.project_name ||
+                    v.context.project_code ||
+                    "Proyecto Sin dato · abrir visita"}
+                </h2>
                 <p>
                   {labels[v.kind]} · {labels[v.status]}
                 </p>
@@ -1746,7 +1750,11 @@ function Case({
       <button type="button" className="secondary-action" onClick={() => open(c.visit_id)}>
         Abrir ventana y visita de origen
       </button>
-      <AssetButton assetId={c.evidence.photo.id} online={online} label="Abrir foto contextual" />
+      {c.evidence.photo?.id ? (
+        <AssetButton assetId={c.evidence.photo.id} online={online} label="Abrir foto contextual" />
+      ) : (
+        <p>Sin fotografía en este registro. Abre la visita de origen para revisar su evidencia.</p>
+      )}
       <p>
         Garantía:{" "}
         {c.warranty.expires_on ? (
@@ -1760,7 +1768,13 @@ function Case({
       {c.warranty.text && <p>{c.warranty.text}</p>}
       <details>
         <summary>Perfiles, vidrios y herrajes de origen</summary>
-        <Materials value={c.evidence.materials} />
+        {c.evidence.materials ? (
+          <Materials value={c.evidence.materials} />
+        ) : (
+          <p>
+            Sin materiales en este registro. Abre la revisión de origen para consultar su despiece.
+          </p>
+        )}
       </details>
       {c.resolution.remake_order_id && (
         <Link to={`/production?order=${c.resolution.remake_order_id}`}>

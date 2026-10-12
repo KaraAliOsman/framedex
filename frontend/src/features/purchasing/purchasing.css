@@ -468,6 +468,13 @@
   min-width: var(--control-height);
   min-height: var(--control-height);
 }
+
+.inventory-page[data-density="workshop"] .inventory-stock-scroll td a {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+}
 .inventory-stock-scroll {
   overflow: auto;
   max-width: 100%;

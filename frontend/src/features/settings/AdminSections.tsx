@@ -84,7 +84,7 @@ export function CompanyCard({
     );
   return (
     <section className="settings-card">
-      <h3>Identidad legal y moneda</h3>
+      <h2>Identidad legal y moneda</h2>
       <p>
         Estos datos identifican al emisor de documentos nuevos. La moneda se propone al calcular;
         los acuerdos emitidos conservan su moneda. Las tarifas de trabajo conservan su moneda base
@@ -315,7 +315,7 @@ export function UsersCard({ orgId, canEdit }: { orgId: string; canEdit: boolean 
     );
   return (
     <section className="settings-card">
-      <h3>Usuarios y roles</h3>
+      <h2>Usuarios y roles</h2>
       <p>
         Los cambios de acceso se registran. La empresa siempre conserva al menos un dueño activo.
       </p>
@@ -474,7 +474,7 @@ export function NumberingCard({ orgId }: { orgId: string }): JSX.Element {
     );
   return (
     <section className="settings-card">
-      <h3>Numeración</h3>
+      <h2>Numeración</h2>
       <p>
         Solo lectura. Son referencias sin reservar: otro trabajo puede usar el siguiente número
         antes de tu emisión. Proyectos usa la secuencia global; OC, recepción y retazos usan la de
@@ -541,15 +541,29 @@ export function DocumentPreview({
       return r.data;
     },
   });
+  const previewable = detail.data?.versions?.filter(
+    (v) => v.snapshot_sha256 && ["SHOT09_V1", "SHOT10_V1"].includes(v.authority_version),
+  );
+  const canPreview = Boolean(previewable?.some((v) => v.id === version));
   useEffect(() => {
     if (!project && projects.data?.length)
-      setProject(projects.data.find((p) => p.status !== "DRAFT")?.id ?? projects.data[0]!.id);
+      setProject(
+        projects.data.find((p) => p.status !== "DRAFT" && p.pricing_current)?.id ??
+          projects.data.find((p) => p.status !== "DRAFT")?.id ??
+          projects.data[0]!.id,
+      );
   }, [projects.data, project]);
   useEffect(() => {
-    setVersion(detail.data?.versions?.[0]?.id ?? "");
+    setVersion(
+      detail.data?.versions?.find(
+        (v) => v.snapshot_sha256 && ["SHOT09_V1", "SHOT10_V1"].includes(v.authority_version),
+      )?.id ??
+        detail.data?.versions?.[0]?.id ??
+        "",
+    );
   }, [detail.data]);
   useEffect(() => {
-    if (!version) {
+    if (!canPreview) {
       setUrl("");
       setLoading(false);
       setError("");
@@ -590,10 +604,10 @@ export function DocumentPreview({
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [options, version, branding, retry]);
+  }, [options, version, branding, retry, detail.data, canPreview]);
   return (
-    <aside className="settings-preview" aria-label="Vista previa del PDF real">
-      <h3>Documento de referencia</h3>
+    <section className="settings-preview" aria-label="Vista previa del PDF real">
+      <h2>Documento de referencia</h2>
       <p>
         PDF real con tus cambios en preparación. Conserva precio y moneda de la revisión elegida;
         guardar los ajustes solo cambia emisiones nuevas.
@@ -664,6 +678,16 @@ export function DocumentPreview({
         </>
       )}
       {loading && <LoadingState label="Renderizando el PDF con tus ajustes" />}
+      {version && !canPreview && (
+        <BlockedState
+          reason="Esta revisión histórica no tiene la trazabilidad requerida para generar una nueva vista previa. Elige una revisión emitida reciente; su documento original se conserva."
+          action={
+            <Link className="ui-button" to={`/projects/${project}?section=quote`}>
+              Abrir cotización de la obra
+            </Link>
+          }
+        />
+      )}
       {error && <ErrorState body={error} onRetry={() => setRetry((previous) => previous + 1)} />}
       {url && (
         <>
@@ -673,6 +697,6 @@ export function DocumentPreview({
           </a>
         </>
       )}
-    </aside>
+    </section>
   );
 }

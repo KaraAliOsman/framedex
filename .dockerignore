@@ -11,3 +11,7 @@ frontend/node_modules
 **/*.pem
 **/*.dump
 **/*.aes
+
+.run
+frontend/dist
+docs/redesign/captures

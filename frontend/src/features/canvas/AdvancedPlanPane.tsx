@@ -21,7 +21,7 @@ export function AdvancedPlanPane({
   return (
     <section className="advanced-plan-pane" aria-label="Planta de aperturas avanzadas">
       <header>
-        <h3>Planta · recorrido del motor</h3>
+        <h2>Planta · recorrido del motor</h2>
         {rows.some((row) => row.leaves.some((leaf) => leaf.advanced?.pass_through)) && (
           <button
             type="button"

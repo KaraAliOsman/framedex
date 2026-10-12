@@ -1216,7 +1216,7 @@ def _purchase_plan(org_id: UUID) -> dict:
                 "SELECT DISTINCT e.order_type::text AS order_type, e.supplier_name "
                 "FROM public.supplier_eligibility_versions e "
                 f"WHERE e.org_id = %s AND e.project_version_id IN ({latest}) "
-                "ORDER BY e.order_type, e.supplier_name LIMIT %s",
+                "ORDER BY order_type, e.supplier_name LIMIT %s",
                 [org_id, org_id, MAX_LIST],
             )
     open_pos = rows(

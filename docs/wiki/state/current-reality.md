@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-12
 volatility: high
-verified_ref: bab0df93149e1373b78efd00e17b3120cf092e6d
+verified_ref: cc0003abb3537f0994236e3a0221266bb087ee88
 sources:
+  - P20 corrección cc0003abb3537f0994236e3a0221266bb087ee88, stack limpio/Magic Link/editor, autoridad de propuesta y doce cargas 4G, 2026-10-12
+  - docs/redesign/P20-ARRANQUE.md
   - P24 código final bab0df93149e1373b78efd00e17b3120cf092e6d, cuatro gates completos, 76 PNG, fechas/hover y axe sin serious/critical, 2026-10-12
   - P24 Database Gate completo exit 0, 1483 pgTAP, 589 integraciones, 19 E2E y trece upgrades PG16, 2026-10-12
   - P24 código 5c484cbb9e458ceed0a4af1ec1a3cdeba8c2d067, cuatro gates completos y goldens reproducibles, 2026-10-12
@@ -102,6 +104,15 @@ sources:
 ---
 
 # Current reality
+
+P20 continúa su aceptación global. La corrección `cc0003ab` añade un stack
+propio `framedex-review`, construcción real de API/worker/nginx y fixture v7.
+Se verificaron solicitud Magic Link, Mailpit, entrada, doce posiciones con bow
+y conjunto, editor y axe de la lista en ambos temas. El portal público conserva
+la misma autoridad y vuelve a validar el hash en cada consulta; el reuso queda
+dentro de la consulta. Su p50/p95 en doce contextos fríos 4G es
+2.949,26/2.972,86 ms. El mapa completo de catorce recorridos y la matriz global
+siguen pendientes de su cierre, sin convertir esta corrección en aceptación final.
 
 ## P24 · analítica con evidencia de costos (12-10-2026)
 

@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from django.db import transaction
 
 from dekopen_engine.collections import CollectionPayment, collection_summary
-from documents.agreements import choice, resolve_option, lock_quote
+from documents.agreements import OfferedOptions, choice, resolve_option, lock_quote
 from documents.repository import DocumentaryError, decoded, one, rows, write
 from projects.rut import valid_rut
 from portal.proposal import commercial_projection
@@ -53,7 +53,12 @@ def read(token, *, track=True):
 
     with transaction.atomic(), service.portal_backend():
         approval = service._approval_for_token(token)
-        offering = service._bound_version(approval)
+        # The resolver reads and verifies the complete immutable authority.
+        # Token binding supplies its project boundary, avoiding a second large
+        # snapshot transfer solely to learn the id we already authenticated.
+        authorities = OfferedOptions(approval["org_id"], {
+            "id": approval["project_version_id"], "project_id": approval["project_id"]})
+        offering = {**authorities.offering, "snapshot_json": authorities.snapshot}
         project = service._live_project(approval)
         if track:
             write("UPDATE public.customer_approvals SET view_count=view_count+1,"
@@ -68,11 +73,12 @@ def read(token, *, track=True):
             if legacy:
                 state = 'APPROVED'
                 legacy_approval = legacy[0]['decided_at']
-        selected, _ = resolve_option(approval["org_id"], offering, offering["revision_code"])
+        selected = offering
         if decided:
             record = one("SELECT revision_code FROM public.project_versions WHERE id=%s AND org_id=%s",
                          [decided["selected_version_id"], approval["org_id"]])
-            selected, _ = resolve_option(approval["org_id"], offering, record["revision_code"])
+            selected, full = authorities.resolve(record["revision_code"])
+            selected = {**selected, "snapshot_json": full}
         sealed = service._sealed_project(selected)
         offered_project = service._sealed_project(offering)
         superseded = project["current_revision"] != offering["revision_code"]
@@ -82,7 +88,8 @@ def read(token, *, track=True):
         if not superseded and not expired:
             for alternative in (decoded(offering["snapshot_json"]).get("alternatives") or []):
                 revision = alternative["revision"]
-                version, _ = resolve_option(approval["org_id"], offering, revision)
+                version, full = authorities.resolve(revision)
+                version = {**version, "snapshot_json": full}
                 options.append(selected_option if str(selected['id']) == str(version['id']) else option(version))
         now = datetime.now(ZoneInfo("America/Santiago")).date()
         valid_until = offered_project.get("quotation_valid_until")

@@ -51,13 +51,13 @@ export function DocumentSettings({
   }, [load]);
   return (
     <section className="settings-card document-settings" aria-label="Documentos">
-      <h3>
+      <h2>
         {section === "commercial"
           ? "Condiciones comerciales"
           : section === "production"
             ? "Etiquetas y retazos"
             : "Documentos"}
-      </h3>
+      </h2>
       <p className="settings-defaults">
         {section === "commercial"
           ? "Valores sugeridos: vigencia de 15 días y 50 % al aprobar / 50 % contra entrega."

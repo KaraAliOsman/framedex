@@ -539,6 +539,16 @@ def test_sign_binding_is_lexical_not_spacing_based(monkeypatch):
         assert Decimal("-20") in declared and Decimal("30") in declared
 
 
+@pytest.mark.parametrize("separator", [" ", "\u00a0", "\u2009", "\u202f"])
+def test_displayed_thousands_ground_the_whole_measure_only(separator):
+    values = design_assist._declared_values
+    assert values(f"Ancho 1{separator}250 mm") == {Decimal("1250")}
+    assert values(f"Ancho 1{separator}250,5 mm") == {Decimal("1250.5")}
+    assert values(f"Ancho 1{separator}250 cm") == {Decimal("12500")}
+    assert values(f"Medida 1{separator}250") == {Decimal("1250")}
+    assert values("Cantidad 1 2 3") == {Decimal("1"), Decimal("2"), Decimal("3")}
+
+
 def test_stable_refs_address_modules_and_survive_structural_ops(monkeypatch):
     """§2: domain ids drive the wire — a ref names the entity, not its slot.
     Removing m2 mid-sequence keeps m3's ref honest where an index would have

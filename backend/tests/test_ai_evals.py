@@ -7,8 +7,8 @@ import json
 import pytest
 
 from ai_gateway.evals.outcomes import classify, evaluate, summarize
-from ai_gateway.evals.run import Recorder, design_step_ops, fixture_project, load_cases, sliding_probe
-from ai_gateway.evals.facts import frame_bar_count, priced_winner
+from ai_gateway.evals.run import Recorder, design_step_ops, editable_sandbox_project, fixture_project, fixture_role, load_cases, sliding_probe
+from ai_gateway.evals.facts import common_glass_sku, frame_bar_count, priced_winner, product_from_design
 from ai_gateway.evals.redaction import redact_report
 
 
@@ -34,6 +34,86 @@ def test_owner_suite_is_complete_and_keeps_typo_and_orientation():
                                        [f"F{i:02}" for i in range(1, 4)] + ["G01", "G02"])
     assert cases[10]["request"] == "aser la bentana 20 cm mas ancha"
     assert cases[1]["expected"] == "fixed_tilt_left"
+
+
+def test_glass_intent_uses_the_intersection_of_target_series():
+    assert common_glass_sku([{"glass_skus": {"A", "B"}}, {"glass_skus": {"B", "C"}}]) == "B"
+    assert common_glass_sku([{"glass_skus": {"A"}}, {"glass_skus": {"C"}}]) is None
+    assert common_glass_sku([]) is None
+
+
+def test_factory_cases_use_a_live_workshop_actor_without_elevating_estimators():
+    assert {fixture_role(c) for c in load_cases() if c["view"] == "factory"} == {"WORKSHOP_MANAGER"}
+    assert {fixture_role(c) for c in load_cases() if c["view"] != "factory"} == {"ESTIMATOR"}
+
+
+def test_provider_operation_specs_keep_every_constraint_without_example_numbers():
+    from ai_gateway.agent import provider_operation_specs
+    from dekopen_engine.design_operations import REGISTRY
+    original = deepcopy(REGISTRY)
+    projected = provider_operation_specs()
+    assert [item["name"] for item in projected] == [item["name"] for item in REGISTRY]
+    for visible, authority in zip(projected, REGISTRY, strict=True):
+        assert visible["schema"] == authority["schema"]
+        assert visible["description"] == authority["description"]
+        assert visible["scope"] == authority["scope"]
+        assert "examples" not in visible and "handler" not in visible
+    assert REGISTRY == original
+    assert len(json.dumps(projected)) < len(json.dumps(REGISTRY))
+
+
+def test_sandbox_opens_a_successor_through_the_public_workflow_without_editing_a_seal(monkeypatch):
+    from ai_gateway.evals import run
+    sealed = {"id": "project", "status": "APPROVED", "current_revision": "REV-B", "current_pricing_operation_id": "priced-B"}
+    calls = []
+
+    def request(client, method, path, data):
+        calls.append((method, path, data))
+        return 201, {**sealed, "status": "DRAFT", "current_revision": "REV-C", "current_pricing_operation_id": None}
+
+    monkeypatch.setattr(run, "_request", request)
+    editable = editable_sandbox_project(object(), sealed, {"id": "E01", "view": "editor"})
+    assert editable["current_revision"] == "REV-C"
+    assert calls == [("post", "projects/project/successor/", {"confirmed": True, "expected_current_revision": "REV-B"})]
+    assert sealed["status"] == "APPROVED" and sealed["current_pricing_operation_id"] == "priced-B"
+    assert editable_sandbox_project(object(), sealed, {"id": "J04", "view": "project"}) is sealed
+    assert editable_sandbox_project(object(), sealed, {"id": "J08", "view": "project"}) is sealed
+    assert len(calls) == 1
+
+
+def test_sandbox_resets_draft_pricing_via_the_normal_api_and_retains_failure(monkeypatch):
+    from ai_gateway.evals import run
+    priced = {"id": "project", "status": "DRAFT", "current_revision": "REV-A", "current_pricing_operation_id": "priced-A"}
+    calls = []
+
+    def request(client, method, path, data):
+        calls.append((method, path, data))
+        return 200, {**priced, "current_pricing_operation_id": None}
+
+    monkeypatch.setattr(run, "_request", request)
+    assert editable_sandbox_project(object(), priced, {"id": "J03", "view": "project"})["current_pricing_operation_id"] is None
+    assert calls[0][1] == "projects/project/reset-pricing/"
+    assert calls[0][2]["expected_operation_id"] == "priced-A"
+    monkeypatch.setattr(run, "_request", lambda *args: (403, {}))
+    with pytest.raises(RuntimeError, match="sandbox_pricing_reset_failed"):
+        editable_sandbox_project(object(), priced, {"id": "J01", "view": "project"})
+
+
+def test_kitchen_oracle_checks_current_design_dimensions_and_physical_panels():
+    before = product()
+    tree = sliding_probe(before, kitchen=True)["assembly"]["modules"][0]["tree"]
+    design = {"parametric_tree": tree, "nominal_width_mm": "1600", "nominal_height_mm": "1100"}
+    added = {"id": "new", "location_tag": "Cocina", "design": design}
+    truth = {"sliding_supported": True, "project_application_ok": True,
+             "original_position_ids": ["old"], "project_positions": [added]}
+    result = {"steps": [{"kind": "project_ops", "ops": []}]}
+    assert verdict("J02", before, before, truth=truth, result=result)["passed"]
+    design["nominal_width_mm"] = "1600.01"
+    assert not verdict("J02", before, before, truth=truth, result=result)["passed"]
+    design["nominal_width_mm"] = "1600"
+    tree["sliding_layout"]["panels"][1]["track"] = 0
+    assert not verdict("J02", before, before, truth=truth, result=result)["passed"]
+    assert product_from_design(design)["assembly"]["modules"][0]["width_mm"] == "1600"
 
 
 def test_current_sliding_probe_declares_physical_motion_and_distinct_tracks():

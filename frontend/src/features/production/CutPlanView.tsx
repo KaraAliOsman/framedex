@@ -741,7 +741,7 @@ export function CutPlanView({
           </div>
         ) : null}
       </div>
-      <aside className="cutplan-detail" aria-label={t("production.cutplanDetail")}>
+      <section className="cutplan-detail" aria-label={t("production.cutplanDetail")}>
         {detail ? (
           <dl>
             <div>
@@ -793,7 +793,7 @@ export function CutPlanView({
         ) : (
           <p className="cutplan-detail-empty">{t("production.cutplanDetailHint")}</p>
         )}
-      </aside>
+      </section>
     </div>
   );
 }

@@ -287,8 +287,10 @@ export function PositionCollection({
     const finish = position.bom.finish;
     return (
       <div
-        role="option"
-        aria-selected={checked.includes(position.id)}
+        role="listitem"
+        aria-label={`Posición ${position.position_index} · ${position.location_tag || "Sin ubicación"}`}
+        aria-current={activeId === position.id ? "true" : undefined}
+        aria-keyshortcuts="Enter Space Delete ArrowDown ArrowUp Home End"
         aria-posinset={visible.indexOf(position) + 1}
         aria-setsize={visible.length}
         tabIndex={position.id === activeId ? 0 : -1}
@@ -695,7 +697,7 @@ export function PositionCollection({
           }
         />
       ) : (
-        <div role="listbox" aria-label="Posiciones" aria-multiselectable="true">
+        <div role="list" aria-label="Posiciones">
           <VirtualPositionRows
             key={`${view}:${group}:${search}:${typology}:${glassFilter}:${columns}`}
             rows={rows}

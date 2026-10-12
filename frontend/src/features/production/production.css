@@ -918,7 +918,7 @@ div:has(> table.production-plan) {
   border-radius: var(--r-2);
   background: var(--surface-card, transparent);
 }
-.production-prep h3 {
+.production-prep h2 {
   margin: 0 0 0.4rem;
   font-size: var(--type-body);
   font-weight: 600;
@@ -1104,8 +1104,16 @@ div:has(> table.production-plan) {
 }
 .cnc-panel a,
 .cnc-workspace a,
+.cutplan a,
 .production-shortages a {
   color: var(--interactive);
+}
+.production-shortages a,
+.cutplan-unnested a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--density-loose);
+  padding-block: var(--space-2);
 }
 .cnc-panel .ui-button:disabled .ui-button__label,
 .cnc-workspace .ui-button:disabled .ui-button__label {

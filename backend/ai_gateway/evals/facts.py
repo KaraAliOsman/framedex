@@ -3,6 +3,25 @@
 from decimal import Decimal
 
 
+def common_glass_sku(catalogs: list[dict]) -> str | None:
+    """A requested existing SKU must belong to every targeted series."""
+    if not catalogs:
+        return None
+    shared = set(catalogs[0]["glass_skus"])
+    for catalog in catalogs[1:]:
+        shared.intersection_update(catalog["glass_skus"])
+    return min(shared) if shared else None
+
+
+def product_from_design(design: dict) -> dict:
+    tree = design["parametric_tree"]
+    if tree.get("version") == "product-v2":
+        return tree
+    return {"version": "product-v2", "assembly": {"couplings": [], "modules": [{
+        "id": "single", "width_mm": design["nominal_width_mm"],
+        "height_mm": design["nominal_height_mm"], "tree": tree}]}}
+
+
 def engine_accepted(envelope: dict) -> bool:
     result = envelope.get("result") or {}
     return (envelope.get("http_status") == 200

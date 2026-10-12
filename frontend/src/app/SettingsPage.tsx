@@ -166,7 +166,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h3 className="eyebrow">{t("settings.flow")}</h3>
+      <h2 className="eyebrow">{t("settings.flow")}</h2>
       <p className="settings-hint">{t("settings.flowHint")}</p>
       <p>
         <StatusBadge
@@ -177,7 +177,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
         </StatusBadge>
       </p>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
-      <ValidatedForm className="payments-form" onSubmit={save}>
+      <ValidatedForm className="payments-form" data-region="marca-documentos" onSubmit={save}>
         <label>
           {t("settings.flowEnv")}
           <select value={apiUrl} onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}>
@@ -287,7 +287,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h3 className="eyebrow">{t("settings.siiTitle")}</h3>
+      <h2 className="eyebrow">{t("settings.siiTitle")}</h2>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       {items.length === 0 ? (
         <p className="settings-hint">{t("settings.siiCafEmpty")}</p>
@@ -313,7 +313,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
           </tbody>
         </table>
       )}
-      <ValidatedForm className="payments-form" onSubmit={upload}>
+      <ValidatedForm className="payments-form" data-region="logo-documentos" onSubmit={upload}>
         <label>
           {t("settings.siiCafFile")}
           <FilePick
@@ -410,7 +410,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h3 className="eyebrow">{t("settings.siiCertTitle")}</h3>
+      <h2 className="eyebrow">{t("settings.siiCertTitle")}</h2>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       {certificate === null ? (
         <p className="settings-hint">{t("settings.siiCertEmpty")}</p>
@@ -650,7 +650,7 @@ function OrgBrandingCard({
 
   return (
     <div className="settings-card">
-      <h3 className="eyebrow">{t("settings.branding")}</h3>
+      <h2 className="eyebrow">{t("settings.branding")}</h2>
       <p className="settings-hint">
         La marca y el pie se sellan al emitir. Los documentos anteriores conservan su identidad.
       </p>

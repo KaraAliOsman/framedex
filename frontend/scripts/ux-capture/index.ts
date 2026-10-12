@@ -1,6 +1,8 @@
+import AxeBuilder from "@axe-core/playwright";
 import { chromium, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import * as OTPAuth from "otpauth";
 
@@ -32,6 +34,12 @@ type AuthSession = {
 };
 
 type CaptureRecord = {
+  accessibility?: {
+    id: string;
+    impact: string | null | undefined;
+    help: string;
+    targets: string[][];
+  }[];
   routeId: string;
   path: string;
   reachedPath: string;
@@ -114,7 +122,20 @@ async function ensureVite(): Promise<ChildProcess | null> {
 
 async function signIn(role: UxRole): Promise<AuthSession> {
   const cached = sessions.get(role);
-  if (cached) return cached;
+  if (cached && (cached.expires_at ?? 0) > Date.now() / 1000 + 180) return cached;
+  if (cached) {
+    const refreshed = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { apikey: anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: cached.refresh_token }),
+    });
+    if (!refreshed.ok) throw new Error(`${role} session refresh -> ${refreshed.status}`);
+    const session = (await refreshed.json()) as AuthSession;
+    session.expires_at = Math.floor(Date.now() / 1000) + session.expires_in;
+    sessions.set(role, session);
+    if (role === "OWNER" && ownedFactor) ownedFactor.session = session;
+    return session;
+  }
   const user = FIXTURE_USERS[role];
   const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
@@ -161,6 +182,7 @@ async function signIn(role: UxRole): Promise<AuthSession> {
     session = { ...session, ...((await verified.json()) as AuthSession) };
     ownedFactor = { id: factor.id, session };
   }
+  session.expires_at = Math.floor(Date.now() / 1000) + session.expires_in;
   sessions.set(role, session);
   return session;
 }
@@ -181,8 +203,11 @@ async function discoverFixture(session: AuthSession): Promise<FixtureRefs> {
     session,
     "/projects/",
   );
-  const project =
-    projects.items.find((item) => /casa|vivienda|fixture/i.test(item.name)) ?? projects.items[0];
+  const requestedProject = process.env.DEKOPEN_UX_PROJECT_ID;
+  const project = requestedProject
+    ? projects.items.find((item) => item.id === requestedProject)
+    : (projects.items.find((item) => /casa|vivienda|fixture/i.test(item.name)) ??
+      projects.items[0]);
   if (!project) throw new Error("Fixture has no project; run scripts/dev_fixture.py first");
   const detail = await authenticatedFetch<{
     positions?: { id: string }[];
@@ -222,6 +247,19 @@ function globMatches(value: string, glob?: string): boolean {
       .join(".*")}$`,
   );
   return pattern.test(value);
+}
+
+async function stableAccessibility(page: Page) {
+  for (let attempt = 0; ; attempt += 1) {
+    await page.waitForLoadState("networkidle");
+    try {
+      return (await new AxeBuilder({ page }).analyze()).violations;
+    } catch (error) {
+      if (attempt >= 2 || !String(error).includes("Execution context was destroyed")) throw error;
+      // Auth redirects may replace the document while axe is being injected.
+      // Only a completed scan of the settled document counts as evidence.
+    }
+  }
 }
 
 async function prepareContext(
@@ -280,7 +318,28 @@ async function captureRoute(
       httpErrors.push({ url: response.url(), status: response.status() });
     }
   });
-  await page.goto(route.path, { waitUntil: "networkidle", timeout: 45_000 });
+  try {
+    await page.goto(route.path, { waitUntil: "networkidle", timeout: 45_000 });
+  } catch (error) {
+    await writeFile(
+      path.join(outDir, "navigation-failure.json"),
+      JSON.stringify(
+        {
+          routeId: route.id,
+          role,
+          theme,
+          viewportId,
+          consoleErrors,
+          httpErrors,
+          reachedPath: new URL(page.url()).pathname,
+          error: String(error),
+        },
+        null,
+        2,
+      ),
+    );
+    throw error;
+  }
   if (route.expandDetails) {
     const summary = page.locator(`#${route.expandDetails} > summary`);
     await summary.waitFor();
@@ -300,6 +359,15 @@ async function captureRoute(
       route.workshop || role === "OPERATOR" || role === "INSTALLER",
     )),
   ];
+  const accessibility =
+    process.env.DEKOPEN_UX_AXE === "1"
+      ? (await stableAccessibility(page)).map((violation) => ({
+          id: violation.id,
+          impact: violation.impact,
+          help: violation.help,
+          targets: violation.nodes.map((node) => node.target.map(String)),
+        }))
+      : undefined;
   const screenshot = `${route.id}__${role}__${theme}__${viewportId}.png`;
   await page.screenshot({ path: path.join(outDir, screenshot), fullPage: true });
   for (const sheet of await page.coverage.stopCSSCoverage()) {
@@ -350,6 +418,7 @@ async function captureRoute(
   const reachedPath = new URL(page.url()).pathname;
   await page.close();
   return {
+    accessibility,
     routeId: route.id,
     path: route.path,
     reachedPath,
@@ -390,7 +459,29 @@ async function main(): Promise<void> {
   const routes = routesForFixture(refs).filter(
     (route) => globMatches(route.id, args.routes) || globMatches(route.path, args.routes),
   );
+  const signature = createHash("sha256")
+    .update(
+      JSON.stringify({
+        baseUrl,
+        refs,
+        roles: [...selectedRoles],
+        routes,
+        document: await (await fetch(baseUrl)).text(),
+      }),
+    )
+    .digest("hex");
+  const metadataPath = path.join(outDir, "run.json");
   const records: CaptureRecord[] = [];
+  if (process.env.DEKOPEN_UX_RESUME === "1") {
+    const previous = JSON.parse(await readFile(metadataPath, "utf8")) as { signature: string };
+    if (previous.signature !== signature)
+      throw new Error("UX resume requires the same build and fixture");
+    records.push(...JSON.parse(await readFile(path.join(outDir, "records.partial.json"), "utf8")));
+  }
+  await writeFile(
+    metadataPath,
+    JSON.stringify({ signature, generatedAt: new Date().toISOString() }),
+  );
   try {
     for (const route of routes) {
       const roles = route.public ? [route.roles[0] ?? "ESTIMATOR"] : route.roles;
@@ -398,6 +489,16 @@ async function main(): Promise<void> {
         if (!route.public) await signIn(role);
         for (const theme of THEMES) {
           const captures = VIEWPORTS.map((viewport) => async () => {
+            if (
+              records.some(
+                (record) =>
+                  record.routeId === route.id &&
+                  record.role === role &&
+                  record.theme === theme &&
+                  record.viewport === viewport.id,
+              )
+            )
+              return;
             const context = await prepareContext(
               browser,
               role,
@@ -408,6 +509,10 @@ async function main(): Promise<void> {
             records.push(await captureRoute(context, route, role, theme, viewport.id, outDir));
             console.log(`${records.length}: ${route.id} ${role} ${theme} ${viewport.id}`);
             await context.close();
+            await writeFile(
+              path.join(outDir, "records.partial.json"),
+              JSON.stringify(records, null, 2),
+            );
           });
           if (process.env.DEKOPEN_UX_SERIAL === "1") {
             for (const capture of captures) await capture();
