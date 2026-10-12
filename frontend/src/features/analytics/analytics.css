@@ -16,6 +16,11 @@
 .analytics-page a {
   color: var(--interactive);
 }
+.analytics-page .ui-data-table tr:hover,
+.analytics-number:hover,
+.analytics-entity:hover {
+  background: var(--surface-selected);
+}
 .analytics-page h3 {
   font-size: var(--type-body);
   font-weight: 500;
@@ -32,6 +37,13 @@
 .analytics-closure label {
   display: grid;
   gap: var(--space-1);
+}
+.analytics-period input {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+:root[data-theme="dark"] .analytics-period input {
+  color-scheme: dark;
 }
 .analytics-source,
 .analytics-reading p,

@@ -394,6 +394,7 @@ function AnalyticsWorkspace(): JSX.Element {
           Desde
           <input
             type="date"
+            className="ui-field__input"
             required
             disabled={loading}
             value={start}
@@ -404,6 +405,7 @@ function AnalyticsWorkspace(): JSX.Element {
           Hasta
           <input
             type="date"
+            className="ui-field__input"
             required
             disabled={loading}
             value={end}
