@@ -303,6 +303,9 @@ it.each(["network", "http"])(
     mount();
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("No se pudo abrir la posición");
+    expect(
+      screen.getByRole("heading", { level: 1, name: "No se pudo abrir la posición" }),
+    ).toBeInTheDocument();
     expect(alert).not.toHaveTextContent("⚠");
     expect(screen.queryByRole("button", { name: t("projects.save") })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: t("ui.retry") }));

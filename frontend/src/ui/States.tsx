@@ -31,15 +31,17 @@ export function ErrorState({
   body,
   onRetry,
   technical,
+  titleAs: Title = "p",
 }: {
   title?: string;
   body?: string;
   onRetry?: () => void;
   technical?: string;
+  titleAs?: "p" | "h1" | "h2" | "h3";
 }): JSX.Element {
   return (
     <div className="ui-empty ui-empty--error" role="alert">
-      <p className="ui-empty__title">{title ?? t("ui.errorTitle")}</p>
+      <Title className="ui-empty__title">{title ?? t("ui.errorTitle")}</Title>
       {body ? <p className="ui-empty__body">{body}</p> : null}
       <p className="ui-empty__body">
         Revisa la conexión y los datos. Si continúa, comparte los detalles con el dueño de la

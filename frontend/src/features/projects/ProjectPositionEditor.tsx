@@ -85,6 +85,7 @@ export function ProjectPositionEditor(): JSX.Element {
     return (
       <ErrorState
         title="No se pudo abrir el proyecto"
+        titleAs="h1"
         onRetry={() => void projectQuery.refetch()}
       />
     );
@@ -744,6 +745,7 @@ function PositionWorkspace({
     return message ? (
       <ErrorState
         title="No se pudo abrir la posición"
+        titleAs="h1"
         body="No se recibió el diseño guardado. Vuelve a consultar para abrir esta posición."
         onRetry={() => setLoadAttempt((attempt) => attempt + 1)}
       />
