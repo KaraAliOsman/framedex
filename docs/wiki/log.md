@@ -1531,3 +1531,18 @@ diagnósticos no aprobados y el límite de carga fría WebGL. Véanse
 `docs/redesign/P20-RENDIMIENTO.md`, la migración `20270129000000` y
 `backend/tests/integration/test_pricing_read_performance.py`. La aceptación
 global y el PR final permanecen en curso; DEMO no acredita tarifas productivas.
+
+## 2026-10-12 · P20, recuperación del editor y red local de revisión
+
+Código verificado `de3e0cba`: un error de lectura permite Reintentar el mismo
+ID y tenant, con causa visible, h1 y región del diseño accesible. Ocho pares
+ancho/tema en Vite y ocho en producción pasan error y recuperación sin
+hallazgos, axe, desbordes ni escrituras. El dibujo móvil conserva altura y el
+nombre largo mantiene los controles dentro de 1024 px. Véanse
+`product/editor-canvas.md` y la evidencia `ux/error-posicion/` de P20.
+
+La red Docker propia de REVIEW (`3d410d1d`) evita la ruta IPv6 inalcanzable
+del proxy por el host. Verifica propiedad antes de crear contenedores y
+conserva redes ajenas. Arranque oficial, acceso Magic Link/Mailpit y cuatro
+regresiones pasan; evidencia `guia/red-local.json`. La aceptación global
+continúa su cierre documental y estos ensayos no acreditan fabricación DEMO.

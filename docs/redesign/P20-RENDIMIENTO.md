@@ -25,11 +25,41 @@ La espera del formulario pasa de 350 a 180 ms y conserva el rechazo de respuesta
 anteriores. En Ajustes › Producción, el título del formulario pasa de h4 a h3
 para mantener la jerarquía accesible bajo el h2 de la sección.
 
+La revisión local usa una red Docker propia y el nombre del contenedor API.
+El DNS de `host.docker.internal` ofrecía además una dirección IPv6 sin ruta;
+nginx acumulaba esperas y devolvía 502. La guía conserva la base y ahora evita
+ese salto por el host. Se comprueba la propiedad de la red antes de crear
+contenedores; una red ajena se conserva. El arranque real de la guía y las
+cuatro regresiones del stack pasan. La reutilización técnica sigue siendo
+opcional para los repositorios que cumplen el contrato anterior.
+
+Si la lectura de una posición falla, el editor muestra su causa y permite
+Reintentar. El clic vuelve a consultar el mismo identificador dentro de la
+misma organización; no guarda ni aplica cambios. El estado tiene un título
+principal accesible y el área de diseño tiene un nombre para navegar con
+lector de pantalla. Debajo de 1024 px, la regla de herramientas conserva su
+prioridad frente al CSS compartido del portal: no crea filas implícitas que
+dejen el dibujo sin altura. La lectura móvil mantiene ubicación/cantidad
+bloqueadas y el dibujo visible.
+Los controles de la cabecera conservan su ancho y la ruta de navegación
+puede ocupar otra línea: el nombre largo del proyecto ya no empuja el Orb
+fuera de 1024 px.
+
+La comprobación inyecta un 502 solo en la lectura inicial y pulsa Reintentar
+para obtener la respuesta real. Los POST de evaluación, preview de catálogo
+y simulación se registran por separado; no se presentan como escrituras.
+Se verifican ambos temas y los cuatro anchos con los detectores originales
+y axe, tanto en Vite como en el build de revisión. La evidencia de
+[error y recuperación](captures/aceptacion-final/ux/error-posicion/)
+conserva las revisiones de cada corrida.
+
 ## Medición
 
 Build de producción y APIs propios sobre
 `b8e62295bdcbf04c2427b0420551cbb2c1a30eec`. Chromium, 1440 × 900, sesión real de
 Auth, doce muestras calientes por interacción, sin gates ni capturas simultáneos.
+Los percentiles usan rango más cercano: se ordenan las muestras y se toma
+la posición ceil(n × p). Con doce muestras, p95 es la mayor observación.
 
 | Interacción | p50 ms | p95 ms | Resultado |
 |---|---:|---:|---|
