@@ -7,7 +7,7 @@ import json
 import pytest
 
 from ai_gateway.evals.outcomes import classify, evaluate, summarize
-from ai_gateway.evals.run import Recorder, design_step_ops, fixture_project, fixture_role, load_cases, sliding_probe
+from ai_gateway.evals.run import Recorder, design_step_ops, editable_sandbox_project, fixture_project, fixture_role, load_cases, sliding_probe
 from ai_gateway.evals.facts import common_glass_sku, frame_bar_count, priced_winner, product_from_design
 from ai_gateway.evals.redaction import redact_report
 
@@ -45,6 +45,43 @@ def test_glass_intent_uses_the_intersection_of_target_series():
 def test_factory_cases_use_a_live_workshop_actor_without_elevating_estimators():
     assert {fixture_role(c) for c in load_cases() if c["view"] == "factory"} == {"WORKSHOP_MANAGER"}
     assert {fixture_role(c) for c in load_cases() if c["view"] != "factory"} == {"ESTIMATOR"}
+
+
+def test_sandbox_opens_a_successor_through_the_public_workflow_without_editing_a_seal(monkeypatch):
+    from ai_gateway.evals import run
+    sealed = {"id": "project", "status": "APPROVED", "current_revision": "REV-B", "current_pricing_operation_id": "priced-B"}
+    calls = []
+
+    def request(client, method, path, data):
+        calls.append((method, path, data))
+        return 201, {**sealed, "status": "DRAFT", "current_revision": "REV-C", "current_pricing_operation_id": None}
+
+    monkeypatch.setattr(run, "_request", request)
+    editable = editable_sandbox_project(object(), sealed, {"id": "E01", "view": "editor"})
+    assert editable["current_revision"] == "REV-C"
+    assert calls == [("post", "projects/project/successor/", {"confirmed": True, "expected_current_revision": "REV-B"})]
+    assert sealed["status"] == "APPROVED" and sealed["current_pricing_operation_id"] == "priced-B"
+    assert editable_sandbox_project(object(), sealed, {"id": "J04", "view": "project"}) is sealed
+    assert editable_sandbox_project(object(), sealed, {"id": "J08", "view": "project"}) is sealed
+    assert len(calls) == 1
+
+
+def test_sandbox_resets_draft_pricing_via_the_normal_api_and_retains_failure(monkeypatch):
+    from ai_gateway.evals import run
+    priced = {"id": "project", "status": "DRAFT", "current_revision": "REV-A", "current_pricing_operation_id": "priced-A"}
+    calls = []
+
+    def request(client, method, path, data):
+        calls.append((method, path, data))
+        return 200, {**priced, "current_pricing_operation_id": None}
+
+    monkeypatch.setattr(run, "_request", request)
+    assert editable_sandbox_project(object(), priced, {"id": "J03", "view": "project"})["current_pricing_operation_id"] is None
+    assert calls[0][1] == "projects/project/reset-pricing/"
+    assert calls[0][2]["expected_operation_id"] == "priced-A"
+    monkeypatch.setattr(run, "_request", lambda *args: (403, {}))
+    with pytest.raises(RuntimeError, match="sandbox_pricing_reset_failed"):
+        editable_sandbox_project(object(), priced, {"id": "J01", "view": "project"})
 
 
 def test_kitchen_oracle_checks_current_design_dimensions_and_physical_panels():

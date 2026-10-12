@@ -185,6 +185,27 @@ def _request(client: Any, method: str, path: str, data: dict | None = None) -> t
     return response.status_code, response.json()
 
 
+def editable_sandbox_project(client: Any, project: dict, case: dict) -> dict:
+    """Use the human workflow inside the rollback-only setup, never edit a seal."""
+    if case["view"] != "editor" and case["id"] not in {"J01", "J02", "J03"}:
+        return project
+    current = project
+    if current["status"] != "DRAFT":
+        status, current = _request(client, "post", f"projects/{current['id']}/successor/", {
+            "confirmed": True, "expected_current_revision": current["current_revision"],
+        })
+        if status not in {200, 201}:
+            raise RuntimeError("sandbox_successor_setup_failed")
+    if current.get("current_pricing_operation_id"):
+        status, current = _request(client, "post", f"projects/{current['id']}/reset-pricing/", {
+            "expected_operation_id": current["current_pricing_operation_id"],
+            "reason": "Preparar copia editable de evaluación local; la transacción se revierte.",
+        })
+        if status != 200:
+            raise RuntimeError("sandbox_pricing_reset_failed")
+    return current
+
+
 def _setup_product(source: dict, setup: str) -> dict:
     tree = source["design"]["parametric_tree"]
 
@@ -412,6 +433,7 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
             status, project = _request(client, "get", f"projects/{project_id}/")
             if status != 200 or len(project.get("positions") or []) != 12:
                 raise RuntimeError("local_fixture_requires_twelve_positions")
+            project = editable_sandbox_project(client, project, case)
             position = project["positions"][0]
             before = _setup_product(position, case.get("setup", "fixed"))
             after, wire = apply_copy(before, [])
