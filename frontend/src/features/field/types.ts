@@ -55,7 +55,7 @@ export type Incident = {
   diagnosis: string | null;
   status: string;
   context: Visit["context"];
-  evidence: { materials: Record<string, unknown[]>; photo: { id: string } };
+  evidence: { materials?: Record<string, unknown[]>; photo?: { id: string } };
   resolution: {
     remake_order_id?: string;
     remake_code?: string;

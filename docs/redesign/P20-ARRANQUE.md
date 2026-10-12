@@ -99,6 +99,23 @@ afirman anticipos, despacho o instalación que no registraron.
 
 ## Límites
 
+La aceptación añadió correcciones verificadas: una medida escrita con espacio,
+espacio fino o espacio inseparable conserva el número completo en el validador
+de IA; una incidencia de medición sin fotografía sigue permitiendo abrir su
+origen y diagnosticarla; la agenda histórica conserva un encabezado legible.
+Las regresiones del evaluador comparan el peso exacto que consultó el agente,
+el vidrio común a las series objetivo y las dimensiones/apertura del contrato
+actual. Los casos de fábrica usan una membresía real de jefe de taller. La
+matriz UX renueva sus sesiones, guarda cada captura terminada y permite
+reanudar exclusivamente el mismo build y fixture; una navegación fallida
+conserva su diagnóstico y sigue siendo un error.
+
+Validación específica: 102 regresiones Python y dos recorridos de componente
+de postventa pasan. El navegador acreditó MiMo real con cancelación, nueva
+propuesta, simulación del motor, aplicación, deshacer y auditoría. Las pruebas
+E2E conservan las comprobaciones de selección, teclado e identidad del módulo
+con la semántica accesible actual.
+
 No se cambian fórmulas, esquema ni contratos HTTP. La fuente y el cliente
 generado permanecen reproducibles. DEMO no certifica fabricación. Flow/SII y
 correo conservan sandbox y su activación explícita. La guía completa, IA real,

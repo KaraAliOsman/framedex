@@ -264,11 +264,12 @@ _UNITS = {
     "grados",
 }
 _LEFT_TOKEN_RE = re.compile(r"°|\d[\d.,]*|[\wáéíóúñü]+", re.IGNORECASE)
+_NUMBER_PATTERN = r"-?(?:\d{1,3}(?:[ \u00a0\u2009\u202f]\d{3})+|\d+)(?:[.,]\d+)*"
 _MEASURE_RE = re.compile(
-    r"(?<![\d.,])(-?\d+(?:[.,]\d+)*)\s*(mm|mil[ií]metros?|cm|metros?|mts?|m)\b",
+    rf"(?<![\d.,])({_NUMBER_PATTERN})\s*(mm|mil[ií]metros?|cm|metros?|mts?|m)\b",
     re.IGNORECASE,
 )
-_BARE_NUMBER_RE = re.compile(r"(?<![\d.,])-?\d+(?:[.,]\d+)*")
+_BARE_NUMBER_RE = re.compile(rf"(?<![\d.,]){_NUMBER_PATTERN}")
 _WORD_NUMBER_RE = re.compile(
     r"\b(uno?|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b",
     re.IGNORECASE,
@@ -279,6 +280,7 @@ def _parse_number(token: str) -> Decimal | None:
     """Chilean-locale number: '.' groups thousands (2.400 → 2400), ',' is the
     decimal mark (2,4 → 2.4). A lone '.' with three trailing digits reads as
     thousands so '2.400' means 2400, matching how users write medidas."""
+    token = re.sub(r"[ \u00a0\u2009\u202f]", "", token)
     try:
         if "." in token and "," in token:
             normalized = token.replace(".", "").replace(",", ".")
