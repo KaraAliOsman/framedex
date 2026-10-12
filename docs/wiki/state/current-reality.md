@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-12
 volatility: high
-verified_ref: 15a3332a53ee0c21032ecd2715f5c6298e3b076e
+verified_ref: c99d25b577cc2726d28465dbab59f142c2c7cd73
 sources:
+  - P20 PR https://github.com/KaraAliOsman/framedex/pull/156; squash c99d25b577cc2726d28465dbab59f142c2c7cd73; CI 4/4 sobre c8ac0612aa1ff10008ab666c9527eccc67a9bc4c, cierre de aceptación
   - P20 aceptación global sobre 15a3332a53ee0c21032ecd2715f5c6298e3b076e, catorce recorridos, matriz UX de 912 vistas y dominio175; docs/redesign/acceptance-2026-10-12.md
   - P20 corrección cc0003abb3537f0994236e3a0221266bb087ee88, stack limpio/Magic Link/editor, autoridad de propuesta y doce cargas 4G, 2026-10-12
   - docs/redesign/P20-ARRANQUE.md

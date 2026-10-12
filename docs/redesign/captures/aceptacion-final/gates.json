@@ -52,5 +52,34 @@
       }
     ]
   },
-  "method": "Gates locales completos con exit 0, goldens read-only y detectores originales. El gate SQL/RLS local corresponde a 63d4f267; SQL/RLS no cambió después. CI ejecutó de nuevo los cuatro checks completos sobre el HEAD del PR antes del squash."
+  "method": "Gates locales completos con exit 0, goldens read-only y detectores originales. El gate SQL/RLS local corresponde a 63d4f267; SQL/RLS no cambió después. CI ejecutó de nuevo los cuatro checks completos sobre el HEAD del PR antes del squash.",
+  "delivery": {
+    "pr": 156,
+    "url": "https://github.com/KaraAliOsman/framedex/pull/156",
+    "mergeRef": "c99d25b577cc2726d28465dbab59f142c2c7cd73",
+    "checkedHead": "c8ac0612aa1ff10008ab666c9527eccc67a9bc4c",
+    "checks": "4/4 PASA",
+    "jobs": [
+      {
+        "name": "Lint & Typecheck",
+        "conclusion": "SUCCESS",
+        "url": "https://github.com/KaraAliOsman/framedex/actions/runs/38317935990/job/115038935556"
+      },
+      {
+        "name": "Test Suite",
+        "conclusion": "SUCCESS",
+        "url": "https://github.com/KaraAliOsman/framedex/actions/runs/38317935990/job/115038935510"
+      },
+      {
+        "name": "Frontend Build",
+        "conclusion": "SUCCESS",
+        "url": "https://github.com/KaraAliOsman/framedex/actions/runs/38317935990/job/115038935526"
+      },
+      {
+        "name": "Database Gate",
+        "conclusion": "SUCCESS",
+        "url": "https://github.com/KaraAliOsman/framedex/actions/runs/38317935990/job/115038935374"
+      }
+    ]
+  }
 }

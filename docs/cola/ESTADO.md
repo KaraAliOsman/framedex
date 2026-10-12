@@ -38,7 +38,7 @@
 | P19 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/151 | ff210e7a439b861349d1d602c4137ebe4e65d0c8 | CI 4/4 verde; 40 tipologías, 68 poses, bicolor sellado y render común; 281 PNG y rúbrica PASA. |
 | P18 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/152 | d3b86003d69e29089e62463f9f80af7fd0c5dc78 | CI 4/4 verde; Uw/OGUC con áreas visibles, autoridad ligada al espécimen y anexo inmutable; 1.467 pgTAP, 558 integraciones, 19 E2E, 69 PNG y rúbrica PASA. |
 | P24 | 4 | mergeado | https://github.com/KaraAliOsman/framedex/pull/153 | ed8ef310d5dead8bb85af3ec7b938f788f96b19d | CI 4/4 verde; causas/cierre real inmutable, 1.483 pgTAP, 589 integraciones, 19 E2E y trece upgrades PG16; 76 PNG y rúbrica PASA. |
-| P20 | 5 | en curso |  |  | Aceptación global, guía desde stack limpio y PR final a main, sin merge. |
+| P20 | 5 | mergeado | https://github.com/KaraAliOsman/framedex/pull/156 | c99d25b577cc2726d28465dbab59f142c2c7cd73 | CI 4/4 verde; 14 recorridos, UX912 sin hallazgos, dominio175 y MiMo E/J 18/21; guía probada, rúbrica PASA y activación declarada. PR final a main se entrega sin merge. |
 
 Arranque completado: PR [#116](https://github.com/KaraAliOsman/framedex/pull/116), squash `739704ab8f81ded8f860d44d44adba0c33f96db4` en `integracion/v1`; cuatro checks de CI PASA. Los cuatro commits locales se trasladaron conservando el arreglo de P00 y la evidencia preparada del fixture. `main` local no se modificó.
 
@@ -95,3 +95,9 @@ Ventas, margen, planta y terreno conservan período y fuentes; cada cifra llega 
 El cierre de costos requiere preview, cobertura real y clic humano; sus correcciones son aditivas e inmutables.
 Capturas clave: `docs/redesign/captures/analitica/`; 76 PNG, 40 vistas oficiales sin hallazgos y axe sin serious/critical.
 Riesgos: DEMO no acredita contabilidad ni tarifas reales; P20 verifica ahora el producto completo y su entrega al dueño.
+
+Programa v1 cerrado: 39 encargos; 39 mergeados y 0 bloqueados.
+P20 conserva catorce recorridos, rúbrica por persona y evidencia con sus refs originales.
+UX912 termina sin hallazgos; dominio175 mantiene paridad y rechazos por autoridad ausente.
+Guía, aceptación y ACTIVACION acompañan la revisión del dueño; REVIEW conserva sus datos.
+El PR de integración hacia main se entrega abierto, con sus cuatro checks y sin merge automático.

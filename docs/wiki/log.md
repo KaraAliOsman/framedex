@@ -1560,3 +1560,7 @@ reproducciones individuales. La aceptación y ACTIVACION explican SII 39,
 tarifa real de compra, primera carga WebGL y conexiones del dueño; DEMO no
 acredita producción/certificación ni dinero. Véase
 `docs/redesign/acceptance-2026-10-12.md`. El PR final a main no se mergea.
+
+## 2026-10-12 · P20 integrado
+
+[PR #156](https://github.com/KaraAliOsman/framedex/pull/156), squash `c99d25b577cc2726d28465dbab59f142c2c7cd73`; cuatro checks de CI PASA sobre `c8ac0612aa1ff10008ab666c9527eccc67a9bc4c`. Los 39 encargos quedan cerrados en ESTADO. El cierre documental conserva los refs de cada corrida, límites de sandbox/DEMO y fallos del proveedor. La revisión hacia main se entrega al dueño sin merge.
