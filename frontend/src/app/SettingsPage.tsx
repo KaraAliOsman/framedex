@@ -177,7 +177,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
         </StatusBadge>
       </p>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
-      <ValidatedForm className="payments-form" onSubmit={save}>
+      <ValidatedForm className="payments-form" data-region="marca-documentos" onSubmit={save}>
         <label>
           {t("settings.flowEnv")}
           <select value={apiUrl} onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}>
@@ -313,7 +313,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
           </tbody>
         </table>
       )}
-      <ValidatedForm className="payments-form" onSubmit={upload}>
+      <ValidatedForm className="payments-form" data-region="logo-documentos" onSubmit={upload}>
         <label>
           {t("settings.siiCafFile")}
           <FilePick

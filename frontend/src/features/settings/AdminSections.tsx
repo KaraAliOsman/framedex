@@ -543,13 +543,21 @@ export function DocumentPreview({
   });
   useEffect(() => {
     if (!project && projects.data?.length)
-      setProject(projects.data.find((p) => p.status !== "DRAFT")?.id ?? projects.data[0]!.id);
+      setProject(
+        projects.data.find((p) => p.status !== "DRAFT" && p.pricing_current)?.id ??
+          projects.data.find((p) => p.status !== "DRAFT")?.id ??
+          projects.data[0]!.id,
+      );
   }, [projects.data, project]);
   useEffect(() => {
-    setVersion(detail.data?.versions?.[0]?.id ?? "");
+    setVersion(
+      detail.data?.versions?.find((v) => v.snapshot_sha256)?.id ??
+        detail.data?.versions?.[0]?.id ??
+        "",
+    );
   }, [detail.data]);
   useEffect(() => {
-    if (!version) {
+    if (!version || !detail.data?.versions?.find((v) => v.id === version)?.snapshot_sha256) {
       setUrl("");
       setLoading(false);
       setError("");
@@ -590,7 +598,7 @@ export function DocumentPreview({
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [options, version, branding, retry]);
+  }, [options, version, branding, retry, detail.data]);
   return (
     <aside className="settings-preview" aria-label="Vista previa del PDF real">
       <h3>Documento de referencia</h3>
@@ -664,6 +672,9 @@ export function DocumentPreview({
         </>
       )}
       {loading && <LoadingState label="Renderizando el PDF con tus ajustes" />}
+      {version && !detail.data?.versions?.find((v) => v.id === version)?.snapshot_sha256 && (
+        <BlockedState reason="Esta revisión histórica no tiene la trazabilidad requerida para generar una nueva vista previa. Elige una revisión emitida reciente; su documento original se conserva." />
+      )}
       {error && <ErrorState body={error} onRetry={() => setRetry((previous) => previous + 1)} />}
       {url && (
         <>

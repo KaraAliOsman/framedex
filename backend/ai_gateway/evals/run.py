@@ -428,7 +428,10 @@ def run_case(case: dict, *, client: Any, claims: dict, provider: str, model: str
                 if status != 200:
                     raise RuntimeError("sandbox_position_setup_failed")
                 position = saved
-            truth = _ground_truth(client, claims, project, position, before, case)
+            # The live agent receives the canvas wire, which expands physical
+            # openings. Legacy shorthand preserves historical rounded masses;
+            # compare against the same engine input the provider actually sees.
+            truth = _ground_truth(client, claims, project, position, wire, case)
             request = case["request"].replace("[SKU existente]", truth["existing_sku"] or "[SKU existente]")
             request = request.replace("[código]", truth["work_order_code"] or "[código]")
             output["resolved_request"] = request
