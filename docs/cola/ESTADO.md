@@ -37,7 +37,7 @@
 | D08 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/150 | d6921a893fcc3b303fcd693bd934380e7227f3d0 | CI 4/4 verde; catorce recetas, cortes/BOM/kits y planta; 1.451 pgTAP, 554 integraciones, 19 E2E y trece upgrades PG16; 199 capturas verificadas y rúbrica PASA. |
 | P19 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/151 | ff210e7a439b861349d1d602c4137ebe4e65d0c8 | CI 4/4 verde; 40 tipologías, 68 poses, bicolor sellado y render común; 281 PNG y rúbrica PASA. |
 | P18 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/152 | d3b86003d69e29089e62463f9f80af7fd0c5dc78 | CI 4/4 verde; Uw/OGUC con áreas visibles, autoridad ligada al espécimen y anexo inmutable; 1.467 pgTAP, 558 integraciones, 19 E2E, 69 PNG y rúbrica PASA. |
-| P24 | 4 | pendiente |  |  |  |
+| P24 | 4 | en curso |  |  |  |
 | P20 | 5 | pendiente |  |  |  |
 
 Arranque completado: PR [#116](https://github.com/KaraAliOsman/framedex/pull/116), squash `739704ab8f81ded8f860d44d44adba0c33f96db4` en `integracion/v1`; cuatro checks de CI PASA. Los cuatro commits locales se trasladaron conservando el arreglo de P00 y la evidencia preparada del fixture. `main` local no se modificó.
