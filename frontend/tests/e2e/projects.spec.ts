@@ -457,9 +457,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     () => page.reload(),
   );
   expect(reopenedClone.positions).toEqual(clone.positions);
-  await expect(page.getByRole("list", { name: "Posiciones" }).getByRole("listitem")).toHaveCount(
-    2,
-  );
+  await expect(page.getByRole("list", { name: "Posiciones" }).getByRole("listitem")).toHaveCount(2);
   await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
   await screenshot(page, info, "04-reopened-draft-clone");
 
