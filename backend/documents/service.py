@@ -1618,6 +1618,11 @@ def compose_revision(
             "realized_waste": {"status": "NOT_RECORDED", "value": None},
             "bom_hash": bom_hash,
         }
+        # Thermal evidence participates in preview and emission identically.
+        # It does not change any manufacturing or historical BOM identity.
+        if connection.vendor == "postgresql":
+            from projects.thermal import project_report
+            snapshot["thermal"] = project_report(org_id, project_id, sealed=False)
         return PreparedRevision(snapshot, purchase, position_system_ids)
 
 

@@ -50,6 +50,7 @@ import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
 import { ProjectServicesPanel } from "./ProjectServicesPanel";
 import { MeasurementPanel } from "./MeasurementPanel";
+import { ProjectThermalPanel, PositionThermal } from "./ProjectThermalPanel";
 import { RectificationPanel } from "./RectificationPanel";
 import {
   Button,
@@ -326,6 +327,7 @@ function ProjectMetadataForm({
 /* ------------------------------------------------------------------ */
 
 export type FactsSection =
+  | "thermal"
   | "quote"
   | "pricing"
   | "payments"
@@ -1229,6 +1231,7 @@ function ProjectWorkspace({
   const [quotationDirty, setQuotationDirty] = useState(false);
   const [paymentsDirty, setPaymentsDirty] = useState(false);
   const [importsDirty, setImportsDirty] = useState(false);
+  const [thermalDirty, setThermalDirty] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openSection, setSectionState] = useState<FactsSection | null>(null);
   const [visited, setVisited] = useState<Set<string>>(() => new Set(["positions"]));
@@ -1256,6 +1259,7 @@ function ProjectWorkspace({
   useEffect(() => {
     const requested = params.get("correo") === "cotizacion" ? "quote" : params.get("section");
     const allowed: FactsSection[] = [
+      "thermal",
       "quote",
       "pricing",
       "payments",
@@ -1436,7 +1440,7 @@ function ProjectWorkspace({
     const controller = lifetime.current;
     if (!controller || controller.signal.aborted || locked.current || mustReload) return;
     if (
-      (draft !== null || quotationDirty || paymentsDirty || importsDirty) &&
+      (draft !== null || quotationDirty || paymentsDirty || importsDirty || thermalDirty) &&
       !(await confirm({ title: t("projects.leaveUnsaved") }))
     )
       return;
@@ -1541,7 +1545,7 @@ function ProjectWorkspace({
   return (
     <section className="projects-page" aria-busy={busy || query.isFetching}>
       <UnsavedChangesGuard
-        dirty={draft !== null || quotationDirty || paymentsDirty || importsDirty}
+        dirty={draft !== null || quotationDirty || paymentsDirty || importsDirty || thermalDirty}
         message={t("projects.leaveUnsaved")}
       />
       {!project && (
@@ -1631,6 +1635,7 @@ function ProjectWorkspace({
             }
             items={[
               { id: "positions", label: "Posiciones" },
+              { id: "thermal", label: "Térmica" },
               { id: "quote", label: "Cotización" },
               { id: "pricing", label: "Precio" },
               { id: "payments", label: "Cobranza" },
@@ -1676,6 +1681,17 @@ function ProjectWorkspace({
                 canRelease={canSendEnvio}
                 onChanged={() => query.refetch()}
                 onDirtyChange={setQuotationDirty}
+              />
+            </div>
+          )}
+          {visited.has("thermal") && (
+            <div hidden={openSection !== "thermal"}>
+              <ProjectThermalPanel
+                project={project}
+                orgId={orgId}
+                canWrite={canWrite}
+                onChanged={() => query.refetch()}
+                onDirtyChange={setThermalDirty}
               />
             </div>
           )}
@@ -1745,6 +1761,7 @@ function ProjectWorkspace({
                     {fmtMm(selected.design.nominal_height_mm)} mm · cantidad {selected.quantity}
                   </p>
                   <p>Vista interior · fabricación guardada del motor.</p>
+                  <PositionThermal projectId={project.id} orgId={orgId} positionId={selected.id} />
                   {editable && (
                     <Link to={`/projects/${project.id}/positions/${selected.id}/edit`}>
                       {t("projects.openPosition")}

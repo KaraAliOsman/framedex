@@ -194,6 +194,17 @@ def _position_view(org_id, position, cache):
     view["price"] = {**price, "unit_net": unit_net,
         "net": str(indicative_line_net(Decimal(unit_net), position["quantity"], price["currency"]))
         if unit_net is not None else None}
+    if connection.vendor == "postgresql" and "thermal" not in cache[key]:
+        from projects.thermal import position_metric
+        cache[key]["thermal"] = position_metric(org_id, {
+            "id": position["id"], "position_index": position["position_index"],
+            "location_tag": position["location_tag"], "quantity": position["quantity"],
+            "system_id": design["system_id"], "width_mm": Decimal(design["nominal_width_mm"]),
+            "height_mm": Decimal(design["nominal_height_mm"]), "color_interior": design["color"],
+            "parametric_tree": design["parametric_tree"],
+        })["thermal"]
+    if "thermal" in cache[key]:
+        view["thermal"] = deepcopy(cache[key]["thermal"])
     return view
 
 
@@ -210,7 +221,12 @@ def _change_simulation(org_id, change, cache):
     delta = str(finish_selling_delta(Decimal(left["price"]["net"]), Decimal(price["net"]))) if (
         price.get("net") is not None and left["price"].get("net") is not None) else None
     engine = view["engine"]
+    from dekopen_engine.thermal import thermal_delta
+    left_metric, right_metric = left.get("thermal"), right.get("thermal")
+    uw_delta = thermal_delta(left_metric.get("uw") if left_metric else None,
+                             right_metric.get("uw") if right_metric else None)
     return {**right, "position_id": (change["after"] or change["before"])["id"],
+            "thermal_delta": {"before": left_metric, "after": right_metric, "delta_uw": uw_delta},
             "system_id": view["system_id"], "color": view["color"],
             "before": left, "price": {**price, "delta_net": delta,
                 "reason": price.get("reason") or left["price"].get("reason")},

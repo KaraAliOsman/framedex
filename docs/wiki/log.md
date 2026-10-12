@@ -1461,3 +1461,14 @@ verdes sobre 6bd3ff012f7c411c4dc34cee4c879180e119295a, squash
 `ff210e7a439b861349d1d602c4137ebe4e65d0c8`. La corrida 38180492649 conserva
 Database Gate (26m58s), lint/tipos, tests y build. El enlace temporal del
 fixture se revocó y los procesos propios se detuvieron. P18 sigue la cola.
+
+### 2026-10-11 · P18 térmica con autoridad
+
+Código `5b786e7af6555b7fdb8e40399a604c3c909d94dc`: áreas visibles Decimal,
+tablas oficiales OGUC, fuentes revisadas por catálogo/espécimen, F6 y anexo
+sellado. Alternativa mínima con precio/diff/aplicar/deshacer, revocación y PDF
+idéntico pasan. 57 casos focales, 69 PNG y 16 vistas ux:capture sin hallazgos.
+Gates completos verdes; motor 1052 (+2 xfail), backend 1551, frontend 1131,
+558 integraciones, 19 E2E, 1451 pgTAP +16 térmicos suplementarios y upgrades
+PG16. El certificado real, revisión profesional y alcance de edificio no
+se atribuyen al fixture. CI y squash quedan por registrar al integrar.

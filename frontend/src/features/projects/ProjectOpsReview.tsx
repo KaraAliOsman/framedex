@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { ThermalDelta } from "./ThermalDelta";
 import {
   projectOperationsPreview,
   projectOperationsApply,
@@ -193,10 +193,6 @@ export function ProjectOpsReview({
             {proposal.preview.diff.length} posiciones afectadas. Revisa el antes y después; la
             propuesta todavía no se ha aplicado.
           </p>
-          <p>
-            Δ de Uw: Sin dato · faltan autoridades térmicas de perfiles, vidrio y separador.{" "}
-            <Link to="/catalog">Revisar fuentes del catálogo</Link>
-          </p>
           <ol className="project-ops-diff">
             {proposal.preview.diff.map((raw, index) => {
               const change = raw as Change;
@@ -225,6 +221,7 @@ export function ProjectOpsReview({
                         )
                       : `Sin dato · ${simulation?.price?.reason ?? "calcula el precio del proyecto"}`}
                   </span>
+                  <ThermalDelta simulation={simulation} />
                   <details>
                     <summary>Dibujo y fuente del motor</summary>
                     <SimulationPreview

@@ -131,7 +131,7 @@ def spec_row(label: str, value: str, *, numeric: bool = False) -> str:
     return f'<div class="q-spec-row"><dt>{escape(label)} · </dt><dd class="{"q-num" if numeric else ""}">{escape(value)}</dd></div>'
 
 
-def field_specs(position: dict) -> str:
+def field_specs(position: dict, *, authoritative_thermal: bool = False) -> str:
     tree = position.get("parametric_tree") or {}
     modules = (tree.get("assembly") or {}).get("modules") if tree.get("version") == "product-v2" else None
     roots = [module.get("tree") or {} for module in modules] if isinstance(modules, list) else [tree]
@@ -166,7 +166,9 @@ def field_specs(position: dict) -> str:
                 if glass.synthetic:
                     description += " · DEMO"
                 rows.append(spec_row("Vidrio", description))
-                if glass.properties.ug is not None:
+                # New emissions use the reviewed, scoped evidence in their
+                # sealed thermal annex. Preserve historical snapshots' layout.
+                if glass.properties.ug is not None and not authoritative_thermal:
                     ug = glass.properties.ug
                     number = f'{ug.value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP):.2f}'.replace(".", ",")
                     rows.append(spec_row("Ug", f"{number} W/m²K · {ug.source}", numeric=True))
@@ -316,7 +318,7 @@ def render(snapshot: dict, *, portal_url: str | None = None) -> str:
             for face, label in [("interior", "Color interior"), ("exterior", "Color exterior")]:
                 raw = position.get("color_" + face)
                 specs += spec_row(label, {"WHITE": "Blanco", "FOILED": "Foliado"}.get(str(raw), ""))
-        specs += field_specs(position)
+        specs += field_specs(position, authoritative_thermal="thermal" in snapshot)
         for item in position.get("commercial_hardware") or []:
             specs += spec_row("Manilla", " · ".join(known(item.get(field)) for field in ("handle_name", "handle_color") if known(item.get(field))))
             specs += spec_row("Opciones", "; ".join(item.get("options") or []))
@@ -387,5 +389,47 @@ def render(snapshot: dict, *, portal_url: str | None = None) -> str:
         import segno
         uri = segno.make(portal_url, micro=False, error="m").svg_data_uri(border=4, scale=8)
         body += f'<div class="q-online"><img src="{uri}" alt="QR de esta revisión"><div><strong>Acepta en línea</strong><p>Revise y apruebe esta misma revisión en el portal.</p><a class="q-link" href="{escape(portal_url, quote=True)}">{escape(portal_url)}</a></div></div>'
-    body += '</div></section></main>'
+    body += '</div></section>'
+    body += thermal_annex(snapshot.get("thermal"))
+    body += '</main>'
     return body
+
+
+def thermal_annex(report: dict | None) -> str:
+    """Only independently authoritative values from this revision's seal."""
+    if not report or not (report.get("inputs") or {}).get("include_doc01"):
+        return ""
+    assessment = report.get("assessment") or {}
+    html = '<section class="q-details"><h2>Anexo técnico · ventanas</h2>'
+    html += '<p>Valores con informe vigente revisado al emitir esta revisión. Este cálculo no constituye certificación del edificio.</p>'
+    valid = []
+    for position in assessment.get("positions") or []:
+        metric = position.get("thermal") or {}
+        if metric.get("state") != "KNOWN" or metric.get("uw") is None:
+            continue
+        valid.append(position)
+        trace = metric.get("trace") or {}
+        html += f'<article class="q-position"><h3>Posición {int(position["position_index"])} · {escape(position.get("location_tag") or "Sin ubicación")}</h3><dl>'
+        html += spec_row("Uw", str(_num(metric["uw"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)).replace(".", ",") + " W/m²K", numeric=True)
+        for label, field in (("Clase de aire a 100 Pa", "air_class"), ("Clase de agua", "water_class"), ("Clase de viento", "wind_class")):
+            if metric.get(field) is not None:
+                html += spec_row(label, str(metric[field]), numeric=True)
+        html += '</dl><p>Uw = (ΣAg·Ug + Af·Uf + Σlg·Ψg) / (Ag + Af) · ISO 10077-1, método de áreas.</p>'
+        seen = set()
+        certificates = [trace.get("frame_report"), trace.get("performance_report")]
+        for pane in trace.get("panes") or []:
+            if pane.get("solar_factor") is not None:
+                html += spec_row("Factor solar g", str(_num(pane["solar_factor"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)).replace(".", ","), numeric=True)
+            certificates.extend([pane.get("glass_report"), pane.get("spacer_report")])
+        for source in certificates:
+            if not source or source["id"] in seen:
+                continue
+            seen.add(source["id"])
+            html += f'<p>{escape(source["source_document"])} · {escape(source["laboratory"])} · {escape(_cldate(source["report_date"]))} · {escape(source["standard"])} · {escape(source["source_page"])}</p>'
+            html += f'<p>{escape(source["applicability"])}</p>'
+        html += '</article>'
+    if not valid:
+        html += '<p>No se adjuntan valores térmicos: las posiciones no tienen todas sus entradas autoritativas. Complete sus informes en una nueva revisión.</p>'
+    html += f'<p>{escape(assessment.get("scope") or "")}</p>'
+    html += f'<p>Fuente normativa: {escape(assessment.get("source_label") or "OGUC 4.1.10")}</p></section>'
+    return html

@@ -3,8 +3,10 @@ type: state
 status: active
 updated: 2026-10-11
 volatility: high
-verified_ref: ff210e7a439b861349d1d602c4137ebe4e65d0c8
+verified_ref: 5b786e7af6555b7fdb8e40399a604c3c909d94dc
 sources:
+  - P18 código 5b786e7af6555b7fdb8e40399a604c3c909d94dc; gates completos, 57 casos focales, PostgreSQL y navegador, 2026-10-11
+  - docs/redesign/P18-ACEPTACION.md
   - P19 PR https://github.com/KaraAliOsman/framedex/pull/151, CI 4/4 sobre 6bd3ff012f7c411c4dc34cee4c879180e119295a, squash ff210e7a439b861349d1d602c4137ebe4e65d0c8, 2026-10-11
   - P19 código 94b5f151723207fa7b96a5a087a6906f471454d4, 40 fixtures, 68 tests y navegador propio, 2026-10-11
   - docs/redesign/P19-ACEPTACION.md
@@ -94,6 +96,26 @@ sources:
 ---
 
 # Current reality
+
+## P18 · autoridad térmica de ventanas (11-10-2026)
+
+Uw usa áreas visibles y Decimal del motor; cada fuente se liga a combinación,
+vidrio y separador. Las clases requieren el espécimen exacto con herraje,
+medidas y distribución. DEMO, geometría sin método e informes ausentes,
+contradictorios o revocados conservan Sin dato. OGUC proviene de tablas
+oficiales transcritas y cotejadas, sin inferir zona por comuna.
+
+El responsable declara la unidad térmica, memoria y muros; el motor deriva
+OGT y usa el mayor Uw de cada orientación. F6 explica áreas, entradas y
+certificados. Alternativa mínima evaluable con precio → diff → aplicar →
+deshacer pasa en PostgreSQL y navegador. DOC-01 opcional conserva sus fuentes
+y el PDF idéntico tras revocación. No acredita cumplimiento del edificio.
+
+69 PNG, 34 estados, nueve adicionales, 16 vistas ux:capture y cuatro trazas
+finales no tienen hallazgos. Los cuatro gates locales y Database Gate pasan:
+1.052 motor, 1.551 backend, 1.131 frontend, 1.467 pgTAP (16 suplementarios),
+558 integraciones y 19 E2E. CI/squash se registran al integrar. Catálogo real,
+ensayos y revisión profesional permanecen datos por conectar; P24 y P20 siguen.
 
 ## P19 · representación física 3D (11-10-2026)
 
