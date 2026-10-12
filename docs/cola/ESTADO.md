@@ -37,8 +37,8 @@
 | D08 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/150 | d6921a893fcc3b303fcd693bd934380e7227f3d0 | CI 4/4 verde; catorce recetas, cortes/BOM/kits y planta; 1.451 pgTAP, 554 integraciones, 19 E2E y trece upgrades PG16; 199 capturas verificadas y rúbrica PASA. |
 | P19 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/151 | ff210e7a439b861349d1d602c4137ebe4e65d0c8 | CI 4/4 verde; 40 tipologías, 68 poses, bicolor sellado y render común; 281 PNG y rúbrica PASA. |
 | P18 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/152 | d3b86003d69e29089e62463f9f80af7fd0c5dc78 | CI 4/4 verde; Uw/OGUC con áreas visibles, autoridad ligada al espécimen y anexo inmutable; 1.467 pgTAP, 558 integraciones, 19 E2E, 69 PNG y rúbrica PASA. |
-| P24 | 4 | en curso |  |  |  |
-| P20 | 5 | pendiente |  |  |  |
+| P24 | 4 | mergeado | https://github.com/KaraAliOsman/framedex/pull/153 | ed8ef310d5dead8bb85af3ec7b938f788f96b19d | CI 4/4 verde; causas/cierre real inmutable, 1.483 pgTAP, 589 integraciones, 19 E2E y trece upgrades PG16; 76 PNG y rúbrica PASA. |
+| P20 | 5 | en curso |  |  | Aceptación global, guía desde stack limpio y PR final a main, sin merge. |
 
 Arranque completado: PR [#116](https://github.com/KaraAliOsman/framedex/pull/116), squash `739704ab8f81ded8f860d44d44adba0c33f96db4` en `integracion/v1`; cuatro checks de CI PASA. Los cuatro commits locales se trasladaron conservando el arreglo de P00 y la evidencia preparada del fixture. `main` local no se modificó.
 
@@ -89,3 +89,9 @@ Proyecto, acuerdo, empresa, terreno, aperturas avanzadas, 3D y térmica comparte
 Uw usa áreas visibles; la alternativa mínima pasa por diff y deshacer; revocar una fuente conserva informe y PDF emitidos.
 Capturas clave: `docs/redesign/captures/termico-oguc/`, `tipologias-avanzadas/`, `3d-fisico/` y `terreno-postventa/`.
 Riesgos: catálogo DEMO, adaptadores financieros sandbox, datos reales de fabricante y validación industrial requieren activación; P24 y P20 continúan la aceptación.
+
+Ola 4 cerrada: P24 integrado con CI 4/4 verde.
+Ventas, margen, planta y terreno conservan período y fuentes; cada cifra llega al registro con F6.
+El cierre de costos requiere preview, cobertura real y clic humano; sus correcciones son aditivas e inmutables.
+Capturas clave: `docs/redesign/captures/analitica/`; 76 PNG, 40 vistas oficiales sin hallazgos y axe sin serious/critical.
+Riesgos: DEMO no acredita contabilidad ni tarifas reales; P20 verifica ahora el producto completo y su entrega al dueño.
