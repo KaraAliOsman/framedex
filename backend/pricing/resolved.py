@@ -125,18 +125,19 @@ class FrozenPricingRepository:
 
 def safe_technical(repo, system_id):
     key = str(system_id)
-    if key in repo.technical_values:
-        return repo.technical_values[key]
+    cache = getattr(repo, 'technical_values', {})
+    if key in cache:
+        return cache[key]
     if getattr(repo,'frozen',False):
         if key not in repo.technical:
             raise PricingError('incomplete_repricing_evidence')
-        repo.technical_values[key] = technical_values(repo.technical[key])
-        return repo.technical_values[key]
+        cache[key] = technical_values(repo.technical[key])
+        return cache[key]
     with connection.cursor() as cursor:
         cursor.execute('SET LOCAL ROLE authenticated')
     try:
-        repo.technical_values[key] = technical_values(technical_bundle(repo,system_id))
-        return repo.technical_values[key]
+        cache[key] = technical_values(technical_bundle(repo,system_id))
+        return cache[key]
     finally:
         from authentication.rls import tx_aborted
         if not tx_aborted():
