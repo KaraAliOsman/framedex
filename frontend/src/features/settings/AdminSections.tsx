@@ -673,7 +673,14 @@ export function DocumentPreview({
       )}
       {loading && <LoadingState label="Renderizando el PDF con tus ajustes" />}
       {version && !detail.data?.versions?.find((v) => v.id === version)?.snapshot_sha256 && (
-        <BlockedState reason="Esta revisión histórica no tiene la trazabilidad requerida para generar una nueva vista previa. Elige una revisión emitida reciente; su documento original se conserva." />
+        <BlockedState
+          reason="Esta revisión histórica no tiene la trazabilidad requerida para generar una nueva vista previa. Elige una revisión emitida reciente; su documento original se conserva."
+          action={
+            <Link className="ui-button" to={`/projects/${project}?section=quote`}>
+              Abrir cotización de la obra
+            </Link>
+          }
+        />
       )}
       {error && <ErrorState body={error} onRetry={() => setRetry((previous) => previous + 1)} />}
       {url && (
