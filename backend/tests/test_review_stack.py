@@ -3,6 +3,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -25,6 +26,16 @@ def test_existing_data_without_owner_manifest_is_preserved(review, monkeypatch):
     with pytest.raises(RuntimeError, match="sin manifiesto"):
         review.require_owner()
     assert calls == [] and not review.WORK.exists()
+
+
+def test_start_preserves_a_foreign_network_before_creating_containers(review, monkeypatch):
+    calls = []
+    monkeypatch.setattr(review.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(
+        returncode=0, stdout=json.dumps([{"Labels": {review.LABEL: "foreign"}}])))
+    monkeypatch.setattr(review, "call", lambda *args, **kwargs: calls.append(args))
+    with pytest.raises(RuntimeError, match="red.*otro checkout"):
+        review.container("framedex-review-api", "review-image", [], {})
+    assert calls == []
 
 
 def test_stop_checks_every_container_before_stopping_any(review, monkeypatch):

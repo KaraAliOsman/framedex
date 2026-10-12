@@ -18,6 +18,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.run' / 'review'
 PROJECT = 'framedex-review'
+NETWORK = f'{PROJECT}-network'
 LABEL = 'com.dekopen.review'
 OWNER = hashlib.sha256(str(ROOT).lower().encode()).hexdigest()[:16]
 NAMES = ['framedex-review-web', 'framedex-review-jobs', 'framedex-review-api']
@@ -48,6 +49,17 @@ def owned(name):
     if item and item.get('Config', {}).get('Labels', {}).get(LABEL) != OWNER:
         raise RuntimeError(f'El contenedor {name} no pertenece a esta revisión; se conserva.')
     return item
+
+
+def ensure_network():
+    result = subprocess.run(['docker', 'network', 'inspect', NETWORK],
+                            capture_output=True, text=True)
+    if result.returncode == 0:
+        network = json.loads(result.stdout)[0]
+        if network.get('Labels', {}).get(LABEL) != OWNER:
+            raise RuntimeError('La red de revisión pertenece a otro checkout; se conserva.')
+    else:
+        call(['docker', 'network', 'create', '--label', f'{LABEL}={OWNER}', NETWORK], quiet=True)
 
 
 def resources():
@@ -108,7 +120,7 @@ def environment():
         'SUPABASE_SERVICE_ROLE_KEY': status['SERVICE_ROLE_KEY'], 'DATABASE_URL': status['DB_URL'],
         'VITE_SUPABASE_URL': status['API_URL'], 'VITE_SUPABASE_ANON_KEY': status['ANON_KEY'],
         'SUPABASE_JWT_VERIFY_MODE': 'auth_server', 'DEBUG': 'true', 'DJANGO_DEBUG': 'true',
-        'ALLOWED_HOSTS': 'localhost,127.0.0.1,host.docker.internal', 'DJANGO_URL': API,
+        'ALLOWED_HOSTS': 'localhost,127.0.0.1,host.docker.internal,framedex-review-api', 'DJANGO_URL': API,
         'CORS_ALLOWED_ORIGINS': PUBLIC, 'DEKOPEN_PUBLIC_APP_URL': PUBLIC,
         'BILLING_CALLBACK_ORIGIN': API, 'BILLING_FRONTEND_ORIGIN': PUBLIC,
         'MAIL_PROVIDER': 'sandbox', 'MAIL_SANDBOX_HOST': 'host.docker.internal',
@@ -124,13 +136,15 @@ def environment():
 
 
 def container(name, image, args, env):
+    ensure_network()
     if owned(name):
         call(['docker', 'rm', '--force', name], quiet=True)
     keys = [key for key in env if key.startswith(('AI_GATEWAY_', 'SUPABASE_', 'MAIL_', 'BILLING_'))
             or key in {'DATABASE_URL', 'SECRET_KEY', 'DEBUG', 'DJANGO_DEBUG', 'PORT',
                        'ALLOWED_HOSTS', 'CORS_ALLOWED_ORIGINS', 'DEKOPEN_PUBLIC_APP_URL',
                        'DJANGO_URL', 'PYTHONUTF8'}]
-    command = ['docker', 'run', '--detach', '--name', name, '--label', f'{LABEL}={OWNER}',
+    command = ['docker', 'run', '--detach', '--name', name, '--network', NETWORK,
+               '--label', f'{LABEL}={OWNER}',
                '--mount', f'type=bind,source={ROOT / "scripts"},target=/review-scripts,readonly']
     if name == 'framedex-review-api':
         command += ['--publish', '127.0.0.1:8004:8004']
@@ -186,8 +200,9 @@ def start():
     call([*build, '.'], env={**os.environ, **public_env})
     if owned('framedex-review-web'):
         call(['docker', 'rm', '--force', 'framedex-review-web'], quiet=True)
-    call(['docker', 'run', '--detach', '--name', 'framedex-review-web', '--label', f'{LABEL}={OWNER}',
-          '--publish', '127.0.0.1:5179:5179', '--env', 'PORT=5179', '--env', 'BACKEND_ORIGIN=http://host.docker.internal:8004',
+    call(['docker', 'run', '--detach', '--name', 'framedex-review-web', '--network', NETWORK,
+          '--label', f'{LABEL}={OWNER}',
+          '--publish', '127.0.0.1:5179:5179', '--env', 'PORT=5179', '--env', 'BACKEND_ORIGIN=http://framedex-review-api:8004',
           'framedex-review-web'], quiet=True)
     wait(PUBLIC + '/login')
     print(f'Revisión lista: {PUBLIC} · Correo local: http://127.0.0.1:25364', flush=True)
