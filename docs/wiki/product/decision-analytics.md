@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-12
 volatility: medium
-verified_ref: codex/P24-analitica
+verified_ref: 577db8c038918e45e602291f0aede0766d0e07df
 sources:
   - engine/src/dekopen_engine/analytics.py
   - backend/analytics/sql/

@@ -1476,3 +1476,13 @@ se atribuyen al fixture. CI y squash quedan por registrar al integrar.
 ## 2026-10-12 · P18 integrado
 PR #152 mergeado en d3b86003d69e29089e62463f9f80af7fd0c5dc78 con los cuatro checks verdes. Uw, OGUC, alternativa revisada y anexo sellado conservan sus límites y fuentes; ver product/thermal-authority.md y docs/redesign/P18-ACEPTACION.md. El stack propio se detuvo antes de continuar P24.
 
+
+## 2026-10-12 · P24, evidencia de decisiones y costos
+
+Código `577db8c038918e45e602291f0aede0766d0e07df`. Ventas, margen, planta y terreno
+con SQL versionado y aritmética Decimal; cierre de OT aditivo e inmutable,
+preview, confirmación humana y recibo original en replay. Descuento incluido
+una vez, cobertura invalidada por evidencia nueva y Sin dato ante faltantes.
+51 casos focales y ocho UI PASA; 40 vistas oficiales sin hallazgos y 74 PNG
+pixel idénticos. F6 llega a cada movimiento valorado. Gates completos/CI se
+registran al integrar; límites y cohortes en product/decision-analytics.md.

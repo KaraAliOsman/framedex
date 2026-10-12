@@ -14,7 +14,7 @@ ZERO = D(0)
 
 
 def number(value: object, *, signed: bool = False) -> Decimal:
-    if isinstance(value, (bool, float)):
+    if isinstance(value, bool) or not isinstance(value, (str, int, Decimal)):
         raise ValueError("invalid_analytics_number")
     result = D(str(value))
     if not result.is_finite() or (not signed and result < ZERO):

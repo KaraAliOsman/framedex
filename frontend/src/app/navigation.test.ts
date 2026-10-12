@@ -17,6 +17,7 @@ const expected: Record<MembershipRoleEnum, string[]> = {
     "/field",
     "/assistant",
     "/jobs",
+    "/analytics",
     "/settings/general",
   ],
   ESTIMATOR: [
@@ -47,6 +48,7 @@ const expected: Record<MembershipRoleEnum, string[]> = {
     "/field",
     "/assistant",
     "/jobs",
+    "/analytics",
     "/settings/general",
   ],
   OPERATOR: ["/dashboard", "/inventory", "/production"],
