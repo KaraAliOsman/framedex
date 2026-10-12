@@ -795,8 +795,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.reload();
   await page.getByRole("link", { name: "Composite browser gate", exact: true }).click();
   await page
-    .getByRole("listbox", { name: "Posiciones" })
-    .getByRole("option")
+    .getByRole("list", { name: "Posiciones" })
+    .getByRole("listitem")
     .filter({ hasText: "Fachada compuesta" })
     .press("Enter");
   // Scoped to the main canvas sheet — inspector previews and alternative

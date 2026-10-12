@@ -386,8 +386,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   expect((history[0]!.before_state as { positions: unknown[] }).positions).toHaveLength(1);
   expect((history[0]!.after_state as { positions: unknown[] }).positions).toHaveLength(2);
   const copyRow = page
-    .getByRole("listbox", { name: "Posiciones" })
-    .getByRole("option")
+    .getByRole("list", { name: "Posiciones" })
+    .getByRole("listitem")
     .filter({
       has: page.getByLabel(`Seleccionar posición ${copied.position_index}`, { exact: true }),
     });
@@ -457,7 +457,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     () => page.reload(),
   );
   expect(reopenedClone.positions).toEqual(clone.positions);
-  await expect(page.getByRole("listbox", { name: "Posiciones" }).getByRole("option")).toHaveCount(
+  await expect(page.getByRole("list", { name: "Posiciones" }).getByRole("listitem")).toHaveCount(
     2,
   );
   await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
