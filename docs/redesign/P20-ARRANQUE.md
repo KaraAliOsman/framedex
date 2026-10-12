@@ -53,6 +53,12 @@ proyecto solicitado, para evitar mezclar direcciones de dos obras del fixture.
   `test_offered_options.py`. Tres pruebas protegen propiedad y dotenv del stack.
   23 pruebas de Auth/App y 15 de ciclo/decisión del portal pasan.
   La prueba de cien posiciones conserva `<15` filas montadas y la selección.
+- `make lint`, `make typecheck`, `make test` y `make build` PASA sobre la
+  corrección completa: 1.061 pruebas del motor y dos xfail históricos,
+  1.569 del backend y 1.141 del frontend; goldens byte a byte y residuos del
+  build PASA. La guía llega desde Mailpit hasta precio, PDF revisado, emisión
+  de doce posiciones y portal móvil. CNC, terreno/rectificación y Analítica
+  se revalidaron contra el mismo arranque de producción.
 - La guía y la matriz completa se amplían durante la aceptación final. El
   tiempo de apertura en contexto frío y el de interacción se documentan por
   separado; cien posiciones pertenecen a una obra con cien OT, no a una OT ficticia.

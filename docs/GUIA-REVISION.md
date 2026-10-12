@@ -86,7 +86,8 @@ La columna final describe la señal de aceptación, no una tarea automática.
 | 13 | Instalador: medición → rectificación revisada → fabricación → visita → foto/firma → incidencia → postventa | Evidencia por unidad, sincronización con acceso vigente y actas inmutables |
 | 14 | Dueño: obra cerrada → Analítica → margen → causa → F6 → movimiento | Cotizado y real con período, cobertura y fuente; falta de evidencia dice Sin dato |
 
-Para una primera emisión declare vigencia, pago, plazo, instalación, exclusiones,
+Para una primera emisión complete RUT válido, correo del cliente y dirección de
+obra; el checklist lleva al campo que falta. Declare vigencia, pago, plazo, instalación, exclusiones,
 garantía y ubicación. Confirme las sugerencias de fabricación que corresponden.
 No convierta un aviso de autoridad faltante en aprobación: complete su fuente o
 use **Solo cotización**. La vista previa muestra si una revisión permite producir.

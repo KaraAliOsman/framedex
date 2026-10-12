@@ -64,8 +64,8 @@ async function screenshot(page: Page, info: TestInfo, name: string): Promise<voi
  * its selection and the editor opens the exact physical position. */
 async function card(page: Page, location: string, action: string) {
   await page
-    .getByRole("listbox", { name: "Posiciones" })
-    .getByRole("option")
+    .getByRole("list", { name: "Posiciones" })
+    .getByRole("listitem")
     .filter({ hasText: location })
     .click();
   await page.getByRole("button", { name: "Ficha de posición", exact: true }).click();

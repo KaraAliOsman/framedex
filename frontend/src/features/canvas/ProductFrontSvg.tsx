@@ -2457,6 +2457,7 @@ export function ProductFrontContent({
             return (
               <g
                 key={module.id}
+                data-module-id={module.id}
                 transform={
                   projected ? `translate(${x} 0) scale(${ratio} 1) translate(${-x} 0)` : undefined
                 }

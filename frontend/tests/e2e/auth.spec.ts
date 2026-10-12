@@ -666,8 +666,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("tab", { name: "Posiciones", exact: true }).click();
   // The collection opens the exact selected position with Enter.
   await page
-    .getByRole("listbox", { name: "Posiciones" })
-    .getByRole("option")
+    .getByRole("list", { name: "Posiciones" })
+    .getByRole("listitem")
     .filter({ hasText: "Fijo comercial" })
     .press("Enter");
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
