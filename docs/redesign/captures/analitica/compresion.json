@@ -1,6 +1,6 @@
 {
-  "files": 74,
-  "bytesSaved": 17094,
+  "files": 76,
+  "bytesSaved": 0,
   "pixelExact": true,
   "records": [
     {
@@ -12,6 +12,16 @@
       "path": "antes-hoy.png",
       "pixelsSha256": "9e1c26bee467e2f4993ccdb10c932a09970507fbed79fd0ea29007a06c07f585",
       "bytes": 45269
+    },
+    {
+      "path": "controles-1440-light.png",
+      "pixelsSha256": "7c73ca1868dfae54f6b26ea48bc2cda8d0abfcaedcac1e9aa2294a424c05ebf0",
+      "bytes": 152829
+    },
+    {
+      "path": "controles-390-dark.png",
+      "pixelsSha256": "85e8f2bc18a4d8c5630bb21aa40665bfdfc51c1292e458941ccb8782916cc1cc",
+      "bytes": 113148
     },
     {
       "path": "estados/blocked.png",
@@ -175,203 +185,203 @@
     },
     {
       "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__dark__1024x768.png",
-      "pixelsSha256": "831f63f7156a079a3bdb02fd4a1c281e6287209707119773a3ecc50c0052a776",
-      "bytes": 43333
+      "pixelsSha256": "e93d4ef05b94a0c89d5fbc347ccec5cd8def7bdb14361007121a25e287875cc1",
+      "bytes": 43307
     },
     {
       "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__dark__1280x800.png",
-      "pixelsSha256": "03540dc9dd472dd6770a68cee52ca9b5ebbe003cb4faff802a36f9f2e86c736f",
-      "bytes": 67292
+      "pixelsSha256": "e7de7f7b7d841afa6a26ffbfb843500427529ef8706f33e9d5159118d5fcc954",
+      "bytes": 67269
     },
     {
       "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__dark__1440x900.png",
-      "pixelsSha256": "78b54e7cd7822079f01a8a911e8f7065809b55a320b620c72b133043c80364c2",
-      "bytes": 70935
+      "pixelsSha256": "71c5dc3c04b3d7182269a1d46f0da79d7b5f5d65a3c47ca8f007c42dd1cb2ab1",
+      "bytes": 70911
     },
     {
       "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__dark__390x844.png",
-      "pixelsSha256": "b814165fe8dd4d9439c72cb860dcfb247f8039e92a121e7ac5000a658779c262",
-      "bytes": 34480
+      "pixelsSha256": "bbdc84bfd6ea52f27fa3435e63aea97b8c1ba1593f4316e2c3667331b6bba808",
+      "bytes": 34421
     },
     {
       "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__light__1024x768.png",
-      "pixelsSha256": "6a18bd7a459f4a498f7d05347913e2a442224ed1c9e3bc3337e4ee9a7b3ad1bc",
-      "bytes": 42891
+      "pixelsSha256": "5da56090e14341beb67ccdbfb3684e6b43f5ec5c2d46fb59607c43c41d59e812",
+      "bytes": 42870
     },
     {
       "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__light__1280x800.png",
-      "pixelsSha256": "a7faa7610f4af9c2d26ddd86bf57a469c2a5220390e908d9fc3e7b07e4912f4f",
-      "bytes": 66396
+      "pixelsSha256": "7b03a339ab6974a0a1b41bbbfd7c6f549172255146999b4b1631d2c4e8efd8b0",
+      "bytes": 66372
     },
     {
       "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__light__1440x900.png",
-      "pixelsSha256": "96edaed42b3ca946239cb0c5f016c2faf4e09dabfa4a4d15edc7314529382a25",
-      "bytes": 70118
+      "pixelsSha256": "548dce289a01f6924e7d742d85ad2ba2f72bb1b6577733bb3e6b643ecf5e35a4",
+      "bytes": 70090
     },
     {
       "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__light__390x844.png",
-      "pixelsSha256": "5e69c51c4882d0c63c4845a6253ca3e9e0e8afdf496a8d69897f38ef444c2439",
-      "bytes": 34425
+      "pixelsSha256": "5b37a3ab712af84aaefc21bac7e11a2fc564fc8739bf3600d6ebf57f29113aac",
+      "bytes": 34369
     },
     {
       "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__dark__1024x768.png",
-      "pixelsSha256": "3ab1a9c80ba2edc9653e6416e0d9addf5e995cbf46442c8728cefbc130edb68b",
-      "bytes": 75618
+      "pixelsSha256": "cc81f9c8e0ed619f78d4aa197b1a210d4372376c84ac18c0a380b31fd2cc21b0",
+      "bytes": 73642
     },
     {
       "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__dark__1280x800.png",
-      "pixelsSha256": "3686d2c4982cf76e62d4c79ac29873dc9ea4051268b77061a919f89ab905b11e",
-      "bytes": 99001
+      "pixelsSha256": "c26bfd5a252e074441016da5b952b99622d3a1e00517900615780af3c736353b",
+      "bytes": 96778
     },
     {
       "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__dark__1440x900.png",
-      "pixelsSha256": "72b8335661dc02bb816272d7f6e319dd3d1ebadcc79e6a224d6d1ff19542b513",
-      "bytes": 101714
+      "pixelsSha256": "a28b3fe88d5bce8ab6e1d1c87bd56f67b4022adf402cdbe629f47ab16c9bfc3a",
+      "bytes": 99402
     },
     {
       "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__dark__390x844.png",
-      "pixelsSha256": "86f53a6e563ed0cbedfa990b97c509636de497afeb43452ce185ec14fab9473b",
-      "bytes": 69988
+      "pixelsSha256": "2ea9c5c7ad9ce7a17830ed87d3713b850d8fce4004492c03d34406eea686b391",
+      "bytes": 68005
     },
     {
       "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__light__1024x768.png",
-      "pixelsSha256": "270f15b97ab93755b4e56599f1c587e2851d80f1cedf7a3abf67a3a7a64da376",
-      "bytes": 75571
+      "pixelsSha256": "3e69eefc6355546912ceafe59d1f3bdc08d8a085b16ee972c68edf37d9ba14db",
+      "bytes": 73492
     },
     {
       "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__light__1280x800.png",
-      "pixelsSha256": "7389aac49c55df1d7510959ad4bbe350dc32e270e14d964f818b4ce3aa4446ee",
-      "bytes": 98596
+      "pixelsSha256": "8a1e8732e08a42c7514431284952b8d5028c4696ac3d202acf963dda72857798",
+      "bytes": 96567
     },
     {
       "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__light__1440x900.png",
-      "pixelsSha256": "1d63280c1e58c5152e344fbada6d7e98de3fc95de5ddd5ccc7cb7e4ad475f33d",
-      "bytes": 101557
+      "pixelsSha256": "be8fa055f48a49c82d9cb90174c52d0f7d044a67813f653241e7f250eb793d0c",
+      "bytes": 99293
     },
     {
       "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__light__390x844.png",
-      "pixelsSha256": "d154e3d8da647eb66c1e65d233fcd52d4c6d7bb4d016b46144b984c18a91d410",
-      "bytes": 69811
+      "pixelsSha256": "3903afdebd8509fe3d23999f9abf2de41507d41d2465837023bb0cb2a202de01",
+      "bytes": 67975
     },
     {
       "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__dark__1024x768.png",
-      "pixelsSha256": "9c3edd6967e0907bb6b59ba75928c4b9acdf91a36e8e28ad2283182e11f94664",
-      "bytes": 108647
+      "pixelsSha256": "19b2290dd5a3b258f286204210221091d06af3c17c982e1f255093a3bfc5b4b5",
+      "bytes": 108061
     },
     {
       "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__dark__1280x800.png",
-      "pixelsSha256": "dc3e8bd9de8f5dec8d99b9940dc24abc02204262e075653d6b5c81af76255589",
-      "bytes": 133014
+      "pixelsSha256": "3cb3769398db97d2a6425cf4ca88709420ba54e8badb8895f5720e17ea9f3615",
+      "bytes": 132748
     },
     {
       "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__dark__1440x900.png",
-      "pixelsSha256": "5404f424a94cb9ce08a41112c77bb42ac808bc582db69071c0edb5279731fc96",
-      "bytes": 134280
+      "pixelsSha256": "e951eb2c0a5cd2a9bbfedb5e84ca1a7ae048864b05644fd8e18d797a4d0c70e9",
+      "bytes": 133733
     },
     {
       "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__dark__390x844.png",
-      "pixelsSha256": "be7df5df9a28a73a8e85735dfb6784c9ce3eb02e472e1f94afa072977e1f0f0b",
-      "bytes": 95113
+      "pixelsSha256": "7838c587ea22502def83764c0ef8957706edb017fce558f95d3363321dd21a08",
+      "bytes": 94774
     },
     {
       "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__light__1024x768.png",
-      "pixelsSha256": "62369aa89c006ce4bdbbb0f06999966bcbc009a4287dd3da0eb17dc268e83810",
-      "bytes": 107627
+      "pixelsSha256": "d8149633e0ca3ae5096e8ac0fe996b924a26fcc06571adff343f980d97eb0719",
+      "bytes": 107305
     },
     {
       "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__light__1280x800.png",
-      "pixelsSha256": "94e7775c9decd9a3d0bc86f9f5a1f39662926420ff06c1dc97fc15731a8e3684",
-      "bytes": 132457
+      "pixelsSha256": "596313f445652ab6e5a7f07958e875a916001151799b3124bcece674aacd3d9d",
+      "bytes": 131960
     },
     {
       "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__light__1440x900.png",
-      "pixelsSha256": "eb927065a88e1765847d8c873a6bceb64ba820dea37c346d29a730dff09bcf02",
-      "bytes": 133981
+      "pixelsSha256": "5137e337af51c8d32c583b53c2e78333eca67e4b0d0bd62213ed73a5e18fc74d",
+      "bytes": 133265
     },
     {
       "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__light__390x844.png",
-      "pixelsSha256": "7bfc997f44c74f67ec5a50495f7456a621f44d7ed39b2aa6b4563ac420d57573",
-      "bytes": 94412
+      "pixelsSha256": "eed73dae8e01a9a6c0968d37f48160e9a8f44fdcd5e1d66f5518c4a437c3f687",
+      "bytes": 94367
     },
     {
       "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__dark__1024x768.png",
-      "pixelsSha256": "087db9b8e3d948724ffa1cf08dac4d032c399a12bf9b574a619512108a5fb9f2",
-      "bytes": 192538
+      "pixelsSha256": "270723b099ea1a161fffa0f8311f55b3725f7151a889ec3f76659c11ccb9a528",
+      "bytes": 192199
     },
     {
       "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__dark__1280x800.png",
-      "pixelsSha256": "837f92fe1c35ba44d282f493b9aaeea48cb0f83fc3035b6ed5c01ec365a23554",
-      "bytes": 216921
+      "pixelsSha256": "cf1a1623665f40dcc54f3ad58170b803793197946e6fef358ed39984e930129c",
+      "bytes": 216533
     },
     {
       "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__dark__1440x900.png",
-      "pixelsSha256": "0121b1d0dd2e4ceadd0dc3ad89d13c3fb572e4a2ad3e5f5f34c8594b502ad888",
-      "bytes": 221035
+      "pixelsSha256": "2179dde7888fbc4fb2451901ab9de5a660da246256d162863609f5275d14a24b",
+      "bytes": 220671
     },
     {
       "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__dark__390x844.png",
-      "pixelsSha256": "7cfe93280c67e93865b554dce54ea5a96e1ad6aa486f5d89ebdcce5169b19a07",
-      "bytes": 183809
+      "pixelsSha256": "27fabe64e03bff290ed2e24d9ba93dee6ea120e0acfb71c547de31e8d4b3bbd9",
+      "bytes": 183434
     },
     {
       "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__light__1024x768.png",
-      "pixelsSha256": "6a8457dee8e4644afbb6021af83134e33e5ace820e696c601e068ce6e670052e",
-      "bytes": 191263
+      "pixelsSha256": "6233b44001e2d9683e37e58f6dfa0d4b5ba110fba4611501f2a0eed42b0a6c90",
+      "bytes": 190986
     },
     {
       "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__light__1280x800.png",
-      "pixelsSha256": "308893e4e95dabc89791270f5238ffcfa4de2b6ed8dadb0732aa48cf549261b1",
-      "bytes": 215653
+      "pixelsSha256": "4010a17bbc2c7d2e90289880e3eb029b4458e59dff40f6dbc88f3572a666e92a",
+      "bytes": 215197
     },
     {
       "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__light__1440x900.png",
-      "pixelsSha256": "1961e08916f3420b416f22be10400fa879727ecd61cb41caccc956a8e807662f",
-      "bytes": 219727
+      "pixelsSha256": "026b0545fe35b0b9e5a06fa85acdb5bf9f4b6ccb4147fa72797d90a6a86bd0f7",
+      "bytes": 219517
     },
     {
       "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__light__390x844.png",
-      "pixelsSha256": "8e9d546e02c7ea40133876018accb94f88e1c30c03f7bc73a12c7f4722b13f18",
-      "bytes": 182838
+      "pixelsSha256": "0ef99199194bedc964552ba0704f5f596e5fb071374c5ecbcee99f4a23ded784",
+      "bytes": 182906
     },
     {
       "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__dark__1024x768.png",
-      "pixelsSha256": "98f82e3c67885a16885ab019b17c80d0be714144bdee301f2f27ec967a85353d",
-      "bytes": 184412
+      "pixelsSha256": "4367888016aac0d5ec2b6f1f9a82982d7be538de236775b4cc4aa07caa70a73c",
+      "bytes": 184099
     },
     {
       "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__dark__1280x800.png",
-      "pixelsSha256": "d651162e06377456f6973f2be29dc99cd232efc6b141f5105c3738709506bc14",
-      "bytes": 208929
+      "pixelsSha256": "50815c62b210672297c9437f081c0a7846eb8185239ce4d281df4a9e1fb07401",
+      "bytes": 208639
     },
     {
       "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__dark__1440x900.png",
-      "pixelsSha256": "919b1e2b3a1351a77a079bb4de7d16e7968ed69cf105bf19f1e162b5dd6d3dcb",
-      "bytes": 213429
+      "pixelsSha256": "903d930f89d98e37d8198ca49a040043393ca567297a75060f926fe1242edd5e",
+      "bytes": 213040
     },
     {
       "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__dark__390x844.png",
-      "pixelsSha256": "c7d7ea2b5eb72c4d404187adf75cc36b455437e8f78edeaeea73ad27c7ad091a",
-      "bytes": 177407
+      "pixelsSha256": "16f643841d4b5896f0e8261bac2a99cff9d12876ac72c2cb15ed92f4c478d5d0",
+      "bytes": 177029
     },
     {
       "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__light__1024x768.png",
-      "pixelsSha256": "1c9659e3ecec3366cbe622d0dbc4d4a0099d8345c9040fdff0e03dd9f4aad1a1",
-      "bytes": 183859
+      "pixelsSha256": "79caaf0dc391aee5c9feba63fc160b0155f62630d61a6d4b836d27025ffe523a",
+      "bytes": 183474
     },
     {
       "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__light__1280x800.png",
-      "pixelsSha256": "58d23f2e3ce29e22c708cf7a4877bd08fc79a0200f3644138e06a6aad9a6b38c",
-      "bytes": 208569
+      "pixelsSha256": "aadc6087297e3040f4c5e76b6ba950acdda22802acf323f3e897ca40e6f89c92",
+      "bytes": 208047
     },
     {
       "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__light__1440x900.png",
-      "pixelsSha256": "7f992afde6eb1b8c0f80674b0a4bd0c4cd66b9edc5a3a0a97319d4b1e74b6456",
-      "bytes": 212955
+      "pixelsSha256": "50cab3567637f7cc9940c67a47afddb37a2edbfbb5376397337cd3b962a93933",
+      "bytes": 212380
     },
     {
       "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__light__390x844.png",
-      "pixelsSha256": "a50f91c554e09188b414c651afae5d9f25210b6d3f08c6767b22be2a7677cbab",
-      "bytes": 176115
+      "pixelsSha256": "bb776efc2c61cf62332209d953b9e0ed5c1d7a603aa123003d29255bbf1df669",
+      "bytes": 175857
     }
   ]
 }

@@ -3,8 +3,11 @@ type: state
 status: active
 updated: 2026-10-12
 volatility: high
-verified_ref: 577db8c038918e45e602291f0aede0766d0e07df
+verified_ref: bab0df93149e1373b78efd00e17b3120cf092e6d
 sources:
+  - P24 código final bab0df93149e1373b78efd00e17b3120cf092e6d, cuatro gates completos, 76 PNG, fechas/hover y axe sin serious/critical, 2026-10-12
+  - P24 Database Gate completo exit 0, 1483 pgTAP, 589 integraciones, 19 E2E y trece upgrades PG16, 2026-10-12
+  - P24 código 5c484cbb9e458ceed0a4af1ec1a3cdeba8c2d067, cuatro gates completos y goldens reproducibles, 2026-10-12
   - P24 código 577db8c038918e45e602291f0aede0766d0e07df, PostgreSQL focal y navegador propio, 2026-10-12
   - docs/redesign/P24-ACEPTACION.md
   - P18 PR https://github.com/KaraAliOsman/framedex/pull/152; squash d3b86003d69e29089e62463f9f80af7fd0c5dc78, cuatro checks verdes, 2026-10-12
@@ -115,8 +118,9 @@ salarios inferidos, FX implícito ni suma parcial de costos presentada como tota
 
 51 casos focales y ocho UI pasan. El recorrido de revisión/registro/corrección,
 CSV y preferencias persiste; 40 vistas oficiales no tienen hallazgos ni errores.
-74 PNG conservan sus píxeles. Los gates completos y CI se registran al cerrar
-P24; P20 verifica el programa integrado y prepara la revisión del dueño.
+74 PNG conservan sus píxeles. Lint/tipos/test/build pasan: 1.061 motor (dos
+xfail históricas), 1.562 backend y 1.140 frontend. Database Gate y CI se registran
+al cerrar P24; P20 verifica el conjunto y prepara la revisión del dueño.
 
 ## P18 · autoridad térmica de ventanas (11-10-2026)
 

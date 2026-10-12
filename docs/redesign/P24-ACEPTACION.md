@@ -48,7 +48,21 @@ precios, versiones ni documentos emitidos.
 - Recorrido persistente con preview, registro, corrección aditiva, CSV y
   preferencias recargadas: PASA. Matriz de 24 vistas y cinco estados,
   más 40 vistas `ux:capture`, sin hallazgos, desbordes ni errores de consola
-  o HTTP. 74 PNG comprimidos conservan el hash de sus píxeles.
+  o HTTP. 76 PNG comprimidos conservan el hash de sus píxeles.
+- Fechas con el control común, Mono y calendario oscuro; hover con tinte de
+  selección. Axe en 1440 claro y 390 oscuro: cero serious/critical, incluido
+  el puente abierto y la fila enfocada. Ocho tests UI, lint y tipos repasan
+  esta corrección de presentación. [Controles](captures/analitica/controles-390-dark.png).
+- Sobre código final `bab0df93` (rama P24), `make lint`, `make typecheck`,
+  `make test` y `make build`: PASA. 1.061 tests del motor (dos xfail históricas),
+  1.562 backend y 1.140 frontend; 135 fuentes mypy sin errores. Goldens y cliente
+  generado reproducibles, build y activos de marca verificados.
+- `make test-db`: PASA completo, exit 0. 1.483 pgTAP en 97 archivos,
+  589 integraciones PostgreSQL, 19 E2E reales y trece comprobaciones de
+  actualización PG16 conservan los snapshots e historiales previos.
+  Un reinicio de Docker había dejado vacía la plantilla pública de acceso;
+  restaurarla byte a byte permitió repetir el gate sin cambiar checks ni
+  tiempos de espera. La evidencia válida corresponde a la corrida completa.
 
 ## Pase editorial
 

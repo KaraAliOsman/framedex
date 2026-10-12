@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-12
 volatility: medium
-verified_ref: 577db8c038918e45e602291f0aede0766d0e07df
+verified_ref: bab0df93149e1373b78efd00e17b3120cf092e6d
 sources:
   - engine/src/dekopen_engine/analytics.py
   - backend/analytics/sql/
