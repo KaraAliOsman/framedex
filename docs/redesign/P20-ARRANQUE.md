@@ -116,7 +116,20 @@ propuesta, simulación del motor, aplicación, deshacer y auditoría. Las prueba
 E2E conservan las comprobaciones de selección, teclado e identidad del módulo
 con la semántica accesible actual.
 
-No se cambian fórmulas, esquema ni contratos HTTP. La fuente y el cliente
+La aceptación corrigió el refuerzo de perfiles auxiliares bicolor: respeta la
+autoridad del artículo SILL/FRAME_EXTENSION, con golden específico y conservación
+exacta de casos anteriores. No cambió el esquema SQL. Los esquemas de IA retiraron
+ejemplos numéricos y handlers internos; OpenAPI/orval siguen reproducibles. La fuente y el cliente
 generado permanecen reproducibles. DEMO no certifica fabricación. Flow/SII y
 correo conservan sandbox y su activación explícita. La guía completa, IA real,
 matriz global y sus mediciones restantes pertenecen a la aceptación de P20.
+
+## Integración de la corrección
+
+PR [#154](https://github.com/KaraAliOsman/framedex/pull/154), squash
+`b8450659d4ec82e062bdef5e7b3e703266956b09`. CI 4/4 verde sobre
+`d4dea5827d9509adb288c94eb8e01ddd05948f13`, corrida `38295986860`.
+La validación final de código pasa 1.064 pruebas de motor (+2 xfail históricos),
+1.579 de backend y 1.145 de frontend. El Database Gate de CI termina verde
+en 27m42s. La [aceptación global](acceptance-2026-10-12.md) amplía esta evidencia
+y conserva la revisión y resultado propios de cada recorrido.

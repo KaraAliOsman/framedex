@@ -1,0 +1,20 @@
+[
+  {
+    "document": "dominio",
+    "pages": 80,
+    "allTextWithinPage": true,
+    "review": "Contact sheets of every page; original PDFs private because QR contains an access capability.",
+    "reviewedAllPages": true,
+    "visualResult": "PASA",
+    "boundsResult": "PASA"
+  },
+  {
+    "document": "templado",
+    "pages": 22,
+    "allTextWithinPage": true,
+    "review": "Contact sheets of every page; original PDFs private because QR contains an access capability.",
+    "reviewedAllPages": true,
+    "visualResult": "PASA",
+    "boundsResult": "PASA"
+  }
+]

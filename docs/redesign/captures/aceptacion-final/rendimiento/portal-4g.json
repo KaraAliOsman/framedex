@@ -1,0 +1,33 @@
+{
+  "name": "portal-4g",
+  "runs": [
+    2964.4793,
+    2949.2611000000006,
+    2940.549000000001,
+    2960.8915000000015,
+    2972.859200000001,
+    2933.1172000000006,
+    2941.5697,
+    2943.369400000003,
+    2952.0252,
+    2945.993699999999,
+    2956.7079999999987,
+    2952.8980999999985
+  ],
+  "p50": 2949.2611000000006,
+  "p95": 2972.859200000001,
+  "samples": 12,
+  "coldContext": true,
+  "viewport": "390x844",
+  "latencyMs": 150,
+  "downloadMbps": "1.6",
+  "uploadKbps": 750,
+  "concurrentGates": false,
+  "concurrentCapture": false,
+  "verified_ref": "cc0003abb3537f0994236e3a0221266bb087ee88",
+  "baseline": {
+    "p50": 8871.22,
+    "p95": 9373.35
+  },
+  "source": "P20-ARRANQUE.md: medición optimizada conservada; no se atribuye una nueva medición de portal a la aceptación documental"
+}

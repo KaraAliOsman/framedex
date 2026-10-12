@@ -1,0 +1,6 @@
+[
+  {
+    "flow": "Hoy → Analítica → F6 → movimiento valorado → preview → registro → corrección inmutable → CSV → Ajustes/recarga",
+    "result": "PASA"
+  }
+]

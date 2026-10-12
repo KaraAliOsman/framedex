@@ -1,0 +1,15 @@
+[
+  {
+    "flow": "Revisión B → cuatro unidades con medidas confirmadas → cascada aprobada por dueño",
+    "result": "PASA",
+    "net": "671831",
+    "gross": "799479"
+  },
+  {
+    "flow": "Checklist → PDF real → confirmación humana → emitir/enviar → cliente móvil → seguimiento",
+    "result": "PASA",
+    "pdfBytes": 35222,
+    "pdfHash": "3f34186dfd3ba3fd548bf2073dd038c07958894b83f4b48c85abe3ac7bcc8600",
+    "revision": "REV-B"
+  }
+]

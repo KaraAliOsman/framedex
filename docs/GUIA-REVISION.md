@@ -103,8 +103,8 @@ Un cambio configura nuevas operaciones; no reescribe una emisión anterior.
 
 ## Conecte después de aceptar
 
-El proveedor de IA local ya está configurado. Revise en Ajustes › Integraciones
-la conexión antes de usarla. Complete [ACTIVACION](operations/ACTIVACION.md) para
+El proveedor de IA local ya está configurado. Revise en Ajustes › Inteligencia
+artificial la conexión antes de usarla. Complete [ACTIVACION](operations/ACTIVACION.md) para
 hosting, Supabase productivo, Flow de su empresa, certificado/CAF/transporte SII,
 correo del dominio y webhooks. Añada catálogo, precios, tarifas, datos térmicos y
 calibración industrial con fuentes reales. La marca DEMO desaparece solo al

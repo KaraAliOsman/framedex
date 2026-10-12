@@ -1,10 +1,12 @@
 ---
 type: state
 status: active
-updated: 2026-10-07
+updated: 2026-10-12
 volatility: high
-verified_ref: 75bd60c70b7ad6c1943b5fd855d4672ae3a29f31
+verified_ref: 484182126c4f7ba32ba41f3e77b1a1ba31faf04c
 sources:
+  - docs/redesign/captures/aceptacion-final/ia-suite/resumen.json
+  - docs/redesign/captures/aceptacion-final/ia-suite/numeros.json
   - docs/cola/prompts/IA1-diagnostico-evals.md
   - backend/ai_gateway/evals/cases.yaml
   - backend/ai_gateway/evals/run.py
@@ -16,7 +18,25 @@ sources:
 
 # AI acceptance by outcome
 
-## IA3 · medición vigente (07-10-2026)
+## P20 · medición vigente (12-10-2026)
+
+MiMo real sobre `484182126c4f7ba32ba41f3e77b1a1ba31faf04c`: 21/26,
+editor 12/13, proyecto 6/8, planta 1/3 y general 2/2. E/J 18/21 (85,71 %)
+supera el umbral del contrato. Se conserva una corrida completa, con 49
+intercambios y 89 eventos; fuente ejecutada y estado persistente sin cambios.
+
+E04 falla por HTTP 524; J04 no entrega el claim estructurado; J08 falla por
+proveedor; F02/F03 no entregan el artefacto de corte/compra exigido. Sus fallos
+no se sustituyen por éxitos de corridas anteriores. La auditoría numérica de
+24 respuestas finales contra verdad y sandbox calculados por servidor da
+cero canales con cifras sin respaldo y cero acciones consecuentes automáticas.
+Dos rondas rechazadas permanecen registradas; dos errores no tienen respuesta
+final. Ese resultado no acredita corrección semántica de los cinco fallos.
+
+El editor y la ingesta PDF/XLSX también recorren MiMo real con revisión humana.
+Véase [aceptación P20](../../redesign/acceptance-2026-10-12.md).
+
+## IA3 · medición histórica (07-10-2026)
 
 La corrida completa MiMo tras la revisión del PR sobre `041cb622836c745897c04e52a354d10bbf16a8b4` pasa 22/26:
 editor 13/13, proyecto 6/8, planta 1/3 y general 2/2; editor/proyecto 19/21.
