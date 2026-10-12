@@ -29,11 +29,14 @@ def finish_article(article: EffectiveProfileArticle, selected: ResolvedFinish | 
         return article
     combo = selected.combination
     rule = article.reinforcement_rule
-    if article.material is MaterialType.PVC and combo.reinforcement_required and article.role.value not in {"GLAZING_BEAD", "THRESHOLD", "RAIL"}:
+    auxiliary = article.role in {ProfileRole.SILL, ProfileRole.FRAME_EXTENSION, ProfileRole.COVER_TRIM}
+    # Auxiliary profiles keep their own catalog rule. A finish cannot supply
+    # structural steel authority for a trim, extension or sill.
+    if article.material is MaterialType.PVC and combo.reinforcement_required and not auxiliary and article.role.value not in {"GLAZING_BEAD", "THRESHOLD", "RAIL"}:
         if rule is None:
             raise MissingFabricationAuthority(f"Sin dato: {selected.exterior.name} / {selected.interior.name} exige refuerzo; falta la regla de {article.sku}. Completa el catálogo.")
         rule = rule.model_copy(update={"minimum_length_mm": Decimal(0), "required_non_white": False})
-    elif rule is not None:
+    elif rule is not None and not auxiliary:
         rule = rule.model_copy(update={"required_non_white": False})
     return article.model_copy(update={"reinforcement_rule": rule})
 

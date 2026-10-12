@@ -1,4 +1,421 @@
 {
+  "bicolor-auxiliary-profiles": {
+    "extra_suggestions": [],
+    "extras": [
+      {
+        "bay_id": null,
+        "code": "SILL",
+        "height_mm": "1400",
+        "installation": false,
+        "kind": "PROFILE",
+        "leaf_id": null,
+        "name": "Vierteaguas",
+        "quantity": "1.56",
+        "scope": "POSITION",
+        "sku": "DEMO_60-EXTRA-SILL",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "M",
+        "width_mm": "1500",
+        "zone": null
+      },
+      {
+        "bay_id": null,
+        "code": "FRAME_EXTENSION",
+        "height_mm": "1400",
+        "installation": false,
+        "kind": "PROFILE",
+        "leaf_id": null,
+        "name": "Ensanche",
+        "quantity": "2.80",
+        "scope": "POSITION",
+        "sku": "DEMO_60-EXTRA-FRAME_EXTENSION",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "M",
+        "width_mm": "1500",
+        "zone": null
+      },
+      {
+        "bay_id": null,
+        "code": "SCREEN_FIXED",
+        "height_mm": "1400",
+        "installation": false,
+        "kind": "SCREEN",
+        "leaf_id": null,
+        "name": "Mosquitero fijo a medida",
+        "quantity": "1",
+        "scope": "POSITION",
+        "sku": "DEMO_60-EXTRA-SCREEN_FIXED",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "EA",
+        "width_mm": "1500",
+        "zone": null
+      },
+      {
+        "bay_id": null,
+        "code": "COVER_TRIM",
+        "height_mm": "1400",
+        "installation": false,
+        "kind": "PROFILE",
+        "leaf_id": null,
+        "name": "Tapajuntas",
+        "quantity": "5.80",
+        "scope": "POSITION",
+        "sku": "DEMO_60-EXTRA-COVER_TRIM",
+        "source": "Accesorios sintéticos DEKOPEN v6; semilla 20270103; sin certificación",
+        "synthetic": true,
+        "unit": "M",
+        "width_mm": "1500",
+        "zone": null
+      }
+    ],
+    "finish": {
+      "base": {
+        "approximate": true,
+        "code": "WHITE",
+        "gloss": "0.30",
+        "kind": "MASS",
+        "linear_rgb": [
+          "0.78",
+          "0.79",
+          "0.76"
+        ],
+        "manufacturer_code": "DEMO-WHITE",
+        "name": "Blanco",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "synthetic": true,
+        "texture_path": null
+      },
+      "combination": {
+        "allowed_handle_colors": [
+          "WHITE",
+          "BLACK"
+        ],
+        "base": "WHITE",
+        "code": "WHITE_WALNUT",
+        "exterior": "WALNUT",
+        "extra_lead_days": 5,
+        "glass_clearance_mm": "6",
+        "interior": "WHITE",
+        "max_leaf_height_mm": "2500",
+        "max_leaf_width_mm": "1400",
+        "max_position_height_mm": "3000",
+        "max_position_width_mm": "6000",
+        "reinforcement_required": true,
+        "reinforcement_stock_code": "WHITE",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "surcharge": {
+          "amount": "750",
+          "currency": "CLP",
+          "kind": "PER_M",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación"
+        },
+        "synthetic": true
+      },
+      "exterior": {
+        "approximate": true,
+        "code": "WALNUT",
+        "gloss": "0.18",
+        "kind": "FOIL",
+        "linear_rgb": [
+          "0.12",
+          "0.046",
+          "0.013"
+        ],
+        "manufacturer_code": "DEMO-WALNUT",
+        "name": "Nogal",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "synthetic": true,
+        "texture_path": null
+      },
+      "handle_colors": [
+        {
+          "approximate": true,
+          "code": "WHITE",
+          "gloss": "0.30",
+          "kind": "RAL",
+          "linear_rgb": [
+            "0.78",
+            "0.79",
+            "0.76"
+          ],
+          "manufacturer_code": "DEMO-MANILLA-WHITE",
+          "name": "Blanco",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        },
+        {
+          "approximate": true,
+          "code": "BLACK",
+          "gloss": "0.30",
+          "kind": "RAL",
+          "linear_rgb": [
+            "0.012",
+            "0.014",
+            "0.015"
+          ],
+          "manufacturer_code": "DEMO-MANILLA-BLACK",
+          "name": "Negro",
+          "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+          "synthetic": true,
+          "texture_path": null
+        }
+      ],
+      "interior": {
+        "approximate": true,
+        "code": "WHITE",
+        "gloss": "0.30",
+        "kind": "MASS",
+        "linear_rgb": [
+          "0.78",
+          "0.79",
+          "0.76"
+        ],
+        "manufacturer_code": "DEMO-WHITE",
+        "name": "Blanco",
+        "source": "Acabados sintéticos DEKOPEN v5; semilla 20270102; sin certificación",
+        "synthetic": true,
+        "texture_path": null
+      },
+      "profile_skus": {
+        "DEMO_60-EXTRA-COVER_TRIM": "COMPRA-V6-DEMO_60-EXTRA-COVER_TRIM-WHITE_WALNUT",
+        "DEMO_60-EXTRA-FRAME_EXTENSION": "COMPRA-V6-DEMO_60-EXTRA-FRAME_EXTENSION-WHITE_WALNUT",
+        "DEMO_60-EXTRA-SILL": "COMPRA-V6-DEMO_60-EXTRA-SILL-WHITE_WALNUT",
+        "DEMO_60-JQ-10": "COMPRA-V5-DEMO_60-JQ-10-WHITE_WALNUT",
+        "DEMO_60-MARCO": "COMPRA-V5-DEMO_60-MARCO-WHITE_WALNUT"
+      }
+    },
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "extra_code": "SCREEN_FIXED",
+        "kind": "SCREEN",
+        "leaf_id": null,
+        "qty": 1,
+        "sku": "DEMO_60-EXTRA-SCREEN_FIXED"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.8146",
+        "article_sku": "DEMO_60-GLASS",
+        "bay_id": "vano",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4",
+        "height_mm": "1298.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "36.29",
+        "width_mm": "1398.00"
+      }
+    ],
+    "hardware_items": [],
+    "leaf_weights": [],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-WHITE_WALNUT",
+        "leaf_id": null,
+        "length_mm": "1506.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V5-DEMO_60-MARCO-WHITE_WALNUT",
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "vano",
+        "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-WHITE_WALNUT",
+        "leaf_id": null,
+        "length_mm": "1407.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "vano",
+        "commercial_sku": "COMPRA-V5-DEMO_60-JQ-10-WHITE_WALNUT",
+        "leaf_id": null,
+        "length_mm": "1307.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-FRAME_EXTENSION-WHITE_WALNUT",
+        "extra_code": "FRAME_EXTENSION",
+        "leaf_id": null,
+        "length_mm": "1400.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME_EXTENSION",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-FRAME_EXTENSION",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-FRAME_EXTENSION-WHITE_WALNUT",
+        "extra_code": "FRAME_EXTENSION",
+        "leaf_id": null,
+        "length_mm": "1400.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "FRAME_EXTENSION",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-FRAME_EXTENSION",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-SILL-WHITE_WALNUT",
+        "extra_code": "SILL",
+        "leaf_id": null,
+        "length_mm": "1560.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "SILL",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-SILL",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-COVER_TRIM-WHITE_WALNUT",
+        "extra_code": "COVER_TRIM",
+        "leaf_id": null,
+        "length_mm": "1500.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "COVER_TRIM",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-COVER_TRIM",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-COVER_TRIM-WHITE_WALNUT",
+        "extra_code": "COVER_TRIM",
+        "leaf_id": null,
+        "length_mm": "1400.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "COVER_TRIM",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-COVER_TRIM",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-COVER_TRIM-WHITE_WALNUT",
+        "extra_code": "COVER_TRIM",
+        "leaf_id": null,
+        "length_mm": "1500.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "COVER_TRIM",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-COVER_TRIM",
+        "stock_color": "WHITE_WALNUT"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "commercial_sku": "COMPRA-V6-DEMO_60-EXTRA-COVER_TRIM-WHITE_WALNUT",
+        "extra_code": "COVER_TRIM",
+        "leaf_id": null,
+        "length_mm": "1400.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "COVER_TRIM",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-EXTRA-COVER_TRIM",
+        "stock_color": "WHITE_WALNUT"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1476.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      }
+    ]
+  },
   "exact-partition": {
     "base_net": "130032",
     "sublines": [
