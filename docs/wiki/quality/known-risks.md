@@ -1,14 +1,34 @@
 ---
 type: risk
 status: active
-updated: 2026-09-28
+updated: 2026-10-12
 volatility: medium
 sources:
+  - P20 código b8450659d4ec82e062bdef5e7b3e703266956b09 y evidencia de aceptación del 12-10-2026
   - owner conversations through 2026-09-28
   - recent DEKOPEN audit notes
 ---
 
 # Known risks and audit targets
+
+## Límites verificados en P20
+
+La aceptación conserva SII 39 real sin timbrador, entrega fiscal productiva
+sin credenciales/certificación y precio unitario de compra sin lista comercial
+autorizada. Los adaptadores y recorridos simulados no eliminan esos límites.
+La primera carga fría de WebGL se informa separada de interacción caliente.
+
+El laminado monolítico de 6,38 mm del ensayo DEMO no tiene junquillo declarado:
+35 combinaciones se rechazan, sin forzar fabricación. El termopanel laminado
+compatible sí pertenece a la matriz positiva. Publicar fuentes sintéticas o
+confirmar un montaje DEMO no acredita certificación del fabricante.
+
+La suite MiMo de P20 cumple E/J 18/21, pero conserva cinco fallos. La auditoría
+numérica sin cifras finales inventadas no acredita éxito de un plan faltante.
+Tarifas reales de IA, catálogos, costos, ensayos térmicos y calibración CNC
+requieren fuentes del dueño/proveedor; no se completan con estimaciones del LLM.
+Véase [aceptación](../../redesign/acceptance-2026-10-12.md) y
+[activación](../../operations/ACTIVACION.md).
 
 D04 verifies class expansion, exact sealed mass, component/length picking and
 the tenant boundary. Missing machining authority blocks station completion;

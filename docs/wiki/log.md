@@ -1546,3 +1546,17 @@ del proxy por el host. Verifica propiedad antes de crear contenedores y
 conserva redes ajenas. Arranque oficial, acceso Magic Link/Mailpit y cuatro
 regresiones pasan; evidencia `guia/red-local.json`. La aceptación global
 continúa su cierre documental y estos ensayos no acreditan fabricación DEMO.
+
+## 2026-10-12 · P20, aceptación global para revisión del dueño
+
+Verificado sobre `15a3332a53ee0c21032ecd2715f5c6298e3b076e` (correcciones #154 y #155 integradas): catorce recorridos con
+cuentas Auth reales y dos stacks propios, guía desde inicio limpio y recibos
+inmutables. Matriz UX de 912 vistas sin hallazgos/overflow/axe serious/critical; dominio: 175 posiciones,
+PDF/OT/portal exactos y 350 vistas de editor/3D, 35 rechazos por junquillo ausente.
+MiMo real: 21/26, E/J 18/21, 85,71 %; cinco fallos conservados, cero canales numéricos
+finales sin respaldo y cero acciones consecuentes automáticas. Gates locales
+completos y CI de ambos PR en verde. No se atribuyen las 343 auditorías históricas a nuevas
+reproducciones individuales. La aceptación y ACTIVACION explican SII 39,
+tarifa real de compra, primera carga WebGL y conexiones del dueño; DEMO no
+acredita producción/certificación ni dinero. Véase
+`docs/redesign/acceptance-2026-10-12.md`. El PR final a main no se mergea.

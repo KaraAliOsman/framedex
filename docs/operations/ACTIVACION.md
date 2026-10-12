@@ -23,7 +23,7 @@ Este indice no contiene secretos. Los valores reales se cargan como variables de
 | Verificacion | Crear enlace de pago, completar pago sandbox, confirmar idempotencia de callback y estado visible en proyecto/portal.                            |
 
 La cobranza del proyecto usa sus propias credenciales, guardadas por el dueño
-en **Ajustes › Flow** (`org_payment_integrations`). Las variables `FLOW_*`
+en **Ajustes › Integraciones › Conectar Flow** (`org_payment_integrations`). Las variables `FLOW_*`
 del servidor pertenecen a la billetera de la plataforma; no habilitan el cobro
 de una fábrica. Configure en backend `BILLING_CALLBACK_ORIGIN` con HTTPS público
 y `BILLING_FRONTEND_ORIGIN` con el frontend, o declare el retorno del pagador
@@ -36,7 +36,7 @@ en la integración de la organización. La creación entrega a Flow el callback
    Complete el pago sandbox y compruebe un único movimiento y recibo. Reenvíe
    el callback y use **Verificar**: la recuperación consulta el pedido y no
    vuelve a crear el cobro. Compruebe un rechazo y un enlace vencido.
-3. Declare la vigencia en **Ajustes › General › Cobranza e integraciones**
+3. Declare la vigencia en **Ajustes › Integraciones**
    (7 días por defecto, 1–90). El timeout enviado a Flow se expresa en segundos,
    según [la API oficial](https://developers.flow.cl/api#tag/payment/paths/~1payment~1create/post).
 4. Tras aceptar el sandbox, cambie URL y llaves al comercio productivo. Verifique
@@ -62,8 +62,8 @@ El adaptador existente de `backend/projects/sii.py` genera factura 33 y nota
 de crédito 61 con CAF/certificado de la organización; `sii_envio.py` envía y
 consulta el estado oficial. No hay firma ni certificación nuevas en P11.
 
-1. En Ajustes › Certificado digital cargue el PFX vigente con su contraseña;
-   en Ajustes › SII registre los CAF autorizados. No publique estos archivos.
+1. En Ajustes › Integraciones › Configurar emisión SII › Certificado digital cargue el PFX vigente con su contraseña;
+   en Ajustes › Integraciones › Configurar emisión SII registre los CAF autorizados. No publique estos archivos.
 2. Configure backend/worker con `SII_WS_ENVIO_URL`, `SII_WS_STATUS_URL` y
    `SII_WS_TOKEN` del transporte oficial autorizado. Las variables genéricas
    del índice anterior no sustituyen estas interfaces existentes.
@@ -107,7 +107,7 @@ externo queda «No conectado» hasta configurar SMTP en el servidor.
    frontend publicado. Confirme que el enlace se usa una sola vez y entra en la
    organización esperada. Para el CLI local, `supabase/config.toml` ya referencia
    la plantilla; configure `MAIL_SANDBOX_HOST`/`MAIL_SANDBOX_PORT` con su Mailpit.
-5. El dueño configura logo, nombre y color en Ajustes › Identidad. Un color sin
+5. El dueño configura logo, nombre y color en Ajustes › Empresa. Un color sin
    contraste AA cae a teal-800 con aviso. Indique un correo de encargado y active
    los avisos internos si los necesita. Estas preferencias no alteran emisiones
    antiguas. El emisor documental y sus pies se sellan en la revisión nueva.
@@ -163,7 +163,7 @@ anterior se conserva. Un pago anulado no permite reenviar su comprobante.
    `mandatory` según su decisión. No copie tablas de la norma sin permiso.
 2. Importe la hoja en Catálogo › Importar, revise sus candidatos y el diff, y
    publique con el dueño o encargado de taller. También puede mantener las reglas
-   en Ajustes › Reglas de vidrio. Los ejemplos DEMO no sirven como regla oficial.
+   en Ajustes › Producción › Reglas de vidrio. Los ejemplos DEMO no sirven como regla oficial.
 3. Obtenga del vidriero composiciones, códigos de compra, propiedades Ug/g/TL,
    clase, límites y fuentes. Publique recetas desde el compositor o la hoja
    Vidrios. Para un laminado, cargue el espesor y la densidad de cada PVB con su
@@ -260,7 +260,7 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
    corresponda, más SKU comercial por acabado. Para accesorios unitarios,
    declare su artículo y unidad de compra. Compruebe un vano y una hoja reales
    contra la ficha; una medida derivada no acredita fabricación sin autoridad.
-3. El dueño con MFA declara servicios y tarifas completas en Ajustes › Extras y
+3. El dueño con MFA declara servicios y tarifas completas en Ajustes › Comercial › Extras y
    servicios: instalación por perímetro/área/cantidad, sellado, retiro, andamio y
    flete fijo/por zona. Registre costo, venta, moneda y fuente. Declare conversión
    vigente si la cotización usa otra moneda; no adopte cero por falta de tarifa.
@@ -307,7 +307,7 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 2. Mantenga estable la clave de cifrado de correo `MAIL_ENCRYPTION_KEY` del
    servidor/worker: también protege la capacidad del QR. Siga su procedimiento
    de secretos y respaldos, sin enviarla al frontend ni incluirla en git.
-3. En Ajustes › General configure identidad/logo y Documentos: papel, acento,
+3. En Ajustes › Empresa configure identidad/logo y en Ajustes › Documentos: papel, acento,
    pie, hitos de pago y condiciones reales de la empresa. Obtenga composiciones
    y Ug de fichas revisadas del proveedor. DEMO no acredita certificación.
 4. Emita con clic humano, abra el PDF y compruebe QR, revisión y total. Cree un
@@ -326,7 +326,7 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 2. Declare la elegibilidad del proveedor con RUT, contacto/correo, materiales y
    fuente vigente. Revise asignaciones, cantidades y precios antes de crear OC.
    Cambiar un proveedor no modifica las órdenes ya selladas.
-3. Configure en Ajustes › General › Documentos el rack inicial de retazos y los
+3. Configure en Ajustes › Producción el rack inicial de retazos y los
    días de alerta. Etiquete racks físicos con esos nombres. Registre guía, fecha,
    lote, rack y dañados al recibir; no ingrese lo dañado como material útil.
 4. Revise suministros/color/largo de barras y declare formatos/sustratos de
@@ -363,7 +363,7 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 1. Configure `BILLING_CALLBACK_ORIGIN` con el origen HTTPS público del backend
    y `DEKOPEN_PUBLIC_APP_URL`/`BILLING_FRONTEND_ORIGIN` con el origen HTTPS del
    frontend. Mantenga el proxy de `/api` y compruebe ambos desde fuera de la red.
-2. En Ajustes › Flow configure credenciales y endpoint sandbox; siga el webhook
+2. En Ajustes › Integraciones › Conectar Flow configure credenciales y endpoint sandbox; siga el webhook
    de cobranza P11. El retorno de cada cobro del portal se prepara automáticamente
    en `/api/v1/portal/payments/<contexto>/return/` antes de llamar al proveedor.
    Flow puede retornar por GET o POST; el servidor consulta su estado real y
@@ -375,7 +375,7 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
    un pago parcial, rechácelo, continúe/reintente, apruébelo y recargue el portal.
    Compruebe revisión elegida, único movimiento/recibo y saldo. Verifique la
    ausencia de pago en propuesta pendiente, vencida, reemplazada y sin saldo.
-5. Ajustes › General › Documentos controla si un enlace reemplazado puede llevar
+5. Ajustes › Documentos controla si un enlace reemplazado puede llevar
    a la revisión vigente. Configure antes de emitir. El permiso se sella y los
    PDFs históricos conservan sus bytes. Revocar una capacidad impide seguir
    consultando o pagando desde ella.
@@ -458,7 +458,7 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 
 ## Costos reales y analítica (P24)
 
-1. Confirme en Ajustes › General › Analítica el período inicial. La consulta usa
+1. Confirme en Ajustes › Analítica el período inicial. La consulta usa
    la zona horaria de la empresa. Dueño y jefe de taller pueden leer costos;
    no asigne ese rol a un usuario que solo necesita cortar o instalar.
 2. Vincule todos los consumos, pérdidas adicionales y devoluciones a la OT real,

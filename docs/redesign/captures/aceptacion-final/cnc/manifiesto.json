@@ -1,0 +1,234 @@
+{
+  "counts_by_kind": {
+    "END_MACHINING": 2
+  },
+  "declared_intent_gaps": [
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Bisagra \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-BISAGRA",
+      "declaration": "Alojamiento de bisagra",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "HINGE_PREP",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 1
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Cremona \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-CREMONA",
+      "declaration": "Alojamiento de cremona",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "SLOT",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 1
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Cerradero \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-CERRADERO",
+      "declaration": "Alojamiento de cerradero",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "LOCK_PREP",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 1
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "detail": "Emisor no implementado para esta declaraci\u00f3n sellada. No se gener\u00f3 trabajo de m\u00e1quina.",
+      "kind": "LOCK_PREP",
+      "leaf_id": null,
+      "name": "Puntos de cierre",
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "emitter_not_implemented",
+      "source": "Anotaci\u00f3n de taller de la revisi\u00f3n emitida",
+      "unit_index": 1
+    },
+    {
+      "detail": "Solo se sell\u00f3 el punto de manilla; faltan patr\u00f3n de agujeros y profundidad.",
+      "kind": "HANDLE_PREP",
+      "member_id": "982b1b8198e6a7717ee5828206a7e9d368b7f3c7dbbfbcf3fa924acb0edaaf44",
+      "name": "Preparaci\u00f3n de manilla",
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "rule_missing",
+      "source": "Regla de manilla de la revisi\u00f3n emitida",
+      "unit_index": 1
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Bisagra \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-BISAGRA",
+      "declaration": "Alojamiento de bisagra",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "HINGE_PREP",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 2
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Cremona \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-CREMONA",
+      "declaration": "Alojamiento de cremona",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "SLOT",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 2
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Cerradero \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-CERRADERO",
+      "declaration": "Alojamiento de cerradero",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "LOCK_PREP",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 2
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "detail": "Emisor no implementado para esta declaraci\u00f3n sellada. No se gener\u00f3 trabajo de m\u00e1quina.",
+      "kind": "LOCK_PREP",
+      "leaf_id": null,
+      "name": "Puntos de cierre",
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "emitter_not_implemented",
+      "source": "Anotaci\u00f3n de taller de la revisi\u00f3n emitida",
+      "unit_index": 2
+    },
+    {
+      "detail": "Solo se sell\u00f3 el punto de manilla; faltan patr\u00f3n de agujeros y profundidad.",
+      "kind": "HANDLE_PREP",
+      "member_id": "a9cd92aaf88a2ec769ee61eb26e23d0d5f99c2f535fbdfba06e59caf9966f451",
+      "name": "Preparaci\u00f3n de manilla",
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "rule_missing",
+      "source": "Regla de manilla de la revisi\u00f3n emitida",
+      "unit_index": 2
+    }
+  ],
+  "files": {
+    "operations.csv": {
+      "bytes": 774,
+      "sha256": "49efd5b28b158689163c52527368b875b106a29663b7828679b4a5c34d2f7b47"
+    },
+    "operations.json": {
+      "bytes": 20588,
+      "sha256": "f6b963fd7aaf47684960a8b1c0e9073bf851da80e07c273afe79b57d08e60ae0"
+    }
+  },
+  "fingerprint": "976a697a7fe72c2e367dd9966d405a5b4ebd253ffaf44327f41c3fe2f0441263",
+  "generated_at": "2026-10-12T14:11:27.792017+00:00",
+  "generated_by": "657fe3ca-c620-46e2-8694-bdca6015575a",
+  "identity": {
+    "machine_id": "CNC-P14-END",
+    "machine_name": "Fresadora de extremos DEMO",
+    "member_id": "1f359e795876bd7b2f6c28d46032643beff907987fc0f06cee66006529c952b2",
+    "member_label": "P01-U01-M17",
+    "order_code": "OT-P-000601-REV-A-01",
+    "plan_seed": "11f619057661775d74f4d5b0c4e3a377c587b4dd079788c8978dee271b89c1d0",
+    "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+    "postprocessor_id": "neutral-ops-v1",
+    "postprocessor_version": "1",
+    "project_code": "P-000601",
+    "revision_code": "REV-A"
+  },
+  "input_fingerprint": "eba337bbe20e15d02d6f8fea5dc6a5e38026ece9db68ba9151309cb43bf21a3c+efa4aa3e73d25941cbc56893872ab2c765e74fa83fd23ffe4aa508055f2e2fc0",
+  "kind": "cnc_program",
+  "machine": {
+    "code": "CNC-P14-END",
+    "id": "9d3131ee-4041-4edb-a2d5-4b4f6e615d16",
+    "postprocessor_id": "neutral-ops-v1",
+    "postprocessor_version": "1"
+  },
+  "operation_count": 2,
+  "output_kind": "NEUTRAL_INTERCHANGE",
+  "plan_fingerprint": "eba337bbe20e15d02d6f8fea5dc6a5e38026ece9db68ba9151309cb43bf21a3c",
+  "plan_seed": "11f619057661775d74f4d5b0c4e3a377c587b4dd079788c8978dee271b89c1d0",
+  "preview": {
+    "datum": "member_start",
+    "length_mm": "1388.00",
+    "marks": [
+      {
+        "face": "START_EDGE",
+        "operation_id": "4edf2287f91215a24b2fd2f7e569eef0",
+        "section_coverage": "END_PLANE",
+        "x_mm": "0"
+      },
+      {
+        "face": "END_EDGE",
+        "operation_id": "d540b202994a2c86be12c61a0b48e07b",
+        "section_coverage": "END_PLANE",
+        "x_mm": "1388.00"
+      }
+    ],
+    "section": {
+      "authority_source": "Secci\u00f3n declarada de DEMO_60-POSTE-V",
+      "axes": [],
+      "catalog_system": "DEMO_60",
+      "depth_mm": "60.00",
+      "drawing_ref": null,
+      "local_origin": "TOP_LEFT",
+      "orientation": "EXTERIOR_DOWN",
+      "orientation_declared": true,
+      "origin_declared": true,
+      "polygon": [
+        {
+          "x_mm": "0.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "80.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "80.00",
+          "y_mm": "60.00"
+        },
+        {
+          "x_mm": "0.00",
+          "y_mm": "60.00"
+        }
+      ],
+      "source": "POLYGON",
+      "synthetic": true
+    },
+    "section_fingerprint": "39d4c47ccf2afedab615aef2aa0217e5f4298dee7609da1c4abc924474026b66"
+  },
+  "program_no": "OT-P-000601-REV-A-01-P01U01M17-CNC-P14-END-06",
+  "schema": "dekopen_export_manifest_v1",
+  "verdict": "WARN"
+}

@@ -3,8 +3,9 @@ type: state
 status: active
 updated: 2026-10-12
 volatility: high
-verified_ref: cc0003abb3537f0994236e3a0221266bb087ee88
+verified_ref: 15a3332a53ee0c21032ecd2715f5c6298e3b076e
 sources:
+  - P20 aceptación global sobre 15a3332a53ee0c21032ecd2715f5c6298e3b076e, catorce recorridos, matriz UX de 912 vistas y dominio175; docs/redesign/acceptance-2026-10-12.md
   - P20 corrección cc0003abb3537f0994236e3a0221266bb087ee88, stack limpio/Magic Link/editor, autoridad de propuesta y doce cargas 4G, 2026-10-12
   - docs/redesign/P20-ARRANQUE.md
   - P24 código final bab0df93149e1373b78efd00e17b3120cf092e6d, cuatro gates completos, 76 PNG, fechas/hover y axe sin serious/critical, 2026-10-12
@@ -105,14 +106,18 @@ sources:
 
 # Current reality
 
-P20 continúa su aceptación global. La corrección `cc0003ab` añade un stack
-propio `framedex-review`, construcción real de API/worker/nginx y fixture v7.
-Se verificaron solicitud Magic Link, Mailpit, entrada, doce posiciones con bow
-y conjunto, editor y axe de la lista en ambos temas. El portal público conserva
-la misma autoridad y vuelve a validar el hash en cada consulta; el reuso queda
-dentro de la consulta. Su p50/p95 en doce contextos fríos 4G es
-2.949,26/2.972,86 ms. El mapa completo de catorce recorridos y la matriz global
-siguen pendientes de su cierre, sin convertir esta corrección en aceptación final.
+P20 completa la aceptación global sobre el código integrado de #154 y #155.
+Los catorce recorridos pasan con sandbox y autoridad DEMO declarados; la guía
+usa un stack REVIEW propio conservado, Magic Link y Mailpit reales. UX de 912 vistas
+termina sin hallazgos, overflow ni axe serious/critical. Dominio: 175 posiciones compara
+PDF/portal/OT y editor/3D en 350 vistas; 35 laminados incompatibles conservan bloqueo.
+La suite real MiMo pasa 21/26 y E/J 18/21 (85,71%), sin cifras finales sin respaldo
+ni acciones consecuentes automáticas; cinco fallos conservados. La evidencia
+mantiene el ref de cada corrida y no convierte DEMO en certificación.
+Véase [aceptación final](../../redesign/acceptance-2026-10-12.md) para métricas,
+rúbrica, hashes, fuentes y límites; [guía](../../GUIA-REVISION.md) y
+[activación](../../operations/ACTIVACION.md) para revisión y conexiones.
+La integración hacia main queda para el clic del dueño.
 
 ## P24 · analítica con evidencia de costos (12-10-2026)
 
@@ -131,7 +136,7 @@ salarios inferidos, FX implícito ni suma parcial de costos presentada como tota
 CSV y preferencias persiste; 40 vistas oficiales no tienen hallazgos ni errores.
 74 PNG conservan sus píxeles. Lint/tipos/test/build pasan: 1.061 motor (dos
 xfail históricas), 1.562 backend y 1.140 frontend. Database Gate y CI se registran
-al cerrar P24; P20 verifica el conjunto y prepara la revisión del dueño.
+al cerrar P24; la aceptación P20 posterior está documentada arriba.
 
 ## P18 · autoridad térmica de ventanas (11-10-2026)
 
@@ -151,7 +156,7 @@ y el PDF idéntico tras revocación. No acredita cumplimiento del edificio.
 finales no tienen hallazgos. Los cuatro gates locales y Database Gate pasan:
 1.052 motor, 1.551 backend, 1.131 frontend, 1.467 pgTAP (16 suplementarios),
 558 integraciones y 19 E2E. CI/squash se registran al integrar. Catálogo real,
-ensayos y revisión profesional permanecen datos por conectar; P24 y P20 siguen.
+ensayos y revisión profesional permanecen datos por conectar; P24 y P20 integran la evidencia posterior.
 
 ## P19 · representación física 3D (11-10-2026)
 

@@ -1,0 +1,36 @@
+{
+  "flows": [
+    2,
+    3,
+    9
+  ],
+  "sandbox": [
+    "Flow simulado",
+    "SII interno"
+  ],
+  "result": "PASA",
+  "REV-A": {
+    "bytes": 83800,
+    "pdfHash": "1ffc30ff5570a0c9c03364c59f0ea851eab6122a1330ace7e17a1d79e62c2c65",
+    "unchanged": true
+  },
+  "REV-B": {
+    "bytes": 84196,
+    "pdfHash": "dc57f729b746be1bd7cd1424b1547d5b40296f8f9e0c1b36a0ee0288b9ff73a0",
+    "unchanged": true
+  },
+  "comparison": {
+    "positions": 12,
+    "exactAuthority": true
+  },
+  "payment": {
+    "manualDeposit": true,
+    "simulatedBalance": true,
+    "replay": true,
+    "balance": "0.00",
+    "receipts": [
+      "RC-0001",
+      "RC-0002"
+    ]
+  }
+}

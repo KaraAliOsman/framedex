@@ -1,0 +1,9 @@
+{
+  "previousTimeout": 90,
+  "timeout": 180,
+  "retries": 1,
+  "provider": "MIMO",
+  "model": "primalabs-ai/MiMo-V2.6-Pro",
+  "configuredVia": "Ajustes · OWNER con MFA",
+  "reason": "Los límites de 60/90 s fallaron. La llamada comparte el límite total de 180 s del agente; el tiempo restante limita cada ronda. Se conserva el oráculo y se prueba con A/B reales."
+}

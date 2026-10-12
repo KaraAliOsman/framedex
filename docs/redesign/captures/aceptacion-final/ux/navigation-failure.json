@@ -1,0 +1,23 @@
+{
+  "routeId": "cnc-autoridad",
+  "role": "WORKSHOP_MANAGER",
+  "theme": "dark",
+  "viewportId": "390x844",
+  "consoleErrors": [],
+  "httpErrors": [],
+  "pending": [
+    {
+      "url": "http://127.0.0.1:5178/api/v1/production/orders/",
+      "started": 1791830571277,
+      "elapsed": 44741
+    },
+    {
+      "url": "http://127.0.0.1:5178/api/v1/production/station-queue/",
+      "started": 1791830571277,
+      "elapsed": 44741
+    }
+  ],
+  "slow": [],
+  "reachedPath": "/production",
+  "error": "TimeoutError: page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"http://127.0.0.1:5178/production?order=0cf13bab-b886-48a9-9c51-42e57f311413&section=mecanizado\", waiting until \"networkidle\"\n"
+}

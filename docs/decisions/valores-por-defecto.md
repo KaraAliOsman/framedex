@@ -78,7 +78,7 @@ Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguient
   Se recalcula con el motor al moverlo; el margen logrado y la utilidad
   pertenecen al dueño/jefe de taller. El estimador recibe solo venta mediante
   allowlist y nunca un costo oculto en una traza o autoridad anidada.
-- CLP es la moneda inicial del formulario. USD y UF requieren un snapshot FX
+- CLP es la moneda inicial del formulario. USD requiere un snapshot FX
   declarado y fechado. Listas, tarifas, IVA y FX se administran por el dueño;
   no se presume una cotización de cambio ni un costo ausente.
 - El repricing aplica cantidad, medidas, vidrio, herrajes, diseño, lista de
@@ -138,7 +138,7 @@ Fuente inicial: `docs/design/CONSTITUCION.md`, seccion 11. Los encargos siguient
 | Pie "Generado con DEKOPEN" | Oculto en documentos del cliente (white-label); visible solo en el portal, discreto                             | Ajustes > Documentos              | por defecto | P09                       |
 | Nombre del asistente       | "Asistente DEKOPEN" con el Orb. No se usa "STARWIN"                                                             | Ajustes > Marca                   | por defecto | P17                       |
 | Marca de la app            | Direccion B del estudio de identidad (`DEKOPEN` con la O como seccion de perfil)                                | P25                               | por defecto | P25                       |
-| Moneda                     | CLP; USD y UF con snapshot FX declarado                                                                         | Precio del proyecto > Moneda y autoridades | implementado | P07                |
+| Moneda                     | CLP; USD con snapshot FX declarado; UF no admitido                                                                         | Precio del proyecto > Moneda y autoridades | implementado | P07                |
 | Catalogo                   | Demo con precios aleatorios de semilla fija, marcado DEMO en todas partes                                       | Catalogo > Importar               | por defecto | D01/P16                   |
 
 ## P01 · contratos de presentación (2026-10-05)
@@ -750,7 +750,7 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 ## P24 · analítica para decidir (2026-10-12)
 
 - Período inicial de 30 días inclusivos hasta hoy, en la zona horaria de la
-  organización. Dueño lo configura entre 1 y 366 en Ajustes › General › Analítica;
+  organización. Dueño lo configura entre 1 y 366 en Ajustes › Analítica;
   el selector de la página admite fechas explícitas sin cambiar esa preferencia.
 - Ventas y margen pertenecen a emisiones del período; producción a creación de
   OT, instalaciones a agenda e incidencias a registro. Estados y decisiones son
@@ -768,3 +768,23 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - No se convierte moneda ni se distribuyen cargos globales por tipología sin
   autoridad. El descuento sellado ya forma parte del neto cotizado: tiene F6,
   pero no se vuelve a restar en las causas del desvío.
+
+## P20 · cierre de aceptación (2026-10-12)
+
+- Las cuatro mediciones de rendimiento distinguen una interacción de una carga
+  fría. Producción conserva una OT por posición: la obra de cien posiciones
+  contiene cien OT. No se cambia ese contrato para fabricar una medida de rendimiento.
+- El servidor valida la autoridad por consulta; una segunda consulta vuelve a
+  comprobar el binding y los permisos. El navegador público inicia solo el portal.
+  No existe un ajuste que permita omitir hashes, RLS o revisión humana.
+- La vista previa histórica requiere snapshot completo y versión de autoridad
+  compatible. En Ajustes se revisa un PDF nuevo cuando cambie la identidad o las
+  preferencias; el PDF ya emitido mantiene sus bytes.
+- La matriz de dominio usa autoridad y costos sintéticos explícitos. El laminado
+  monolítico de 6,38 mm sin junquillo compatible queda bloqueado; ningún default
+  suple esa fuente. La receta laminada compatible se prueba como termopanel de
+  seguridad. Datos de proveedor, viento, tarifas e industria se conectan mediante
+  revisión/publicación, según ACTIVACION.md.
+- Ajustes organiza Empresa, Usuarios y roles, Comercial, Documentos, Numeración,
+  Producción, Analítica, Integraciones e Inteligencia artificial. La guía de
+  activación usa esos destinos; cada preferencia mantiene sus permisos reales.

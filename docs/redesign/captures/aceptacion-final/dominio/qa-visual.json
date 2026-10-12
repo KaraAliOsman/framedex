@@ -1,0 +1,2121 @@
+{
+  "result": "PASA",
+  "method": "Inspección visual de las 22 láminas 3D (350 capturas, ambos temas) y 11 láminas del editor (175 capturas claras). La matriz automatizada conserva también las elevaciones oscuras; esta revisión manual no las contabiliza de nuevo.",
+  "reviewed": {
+    "3d": 350,
+    "editorLight": 175
+  },
+  "checks": [
+    "Ninguna escena vacía; conjunto encuadrado y pose coherente con la tipología.",
+    "Caras bicolor y composición de hojas conservadas entre variantes de vidrio.",
+    "Elevaciones con vista declarada, cotas y simbología común, sin dibujo recortado.",
+    "Límites DEMO, carga de catálogo y autoridad se muestran como sus estados reales; no se atribuye una certificación."
+  ],
+  "findings": [],
+  "captures": {
+    "3d": [
+      {
+        "capture": "dominio\\3d-1-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "ae92c2460ebacf0ff93cc139d2da035e6ebdd229e418f45e67941617f80eed04"
+      },
+      {
+        "capture": "dominio\\3d-1-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "6833190f218486b5383be87293b3b38a29d0c7603e644bc3ff88230ba309e02e"
+      },
+      {
+        "capture": "dominio\\3d-1-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "050b0df7cc74e0402402468b82e079a4b2d455b57c6a8d8640f4699dfe00efcd"
+      },
+      {
+        "capture": "dominio\\3d-1-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "f6f63886664413249d7e479fa4ee6594c27512fbdaa65db0f51070995da1f297"
+      },
+      {
+        "capture": "dominio\\3d-1-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "ae92c2460ebacf0ff93cc139d2da035e6ebdd229e418f45e67941617f80eed04"
+      },
+      {
+        "capture": "dominio\\3d-1-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "6833190f218486b5383be87293b3b38a29d0c7603e644bc3ff88230ba309e02e"
+      },
+      {
+        "capture": "dominio\\3d-1-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "2a7d450a7a58f1983dd38ae94e54fcdf3788425dd408cf6ebff6226887842dca"
+      },
+      {
+        "capture": "dominio\\3d-1-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "5a57dcb4a0319d10e787ca53ea1a599dabfd0c4bf46a0449a219196af3109be5"
+      },
+      {
+        "capture": "dominio\\3d-10-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "460715f00ef6015f8f5fe3499203533d77a469d9e03f08d4c02322f8027e0585"
+      },
+      {
+        "capture": "dominio\\3d-10-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "28aa94ae9733f48f128cd8d690b7af6a91e2cf06285921a27de1104098759147"
+      },
+      {
+        "capture": "dominio\\3d-10-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "5b835e0b5fd80a0eea6463a1bff2e49c2e99f47af6d9510c1b9ee1c7822ad90c"
+      },
+      {
+        "capture": "dominio\\3d-10-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "6314947de10376624a1026b30c660f82ef4f0fd5c67212ea6b1007bd6dfb3f48"
+      },
+      {
+        "capture": "dominio\\3d-10-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "460715f00ef6015f8f5fe3499203533d77a469d9e03f08d4c02322f8027e0585"
+      },
+      {
+        "capture": "dominio\\3d-10-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "28aa94ae9733f48f128cd8d690b7af6a91e2cf06285921a27de1104098759147"
+      },
+      {
+        "capture": "dominio\\3d-10-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "9152dc1450dc724303ca85fdff6933fa8df4f16562fb0e362eb0d00901153102"
+      },
+      {
+        "capture": "dominio\\3d-10-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "bce7bd0c643171e560af9d2c22f14a9013ed78ca93609fda9118ce358d102816"
+      },
+      {
+        "capture": "dominio\\3d-11-DEMO_ALU_PRACTICABLE-GLASS-LOWE-dark.png",
+        "sha256": "c0910ee34ac29ec7e74e248b8053ee38d2b3dc4952345333b1efd095d36ca798"
+      },
+      {
+        "capture": "dominio\\3d-11-DEMO_ALU_PRACTICABLE-GLASS-LOWE-light.png",
+        "sha256": "259f3518bb6f8be6897a7379901a6c7c41ac2c12ab4e03ae493b38adb9cac7c5"
+      },
+      {
+        "capture": "dominio\\3d-11-DEMO_ALU_PRACTICABLE-GLASS-SAFE-dark.png",
+        "sha256": "1cbfc69b180b80d491ee5513d437cf160f4e0541e0ac7a3df07ac8c710aa216c"
+      },
+      {
+        "capture": "dominio\\3d-11-DEMO_ALU_PRACTICABLE-GLASS-SAFE-light.png",
+        "sha256": "340e59705bb2488d438977568679814114853613528280afe13ae5f23e0273e7"
+      },
+      {
+        "capture": "dominio\\3d-11-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-dark.png",
+        "sha256": "c0910ee34ac29ec7e74e248b8053ee38d2b3dc4952345333b1efd095d36ca798"
+      },
+      {
+        "capture": "dominio\\3d-11-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "259f3518bb6f8be6897a7379901a6c7c41ac2c12ab4e03ae493b38adb9cac7c5"
+      },
+      {
+        "capture": "dominio\\3d-11-DEMO_ALU_PRACTICABLE-VIDRIO-4-dark.png",
+        "sha256": "77067fa9adea78562206c9b22fe0383ccec934b1ca985598ca4e39018a091057"
+      },
+      {
+        "capture": "dominio\\3d-11-DEMO_ALU_PRACTICABLE-VIDRIO-4-light.png",
+        "sha256": "0085e1e6034da0354767b052ae2436edb0c6f8093c1b9417102889fd764cb61e"
+      },
+      {
+        "capture": "dominio\\3d-12-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "64c76e12e72ecd88e310fd33acd82d7284d73c51a598515604c81e36c28548f1"
+      },
+      {
+        "capture": "dominio\\3d-12-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "31c60e79f3ae9c7d7ae03186f335b25fe5b47b4de03c6ec5d3fdcc85c37b4706"
+      },
+      {
+        "capture": "dominio\\3d-12-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "189aada609af8268c6917b86b0acceea1884936b522624aec77991ce9f8703d5"
+      },
+      {
+        "capture": "dominio\\3d-12-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "381979f062b0f466b00865d20f39e9bf6be0c517e8b29ebf0729dcc5186ecb1e"
+      },
+      {
+        "capture": "dominio\\3d-12-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "64c76e12e72ecd88e310fd33acd82d7284d73c51a598515604c81e36c28548f1"
+      },
+      {
+        "capture": "dominio\\3d-12-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "31c60e79f3ae9c7d7ae03186f335b25fe5b47b4de03c6ec5d3fdcc85c37b4706"
+      },
+      {
+        "capture": "dominio\\3d-12-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "ca2f13b3267db99a1a69737ccb972496161d59626ab08cd4a844493529c80924"
+      },
+      {
+        "capture": "dominio\\3d-12-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "1b519537bf19e91eeadb0db05d96e04e038883dc0ef45aeb927516cbdea356f7"
+      },
+      {
+        "capture": "dominio\\3d-13-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "a6ab252104e97c94579389589f65be265bb94a1df849daa965d26ca9972ef096"
+      },
+      {
+        "capture": "dominio\\3d-13-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "9df3bf4414673fb4f644dac6087907e5b481841d15e54af7b23dfb841b6667ff"
+      },
+      {
+        "capture": "dominio\\3d-13-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "aca8cb8d652f107d524d670a47ade3b8a8944ffaf27a4a892930d5f256309ea8"
+      },
+      {
+        "capture": "dominio\\3d-13-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "0f68a3bef47e90b9d1880405a9aa0f642e07a9706437f4181f0c495fb1323459"
+      },
+      {
+        "capture": "dominio\\3d-13-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "a6ab252104e97c94579389589f65be265bb94a1df849daa965d26ca9972ef096"
+      },
+      {
+        "capture": "dominio\\3d-13-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "9df3bf4414673fb4f644dac6087907e5b481841d15e54af7b23dfb841b6667ff"
+      },
+      {
+        "capture": "dominio\\3d-13-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "65fdd5e130c1383874541e958f2408a461ce7bfb9cca093af68d36fc0c8c5c39"
+      },
+      {
+        "capture": "dominio\\3d-13-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "0b4a98c46b6d6fbe65c2c00a83e5062e60e97227b0cd671dceedcf5556633719"
+      },
+      {
+        "capture": "dominio\\3d-14-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "179a220292074b3dcd7329309734ee33160ea587afed92142bc499288510c2df"
+      },
+      {
+        "capture": "dominio\\3d-14-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "cb8009c02da2aceb495bd3680d644e5f8dba1b40e620d0f6f488a255f37de136"
+      },
+      {
+        "capture": "dominio\\3d-14-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "f290093bc3e0297e6588871fd31562a3fede9c0502500e89a8e90fe230ada138"
+      },
+      {
+        "capture": "dominio\\3d-14-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "d70135e6bffe99682f48f275a4fd0235cf62939a9f36bb98d2caa95e2f79ebf7"
+      },
+      {
+        "capture": "dominio\\3d-14-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "179a220292074b3dcd7329309734ee33160ea587afed92142bc499288510c2df"
+      },
+      {
+        "capture": "dominio\\3d-14-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "cb8009c02da2aceb495bd3680d644e5f8dba1b40e620d0f6f488a255f37de136"
+      },
+      {
+        "capture": "dominio\\3d-14-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "a0816153d26d95655174d051e5648bb13b93bda7fd417086614bec0350e277f2"
+      },
+      {
+        "capture": "dominio\\3d-14-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "81e1ae424448c1d8e811433a3393f4cbcbac0f536d99e9ac4cd01679781f387b"
+      },
+      {
+        "capture": "dominio\\3d-15-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "9a621fd02ac25dfbd5f5d8ed77a069d1a8a1e9246e331318ebbab1ad3e78d2d0"
+      },
+      {
+        "capture": "dominio\\3d-15-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "1ab21c69d7b873a0797ffc5dfdc39d898cfec9f8f2a063e2747c4e713f920d94"
+      },
+      {
+        "capture": "dominio\\3d-15-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "9501df3df8a732e8d11b7a4ffd051f28c424c1bf68e0721bc69105bdd215714f"
+      },
+      {
+        "capture": "dominio\\3d-15-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "70f4d0465fb36c004defff4820aa8d6d8de5b67d5ffa365f6088f50f9c589903"
+      },
+      {
+        "capture": "dominio\\3d-15-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "9a621fd02ac25dfbd5f5d8ed77a069d1a8a1e9246e331318ebbab1ad3e78d2d0"
+      },
+      {
+        "capture": "dominio\\3d-15-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "1ab21c69d7b873a0797ffc5dfdc39d898cfec9f8f2a063e2747c4e713f920d94"
+      },
+      {
+        "capture": "dominio\\3d-15-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "fac850ea75c6bafe22b6191017948742a8d9a5cbdfcda9d1866b1b4b90d6d8c3"
+      },
+      {
+        "capture": "dominio\\3d-15-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "7b8952d61e7045e83c35c32f975eb188beadf070f4276621927c3ba57e8abb50"
+      },
+      {
+        "capture": "dominio\\3d-16-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "08ae93fbbde00edee27610dabe0cec94256e160e285e3c80a9f00ea4170288a2"
+      },
+      {
+        "capture": "dominio\\3d-16-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "b742cd0587e133c19deceee276231396bd358284167db3bc3303191b032f5db9"
+      },
+      {
+        "capture": "dominio\\3d-16-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "66832181b49ee10343732d38852c7d2977f9353564b3daff2840a03a4e274ca7"
+      },
+      {
+        "capture": "dominio\\3d-16-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "e1e8579b29e1ff77910a64985d9718e4c85929f10d44e4a61d192815effd304f"
+      },
+      {
+        "capture": "dominio\\3d-16-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "08ae93fbbde00edee27610dabe0cec94256e160e285e3c80a9f00ea4170288a2"
+      },
+      {
+        "capture": "dominio\\3d-16-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "b742cd0587e133c19deceee276231396bd358284167db3bc3303191b032f5db9"
+      },
+      {
+        "capture": "dominio\\3d-16-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "73fd22cc4d00824754ae0527e0ec12fa79acea48b87e3838a3ebc6a9aba4386d"
+      },
+      {
+        "capture": "dominio\\3d-16-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "fd9f9292871aee61988d460f8e1dda9f8082ffd1770da8e09fd5233cbe13f0e2"
+      },
+      {
+        "capture": "dominio\\3d-17-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "2a26e3c961462bb4b2dee01697b3f9d2b24e3384fc08ff751dc4ed347f30af6f"
+      },
+      {
+        "capture": "dominio\\3d-17-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "99a8d60427b3a43ea909bb1530081da9109e093d43bc5138c5fc8b9b666c82eb"
+      },
+      {
+        "capture": "dominio\\3d-17-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "2e1f34679f66f74ced0fd81a529bf46d17279d89699ec7b8e19e46b2d5296bc8"
+      },
+      {
+        "capture": "dominio\\3d-17-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "c192fed107b93219e064a343809eb6db4a3868585445bb6e081396638e0c333f"
+      },
+      {
+        "capture": "dominio\\3d-17-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "2a26e3c961462bb4b2dee01697b3f9d2b24e3384fc08ff751dc4ed347f30af6f"
+      },
+      {
+        "capture": "dominio\\3d-17-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "99a8d60427b3a43ea909bb1530081da9109e093d43bc5138c5fc8b9b666c82eb"
+      },
+      {
+        "capture": "dominio\\3d-17-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "d7990ccd5549183b5993450ff4e63ff96bdb4b5036b3952318dd37c4e49dfdfd"
+      },
+      {
+        "capture": "dominio\\3d-17-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "812bc0e52d2c563a0b271dd050606d97d437cb3411cc55cb1be880180edc78a4"
+      },
+      {
+        "capture": "dominio\\3d-18-DEMO_ALU_PRACTICABLE-GLASS-LOWE-dark.png",
+        "sha256": "3807de4d316499a501fe217d2d503a95a932be8693921b01582a6aef08f40028"
+      },
+      {
+        "capture": "dominio\\3d-18-DEMO_ALU_PRACTICABLE-GLASS-LOWE-light.png",
+        "sha256": "e00cd5f3493b9647fa8c6c6361728f43e982d04dba2d38259855f7fbb6ac3e4a"
+      },
+      {
+        "capture": "dominio\\3d-18-DEMO_ALU_PRACTICABLE-GLASS-SAFE-dark.png",
+        "sha256": "0d8ee3c36b971327a37d04ef89f27f7da350fb8edd118ba52148dbcefd0e4b74"
+      },
+      {
+        "capture": "dominio\\3d-18-DEMO_ALU_PRACTICABLE-GLASS-SAFE-light.png",
+        "sha256": "afc05f5999edb8a7de34b59a8f584f19d3eeaefb6c59e8e1c392e6dfd6f4d8b0"
+      },
+      {
+        "capture": "dominio\\3d-18-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-dark.png",
+        "sha256": "3807de4d316499a501fe217d2d503a95a932be8693921b01582a6aef08f40028"
+      },
+      {
+        "capture": "dominio\\3d-18-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "e00cd5f3493b9647fa8c6c6361728f43e982d04dba2d38259855f7fbb6ac3e4a"
+      },
+      {
+        "capture": "dominio\\3d-18-DEMO_ALU_PRACTICABLE-VIDRIO-4-dark.png",
+        "sha256": "09bfbfc8a5cb3e67e7db92b8e2c4052b21c2ba3ca47268ccc65c35ba38e159b2"
+      },
+      {
+        "capture": "dominio\\3d-18-DEMO_ALU_PRACTICABLE-VIDRIO-4-light.png",
+        "sha256": "df41745009294e4646bb12a6e334115322c5900eeeb9841ac9047f8dae948bd8"
+      },
+      {
+        "capture": "dominio\\3d-19-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "02ade3093fcf6b3ea4b99a396a6a6a434f935f4554b0ed8f880fa17d636dd27e"
+      },
+      {
+        "capture": "dominio\\3d-19-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "b1a3e57e828a859e2ab072525c97472fb79eb610235fddc72aa596a43f9c4d66"
+      },
+      {
+        "capture": "dominio\\3d-19-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "1cb32123dca4bb8190931c425f5394731187059266089982e7e745118b43baf2"
+      },
+      {
+        "capture": "dominio\\3d-19-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "1d6cb7360b47f9c867a63e3770b3d4e1de674f69482691cdca4e36d3c5f077bd"
+      },
+      {
+        "capture": "dominio\\3d-19-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "880f709e511013b7936ee28ada5b6906d23d01230b9c7b30cb6bfe567bdd82cc"
+      },
+      {
+        "capture": "dominio\\3d-19-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "b1a3e57e828a859e2ab072525c97472fb79eb610235fddc72aa596a43f9c4d66"
+      },
+      {
+        "capture": "dominio\\3d-19-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "1f2ca6ec8b622f546dfd7b011c05240b548b40093d9e27a09a703dce77442b9f"
+      },
+      {
+        "capture": "dominio\\3d-19-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "f3c987bba43f57acaf2de35f937940f9ce1d190ed5343fe2d460fb8fde520b17"
+      },
+      {
+        "capture": "dominio\\3d-2-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "d407831ad1e5ad54f77bb1fd9e5a2f1838454c52ace385233a89e6b97c276316"
+      },
+      {
+        "capture": "dominio\\3d-2-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "44559b5ecf35a297c774d953216236b2f6c6ee3c5d74608ef25a120539cfb030"
+      },
+      {
+        "capture": "dominio\\3d-2-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "75cb8b2e6c8998a18d7a2982e5ff6821a2baf3b6d8dccd3409cf281779aae6d8"
+      },
+      {
+        "capture": "dominio\\3d-2-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "05c573e833f63fe98f2110f741aa1af9ecae978d28a772af5d47dd387e1b2363"
+      },
+      {
+        "capture": "dominio\\3d-2-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "d407831ad1e5ad54f77bb1fd9e5a2f1838454c52ace385233a89e6b97c276316"
+      },
+      {
+        "capture": "dominio\\3d-2-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "44559b5ecf35a297c774d953216236b2f6c6ee3c5d74608ef25a120539cfb030"
+      },
+      {
+        "capture": "dominio\\3d-2-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "5b219ffa3fb9753d161492fa77f4752d00874a313d91ccb215b5fe131b24e3cf"
+      },
+      {
+        "capture": "dominio\\3d-2-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "68df5b5fcb1a2641d681365b40ea91376d77d2e3f4d4f5f188d7e2b1dd9dc6ef"
+      },
+      {
+        "capture": "dominio\\3d-20-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "9e33c436de5a89f29a34d21e6f3e017b66acf9bdef7f568d4eefb567572889c5"
+      },
+      {
+        "capture": "dominio\\3d-20-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "f82f78dd6c39db891b1d854943e13d8178437941f149cd5d3d91135d5b0ec995"
+      },
+      {
+        "capture": "dominio\\3d-20-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "c1666a6e7eb649aa1eb8ea4dadd7aebaaacc64c70d52c57c3f4211dc4260fe27"
+      },
+      {
+        "capture": "dominio\\3d-20-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "971e218020f9ca08fe2c47192c6f142bb3afd7223af67d05db517fefb97f9279"
+      },
+      {
+        "capture": "dominio\\3d-20-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "9e33c436de5a89f29a34d21e6f3e017b66acf9bdef7f568d4eefb567572889c5"
+      },
+      {
+        "capture": "dominio\\3d-20-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "f82f78dd6c39db891b1d854943e13d8178437941f149cd5d3d91135d5b0ec995"
+      },
+      {
+        "capture": "dominio\\3d-20-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "977633ffcbaa2ba6a384ac9b41f57dafb2a1c0fdaa80f22d271e031f4d65b1a7"
+      },
+      {
+        "capture": "dominio\\3d-20-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "4aec974ade68dd9a3d90a0bae1e4abb926e1c754311a44e026368ad555cf4645"
+      },
+      {
+        "capture": "dominio\\3d-21-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "b160e1b0f6dd88d3dc39aa596fa17d734bb42766241855faf43008d342f4f48c"
+      },
+      {
+        "capture": "dominio\\3d-21-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "eb48b7ab1ac6d7db4dd4cae5966f9363c3efda28afc67196376ca68e652840a1"
+      },
+      {
+        "capture": "dominio\\3d-21-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "e2c86cec11bb192b5451424155d1a276065d7a3d5d4ffb822bede82c06711440"
+      },
+      {
+        "capture": "dominio\\3d-21-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "0b6a5300ed4293ae8f25918544d8c502951b1a0fd17d534af28ad7edf8e7973b"
+      },
+      {
+        "capture": "dominio\\3d-21-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "b160e1b0f6dd88d3dc39aa596fa17d734bb42766241855faf43008d342f4f48c"
+      },
+      {
+        "capture": "dominio\\3d-21-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "eb48b7ab1ac6d7db4dd4cae5966f9363c3efda28afc67196376ca68e652840a1"
+      },
+      {
+        "capture": "dominio\\3d-21-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "db6d06ef2863d8591a52f66cb259a1a792045e5938486f520c211217d4c2948f"
+      },
+      {
+        "capture": "dominio\\3d-21-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "da829dca6a706681bd3af0a91fb230f41809b6f7c49adccb88ecd85d0aa48ce9"
+      },
+      {
+        "capture": "dominio\\3d-22-DEMO_HST-GLASS-LOWE-dark.png",
+        "sha256": "6ec351ee9bdacf977e9cba1eb69b3362173999241af67398a4376291438f25d0"
+      },
+      {
+        "capture": "dominio\\3d-22-DEMO_HST-GLASS-LOWE-light.png",
+        "sha256": "a7f5cd80057e3ca1aa64f35c00b524a2c7150e0ead4d051e071431d6dbb24ca2"
+      },
+      {
+        "capture": "dominio\\3d-22-DEMO_HST-GLASS-SAFE-dark.png",
+        "sha256": "353df93e457391994d845bdd5df47e4b0d0ea3a679f3b93092bd8bbfda5cc1ca"
+      },
+      {
+        "capture": "dominio\\3d-22-DEMO_HST-GLASS-SAFE-light.png",
+        "sha256": "8a185e7686e1ccd41cc6dc09201d04b3544baad518b45f25c938c6a8e48bbf3e"
+      },
+      {
+        "capture": "dominio\\3d-22-DEMO_HST-VIDRIO-4-16-4-dark.png",
+        "sha256": "d4abb4eb45207a8458f385d137211445a0016c14fa800b5e7ca1ada2df0485be"
+      },
+      {
+        "capture": "dominio\\3d-22-DEMO_HST-VIDRIO-4-16-4-light.png",
+        "sha256": "cfa8e496852a1aa981926edae82d3170626da39068ef05b4041756c6dbb9a86f"
+      },
+      {
+        "capture": "dominio\\3d-22-DEMO_HST-VIDRIO-4-dark.png",
+        "sha256": "212b72ec9940120c6c11b89714b65bebe554edb4ca74d79f1023963f01d9acb6"
+      },
+      {
+        "capture": "dominio\\3d-22-DEMO_HST-VIDRIO-4-light.png",
+        "sha256": "dc399db828c7ff9f0554a60b998275d4654453baa4ef3fa16529a0f854281f24"
+      },
+      {
+        "capture": "dominio\\3d-23-DEMO_HST-GLASS-LOWE-dark.png",
+        "sha256": "acb3040fca075c89bd12b6ecb1702c4b4c6bad7d46afe7114417089c79c27e92"
+      },
+      {
+        "capture": "dominio\\3d-23-DEMO_HST-GLASS-LOWE-light.png",
+        "sha256": "c3e74209e6ce4307dcd88a0c882d041fe07b4e868d8917c0b8bcd31fd9396222"
+      },
+      {
+        "capture": "dominio\\3d-23-DEMO_HST-GLASS-SAFE-dark.png",
+        "sha256": "b6828c75dc1284fd59886e933eb99533d56a2b364f1b9284cc7b3b45c6446405"
+      },
+      {
+        "capture": "dominio\\3d-23-DEMO_HST-GLASS-SAFE-light.png",
+        "sha256": "cd4b2a97b2fbd535f52aa20f11da78f5680045aa6f1c165dc11c894ab408d8ad"
+      },
+      {
+        "capture": "dominio\\3d-23-DEMO_HST-VIDRIO-4-16-4-dark.png",
+        "sha256": "8987959a68214b0ebe8c0e90928687c29b0981e7719f617e2294c594a66a9728"
+      },
+      {
+        "capture": "dominio\\3d-23-DEMO_HST-VIDRIO-4-16-4-light.png",
+        "sha256": "af08de3f597bfc941c162ee343542338353b1bcab4b8f0fd81288726e2dc81e9"
+      },
+      {
+        "capture": "dominio\\3d-23-DEMO_HST-VIDRIO-4-dark.png",
+        "sha256": "4b619f1b625e1660c1182dbfe863e3709e8744c9ad7b17f908fa154163d26473"
+      },
+      {
+        "capture": "dominio\\3d-23-DEMO_HST-VIDRIO-4-light.png",
+        "sha256": "1ad866db280a0aa5f3f1c0df29cbd5767627a217a79ea6b6889dac75c33316cc"
+      },
+      {
+        "capture": "dominio\\3d-24-DEMO_PSK-GLASS-LOWE-dark.png",
+        "sha256": "920d69f27d35d1657972bf0a76ff3e7d62c543d7d4d6c99edddecd3dd20f9353"
+      },
+      {
+        "capture": "dominio\\3d-24-DEMO_PSK-GLASS-LOWE-light.png",
+        "sha256": "3f961d99be95b6f079a7dacccc77c7b14f6c4c54929db38993e32f123fa33ed3"
+      },
+      {
+        "capture": "dominio\\3d-24-DEMO_PSK-GLASS-SAFE-dark.png",
+        "sha256": "f7482e42ff683de67c3449bde771ca2e4c63a80c56c9db7cac7961376ab46fcd"
+      },
+      {
+        "capture": "dominio\\3d-24-DEMO_PSK-GLASS-SAFE-light.png",
+        "sha256": "8de1b7e53f8c85016671f5694c7afc4cef8664c9a7fe51f071e4c6b63aa03080"
+      },
+      {
+        "capture": "dominio\\3d-24-DEMO_PSK-VIDRIO-4-16-4-dark.png",
+        "sha256": "01ee135e740e245207054e2d134e597cc11c3aaf86a5edb5c7f7224a89043668"
+      },
+      {
+        "capture": "dominio\\3d-24-DEMO_PSK-VIDRIO-4-16-4-light.png",
+        "sha256": "d34bc22f62938d68e30080f4c09c7dc4407da6aeef4ba2a95382a6d9dc65ab47"
+      },
+      {
+        "capture": "dominio\\3d-24-DEMO_PSK-VIDRIO-4-dark.png",
+        "sha256": "93b911403dd4e11a88e4d91e85620586b9a751399c7fdfa35a88a8acdaab72a2"
+      },
+      {
+        "capture": "dominio\\3d-24-DEMO_PSK-VIDRIO-4-light.png",
+        "sha256": "69a5330012e142df613777199640d14198bc3009ee3c2a49a5eb95dd5a153597"
+      },
+      {
+        "capture": "dominio\\3d-25-DEMO_PLEGABLE-GLASS-LOWE-dark.png",
+        "sha256": "97e956304949727b6667f0944d63aad7d0bafb6f28b0f4e43b0a8076b701eca3"
+      },
+      {
+        "capture": "dominio\\3d-25-DEMO_PLEGABLE-GLASS-LOWE-light.png",
+        "sha256": "fb27cf323abc5aaabdc922d0acaf0cfe6c02d40336c99572a6039cf0fee77ff1"
+      },
+      {
+        "capture": "dominio\\3d-25-DEMO_PLEGABLE-GLASS-SAFE-dark.png",
+        "sha256": "199a4d81d18563e0cf15a5bcc97dcc835a9b8a73d7e08c60377524615ec5023e"
+      },
+      {
+        "capture": "dominio\\3d-25-DEMO_PLEGABLE-GLASS-SAFE-light.png",
+        "sha256": "9256e95364a9cef3720192cb0f31aaa8331394f8075a9c2f4a951515427c146b"
+      },
+      {
+        "capture": "dominio\\3d-25-DEMO_PLEGABLE-VIDRIO-4-16-4-dark.png",
+        "sha256": "97e956304949727b6667f0944d63aad7d0bafb6f28b0f4e43b0a8076b701eca3"
+      },
+      {
+        "capture": "dominio\\3d-25-DEMO_PLEGABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "fb27cf323abc5aaabdc922d0acaf0cfe6c02d40336c99572a6039cf0fee77ff1"
+      },
+      {
+        "capture": "dominio\\3d-25-DEMO_PLEGABLE-VIDRIO-4-dark.png",
+        "sha256": "e904409a2609d188c3cf03c5f36220c245e5d5e996c22ab8df0d384fc2459f4a"
+      },
+      {
+        "capture": "dominio\\3d-25-DEMO_PLEGABLE-VIDRIO-4-light.png",
+        "sha256": "45fc4eca220de06eecc5d2a408a163589cc4f5382d97445758fbae38fa085f71"
+      },
+      {
+        "capture": "dominio\\3d-26-DEMO_PLEGABLE-GLASS-LOWE-dark.png",
+        "sha256": "97e956304949727b6667f0944d63aad7d0bafb6f28b0f4e43b0a8076b701eca3"
+      },
+      {
+        "capture": "dominio\\3d-26-DEMO_PLEGABLE-GLASS-LOWE-light.png",
+        "sha256": "fb27cf323abc5aaabdc922d0acaf0cfe6c02d40336c99572a6039cf0fee77ff1"
+      },
+      {
+        "capture": "dominio\\3d-26-DEMO_PLEGABLE-GLASS-SAFE-dark.png",
+        "sha256": "199a4d81d18563e0cf15a5bcc97dcc835a9b8a73d7e08c60377524615ec5023e"
+      },
+      {
+        "capture": "dominio\\3d-26-DEMO_PLEGABLE-GLASS-SAFE-light.png",
+        "sha256": "9256e95364a9cef3720192cb0f31aaa8331394f8075a9c2f4a951515427c146b"
+      },
+      {
+        "capture": "dominio\\3d-26-DEMO_PLEGABLE-VIDRIO-4-16-4-dark.png",
+        "sha256": "97e956304949727b6667f0944d63aad7d0bafb6f28b0f4e43b0a8076b701eca3"
+      },
+      {
+        "capture": "dominio\\3d-26-DEMO_PLEGABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "fb27cf323abc5aaabdc922d0acaf0cfe6c02d40336c99572a6039cf0fee77ff1"
+      },
+      {
+        "capture": "dominio\\3d-26-DEMO_PLEGABLE-VIDRIO-4-dark.png",
+        "sha256": "e904409a2609d188c3cf03c5f36220c245e5d5e996c22ab8df0d384fc2459f4a"
+      },
+      {
+        "capture": "dominio\\3d-26-DEMO_PLEGABLE-VIDRIO-4-light.png",
+        "sha256": "45fc4eca220de06eecc5d2a408a163589cc4f5382d97445758fbae38fa085f71"
+      },
+      {
+        "capture": "dominio\\3d-27-DEMO_PLEGABLE-GLASS-LOWE-dark.png",
+        "sha256": "ee634631a8d99ca358d9cae8532273ee409624bc4a06914bea5cc80753976461"
+      },
+      {
+        "capture": "dominio\\3d-27-DEMO_PLEGABLE-GLASS-LOWE-light.png",
+        "sha256": "b3fd6f93448697d1ae15220c8c661aa28ef6e78ac7599c5eee73f79784c16f7a"
+      },
+      {
+        "capture": "dominio\\3d-27-DEMO_PLEGABLE-GLASS-SAFE-dark.png",
+        "sha256": "396798775dec1ef48085ba588a94ba1c237a2a9708295838da2375557172420b"
+      },
+      {
+        "capture": "dominio\\3d-27-DEMO_PLEGABLE-GLASS-SAFE-light.png",
+        "sha256": "e5b3cb2f4e1389fafac6296a169a713e6d7f067255512a53b7e8fb7f733f4d16"
+      },
+      {
+        "capture": "dominio\\3d-27-DEMO_PLEGABLE-VIDRIO-4-16-4-dark.png",
+        "sha256": "ee634631a8d99ca358d9cae8532273ee409624bc4a06914bea5cc80753976461"
+      },
+      {
+        "capture": "dominio\\3d-27-DEMO_PLEGABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "b3fd6f93448697d1ae15220c8c661aa28ef6e78ac7599c5eee73f79784c16f7a"
+      },
+      {
+        "capture": "dominio\\3d-27-DEMO_PLEGABLE-VIDRIO-4-dark.png",
+        "sha256": "1411e03848da8b5806bbdc5b951f1d75d978df9f59f5a21757790dc546c03bc3"
+      },
+      {
+        "capture": "dominio\\3d-27-DEMO_PLEGABLE-VIDRIO-4-light.png",
+        "sha256": "d268a34a4dab71a6f71cb8db70aed3c51a9b3537c9884cef27ea1c50fe9b5708"
+      },
+      {
+        "capture": "dominio\\3d-28-DEMO_PLEGABLE-GLASS-LOWE-dark.png",
+        "sha256": "ee634631a8d99ca358d9cae8532273ee409624bc4a06914bea5cc80753976461"
+      },
+      {
+        "capture": "dominio\\3d-28-DEMO_PLEGABLE-GLASS-LOWE-light.png",
+        "sha256": "b3fd6f93448697d1ae15220c8c661aa28ef6e78ac7599c5eee73f79784c16f7a"
+      },
+      {
+        "capture": "dominio\\3d-28-DEMO_PLEGABLE-GLASS-SAFE-dark.png",
+        "sha256": "396798775dec1ef48085ba588a94ba1c237a2a9708295838da2375557172420b"
+      },
+      {
+        "capture": "dominio\\3d-28-DEMO_PLEGABLE-GLASS-SAFE-light.png",
+        "sha256": "e5b3cb2f4e1389fafac6296a169a713e6d7f067255512a53b7e8fb7f733f4d16"
+      },
+      {
+        "capture": "dominio\\3d-28-DEMO_PLEGABLE-VIDRIO-4-16-4-dark.png",
+        "sha256": "ee634631a8d99ca358d9cae8532273ee409624bc4a06914bea5cc80753976461"
+      },
+      {
+        "capture": "dominio\\3d-28-DEMO_PLEGABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "b3fd6f93448697d1ae15220c8c661aa28ef6e78ac7599c5eee73f79784c16f7a"
+      },
+      {
+        "capture": "dominio\\3d-28-DEMO_PLEGABLE-VIDRIO-4-dark.png",
+        "sha256": "1411e03848da8b5806bbdc5b951f1d75d978df9f59f5a21757790dc546c03bc3"
+      },
+      {
+        "capture": "dominio\\3d-28-DEMO_PLEGABLE-VIDRIO-4-light.png",
+        "sha256": "d268a34a4dab71a6f71cb8db70aed3c51a9b3537c9884cef27ea1c50fe9b5708"
+      },
+      {
+        "capture": "dominio\\3d-29-DEMO_PIVOT_V-GLASS-LOWE-dark.png",
+        "sha256": "8550f07165c84b8c98342b723916e4fa6e97a6077036869c70f9045893dc0b4c"
+      },
+      {
+        "capture": "dominio\\3d-29-DEMO_PIVOT_V-GLASS-LOWE-light.png",
+        "sha256": "5d9a47e4b754ceffd695316bcb0823f6b3368776d1f601daa365c17266bf7da3"
+      },
+      {
+        "capture": "dominio\\3d-29-DEMO_PIVOT_V-GLASS-SAFE-dark.png",
+        "sha256": "cada4506bc8e3627456b1749d1c0356c9f4e7ab64387cb4a50611655fb39e0b0"
+      },
+      {
+        "capture": "dominio\\3d-29-DEMO_PIVOT_V-GLASS-SAFE-light.png",
+        "sha256": "ef782114c985cd1166c64d9707cffbafa6f8ec762919847d42043b8923fa01e1"
+      },
+      {
+        "capture": "dominio\\3d-29-DEMO_PIVOT_V-VIDRIO-4-16-4-dark.png",
+        "sha256": "8550f07165c84b8c98342b723916e4fa6e97a6077036869c70f9045893dc0b4c"
+      },
+      {
+        "capture": "dominio\\3d-29-DEMO_PIVOT_V-VIDRIO-4-16-4-light.png",
+        "sha256": "5d9a47e4b754ceffd695316bcb0823f6b3368776d1f601daa365c17266bf7da3"
+      },
+      {
+        "capture": "dominio\\3d-29-DEMO_PIVOT_V-VIDRIO-4-dark.png",
+        "sha256": "3f53d141fee6f2368eda069a414f4e6b2b067efb329adb609602b7450a8a30dc"
+      },
+      {
+        "capture": "dominio\\3d-29-DEMO_PIVOT_V-VIDRIO-4-light.png",
+        "sha256": "c93ba4e3aee368fc7b332035a277ba1c95deea036e587288631929c896f10f3c"
+      },
+      {
+        "capture": "dominio\\3d-3-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "ae92c2460ebacf0ff93cc139d2da035e6ebdd229e418f45e67941617f80eed04"
+      },
+      {
+        "capture": "dominio\\3d-3-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "6833190f218486b5383be87293b3b38a29d0c7603e644bc3ff88230ba309e02e"
+      },
+      {
+        "capture": "dominio\\3d-3-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "050b0df7cc74e0402402468b82e079a4b2d455b57c6a8d8640f4699dfe00efcd"
+      },
+      {
+        "capture": "dominio\\3d-3-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "f6f63886664413249d7e479fa4ee6594c27512fbdaa65db0f51070995da1f297"
+      },
+      {
+        "capture": "dominio\\3d-3-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "ae92c2460ebacf0ff93cc139d2da035e6ebdd229e418f45e67941617f80eed04"
+      },
+      {
+        "capture": "dominio\\3d-3-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "6833190f218486b5383be87293b3b38a29d0c7603e644bc3ff88230ba309e02e"
+      },
+      {
+        "capture": "dominio\\3d-3-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "2a7d450a7a58f1983dd38ae94e54fcdf3788425dd408cf6ebff6226887842dca"
+      },
+      {
+        "capture": "dominio\\3d-3-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "5a57dcb4a0319d10e787ca53ea1a599dabfd0c4bf46a0449a219196af3109be5"
+      },
+      {
+        "capture": "dominio\\3d-30-DEMO_PIVOT_H-GLASS-LOWE-dark.png",
+        "sha256": "dc8812aedb12eafb5dfb14d55f789b11cbf7bc47e771c7296cedd9a8ee2d806e"
+      },
+      {
+        "capture": "dominio\\3d-30-DEMO_PIVOT_H-GLASS-LOWE-light.png",
+        "sha256": "8e72dbd21f82c466b3abda4990f4664ae78ac74c9ee2e6da3769343ee552f9bf"
+      },
+      {
+        "capture": "dominio\\3d-30-DEMO_PIVOT_H-GLASS-SAFE-dark.png",
+        "sha256": "88190f50800a49ca0b0ec29cc35cfb8a2976cdba9297998c38992fd4cc017d9e"
+      },
+      {
+        "capture": "dominio\\3d-30-DEMO_PIVOT_H-GLASS-SAFE-light.png",
+        "sha256": "936172547f97aa5edba458328693bdef8bf18612bf9f243162141afd710b753f"
+      },
+      {
+        "capture": "dominio\\3d-30-DEMO_PIVOT_H-VIDRIO-4-16-4-dark.png",
+        "sha256": "a881c97d253a37854f60eda906e017d820952a590bbbda6974ae62f7a26199e1"
+      },
+      {
+        "capture": "dominio\\3d-30-DEMO_PIVOT_H-VIDRIO-4-16-4-light.png",
+        "sha256": "33e89445b145a876eb74cfeda5982a46421e704483e01a0043378d1feca87242"
+      },
+      {
+        "capture": "dominio\\3d-30-DEMO_PIVOT_H-VIDRIO-4-dark.png",
+        "sha256": "dc8812aedb12eafb5dfb14d55f789b11cbf7bc47e771c7296cedd9a8ee2d806e"
+      },
+      {
+        "capture": "dominio\\3d-30-DEMO_PIVOT_H-VIDRIO-4-light.png",
+        "sha256": "33e89445b145a876eb74cfeda5982a46421e704483e01a0043378d1feca87242"
+      },
+      {
+        "capture": "dominio\\3d-31-DEMO_GUILLOTINA-GLASS-LOWE-dark.png",
+        "sha256": "f45392221dd06421d5b2f259bda52e79973e66b48db70e30dc1adbc95dee30ff"
+      },
+      {
+        "capture": "dominio\\3d-31-DEMO_GUILLOTINA-GLASS-LOWE-light.png",
+        "sha256": "44512999802e360e07ec96d763b1e408d37438cf1276d153aa2d1f0ae793d4f4"
+      },
+      {
+        "capture": "dominio\\3d-31-DEMO_GUILLOTINA-GLASS-SAFE-dark.png",
+        "sha256": "19568f9e9c33670e29cafc509090cf82119a2472b262787cd2ea55b63ab3a146"
+      },
+      {
+        "capture": "dominio\\3d-31-DEMO_GUILLOTINA-GLASS-SAFE-light.png",
+        "sha256": "d3d6d2644db011cdc74654ca4e1b3ef0d08d3e1278c6124791ac9035b3f79fe9"
+      },
+      {
+        "capture": "dominio\\3d-31-DEMO_GUILLOTINA-VIDRIO-4-16-4-dark.png",
+        "sha256": "3a2c2cddaa00e959ebcc81435c74314976385be9dd6d862500aa47b439379ca5"
+      },
+      {
+        "capture": "dominio\\3d-31-DEMO_GUILLOTINA-VIDRIO-4-16-4-light.png",
+        "sha256": "44512999802e360e07ec96d763b1e408d37438cf1276d153aa2d1f0ae793d4f4"
+      },
+      {
+        "capture": "dominio\\3d-31-DEMO_GUILLOTINA-VIDRIO-4-dark.png",
+        "sha256": "91b7747097d59a3287c46699642a92f30ef4adc3d8604a014a148ca2cc39ed69"
+      },
+      {
+        "capture": "dominio\\3d-31-DEMO_GUILLOTINA-VIDRIO-4-light.png",
+        "sha256": "841efcc66c8ce2d7aa39da1518dc21eb11475bb2abd2581272b70d9704941767"
+      },
+      {
+        "capture": "dominio\\3d-32-DEMO_GUILLOTINA-GLASS-LOWE-dark.png",
+        "sha256": "8edbf5fedd4f6d9f22f9c9b623bb1dd92cad41c98fb73de0070895e1e186e99a"
+      },
+      {
+        "capture": "dominio\\3d-32-DEMO_GUILLOTINA-GLASS-LOWE-light.png",
+        "sha256": "1888d904e8b8b1890301ae89b0a436e9b414ddc934226011ffa66ba8c121aa47"
+      },
+      {
+        "capture": "dominio\\3d-32-DEMO_GUILLOTINA-GLASS-SAFE-dark.png",
+        "sha256": "2aca42b49c30f27ab46a73f5931bd2ee5049115c78bb3cff864a43743ab3df0b"
+      },
+      {
+        "capture": "dominio\\3d-32-DEMO_GUILLOTINA-GLASS-SAFE-light.png",
+        "sha256": "4065f8d484b839d1ee41e981b879a6898de8e849d4b809ba42ab8954639da8a5"
+      },
+      {
+        "capture": "dominio\\3d-32-DEMO_GUILLOTINA-VIDRIO-4-16-4-dark.png",
+        "sha256": "8edbf5fedd4f6d9f22f9c9b623bb1dd92cad41c98fb73de0070895e1e186e99a"
+      },
+      {
+        "capture": "dominio\\3d-32-DEMO_GUILLOTINA-VIDRIO-4-16-4-light.png",
+        "sha256": "a424f0440875339be3e9ffb760180cfa5f68a601640c8e68f13a367d8f209c2a"
+      },
+      {
+        "capture": "dominio\\3d-32-DEMO_GUILLOTINA-VIDRIO-4-dark.png",
+        "sha256": "2bbd64093e7ee9e0f3cf38e7188178ce0b5cff030d00c00825a34fa9274cccca"
+      },
+      {
+        "capture": "dominio\\3d-32-DEMO_GUILLOTINA-VIDRIO-4-light.png",
+        "sha256": "f00e7494ce842b2479f662e243c154b625dd3631b4008e27d8fe5c256415f324"
+      },
+      {
+        "capture": "dominio\\3d-33-DEMO_GUILLOTINA-GLASS-LOWE-dark.png",
+        "sha256": "3a2c2cddaa00e959ebcc81435c74314976385be9dd6d862500aa47b439379ca5"
+      },
+      {
+        "capture": "dominio\\3d-33-DEMO_GUILLOTINA-GLASS-LOWE-light.png",
+        "sha256": "44512999802e360e07ec96d763b1e408d37438cf1276d153aa2d1f0ae793d4f4"
+      },
+      {
+        "capture": "dominio\\3d-33-DEMO_GUILLOTINA-GLASS-SAFE-dark.png",
+        "sha256": "4dc0b4108b029c7c390ae0da477a0124bf3441fc1b604e4403f2312a3f7f1281"
+      },
+      {
+        "capture": "dominio\\3d-33-DEMO_GUILLOTINA-GLASS-SAFE-light.png",
+        "sha256": "ea98f6bb5e765d6f1c00053493d47401ad06b4770a3a4e70e45e04bb299a7092"
+      },
+      {
+        "capture": "dominio\\3d-33-DEMO_GUILLOTINA-VIDRIO-4-16-4-dark.png",
+        "sha256": "3a2c2cddaa00e959ebcc81435c74314976385be9dd6d862500aa47b439379ca5"
+      },
+      {
+        "capture": "dominio\\3d-33-DEMO_GUILLOTINA-VIDRIO-4-16-4-light.png",
+        "sha256": "44512999802e360e07ec96d763b1e408d37438cf1276d153aa2d1f0ae793d4f4"
+      },
+      {
+        "capture": "dominio\\3d-33-DEMO_GUILLOTINA-VIDRIO-4-dark.png",
+        "sha256": "63dbb7bbea6c9691ba9c536ecdace9d9f00e1a26ed38a87a98b5b99325508eed"
+      },
+      {
+        "capture": "dominio\\3d-33-DEMO_GUILLOTINA-VIDRIO-4-light.png",
+        "sha256": "841efcc66c8ce2d7aa39da1518dc21eb11475bb2abd2581272b70d9704941767"
+      },
+      {
+        "capture": "dominio\\3d-34-DEMO_GUILLOTINA-GLASS-LOWE-dark.png",
+        "sha256": "8edbf5fedd4f6d9f22f9c9b623bb1dd92cad41c98fb73de0070895e1e186e99a"
+      },
+      {
+        "capture": "dominio\\3d-34-DEMO_GUILLOTINA-GLASS-LOWE-light.png",
+        "sha256": "a424f0440875339be3e9ffb760180cfa5f68a601640c8e68f13a367d8f209c2a"
+      },
+      {
+        "capture": "dominio\\3d-34-DEMO_GUILLOTINA-GLASS-SAFE-dark.png",
+        "sha256": "2aca42b49c30f27ab46a73f5931bd2ee5049115c78bb3cff864a43743ab3df0b"
+      },
+      {
+        "capture": "dominio\\3d-34-DEMO_GUILLOTINA-GLASS-SAFE-light.png",
+        "sha256": "7937b6236f0b28c09e3c3cf946af87b9cdb69887428d26245b950145b286cbc7"
+      },
+      {
+        "capture": "dominio\\3d-34-DEMO_GUILLOTINA-VIDRIO-4-16-4-dark.png",
+        "sha256": "8edbf5fedd4f6d9f22f9c9b623bb1dd92cad41c98fb73de0070895e1e186e99a"
+      },
+      {
+        "capture": "dominio\\3d-34-DEMO_GUILLOTINA-VIDRIO-4-16-4-light.png",
+        "sha256": "1888d904e8b8b1890301ae89b0a436e9b414ddc934226011ffa66ba8c121aa47"
+      },
+      {
+        "capture": "dominio\\3d-34-DEMO_GUILLOTINA-VIDRIO-4-dark.png",
+        "sha256": "bc0c523f4b18f4947271243ab6229b3704d1348b5e6b84df2fdd55285c5201c0"
+      },
+      {
+        "capture": "dominio\\3d-34-DEMO_GUILLOTINA-VIDRIO-4-light.png",
+        "sha256": "f00e7494ce842b2479f662e243c154b625dd3631b4008e27d8fe5c256415f324"
+      },
+      {
+        "capture": "dominio\\3d-35-DEMO_PUERTA_CORREDERA-GLASS-LOWE-dark.png",
+        "sha256": "aaf5315340c418b5f6a86511cef4dd0d5ee546d816b3048628db8523b57a10dd"
+      },
+      {
+        "capture": "dominio\\3d-35-DEMO_PUERTA_CORREDERA-GLASS-LOWE-light.png",
+        "sha256": "5a28bb08361f248ce14793820d14a00200ed76dccf3dc714ea759024e3bd82e3"
+      },
+      {
+        "capture": "dominio\\3d-35-DEMO_PUERTA_CORREDERA-GLASS-SAFE-dark.png",
+        "sha256": "3ce64e8270b174cf73521857b3795612a67ccb1dec5bd468c4cd31eb1b7a45c8"
+      },
+      {
+        "capture": "dominio\\3d-35-DEMO_PUERTA_CORREDERA-GLASS-SAFE-light.png",
+        "sha256": "2ef62d4dad8c3fb83cc708ac3e5039993d137ece73f729b9a87f5503d639e8b5"
+      },
+      {
+        "capture": "dominio\\3d-35-DEMO_PUERTA_CORREDERA-VIDRIO-4-16-4-dark.png",
+        "sha256": "aaf5315340c418b5f6a86511cef4dd0d5ee546d816b3048628db8523b57a10dd"
+      },
+      {
+        "capture": "dominio\\3d-35-DEMO_PUERTA_CORREDERA-VIDRIO-4-16-4-light.png",
+        "sha256": "5a28bb08361f248ce14793820d14a00200ed76dccf3dc714ea759024e3bd82e3"
+      },
+      {
+        "capture": "dominio\\3d-35-DEMO_PUERTA_CORREDERA-VIDRIO-4-dark.png",
+        "sha256": "4ab45881e189863cbf11bf06a68829f32ba5b56d51f37d0d3cd76d6f40819949"
+      },
+      {
+        "capture": "dominio\\3d-35-DEMO_PUERTA_CORREDERA-VIDRIO-4-light.png",
+        "sha256": "92b15a8ab12e6643beef8d688377a8ddde8ab8e9564b1f6f0c763818d27f32cd"
+      },
+      {
+        "capture": "dominio\\3d-4-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "d407831ad1e5ad54f77bb1fd9e5a2f1838454c52ace385233a89e6b97c276316"
+      },
+      {
+        "capture": "dominio\\3d-4-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "44559b5ecf35a297c774d953216236b2f6c6ee3c5d74608ef25a120539cfb030"
+      },
+      {
+        "capture": "dominio\\3d-4-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "75cb8b2e6c8998a18d7a2982e5ff6821a2baf3b6d8dccd3409cf281779aae6d8"
+      },
+      {
+        "capture": "dominio\\3d-4-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "05c573e833f63fe98f2110f741aa1af9ecae978d28a772af5d47dd387e1b2363"
+      },
+      {
+        "capture": "dominio\\3d-4-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "d407831ad1e5ad54f77bb1fd9e5a2f1838454c52ace385233a89e6b97c276316"
+      },
+      {
+        "capture": "dominio\\3d-4-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "44559b5ecf35a297c774d953216236b2f6c6ee3c5d74608ef25a120539cfb030"
+      },
+      {
+        "capture": "dominio\\3d-4-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "5b219ffa3fb9753d161492fa77f4752d00874a313d91ccb215b5fe131b24e3cf"
+      },
+      {
+        "capture": "dominio\\3d-4-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "68df5b5fcb1a2641d681365b40ea91376d77d2e3f4d4f5f188d7e2b1dd9dc6ef"
+      },
+      {
+        "capture": "dominio\\3d-5-DEMO_ALU_PRACTICABLE-GLASS-LOWE-dark.png",
+        "sha256": "7050e6be5245174357f889884d4887556b57e023c6e98aad0163a9c7592046af"
+      },
+      {
+        "capture": "dominio\\3d-5-DEMO_ALU_PRACTICABLE-GLASS-LOWE-light.png",
+        "sha256": "471dd03dffdaa28c03c32bee16e24dcc51b6b68450460ff53d9284e65420a09c"
+      },
+      {
+        "capture": "dominio\\3d-5-DEMO_ALU_PRACTICABLE-GLASS-SAFE-dark.png",
+        "sha256": "9e5d9ec6c30e1853f0e51d0da879a7b884af16c8920194f7aef1cc8ee98872a0"
+      },
+      {
+        "capture": "dominio\\3d-5-DEMO_ALU_PRACTICABLE-GLASS-SAFE-light.png",
+        "sha256": "8b4d388289dd62aaa00c542259f1f9cf0e59a1038ac4a8c19bfb354f6527868c"
+      },
+      {
+        "capture": "dominio\\3d-5-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-dark.png",
+        "sha256": "7050e6be5245174357f889884d4887556b57e023c6e98aad0163a9c7592046af"
+      },
+      {
+        "capture": "dominio\\3d-5-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "471dd03dffdaa28c03c32bee16e24dcc51b6b68450460ff53d9284e65420a09c"
+      },
+      {
+        "capture": "dominio\\3d-5-DEMO_ALU_PRACTICABLE-VIDRIO-4-dark.png",
+        "sha256": "2465efcf9f438a9ca514061cc6cd911d720d3892c24f668cdf549ac30806a608"
+      },
+      {
+        "capture": "dominio\\3d-5-DEMO_ALU_PRACTICABLE-VIDRIO-4-light.png",
+        "sha256": "a33ffa4f762a8af49badda80b2415f7b0576519e10640727f6761073b2dc0997"
+      },
+      {
+        "capture": "dominio\\3d-6-DEMO_60-GLASS-LOWE-dark.png",
+        "sha256": "64c76e12e72ecd88e310fd33acd82d7284d73c51a598515604c81e36c28548f1"
+      },
+      {
+        "capture": "dominio\\3d-6-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "31c60e79f3ae9c7d7ae03186f335b25fe5b47b4de03c6ec5d3fdcc85c37b4706"
+      },
+      {
+        "capture": "dominio\\3d-6-DEMO_60-GLASS-SAFE-dark.png",
+        "sha256": "189aada609af8268c6917b86b0acceea1884936b522624aec77991ce9f8703d5"
+      },
+      {
+        "capture": "dominio\\3d-6-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "381979f062b0f466b00865d20f39e9bf6be0c517e8b29ebf0729dcc5186ecb1e"
+      },
+      {
+        "capture": "dominio\\3d-6-DEMO_60-VIDRIO-4-16-4-dark.png",
+        "sha256": "64c76e12e72ecd88e310fd33acd82d7284d73c51a598515604c81e36c28548f1"
+      },
+      {
+        "capture": "dominio\\3d-6-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "31c60e79f3ae9c7d7ae03186f335b25fe5b47b4de03c6ec5d3fdcc85c37b4706"
+      },
+      {
+        "capture": "dominio\\3d-6-DEMO_60-VIDRIO-4-dark.png",
+        "sha256": "ca2f13b3267db99a1a69737ccb972496161d59626ab08cd4a844493529c80924"
+      },
+      {
+        "capture": "dominio\\3d-6-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "1b519537bf19e91eeadb0db05d96e04e038883dc0ef45aeb927516cbdea356f7"
+      },
+      {
+        "capture": "dominio\\3d-7-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "f00405a6373fafe4eb589e6199e91ab2488d42651838762ce0c48ccc530a729f"
+      },
+      {
+        "capture": "dominio\\3d-7-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "159ae919f156801fc5db2efd18cdef77a918ed7bdf62eccd2cd30fc583b94ce2"
+      },
+      {
+        "capture": "dominio\\3d-7-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "0cfeaeb7bc3e03d868410ef2cfad3a0cc6423da2564523f7bdd7017e53d5ea5c"
+      },
+      {
+        "capture": "dominio\\3d-7-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "4f51b2b8e27cce6d54c440661cab14181c7f408a67ed186c93d52b42dc7587db"
+      },
+      {
+        "capture": "dominio\\3d-7-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "f00405a6373fafe4eb589e6199e91ab2488d42651838762ce0c48ccc530a729f"
+      },
+      {
+        "capture": "dominio\\3d-7-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "159ae919f156801fc5db2efd18cdef77a918ed7bdf62eccd2cd30fc583b94ce2"
+      },
+      {
+        "capture": "dominio\\3d-7-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "35e6ac0103cfaa749e06ebe073ea2e10b3898b548f9f6999aef18e4e3acfc04d"
+      },
+      {
+        "capture": "dominio\\3d-7-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "1df50df08ea811ab1e09f4573ba033e7f57b8a49809526811a4f7ce3af763b29"
+      },
+      {
+        "capture": "dominio\\3d-8-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "73133bc0112d662931617a6be4e6cb172ea35556b7762dd37a93552696f6efb7"
+      },
+      {
+        "capture": "dominio\\3d-8-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "5771d105ea9139b96778c5d5580a507f4526dc76eccd78ce472548213a7328af"
+      },
+      {
+        "capture": "dominio\\3d-8-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "0e2bfdbaeeaa09ad869641ef8ac52535858d6ac093dd6c453ba0e174d865a1f6"
+      },
+      {
+        "capture": "dominio\\3d-8-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "123d4f83cb0c59f73bfab144cd7092a744b796cfbbccf02b7a0dfef9cddefb0d"
+      },
+      {
+        "capture": "dominio\\3d-8-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "73133bc0112d662931617a6be4e6cb172ea35556b7762dd37a93552696f6efb7"
+      },
+      {
+        "capture": "dominio\\3d-8-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "5771d105ea9139b96778c5d5580a507f4526dc76eccd78ce472548213a7328af"
+      },
+      {
+        "capture": "dominio\\3d-8-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "c8581a2aa4115d2225eedd8b8145fb71030b407b429a7094c3d9d4342ebe5793"
+      },
+      {
+        "capture": "dominio\\3d-8-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "96d1c453c4eb71700c537752ebfd32a60cdc39a91421b14170bfd47b2c8a542b"
+      },
+      {
+        "capture": "dominio\\3d-9-DEMO_PUERTA_70-GLASS-LOWE-dark.png",
+        "sha256": "24db9017fe179307cad0fa1e6cbdee30f4e4edc84c610cfaa67d2e32b5b6a886"
+      },
+      {
+        "capture": "dominio\\3d-9-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "73281caada35034b3d2d795890fc570a972de5e5cf2d27b6b8f83cc0ce9b1fbe"
+      },
+      {
+        "capture": "dominio\\3d-9-DEMO_PUERTA_70-GLASS-SAFE-dark.png",
+        "sha256": "359da1f7d6dd73ab8bb56b434267bf1dd7d95301b07a9c51d07d976afe58a3b4"
+      },
+      {
+        "capture": "dominio\\3d-9-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "9e2d07484bc51716bd2feb14c14e29e9b93dbfdc42b5a6c89fe09c82fcb08b74"
+      },
+      {
+        "capture": "dominio\\3d-9-DEMO_PUERTA_70-VIDRIO-4-16-4-dark.png",
+        "sha256": "24db9017fe179307cad0fa1e6cbdee30f4e4edc84c610cfaa67d2e32b5b6a886"
+      },
+      {
+        "capture": "dominio\\3d-9-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "73281caada35034b3d2d795890fc570a972de5e5cf2d27b6b8f83cc0ce9b1fbe"
+      },
+      {
+        "capture": "dominio\\3d-9-DEMO_PUERTA_70-VIDRIO-4-dark.png",
+        "sha256": "f9de326b4765707c4156b84d276916e36cff2016bd453ec4f089eb85a8235e56"
+      },
+      {
+        "capture": "dominio\\3d-9-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "d80267814c2dc19211d6acb16576d800c28857be5abb25925eef5078f0420fcf"
+      },
+      {
+        "capture": "dominio\\templado\\3d-1-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "2a7d450a7a58f1983dd38ae94e54fcdf3788425dd408cf6ebff6226887842dca"
+      },
+      {
+        "capture": "dominio\\templado\\3d-1-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "5a57dcb4a0319d10e787ca53ea1a599dabfd0c4bf46a0449a219196af3109be5"
+      },
+      {
+        "capture": "dominio\\templado\\3d-10-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "9152dc1450dc724303ca85fdff6933fa8df4f16562fb0e362eb0d00901153102"
+      },
+      {
+        "capture": "dominio\\templado\\3d-10-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "bce7bd0c643171e560af9d2c22f14a9013ed78ca93609fda9118ce358d102816"
+      },
+      {
+        "capture": "dominio\\templado\\3d-11-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-dark.png",
+        "sha256": "77067fa9adea78562206c9b22fe0383ccec934b1ca985598ca4e39018a091057"
+      },
+      {
+        "capture": "dominio\\templado\\3d-11-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-light.png",
+        "sha256": "0085e1e6034da0354767b052ae2436edb0c6f8093c1b9417102889fd764cb61e"
+      },
+      {
+        "capture": "dominio\\templado\\3d-12-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "ca2f13b3267db99a1a69737ccb972496161d59626ab08cd4a844493529c80924"
+      },
+      {
+        "capture": "dominio\\templado\\3d-12-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "1b519537bf19e91eeadb0db05d96e04e038883dc0ef45aeb927516cbdea356f7"
+      },
+      {
+        "capture": "dominio\\templado\\3d-13-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "65fdd5e130c1383874541e958f2408a461ce7bfb9cca093af68d36fc0c8c5c39"
+      },
+      {
+        "capture": "dominio\\templado\\3d-13-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "0b4a98c46b6d6fbe65c2c00a83e5062e60e97227b0cd671dceedcf5556633719"
+      },
+      {
+        "capture": "dominio\\templado\\3d-14-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "a0816153d26d95655174d051e5648bb13b93bda7fd417086614bec0350e277f2"
+      },
+      {
+        "capture": "dominio\\templado\\3d-14-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "81e1ae424448c1d8e811433a3393f4cbcbac0f536d99e9ac4cd01679781f387b"
+      },
+      {
+        "capture": "dominio\\templado\\3d-15-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "fac850ea75c6bafe22b6191017948742a8d9a5cbdfcda9d1866b1b4b90d6d8c3"
+      },
+      {
+        "capture": "dominio\\templado\\3d-15-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "7b8952d61e7045e83c35c32f975eb188beadf070f4276621927c3ba57e8abb50"
+      },
+      {
+        "capture": "dominio\\templado\\3d-16-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "73fd22cc4d00824754ae0527e0ec12fa79acea48b87e3838a3ebc6a9aba4386d"
+      },
+      {
+        "capture": "dominio\\templado\\3d-16-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "fd9f9292871aee61988d460f8e1dda9f8082ffd1770da8e09fd5233cbe13f0e2"
+      },
+      {
+        "capture": "dominio\\templado\\3d-17-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "d7990ccd5549183b5993450ff4e63ff96bdb4b5036b3952318dd37c4e49dfdfd"
+      },
+      {
+        "capture": "dominio\\templado\\3d-17-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "812bc0e52d2c563a0b271dd050606d97d437cb3411cc55cb1be880180edc78a4"
+      },
+      {
+        "capture": "dominio\\templado\\3d-18-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-dark.png",
+        "sha256": "09bfbfc8a5cb3e67e7db92b8e2c4052b21c2ba3ca47268ccc65c35ba38e159b2"
+      },
+      {
+        "capture": "dominio\\templado\\3d-18-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-light.png",
+        "sha256": "df41745009294e4646bb12a6e334115322c5900eeeb9841ac9047f8dae948bd8"
+      },
+      {
+        "capture": "dominio\\templado\\3d-19-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "1f2ca6ec8b622f546dfd7b011c05240b548b40093d9e27a09a703dce77442b9f"
+      },
+      {
+        "capture": "dominio\\templado\\3d-19-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "f3c987bba43f57acaf2de35f937940f9ce1d190ed5343fe2d460fb8fde520b17"
+      },
+      {
+        "capture": "dominio\\templado\\3d-2-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "5b219ffa3fb9753d161492fa77f4752d00874a313d91ccb215b5fe131b24e3cf"
+      },
+      {
+        "capture": "dominio\\templado\\3d-2-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "68df5b5fcb1a2641d681365b40ea91376d77d2e3f4d4f5f188d7e2b1dd9dc6ef"
+      },
+      {
+        "capture": "dominio\\templado\\3d-20-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "977633ffcbaa2ba6a384ac9b41f57dafb2a1c0fdaa80f22d271e031f4d65b1a7"
+      },
+      {
+        "capture": "dominio\\templado\\3d-20-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "4aec974ade68dd9a3d90a0bae1e4abb926e1c754311a44e026368ad555cf4645"
+      },
+      {
+        "capture": "dominio\\templado\\3d-21-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "db6d06ef2863d8591a52f66cb259a1a792045e5938486f520c211217d4c2948f"
+      },
+      {
+        "capture": "dominio\\templado\\3d-21-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "da829dca6a706681bd3af0a91fb230f41809b6f7c49adccb88ecd85d0aa48ce9"
+      },
+      {
+        "capture": "dominio\\templado\\3d-22-DEMO_HST-MONO-TEMPERED-dark.png",
+        "sha256": "92fed522f736cd6f52ee5b45b4d26a97a95b2b6df6244b056a5c456e8d90ecfc"
+      },
+      {
+        "capture": "dominio\\templado\\3d-22-DEMO_HST-MONO-TEMPERED-light.png",
+        "sha256": "00ba5454e123069ccf52de87fd2423ec4541205008510b035494bb91c1cb28f7"
+      },
+      {
+        "capture": "dominio\\templado\\3d-23-DEMO_HST-MONO-TEMPERED-dark.png",
+        "sha256": "f53013eb1b3be2f3c35fe2fdf690baa66c55dcb84fabb2d5cf874a96bd240a3e"
+      },
+      {
+        "capture": "dominio\\templado\\3d-23-DEMO_HST-MONO-TEMPERED-light.png",
+        "sha256": "3d8b16627e3c54f57232c128ac4346043fd75c98c7ed9999ed05bfd38259a0f1"
+      },
+      {
+        "capture": "dominio\\templado\\3d-24-DEMO_PSK-MONO-TEMPERED-dark.png",
+        "sha256": "9074062aa27b75e4f42029e5c2c8c8d66bb91d516cab7fa1c02af392601de7ab"
+      },
+      {
+        "capture": "dominio\\templado\\3d-24-DEMO_PSK-MONO-TEMPERED-light.png",
+        "sha256": "bd4c0bd2e37eb7897818436f6df3392d3c3c5e82d5228c6215be30e83ff9714f"
+      },
+      {
+        "capture": "dominio\\templado\\3d-25-DEMO_PLEGABLE-MONO-TEMPERED-dark.png",
+        "sha256": "e904409a2609d188c3cf03c5f36220c245e5d5e996c22ab8df0d384fc2459f4a"
+      },
+      {
+        "capture": "dominio\\templado\\3d-25-DEMO_PLEGABLE-MONO-TEMPERED-light.png",
+        "sha256": "45fc4eca220de06eecc5d2a408a163589cc4f5382d97445758fbae38fa085f71"
+      },
+      {
+        "capture": "dominio\\templado\\3d-26-DEMO_PLEGABLE-MONO-TEMPERED-dark.png",
+        "sha256": "e904409a2609d188c3cf03c5f36220c245e5d5e996c22ab8df0d384fc2459f4a"
+      },
+      {
+        "capture": "dominio\\templado\\3d-26-DEMO_PLEGABLE-MONO-TEMPERED-light.png",
+        "sha256": "45fc4eca220de06eecc5d2a408a163589cc4f5382d97445758fbae38fa085f71"
+      },
+      {
+        "capture": "dominio\\templado\\3d-27-DEMO_PLEGABLE-MONO-TEMPERED-dark.png",
+        "sha256": "1411e03848da8b5806bbdc5b951f1d75d978df9f59f5a21757790dc546c03bc3"
+      },
+      {
+        "capture": "dominio\\templado\\3d-27-DEMO_PLEGABLE-MONO-TEMPERED-light.png",
+        "sha256": "d268a34a4dab71a6f71cb8db70aed3c51a9b3537c9884cef27ea1c50fe9b5708"
+      },
+      {
+        "capture": "dominio\\templado\\3d-28-DEMO_PLEGABLE-MONO-TEMPERED-dark.png",
+        "sha256": "1411e03848da8b5806bbdc5b951f1d75d978df9f59f5a21757790dc546c03bc3"
+      },
+      {
+        "capture": "dominio\\templado\\3d-28-DEMO_PLEGABLE-MONO-TEMPERED-light.png",
+        "sha256": "d268a34a4dab71a6f71cb8db70aed3c51a9b3537c9884cef27ea1c50fe9b5708"
+      },
+      {
+        "capture": "dominio\\templado\\3d-29-DEMO_PIVOT_V-MONO-TEMPERED-dark.png",
+        "sha256": "3f53d141fee6f2368eda069a414f4e6b2b067efb329adb609602b7450a8a30dc"
+      },
+      {
+        "capture": "dominio\\templado\\3d-29-DEMO_PIVOT_V-MONO-TEMPERED-light.png",
+        "sha256": "c93ba4e3aee368fc7b332035a277ba1c95deea036e587288631929c896f10f3c"
+      },
+      {
+        "capture": "dominio\\templado\\3d-3-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "2a7d450a7a58f1983dd38ae94e54fcdf3788425dd408cf6ebff6226887842dca"
+      },
+      {
+        "capture": "dominio\\templado\\3d-3-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "5a57dcb4a0319d10e787ca53ea1a599dabfd0c4bf46a0449a219196af3109be5"
+      },
+      {
+        "capture": "dominio\\templado\\3d-30-DEMO_PIVOT_H-MONO-TEMPERED-dark.png",
+        "sha256": "dc8812aedb12eafb5dfb14d55f789b11cbf7bc47e771c7296cedd9a8ee2d806e"
+      },
+      {
+        "capture": "dominio\\templado\\3d-30-DEMO_PIVOT_H-MONO-TEMPERED-light.png",
+        "sha256": "8e72dbd21f82c466b3abda4990f4664ae78ac74c9ee2e6da3769343ee552f9bf"
+      },
+      {
+        "capture": "dominio\\templado\\3d-31-DEMO_GUILLOTINA-MONO-TEMPERED-dark.png",
+        "sha256": "63dbb7bbea6c9691ba9c536ecdace9d9f00e1a26ed38a87a98b5b99325508eed"
+      },
+      {
+        "capture": "dominio\\templado\\3d-31-DEMO_GUILLOTINA-MONO-TEMPERED-light.png",
+        "sha256": "841efcc66c8ce2d7aa39da1518dc21eb11475bb2abd2581272b70d9704941767"
+      },
+      {
+        "capture": "dominio\\templado\\3d-32-DEMO_GUILLOTINA-MONO-TEMPERED-dark.png",
+        "sha256": "2bbd64093e7ee9e0f3cf38e7188178ce0b5cff030d00c00825a34fa9274cccca"
+      },
+      {
+        "capture": "dominio\\templado\\3d-32-DEMO_GUILLOTINA-MONO-TEMPERED-light.png",
+        "sha256": "05cf805b270d84c5f1f7bc9092ab63b7b489b90ab59705537e2fb97ba8cb502b"
+      },
+      {
+        "capture": "dominio\\templado\\3d-33-DEMO_GUILLOTINA-MONO-TEMPERED-dark.png",
+        "sha256": "91b7747097d59a3287c46699642a92f30ef4adc3d8604a014a148ca2cc39ed69"
+      },
+      {
+        "capture": "dominio\\templado\\3d-33-DEMO_GUILLOTINA-MONO-TEMPERED-light.png",
+        "sha256": "841efcc66c8ce2d7aa39da1518dc21eb11475bb2abd2581272b70d9704941767"
+      },
+      {
+        "capture": "dominio\\templado\\3d-34-DEMO_GUILLOTINA-MONO-TEMPERED-dark.png",
+        "sha256": "2bbd64093e7ee9e0f3cf38e7188178ce0b5cff030d00c00825a34fa9274cccca"
+      },
+      {
+        "capture": "dominio\\templado\\3d-34-DEMO_GUILLOTINA-MONO-TEMPERED-light.png",
+        "sha256": "f00e7494ce842b2479f662e243c154b625dd3631b4008e27d8fe5c256415f324"
+      },
+      {
+        "capture": "dominio\\templado\\3d-35-DEMO_PUERTA_CORREDERA-MONO-TEMPERED-dark.png",
+        "sha256": "4ab45881e189863cbf11bf06a68829f32ba5b56d51f37d0d3cd76d6f40819949"
+      },
+      {
+        "capture": "dominio\\templado\\3d-35-DEMO_PUERTA_CORREDERA-MONO-TEMPERED-light.png",
+        "sha256": "92b15a8ab12e6643beef8d688377a8ddde8ab8e9564b1f6f0c763818d27f32cd"
+      },
+      {
+        "capture": "dominio\\templado\\3d-4-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "5b219ffa3fb9753d161492fa77f4752d00874a313d91ccb215b5fe131b24e3cf"
+      },
+      {
+        "capture": "dominio\\templado\\3d-4-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "68df5b5fcb1a2641d681365b40ea91376d77d2e3f4d4f5f188d7e2b1dd9dc6ef"
+      },
+      {
+        "capture": "dominio\\templado\\3d-5-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-dark.png",
+        "sha256": "2465efcf9f438a9ca514061cc6cd911d720d3892c24f668cdf549ac30806a608"
+      },
+      {
+        "capture": "dominio\\templado\\3d-5-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-light.png",
+        "sha256": "a33ffa4f762a8af49badda80b2415f7b0576519e10640727f6761073b2dc0997"
+      },
+      {
+        "capture": "dominio\\templado\\3d-6-DEMO_60-MONO-TEMPERED-dark.png",
+        "sha256": "ca2f13b3267db99a1a69737ccb972496161d59626ab08cd4a844493529c80924"
+      },
+      {
+        "capture": "dominio\\templado\\3d-6-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "1b519537bf19e91eeadb0db05d96e04e038883dc0ef45aeb927516cbdea356f7"
+      },
+      {
+        "capture": "dominio\\templado\\3d-7-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "35e6ac0103cfaa749e06ebe073ea2e10b3898b548f9f6999aef18e4e3acfc04d"
+      },
+      {
+        "capture": "dominio\\templado\\3d-7-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "1df50df08ea811ab1e09f4573ba033e7f57b8a49809526811a4f7ce3af763b29"
+      },
+      {
+        "capture": "dominio\\templado\\3d-8-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "c8581a2aa4115d2225eedd8b8145fb71030b407b429a7094c3d9d4342ebe5793"
+      },
+      {
+        "capture": "dominio\\templado\\3d-8-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "96d1c453c4eb71700c537752ebfd32a60cdc39a91421b14170bfd47b2c8a542b"
+      },
+      {
+        "capture": "dominio\\templado\\3d-9-DEMO_PUERTA_70-MONO-TEMPERED-dark.png",
+        "sha256": "f9de326b4765707c4156b84d276916e36cff2016bd453ec4f089eb85a8235e56"
+      },
+      {
+        "capture": "dominio\\templado\\3d-9-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "d80267814c2dc19211d6acb16576d800c28857be5abb25925eef5078f0420fcf"
+      }
+    ],
+    "editorLight": [
+      {
+        "capture": "dominio\\editor-1-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "5a43fe82a6b56290638dcd00b164a73d4b3102673cd85ff70fbbeb8374695665"
+      },
+      {
+        "capture": "dominio\\editor-1-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "5554d0759358ac56b783269992058b87b4994e32d017b298c7142cae52da3404"
+      },
+      {
+        "capture": "dominio\\editor-1-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "21dd77502c160a73c1435ecbfd3d347837544273de8cd57a1d18e5cf71eec86a"
+      },
+      {
+        "capture": "dominio\\editor-1-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "02a0113801236e4b3e5c59e16697b6192b9f49661607e7197a3943ab2c35b740"
+      },
+      {
+        "capture": "dominio\\editor-10-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "772fdc114b7723daa27e313681fa476d61cd31f33e451079f3405cb2438c10eb"
+      },
+      {
+        "capture": "dominio\\editor-10-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "974831b986cd1cb68e1cece8a1163dcad65e32fb5727a30d4d481a9006d2f215"
+      },
+      {
+        "capture": "dominio\\editor-10-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "5c803f0d8406d92fa8cc518c9352e551c71b041fc0ab992b7006ffbb316f917d"
+      },
+      {
+        "capture": "dominio\\editor-10-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "c0e5df5c69e75c918bba19ef6cdf3868a8ba10a14ff455847a03468be6932a62"
+      },
+      {
+        "capture": "dominio\\editor-11-DEMO_ALU_PRACTICABLE-GLASS-LOWE-light.png",
+        "sha256": "f2da304eeab57cc4a51cf4ac96326b055e1137df5c18ebcf91a42e677d706e80"
+      },
+      {
+        "capture": "dominio\\editor-11-DEMO_ALU_PRACTICABLE-GLASS-SAFE-light.png",
+        "sha256": "6c70c183e70a39468945a7b2613f2acb7a48e6b2aa34344b16bfbb0a46d07b08"
+      },
+      {
+        "capture": "dominio\\editor-11-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "c1287ac8fc09898ef27df9f3590535f0e93121797b574c79fc466568b6bc2f0b"
+      },
+      {
+        "capture": "dominio\\editor-11-DEMO_ALU_PRACTICABLE-VIDRIO-4-light.png",
+        "sha256": "397109b5d631ded1f5cf1fc2ae3b87a96cdc2146f5089b33a078e917faca791c"
+      },
+      {
+        "capture": "dominio\\editor-12-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "0d25ed920e022090ee7d5f9c500d3b0c06bba994465c80b50ec70fa1db492e8c"
+      },
+      {
+        "capture": "dominio\\editor-12-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "8980b18fdd8718d6046acefb2d8764609ea2a9bdf5dae0d5c7308ade8567cc10"
+      },
+      {
+        "capture": "dominio\\editor-12-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "a2cae76ea061eaf0ab36dab90414e78061680cff55600da05cdc0bd0df07f35b"
+      },
+      {
+        "capture": "dominio\\editor-12-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "ef90e5580d45049a18dfc5c1f7608b46939cde2647c59bd8a2e1ab81792c9cf5"
+      },
+      {
+        "capture": "dominio\\editor-13-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "c758a1cd0175c01dc0e13556a4a320cf494d63f0486f49d4db22339b771eb1f0"
+      },
+      {
+        "capture": "dominio\\editor-13-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "9f5e72dcb066348e674abcac6bec96d303d12e0fedd4e271cbf4a8123896f531"
+      },
+      {
+        "capture": "dominio\\editor-13-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "8e99abf1da89f1c56ec0b11177044f955426b791213f9c35725e57c03d6c089e"
+      },
+      {
+        "capture": "dominio\\editor-13-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "c75484a3a7daacb5a03e1fafeaa738f265b503b252fac715f912068243cf6346"
+      },
+      {
+        "capture": "dominio\\editor-14-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "e70e374ad9e13d7cda3e0fa6f13ae05ad229d242f8460f20cb7e868c1ce121ea"
+      },
+      {
+        "capture": "dominio\\editor-14-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "473ca73da278eedcb0fb59fae9711d95f00017981b98a645994e39ca20261399"
+      },
+      {
+        "capture": "dominio\\editor-14-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "ca81c6fb80e3891bf42bebdca8e0034d1c48e595639e8a517b6167110804e14a"
+      },
+      {
+        "capture": "dominio\\editor-14-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "57b2c5af4ef261a756b2cf68f4f693a7e93e3928e0c22cb2010fb98c5d81f78f"
+      },
+      {
+        "capture": "dominio\\editor-15-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "9a09c9eea0c3adfa0192b8f9745a20ac5b675abc311643cfa6edf354695a47cc"
+      },
+      {
+        "capture": "dominio\\editor-15-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "ec445a83f4c8a8f69e087b0e883e3c4cbd1e6d8291b61eefe68ddb8093e0e67d"
+      },
+      {
+        "capture": "dominio\\editor-15-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "a44a70a1943643ce45639ad81866c1af10e396e25754c8dbbd465574ceecd315"
+      },
+      {
+        "capture": "dominio\\editor-15-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "0a1261992ba9a89b7e8cfce9206c208fcf9b32ea8b2d6412b8343d2c31fde2cd"
+      },
+      {
+        "capture": "dominio\\editor-16-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "f15182e36c14fefb8c9427c91e7432c9540f44e03d029cf03fffe56569b69a3b"
+      },
+      {
+        "capture": "dominio\\editor-16-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "258f578290849d5f0ed14d0e22babc6e2efa34b6daec81070f5884d1e851aa9f"
+      },
+      {
+        "capture": "dominio\\editor-16-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "14234eb5aad11cc246328b77b2f506aaeb216592c2d5d85125c2a7a8a8e939f8"
+      },
+      {
+        "capture": "dominio\\editor-16-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "ad19f2bbb4aa9dea293752f79c2ad7e118a173eaed2d1d386ee9753e14a2b0b7"
+      },
+      {
+        "capture": "dominio\\editor-17-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "16acf4feccb3595237c1b10a68f0c7695eaa38d6584afe305a2875114009a263"
+      },
+      {
+        "capture": "dominio\\editor-17-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "832eddf88385ced7e702c41c46a1f58a78ecc613eae22b92657469ecd6d206d9"
+      },
+      {
+        "capture": "dominio\\editor-17-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "acde5c4516816d703a0aea44f5c8655715e072269845ff5d0f7af9b3c87eb8a8"
+      },
+      {
+        "capture": "dominio\\editor-17-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "05b95d922bca753c5d5e37703474abf3217ea165d06cc5721407daaabe3a21b7"
+      },
+      {
+        "capture": "dominio\\editor-18-DEMO_ALU_PRACTICABLE-GLASS-LOWE-light.png",
+        "sha256": "c883ca680140ce3819fb2828e9aebbd3c7c52e567c1ae087af51f390a7cce031"
+      },
+      {
+        "capture": "dominio\\editor-18-DEMO_ALU_PRACTICABLE-GLASS-SAFE-light.png",
+        "sha256": "4e54813e33be992f57bae20d8ac02ddc6335937924fe8dbd186208599e72567d"
+      },
+      {
+        "capture": "dominio\\editor-18-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "dcfcc31c1b7dd1a106de898b96e2c1f8876f98342a0777defac595038a0121df"
+      },
+      {
+        "capture": "dominio\\editor-18-DEMO_ALU_PRACTICABLE-VIDRIO-4-light.png",
+        "sha256": "8d18e3591154c931279ee2d33505cfe7ea559b1599fb3823251ed67acd4564b7"
+      },
+      {
+        "capture": "dominio\\editor-19-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "6437c177d36cd4f254b60501aa2ce2a9418dd22b27998fd1125ea2d84948766b"
+      },
+      {
+        "capture": "dominio\\editor-19-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "dd399971ce9f336db6589b2a6d66e1593300bdf85c6644053bb2516d117bd109"
+      },
+      {
+        "capture": "dominio\\editor-19-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "a553fcfc4fd2b22358779470913d34587cc643945b80938eb7a046b7d6213992"
+      },
+      {
+        "capture": "dominio\\editor-19-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "bad2fc4aafbd3ed20379dce7ea3cc14eec2851505d61150e85ec0f7b257a9026"
+      },
+      {
+        "capture": "dominio\\editor-2-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "97780e30380c7cea02a774894c828efef12844ad1dcdb510667af24fbca9c582"
+      },
+      {
+        "capture": "dominio\\editor-2-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "cce804bc8e4382bc2f4107387070d17e44671c6b7defb5c3756ce4fc477ce58b"
+      },
+      {
+        "capture": "dominio\\editor-2-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "b6f436f8985406d2944c2affaadc1aef034891893238af6bfd64ede00340389d"
+      },
+      {
+        "capture": "dominio\\editor-2-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "96e6a3b8d8c9b25fbca1965d54fc09c47804a88c5f063d09cd5ad4d91c980e2e"
+      },
+      {
+        "capture": "dominio\\editor-20-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "9c22d7a8044eef55e292bbdf9cae0903216592ee2d62c5292d541be35d84617c"
+      },
+      {
+        "capture": "dominio\\editor-20-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "52a1b7c5ede15e0d20caa23359e6d2b46bc74d032433a4715c1107585decf842"
+      },
+      {
+        "capture": "dominio\\editor-20-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "1f78420ef9a1f87d870d321522300a2324c8d5952c1de71b9c1e8214bd7f0213"
+      },
+      {
+        "capture": "dominio\\editor-20-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "632f950a17e94345ab3b57b81c83de8d0b3d3951baae25b65fa713e25a9b3c11"
+      },
+      {
+        "capture": "dominio\\editor-21-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "8864397410c5d76f2ac4e72fdc2caaa99d4933fc6be4a3e388a5fa2c798181ea"
+      },
+      {
+        "capture": "dominio\\editor-21-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "e0745149651795fd5bead3c647ec13158b26a6be3d87bac9f8f6633d701d32ad"
+      },
+      {
+        "capture": "dominio\\editor-21-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "b0f17bd34c17765843ffcef678e25952d90b4b907eba49c9daa442829040ee0d"
+      },
+      {
+        "capture": "dominio\\editor-21-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "03b4dd1d523a2eec5d984dc564d1c0f7c66897c88c4c4df0942710b098cf9822"
+      },
+      {
+        "capture": "dominio\\editor-22-DEMO_HST-GLASS-LOWE-light.png",
+        "sha256": "c2dedc1e43732932b4e9e8d41d9d3442e99c23d0ae8ca2d81b8675e558b10484"
+      },
+      {
+        "capture": "dominio\\editor-22-DEMO_HST-GLASS-SAFE-light.png",
+        "sha256": "891c453fa143b7c5a42bc3b8f63d4c4a0378a3e172e15ab8ba3239ed5e26f720"
+      },
+      {
+        "capture": "dominio\\editor-22-DEMO_HST-VIDRIO-4-16-4-light.png",
+        "sha256": "2554caa4af6f5973cfd70db79e0c1c60e8ac13b126875a1415565626e71a2110"
+      },
+      {
+        "capture": "dominio\\editor-22-DEMO_HST-VIDRIO-4-light.png",
+        "sha256": "f0a643bbbe10f43db3315785a21127e4fc8fe14fa3ae0c39280b2d73061eb557"
+      },
+      {
+        "capture": "dominio\\editor-23-DEMO_HST-GLASS-LOWE-light.png",
+        "sha256": "4474f193d2def378fcff6c336b26f41e66a3e2dba5d7d540e7716804b0702137"
+      },
+      {
+        "capture": "dominio\\editor-23-DEMO_HST-GLASS-SAFE-light.png",
+        "sha256": "618abcc218ae0ae8ea2a3afaac028d6c815cf01a459e1f1b46698d7a96151061"
+      },
+      {
+        "capture": "dominio\\editor-23-DEMO_HST-VIDRIO-4-16-4-light.png",
+        "sha256": "18a3238b398c02aa6739528cded5a6f7a62020c943f1e2d5a2a7d03c8928a920"
+      },
+      {
+        "capture": "dominio\\editor-23-DEMO_HST-VIDRIO-4-light.png",
+        "sha256": "950928210bd089730a5fcdc3cc0876765eb34da92e66035009b6bc8d15693a39"
+      },
+      {
+        "capture": "dominio\\editor-24-DEMO_PSK-GLASS-LOWE-light.png",
+        "sha256": "a5f17b65c6570f7a3529f47466b6643d9fad57507df1beda63b706868f337aa4"
+      },
+      {
+        "capture": "dominio\\editor-24-DEMO_PSK-GLASS-SAFE-light.png",
+        "sha256": "57a4b3cbb359bdea9104e6a15adad6649aa8129b8f40d8bcbe093e6bf03dcb87"
+      },
+      {
+        "capture": "dominio\\editor-24-DEMO_PSK-VIDRIO-4-16-4-light.png",
+        "sha256": "4a8f77c60edc092950a3626857b0b502737744f37ba844efc845140c1e0da131"
+      },
+      {
+        "capture": "dominio\\editor-24-DEMO_PSK-VIDRIO-4-light.png",
+        "sha256": "ea0762c5ee3b019ea35168de5059e12c622e0cc13920c4de9447c2b82bc5b059"
+      },
+      {
+        "capture": "dominio\\editor-25-DEMO_PLEGABLE-GLASS-LOWE-light.png",
+        "sha256": "6899db0e822456f2630700f67207c3b2f3125b0cd773fbbb5b46d1b9426eb9ec"
+      },
+      {
+        "capture": "dominio\\editor-25-DEMO_PLEGABLE-GLASS-SAFE-light.png",
+        "sha256": "4738df2f1d89504c9efa78b4b99f0f09bd1e0f9e9ddf5dc9aef7f8141cb553b3"
+      },
+      {
+        "capture": "dominio\\editor-25-DEMO_PLEGABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "44a4fb910763acc96976b159d02afa33b2e06db9e0b092cca8e75462807c6268"
+      },
+      {
+        "capture": "dominio\\editor-25-DEMO_PLEGABLE-VIDRIO-4-light.png",
+        "sha256": "81f8c8b1871c416d538a5bf43d94bf5bf4848651fd85c9dc8f3391bc09b6bb3c"
+      },
+      {
+        "capture": "dominio\\editor-26-DEMO_PLEGABLE-GLASS-LOWE-light.png",
+        "sha256": "f2d8a5fe60c374d6be5245cf0650891261366caa7617c9b762886d6d277c5ece"
+      },
+      {
+        "capture": "dominio\\editor-26-DEMO_PLEGABLE-GLASS-SAFE-light.png",
+        "sha256": "f309e1f8a3df885b4648e6bf38b4acbc4b1ed46dd2f43a3c840bb40141592136"
+      },
+      {
+        "capture": "dominio\\editor-26-DEMO_PLEGABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "0b376172afdcd152f1cdda92a7905bfd19f5ad50452692a9b0cdc08c8f0647da"
+      },
+      {
+        "capture": "dominio\\editor-26-DEMO_PLEGABLE-VIDRIO-4-light.png",
+        "sha256": "52247512e367461c291f42149fa2dfcfde47b1ceba7c9dbb03447fd9ca8d07a1"
+      },
+      {
+        "capture": "dominio\\editor-27-DEMO_PLEGABLE-GLASS-LOWE-light.png",
+        "sha256": "e7e863e25c8914f0f267abf28dc21f86d389853984360064d40010d34c216d9e"
+      },
+      {
+        "capture": "dominio\\editor-27-DEMO_PLEGABLE-GLASS-SAFE-light.png",
+        "sha256": "cacd1568b3fb6de81279f900e4e8ffb1b1e3d4884084ec8271d0bd79653d7e6c"
+      },
+      {
+        "capture": "dominio\\editor-27-DEMO_PLEGABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "f86f436b35efe8d705d230e02991c0fe4f65375e3bf25d9e74fabc1d32f625a0"
+      },
+      {
+        "capture": "dominio\\editor-27-DEMO_PLEGABLE-VIDRIO-4-light.png",
+        "sha256": "9af2ff0353a6bd6891e3f6e5c57c19eecbe43d82c5abc9435f337fdadfea2ff1"
+      },
+      {
+        "capture": "dominio\\editor-28-DEMO_PLEGABLE-GLASS-LOWE-light.png",
+        "sha256": "470f3341e7d89cb7c2b782b122251845570610f0524eb189cc2daebf0cf4d0bc"
+      },
+      {
+        "capture": "dominio\\editor-28-DEMO_PLEGABLE-GLASS-SAFE-light.png",
+        "sha256": "5e4696d2d7722a1d6d8332e9b4ff5beef7ea7750278379179881898ce49ec74d"
+      },
+      {
+        "capture": "dominio\\editor-28-DEMO_PLEGABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "4e0e14cda637c74385d5d794b6fc13f27eed96e3ec1a18658cf844de087551b6"
+      },
+      {
+        "capture": "dominio\\editor-28-DEMO_PLEGABLE-VIDRIO-4-light.png",
+        "sha256": "1a6c47af50032ae39e30e3906f9b327c6b84760b37e7b4ced00104e1b7ed07b5"
+      },
+      {
+        "capture": "dominio\\editor-29-DEMO_PIVOT_V-GLASS-LOWE-light.png",
+        "sha256": "0bbb789757dc6edd21aa840905f3c8d29b08c1e356dc63191a111593c6d84a0a"
+      },
+      {
+        "capture": "dominio\\editor-29-DEMO_PIVOT_V-GLASS-SAFE-light.png",
+        "sha256": "35d4440c2cf9960cc9f8620b00fdfe77e49eaab666c7bccb1346ef78599bf5d3"
+      },
+      {
+        "capture": "dominio\\editor-29-DEMO_PIVOT_V-VIDRIO-4-16-4-light.png",
+        "sha256": "07d92fe42dcc54803115c829b6d5ccac0407c5b921bc4e6a8b4f89ae566ed2ad"
+      },
+      {
+        "capture": "dominio\\editor-29-DEMO_PIVOT_V-VIDRIO-4-light.png",
+        "sha256": "3264ca5dcba47c506f1de922952f9e237290d3588a96defaa860b677f3517682"
+      },
+      {
+        "capture": "dominio\\editor-3-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "637a9f4ad2297e4aa3302a20514fd61e8ccb18be111d27b5fc16be82409f9be3"
+      },
+      {
+        "capture": "dominio\\editor-3-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "8345174dfab84eb4ed5624680c371cf8ddd3dde7b9d341e455593cf32567c298"
+      },
+      {
+        "capture": "dominio\\editor-3-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "aca1cc4b5568a0bcc3d3305b4d08252fbd303312f75547493e9a76bf4325301a"
+      },
+      {
+        "capture": "dominio\\editor-3-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "4c944991780d79bd5261181ca170867f3183c99f78816a9458a60b9fa76b84b9"
+      },
+      {
+        "capture": "dominio\\editor-30-DEMO_PIVOT_H-GLASS-LOWE-light.png",
+        "sha256": "79d9d329a345cbf913caa659f6cebbd780e7a34b14a218553e50a2da32b16125"
+      },
+      {
+        "capture": "dominio\\editor-30-DEMO_PIVOT_H-GLASS-SAFE-light.png",
+        "sha256": "bf0c25087c9a2d781a90d604ac2a8bb2b74a2dc27f6b68425cc87e532fb20694"
+      },
+      {
+        "capture": "dominio\\editor-30-DEMO_PIVOT_H-VIDRIO-4-16-4-light.png",
+        "sha256": "31ac6da6b0564279b48b5e51847a2739d50aef4b41d679de34be04d7aef5bcd2"
+      },
+      {
+        "capture": "dominio\\editor-30-DEMO_PIVOT_H-VIDRIO-4-light.png",
+        "sha256": "9215ec2698a7e836681c7c165244c521a715a8ca9a5047b1c8b6682d566a5815"
+      },
+      {
+        "capture": "dominio\\editor-31-DEMO_GUILLOTINA-GLASS-LOWE-light.png",
+        "sha256": "9e95d7334df4d3ed077cf7393693c542dca823da5c6776b6b900cad9446cffae"
+      },
+      {
+        "capture": "dominio\\editor-31-DEMO_GUILLOTINA-GLASS-SAFE-light.png",
+        "sha256": "913872dc8fe7fa68e89c4ab81e019eeb65253a85d036cb08dc17fcc4547bf6cb"
+      },
+      {
+        "capture": "dominio\\editor-31-DEMO_GUILLOTINA-VIDRIO-4-16-4-light.png",
+        "sha256": "cba384125a1a6ca3285617d7e9ea99a838db41261f9d546e11679da66eacdb37"
+      },
+      {
+        "capture": "dominio\\editor-31-DEMO_GUILLOTINA-VIDRIO-4-light.png",
+        "sha256": "d2160e6c7ca8ccd37eff935d87101f014bf3f53cb53fe7ce0d7bdd1fecd82c0d"
+      },
+      {
+        "capture": "dominio\\editor-32-DEMO_GUILLOTINA-GLASS-LOWE-light.png",
+        "sha256": "b1964b6fac153d7fb212385c935660fd3077bc0045c9888443c6b650fbe92807"
+      },
+      {
+        "capture": "dominio\\editor-32-DEMO_GUILLOTINA-GLASS-SAFE-light.png",
+        "sha256": "1aa27694461f3e7b6bd6809005b4ec7b98ec7e0a108003d8199ef01009f527d6"
+      },
+      {
+        "capture": "dominio\\editor-32-DEMO_GUILLOTINA-VIDRIO-4-16-4-light.png",
+        "sha256": "bbdba1c3420b0e118ed554c8ce9b8c02f00905af9a7ca1367d3a9450ad3427ad"
+      },
+      {
+        "capture": "dominio\\editor-32-DEMO_GUILLOTINA-VIDRIO-4-light.png",
+        "sha256": "f0c516b14a832c5e57d41d92da65e706c2f5ab83f78f858ea775d681d73a6deb"
+      },
+      {
+        "capture": "dominio\\editor-33-DEMO_GUILLOTINA-GLASS-LOWE-light.png",
+        "sha256": "775f7a962fd965c26b7942201bf7cd35154aea2a39ce92f240f5c79e3cbfd54b"
+      },
+      {
+        "capture": "dominio\\editor-33-DEMO_GUILLOTINA-GLASS-SAFE-light.png",
+        "sha256": "8236fec601620a49843f2659e6b5e7967b362378335d4f0f6fcc023e1b1ca700"
+      },
+      {
+        "capture": "dominio\\editor-33-DEMO_GUILLOTINA-VIDRIO-4-16-4-light.png",
+        "sha256": "527906047908ddf73ba0f9e019475668a7d661d829deb88ed4e99baddf263ae0"
+      },
+      {
+        "capture": "dominio\\editor-33-DEMO_GUILLOTINA-VIDRIO-4-light.png",
+        "sha256": "6f7f05151496a1dcafd2d7d39c1069428ceb25cb258b3e477d4ea7543c68e9d6"
+      },
+      {
+        "capture": "dominio\\editor-34-DEMO_GUILLOTINA-GLASS-LOWE-light.png",
+        "sha256": "bda699c557008c217005a1c313930921877788f1f58265bc1728fa46e88fbd50"
+      },
+      {
+        "capture": "dominio\\editor-34-DEMO_GUILLOTINA-GLASS-SAFE-light.png",
+        "sha256": "13dde900f6cdf1850538f5f9556b62cb79f20028272a5cb27b7f5d19f1aebd19"
+      },
+      {
+        "capture": "dominio\\editor-34-DEMO_GUILLOTINA-VIDRIO-4-16-4-light.png",
+        "sha256": "e1f620b6e949856d0e6286e96dc6babc0d645e4b85277522ad0f34682a243dfc"
+      },
+      {
+        "capture": "dominio\\editor-34-DEMO_GUILLOTINA-VIDRIO-4-light.png",
+        "sha256": "6cf60e453eafdc2322417c1d67ac544343e793cebb1855587f53c109d661bb90"
+      },
+      {
+        "capture": "dominio\\editor-35-DEMO_PUERTA_CORREDERA-GLASS-LOWE-light.png",
+        "sha256": "57edd70b6712784450f991137d5980433edba5279407697294f2fc273eca9162"
+      },
+      {
+        "capture": "dominio\\editor-35-DEMO_PUERTA_CORREDERA-GLASS-SAFE-light.png",
+        "sha256": "3b571166308f133b6d18b0b33be965c4f7356691ddb51c83ae711993ff25ed77"
+      },
+      {
+        "capture": "dominio\\editor-35-DEMO_PUERTA_CORREDERA-VIDRIO-4-16-4-light.png",
+        "sha256": "36294979e70a5d14faf0bb003f31a0a25ea3860828e4bc3aae118e2ded482210"
+      },
+      {
+        "capture": "dominio\\editor-35-DEMO_PUERTA_CORREDERA-VIDRIO-4-light.png",
+        "sha256": "0ade9a99e7a5135fde1201cccd936de2fb3e7c5ccb588ea6f23e59775084ebd6"
+      },
+      {
+        "capture": "dominio\\editor-4-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "7ce15bbab17ef13faa6ef067cdb264f5541a3d4615b665cbaad4be878be1d6e3"
+      },
+      {
+        "capture": "dominio\\editor-4-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "3ac96985aa993170c2059cb1224371035cb3b13cc591ed47e281bd7cbf9a0681"
+      },
+      {
+        "capture": "dominio\\editor-4-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "5ec12c74f74f4078b8fb5c4bdc9e2c51de5ea49605cdbd3188ad6b99d8d7757a"
+      },
+      {
+        "capture": "dominio\\editor-4-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "aad141e4c1bdbc5b23b986661eabe7d0f8d07911d85320164b97dbab11a74b49"
+      },
+      {
+        "capture": "dominio\\editor-5-DEMO_ALU_PRACTICABLE-GLASS-LOWE-light.png",
+        "sha256": "6e518ac578fdd23c20d1b6d09d8cb5879d2dd521ce68fae6cbbca4f5ff2022c2"
+      },
+      {
+        "capture": "dominio\\editor-5-DEMO_ALU_PRACTICABLE-GLASS-SAFE-light.png",
+        "sha256": "5bc0b194f0ea9f6362c0238c536880d158803e3bcea3b49a01ff3982478363e1"
+      },
+      {
+        "capture": "dominio\\editor-5-DEMO_ALU_PRACTICABLE-VIDRIO-4-16-4-light.png",
+        "sha256": "0cdce57c35715ad00f7247f7fd0797d174aefe9ced6186ed849f8277a9acec36"
+      },
+      {
+        "capture": "dominio\\editor-5-DEMO_ALU_PRACTICABLE-VIDRIO-4-light.png",
+        "sha256": "6d9ba2faaf15e461c90d03f49e8929c9d767ae8cdbaf194eae2060ce54779ae9"
+      },
+      {
+        "capture": "dominio\\editor-6-DEMO_60-GLASS-LOWE-light.png",
+        "sha256": "3789ad8aff8e396ea0b8ac514297a216a780f796cf49bfb93b14e32e47ef25c9"
+      },
+      {
+        "capture": "dominio\\editor-6-DEMO_60-GLASS-SAFE-light.png",
+        "sha256": "7992dd538175ae3505221012747aa8414593123b279f9a085875008b301f3e4d"
+      },
+      {
+        "capture": "dominio\\editor-6-DEMO_60-VIDRIO-4-16-4-light.png",
+        "sha256": "6ae5503a07b8f515931089d8e5783896a02e3622c3f860cd1c2e5258449996ca"
+      },
+      {
+        "capture": "dominio\\editor-6-DEMO_60-VIDRIO-4-light.png",
+        "sha256": "7dc7cce5ccf658bb29d89578cbff578f06cbf8b2a21e405a0507541a0c00e436"
+      },
+      {
+        "capture": "dominio\\editor-7-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "ea3dc49f994ff58bad11d82a3a353b0066c5d592fa602fb5685c580042ebc0d2"
+      },
+      {
+        "capture": "dominio\\editor-7-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "af487945e9cf9cc8c0693e73c67b947d17a1b1eaef1ed04901f37d988260b52b"
+      },
+      {
+        "capture": "dominio\\editor-7-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "e30e1cc17775e454f135db0c106714b77eef61bc7d5f03b8abe09de5966c9635"
+      },
+      {
+        "capture": "dominio\\editor-7-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "90fe3a25c9a82be312fd0f18ae8b38c844235aa46eac978e601e252d2008d4ed"
+      },
+      {
+        "capture": "dominio\\editor-8-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "a362c09b9b1340a3cc4420667b1d3b0094d9b57e8dc12c9de951688e6de615c5"
+      },
+      {
+        "capture": "dominio\\editor-8-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "71e74f8770023cb22c9264fa9cd55c0c27eebf6a440ae32efe9c69d33ada38b3"
+      },
+      {
+        "capture": "dominio\\editor-8-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "109ce33ae6f5968432781cd0a172257713d8cddba7a3809af559bd8ce791b645"
+      },
+      {
+        "capture": "dominio\\editor-8-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "12178473fa3fad133434debee1f08fab48cf1a61f132bfb65919a5038be20ccc"
+      },
+      {
+        "capture": "dominio\\editor-9-DEMO_PUERTA_70-GLASS-LOWE-light.png",
+        "sha256": "bef5bbd3044cae71cb2ee612d7f7baddd9b5d522fe8369a5f353cff0f812afb4"
+      },
+      {
+        "capture": "dominio\\editor-9-DEMO_PUERTA_70-GLASS-SAFE-light.png",
+        "sha256": "7746ee304fd35f3b4803e8127af1caaf73977c0c4d4ac44e7349e35771c43e09"
+      },
+      {
+        "capture": "dominio\\editor-9-DEMO_PUERTA_70-VIDRIO-4-16-4-light.png",
+        "sha256": "3e1fd7774e1894f747007e3801937f0ea03d4627638b22094c5c46c8dbad2443"
+      },
+      {
+        "capture": "dominio\\editor-9-DEMO_PUERTA_70-VIDRIO-4-light.png",
+        "sha256": "2ec09e717e7cab8306b42dcbbffcd40d7e7f732eceeaa5d5c3773c125b5be0f4"
+      },
+      {
+        "capture": "dominio\\templado\\editor-1-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "496a78b6efe705d9f9e2c09f9719f358b6ba1e8556a0e401eb97212f00dc63f2"
+      },
+      {
+        "capture": "dominio\\templado\\editor-10-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "962a933c915c0c07d880c24c3f8bb2f86cb7d52a09d41db466a883da0f384d2d"
+      },
+      {
+        "capture": "dominio\\templado\\editor-11-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-light.png",
+        "sha256": "0c5e45d462ecce7d67afd3c49584b558b57adfccdb2214e1e38cba063b9cab3d"
+      },
+      {
+        "capture": "dominio\\templado\\editor-12-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "853aee7509d95926d7dc0fdb5f244507855260ae5e74ad98181c42d94936993e"
+      },
+      {
+        "capture": "dominio\\templado\\editor-13-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "dd6b8831804f7b04412cff7b0221d594028d08a735d85324b1b3d03769f4ae4c"
+      },
+      {
+        "capture": "dominio\\templado\\editor-14-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "649b4fea8ee92df858846f6220e31a69736a1b42b44aa18288c442976f458d0c"
+      },
+      {
+        "capture": "dominio\\templado\\editor-15-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "2997a8074af9adddbe8d404b9e4383c3489f2f1028dd6089a581b1b120009cfb"
+      },
+      {
+        "capture": "dominio\\templado\\editor-16-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "64aad8f21537ba169ef7ffaa5b301f98d48e853d29dbd2a154de514492b50c26"
+      },
+      {
+        "capture": "dominio\\templado\\editor-17-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "c9273c3fb29ec157fb7d435786a7318f8af61aac7509cd06902018c7f4df3693"
+      },
+      {
+        "capture": "dominio\\templado\\editor-18-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-light.png",
+        "sha256": "bdb8a8ab1d782a2582ce2f028ff49df1814b7f866140f2463a245a3cc3ddcac8"
+      },
+      {
+        "capture": "dominio\\templado\\editor-19-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "1c249ef50f17543471eceb4edad8e394a8f5dd5c0d2903afbe55c6a0345c14e4"
+      },
+      {
+        "capture": "dominio\\templado\\editor-2-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "e2e7f1828fa37fe1c4b34ed753092215a4123d1647c354f65ea465e766ac04b8"
+      },
+      {
+        "capture": "dominio\\templado\\editor-20-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "0d62d30731e3ab70ddd2d6f55ad2edd8a8dafea5d8eb71a0b9c3ab9ff808739c"
+      },
+      {
+        "capture": "dominio\\templado\\editor-21-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "208d122733e02de2e96b31da0aeb14b260976f3c8cbdb8125404d5cac7816901"
+      },
+      {
+        "capture": "dominio\\templado\\editor-22-DEMO_HST-MONO-TEMPERED-light.png",
+        "sha256": "4c65c7c9fd306e614debb8b94e60e6a0b3e981edc5943e5f59417a39506e8693"
+      },
+      {
+        "capture": "dominio\\templado\\editor-23-DEMO_HST-MONO-TEMPERED-light.png",
+        "sha256": "6202e01373b981c79f4aba2173e0c1a3c1c142025f6c9e79f6294a3170802841"
+      },
+      {
+        "capture": "dominio\\templado\\editor-24-DEMO_PSK-MONO-TEMPERED-light.png",
+        "sha256": "d5b38ac4336611d39adf85043485173be6e19052e554bced75a54585bc76a5eb"
+      },
+      {
+        "capture": "dominio\\templado\\editor-25-DEMO_PLEGABLE-MONO-TEMPERED-light.png",
+        "sha256": "ec31ef91435337dbb2dce21ca646fe79afab4650022ac62a41402147dded1e5e"
+      },
+      {
+        "capture": "dominio\\templado\\editor-26-DEMO_PLEGABLE-MONO-TEMPERED-light.png",
+        "sha256": "e67bb9a06314e82ad3cdca6b57da928e8c823cf811f7861a77d37a7992d809c0"
+      },
+      {
+        "capture": "dominio\\templado\\editor-27-DEMO_PLEGABLE-MONO-TEMPERED-light.png",
+        "sha256": "e92ac0d18202c390152e8e53c195cec50236e2afa949ee43f9f98691238a75c3"
+      },
+      {
+        "capture": "dominio\\templado\\editor-28-DEMO_PLEGABLE-MONO-TEMPERED-light.png",
+        "sha256": "6729193bf0aa62c92c0fa7d46f3c3a5532811613883e301e27d88b395f9701c6"
+      },
+      {
+        "capture": "dominio\\templado\\editor-29-DEMO_PIVOT_V-MONO-TEMPERED-light.png",
+        "sha256": "807bf075b719d5c2201bf69f3f06fd2e952cb891b608c59a00de3038d8595319"
+      },
+      {
+        "capture": "dominio\\templado\\editor-3-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "ba8740a8b12bc6636f655d34ca5c7b3a252424bc816c66523af7e01f36c79687"
+      },
+      {
+        "capture": "dominio\\templado\\editor-30-DEMO_PIVOT_H-MONO-TEMPERED-light.png",
+        "sha256": "eec034c0e740018d19a3ea8547fbd4bd2c0cf1555ea947176c1840b125be46b1"
+      },
+      {
+        "capture": "dominio\\templado\\editor-31-DEMO_GUILLOTINA-MONO-TEMPERED-light.png",
+        "sha256": "727d59d672dac2c2b429e67bac9655bd063ab5601c682a26614de147769f967d"
+      },
+      {
+        "capture": "dominio\\templado\\editor-32-DEMO_GUILLOTINA-MONO-TEMPERED-light.png",
+        "sha256": "40768045ae50e3ac053edd7e545e5916fcde35dea105bd274f3394f55ae77851"
+      },
+      {
+        "capture": "dominio\\templado\\editor-33-DEMO_GUILLOTINA-MONO-TEMPERED-light.png",
+        "sha256": "0a30c0d4baaa0fb184acfbfa969393ce5825c9c8d18f3db299ea99619f7afcde"
+      },
+      {
+        "capture": "dominio\\templado\\editor-34-DEMO_GUILLOTINA-MONO-TEMPERED-light.png",
+        "sha256": "da6caf5125ca7319d0072ff82981b894dd510061a27d972f4aa6ba7dbf0584bf"
+      },
+      {
+        "capture": "dominio\\templado\\editor-35-DEMO_PUERTA_CORREDERA-MONO-TEMPERED-light.png",
+        "sha256": "b978cdc8474225462386b5b7f1ed2eca91025907c98d3fd54d4965ff36382f1d"
+      },
+      {
+        "capture": "dominio\\templado\\editor-4-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "c114a1bb78fd018619d1a7cf045ec2c2a66e81c3b65ca1c989d2e5ea3abc6407"
+      },
+      {
+        "capture": "dominio\\templado\\editor-5-DEMO_ALU_PRACTICABLE-MONO-TEMPERED-light.png",
+        "sha256": "527febb0b7cbc2d73a639cb4928b5076ccc0a21a4eed876f71edb8fc69e1a94e"
+      },
+      {
+        "capture": "dominio\\templado\\editor-6-DEMO_60-MONO-TEMPERED-light.png",
+        "sha256": "5196cb86304c90129fd3b67ff45d645ee3b04fffcf0e310c6193fe588d1e7c78"
+      },
+      {
+        "capture": "dominio\\templado\\editor-7-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "9a9825bf27e5dc71ae599818c99ff436c7d0f513e31d9d6e29d794ea317c87e7"
+      },
+      {
+        "capture": "dominio\\templado\\editor-8-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "b57fc1096f8b6a0ef3a800b84686fb4e2c023321bc6ee154efa00a6e62add872"
+      },
+      {
+        "capture": "dominio\\templado\\editor-9-DEMO_PUERTA_70-MONO-TEMPERED-light.png",
+        "sha256": "43e06922c64cb95c232dfa44d10ab3cd838e16e68ac47571c2bad0e1bd209f11"
+      }
+    ]
+  }
+}
