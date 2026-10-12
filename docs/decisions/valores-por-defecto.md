@@ -746,3 +746,25 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
 - La alternativa busca el mínimo entre combinaciones visibles evaluables
   con precio; requiere el diff común y clic humano. Los datos DEMO y las
   geometrías sin método quedan Sin dato y no habilitan propuestas favorables.
+
+## P24 · analítica para decidir (2026-10-12)
+
+- Período inicial de 30 días inclusivos hasta hoy, en la zona horaria de la
+  organización. Dueño lo configura entre 1 y 366 en Ajustes › General › Analítica;
+  el selector de la página admite fechas explícitas sin cambiar esa preferencia.
+- Ventas y margen pertenecen a emisiones del período; producción a creación de
+  OT, instalaciones a agenda e incidencias a registro. Estados y decisiones son
+  actuales al consultar. La definición muestra esa elección, sin afirmar saldo
+  histórico ni omitir silenciosamente pendientes.
+- Dueño y jefe de taller consultan y registran costos; el dueño configura el
+  período. Otros roles no reciben datos financieros por API ni por RLS.
+- Costos, horas efectivas, pérdida y crédito comienzan Sin dato. Se declaran por
+  OT con fuente, motivo, preview y confirmación. Los ceros también se acreditan.
+  El crédito exige retazos producidos y no excede el material útil. Una corrección
+  añade revisión; un movimiento posterior obliga a revisar el cierre.
+- Barras reales exigen balance exacto y confirmación de cobertura total. El plan
+  no se copia como hecho real y el tiempo transcurrido no se trata como salario.
+  No hay default configurable que permita omitir esa evidencia.
+- No se convierte moneda ni se distribuyen cargos globales por tipología sin
+  autoridad. El descuento sellado ya forma parte del neto cotizado: tiene F6,
+  pero no se vuelve a restar en las causas del desvío.

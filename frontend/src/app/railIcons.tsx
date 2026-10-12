@@ -31,6 +31,7 @@ const paths = {
     </>
   ),
   jobs: <path d="M4 5h16M4 12h16M4 19h10" />,
+  analytics: <path d="M3 3v18h18M7 16V9M12 16V5M17 16v-5" />,
   settings: (
     <>
       <circle cx="12" cy="12" r="4" />
@@ -50,6 +51,7 @@ const routes: Record<string, keyof typeof paths> = {
   "/production": "production",
   "/assistant": "assistant",
   "/jobs": "jobs",
+  "/analytics": "analytics",
   "/settings/general": "settings",
 };
 export function RailIcon({ to }: { to: string }): JSX.Element | null {

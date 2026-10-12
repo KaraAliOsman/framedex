@@ -7,6 +7,8 @@
  */
 import type {
   AcknowledgeRequest,
+  ActualReportRequestRequest,
+  ActualReportResponse,
   AdminResponse,
   AdminWriteRequest,
   AiAgentAccepted,
@@ -36,7 +38,12 @@ import type {
   AiUsageWork,
   AllocationRequestRequest,
   AllocationResponse,
+  AnalyticsDecisionCsvParams,
+  AnalyticsDecisionWorkspaceParams,
+  AnalyticsPreference,
+  AnalyticsPreferenceRequest,
   AnalyticsQuotationsParams,
+  AnalyticsWorkspace,
   ApplyRequest,
   ApprovalRecord,
   ArticleList,
@@ -1773,6 +1780,569 @@ export const aiUsageList = async (
   return apiMutator<aiUsageListResponse>(getAiUsageListUrl(params), {
     ...options,
     method: "GET",
+  });
+};
+
+export type analyticsDecisionWorkspaceResponse200 = {
+  data: AnalyticsWorkspace;
+  status: 200;
+};
+
+export type analyticsDecisionWorkspaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsDecisionWorkspaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsDecisionWorkspaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsDecisionWorkspaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsDecisionWorkspaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsDecisionWorkspaceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsDecisionWorkspaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsDecisionWorkspaceResponseSuccess = analyticsDecisionWorkspaceResponse200 & {
+  headers: Headers;
+};
+export type analyticsDecisionWorkspaceResponseError = (
+  | analyticsDecisionWorkspaceResponse400
+  | analyticsDecisionWorkspaceResponse401
+  | analyticsDecisionWorkspaceResponse403
+  | analyticsDecisionWorkspaceResponse404
+  | analyticsDecisionWorkspaceResponse409
+  | analyticsDecisionWorkspaceResponse422
+  | analyticsDecisionWorkspaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsDecisionWorkspaceResponse =
+  analyticsDecisionWorkspaceResponseSuccess | analyticsDecisionWorkspaceResponseError;
+
+export const getAnalyticsDecisionWorkspaceUrl = (params?: AnalyticsDecisionWorkspaceParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/analytics/decision/?${stringifiedParams}`
+    : `/api/v1/analytics/decision/`;
+};
+
+export const analyticsDecisionWorkspace = async (
+  params?: AnalyticsDecisionWorkspaceParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsDecisionWorkspaceResponse> => {
+  return apiMutator<analyticsDecisionWorkspaceResponse>(getAnalyticsDecisionWorkspaceUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsDecisionCsvResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type analyticsDecisionCsvResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsDecisionCsvResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsDecisionCsvResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsDecisionCsvResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsDecisionCsvResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsDecisionCsvResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsDecisionCsvResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsDecisionCsvResponseSuccess = analyticsDecisionCsvResponse200 & {
+  headers: Headers;
+};
+export type analyticsDecisionCsvResponseError = (
+  | analyticsDecisionCsvResponse400
+  | analyticsDecisionCsvResponse401
+  | analyticsDecisionCsvResponse403
+  | analyticsDecisionCsvResponse404
+  | analyticsDecisionCsvResponse409
+  | analyticsDecisionCsvResponse422
+  | analyticsDecisionCsvResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsDecisionCsvResponse =
+  analyticsDecisionCsvResponseSuccess | analyticsDecisionCsvResponseError;
+
+export const getAnalyticsDecisionCsvUrl = (params?: AnalyticsDecisionCsvParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/analytics/decision/export/?${stringifiedParams}`
+    : `/api/v1/analytics/decision/export/`;
+};
+
+export const analyticsDecisionCsv = async (
+  params?: AnalyticsDecisionCsvParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsDecisionCsvResponse> => {
+  return apiMutator<analyticsDecisionCsvResponse>(getAnalyticsDecisionCsvUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsActualReportResponse200 = {
+  data: ActualReportResponse;
+  status: 200;
+};
+
+export type analyticsActualReportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsActualReportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsActualReportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsActualReportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsActualReportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsActualReportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsActualReportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsActualReportResponseSuccess = analyticsActualReportResponse200 & {
+  headers: Headers;
+};
+export type analyticsActualReportResponseError = (
+  | analyticsActualReportResponse400
+  | analyticsActualReportResponse401
+  | analyticsActualReportResponse403
+  | analyticsActualReportResponse404
+  | analyticsActualReportResponse409
+  | analyticsActualReportResponse422
+  | analyticsActualReportResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsActualReportResponse =
+  analyticsActualReportResponseSuccess | analyticsActualReportResponseError;
+
+export const getAnalyticsActualReportUrl = (orderId: string) => {
+  return `/api/v1/analytics/orders/${orderId}/actual/`;
+};
+
+export const analyticsActualReport = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsActualReportResponse> => {
+  return apiMutator<analyticsActualReportResponse>(getAnalyticsActualReportUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsActualReportSaveResponse201 = {
+  data: ActualReportResponse;
+  status: 201;
+};
+
+export type analyticsActualReportSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsActualReportSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsActualReportSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsActualReportSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsActualReportSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsActualReportSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsActualReportSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsActualReportSaveResponseSuccess = analyticsActualReportSaveResponse201 & {
+  headers: Headers;
+};
+export type analyticsActualReportSaveResponseError = (
+  | analyticsActualReportSaveResponse400
+  | analyticsActualReportSaveResponse401
+  | analyticsActualReportSaveResponse403
+  | analyticsActualReportSaveResponse404
+  | analyticsActualReportSaveResponse409
+  | analyticsActualReportSaveResponse422
+  | analyticsActualReportSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsActualReportSaveResponse =
+  analyticsActualReportSaveResponseSuccess | analyticsActualReportSaveResponseError;
+
+export const getAnalyticsActualReportSaveUrl = (orderId: string) => {
+  return `/api/v1/analytics/orders/${orderId}/actual/`;
+};
+
+export const analyticsActualReportSave = async (
+  orderId: string,
+  actualReportRequestRequest: ActualReportRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsActualReportSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<analyticsActualReportSaveResponse>(getAnalyticsActualReportSaveUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(actualReportRequestRequest),
+  });
+};
+
+export type analyticsActualReportPreviewResponse200 = {
+  data: ActualReportResponse;
+  status: 200;
+};
+
+export type analyticsActualReportPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsActualReportPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsActualReportPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsActualReportPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsActualReportPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsActualReportPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsActualReportPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsActualReportPreviewResponseSuccess =
+  analyticsActualReportPreviewResponse200 & {
+    headers: Headers;
+  };
+export type analyticsActualReportPreviewResponseError = (
+  | analyticsActualReportPreviewResponse400
+  | analyticsActualReportPreviewResponse401
+  | analyticsActualReportPreviewResponse403
+  | analyticsActualReportPreviewResponse404
+  | analyticsActualReportPreviewResponse409
+  | analyticsActualReportPreviewResponse422
+  | analyticsActualReportPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsActualReportPreviewResponse =
+  analyticsActualReportPreviewResponseSuccess | analyticsActualReportPreviewResponseError;
+
+export const getAnalyticsActualReportPreviewUrl = (orderId: string) => {
+  return `/api/v1/analytics/orders/${orderId}/actual/preview/`;
+};
+
+export const analyticsActualReportPreview = async (
+  orderId: string,
+  actualReportRequestRequest: ActualReportRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsActualReportPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<analyticsActualReportPreviewResponse>(
+    getAnalyticsActualReportPreviewUrl(orderId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(actualReportRequestRequest),
+    },
+  );
+};
+
+export type analyticsPreferencesResponse200 = {
+  data: AnalyticsPreference;
+  status: 200;
+};
+
+export type analyticsPreferencesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsPreferencesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsPreferencesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsPreferencesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsPreferencesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsPreferencesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsPreferencesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsPreferencesResponseSuccess = analyticsPreferencesResponse200 & {
+  headers: Headers;
+};
+export type analyticsPreferencesResponseError = (
+  | analyticsPreferencesResponse400
+  | analyticsPreferencesResponse401
+  | analyticsPreferencesResponse403
+  | analyticsPreferencesResponse404
+  | analyticsPreferencesResponse409
+  | analyticsPreferencesResponse422
+  | analyticsPreferencesResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsPreferencesResponse =
+  analyticsPreferencesResponseSuccess | analyticsPreferencesResponseError;
+
+export const getAnalyticsPreferencesUrl = () => {
+  return `/api/v1/analytics/preferences/`;
+};
+
+export const analyticsPreferences = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsPreferencesResponse> => {
+  return apiMutator<analyticsPreferencesResponse>(getAnalyticsPreferencesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsPreferencesSaveResponse200 = {
+  data: AnalyticsPreference;
+  status: 200;
+};
+
+export type analyticsPreferencesSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsPreferencesSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsPreferencesSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsPreferencesSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsPreferencesSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsPreferencesSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsPreferencesSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsPreferencesSaveResponseSuccess = analyticsPreferencesSaveResponse200 & {
+  headers: Headers;
+};
+export type analyticsPreferencesSaveResponseError = (
+  | analyticsPreferencesSaveResponse400
+  | analyticsPreferencesSaveResponse401
+  | analyticsPreferencesSaveResponse403
+  | analyticsPreferencesSaveResponse404
+  | analyticsPreferencesSaveResponse409
+  | analyticsPreferencesSaveResponse422
+  | analyticsPreferencesSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsPreferencesSaveResponse =
+  analyticsPreferencesSaveResponseSuccess | analyticsPreferencesSaveResponseError;
+
+export const getAnalyticsPreferencesSaveUrl = () => {
+  return `/api/v1/analytics/preferences/`;
+};
+
+export const analyticsPreferencesSave = async (
+  analyticsPreferenceRequest: AnalyticsPreferenceRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsPreferencesSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<analyticsPreferencesSaveResponse>(getAnalyticsPreferencesSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(analyticsPreferenceRequest),
   });
 };
 

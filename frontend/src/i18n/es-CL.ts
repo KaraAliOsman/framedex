@@ -1207,6 +1207,7 @@ export const messages = {
   "nav.sales": "Ventas",
   "nav.systems": "Sistemas",
   "nav.settings": "Ajustes",
+  "nav.analytics": "Analítica",
   "nav.groupSales": "Ventas",
   "nav.groupEngineering": "Ingeniería",
   "nav.groupAssistant": "Asistente",

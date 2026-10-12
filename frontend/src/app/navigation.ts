@@ -47,6 +47,10 @@ const flow: NavGroup[] = [
       { to: "/jobs", label: "nav.jobs", roles: office },
     ],
   },
+  {
+    id: "analytics",
+    items: [{ to: "/analytics", label: "nav.analytics", roles: ["OWNER", "WORKSHOP_MANAGER"] }],
+  },
   { id: "settings", items: [{ to: "/settings/general", label: "nav.settings", roles: office }] },
 ];
 

@@ -47,6 +47,7 @@ import {
 } from "../features/settings/AdminSections";
 import { PricingRulesSettings } from "../features/pricing/PricingPage";
 import { ProductionSettings } from "../features/settings/ProductionSettings";
+import { AnalyticsPreferences } from "../features/analytics/AnalyticsPreferences";
 import type { OrgBrandingWriteRequest, DocumentPreferences } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { formatDate } from "../features/money";
@@ -809,6 +810,7 @@ const SETTINGS_SECTIONS = [
   ["documents", "Documentos"],
   ["numbering", "Numeración"],
   ["production", "Producción"],
+  ["analytics", "Analítica"],
   ["integrations", "Integraciones"],
   ["ai", "Inteligencia artificial"],
 ] as const;
@@ -973,6 +975,12 @@ export function SettingsPage(): JSX.Element {
             </div>
           )}
           {section === "numbering" && <NumberingCard orgId={org.id} />}
+          {section === "analytics" &&
+            (workshop ? (
+              <AnalyticsPreferences orgId={org.id} canEdit={owner} />
+            ) : (
+              <DeniedState reason="El dueño y el jefe de taller consultan la configuración de analítica." />
+            ))}
           {section === "production" && (
             <>
               {["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role) ? (

@@ -1,0 +1,223 @@
+[
+  {
+    "flow": "Hoy → Analítica → F6 → movimiento valorado → preview → registro → corrección inmutable → CSV → Ajustes/recarga",
+    "result": "PASA"
+  },
+  {
+    "view": "margin",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "sales",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "production",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "field",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "margin",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "sales",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "production",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "field",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "margin",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "sales",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "production",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "field",
+    "width": 1280,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "margin",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "sales",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "production",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "field",
+    "width": 1280,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "margin",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "sales",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "production",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "field",
+    "width": 1024,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "margin",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "sales",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "production",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "view": "field",
+    "width": 1024,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "result": "PASA"
+  },
+  {
+    "state": "empty",
+    "source": "Datos y permiso reales",
+    "result": "PASA"
+  },
+  {
+    "state": "loading",
+    "source": "Transporte controlado",
+    "result": "PASA"
+  },
+  {
+    "state": "error",
+    "source": "Transporte controlado",
+    "result": "PASA"
+  },
+  {
+    "state": "denied",
+    "source": "Datos y permiso reales",
+    "result": "PASA"
+  },
+  {
+    "state": "blocked",
+    "source": "Datos y permiso reales",
+    "result": "PASA"
+  }
+]

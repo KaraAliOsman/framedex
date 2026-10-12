@@ -131,6 +131,11 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
     },
     { id: "asistente", path: "/assistant", roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] },
     { id: "trabajos", path: "/jobs", roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"] },
+    ...["margin", "sales", "production", "field"].map((view) => ({
+      id: `analitica-${view}`,
+      path: `/analytics?view=${view}`,
+      roles: ["OWNER", "WORKSHOP_MANAGER"] as UxRole[],
+    })),
     { id: "ajustes", path: "/settings/general", roles: ["OWNER"] },
     ...[
       "account",
@@ -142,6 +147,7 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
       "production",
       "integrations",
       "ai",
+      "analytics",
     ].map((section) => ({
       id: `ajustes-${section}`,
       path: `/settings/general?section=${section}`,

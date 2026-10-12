@@ -29,6 +29,8 @@ Content-oriented map of durable project knowledge.
 
 ## Current state
 
+- [Analítica para decidir](product/decision-analytics.md) — cohortes, cierres inmutables de costos, F6 y desvíos con causa exacta.
+
 - [Despacho, terreno y postventa](product/field-work.md) — unidades selladas, cola privada, recepción inmutable, rectificación y decisiones trazables.
 
 - [Empresa y clientes](product/company-customers.md) — fichas auditadas, obras, saldos por moneda, MFA e invitaciones y PDF vivo.

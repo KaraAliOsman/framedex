@@ -23,6 +23,9 @@ const DashboardPage = lazy(async () => ({
   default: (await import("./app/DashboardPage")).DashboardPage,
 }));
 const JobsPage = lazy(async () => ({ default: (await import("./app/JobsPage")).JobsPage }));
+const AnalyticsPage = lazy(async () => ({
+  default: (await import("./features/analytics/AnalyticsPage")).AnalyticsPage,
+}));
 const FieldPage = lazy(async () => ({
   default: (await import("./features/field/FieldPage")).FieldPage,
 }));
@@ -324,6 +327,18 @@ export function AppRoutes(): JSX.Element {
           }
         />
         <Route path="/" element={<HomeRedirect />} />
+        <Route
+          path="/analytics"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<DimLoader label="Cargando Analítica" />}>
+                  <AnalyticsPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
         <Route
           path="/about"
           element={

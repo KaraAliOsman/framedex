@@ -455,3 +455,26 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
    conserva las fuentes; la revocación posterior solo afecta cálculos nuevos.
 6. El resultado evalúa ventanas y no sustituye certificación profesional ni
    acredita condensación, ventilación o cumplimiento completo del edificio.
+
+## Costos reales y analítica (P24)
+
+1. Confirme en Ajustes › General › Analítica el período inicial. La consulta usa
+   la zona horaria de la empresa. Dueño y jefe de taller pueden leer costos;
+   no asigne ese rol a un usuario que solo necesita cortar o instalar.
+2. Vincule todos los consumos, pérdidas adicionales y devoluciones a la OT real,
+   y confirme los retazos efectivamente consumidos o producidos. Termine sus
+   estaciones antes de declarar el cierre; una reserva no acredita consumo.
+3. Abra Analítica › Margen › obra › Ver consumos y costos. Declare tarifa neta por
+   la misma unidad del movimiento, parte perdida, horas efectivas de personas
+   y costo por hora, servicios y crédito recuperable. Registre cero solo con
+   respaldo; cite factura, parte de trabajo o medición en la fuente.
+4. En Medición real del corte declare largos de entrada, piezas, pérdida
+   (incluyendo sierra/despuntes) y retazo recuperable de todas las barras. Compruebe
+   el balance y confirme la cobertura. No use automáticamente el plan previsto.
+5. Revise el preview, confirme el cierre y haga clic en Registrar revisión de
+   costos. Recorra F6 de cada causa hasta el movimiento. Si corrige o aparece
+   evidencia posterior, añada una revisión; nunca edite el recibo anterior.
+6. Valore en la moneda de la revisión elegida. Una conversión necesita fuente
+   explícita antes del ingreso. Contraste una obra completa con sus comprobantes
+   y exporte CSV antes de usar la lectura para decisiones reales. El oráculo DEMO
+   acredita los tests, no las tarifas ni la contabilidad de su fábrica.
