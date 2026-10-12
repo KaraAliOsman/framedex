@@ -53,7 +53,7 @@ export function EditorFlyout({
       aria-label={title}
     >
       <header>
-        <h3>{title}</h3>
+        <h2>{title}</h2>
         <button type="button" aria-label={`Cerrar ${title}`} onClick={onClose}>
           ×
         </button>

@@ -50,7 +50,7 @@ export function ProductionSettings({
     );
   return (
     <section className="settings-card">
-      <h3>Estaciones y ruta de fabricación</h3>
+      <h2>Estaciones y ruta de fabricación</h2>
       <p>
         Las estaciones activas aparecen en el puesto del operario. La ruta se declara por serie en
         Catálogo y se sella en cada OT; no se altera al cambiar estos ajustes.

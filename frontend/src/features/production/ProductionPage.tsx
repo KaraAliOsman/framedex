@@ -71,6 +71,7 @@ import { fmtMm } from "../../format";
 import { formatDate } from "../money";
 import { t, tDynamic, tOptional } from "../../i18n/es-CL";
 import { domainLabels } from "../../i18n/domainLabels";
+import { fiscalLabels } from "../projects/FiscalSimulationPanel";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { PLAN_REQUIRED_CODES, STEP_STOCK_KINDS } from "./labels";
 
@@ -1582,7 +1583,7 @@ function ProductionOfficePage(): JSX.Element {
                                 title={`${t("production.envioStatus")} · ${envio.track_id ?? ""}`}
                                 onClick={() => void openDispatchEnvio(detail.id)}
                               >
-                                {`${t("production.envioStatus")} · ${envio.status}`}
+                                {`${t("production.envioStatus")} · ${fiscalLabels[envio.status] ?? "Por verificar"}`}
                               </button>
                             ) : canWrite ? (
                               <button

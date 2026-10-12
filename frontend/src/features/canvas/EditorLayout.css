@@ -44,7 +44,7 @@
   padding: var(--space-1) var(--space-2);
   border-bottom: 1px solid var(--border-subtle);
 }
-.assembly-plan-pane h3 {
+.assembly-plan-pane h2 {
   margin: 0;
   font-size: var(--type-label);
   font-weight: 500;
@@ -458,7 +458,7 @@
   gap: var(--space-2);
   margin-bottom: var(--space-2);
 }
-.editor-flyout h3,
+.editor-flyout h2,
 .editor-proposal h3 {
   font-size: var(--type-title-m);
   margin: 0;

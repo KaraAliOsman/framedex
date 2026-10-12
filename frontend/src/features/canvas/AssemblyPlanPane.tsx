@@ -75,7 +75,7 @@ export function AssemblyPlanPane({
         }}
       />
       <header>
-        <h3>Planta acoplada</h3>
+        <h2>Planta acoplada</h2>
         <span role="status">
           {preview
             ? pending
