@@ -1,0 +1,22 @@
+[
+  {
+    "width": 1440,
+    "theme": "light",
+    "findings": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "findings": []
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "findings": []
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "findings": []
+  }
+]

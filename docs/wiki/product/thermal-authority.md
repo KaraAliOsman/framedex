@@ -3,6 +3,7 @@ type: concept
 status: active
 updated: 2026-10-11
 volatility: medium
+verified_ref: 5b786e7af6555b7fdb8e40399a604c3c909d94dc
 sources:
   - engine/src/dekopen_engine/thermal.py
   - backend/projects/thermal.py
