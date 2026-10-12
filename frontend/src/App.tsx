@@ -15,6 +15,7 @@ import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
 import { consumeReturnTo } from "./auth/returnTo";
 import { homeFor } from "./app/navigation";
 import { DimLoader } from "./ui/Signature";
+import { publicProposalRoutes } from "./features/portal/PublicProposalApp";
 
 // Public proposals should not fetch the estimator's shell, assistant and
 // settings before they can show the manufacturer's document.
@@ -62,13 +63,15 @@ function AppShell({ children }: PropsWithChildren): JSX.Element {
   );
 }
 
-export const DEV_ONLY_ROUTE_PATHS = [
-  "/projects/demo/positions/g1/edit",
-  "/benchmark",
-  "/dev/ui",
-  "/dev/marca",
-  "/dev/correos",
-] as const;
+export const DEV_ONLY_ROUTE_PATHS = import.meta.env.DEV
+  ? ([
+      "/projects/demo/positions/g1/edit",
+      "/benchmark",
+      "/dev/ui",
+      "/dev/marca",
+      "/dev/correos",
+    ] as const)
+  : [];
 
 export function visibleDevOnlyRoutePaths(
   env: Pick<ImportMetaEnv, "DEV"> = import.meta.env,
@@ -145,18 +148,6 @@ const ProductionPage = lazy(async () => {
   return { default: module.ProductionPage };
 });
 
-const PortalQuotePage = lazy(async () => {
-  const module = await import("./features/portal/PortalQuotePage");
-  return { default: module.PortalQuotePage };
-});
-const PaymentReturnPage = lazy(async () => {
-  const module = await import("./features/portal/PaymentReturnPage");
-  return { default: module.PaymentReturnPage };
-});
-const FlowSimulationPage = lazy(async () => {
-  const module = await import("./features/portal/FlowSimulationPage");
-  return { default: module.FlowSimulationPage };
-});
 const BenchmarkPage = lazy(async () => {
   const module = await import("./features/benchmark/BenchmarkPage");
   return { default: module.BenchmarkPage };
@@ -244,7 +235,7 @@ export function AppRoutes(): JSX.Element {
             </ReadyGuard>
           }
         />
-        {visibleDevOnlyRoutePaths().length > 0 && (
+        {import.meta.env.DEV && visibleDevOnlyRoutePaths().length > 0 && (
           <>
             {BrandPage ? (
               <Route
@@ -347,30 +338,7 @@ export function AppRoutes(): JSX.Element {
             </ReadyGuard>
           }
         />
-        <Route
-          path="/cotizacion/:token"
-          element={
-            <Suspense fallback={<p role="status">{t("portal.loading")}</p>}>
-              <PortalQuotePage />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/pago/simulado/:linkId"
-          element={
-            <Suspense fallback={<p role="status">Consultando el cobro de prueba</p>}>
-              <FlowSimulationPage />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/pago/retorno"
-          element={
-            <Suspense fallback={<p role="status" />}>
-              <PaymentReturnPage />
-            </Suspense>
-          }
-        />
+        {publicProposalRoutes()}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route

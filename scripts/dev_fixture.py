@@ -69,7 +69,7 @@ SVC = {
     "Prefer": "resolution=merge-duplicates,return=representation",
 }
 
-DEMO_60 = "3067da09-3119-5ad0-a1d5-498cd2dfd753"
+DEMO_60 = "1ac748f1-26f1-5cb6-86a6-41bcf2babcf7"
 
 
 def rest(path: str, rows: list[dict]) -> list[dict]:
@@ -234,7 +234,7 @@ def fixed(width: str, height: str, uid: str = "m1") -> dict:
             "opening_type": "FIXED",
             "glass_thickness_mm": "24.00",
             "glass_spec": "4-16-4 Float Incoloro",
-            "glass_article_sku": "VIDRIO-BASE",
+            "glass_article_sku": "DEMO_60-VIDRIO-4-16-4",
         },
     )
 
@@ -247,7 +247,7 @@ def tilt_turn(width: str, height: str, uid: str = "m1") -> dict:
             "id": uid,
             "type": "SPLIT_V",
             "split_offset_mm": str(Decimal(width) / 2),
-            "mullion_profile_sku": "POSTE-V",
+            "mullion_profile_sku": "DEMO_60-POSTE-V",
             "children": [
                 {
                     "id": f"{uid}-a",
@@ -255,7 +255,7 @@ def tilt_turn(width: str, height: str, uid: str = "m1") -> dict:
                     "opening_type": "FIXED",
                     "glass_thickness_mm": "24.00",
                     "glass_spec": "4-16-4 Float Incoloro",
-                    "glass_article_sku": "VIDRIO-BASE",
+                    "glass_article_sku": "DEMO_60-VIDRIO-4-16-4",
                 },
                 {
                     "id": f"{uid}-b",
@@ -263,7 +263,7 @@ def tilt_turn(width: str, height: str, uid: str = "m1") -> dict:
                     "opening_type": "TILT_TURN_RIGHT",
                     "glass_thickness_mm": "24.00",
                     "glass_spec": "4-16-4 Float Incoloro",
-                    "glass_article_sku": "VIDRIO-BASE",
+                    "glass_article_sku": "DEMO_60-VIDRIO-4-16-4",
                 },
             ],
         },
@@ -271,7 +271,7 @@ def tilt_turn(width: str, height: str, uid: str = "m1") -> dict:
 
 
 def bay(width: str, height: str, opening: str, uid: str = "m1") -> dict:
-    return design(
+    result = design(
         width,
         height,
         {
@@ -280,9 +280,39 @@ def bay(width: str, height: str, opening: str, uid: str = "m1") -> dict:
             "opening_type": opening,
             "glass_thickness_mm": "24.00",
             "glass_spec": "4-16-4 Float Incoloro",
-            "glass_article_sku": "VIDRIO-BASE",
+            "glass_article_sku": "DEMO_60-VIDRIO-4-16-4",
         },
     )
+    tree = result["parametric_tree"]
+    if opening in {"TURN_LEFT", "TURN_RIGHT"}:
+        tree.pop("opening_type")
+        tree["opening_use"] = "WINDOW"
+        tree["opening"] = {"movement": "TURN", "direction": "INWARD",
+                           "hinge_side": "LEFT" if opening == "TURN_LEFT" else "RIGHT",
+                           "leaf_role": "SINGLE", "fixed_in_sash": False}
+    elif opening == "SLIDING_2L":
+        # A practicable series cannot manufacture a sliding sash. Select the
+        # pinned DEMO v7 sliding family and its own declared glass article.
+        result["system_id"] = "28f95d0e-868d-5e77-bcfe-8b58a3b7b546"
+        tree["glass_article_sku"] = "DEMO_CORREDERA_60-VIDRIO-4-16-4"
+        tree["sliding_layout"] = {"tracks": 2, "panels": [
+            {"slot": "L", "kind": "MOVING", "track": 0, "travel": "RIGHT"},
+            {"slot": "R", "kind": "MOVING", "track": 1, "travel": "LEFT"},
+        ]}
+    return result
+
+
+def coupled(*, bow: bool) -> dict:
+    """Real product-v2 modules, catalog couplers and a declared DEMO angle."""
+    modules = [{"id": f"coupled-{i}", "width_mm": width, "height_mm": "1300",
+                "tree": fixed(width, "1300", f"coupled-bay-{i}")["parametric_tree"]}
+               for i, width in enumerate(["600", "1200", "600"] if bow else ["1000", "1000"])]
+    couplings = [{"id": f"coupling-{i}", "kind": "INLINE", "edges": ["right", "left"],
+                  "modules": [left["id"], right["id"]], "angle_deg": "22.5" if bow else "0",
+                  "coupler_profile_sku": "DEMO_60-ACOPLE-REGULABLE"}
+                 for i, (left, right) in enumerate(zip(modules, modules[1:]))]
+    return design("2400" if bow else "2000", "1300",
+                  {"version": "product-v2", "assembly": {"modules": modules, "couplings": couplings}})
 
 
 def main() -> None:
@@ -629,9 +659,9 @@ def main() -> None:
         ("Dormitorio norte", bay("1400", "1100", "TILT_TURN_LEFT", "dn1"), 1),
         ("Pasillo", fixed("700", "1400", "ps1"), 1),
         ("Acceso terraza", bay("900", "2100", "TURN_RIGHT", "pt1"), 1),
-        ("Bow comedor modulo 1", fixed("900", "1300", "bw1"), 1),
-        ("Bow comedor modulo 2", fixed("900", "1300", "bw2"), 1),
-        ("Conjunto acoplado escritorio", tilt_turn("2200", "1300", "ac1"), 1),
+        ("Bow comedor · tres módulos DEMO", coupled(bow=True), 1),
+        ("Dormitorio poniente", fixed("900", "1300", "bw2"), 1),
+        ("Conjunto acoplado escritorio", coupled(bow=False), 1),
     ]:
         position(vivienda["id"], loc, tree, qty)
 
@@ -661,7 +691,7 @@ def main() -> None:
 
     aprobado = project(
         "APROBADO",
-        "Clinica Puerto Sur - anticipo recibido DEMO",
+        "Clinica Puerto Sur - ensayo de anticipo DEMO",
         "Clinica Puerto Sur SpA",
         "Barros Arana 1220, Concepcion",
     )
@@ -669,7 +699,7 @@ def main() -> None:
 
     produccion = project(
         "PRODUCCION",
-        "Condominio Los Raulies - en produccion DEMO",
+        "Condominio Los Raulies - ensayo de produccion DEMO",
         "Inversiones Lomas Ltda.",
         "Camino a Chiguayante 3210, Chiguayante",
     )
@@ -682,7 +712,7 @@ def main() -> None:
 
     despachado = project(
         "DESPACHADO",
-        "Casa Jorge Vidal - despachado DEMO",
+        "Casa Jorge Vidal - ensayo de despacho DEMO",
         "Jorge Andres Vidal",
         "Pasaje Maiten 402, Hualpen",
     )
@@ -690,7 +720,7 @@ def main() -> None:
 
     instalado = project(
         "INSTALADO",
-        "Reposicion oficinas Rio Claro - instalado DEMO",
+        "Reposicion oficinas Rio Claro - ensayo de instalacion DEMO",
         "Constructora Rio Claro SpA",
         "Ongolmo 533, Concepcion",
     )
@@ -698,7 +728,7 @@ def main() -> None:
 
     rechazado = project(
         "RECHAZADO",
-        "Presupuesto local comercial - rechazado DEMO",
+        "Presupuesto local comercial - ensayo de rechazo DEMO",
         "Maria Paz Rojas",
         "Anibal Pinto 650, Concepcion",
     )
@@ -740,7 +770,9 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
     Idempotent: re-checks current state at every step so reruns only fill
     what is missing. Same HTTP surface the UI drives.
     """
-    today = "2026-09-28"
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    today = datetime.now(ZoneInfo("America/Santiago")).date().isoformat()
 
     def save_inputs(project_id: str) -> None:
         prepared = api(
@@ -829,7 +861,8 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
             f"/documents/projects/{project_id}/inputs/",
             {
                 "payment_terms": "50% anticipo, 50% contra entrega",
-                "quotation_valid_until": "2026-10-14",
+                "quotation_valid_until": (datetime.fromisoformat(today).date() + timedelta(days=15)).isoformat(),
+                "commercial_terms": prepared["commercial_terms"],
                 "positions": positions,
             },
         )

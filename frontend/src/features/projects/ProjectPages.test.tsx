@@ -1812,7 +1812,7 @@ it("windows a hundred real elevations and filters by declared site grouping with
   const first = (await screen.findByLabelText("Seleccionar posición 1")).closest(".position-row")!;
   expect(first.querySelector("svg")).toBeInTheDocument();
   expect(
-    within(screen.getByRole("listbox", { name: "Posiciones" })).getAllByRole("option").length,
+    within(screen.getByRole("list", { name: "Posiciones" })).getAllByRole("listitem").length,
   ).toBeLessThan(15);
   fireEvent.click(screen.getByLabelText("Seleccionar posición 1"));
   fireEvent.change(screen.getByLabelText("Filtrar piso, recinto, eje o ubicación"), {

@@ -14,7 +14,7 @@ import {
 import { ApiError, configureApiAuthContext } from "../api/apiMutator";
 import { authMe } from "../api/generated/dekopen";
 import type { AuthMeResponse, Membership } from "../api/generated/models";
-import { useCanvasStore } from "../features/canvas/canvasStore";
+import { resetCanvasSession } from "../features/canvas/canvasSession";
 import { clearActor, clearScope } from "../features/field/outbox";
 import { t } from "../i18n/es-CL";
 import { telemetry } from "../telemetry/telemetry";
@@ -99,12 +99,12 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
     (userId: string | null, organizationId: string | null): void => {
       const previous = canvasIdentity.current;
       if (userId === null) {
-        if (previous !== null) useCanvasStore.getState().reset();
+        if (previous !== null) resetCanvasSession();
         canvasIdentity.current = null;
         return;
       }
       if (previous === null || previous.userId !== userId) {
-        useCanvasStore.getState().reset();
+        resetCanvasSession();
         canvasIdentity.current = { userId, organizationId };
         return;
       }
@@ -113,7 +113,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
         previous.organizationId !== null &&
         previous.organizationId !== organizationId
       ) {
-        useCanvasStore.getState().reset();
+        resetCanvasSession();
       }
       canvasIdentity.current = {
         userId,

@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { chromium, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -32,6 +33,12 @@ type AuthSession = {
 };
 
 type CaptureRecord = {
+  accessibility?: {
+    id: string;
+    impact: string | null | undefined;
+    help: string;
+    targets: string[][];
+  }[];
   routeId: string;
   path: string;
   reachedPath: string;
@@ -224,6 +231,19 @@ function globMatches(value: string, glob?: string): boolean {
   return pattern.test(value);
 }
 
+async function stableAccessibility(page: Page) {
+  for (let attempt = 0; ; attempt += 1) {
+    await page.waitForLoadState("networkidle");
+    try {
+      return (await new AxeBuilder({ page }).analyze()).violations;
+    } catch (error) {
+      if (attempt >= 2 || !String(error).includes("Execution context was destroyed")) throw error;
+      // Auth redirects may replace the document while axe is being injected.
+      // Only a completed scan of the settled document counts as evidence.
+    }
+  }
+}
+
 async function prepareContext(
   browser: Browser,
   role: UxRole,
@@ -300,6 +320,15 @@ async function captureRoute(
       route.workshop || role === "OPERATOR" || role === "INSTALLER",
     )),
   ];
+  const accessibility =
+    process.env.DEKOPEN_UX_AXE === "1"
+      ? (await stableAccessibility(page)).map((violation) => ({
+          id: violation.id,
+          impact: violation.impact,
+          help: violation.help,
+          targets: violation.nodes.map((node) => node.target.map(String)),
+        }))
+      : undefined;
   const screenshot = `${route.id}__${role}__${theme}__${viewportId}.png`;
   await page.screenshot({ path: path.join(outDir, screenshot), fullPage: true });
   for (const sheet of await page.coverage.stopCSSCoverage()) {
@@ -350,6 +379,7 @@ async function captureRoute(
   const reachedPath = new URL(page.url()).pathname;
   await page.close();
   return {
+    accessibility,
     routeId: route.id,
     path: route.path,
     reachedPath,

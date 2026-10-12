@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { registerCanvasReset } from "./canvasSession";
 import type { AnnotationRequest, InspectorDiff } from "../../api/generated/models";
 import type { SpecClipboard } from "../commands/types";
 import { intentBays, walkIntent, type IntentNode } from "./intentEditing";
@@ -370,3 +371,5 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     });
   },
 }));
+
+registerCanvasReset(() => useCanvasStore.getState().reset());

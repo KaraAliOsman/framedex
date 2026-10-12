@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { StrictMode } from "react";
+import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 
-import { App } from "./App";
-import { AuthSessionProvider } from "./auth/AuthSessionProvider";
+import { PublicProposalApp, isPublicProposalPath } from "./features/portal/PublicProposalApp";
+import { DimLoader } from "./ui/Signature";
 import "./index.css";
 import "./styles/tokens.css";
 import { ThemeProvider } from "./theme/ThemeProvider";
@@ -23,17 +23,23 @@ const queryClient = new QueryClient({
   },
 });
 
+const PrivateApplication = lazy(() => import("./PrivateApplication"));
+
 createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthSessionProvider>
-          <ConfirmProvider>
-            <ToastProvider>
-              <App />
-            </ToastProvider>
-          </ConfirmProvider>
-        </AuthSessionProvider>
+        <ConfirmProvider>
+          <ToastProvider>
+            <Suspense fallback={<DimLoader label="Cargando su espacio de trabajo" />}>
+              {isPublicProposalPath(window.location.pathname) ? (
+                <PublicProposalApp />
+              ) : (
+                <PrivateApplication />
+              )}
+            </Suspense>
+          </ToastProvider>
+        </ConfirmProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
