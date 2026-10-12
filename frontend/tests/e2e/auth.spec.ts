@@ -407,7 +407,7 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
     .getByRole("button", { name: "Documentos", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Documentos", exact: true, level: 3 }),
+    page.getByRole("heading", { name: "Documentos", exact: true, level: 2 }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar documentos", exact: true })).toBeVisible();
   for (const route of ["Proyectos", "Clientes", "Inicio"]) {
