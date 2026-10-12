@@ -1,12 +1,14 @@
 ---
 type: concept
 status: active
-updated: 2026-10-09
+updated: 2026-10-12
 volatility: medium
+verified_ref: de3e0cba
 sources:
   - P04 acceptance in docs/redesign/P04-ACEPTACION.md
   - frontend/tests/e2e/editor.spec.ts
   - backend/tests/integration/test_project_operations.py
+  - docs/redesign/captures/aceptacion-final/ux/error-posicion/produccion-verificacion.json
 ---
 
 # Editor centrado en el dibujo
@@ -46,3 +48,16 @@ La reproducción del fallo CI de P03 (`37915677274`, 09-10-2026) midió
 botón de 5 s no representa el término de esa transacción. El recorrido
 focalizado pasa en 43,5 s sin retries ni cambiar timeouts globales; conserva
 aplicar/deshacer y descartar propuestas de una cantidad anterior.
+
+P20 verifica recuperación ante lectura fallida en `de3e0cba`: Reintentar vuelve
+a consultar la misma posición y organización. El error conserva su causa y un
+título h1; el diseño tiene una región accesible con h2. El clic no guarda ni
+aplica cambios. Las solicitudes de cálculo, preview y simulación se registran
+separadas de las escrituras.
+
+La evidencia conserva ocho pares ancho/tema en Vite y ocho en producción,
+cada uno con error y recuperación, sin hallazgos, axe, desbordes ni escrituras.
+A 390 px, el CSS compartido del portal ya no crea filas implícitas que oculten
+el dibujo. A 1024 px, un nombre largo conserva los controles de cabecera dentro
+del viewport. Los archivos mantienen el ref de cada corrida; la medición
+histórica de precio no se reatribuye a esta revisión posterior.

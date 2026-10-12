@@ -270,6 +270,7 @@
 }
 .app-topbar__actions {
   min-width: 0;
+  flex-shrink: 0;
 }
 .app-topbar > nav {
   min-width: 0;

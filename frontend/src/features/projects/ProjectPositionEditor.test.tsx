@@ -292,6 +292,30 @@ function change(key: TranslationKey, value: string) {
   );
 }
 
+it.each(["network", "http"])(
+  "retries the same position after a %s load failure",
+  async (failure) => {
+    retrieve.mockRejectedValueOnce(
+      failure === "http"
+        ? new ApiError(502, { error: { code: "upstream_unavailable" } })
+        : new TypeError("Failed to fetch"),
+    );
+    mount();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("No se pudo abrir la posición");
+    expect(
+      screen.getByRole("heading", { level: 1, name: "No se pudo abrir la posición" }),
+    ).toBeInTheDocument();
+    expect(alert).not.toHaveTextContent("⚠");
+    expect(screen.queryByRole("button", { name: t("projects.save") })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: t("ui.retry") }));
+    await ready();
+    expect(retrieve).toHaveBeenCalledTimes(2);
+    expect(retrieve.mock.calls[1]).toEqual(retrieve.mock.calls[0]);
+    expect(alert).not.toBeInTheDocument();
+  },
+);
+
 it("restores the cached BOM on undo and never authorizes saving a pending color", async () => {
   const options = await projectDesignOptions("system-a");
   if (options.status !== 200) throw new Error("Expected fixture options");

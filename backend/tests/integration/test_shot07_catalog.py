@@ -39,16 +39,22 @@ def fixture_cursor():
     return cursor
 
 
-def test_purchase_tenant_precedence_and_ambiguity(real_rows: RLSFixtures) -> None:
+@pytest.mark.parametrize('prefetched', [False, True])
+def test_purchase_tenant_precedence_and_ambiguity(real_rows: RLSFixtures, prefetched) -> None:
     # The global demo system can be technical_locked once positions reference
     # it — tenant mappings run against an org-owned clone carrying the same
     # global-scope authorities.
     from backend.tests.integration.catalog_fixture import copy_fixed_catalog
 
     repo = CuttingRepository()
+    def profile_stock(system, org, sku, color):
+        snapshot = CuttingRepository(request_cache=True) if prefetched else repo
+        if prefetched:
+            snapshot.prefetch_stocks(system, org)
+        return snapshot.profile_stock(system, org, sku, color)
     org = real_rows.organizations["A"]
     with authenticated_rls_context(real_rows.tokens["A"].claims):
-        global_stock = repo.profile_stock(real_rows.demo_system, org, "MARCO", "WHITE")
+        global_stock = profile_stock(real_rows.demo_system, org, "MARCO", "WHITE")
         assert global_stock.stock_length_mm == Decimal("6000.00")
         assert global_stock.commercial_sku == "COMPRA-MARCO"
     clone = copy_fixed_catalog(org, global_scope=True)
@@ -63,7 +69,7 @@ def test_purchase_tenant_precedence_and_ambiguity(real_rows: RLSFixtures) -> Non
         mapping_id = cursor.fetchone()[0]
     try:
         with authenticated_rls_context(real_rows.tokens["A"].claims):
-            chosen = repo.profile_stock(clone, org, "MARCO", "WHITE")
+            chosen = profile_stock(clone, org, "MARCO", "WHITE")
             assert chosen.commercial_sku == "TENANT-EXACT"
             assert chosen.stock_length_mm == global_stock.stock_length_mm
         with fixture_cursor() as cursor:
@@ -77,12 +83,12 @@ def test_purchase_tenant_precedence_and_ambiguity(real_rows: RLSFixtures) -> Non
             duplicate_id = cursor.fetchone()[0]
         with authenticated_rls_context(real_rows.tokens["A"].claims):
             with pytest.raises(AmbiguousStockAuthority):
-                repo.profile_stock(clone, org, "MARCO", "WHITE")
+                profile_stock(clone, org, "MARCO", "WHITE")
         with fixture_cursor() as cursor:
             cursor.execute("DELETE FROM public.profile_purchase_mappings WHERE id=%s",
                            [duplicate_id])
         with authenticated_rls_context(real_rows.tokens["B"].claims):
-            assert repo.profile_stock(real_rows.demo_system, real_rows.organizations["B"],
+            assert profile_stock(real_rows.demo_system, real_rows.organizations["B"],
                                       "MARCO", "WHITE").commercial_sku == global_stock.commercial_sku
     finally:
         with fixture_cursor() as cursor:

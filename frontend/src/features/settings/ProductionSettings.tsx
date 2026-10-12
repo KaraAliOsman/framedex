@@ -118,7 +118,7 @@ export function ProductionSettings({
             })();
           }}
         >
-          <h4>{editingCode ? "Editar estación" : "Nueva estación"}</h4>
+          <h3>{editingCode ? "Editar estación" : "Nueva estación"}</h3>
           <label>
             Código de estación
             <input

@@ -653,7 +653,7 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "canvas" "status";
   }
-  .assembly-tools {
+  .assembly-editor .assembly-tools {
     display: none;
   }
   .editor-library {

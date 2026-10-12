@@ -1,15 +1,17 @@
 ---
 type: state
 status: active
-updated: 2026-10-09
+updated: 2026-10-12
 volatility: high
-verified_ref: d8e4d899a29d9f154f8c7d37b054581132dadbb1
+verified_ref: b8e62295bdcbf04c2427b0420551cbb2c1a30eec
 sources:
   - engine/src/dekopen_engine/price_workspace.py
   - backend/pricing/workspace.py
   - backend/pricing/resolved.py
   - backend/pricing/visibility.py
   - supabase/migrations/20270110000100_p07_price_workspace.sql
+  - supabase/migrations/20270129000000_pricing_read_scope.sql
+  - backend/tests/integration/test_pricing_read_performance.py
   - docs/redesign/P07-ACEPTACION.md
 ---
 
@@ -44,6 +46,17 @@ El dueño puede configurar esas reglas; la aplicación las relee bajo bloqueo
 asesor, evitando carreras con una edición de política. Aprobar/rechazar
 registra actor y comentario, y la decisión llega a Hoy/campana del solicitante.
 Los recibos de lectura son append-only, por tenant y solicitante, e idempotentes.
+
+P20 acota la reutilización a una propuesta y su transacción de lectura repetible.
+Los stocks se leen en lote con las mismas reglas de color, precedencia de tenant,
+ambigüedad, unidad y longitud desconocida. Las listas completas siguen formando
+la evidencia de reprecio: no se recortan los costos para acelerar el cálculo.
+Los modelos técnicos y las lecturas de costos se reutilizan dentro de esa
+propuesta; la siguiente propuesta vuelve a consultar la autoridad vigente.
+La lectura comercial evalúa una vez el mismo conjunto de membresías activas,
+roles y MFA. Los permisos de escritura y la proyección pública conservan sus
+reglas. La espera del formulario baja a 180 ms y mantiene la protección frente
+a respuestas anteriores. Véase la evidencia de rendimiento de la aceptación P20.
 
 ## Intención del dueño y límites
 

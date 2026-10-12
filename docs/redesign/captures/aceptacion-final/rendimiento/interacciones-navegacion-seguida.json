@@ -1,0 +1,81 @@
+[
+  {
+    "name": "abrir-posicion",
+    "warm": true,
+    "samples": 12,
+    "runs": [
+      295.4524000000001,
+      414.59339999999975,
+      832.0062999999991,
+      675.9446000000007,
+      531.9825999999994,
+      719.0699000000004,
+      674.6447000000007,
+      609.0008000000016,
+      537.7891999999993,
+      668.679699999997,
+      826.8402999999998,
+      880.8534
+    ],
+    "p50": 668.679699999997,
+    "p95": 880.8534,
+    "verified_ref": "b8e62295bdcbf04c2427b0420551cbb2c1a30eec",
+    "measuredAt": "2026-10-12T20:53:50.011Z",
+    "readinessProtocol": "Same visible editor/location or exact OT heading; requestAnimationFrame polling + two rendered frames, avoiding assertion retry backoff. Price includes input debounce, matching response and enabled Apply.",
+    "projectPositions": 12
+  },
+  {
+    "name": "recalcular-precio",
+    "warm": true,
+    "samples": 12,
+    "runs": [
+      1912.2479000000021,
+      1576.121500000001,
+      1339.959600000002,
+      916.2940000000017,
+      923.1117000000013,
+      853.7609000000011,
+      888.6515999999974,
+      827.6661999999997,
+      907.2448000000004,
+      1006.7041000000027,
+      881.6370000000024,
+      840.1301999999996
+    ],
+    "p50": 907.2448000000004,
+    "p95": 1912.2479000000021,
+    "verified_ref": "b8e62295bdcbf04c2427b0420551cbb2c1a30eec",
+    "measuredAt": "2026-10-12T20:54:09.492Z",
+    "readinessProtocol": "Same visible editor/location or exact OT heading; requestAnimationFrame polling + two rendered frames, avoiding assertion retry backoff. Price includes input debounce, matching response and enabled Apply.",
+    "projectPositions": 12,
+    "includesDebounce": true,
+    "engineCascadeCloses": true
+  },
+  {
+    "name": "abrir-ot-obra-cien",
+    "warm": true,
+    "samples": 12,
+    "runs": [
+      670.5118999999977,
+      734.6132999999973,
+      720.8738999999987,
+      599.827400000002,
+      704.5184000000008,
+      691.2029999999941,
+      627.5999999999985,
+      715.6975000000093,
+      699.1848999999929,
+      816.6999999999971,
+      719.8087000000087,
+      711.2266999999993
+    ],
+    "p50": 704.5184000000008,
+    "p95": 816.6999999999971,
+    "verified_ref": "b8e62295bdcbf04c2427b0420551cbb2c1a30eec",
+    "measuredAt": "2026-10-12T20:54:32.782Z",
+    "readinessProtocol": "Same visible editor/location or exact OT heading; requestAnimationFrame polling + two rendered frames, avoiding assertion retry backoff. Price includes input debounce, matching response and enabled Apply.",
+    "workPositions": 100,
+    "workOrders": 100,
+    "model": "Una OT por posición; se abre la OT de una obra con cien posiciones."
+  }
+]

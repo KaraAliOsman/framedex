@@ -77,20 +77,49 @@ def commercial_backend():
 
 
 class PricingRepository:
-    def __init__(self, org_id, effective_date: date, currency: str, fx_id=None):
+    def __init__(self, org_id, effective_date: date, currency: str, fx_id=None, *, request_cache=False):
         self.org_id = org_id
         self.effective_date = effective_date
         self.currency = currency
         self.fx_id = fx_id
         self.authorities = []
         self.technical = {}
+        self.technical_values = {}
+        # Opt-in only for one repeatable-read proposal. An ordinary repository
+        # continues to observe edits between transactions.
+        self._query_cache = {} if request_cache else None
+        self.financial = None
+
+    def preload_costs(self, bundle):
+        if self._query_cache is None:
+            raise ValueError('Cost prefetch requires a request-scoped repository')
+        self.financial = bundle
+        self._cost_candidates = {}
+        self._demo_candidates = {}
+        for kind, target in [('costs', self._cost_candidates), ('demo', self._demo_candidates)]:
+            for item in bundle[kind]:
+                target.setdefault(item['sku'], []).append(item)
+
+    def _rows(self, query, parameters):
+        if self._query_cache is None:
+            return rows(query, parameters)
+        key = (query, tuple(parameters))
+        if key not in self._query_cache:
+            self._query_cache[key] = rows(query, parameters)
+        return self._query_cache[key]
+
+    def _one(self, query, parameters, code):
+        result = self._rows(query, parameters)
+        if len(result) != 1:
+            raise PricingError('ambiguous_authority' if result else code)
+        return result[0]
 
     def convert(self, value, currency):
         snapshot = None
         if currency != self.currency:
             if self.fx_id is None:
                 raise PricingError('missing_fx_authority')
-            snapshot = one(
+            snapshot = self._one(
                 'SELECT * FROM public.pricing_fx_snapshots WHERE id=%s AND org_id=%s '
                 'AND effective_date=%s AND base_currency=%s AND quote_currency=%s',
                 [self.fx_id,self.org_id,self.effective_date,'USD','CLP'],
@@ -100,7 +129,7 @@ class PricingRepository:
                             None if snapshot is None else snapshot['observed_rate'])
 
     def cost(self, sku: str, required_unit: str):
-        candidates = rows(
+        candidates = self._cost_candidates.get(sku, []) if self.financial is not None else self._rows(
             'SELECT i.id,i.sku,i.unit,i.unit_cost,l.id AS cost_list_id,l.currency,l.valid_from,l.valid_to '
             'FROM public.cost_list_items i JOIN public.cost_lists l '
             'ON l.id=i.cost_list_id AND l.org_id=i.org_id '
@@ -108,7 +137,7 @@ class PricingRepository:
             'AND (l.valid_to IS NULL OR l.valid_to>=%s) ORDER BY l.valid_from DESC',
             [self.org_id,sku,self.effective_date,self.effective_date])
         if not candidates:
-            demo = rows(
+            demo = self._demo_candidates.get(sku, []) if self.financial is not None else self._rows(
                 'SELECT p.id,p.sku,p.unit,p.unit_cost,p.currency,p.system_id,p.is_demo,p.seed,p.source '
                 'FROM public.catalog_demo_prices p JOIN public.profile_systems s ON s.id=p.system_id '
                 'WHERE p.sku=%s AND p.org_id IS NULL AND p.is_demo AND s.is_demo AND s.is_global '
@@ -117,7 +146,8 @@ class PricingRepository:
                 raise PricingError('cost_list_not_found')
             if len(demo) != 1:
                 raise PricingError('ambiguous_cost_list')
-            value = demo[0]
+            value = {key: demo[0][key] for key in
+                     ('id','sku','unit','unit_cost','currency','system_id','is_demo','seed','source')}
             if value['unit'].upper() != required_unit.upper():
                 raise PricingError('incompatible_cost_unit')
             self.authorities.append({'cost': value})
@@ -132,7 +162,7 @@ class PricingRepository:
         return self.convert(value['unit_cost'],value['currency'])
 
     def configuration(self, mode, context, typology):
-        config = one(
+        config = self._one(
             'SELECT * FROM public.pricing_configurations WHERE org_id=%s AND pricing_mode=%s '
             'AND context_code=%s AND typology=%s AND is_active',
             [self.org_id,mode,context,typology], 'pricing_configuration_not_found')
@@ -140,7 +170,7 @@ class PricingRepository:
         return config
 
     def matrix(self, configuration):
-        cells = rows('SELECT width_mm,height_mm,price FROM public.pricing_matrix_cells '
+        cells = self._rows('SELECT width_mm,height_mm,price FROM public.pricing_matrix_cells '
                      'WHERE org_id=%s AND configuration_id=%s',
                      [self.org_id,configuration['id']])
         self.authorities.append({'cells': cells})

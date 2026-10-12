@@ -1,6 +1,5 @@
 """Frozen authority resolver for pure commercial counterfactual replay."""
 
-from copy import deepcopy
 from decimal import Decimal
 
 from django.db import connection
@@ -14,6 +13,8 @@ from pricing.repository import rows, json_text
 
 
 def financial_bundle(repo):
+    if repo.financial is not None:
+        return repo.financial
     return {
         'costs': rows('SELECT i.id,i.sku,i.unit,i.unit_cost,l.id AS cost_list_id,l.currency,l.valid_from,l.valid_to '
             'FROM public.cost_list_items i JOIN public.cost_lists l ON l.id=i.cost_list_id AND l.org_id=i.org_id '
@@ -41,7 +42,8 @@ def technical_bundle(repo, system_id):
         'JOIN public.profile_articles p ON p.id=r.parent_profile_article_id '
         'WHERE r.system_id=%s AND r.is_active AND (r.org_id=%s OR r.org_id IS NULL)',[system_id,repo.org_id])
     stocks, reinforcements = {}, {}
-    source = CuttingRepository()
+    source = CuttingRepository(request_cache=True)
+    source.prefetch_stocks(system_id, repo.org_id)
     for color in params.finishes:
         for article in profiles:
             try:
@@ -84,6 +86,7 @@ class FrozenPricingRepository:
         self.org_id, self.currency = org_id, currency
         self.bundle, self.technical, self.fx_id = bundle, technical, str(fx_id) if fx_id else None
         self.authorities = []
+        self.technical_values = {}
 
     def convert(self, value, currency):
         rate = None
@@ -121,14 +124,20 @@ class FrozenPricingRepository:
 
 
 def safe_technical(repo, system_id):
+    key = str(system_id)
+    cache = getattr(repo, 'technical_values', {})
+    if key in cache:
+        return cache[key]
     if getattr(repo,'frozen',False):
-        if str(system_id) not in repo.technical:
+        if key not in repo.technical:
             raise PricingError('incomplete_repricing_evidence')
-        return technical_values(repo.technical[str(system_id)])
+        cache[key] = technical_values(repo.technical[key])
+        return cache[key]
     with connection.cursor() as cursor:
         cursor.execute('SET LOCAL ROLE authenticated')
     try:
-        return technical_values(technical_bundle(repo,system_id))
+        cache[key] = technical_values(technical_bundle(repo,system_id))
+        return cache[key]
     finally:
         from authentication.rls import tx_aborted
         if not tx_aborted():
@@ -139,4 +148,5 @@ def safe_technical(repo, system_id):
 def frozen_copy(value):
     # Numeric strings and date/UUID strings are portable; Decimal(float) is forbidden.
     import json
-    return deepcopy(json.loads(json_text(value),parse_float=Decimal))
+    # Parsing already allocates an independent object graph.
+    return json.loads(json_text(value),parse_float=Decimal)

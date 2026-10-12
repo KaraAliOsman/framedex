@@ -386,7 +386,7 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None, 
         raise PricingError('project_has_no_positions')
     rules = one('SELECT * FROM public.pricing_rules WHERE org_id=%s',[org_id],'pricing_rules_not_found')
     request = {**request,'target_margin':request.get('target_margin',rules['default_margin_pct'])}
-    repo = PricingRepository(org_id,request['effective_date'],request['currency'],request.get('fx_snapshot_id'))
+    repo = PricingRepository(org_id,request['effective_date'],request['currency'],request.get('fx_snapshot_id'),request_cache=True)
     repo.technical = {}
     mode = PricingMode(request['pricing_mode'])
     if mode == PricingMode.TARGET_GROSS_MARGIN_PROJECT and actor.active_organization.role != 'OWNER':
@@ -396,6 +396,9 @@ def preview(org_id, actor, request, *, simulate=False, proposed_positions=None, 
     calculation_rules = {**rules,
         'labor_rate_per_m2':repo.convert(rules['labor_rate_per_m2'],organization['currency']),
         'installation_rate_per_m2':repo.convert(rules['installation_rate_per_m2'],organization['currency'])}
+    if not simulate or workspace:
+        from pricing.resolved import financial_bundle
+        repo.preload_costs(financial_bundle(repo))
     from projects.extras import service_lines, policy_record, lock_policy
     from dekopen_engine.extra_models import ExtraLine
     from dekopen_engine.extras import partition_price, service_price, target_services

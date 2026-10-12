@@ -85,6 +85,7 @@ export function ProjectPositionEditor(): JSX.Element {
     return (
       <ErrorState
         title="No se pudo abrir el proyecto"
+        titleAs="h1"
         onRetry={() => void projectQuery.refetch()}
       />
     );
@@ -340,6 +341,7 @@ function PositionWorkspace({
   const navigate = useNavigate();
   const readOnly = useEditorMedia("(max-width: 1023px)");
   const [loaded, setLoaded] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [saved, setSaved] = useState<PositionResponse | null>(null);
   const [result, setResult] = useState<EngineCalculateResponse | null>(null);
   const [location, setLocation] = useState("");
@@ -430,6 +432,7 @@ function PositionWorkspace({
 
   useEffect(() => {
     let active = true;
+    setMessage("");
     const offerDraftIfDivergent = (
       baselineDesign: string,
       baselineLocation: string,
@@ -527,7 +530,7 @@ function PositionWorkspace({
       generation.current += 1;
       useCanvasStore.getState().reset();
     };
-  }, [orgId, projectId, positionId, copyId, preferredSystem, draftKey]);
+  }, [orgId, projectId, positionId, copyId, preferredSystem, draftKey, loadAttempt]);
 
   // Once catalog options arrive, fill uniquely-determined SKUs (coupler when
   // the series has exactly one, mullions for splits created by starters).
@@ -738,7 +741,17 @@ function PositionWorkspace({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  if (!loaded) return <p role={message ? "alert" : "status"}>{message || t("projects.loading")}</p>;
+  if (!loaded)
+    return message ? (
+      <ErrorState
+        title="No se pudo abrir la posición"
+        titleAs="h1"
+        body="No se recibió el diseño guardado. Vuelve a consultar para abrir esta posición."
+        onRetry={() => setLoadAttempt((attempt) => attempt + 1)}
+      />
+    ) : (
+      <LoadingState label="Cargando la posición" />
+    );
   const dirty = isDirty;
   const restoreDraft = (draft: PositionDraft) => {
     const store = useCanvasStore.getState();
@@ -1074,7 +1087,10 @@ function PositionWorkspace({
         </div>
       )}
       <div className="position-body">
-        <div className="position-workspace">
+        <div className="position-workspace" role="region" aria-labelledby="position-design-title">
+          <h2 id="position-design-title" className="visually-hidden">
+            Diseño de la posición
+          </h2>
           <AssemblyEditor
             organizationId={orgId}
             couplerSkus={options.data?.coupler_skus ?? []}

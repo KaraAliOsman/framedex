@@ -714,6 +714,8 @@ test("tablet opening choices stay compatible and mobile blocks editing and save 
   ).toBeVisible();
   await expect(page.getByLabel("Ubicación del vano", { exact: true })).toBeDisabled();
   await expect(page.getByLabel("Cantidad", { exact: true })).toBeDisabled();
+  await expect(page.getByRole("toolbar", { name: "Herramientas", exact: true })).toBeHidden();
+  await expect(page.locator("[data-testid='assembly-sheet']")).toBeVisible();
   let writes = 0;
   page.on("request", (request) => {
     if (request.method() === "POST" && /\/positions\//.test(request.url())) writes++;

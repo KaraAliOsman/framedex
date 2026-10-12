@@ -1519,3 +1519,30 @@ otra consulta vuelve a verificar hash y binding. El canon optimizado conserva
 los bytes. Doce cargas frías 4G del portal: p50 2.949,26 / p95 2.972,86 ms frente
 a 8.871,22 / 9.373,35 ms iniciales. P20 sigue en curso; no se atribuye aceptación
 global a esta corrección. Véase `docs/redesign/P20-ARRANQUE.md`.
+
+## 2026-10-12 · P20, lectura comercial por propuesta
+
+Código verificado `b8e62295bdcbf04c2427b0420551cbb2c1a30eec`: la lectura de
+stock/costos conserva autoridad completa y reutiliza modelos dentro de una
+propuesta. RLS conserva membresías/roles/MFA; escritura mantiene sus reglas.
+La siguiente propuesta vuelve a consultar fuentes. Doce muestras por interacción
+cumplen p95 < 1 s; 24 vistas de Ajustes no presentan hallazgos. Se conservan
+diagnósticos no aprobados y el límite de carga fría WebGL. Véanse
+`docs/redesign/P20-RENDIMIENTO.md`, la migración `20270129000000` y
+`backend/tests/integration/test_pricing_read_performance.py`. La aceptación
+global y el PR final permanecen en curso; DEMO no acredita tarifas productivas.
+
+## 2026-10-12 · P20, recuperación del editor y red local de revisión
+
+Código verificado `de3e0cba`: un error de lectura permite Reintentar el mismo
+ID y tenant, con causa visible, h1 y región del diseño accesible. Ocho pares
+ancho/tema en Vite y ocho en producción pasan error y recuperación sin
+hallazgos, axe, desbordes ni escrituras. El dibujo móvil conserva altura y el
+nombre largo mantiene los controles dentro de 1024 px. Véanse
+`product/editor-canvas.md` y la evidencia `ux/error-posicion/` de P20.
+
+La red Docker propia de REVIEW (`3d410d1d`) evita la ruta IPv6 inalcanzable
+del proxy por el host. Verifica propiedad antes de crear contenedores y
+conserva redes ajenas. Arranque oficial, acceso Magic Link/Mailpit y cuatro
+regresiones pasan; evidencia `guia/red-local.json`. La aceptación global
+continúa su cierre documental y estos ensayos no acreditan fabricación DEMO.
