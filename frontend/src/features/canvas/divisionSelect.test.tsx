@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { resolveMembers } from "./members";
@@ -35,6 +35,34 @@ function transomProduct() {
 }
 
 describe("division grips", () => {
+  it("a module groups accessible leaf controls and keeps their keyboard activation independent", () => {
+    const onSelectModule = vi.fn(),
+      onSelectBay = vi.fn();
+    const view = render(
+      <ProductFrontSvg
+        product={transomProduct()}
+        members={members}
+        selectedId="m1"
+        issues={[]}
+        disabled={false}
+        onSelectModule={onSelectModule}
+        onSelectBay={onSelectBay}
+        onAddUnit={vi.fn()}
+        onCommitModuleWidth={vi.fn()}
+        onCommitTotalWidth={vi.fn()}
+        onCommitHeight={vi.fn()}
+      />,
+    );
+    const module = view.getByRole("group", { name: "Módulo 1" });
+    expect(module).toHaveAttribute("aria-current", "true");
+    fireEvent.keyDown(module, { key: "Enter" });
+    expect(onSelectModule).toHaveBeenCalledWith("m1");
+    onSelectModule.mockClear();
+    const leaf = within(module).getAllByRole("button")[0]!;
+    fireEvent.keyDown(leaf, { key: "Enter" });
+    expect(onSelectBay).toHaveBeenCalled();
+    expect(onSelectModule).not.toHaveBeenCalled();
+  });
   it("clicking the horizontal mullion grip selects the division, not a bay", () => {
     const onSelectDivision = vi.fn();
     const onSelectBay = vi.fn();

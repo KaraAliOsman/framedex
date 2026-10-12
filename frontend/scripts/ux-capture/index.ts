@@ -188,8 +188,10 @@ async function discoverFixture(session: AuthSession): Promise<FixtureRefs> {
     session,
     "/projects/",
   );
-  const project =
-    projects.items.find((item) => /casa|vivienda|fixture/i.test(item.name)) ?? projects.items[0];
+  const requestedProject = process.env.DEKOPEN_UX_PROJECT_ID;
+  const project = requestedProject
+    ? projects.items.find((item) => item.id === requestedProject)
+    : (projects.items.find((item) => /casa|vivienda|fixture/i.test(item.name)) ?? projects.items[0]);
   if (!project) throw new Error("Fixture has no project; run scripts/dev_fixture.py first");
   const detail = await authenticatedFetch<{
     positions?: { id: string }[];

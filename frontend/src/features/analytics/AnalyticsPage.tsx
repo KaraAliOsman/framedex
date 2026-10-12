@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { analyticsDecisionWorkspace } from "../../api/generated/dekopen";
 import type {
@@ -314,7 +314,7 @@ function AnalyticsWorkspace(): JSX.Element {
     }
     if (params.get("order")) setOrder(params.get("order")!);
   }, [data, params]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handle = (event: KeyboardEvent) => {
       if (event.key !== "F6" || definition || order) return;
       const button = (document.activeElement as HTMLElement)?.closest<HTMLElement>("[data-metric]");

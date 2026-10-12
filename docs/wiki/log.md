@@ -1506,3 +1506,16 @@ abierto. 76 PNG comprimidos conservan sus píxeles. Database Gate completo termi
 exit 0: 1.483 pgTAP, 589 integraciones, 19 E2E y trece upgrades PG16. La plantilla
 pública de acceso del daemon se restauró y verificó byte a byte tras su reinicio;
 no se modificaron pruebas ni timeouts. La aceptación enlaza oráculos y límites.
+
+## 2026-10-12 · P20, corrección de arranque y propuesta
+
+Verificado en `cc0003abb3537f0994236e3a0221266bb087ee88`: stack propio
+`framedex-review`, API/worker/nginx compilados, fixture v7 y solicitud/entrada
+Magic Link por Mailpit. Doce posiciones, bow/conjunto y editor existen sobre
+la base independiente; axe de la lista pasa en ambos temas. Se evita inicializar
+autenticación del personal para leer la propuesta pública y se conserva el
+reset síncrono del lienzo. Cada autoridad se valida una vez dentro de la consulta,
+otra consulta vuelve a verificar hash y binding. El canon optimizado conserva
+los bytes. Doce cargas frías 4G del portal: p50 2.949,26 / p95 2.972,86 ms frente
+a 8.871,22 / 9.373,35 ms iniciales. P20 sigue en curso; no se atribuye aceptación
+global a esta corrección. Véase `docs/redesign/P20-ARRANQUE.md`.

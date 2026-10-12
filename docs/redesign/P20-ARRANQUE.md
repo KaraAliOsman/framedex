@@ -31,6 +31,13 @@ No se añade caché de capacidades ni de respuestas privadas. Las posiciones
 usan lista/fila y sus controles reales, evitando controles interactivos anidados
 en opciones ARIA; mantienen selección, teclado y virtualización.
 
+La matriz de axe detectó también botones de hoja dentro de un módulo con rol
+de botón. El módulo pasa a grupo con foco, índice humano y selección explícita;
+Enter/Espacio siguen seleccionándolo y la hoja conserva su activación independiente.
+F6 de Analítica registra su manejador antes de pintar el control, eliminando la
+carrera encontrada por la suite completa. La captura obtiene la posición del
+proyecto solicitado, para evitar mezclar direcciones de dos obras del fixture.
+
 ## Evidencia
 
 - [Antes](captures/aceptacion-final/antes/): build P24 conservado.
