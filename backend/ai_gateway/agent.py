@@ -48,6 +48,12 @@ from dekopen_engine.design_operations import REGISTRY as OPERATIONS, OperationEr
 
 CAPABILITY = "agent"
 
+
+def provider_operation_specs() -> list[dict]:
+    """Keep every typed schema; internal handlers and example numbers add no authority."""
+    return [{key: item[key] for key in ("name", "description", "scope", "schema")}
+            for item in OPERATIONS]
+
 # §07-D — canonical tool registry. Every step/query/artifact resolves to one
 # named tool so the model, the transcript and the workspace share a single
 # vocabulary. Mutations never execute here: ops/prepare only produce the
@@ -895,7 +901,7 @@ def _act(
                     "ops_available": surface == "position" and product is not None,
                 },
                 "product": product,
-                "operations": OPERATIONS,
+                "operations": provider_operation_specs(),
                 "tools": ENGINE_TOOLS,
                 "limits": {"steps": MAX_STEPS, "queries": MAX_QUERIES, "rounds": MAX_ROUNDS},
                 "product_fields": (

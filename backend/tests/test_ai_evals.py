@@ -47,6 +47,21 @@ def test_factory_cases_use_a_live_workshop_actor_without_elevating_estimators():
     assert {fixture_role(c) for c in load_cases() if c["view"] != "factory"} == {"ESTIMATOR"}
 
 
+def test_provider_operation_specs_keep_every_constraint_without_example_numbers():
+    from ai_gateway.agent import provider_operation_specs
+    from dekopen_engine.design_operations import REGISTRY
+    original = deepcopy(REGISTRY)
+    projected = provider_operation_specs()
+    assert [item["name"] for item in projected] == [item["name"] for item in REGISTRY]
+    for visible, authority in zip(projected, REGISTRY, strict=True):
+        assert visible["schema"] == authority["schema"]
+        assert visible["description"] == authority["description"]
+        assert visible["scope"] == authority["scope"]
+        assert "examples" not in visible and "handler" not in visible
+    assert REGISTRY == original
+    assert len(json.dumps(projected)) < len(json.dumps(REGISTRY))
+
+
 def test_sandbox_opens_a_successor_through_the_public_workflow_without_editing_a_seal(monkeypatch):
     from ai_gateway.evals import run
     sealed = {"id": "project", "status": "APPROVED", "current_revision": "REV-B", "current_pricing_operation_id": "priced-B"}
