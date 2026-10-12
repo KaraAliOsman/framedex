@@ -44,6 +44,12 @@
 .onboarding-card input:not([type="checkbox"]) {
   min-width: 0;
   width: 100%;
+  min-height: var(--control-height);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  background: var(--surface-sheet);
+  color: var(--text-primary);
+  padding: var(--space-2);
 }
 .onboarding-card label {
   display: grid;

@@ -1355,7 +1355,7 @@ function ProductionOfficePage(): JSX.Element {
             ) : null}
             {role !== "INSTALLER" && prepVersions.length > 0 ? (
               <section className="production-prep" aria-label={t("production.prepTitle")}>
-                <h3>{t("production.prepTitle")}</h3>
+                <h2>{t("production.prepTitle")}</h2>
                 <ul>
                   {prepVersions.map((version) => (
                     <li key={version.version_id}>

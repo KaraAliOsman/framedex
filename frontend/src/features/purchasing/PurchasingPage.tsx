@@ -599,7 +599,7 @@ function PurchasingWorkspace({
           <h2>{t("purchasing.blockers")}</h2>
           <ul>
             {blockers.map((blocker, index) => (
-              <li key={index} role="alert">
+              <li key={index}>
                 <button
                   type="button"
                   className="purchasing-blocker-link"

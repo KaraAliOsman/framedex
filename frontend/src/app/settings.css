@@ -192,16 +192,7 @@
   padding: 0;
   margin: 0 0 var(--space-4);
 }
-.settings
-  :is(
-    .settings-company-form,
-    .settings-user,
-    .settings-invite,
-    .settings-preview,
-    .settings-station-form,
-    .payments-form
-  )
-  :is(input:not([type="checkbox"]), select, textarea) {
+.settings :is(input:not([type="checkbox"]):not([type="file"]), select, textarea) {
   min-height: var(--control-height);
   min-width: 0;
   border: 1px solid var(--theme-border);
