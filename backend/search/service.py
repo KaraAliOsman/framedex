@@ -9,24 +9,28 @@ and the explicit org filter agree on what is visible.
 from __future__ import annotations
 
 from uuid import UUID
+from urllib.parse import urlencode
 
 from catalogs.service import visibility_sql
+from documents.repository import documentary_backend
 from pricing.repository import rows
 
 MAX_QUERY_LEN = 80
 GROUP_LIMIT = 6
+
+_ORDER_STATUS = {
+    "DRAFT": "Borrador", "SENT": "Enviada", "PARTIALLY_RECEIVED": "Recepción parcial",
+    "FULFILLED": "Recibida", "CANCELLED": "Anulada", "RELEASED": "Liberada",
+    "IN_PROGRESS": "En producción", "COMPLETED": "Terminada", "DISPATCHED": "Despachada",
+    "INSTALLED": "Instalada", "HOLD": "En espera",
+}
+_REMNANT_STATUS = {"AVAILABLE": "Disponible", "RESERVED": "Reservado", "CONSUMED": "Consumido", "SCRAPPED": "Descartado"}
 
 
 def _where(columns: tuple[str, ...]) -> str:
     return " OR ".join(
         f"POSITION(%s IN lower(coalesce({column}::text, ''))) > 0" for column in columns
     )
-
-
-# Groups an installer must never see: the client registry carries fiscal PII
-# (RUT) and the documents group mixes invoices into the result set. Projects
-# still surface (dispatch/installation context) minus the commercial subtitle.
-_INSTALLER_EXCLUDED_GROUPS = {"clients", "documents"}
 
 
 def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
@@ -41,6 +45,34 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
         )
 
     results: list[dict] = []
+
+    if role in {"OPERATOR", "INSTALLER"}:
+        for row in org(
+            "SELECT id, order_code, status::text AS status FROM public.orders"
+            " WHERE org_id=%s AND order_type='WORKSHOP_OT' AND (__WHERE__)"
+            f" ORDER BY updated_at DESC LIMIT {GROUP_LIMIT}",
+            "order_code",
+        ):
+            results.append({"group": "orders", "id": str(row["id"]),
+                "title": row["order_code"], "subtitle": _ORDER_STATUS.get(row["status"], "Sin dato · falta estado"),
+                "path": "/production?" + urlencode({"order": row["id"]})})
+        return {"results": results}
+
+    if role in {"OWNER", "ESTIMATOR"}:
+        with documentary_backend():
+            quotes = org(
+                "SELECT v.id,p.id AS project_id,p.code,p.name,p.client_name,v.revision_code"
+                " FROM public.project_versions v JOIN public.projects p"
+                " ON p.id=v.project_id AND p.org_id=v.org_id"
+                " WHERE v.org_id=%s AND v.revision_code=p.current_revision AND (__WHERE__)"
+                f" ORDER BY v.emitted_at DESC,p.code LIMIT {GROUP_LIMIT}",
+                "p.code", "p.name", "p.client_name", "v.revision_code",
+            )
+        for row in quotes:
+            revision = row["revision_code"].removeprefix("REV-")
+            results.append({"group": "quotes", "id": str(row["id"]),
+                "title": f"{row['code']} · Cotización {revision}", "subtitle": row["client_name"],
+                "path": "/quotes?" + urlencode({"q": row["code"]})})
 
     for row in org(
         "SELECT id, code, name, client_name FROM public.projects"
@@ -74,7 +106,7 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
                 "id": str(row["id"]),
                 "title": row["name"],
                 "subtitle": row.get("rut"),
-                "path": "/clients",
+                "path": f"/clients/{row['id']}",
             }
         )
 
@@ -155,8 +187,10 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
         )
 
     for row in org(
-        "SELECT id, order_code, order_type::text AS kind, status::text AS status"
-        " FROM public.orders"
+        "SELECT id, order_code, project_version_id, kind, status FROM ("
+        " SELECT id, org_id, order_code,"
+        " project_version_id, order_type::text AS kind, status::text AS status,"
+        " supplier_name, updated_at FROM public.orders WHERE order_type='WORKSHOP_OT') o"
         " WHERE org_id=%s AND (__WHERE__)"
         f" ORDER BY updated_at DESC LIMIT {GROUP_LIMIT}",
         "order_code",
@@ -167,8 +201,12 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
                 "group": "orders",
                 "id": str(row["id"]),
                 "title": row["order_code"],
-                "subtitle": row["status"],
-                "path": "/production" if row["kind"] == "WORKSHOP_OT" else "/purchasing",
+                "subtitle": _ORDER_STATUS.get(row["status"], "Sin dato · falta estado"),
+                "path": (
+                    "/production?" + urlencode({"order": row["id"]})
+                    if row["kind"] == "WORKSHOP_OT" else
+                    "/purchasing?" + urlencode({"order": row["id"], "version": row["project_version_id"]})
+                ),
             }
         )
 
@@ -221,15 +259,47 @@ def search(org_id: UUID, query: str, role: str = "OWNER") -> dict:
                 "id": str(row["id"]),
                 "title": row["sku"],
                 "subtitle": row["name"],
-                "path": "/purchasing",
+                "path": "/inventory?" + urlencode({"sku": row["sku"]}),
             }
         )
 
-    if role == "INSTALLER":
-        results = [
-            ({**r, "subtitle": None} if r["group"] == "projects" else r)
-            for r in results
-            if r["group"] not in _INSTALLER_EXCLUDED_GROUPS
-        ]
+    if role in {"OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"}:
+        # Use Purchasing's RLS-bound read role for supplier evidence only.
+        # Authenticated direct-table reads expose workshop OTs, not supplier POs.
+        # Installers and operators never enter this scope.
+        with documentary_backend():
+            supplier_rows = org(
+                "SELECT id, order_code, project_version_id, status FROM (SELECT id,org_id,"
+                " private.entity_code(org_id,'OC',id,order_code) AS order_code,project_version_id,"
+                " supplier_name,status::text AS status,updated_at FROM public.orders"
+                " WHERE order_type<>'WORKSHOP_OT') o WHERE org_id=%s AND (__WHERE__)"
+                f" ORDER BY updated_at DESC LIMIT {GROUP_LIMIT}", "order_code", "supplier_name",
+            )
+            receipt_rows = org(
+                "SELECT r.id, private.entity_code(r.org_id,'REC',r.id) AS code,"
+                " o.id AS order_id, o.project_version_id FROM public.order_receipts r"
+                " JOIN public.orders o ON o.id=r.order_id AND o.org_id=r.org_id"
+                " WHERE r.org_id=%s AND (__WHERE__)"
+                f" ORDER BY r.created_at DESC LIMIT {GROUP_LIMIT}",
+                "private.entity_code(r.org_id,'REC',r.id)",
+            )
+        for row in supplier_rows:
+            results.append({"group": "orders", "id": str(row["id"]), "title": row["order_code"],
+                "subtitle": _ORDER_STATUS.get(row["status"], "Sin dato · falta estado"),
+                "path": "/purchasing?" + urlencode({"order": row["id"], "version": row["project_version_id"]})})
+        for row in org(
+            "SELECT id, code, status FROM (SELECT id, org_id, created_at,"
+            " private.entity_code(org_id,'RT',id) AS code, status"
+            " FROM public.inventory_remnants) r WHERE org_id=%s AND (__WHERE__)"
+            f" ORDER BY created_at DESC LIMIT {GROUP_LIMIT}", "code",
+        ):
+            results.append({"group": "inventory", "id": str(row["id"]),
+                "title": row["code"], "subtitle": _REMNANT_STATUS.get(row["status"], "Sin dato · falta estado"),
+                "path": "/inventory?" + urlencode({"remnant": row["id"], "code": row["code"]})})
+        for row in receipt_rows:
+            results.append({"group": "inventory", "id": str(row["id"]),
+                "title": row["code"], "subtitle": None,
+                "path": "/purchasing?" + urlencode({"order": row["order_id"],
+                    "version": row["project_version_id"], "receipt": row["id"]})})
 
     return {"results": results}

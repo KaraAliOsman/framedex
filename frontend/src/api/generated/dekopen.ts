@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
+  AcknowledgeRequest,
+  ActualReportRequestRequest,
+  ActualReportResponse,
   AdminResponse,
   AdminWriteRequest,
   AiAgentAccepted,
@@ -14,6 +17,8 @@ import type {
   AiAskResponse,
   AiAskThreadParams,
   AiAskTurn,
+  AiConnectionResult,
+  AiConnectionTestRequest,
   AiInvokeRequestRequest,
   AiInvokeResponse,
   AiJob,
@@ -24,8 +29,21 @@ import type {
   AiJobOutcomeResponse,
   AiMetrics,
   AiMetricsParams,
+  AiMode,
+  AiPresence,
+  AiPresenceGetParams,
+  AiSettings,
+  AiSettingsSaveRequest,
+  AiUsageListParams,
+  AiUsageWork,
   AllocationRequestRequest,
   AllocationResponse,
+  AnalyticsDecisionCsvParams,
+  AnalyticsDecisionWorkspaceParams,
+  AnalyticsPreference,
+  AnalyticsPreferenceRequest,
+  AnalyticsQuotationsParams,
+  AnalyticsWorkspace,
   ApplyRequest,
   ApprovalRecord,
   ArticleList,
@@ -47,14 +65,32 @@ import type {
   CatalogImportConfirmResponse,
   CatalogImportCreateResponse,
   CatalogImportDetailResponse,
+  CatalogImportExportParams,
   CatalogImportListResponse,
+  CatalogImportTimeline,
   CatalogKitListParams,
+  CatalogPublishRequestRequest,
+  CatalogReviewRequestRequest,
+  CatalogReviewResponse,
   CatalogSectionImportCreateBody,
+  CatalogTemplateDownloadParams,
+  CatalogTemplateSchema,
+  CatalogThermalDeclare201,
+  CatalogThermalReview200,
+  CatalogUndoRequestRequest,
   ChangeInputRequest,
   ChangeResult,
   CheckoutInputRequest,
   CheckoutResult,
+  ClientDirectory,
+  ClientDirectoryParams,
+  ClientDossierResponse,
   ClientListResponse,
+  ClientMergePreview,
+  ClientMergePreviewRequestRequest,
+  ClientMergeRequestRequest,
+  ClientNote,
+  ClientNoteWriteRequest,
   ClientResponse,
   ClientWriteRequest,
   CloneProjectRequest,
@@ -63,6 +99,8 @@ import type {
   CncMachine,
   CncMachineList,
   CncMachineRequestRequest,
+  CncPreview,
+  CncPreviewRequestRequest,
   CncProgram,
   CncProgramList,
   CncReadiness,
@@ -70,7 +108,16 @@ import type {
   CncToolList,
   CncToolRequestRequest,
   CncWorkspace,
+  CollectionIntegration,
+  CollectionReminder,
+  CollectionReminderSendRequest,
+  CollectionSettingsRequestRequest,
   Commerce,
+  Company,
+  CompanyPreviewRequest,
+  CompanyUserWriteRequest,
+  CompanyUsers,
+  CompanyWriteRequest,
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
   DecideRequestRequest,
@@ -117,11 +164,37 @@ import type {
   EvidenceList,
   EvidenceReviewInputRequest,
   EvidenceRow,
+  ExtrasPreviewRequestRequest,
+  ExtrasPreviewResponse,
+  FieldAssetAccess,
+  FieldCommandRequest,
+  FieldReceipt,
+  FieldReviewRequest,
+  FieldReviewResponse,
+  FieldScheduleRequest,
+  FieldWorkspace,
+  FinishPreviewRequestRequest,
+  FinishPreviewResponse,
+  FiscalSimulation,
+  FiscalSimulationRequestRequest,
+  FiscalSimulations,
   FlowAcknowledgement,
   FlowConfirmationRequest,
+  FlowSimulation,
+  FlowSimulationRequestRequest,
+  FlowSimulationStatusParams,
   FreezeRequestRequest,
   FreezeResponse,
+  GlassOrder,
+  GlassPreviewInputRequest,
+  GlassPreviewOutput,
+  GlassRulesOutput,
+  GlassRulesRequest,
+  GlassVariantOutput,
+  GlassVariantRequest,
   GlobalSearchParams,
+  HardwarePreview,
+  HardwarePreviewRequestRequest,
   ImportConfirmRequest,
   ImportConfirmResponse,
   ImportCreateResponse,
@@ -132,20 +205,42 @@ import type {
   InstallationRequestRequest,
   InternalApprovalRequest,
   InternalApprovalResult,
+  InternalDocumentRequestRequest,
   InventoryMovement,
   InventoryMovementRequestRequest,
   InventoryMovements,
   InventoryMovementsParams,
   InventoryRemnantsParams,
   InventoryStock,
+  InvitationAccepted,
+  InvitationInspect,
+  InvitationTokenRequest,
+  InvitationWriteRequest,
   JobEnqueueRequest,
   JobRun,
   JobsListParams,
   KitList,
   KitResponse,
   KitWriteRequest,
+  LinkDeadlineRequest,
+  LinkRegenerateRequest,
+  MailExample,
+  MailIntegration,
+  MailListParams,
+  MailPreview,
+  MailRecord,
+  MailRecoveryRequest,
+  MailSendRequest,
   MaterialRecheck,
+  MeasurementConfirmRequest,
+  MeasurementResponse,
+  MountingPreviewRequest,
+  MountingPreviewResponse,
+  NumberingList,
   OperationalSummary,
+  OperationsRegistry,
+  OperatorStation,
+  OperatorStationRequestRequest,
   OpsExport,
   OrderIndexResponse,
   OrderReceiptRequestRequest,
@@ -163,6 +258,7 @@ import type {
   PatchedCncToolPatchRequest,
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
+  PatchedQuotationCustomerRequestRequest,
   PatchedSystemWriteRequest,
   PaymentIntegrationRequest,
   PaymentIntegrationStatus,
@@ -174,6 +270,13 @@ import type {
   PaymentRecordResponse,
   PaymentVoidRequest,
   PaymentsSummary,
+  PolicyResponse,
+  PolicyWriteRequest,
+  PortalPayRequestRequest,
+  PortalPayResult,
+  PortalPayReturn,
+  PortalPaymentProviderReturnParams,
+  PortalPaymentReturnParams,
   PortalQuote,
   PositionResponse,
   PositionUpdateRequest,
@@ -181,12 +284,17 @@ import type {
   PositionsDestroyParams,
   PriceRequestRequest,
   PriceResponse,
+  PricingOptions,
   ProcessProfileOptionList,
+  ProductionGlassOrderParams,
+  ProductionOrderCutPackParams,
   ProductionOrderDeliveryConfirmationParams,
   ProductionOrderDetail,
   ProductionOrderDispatchNoteParams,
   ProductionOrderList,
+  ProductionOrderPieceLabelsParams,
   ProductionOrderTrace,
+  ProductionOrdersParams,
   ProductionPieceTrace,
   ProductionPrep,
   ProductionRelease,
@@ -200,20 +308,51 @@ import type {
   ProjectInvoice,
   ProjectInvoiceAccess,
   ProjectListResponse,
+  ProjectOperationsStateParams,
+  ProjectOpsApplyRequest,
+  ProjectOpsPreviewRequest,
+  ProjectOpsPreviewResponse,
+  ProjectOpsResult,
+  ProjectOpsState,
   ProjectResponse,
   ProjectWriteRequest,
+  PurchaseMailPreview,
+  PurchaseMailRequestRequest,
+  PurchaseMailResult,
+  PurchaseNeeds,
+  PurchaseNeedsConfirmRequest,
+  PurchaseNeedsResult,
   PurchasingState,
+  QcRemakeRequestRequest,
+  QuotationCustomer,
+  QuotationIndexResponse,
+  QuotationIssue,
+  QuotationIssueRequestRequest,
+  QuotationPreview,
+  QuotationPreviewRequestRequest,
+  RectificationRequest,
+  RectificationResponse,
   RemakeRequestRequest,
   Remnant,
+  RemnantActionRequest,
   RemnantCreateRequest,
   RemnantLabel,
   RemnantList,
+  RemnantMoveRequest,
+  RemnantReserveRequest,
   ResetPricingRequest,
   RevisionCompareResponse,
+  RuleWriteRequest,
+  Rules,
   SearchResponse,
   SectionImportResponse,
   SendOrderRequestRequest,
+  ServicesResponse,
+  ServicesWriteRequest,
   ShareQuoteResponse,
+  SheetFormatCreated,
+  SheetFormatList,
+  SheetFormatRequestRequest,
   SignedAccessResponse,
   SiiCaf,
   SiiCafList,
@@ -224,6 +363,8 @@ import type {
   SiiEnvio,
   SiiEnvioAccess,
   SiiEnvioSendRequest,
+  SimulateOpsRequest,
+  Simulation,
   StepTransition,
   StepTransitionRequestRequest,
   SuccessorRequestRequest,
@@ -234,6 +375,14 @@ import type {
   SystemResponse,
   SystemWorkspace,
   SystemWriteRequest,
+  ThermalAlternative,
+  ThermalAuthorityRequest,
+  ThermalCatalogResponse,
+  ThermalReport,
+  ThermalReviewRequest,
+  ThermalWriteRequest,
+  TodayResponse,
+  VersionHardwarePicking,
   Wallet,
   WithdrawRequest,
   WorkCenter,
@@ -244,6 +393,7 @@ import type {
   WorkOrderOptimizeCompare,
   WorkOrderOptimizeCompareRequestRequest,
   WorkOrderOptimizeRequestRequest,
+  WorkspaceResponse,
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
@@ -502,6 +652,88 @@ export const aiAsk = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(aiAskRequestRequest),
+  });
+};
+
+export type aiConnectionTestResponse200 = {
+  data: AiConnectionResult;
+  status: 200;
+};
+
+export type aiConnectionTestResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiConnectionTestResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiConnectionTestResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiConnectionTestResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiConnectionTestResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiConnectionTestResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiConnectionTestResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiConnectionTestResponseSuccess = aiConnectionTestResponse200 & {
+  headers: Headers;
+};
+export type aiConnectionTestResponseError = (
+  | aiConnectionTestResponse400
+  | aiConnectionTestResponse401
+  | aiConnectionTestResponse403
+  | aiConnectionTestResponse404
+  | aiConnectionTestResponse409
+  | aiConnectionTestResponse422
+  | aiConnectionTestResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiConnectionTestResponse =
+  aiConnectionTestResponseSuccess | aiConnectionTestResponseError;
+
+export const getAiConnectionTestUrl = () => {
+  return `/api/v1/ai/connection-test/`;
+};
+
+export const aiConnectionTest = async (
+  aiConnectionTestRequest: AiConnectionTestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiConnectionTestResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiConnectionTestResponse>(getAiConnectionTestUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiConnectionTestRequest),
   });
 };
 
@@ -1161,6 +1393,1043 @@ export const aiMetrics = async (
   });
 };
 
+export type aiModeGetResponse200 = {
+  data: AiMode;
+  status: 200;
+};
+
+export type aiModeGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiModeGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiModeGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiModeGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiModeGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiModeGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiModeGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiModeGetResponseSuccess = aiModeGetResponse200 & {
+  headers: Headers;
+};
+export type aiModeGetResponseError = (
+  | aiModeGetResponse400
+  | aiModeGetResponse401
+  | aiModeGetResponse403
+  | aiModeGetResponse404
+  | aiModeGetResponse409
+  | aiModeGetResponse422
+  | aiModeGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiModeGetResponse = aiModeGetResponseSuccess | aiModeGetResponseError;
+
+export const getAiModeGetUrl = () => {
+  return `/api/v1/ai/mode/`;
+};
+
+export const aiModeGet = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiModeGetResponse> => {
+  return apiMutator<aiModeGetResponse>(getAiModeGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiPresenceGetResponse200 = {
+  data: AiPresence;
+  status: 200;
+};
+
+export type aiPresenceGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiPresenceGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiPresenceGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiPresenceGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiPresenceGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiPresenceGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiPresenceGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiPresenceGetResponseSuccess = aiPresenceGetResponse200 & {
+  headers: Headers;
+};
+export type aiPresenceGetResponseError = (
+  | aiPresenceGetResponse400
+  | aiPresenceGetResponse401
+  | aiPresenceGetResponse403
+  | aiPresenceGetResponse404
+  | aiPresenceGetResponse409
+  | aiPresenceGetResponse422
+  | aiPresenceGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiPresenceGetResponse = aiPresenceGetResponseSuccess | aiPresenceGetResponseError;
+
+export const getAiPresenceGetUrl = (params: AiPresenceGetParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/presence/?${stringifiedParams}`
+    : `/api/v1/ai/presence/`;
+};
+
+/**
+ * Latest work for this caller and this exact stable context, without a page limit.
+ */
+export const aiPresenceGet = async (
+  params: AiPresenceGetParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiPresenceGetResponse> => {
+  return apiMutator<aiPresenceGetResponse>(getAiPresenceGetUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiSettingsGetResponse200 = {
+  data: AiSettings;
+  status: 200;
+};
+
+export type aiSettingsGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiSettingsGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiSettingsGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiSettingsGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiSettingsGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiSettingsGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiSettingsGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiSettingsGetResponseSuccess = aiSettingsGetResponse200 & {
+  headers: Headers;
+};
+export type aiSettingsGetResponseError = (
+  | aiSettingsGetResponse400
+  | aiSettingsGetResponse401
+  | aiSettingsGetResponse403
+  | aiSettingsGetResponse404
+  | aiSettingsGetResponse409
+  | aiSettingsGetResponse422
+  | aiSettingsGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiSettingsGetResponse = aiSettingsGetResponseSuccess | aiSettingsGetResponseError;
+
+export const getAiSettingsGetUrl = () => {
+  return `/api/v1/ai/settings/`;
+};
+
+export const aiSettingsGet = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiSettingsGetResponse> => {
+  return apiMutator<aiSettingsGetResponse>(getAiSettingsGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiSettingsSaveResponse200 = {
+  data: AiSettings;
+  status: 200;
+};
+
+export type aiSettingsSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiSettingsSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiSettingsSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiSettingsSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiSettingsSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiSettingsSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiSettingsSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiSettingsSaveResponseSuccess = aiSettingsSaveResponse200 & {
+  headers: Headers;
+};
+export type aiSettingsSaveResponseError = (
+  | aiSettingsSaveResponse400
+  | aiSettingsSaveResponse401
+  | aiSettingsSaveResponse403
+  | aiSettingsSaveResponse404
+  | aiSettingsSaveResponse409
+  | aiSettingsSaveResponse422
+  | aiSettingsSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiSettingsSaveResponse = aiSettingsSaveResponseSuccess | aiSettingsSaveResponseError;
+
+export const getAiSettingsSaveUrl = () => {
+  return `/api/v1/ai/settings/`;
+};
+
+export const aiSettingsSave = async (
+  aiSettingsSaveRequest: AiSettingsSaveRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiSettingsSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiSettingsSaveResponse>(getAiSettingsSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiSettingsSaveRequest),
+  });
+};
+
+export type aiUsageListResponse200 = {
+  data: AiUsageWork[];
+  status: 200;
+};
+
+export type aiUsageListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiUsageListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiUsageListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiUsageListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiUsageListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiUsageListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiUsageListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiUsageListResponseSuccess = aiUsageListResponse200 & {
+  headers: Headers;
+};
+export type aiUsageListResponseError = (
+  | aiUsageListResponse400
+  | aiUsageListResponse401
+  | aiUsageListResponse403
+  | aiUsageListResponse404
+  | aiUsageListResponse409
+  | aiUsageListResponse422
+  | aiUsageListResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiUsageListResponse = aiUsageListResponseSuccess | aiUsageListResponseError;
+
+export const getAiUsageListUrl = (params?: AiUsageListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/usage/?${stringifiedParams}`
+    : `/api/v1/ai/usage/`;
+};
+
+export const aiUsageList = async (
+  params?: AiUsageListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiUsageListResponse> => {
+  return apiMutator<aiUsageListResponse>(getAiUsageListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsDecisionWorkspaceResponse200 = {
+  data: AnalyticsWorkspace;
+  status: 200;
+};
+
+export type analyticsDecisionWorkspaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsDecisionWorkspaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsDecisionWorkspaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsDecisionWorkspaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsDecisionWorkspaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsDecisionWorkspaceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsDecisionWorkspaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsDecisionWorkspaceResponseSuccess = analyticsDecisionWorkspaceResponse200 & {
+  headers: Headers;
+};
+export type analyticsDecisionWorkspaceResponseError = (
+  | analyticsDecisionWorkspaceResponse400
+  | analyticsDecisionWorkspaceResponse401
+  | analyticsDecisionWorkspaceResponse403
+  | analyticsDecisionWorkspaceResponse404
+  | analyticsDecisionWorkspaceResponse409
+  | analyticsDecisionWorkspaceResponse422
+  | analyticsDecisionWorkspaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsDecisionWorkspaceResponse =
+  analyticsDecisionWorkspaceResponseSuccess | analyticsDecisionWorkspaceResponseError;
+
+export const getAnalyticsDecisionWorkspaceUrl = (params?: AnalyticsDecisionWorkspaceParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/analytics/decision/?${stringifiedParams}`
+    : `/api/v1/analytics/decision/`;
+};
+
+export const analyticsDecisionWorkspace = async (
+  params?: AnalyticsDecisionWorkspaceParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsDecisionWorkspaceResponse> => {
+  return apiMutator<analyticsDecisionWorkspaceResponse>(getAnalyticsDecisionWorkspaceUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsDecisionCsvResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type analyticsDecisionCsvResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsDecisionCsvResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsDecisionCsvResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsDecisionCsvResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsDecisionCsvResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsDecisionCsvResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsDecisionCsvResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsDecisionCsvResponseSuccess = analyticsDecisionCsvResponse200 & {
+  headers: Headers;
+};
+export type analyticsDecisionCsvResponseError = (
+  | analyticsDecisionCsvResponse400
+  | analyticsDecisionCsvResponse401
+  | analyticsDecisionCsvResponse403
+  | analyticsDecisionCsvResponse404
+  | analyticsDecisionCsvResponse409
+  | analyticsDecisionCsvResponse422
+  | analyticsDecisionCsvResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsDecisionCsvResponse =
+  analyticsDecisionCsvResponseSuccess | analyticsDecisionCsvResponseError;
+
+export const getAnalyticsDecisionCsvUrl = (params?: AnalyticsDecisionCsvParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/analytics/decision/export/?${stringifiedParams}`
+    : `/api/v1/analytics/decision/export/`;
+};
+
+export const analyticsDecisionCsv = async (
+  params?: AnalyticsDecisionCsvParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsDecisionCsvResponse> => {
+  return apiMutator<analyticsDecisionCsvResponse>(getAnalyticsDecisionCsvUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsActualReportResponse200 = {
+  data: ActualReportResponse;
+  status: 200;
+};
+
+export type analyticsActualReportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsActualReportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsActualReportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsActualReportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsActualReportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsActualReportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsActualReportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsActualReportResponseSuccess = analyticsActualReportResponse200 & {
+  headers: Headers;
+};
+export type analyticsActualReportResponseError = (
+  | analyticsActualReportResponse400
+  | analyticsActualReportResponse401
+  | analyticsActualReportResponse403
+  | analyticsActualReportResponse404
+  | analyticsActualReportResponse409
+  | analyticsActualReportResponse422
+  | analyticsActualReportResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsActualReportResponse =
+  analyticsActualReportResponseSuccess | analyticsActualReportResponseError;
+
+export const getAnalyticsActualReportUrl = (orderId: string) => {
+  return `/api/v1/analytics/orders/${orderId}/actual/`;
+};
+
+export const analyticsActualReport = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsActualReportResponse> => {
+  return apiMutator<analyticsActualReportResponse>(getAnalyticsActualReportUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsActualReportSaveResponse201 = {
+  data: ActualReportResponse;
+  status: 201;
+};
+
+export type analyticsActualReportSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsActualReportSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsActualReportSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsActualReportSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsActualReportSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsActualReportSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsActualReportSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsActualReportSaveResponseSuccess = analyticsActualReportSaveResponse201 & {
+  headers: Headers;
+};
+export type analyticsActualReportSaveResponseError = (
+  | analyticsActualReportSaveResponse400
+  | analyticsActualReportSaveResponse401
+  | analyticsActualReportSaveResponse403
+  | analyticsActualReportSaveResponse404
+  | analyticsActualReportSaveResponse409
+  | analyticsActualReportSaveResponse422
+  | analyticsActualReportSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsActualReportSaveResponse =
+  analyticsActualReportSaveResponseSuccess | analyticsActualReportSaveResponseError;
+
+export const getAnalyticsActualReportSaveUrl = (orderId: string) => {
+  return `/api/v1/analytics/orders/${orderId}/actual/`;
+};
+
+export const analyticsActualReportSave = async (
+  orderId: string,
+  actualReportRequestRequest: ActualReportRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsActualReportSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<analyticsActualReportSaveResponse>(getAnalyticsActualReportSaveUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(actualReportRequestRequest),
+  });
+};
+
+export type analyticsActualReportPreviewResponse200 = {
+  data: ActualReportResponse;
+  status: 200;
+};
+
+export type analyticsActualReportPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsActualReportPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsActualReportPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsActualReportPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsActualReportPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsActualReportPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsActualReportPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsActualReportPreviewResponseSuccess =
+  analyticsActualReportPreviewResponse200 & {
+    headers: Headers;
+  };
+export type analyticsActualReportPreviewResponseError = (
+  | analyticsActualReportPreviewResponse400
+  | analyticsActualReportPreviewResponse401
+  | analyticsActualReportPreviewResponse403
+  | analyticsActualReportPreviewResponse404
+  | analyticsActualReportPreviewResponse409
+  | analyticsActualReportPreviewResponse422
+  | analyticsActualReportPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsActualReportPreviewResponse =
+  analyticsActualReportPreviewResponseSuccess | analyticsActualReportPreviewResponseError;
+
+export const getAnalyticsActualReportPreviewUrl = (orderId: string) => {
+  return `/api/v1/analytics/orders/${orderId}/actual/preview/`;
+};
+
+export const analyticsActualReportPreview = async (
+  orderId: string,
+  actualReportRequestRequest: ActualReportRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsActualReportPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<analyticsActualReportPreviewResponse>(
+    getAnalyticsActualReportPreviewUrl(orderId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(actualReportRequestRequest),
+    },
+  );
+};
+
+export type analyticsPreferencesResponse200 = {
+  data: AnalyticsPreference;
+  status: 200;
+};
+
+export type analyticsPreferencesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsPreferencesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsPreferencesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsPreferencesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsPreferencesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsPreferencesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsPreferencesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsPreferencesResponseSuccess = analyticsPreferencesResponse200 & {
+  headers: Headers;
+};
+export type analyticsPreferencesResponseError = (
+  | analyticsPreferencesResponse400
+  | analyticsPreferencesResponse401
+  | analyticsPreferencesResponse403
+  | analyticsPreferencesResponse404
+  | analyticsPreferencesResponse409
+  | analyticsPreferencesResponse422
+  | analyticsPreferencesResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsPreferencesResponse =
+  analyticsPreferencesResponseSuccess | analyticsPreferencesResponseError;
+
+export const getAnalyticsPreferencesUrl = () => {
+  return `/api/v1/analytics/preferences/`;
+};
+
+export const analyticsPreferences = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsPreferencesResponse> => {
+  return apiMutator<analyticsPreferencesResponse>(getAnalyticsPreferencesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type analyticsPreferencesSaveResponse200 = {
+  data: AnalyticsPreference;
+  status: 200;
+};
+
+export type analyticsPreferencesSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsPreferencesSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsPreferencesSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsPreferencesSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsPreferencesSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsPreferencesSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsPreferencesSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsPreferencesSaveResponseSuccess = analyticsPreferencesSaveResponse200 & {
+  headers: Headers;
+};
+export type analyticsPreferencesSaveResponseError = (
+  | analyticsPreferencesSaveResponse400
+  | analyticsPreferencesSaveResponse401
+  | analyticsPreferencesSaveResponse403
+  | analyticsPreferencesSaveResponse404
+  | analyticsPreferencesSaveResponse409
+  | analyticsPreferencesSaveResponse422
+  | analyticsPreferencesSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsPreferencesSaveResponse =
+  analyticsPreferencesSaveResponseSuccess | analyticsPreferencesSaveResponseError;
+
+export const getAnalyticsPreferencesSaveUrl = () => {
+  return `/api/v1/analytics/preferences/`;
+};
+
+export const analyticsPreferencesSave = async (
+  analyticsPreferenceRequest: AnalyticsPreferenceRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsPreferencesSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<analyticsPreferencesSaveResponse>(getAnalyticsPreferencesSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(analyticsPreferenceRequest),
+  });
+};
+
+export type analyticsQuotationsResponse200 = {
+  data: QuotationIndexResponse;
+  status: 200;
+};
+
+export type analyticsQuotationsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsQuotationsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsQuotationsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsQuotationsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsQuotationsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsQuotationsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsQuotationsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsQuotationsResponseSuccess = analyticsQuotationsResponse200 & {
+  headers: Headers;
+};
+export type analyticsQuotationsResponseError = (
+  | analyticsQuotationsResponse400
+  | analyticsQuotationsResponse401
+  | analyticsQuotationsResponse403
+  | analyticsQuotationsResponse404
+  | analyticsQuotationsResponse409
+  | analyticsQuotationsResponse422
+  | analyticsQuotationsResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsQuotationsResponse =
+  analyticsQuotationsResponseSuccess | analyticsQuotationsResponseError;
+
+export const getAnalyticsQuotationsUrl = (params?: AnalyticsQuotationsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/analytics/quotations/?${stringifiedParams}`
+    : `/api/v1/analytics/quotations/`;
+};
+
+export const analyticsQuotations = async (
+  params?: AnalyticsQuotationsParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsQuotationsResponse> => {
+  return apiMutator<analyticsQuotationsResponse>(getAnalyticsQuotationsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type analyticsOperationalSummaryResponse200 = {
   data: OperationalSummary;
   status: 200;
@@ -1229,6 +2498,240 @@ export const analyticsOperationalSummary = async (
   return apiMutator<analyticsOperationalSummaryResponse>(getAnalyticsOperationalSummaryUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export type analyticsTodayResponse200 = {
+  data: TodayResponse;
+  status: 200;
+};
+
+export type analyticsTodayResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsTodayResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsTodayResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsTodayResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsTodayResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsTodayResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsTodayResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsTodayResponseSuccess = analyticsTodayResponse200 & {
+  headers: Headers;
+};
+export type analyticsTodayResponseError = (
+  | analyticsTodayResponse400
+  | analyticsTodayResponse401
+  | analyticsTodayResponse403
+  | analyticsTodayResponse404
+  | analyticsTodayResponse409
+  | analyticsTodayResponse422
+  | analyticsTodayResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsTodayResponse = analyticsTodayResponseSuccess | analyticsTodayResponseError;
+
+export const getAnalyticsTodayUrl = () => {
+  return `/api/v1/analytics/today/`;
+};
+
+export const analyticsToday = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsTodayResponse> => {
+  return apiMutator<analyticsTodayResponse>(getAnalyticsTodayUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type invitationInspectResponse200 = {
+  data: InvitationInspect;
+  status: 200;
+};
+
+export type invitationInspectResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type invitationInspectResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type invitationInspectResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type invitationInspectResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type invitationInspectResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type invitationInspectResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type invitationInspectResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type invitationInspectResponseSuccess = invitationInspectResponse200 & {
+  headers: Headers;
+};
+export type invitationInspectResponseError = (
+  | invitationInspectResponse400
+  | invitationInspectResponse401
+  | invitationInspectResponse403
+  | invitationInspectResponse404
+  | invitationInspectResponse409
+  | invitationInspectResponse422
+  | invitationInspectResponse503
+) & {
+  headers: Headers;
+};
+
+export type invitationInspectResponse =
+  invitationInspectResponseSuccess | invitationInspectResponseError;
+
+export const getInvitationInspectUrl = () => {
+  return `/api/v1/auth/invitation/`;
+};
+
+export const invitationInspect = async (
+  invitationTokenRequest: InvitationTokenRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<invitationInspectResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<invitationInspectResponse>(getInvitationInspectUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(invitationTokenRequest),
+  });
+};
+
+export type invitationAcceptResponse200 = {
+  data: InvitationAccepted;
+  status: 200;
+};
+
+export type invitationAcceptResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type invitationAcceptResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type invitationAcceptResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type invitationAcceptResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type invitationAcceptResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type invitationAcceptResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type invitationAcceptResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type invitationAcceptResponseSuccess = invitationAcceptResponse200 & {
+  headers: Headers;
+};
+export type invitationAcceptResponseError = (
+  | invitationAcceptResponse400
+  | invitationAcceptResponse401
+  | invitationAcceptResponse403
+  | invitationAcceptResponse404
+  | invitationAcceptResponse409
+  | invitationAcceptResponse422
+  | invitationAcceptResponse503
+) & {
+  headers: Headers;
+};
+
+export type invitationAcceptResponse =
+  invitationAcceptResponseSuccess | invitationAcceptResponseError;
+
+export const getInvitationAcceptUrl = () => {
+  return `/api/v1/auth/invitation/accept/`;
+};
+
+export const invitationAccept = async (
+  invitationTokenRequest: InvitationTokenRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<invitationAcceptResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<invitationAcceptResponse>(getInvitationAcceptUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(invitationTokenRequest),
   });
 };
 
@@ -2633,6 +4136,639 @@ export const catalogImportConfirm = async (
   });
 };
 
+export type catalogImportExportResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type catalogImportExportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportExportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportExportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportExportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportExportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportExportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportExportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportExportResponseSuccess = catalogImportExportResponse200 & {
+  headers: Headers;
+};
+export type catalogImportExportResponseError = (
+  | catalogImportExportResponse400
+  | catalogImportExportResponse401
+  | catalogImportExportResponse403
+  | catalogImportExportResponse404
+  | catalogImportExportResponse409
+  | catalogImportExportResponse422
+  | catalogImportExportResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportExportResponse =
+  catalogImportExportResponseSuccess | catalogImportExportResponseError;
+
+export const getCatalogImportExportUrl = (importId: string, params?: CatalogImportExportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalog-imports/${importId}/export/?${stringifiedParams}`
+    : `/api/v1/catalog-imports/${importId}/export/`;
+};
+
+export const catalogImportExport = async (
+  importId: string,
+  params?: CatalogImportExportParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportExportResponse> => {
+  return apiMutator<catalogImportExportResponse>(getCatalogImportExportUrl(importId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogImportPublishResponse200 = {
+  data: CatalogImportConfirmResponse;
+  status: 200;
+};
+
+export type catalogImportPublishResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportPublishResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportPublishResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportPublishResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportPublishResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportPublishResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportPublishResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportPublishResponseSuccess = catalogImportPublishResponse200 & {
+  headers: Headers;
+};
+export type catalogImportPublishResponseError = (
+  | catalogImportPublishResponse400
+  | catalogImportPublishResponse401
+  | catalogImportPublishResponse403
+  | catalogImportPublishResponse404
+  | catalogImportPublishResponse409
+  | catalogImportPublishResponse422
+  | catalogImportPublishResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportPublishResponse =
+  catalogImportPublishResponseSuccess | catalogImportPublishResponseError;
+
+export const getCatalogImportPublishUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/publish/`;
+};
+
+export const catalogImportPublish = async (
+  importId: string,
+  catalogPublishRequestRequest: CatalogPublishRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportPublishResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogImportPublishResponse>(getCatalogImportPublishUrl(importId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(catalogPublishRequestRequest),
+  });
+};
+
+export type catalogImportReviewResponse200 = {
+  data: CatalogReviewResponse;
+  status: 200;
+};
+
+export type catalogImportReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportReviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportReviewResponseSuccess = catalogImportReviewResponse200 & {
+  headers: Headers;
+};
+export type catalogImportReviewResponseError = (
+  | catalogImportReviewResponse400
+  | catalogImportReviewResponse401
+  | catalogImportReviewResponse403
+  | catalogImportReviewResponse404
+  | catalogImportReviewResponse409
+  | catalogImportReviewResponse422
+  | catalogImportReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportReviewResponse =
+  catalogImportReviewResponseSuccess | catalogImportReviewResponseError;
+
+export const getCatalogImportReviewUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/review/`;
+};
+
+export const catalogImportReview = async (
+  importId: string,
+  catalogReviewRequestRequest: CatalogReviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportReviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogImportReviewResponse>(getCatalogImportReviewUrl(importId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(catalogReviewRequestRequest),
+  });
+};
+
+export type catalogImportSourceResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type catalogImportSourceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportSourceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportSourceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportSourceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportSourceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportSourceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportSourceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportSourceResponseSuccess = catalogImportSourceResponse200 & {
+  headers: Headers;
+};
+export type catalogImportSourceResponseError = (
+  | catalogImportSourceResponse400
+  | catalogImportSourceResponse401
+  | catalogImportSourceResponse403
+  | catalogImportSourceResponse404
+  | catalogImportSourceResponse409
+  | catalogImportSourceResponse422
+  | catalogImportSourceResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportSourceResponse =
+  catalogImportSourceResponseSuccess | catalogImportSourceResponseError;
+
+export const getCatalogImportSourceUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/source/`;
+};
+
+export const catalogImportSource = async (
+  importId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportSourceResponse> => {
+  return apiMutator<catalogImportSourceResponse>(getCatalogImportSourceUrl(importId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogImportTimelineResponse200 = {
+  data: CatalogImportTimeline;
+  status: 200;
+};
+
+export type catalogImportTimelineResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportTimelineResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportTimelineResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportTimelineResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportTimelineResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportTimelineResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportTimelineResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportTimelineResponseSuccess = catalogImportTimelineResponse200 & {
+  headers: Headers;
+};
+export type catalogImportTimelineResponseError = (
+  | catalogImportTimelineResponse400
+  | catalogImportTimelineResponse401
+  | catalogImportTimelineResponse403
+  | catalogImportTimelineResponse404
+  | catalogImportTimelineResponse409
+  | catalogImportTimelineResponse422
+  | catalogImportTimelineResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportTimelineResponse =
+  catalogImportTimelineResponseSuccess | catalogImportTimelineResponseError;
+
+export const getCatalogImportTimelineUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/timeline/`;
+};
+
+export const catalogImportTimeline = async (
+  importId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportTimelineResponse> => {
+  return apiMutator<catalogImportTimelineResponse>(getCatalogImportTimelineUrl(importId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogImportUndoResponse200 = {
+  data: CatalogImportDetailResponse;
+  status: 200;
+};
+
+export type catalogImportUndoResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogImportUndoResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogImportUndoResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogImportUndoResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogImportUndoResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogImportUndoResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogImportUndoResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogImportUndoResponseSuccess = catalogImportUndoResponse200 & {
+  headers: Headers;
+};
+export type catalogImportUndoResponseError = (
+  | catalogImportUndoResponse400
+  | catalogImportUndoResponse401
+  | catalogImportUndoResponse403
+  | catalogImportUndoResponse404
+  | catalogImportUndoResponse409
+  | catalogImportUndoResponse422
+  | catalogImportUndoResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogImportUndoResponse =
+  catalogImportUndoResponseSuccess | catalogImportUndoResponseError;
+
+export const getCatalogImportUndoUrl = (importId: string) => {
+  return `/api/v1/catalog-imports/${importId}/undo/`;
+};
+
+export const catalogImportUndo = async (
+  importId: string,
+  catalogUndoRequestRequest: CatalogUndoRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogImportUndoResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogImportUndoResponse>(getCatalogImportUndoUrl(importId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(catalogUndoRequestRequest),
+  });
+};
+
+export type catalogTemplateSchemaResponse200 = {
+  data: CatalogTemplateSchema;
+  status: 200;
+};
+
+export type catalogTemplateSchemaResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogTemplateSchemaResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogTemplateSchemaResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogTemplateSchemaResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogTemplateSchemaResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogTemplateSchemaResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogTemplateSchemaResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogTemplateSchemaResponseSuccess = catalogTemplateSchemaResponse200 & {
+  headers: Headers;
+};
+export type catalogTemplateSchemaResponseError = (
+  | catalogTemplateSchemaResponse400
+  | catalogTemplateSchemaResponse401
+  | catalogTemplateSchemaResponse403
+  | catalogTemplateSchemaResponse404
+  | catalogTemplateSchemaResponse409
+  | catalogTemplateSchemaResponse422
+  | catalogTemplateSchemaResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogTemplateSchemaResponse =
+  catalogTemplateSchemaResponseSuccess | catalogTemplateSchemaResponseError;
+
+export const getCatalogTemplateSchemaUrl = () => {
+  return `/api/v1/catalog-imports/schema/`;
+};
+
+export const catalogTemplateSchema = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogTemplateSchemaResponse> => {
+  return apiMutator<catalogTemplateSchemaResponse>(getCatalogTemplateSchemaUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogTemplateDownloadResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type catalogTemplateDownloadResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogTemplateDownloadResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogTemplateDownloadResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogTemplateDownloadResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogTemplateDownloadResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogTemplateDownloadResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogTemplateDownloadResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogTemplateDownloadResponseSuccess = catalogTemplateDownloadResponse200 & {
+  headers: Headers;
+};
+export type catalogTemplateDownloadResponseError = (
+  | catalogTemplateDownloadResponse400
+  | catalogTemplateDownloadResponse401
+  | catalogTemplateDownloadResponse403
+  | catalogTemplateDownloadResponse404
+  | catalogTemplateDownloadResponse409
+  | catalogTemplateDownloadResponse422
+  | catalogTemplateDownloadResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogTemplateDownloadResponse =
+  catalogTemplateDownloadResponseSuccess | catalogTemplateDownloadResponseError;
+
+export const getCatalogTemplateDownloadUrl = (params?: CatalogTemplateDownloadParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalog-imports/template/?${stringifiedParams}`
+    : `/api/v1/catalog-imports/template/`;
+};
+
+export const catalogTemplateDownload = async (
+  params?: CatalogTemplateDownloadParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogTemplateDownloadResponse> => {
+  return apiMutator<catalogTemplateDownloadResponse>(getCatalogTemplateDownloadUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type catalogArticleListResponse200 = {
   data: ArticleList;
   status: 200;
@@ -3307,6 +5443,299 @@ export const catalogEvidenceReview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(evidenceReviewInputRequest),
+  });
+};
+
+export type catalogGlassPreviewResponse200 = {
+  data: GlassPreviewOutput;
+  status: 200;
+};
+
+export type catalogGlassPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogGlassPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogGlassPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogGlassPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogGlassPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogGlassPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogGlassPreviewResponseSuccess = catalogGlassPreviewResponse200 & {
+  headers: Headers;
+};
+export type catalogGlassPreviewResponseError = (
+  | catalogGlassPreviewResponse400
+  | catalogGlassPreviewResponse401
+  | catalogGlassPreviewResponse403
+  | catalogGlassPreviewResponse404
+  | catalogGlassPreviewResponse409
+  | catalogGlassPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogGlassPreviewResponse =
+  catalogGlassPreviewResponseSuccess | catalogGlassPreviewResponseError;
+
+export const getCatalogGlassPreviewUrl = () => {
+  return `/api/v1/catalogs/glass/preview/`;
+};
+
+export const catalogGlassPreview = async (
+  glassPreviewInputRequest: GlassPreviewInputRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogGlassPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogGlassPreviewResponse>(getCatalogGlassPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(glassPreviewInputRequest),
+  });
+};
+
+export type catalogGlassRulesResponse200 = {
+  data: GlassRulesOutput;
+  status: 200;
+};
+
+export type catalogGlassRulesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogGlassRulesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogGlassRulesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogGlassRulesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogGlassRulesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogGlassRulesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogGlassRulesResponseSuccess = catalogGlassRulesResponse200 & {
+  headers: Headers;
+};
+export type catalogGlassRulesResponseError = (
+  | catalogGlassRulesResponse400
+  | catalogGlassRulesResponse401
+  | catalogGlassRulesResponse403
+  | catalogGlassRulesResponse404
+  | catalogGlassRulesResponse409
+  | catalogGlassRulesResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogGlassRulesResponse =
+  catalogGlassRulesResponseSuccess | catalogGlassRulesResponseError;
+
+export const getCatalogGlassRulesUrl = () => {
+  return `/api/v1/catalogs/glass/rules/`;
+};
+
+export const catalogGlassRules = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogGlassRulesResponse> => {
+  return apiMutator<catalogGlassRulesResponse>(getCatalogGlassRulesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogGlassRulesReplaceResponse200 = {
+  data: GlassRulesOutput;
+  status: 200;
+};
+
+export type catalogGlassRulesReplaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogGlassRulesReplaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogGlassRulesReplaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogGlassRulesReplaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogGlassRulesReplaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogGlassRulesReplaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogGlassRulesReplaceResponseSuccess = catalogGlassRulesReplaceResponse200 & {
+  headers: Headers;
+};
+export type catalogGlassRulesReplaceResponseError = (
+  | catalogGlassRulesReplaceResponse400
+  | catalogGlassRulesReplaceResponse401
+  | catalogGlassRulesReplaceResponse403
+  | catalogGlassRulesReplaceResponse404
+  | catalogGlassRulesReplaceResponse409
+  | catalogGlassRulesReplaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogGlassRulesReplaceResponse =
+  catalogGlassRulesReplaceResponseSuccess | catalogGlassRulesReplaceResponseError;
+
+export const getCatalogGlassRulesReplaceUrl = () => {
+  return `/api/v1/catalogs/glass/rules/`;
+};
+
+export const catalogGlassRulesReplace = async (
+  glassRulesRequest: GlassRulesRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogGlassRulesReplaceResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogGlassRulesReplaceResponse>(getCatalogGlassRulesReplaceUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(glassRulesRequest),
+  });
+};
+
+export type catalogGlassVariantPublishResponse201 = {
+  data: GlassVariantOutput;
+  status: 201;
+};
+
+export type catalogGlassVariantPublishResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogGlassVariantPublishResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogGlassVariantPublishResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogGlassVariantPublishResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogGlassVariantPublishResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogGlassVariantPublishResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogGlassVariantPublishResponseSuccess = catalogGlassVariantPublishResponse201 & {
+  headers: Headers;
+};
+export type catalogGlassVariantPublishResponseError = (
+  | catalogGlassVariantPublishResponse400
+  | catalogGlassVariantPublishResponse401
+  | catalogGlassVariantPublishResponse403
+  | catalogGlassVariantPublishResponse404
+  | catalogGlassVariantPublishResponse409
+  | catalogGlassVariantPublishResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogGlassVariantPublishResponse =
+  catalogGlassVariantPublishResponseSuccess | catalogGlassVariantPublishResponseError;
+
+export const getCatalogGlassVariantPublishUrl = () => {
+  return `/api/v1/catalogs/glass/variants/`;
+};
+
+export const catalogGlassVariantPublish = async (
+  glassVariantRequest: GlassVariantRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogGlassVariantPublishResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogGlassVariantPublishResponse>(getCatalogGlassVariantPublishUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(glassVariantRequest),
   });
 };
 
@@ -4806,6 +7235,245 @@ export const catalogSystemWorkspace = async (
   });
 };
 
+export type catalogThermalReportsResponse200 = {
+  data: ThermalCatalogResponse;
+  status: 200;
+};
+
+export type catalogThermalReportsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogThermalReportsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogThermalReportsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogThermalReportsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogThermalReportsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogThermalReportsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogThermalReportsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogThermalReportsResponseSuccess = catalogThermalReportsResponse200 & {
+  headers: Headers;
+};
+export type catalogThermalReportsResponseError = (
+  | catalogThermalReportsResponse400
+  | catalogThermalReportsResponse401
+  | catalogThermalReportsResponse403
+  | catalogThermalReportsResponse404
+  | catalogThermalReportsResponse409
+  | catalogThermalReportsResponse422
+  | catalogThermalReportsResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogThermalReportsResponse =
+  catalogThermalReportsResponseSuccess | catalogThermalReportsResponseError;
+
+export const getCatalogThermalReportsUrl = (systemId: string) => {
+  return `/api/v1/catalogs/systems/${systemId}/thermal/`;
+};
+
+export const catalogThermalReports = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogThermalReportsResponse> => {
+  return apiMutator<catalogThermalReportsResponse>(getCatalogThermalReportsUrl(systemId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogThermalDeclareResponse201 = {
+  data: CatalogThermalDeclare201;
+  status: 201;
+};
+
+export type catalogThermalDeclareResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogThermalDeclareResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogThermalDeclareResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogThermalDeclareResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogThermalDeclareResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogThermalDeclareResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogThermalDeclareResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogThermalDeclareResponseSuccess = catalogThermalDeclareResponse201 & {
+  headers: Headers;
+};
+export type catalogThermalDeclareResponseError = (
+  | catalogThermalDeclareResponse400
+  | catalogThermalDeclareResponse401
+  | catalogThermalDeclareResponse403
+  | catalogThermalDeclareResponse404
+  | catalogThermalDeclareResponse409
+  | catalogThermalDeclareResponse422
+  | catalogThermalDeclareResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogThermalDeclareResponse =
+  catalogThermalDeclareResponseSuccess | catalogThermalDeclareResponseError;
+
+export const getCatalogThermalDeclareUrl = (systemId: string) => {
+  return `/api/v1/catalogs/systems/${systemId}/thermal/`;
+};
+
+export const catalogThermalDeclare = async (
+  systemId: string,
+  thermalAuthorityRequest: ThermalAuthorityRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogThermalDeclareResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogThermalDeclareResponse>(getCatalogThermalDeclareUrl(systemId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(thermalAuthorityRequest),
+  });
+};
+
+export type catalogThermalReviewResponse200 = {
+  data: CatalogThermalReview200;
+  status: 200;
+};
+
+export type catalogThermalReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogThermalReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogThermalReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogThermalReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogThermalReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogThermalReviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogThermalReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogThermalReviewResponseSuccess = catalogThermalReviewResponse200 & {
+  headers: Headers;
+};
+export type catalogThermalReviewResponseError = (
+  | catalogThermalReviewResponse400
+  | catalogThermalReviewResponse401
+  | catalogThermalReviewResponse403
+  | catalogThermalReviewResponse404
+  | catalogThermalReviewResponse409
+  | catalogThermalReviewResponse422
+  | catalogThermalReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogThermalReviewResponse =
+  catalogThermalReviewResponseSuccess | catalogThermalReviewResponseError;
+
+export const getCatalogThermalReviewUrl = (systemId: string, reportId: string) => {
+  return `/api/v1/catalogs/systems/${systemId}/thermal/${reportId}/review/`;
+};
+
+export const catalogThermalReview = async (
+  systemId: string,
+  reportId: string,
+  thermalReviewRequest: ThermalReviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogThermalReviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogThermalReviewResponse>(getCatalogThermalReviewUrl(systemId, reportId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(thermalReviewRequest),
+  });
+};
+
 export type clientsListResponse200 = {
   data: ClientListResponse;
   status: 200;
@@ -5179,6 +7847,477 @@ export const clientsDeactivate = async (
   return apiMutator<clientsDeactivateResponse>(getClientsDeactivateUrl(clientId), {
     ...options,
     method: "DELETE",
+  });
+};
+
+export type clientDossierResponse200 = {
+  data: ClientDossierResponse;
+  status: 200;
+};
+
+export type clientDossierResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientDossierResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientDossierResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientDossierResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientDossierResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientDossierResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientDossierResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientDossierResponseSuccess = clientDossierResponse200 & {
+  headers: Headers;
+};
+export type clientDossierResponseError = (
+  | clientDossierResponse400
+  | clientDossierResponse401
+  | clientDossierResponse403
+  | clientDossierResponse404
+  | clientDossierResponse409
+  | clientDossierResponse422
+  | clientDossierResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientDossierResponse = clientDossierResponseSuccess | clientDossierResponseError;
+
+export const getClientDossierUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/dossier/`;
+};
+
+export const clientDossier = async (
+  clientId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientDossierResponse> => {
+  return apiMutator<clientDossierResponse>(getClientDossierUrl(clientId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type clientMergeResponse200 = {
+  data: ClientResponse;
+  status: 200;
+};
+
+export type clientMergeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientMergeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientMergeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientMergeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientMergeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientMergeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientMergeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientMergeResponseSuccess = clientMergeResponse200 & {
+  headers: Headers;
+};
+export type clientMergeResponseError = (
+  | clientMergeResponse400
+  | clientMergeResponse401
+  | clientMergeResponse403
+  | clientMergeResponse404
+  | clientMergeResponse409
+  | clientMergeResponse422
+  | clientMergeResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientMergeResponse = clientMergeResponseSuccess | clientMergeResponseError;
+
+export const getClientMergeUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/merge/`;
+};
+
+export const clientMerge = async (
+  clientId: string,
+  clientMergeRequestRequest: ClientMergeRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientMergeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<clientMergeResponse>(getClientMergeUrl(clientId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientMergeRequestRequest),
+  });
+};
+
+export type clientMergePreviewResponse200 = {
+  data: ClientMergePreview;
+  status: 200;
+};
+
+export type clientMergePreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientMergePreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientMergePreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientMergePreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientMergePreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientMergePreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientMergePreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientMergePreviewResponseSuccess = clientMergePreviewResponse200 & {
+  headers: Headers;
+};
+export type clientMergePreviewResponseError = (
+  | clientMergePreviewResponse400
+  | clientMergePreviewResponse401
+  | clientMergePreviewResponse403
+  | clientMergePreviewResponse404
+  | clientMergePreviewResponse409
+  | clientMergePreviewResponse422
+  | clientMergePreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientMergePreviewResponse =
+  clientMergePreviewResponseSuccess | clientMergePreviewResponseError;
+
+export const getClientMergePreviewUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/merge-preview/`;
+};
+
+export const clientMergePreview = async (
+  clientId: string,
+  clientMergePreviewRequestRequest: ClientMergePreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientMergePreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<clientMergePreviewResponse>(getClientMergePreviewUrl(clientId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientMergePreviewRequestRequest),
+  });
+};
+
+export type clientNoteAddResponse201 = {
+  data: ClientNote;
+  status: 201;
+};
+
+export type clientNoteAddResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientNoteAddResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientNoteAddResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientNoteAddResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientNoteAddResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientNoteAddResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientNoteAddResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientNoteAddResponseSuccess = clientNoteAddResponse201 & {
+  headers: Headers;
+};
+export type clientNoteAddResponseError = (
+  | clientNoteAddResponse400
+  | clientNoteAddResponse401
+  | clientNoteAddResponse403
+  | clientNoteAddResponse404
+  | clientNoteAddResponse409
+  | clientNoteAddResponse422
+  | clientNoteAddResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientNoteAddResponse = clientNoteAddResponseSuccess | clientNoteAddResponseError;
+
+export const getClientNoteAddUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/notes/`;
+};
+
+export const clientNoteAdd = async (
+  clientId: string,
+  clientNoteWriteRequest: ClientNoteWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientNoteAddResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<clientNoteAddResponse>(getClientNoteAddUrl(clientId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientNoteWriteRequest),
+  });
+};
+
+export type clientDirectoryResponse200 = {
+  data: ClientDirectory;
+  status: 200;
+};
+
+export type clientDirectoryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientDirectoryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientDirectoryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientDirectoryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientDirectoryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientDirectoryResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientDirectoryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientDirectoryResponseSuccess = clientDirectoryResponse200 & {
+  headers: Headers;
+};
+export type clientDirectoryResponseError = (
+  | clientDirectoryResponse400
+  | clientDirectoryResponse401
+  | clientDirectoryResponse403
+  | clientDirectoryResponse404
+  | clientDirectoryResponse409
+  | clientDirectoryResponse422
+  | clientDirectoryResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientDirectoryResponse = clientDirectoryResponseSuccess | clientDirectoryResponseError;
+
+export const getClientDirectoryUrl = (params?: ClientDirectoryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/clients/directory/?${stringifiedParams}`
+    : `/api/v1/clients/directory/`;
+};
+
+export const clientDirectory = async (
+  params?: ClientDirectoryParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientDirectoryResponse> => {
+  return apiMutator<clientDirectoryResponse>(getClientDirectoryUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type mailExamplesResponse200 = {
+  data: MailExample[];
+  status: 200;
+};
+
+export type mailExamplesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mailExamplesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mailExamplesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mailExamplesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mailExamplesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mailExamplesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mailExamplesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mailExamplesResponseSuccess = mailExamplesResponse200 & {
+  headers: Headers;
+};
+export type mailExamplesResponseError = (
+  | mailExamplesResponse400
+  | mailExamplesResponse401
+  | mailExamplesResponse403
+  | mailExamplesResponse404
+  | mailExamplesResponse409
+  | mailExamplesResponse422
+  | mailExamplesResponse503
+) & {
+  headers: Headers;
+};
+
+export type mailExamplesResponse = mailExamplesResponseSuccess | mailExamplesResponseError;
+
+export const getMailExamplesUrl = () => {
+  return `/api/v1/dev/mail/`;
+};
+
+export const mailExamples = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mailExamplesResponse> => {
+  return apiMutator<mailExamplesResponse>(getMailExamplesUrl(), {
+    ...options,
+    method: "GET",
   });
 };
 
@@ -5664,6 +8803,337 @@ export const documentarySaveInputs = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(documentaryInputsRequest),
   });
+};
+
+export type quotationIssueResponse200 = {
+  data: QuotationIssue;
+  status: 200;
+};
+
+export type quotationIssueResponse201 = {
+  data: QuotationIssue;
+  status: 201;
+};
+
+export type quotationIssueResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationIssueResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationIssueResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationIssueResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationIssueResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationIssueResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationIssueResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationIssueResponseSuccess = (
+  quotationIssueResponse200 | quotationIssueResponse201
+) & {
+  headers: Headers;
+};
+export type quotationIssueResponseError = (
+  | quotationIssueResponse400
+  | quotationIssueResponse401
+  | quotationIssueResponse403
+  | quotationIssueResponse404
+  | quotationIssueResponse409
+  | quotationIssueResponse422
+  | quotationIssueResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationIssueResponse = quotationIssueResponseSuccess | quotationIssueResponseError;
+
+export const getQuotationIssueUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/issue/`;
+};
+
+export const quotationIssue = async (
+  projectId: string,
+  quotationIssueRequestRequest: QuotationIssueRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationIssueResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationIssueResponse>(getQuotationIssueUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(quotationIssueRequestRequest),
+  });
+};
+
+export type quotationSaveCustomerResponse200 = {
+  data: QuotationCustomer;
+  status: 200;
+};
+
+export type quotationSaveCustomerResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationSaveCustomerResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationSaveCustomerResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationSaveCustomerResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationSaveCustomerResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationSaveCustomerResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationSaveCustomerResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationSaveCustomerResponseSuccess = quotationSaveCustomerResponse200 & {
+  headers: Headers;
+};
+export type quotationSaveCustomerResponseError = (
+  | quotationSaveCustomerResponse400
+  | quotationSaveCustomerResponse401
+  | quotationSaveCustomerResponse403
+  | quotationSaveCustomerResponse404
+  | quotationSaveCustomerResponse409
+  | quotationSaveCustomerResponse422
+  | quotationSaveCustomerResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationSaveCustomerResponse =
+  quotationSaveCustomerResponseSuccess | quotationSaveCustomerResponseError;
+
+export const getQuotationSaveCustomerUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-customer/`;
+};
+
+export const quotationSaveCustomer = async (
+  projectId: string,
+  patchedQuotationCustomerRequestRequest?: PatchedQuotationCustomerRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationSaveCustomerResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationSaveCustomerResponse>(getQuotationSaveCustomerUrl(projectId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedQuotationCustomerRequestRequest),
+  });
+};
+
+export type quotationPreparePreviewResponse201 = {
+  data: QuotationPreview;
+  status: 201;
+};
+
+export type quotationPreparePreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationPreparePreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationPreparePreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationPreparePreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationPreparePreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationPreparePreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationPreparePreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationPreparePreviewResponseSuccess = quotationPreparePreviewResponse201 & {
+  headers: Headers;
+};
+export type quotationPreparePreviewResponseError = (
+  | quotationPreparePreviewResponse400
+  | quotationPreparePreviewResponse401
+  | quotationPreparePreviewResponse403
+  | quotationPreparePreviewResponse404
+  | quotationPreparePreviewResponse409
+  | quotationPreparePreviewResponse422
+  | quotationPreparePreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationPreparePreviewResponse =
+  quotationPreparePreviewResponseSuccess | quotationPreparePreviewResponseError;
+
+export const getQuotationPreparePreviewUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-preview/`;
+};
+
+export const quotationPreparePreview = async (
+  projectId: string,
+  quotationPreviewRequestRequest: QuotationPreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationPreparePreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quotationPreparePreviewResponse>(getQuotationPreparePreviewUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(quotationPreviewRequestRequest),
+  });
+};
+
+export type quotationPreviewAccessResponse200 = {
+  data: QuotationPreview;
+  status: 200;
+};
+
+export type quotationPreviewAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quotationPreviewAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quotationPreviewAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quotationPreviewAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quotationPreviewAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quotationPreviewAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quotationPreviewAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quotationPreviewAccessResponseSuccess = quotationPreviewAccessResponse200 & {
+  headers: Headers;
+};
+export type quotationPreviewAccessResponseError = (
+  | quotationPreviewAccessResponse400
+  | quotationPreviewAccessResponse401
+  | quotationPreviewAccessResponse403
+  | quotationPreviewAccessResponse404
+  | quotationPreviewAccessResponse409
+  | quotationPreviewAccessResponse422
+  | quotationPreviewAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type quotationPreviewAccessResponse =
+  quotationPreviewAccessResponseSuccess | quotationPreviewAccessResponseError;
+
+export const getQuotationPreviewAccessUrl = (projectId: string, previewId: string) => {
+  return `/api/v1/documents/projects/${projectId}/quotation-previews/${previewId}/`;
+};
+
+export const quotationPreviewAccess = async (
+  projectId: string,
+  previewId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quotationPreviewAccessResponse> => {
+  return apiMutator<quotationPreviewAccessResponse>(
+    getQuotationPreviewAccessUrl(projectId, previewId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type documentsCompareVersionsResponse200 = {
@@ -6798,6 +10268,89 @@ export const inventoryRemnantLabel = async (
   });
 };
 
+export type inventoryRemnantMoveResponse200 = {
+  data: Remnant;
+  status: 200;
+};
+
+export type inventoryRemnantMoveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryRemnantMoveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryRemnantMoveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryRemnantMoveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryRemnantMoveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryRemnantMoveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryRemnantMoveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryRemnantMoveResponseSuccess = inventoryRemnantMoveResponse200 & {
+  headers: Headers;
+};
+export type inventoryRemnantMoveResponseError = (
+  | inventoryRemnantMoveResponse400
+  | inventoryRemnantMoveResponse401
+  | inventoryRemnantMoveResponse403
+  | inventoryRemnantMoveResponse404
+  | inventoryRemnantMoveResponse409
+  | inventoryRemnantMoveResponse422
+  | inventoryRemnantMoveResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryRemnantMoveResponse =
+  inventoryRemnantMoveResponseSuccess | inventoryRemnantMoveResponseError;
+
+export const getInventoryRemnantMoveUrl = (remnantId: string) => {
+  return `/api/v1/inventory/remnants/${remnantId}/move/`;
+};
+
+export const inventoryRemnantMove = async (
+  remnantId: string,
+  remnantMoveRequest: RemnantMoveRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryRemnantMoveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventoryRemnantMoveResponse>(getInventoryRemnantMoveUrl(remnantId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(remnantMoveRequest),
+  });
+};
+
 export type inventoryRemnantReleaseResponse200 = {
   data: Remnant;
   status: 200;
@@ -6870,6 +10423,89 @@ export const inventoryRemnantRelease = async (
   });
 };
 
+export type inventoryRemnantReserveResponse200 = {
+  data: Remnant;
+  status: 200;
+};
+
+export type inventoryRemnantReserveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryRemnantReserveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryRemnantReserveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryRemnantReserveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryRemnantReserveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryRemnantReserveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryRemnantReserveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryRemnantReserveResponseSuccess = inventoryRemnantReserveResponse200 & {
+  headers: Headers;
+};
+export type inventoryRemnantReserveResponseError = (
+  | inventoryRemnantReserveResponse400
+  | inventoryRemnantReserveResponse401
+  | inventoryRemnantReserveResponse403
+  | inventoryRemnantReserveResponse404
+  | inventoryRemnantReserveResponse409
+  | inventoryRemnantReserveResponse422
+  | inventoryRemnantReserveResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryRemnantReserveResponse =
+  inventoryRemnantReserveResponseSuccess | inventoryRemnantReserveResponseError;
+
+export const getInventoryRemnantReserveUrl = (remnantId: string) => {
+  return `/api/v1/inventory/remnants/${remnantId}/reserve/`;
+};
+
+export const inventoryRemnantReserve = async (
+  remnantId: string,
+  remnantReserveRequest: RemnantReserveRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryRemnantReserveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventoryRemnantReserveResponse>(getInventoryRemnantReserveUrl(remnantId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(remnantReserveRequest),
+  });
+};
+
 export type inventoryRemnantScrapResponse200 = {
   data: Remnant;
   status: 200;
@@ -6934,11 +10570,182 @@ export const getInventoryRemnantScrapUrl = (remnantId: string) => {
 
 export const inventoryRemnantScrap = async (
   remnantId: string,
+  remnantActionRequest: RemnantActionRequest,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<inventoryRemnantScrapResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
   return apiMutator<inventoryRemnantScrapResponse>(getInventoryRemnantScrapUrl(remnantId), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(remnantActionRequest),
+  });
+};
+
+export type inventorySheetFormatsResponse200 = {
+  data: SheetFormatList;
+  status: 200;
+};
+
+export type inventorySheetFormatsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventorySheetFormatsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventorySheetFormatsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventorySheetFormatsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventorySheetFormatsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventorySheetFormatsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventorySheetFormatsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventorySheetFormatsResponseSuccess = inventorySheetFormatsResponse200 & {
+  headers: Headers;
+};
+export type inventorySheetFormatsResponseError = (
+  | inventorySheetFormatsResponse400
+  | inventorySheetFormatsResponse401
+  | inventorySheetFormatsResponse403
+  | inventorySheetFormatsResponse404
+  | inventorySheetFormatsResponse409
+  | inventorySheetFormatsResponse422
+  | inventorySheetFormatsResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventorySheetFormatsResponse =
+  inventorySheetFormatsResponseSuccess | inventorySheetFormatsResponseError;
+
+export const getInventorySheetFormatsUrl = () => {
+  return `/api/v1/inventory/sheet-formats/`;
+};
+
+export const inventorySheetFormats = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventorySheetFormatsResponse> => {
+  return apiMutator<inventorySheetFormatsResponse>(getInventorySheetFormatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type inventorySheetFormatDeclareResponse200 = {
+  data: SheetFormatCreated;
+  status: 200;
+};
+
+export type inventorySheetFormatDeclareResponse201 = {
+  data: SheetFormatCreated;
+  status: 201;
+};
+
+export type inventorySheetFormatDeclareResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventorySheetFormatDeclareResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventorySheetFormatDeclareResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventorySheetFormatDeclareResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventorySheetFormatDeclareResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventorySheetFormatDeclareResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventorySheetFormatDeclareResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventorySheetFormatDeclareResponseSuccess = (
+  inventorySheetFormatDeclareResponse200 | inventorySheetFormatDeclareResponse201
+) & {
+  headers: Headers;
+};
+export type inventorySheetFormatDeclareResponseError = (
+  | inventorySheetFormatDeclareResponse400
+  | inventorySheetFormatDeclareResponse401
+  | inventorySheetFormatDeclareResponse403
+  | inventorySheetFormatDeclareResponse404
+  | inventorySheetFormatDeclareResponse409
+  | inventorySheetFormatDeclareResponse422
+  | inventorySheetFormatDeclareResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventorySheetFormatDeclareResponse =
+  inventorySheetFormatDeclareResponseSuccess | inventorySheetFormatDeclareResponseError;
+
+export const getInventorySheetFormatDeclareUrl = () => {
+  return `/api/v1/inventory/sheet-formats/`;
+};
+
+export const inventorySheetFormatDeclare = async (
+  sheetFormatRequestRequest: SheetFormatRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventorySheetFormatDeclareResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventorySheetFormatDeclareResponse>(getInventorySheetFormatDeclareUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(sheetFormatRequestRequest),
   });
 };
 
@@ -7130,6 +10937,169 @@ export const jobsRetry = async (
   return apiMutator<jobsRetryResponse>(getJobsRetryUrl(jobId), {
     ...options,
     method: "POST",
+  });
+};
+
+export type mailListResponse200 = {
+  data: MailRecord[];
+  status: 200;
+};
+
+export type mailListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mailListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mailListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mailListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mailListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mailListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mailListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mailListResponseSuccess = mailListResponse200 & {
+  headers: Headers;
+};
+export type mailListResponseError = (
+  | mailListResponse400
+  | mailListResponse401
+  | mailListResponse403
+  | mailListResponse404
+  | mailListResponse409
+  | mailListResponse422
+  | mailListResponse503
+) & {
+  headers: Headers;
+};
+
+export type mailListResponse = mailListResponseSuccess | mailListResponseError;
+
+export const getMailListUrl = (params?: MailListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/mail/?${stringifiedParams}` : `/api/v1/mail/`;
+};
+
+export const mailList = async (
+  params?: MailListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mailListResponse> => {
+  return apiMutator<mailListResponse>(getMailListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type mailRecoverResponse200 = {
+  data: MailRecord;
+  status: 200;
+};
+
+export type mailRecoverResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mailRecoverResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mailRecoverResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mailRecoverResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mailRecoverResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mailRecoverResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mailRecoverResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mailRecoverResponseSuccess = mailRecoverResponse200 & {
+  headers: Headers;
+};
+export type mailRecoverResponseError = (
+  | mailRecoverResponse400
+  | mailRecoverResponse401
+  | mailRecoverResponse403
+  | mailRecoverResponse404
+  | mailRecoverResponse409
+  | mailRecoverResponse422
+  | mailRecoverResponse503
+) & {
+  headers: Headers;
+};
+
+export type mailRecoverResponse = mailRecoverResponseSuccess | mailRecoverResponseError;
+
+export const getMailRecoverUrl = (mailId: string) => {
+  return `/api/v1/mail/${mailId}/recover/`;
+};
+
+export const mailRecover = async (
+  mailId: string,
+  mailRecoveryRequest: MailRecoveryRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mailRecoverResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<mailRecoverResponse>(getMailRecoverUrl(mailId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(mailRecoveryRequest),
   });
 };
 
@@ -7515,6 +11485,1326 @@ export const organizationBrandingLogoDelete = async (
   );
 };
 
+export type collectionIntegrationsResponse200 = {
+  data: CollectionIntegration;
+  status: 200;
+};
+
+export type collectionIntegrationsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type collectionIntegrationsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type collectionIntegrationsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type collectionIntegrationsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type collectionIntegrationsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type collectionIntegrationsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type collectionIntegrationsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type collectionIntegrationsResponseSuccess = collectionIntegrationsResponse200 & {
+  headers: Headers;
+};
+export type collectionIntegrationsResponseError = (
+  | collectionIntegrationsResponse400
+  | collectionIntegrationsResponse401
+  | collectionIntegrationsResponse403
+  | collectionIntegrationsResponse404
+  | collectionIntegrationsResponse409
+  | collectionIntegrationsResponse422
+  | collectionIntegrationsResponse503
+) & {
+  headers: Headers;
+};
+
+export type collectionIntegrationsResponse =
+  collectionIntegrationsResponseSuccess | collectionIntegrationsResponseError;
+
+export const getCollectionIntegrationsUrl = () => {
+  return `/api/v1/organization/collections/`;
+};
+
+export const collectionIntegrations = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<collectionIntegrationsResponse> => {
+  return apiMutator<collectionIntegrationsResponse>(getCollectionIntegrationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type collectionSettingsSaveResponse200 = {
+  data: CollectionIntegration;
+  status: 200;
+};
+
+export type collectionSettingsSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type collectionSettingsSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type collectionSettingsSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type collectionSettingsSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type collectionSettingsSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type collectionSettingsSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type collectionSettingsSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type collectionSettingsSaveResponseSuccess = collectionSettingsSaveResponse200 & {
+  headers: Headers;
+};
+export type collectionSettingsSaveResponseError = (
+  | collectionSettingsSaveResponse400
+  | collectionSettingsSaveResponse401
+  | collectionSettingsSaveResponse403
+  | collectionSettingsSaveResponse404
+  | collectionSettingsSaveResponse409
+  | collectionSettingsSaveResponse422
+  | collectionSettingsSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type collectionSettingsSaveResponse =
+  collectionSettingsSaveResponseSuccess | collectionSettingsSaveResponseError;
+
+export const getCollectionSettingsSaveUrl = () => {
+  return `/api/v1/organization/collections/`;
+};
+
+export const collectionSettingsSave = async (
+  collectionSettingsRequestRequest: CollectionSettingsRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<collectionSettingsSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<collectionSettingsSaveResponse>(getCollectionSettingsSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(collectionSettingsRequestRequest),
+  });
+};
+
+export type companyGetResponse200 = {
+  data: Company;
+  status: 200;
+};
+
+export type companyGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyGetResponseSuccess = companyGetResponse200 & {
+  headers: Headers;
+};
+export type companyGetResponseError = (
+  | companyGetResponse400
+  | companyGetResponse401
+  | companyGetResponse403
+  | companyGetResponse404
+  | companyGetResponse409
+  | companyGetResponse422
+  | companyGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyGetResponse = companyGetResponseSuccess | companyGetResponseError;
+
+export const getCompanyGetUrl = () => {
+  return `/api/v1/organization/company/`;
+};
+
+export const companyGet = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyGetResponse> => {
+  return apiMutator<companyGetResponse>(getCompanyGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type companySaveResponse200 = {
+  data: Company;
+  status: 200;
+};
+
+export type companySaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companySaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companySaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companySaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companySaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companySaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companySaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companySaveResponseSuccess = companySaveResponse200 & {
+  headers: Headers;
+};
+export type companySaveResponseError = (
+  | companySaveResponse400
+  | companySaveResponse401
+  | companySaveResponse403
+  | companySaveResponse404
+  | companySaveResponse409
+  | companySaveResponse422
+  | companySaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type companySaveResponse = companySaveResponseSuccess | companySaveResponseError;
+
+export const getCompanySaveUrl = () => {
+  return `/api/v1/organization/company/`;
+};
+
+export const companySave = async (
+  companyWriteRequest: CompanyWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companySaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companySaveResponse>(getCompanySaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyWriteRequest),
+  });
+};
+
+export type companyDocumentPreviewResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type companyDocumentPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyDocumentPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyDocumentPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyDocumentPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyDocumentPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyDocumentPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyDocumentPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyDocumentPreviewResponseSuccess = companyDocumentPreviewResponse200 & {
+  headers: Headers;
+};
+export type companyDocumentPreviewResponseError = (
+  | companyDocumentPreviewResponse400
+  | companyDocumentPreviewResponse401
+  | companyDocumentPreviewResponse403
+  | companyDocumentPreviewResponse404
+  | companyDocumentPreviewResponse409
+  | companyDocumentPreviewResponse422
+  | companyDocumentPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyDocumentPreviewResponse =
+  companyDocumentPreviewResponseSuccess | companyDocumentPreviewResponseError;
+
+export const getCompanyDocumentPreviewUrl = () => {
+  return `/api/v1/organization/document-preview/`;
+};
+
+export const companyDocumentPreview = async (
+  companyPreviewRequest: CompanyPreviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyDocumentPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companyDocumentPreviewResponse>(getCompanyDocumentPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyPreviewRequest),
+  });
+};
+
+export type organizationExtraPolicyResponse200 = {
+  data: PolicyResponse;
+  status: 200;
+};
+
+export type organizationExtraPolicyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationExtraPolicyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationExtraPolicyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationExtraPolicyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationExtraPolicyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationExtraPolicyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationExtraPolicyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationExtraPolicyResponseSuccess = organizationExtraPolicyResponse200 & {
+  headers: Headers;
+};
+export type organizationExtraPolicyResponseError = (
+  | organizationExtraPolicyResponse400
+  | organizationExtraPolicyResponse401
+  | organizationExtraPolicyResponse403
+  | organizationExtraPolicyResponse404
+  | organizationExtraPolicyResponse409
+  | organizationExtraPolicyResponse422
+  | organizationExtraPolicyResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationExtraPolicyResponse =
+  organizationExtraPolicyResponseSuccess | organizationExtraPolicyResponseError;
+
+export const getOrganizationExtraPolicyUrl = () => {
+  return `/api/v1/organization/extras/`;
+};
+
+export const organizationExtraPolicy = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationExtraPolicyResponse> => {
+  return apiMutator<organizationExtraPolicyResponse>(getOrganizationExtraPolicyUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type organizationExtraPolicySaveResponse200 = {
+  data: PolicyResponse;
+  status: 200;
+};
+
+export type organizationExtraPolicySaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationExtraPolicySaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationExtraPolicySaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationExtraPolicySaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationExtraPolicySaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationExtraPolicySaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationExtraPolicySaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationExtraPolicySaveResponseSuccess = organizationExtraPolicySaveResponse200 & {
+  headers: Headers;
+};
+export type organizationExtraPolicySaveResponseError = (
+  | organizationExtraPolicySaveResponse400
+  | organizationExtraPolicySaveResponse401
+  | organizationExtraPolicySaveResponse403
+  | organizationExtraPolicySaveResponse404
+  | organizationExtraPolicySaveResponse409
+  | organizationExtraPolicySaveResponse422
+  | organizationExtraPolicySaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationExtraPolicySaveResponse =
+  organizationExtraPolicySaveResponseSuccess | organizationExtraPolicySaveResponseError;
+
+export const getOrganizationExtraPolicySaveUrl = () => {
+  return `/api/v1/organization/extras/`;
+};
+
+export const organizationExtraPolicySave = async (
+  policyWriteRequest: PolicyWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationExtraPolicySaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<organizationExtraPolicySaveResponse>(getOrganizationExtraPolicySaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(policyWriteRequest),
+  });
+};
+
+export type companyInviteResponse201 = {
+  data: CompanyUsers;
+  status: 201;
+};
+
+export type companyInviteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyInviteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyInviteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyInviteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyInviteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyInviteResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyInviteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyInviteResponseSuccess = companyInviteResponse201 & {
+  headers: Headers;
+};
+export type companyInviteResponseError = (
+  | companyInviteResponse400
+  | companyInviteResponse401
+  | companyInviteResponse403
+  | companyInviteResponse404
+  | companyInviteResponse409
+  | companyInviteResponse422
+  | companyInviteResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyInviteResponse = companyInviteResponseSuccess | companyInviteResponseError;
+
+export const getCompanyInviteUrl = () => {
+  return `/api/v1/organization/invitations/`;
+};
+
+export const companyInvite = async (
+  invitationWriteRequest: InvitationWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyInviteResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companyInviteResponse>(getCompanyInviteUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(invitationWriteRequest),
+  });
+};
+
+export type companyInvitationRevokeResponse200 = {
+  data: CompanyUsers;
+  status: 200;
+};
+
+export type companyInvitationRevokeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyInvitationRevokeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyInvitationRevokeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyInvitationRevokeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyInvitationRevokeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyInvitationRevokeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyInvitationRevokeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyInvitationRevokeResponseSuccess = companyInvitationRevokeResponse200 & {
+  headers: Headers;
+};
+export type companyInvitationRevokeResponseError = (
+  | companyInvitationRevokeResponse400
+  | companyInvitationRevokeResponse401
+  | companyInvitationRevokeResponse403
+  | companyInvitationRevokeResponse404
+  | companyInvitationRevokeResponse409
+  | companyInvitationRevokeResponse422
+  | companyInvitationRevokeResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyInvitationRevokeResponse =
+  companyInvitationRevokeResponseSuccess | companyInvitationRevokeResponseError;
+
+export const getCompanyInvitationRevokeUrl = (identity: string) => {
+  return `/api/v1/organization/invitations/${identity}/`;
+};
+
+export const companyInvitationRevoke = async (
+  identity: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyInvitationRevokeResponse> => {
+  return apiMutator<companyInvitationRevokeResponse>(getCompanyInvitationRevokeUrl(identity), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export type mailIntegrationStatusResponse200 = {
+  data: MailIntegration;
+  status: 200;
+};
+
+export type mailIntegrationStatusResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mailIntegrationStatusResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mailIntegrationStatusResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mailIntegrationStatusResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mailIntegrationStatusResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mailIntegrationStatusResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mailIntegrationStatusResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mailIntegrationStatusResponseSuccess = mailIntegrationStatusResponse200 & {
+  headers: Headers;
+};
+export type mailIntegrationStatusResponseError = (
+  | mailIntegrationStatusResponse400
+  | mailIntegrationStatusResponse401
+  | mailIntegrationStatusResponse403
+  | mailIntegrationStatusResponse404
+  | mailIntegrationStatusResponse409
+  | mailIntegrationStatusResponse422
+  | mailIntegrationStatusResponse503
+) & {
+  headers: Headers;
+};
+
+export type mailIntegrationStatusResponse =
+  mailIntegrationStatusResponseSuccess | mailIntegrationStatusResponseError;
+
+export const getMailIntegrationStatusUrl = () => {
+  return `/api/v1/organization/mail/`;
+};
+
+export const mailIntegrationStatus = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mailIntegrationStatusResponse> => {
+  return apiMutator<mailIntegrationStatusResponse>(getMailIntegrationStatusUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type mountingRulesResponse200 = {
+  data: Rules;
+  status: 200;
+};
+
+export type mountingRulesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mountingRulesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mountingRulesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mountingRulesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mountingRulesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mountingRulesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mountingRulesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mountingRulesResponseSuccess = mountingRulesResponse200 & {
+  headers: Headers;
+};
+export type mountingRulesResponseError = (
+  | mountingRulesResponse400
+  | mountingRulesResponse401
+  | mountingRulesResponse403
+  | mountingRulesResponse404
+  | mountingRulesResponse409
+  | mountingRulesResponse422
+  | mountingRulesResponse503
+) & {
+  headers: Headers;
+};
+
+export type mountingRulesResponse = mountingRulesResponseSuccess | mountingRulesResponseError;
+
+export const getMountingRulesUrl = (systemId: string) => {
+  return `/api/v1/organization/mounting/${systemId}/`;
+};
+
+export const mountingRules = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mountingRulesResponse> => {
+  return apiMutator<mountingRulesResponse>(getMountingRulesUrl(systemId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type mountingRuleSaveResponse200 = {
+  data: Rules;
+  status: 200;
+};
+
+export type mountingRuleSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mountingRuleSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mountingRuleSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mountingRuleSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mountingRuleSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mountingRuleSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mountingRuleSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mountingRuleSaveResponseSuccess = mountingRuleSaveResponse200 & {
+  headers: Headers;
+};
+export type mountingRuleSaveResponseError = (
+  | mountingRuleSaveResponse400
+  | mountingRuleSaveResponse401
+  | mountingRuleSaveResponse403
+  | mountingRuleSaveResponse404
+  | mountingRuleSaveResponse409
+  | mountingRuleSaveResponse422
+  | mountingRuleSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type mountingRuleSaveResponse =
+  mountingRuleSaveResponseSuccess | mountingRuleSaveResponseError;
+
+export const getMountingRuleSaveUrl = (systemId: string) => {
+  return `/api/v1/organization/mounting/${systemId}/`;
+};
+
+export const mountingRuleSave = async (
+  systemId: string,
+  ruleWriteRequest: RuleWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mountingRuleSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<mountingRuleSaveResponse>(getMountingRuleSaveUrl(systemId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(ruleWriteRequest),
+  });
+};
+
+export type companyNumberingResponse200 = {
+  data: NumberingList;
+  status: 200;
+};
+
+export type companyNumberingResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyNumberingResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyNumberingResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyNumberingResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyNumberingResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyNumberingResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyNumberingResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyNumberingResponseSuccess = companyNumberingResponse200 & {
+  headers: Headers;
+};
+export type companyNumberingResponseError = (
+  | companyNumberingResponse400
+  | companyNumberingResponse401
+  | companyNumberingResponse403
+  | companyNumberingResponse404
+  | companyNumberingResponse409
+  | companyNumberingResponse422
+  | companyNumberingResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyNumberingResponse =
+  companyNumberingResponseSuccess | companyNumberingResponseError;
+
+export const getCompanyNumberingUrl = () => {
+  return `/api/v1/organization/numbering/`;
+};
+
+export const companyNumbering = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyNumberingResponse> => {
+  return apiMutator<companyNumberingResponse>(getCompanyNumberingUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type companyUsersResponse200 = {
+  data: CompanyUsers;
+  status: 200;
+};
+
+export type companyUsersResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyUsersResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyUsersResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyUsersResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyUsersResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyUsersResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyUsersResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyUsersResponseSuccess = companyUsersResponse200 & {
+  headers: Headers;
+};
+export type companyUsersResponseError = (
+  | companyUsersResponse400
+  | companyUsersResponse401
+  | companyUsersResponse403
+  | companyUsersResponse404
+  | companyUsersResponse409
+  | companyUsersResponse422
+  | companyUsersResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyUsersResponse = companyUsersResponseSuccess | companyUsersResponseError;
+
+export const getCompanyUsersUrl = () => {
+  return `/api/v1/organization/users/`;
+};
+
+export const companyUsers = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyUsersResponse> => {
+  return apiMutator<companyUsersResponse>(getCompanyUsersUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type companyUserUpdateResponse200 = {
+  data: CompanyUsers;
+  status: 200;
+};
+
+export type companyUserUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type companyUserUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type companyUserUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type companyUserUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type companyUserUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type companyUserUpdateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type companyUserUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type companyUserUpdateResponseSuccess = companyUserUpdateResponse200 & {
+  headers: Headers;
+};
+export type companyUserUpdateResponseError = (
+  | companyUserUpdateResponse400
+  | companyUserUpdateResponse401
+  | companyUserUpdateResponse403
+  | companyUserUpdateResponse404
+  | companyUserUpdateResponse409
+  | companyUserUpdateResponse422
+  | companyUserUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type companyUserUpdateResponse =
+  companyUserUpdateResponseSuccess | companyUserUpdateResponseError;
+
+export const getCompanyUserUpdateUrl = (identity: string) => {
+  return `/api/v1/organization/users/${identity}/`;
+};
+
+export const companyUserUpdate = async (
+  identity: string,
+  companyUserWriteRequest: CompanyUserWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<companyUserUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<companyUserUpdateResponse>(getCompanyUserUpdateUrl(identity), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyUserWriteRequest),
+  });
+};
+
+export type portalPaymentReturnResponse200 = {
+  data: PortalPayReturn;
+  status: 200;
+};
+
+export type portalPaymentReturnResponse302 = {
+  data: void;
+  status: 302;
+};
+
+export type portalPaymentReturnResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type portalPaymentReturnResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type portalPaymentReturnResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type portalPaymentReturnResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type portalPaymentReturnResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type portalPaymentReturnResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type portalPaymentReturnResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type portalPaymentReturnResponseSuccess = portalPaymentReturnResponse200 & {
+  headers: Headers;
+};
+export type portalPaymentReturnResponseError = (
+  | portalPaymentReturnResponse302
+  | portalPaymentReturnResponse400
+  | portalPaymentReturnResponse401
+  | portalPaymentReturnResponse403
+  | portalPaymentReturnResponse404
+  | portalPaymentReturnResponse409
+  | portalPaymentReturnResponse422
+  | portalPaymentReturnResponse503
+) & {
+  headers: Headers;
+};
+
+export type portalPaymentReturnResponse =
+  portalPaymentReturnResponseSuccess | portalPaymentReturnResponseError;
+
+export const getPortalPaymentReturnUrl = (contextId: string, params: PortalPaymentReturnParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/portal/payments/${contextId}/return/?${stringifiedParams}`
+    : `/api/v1/portal/payments/${contextId}/return/`;
+};
+
+export const portalPaymentReturn = async (
+  contextId: string,
+  params: PortalPaymentReturnParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<portalPaymentReturnResponse> => {
+  return apiMutator<portalPaymentReturnResponse>(getPortalPaymentReturnUrl(contextId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type portalPaymentProviderReturnResponse302 = {
+  data: void;
+  status: 302;
+};
+
+export type portalPaymentProviderReturnResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type portalPaymentProviderReturnResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type portalPaymentProviderReturnResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type portalPaymentProviderReturnResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type portalPaymentProviderReturnResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type portalPaymentProviderReturnResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type portalPaymentProviderReturnResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type portalPaymentProviderReturnResponseError = (
+  | portalPaymentProviderReturnResponse302
+  | portalPaymentProviderReturnResponse400
+  | portalPaymentProviderReturnResponse401
+  | portalPaymentProviderReturnResponse403
+  | portalPaymentProviderReturnResponse404
+  | portalPaymentProviderReturnResponse409
+  | portalPaymentProviderReturnResponse422
+  | portalPaymentProviderReturnResponse503
+) & {
+  headers: Headers;
+};
+
+export type portalPaymentProviderReturnResponse = portalPaymentProviderReturnResponseError;
+
+export const getPortalPaymentProviderReturnUrl = (
+  contextId: string,
+  params: PortalPaymentProviderReturnParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/portal/payments/${contextId}/return/?${stringifiedParams}`
+    : `/api/v1/portal/payments/${contextId}/return/`;
+};
+
+export const portalPaymentProviderReturn = async (
+  contextId: string,
+  params: PortalPaymentProviderReturnParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<portalPaymentProviderReturnResponse> => {
+  return apiMutator<portalPaymentProviderReturnResponse>(
+    getPortalPaymentProviderReturnUrl(contextId, params),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
 export type portalQuoteRetrieveResponse200 = {
   data: PortalQuote;
   status: 200;
@@ -7673,6 +12963,88 @@ export const portalQuoteDecide = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(decideRequestRequest),
+  });
+};
+
+export type portalQuotePayResponse200 = {
+  data: PortalPayResult;
+  status: 200;
+};
+
+export type portalQuotePayResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type portalQuotePayResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type portalQuotePayResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type portalQuotePayResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type portalQuotePayResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type portalQuotePayResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type portalQuotePayResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type portalQuotePayResponseSuccess = portalQuotePayResponse200 & {
+  headers: Headers;
+};
+export type portalQuotePayResponseError = (
+  | portalQuotePayResponse400
+  | portalQuotePayResponse401
+  | portalQuotePayResponse403
+  | portalQuotePayResponse404
+  | portalQuotePayResponse409
+  | portalQuotePayResponse422
+  | portalQuotePayResponse503
+) & {
+  headers: Headers;
+};
+
+export type portalQuotePayResponse = portalQuotePayResponseSuccess | portalQuotePayResponseError;
+
+export const getPortalQuotePayUrl = (token: string) => {
+  return `/api/v1/portal/quotes/${token}/pay/`;
+};
+
+export const portalQuotePay = async (
+  token: string,
+  portalPayRequestRequest: PortalPayRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<portalQuotePayResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<portalQuotePayResponse>(getPortalQuotePayUrl(token), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(portalPayRequestRequest),
   });
 };
 
@@ -8093,6 +13465,254 @@ export const positionsDesignAssist = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(designAssistRequestRequest),
+  });
+};
+
+export type measurementConfirmResponse200 = {
+  data: MeasurementResponse;
+  status: 200;
+};
+
+export type measurementConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type measurementConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type measurementConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type measurementConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type measurementConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type measurementConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type measurementConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type measurementConfirmResponseSuccess = measurementConfirmResponse200 & {
+  headers: Headers;
+};
+export type measurementConfirmResponseError = (
+  | measurementConfirmResponse400
+  | measurementConfirmResponse401
+  | measurementConfirmResponse403
+  | measurementConfirmResponse404
+  | measurementConfirmResponse409
+  | measurementConfirmResponse422
+  | measurementConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type measurementConfirmResponse =
+  measurementConfirmResponseSuccess | measurementConfirmResponseError;
+
+export const getMeasurementConfirmUrl = (positionId: string) => {
+  return `/api/v1/positions/${positionId}/measurements/confirm/`;
+};
+
+export const measurementConfirm = async (
+  positionId: string,
+  measurementConfirmRequest: MeasurementConfirmRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<measurementConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<measurementConfirmResponse>(getMeasurementConfirmUrl(positionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(measurementConfirmRequest),
+  });
+};
+
+export type measurementRectifyResponse200 = {
+  data: RectificationResponse;
+  status: 200;
+};
+
+export type measurementRectifyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type measurementRectifyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type measurementRectifyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type measurementRectifyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type measurementRectifyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type measurementRectifyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type measurementRectifyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type measurementRectifyResponseSuccess = measurementRectifyResponse200 & {
+  headers: Headers;
+};
+export type measurementRectifyResponseError = (
+  | measurementRectifyResponse400
+  | measurementRectifyResponse401
+  | measurementRectifyResponse403
+  | measurementRectifyResponse404
+  | measurementRectifyResponse409
+  | measurementRectifyResponse422
+  | measurementRectifyResponse503
+) & {
+  headers: Headers;
+};
+
+export type measurementRectifyResponse =
+  measurementRectifyResponseSuccess | measurementRectifyResponseError;
+
+export const getMeasurementRectifyUrl = (positionId: string) => {
+  return `/api/v1/positions/${positionId}/measurements/rectify/`;
+};
+
+export const measurementRectify = async (
+  positionId: string,
+  rectificationRequest: RectificationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<measurementRectifyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<measurementRectifyResponse>(getMeasurementRectifyUrl(positionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(rectificationRequest),
+  });
+};
+
+export type pricingAcknowledgeResponse200 = {
+  data: AdminResponse;
+  status: 200;
+};
+
+export type pricingAcknowledgeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingAcknowledgeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingAcknowledgeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingAcknowledgeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingAcknowledgeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingAcknowledgeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingAcknowledgeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingAcknowledgeResponseSuccess = pricingAcknowledgeResponse200 & {
+  headers: Headers;
+};
+export type pricingAcknowledgeResponseError = (
+  | pricingAcknowledgeResponse400
+  | pricingAcknowledgeResponse401
+  | pricingAcknowledgeResponse403
+  | pricingAcknowledgeResponse404
+  | pricingAcknowledgeResponse409
+  | pricingAcknowledgeResponse422
+  | pricingAcknowledgeResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingAcknowledgeResponse =
+  pricingAcknowledgeResponseSuccess | pricingAcknowledgeResponseError;
+
+export const getPricingAcknowledgeUrl = () => {
+  return `/api/v1/pricing/acknowledge/`;
+};
+
+export const pricingAcknowledge = async (
+  acknowledgeRequest: AcknowledgeRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingAcknowledgeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingAcknowledgeResponse>(getPricingAcknowledgeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(acknowledgeRequest),
   });
 };
 
@@ -8571,6 +14191,78 @@ export const pricingOperations = async (
   });
 };
 
+export type pricingOperationResponse200 = {
+  data: PriceResponse;
+  status: 200;
+};
+
+export type pricingOperationResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingOperationResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingOperationResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingOperationResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingOperationResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingOperationResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingOperationResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingOperationResponseSuccess = pricingOperationResponse200 & {
+  headers: Headers;
+};
+export type pricingOperationResponseError = (
+  | pricingOperationResponse400
+  | pricingOperationResponse401
+  | pricingOperationResponse403
+  | pricingOperationResponse404
+  | pricingOperationResponse409
+  | pricingOperationResponse422
+  | pricingOperationResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingOperationResponse =
+  pricingOperationResponseSuccess | pricingOperationResponseError;
+
+export const getPricingOperationUrl = (operationId: string) => {
+  return `/api/v1/pricing/operations/${operationId}/`;
+};
+
+export const pricingOperation = async (
+  operationId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingOperationResponse> => {
+  return apiMutator<pricingOperationResponse>(getPricingOperationUrl(operationId), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type pricingApplyResponse200 = {
   data: PriceResponse;
   status: 200;
@@ -8735,6 +14427,76 @@ export const pricingWithdraw = async (
   });
 };
 
+export type pricingOptionsResponse200 = {
+  data: PricingOptions;
+  status: 200;
+};
+
+export type pricingOptionsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingOptionsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingOptionsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingOptionsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingOptionsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingOptionsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingOptionsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingOptionsResponseSuccess = pricingOptionsResponse200 & {
+  headers: Headers;
+};
+export type pricingOptionsResponseError = (
+  | pricingOptionsResponse400
+  | pricingOptionsResponse401
+  | pricingOptionsResponse403
+  | pricingOptionsResponse404
+  | pricingOptionsResponse409
+  | pricingOptionsResponse422
+  | pricingOptionsResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingOptionsResponse = pricingOptionsResponseSuccess | pricingOptionsResponseError;
+
+export const getPricingOptionsUrl = () => {
+  return `/api/v1/pricing/options/`;
+};
+
+export const pricingOptions = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingOptionsResponse> => {
+  return apiMutator<pricingOptionsResponse>(getPricingOptionsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type pricingPreviewResponse200 = {
   data: PriceResponse;
   status: 200;
@@ -8809,6 +14571,88 @@ export const pricingPreview = async (
     return h;
   };
   return apiMutator<pricingPreviewResponse>(getPricingPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(priceRequestRequest),
+  });
+};
+
+export type pricingWorkspaceResponse200 = {
+  data: WorkspaceResponse;
+  status: 200;
+};
+
+export type pricingWorkspaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingWorkspaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingWorkspaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingWorkspaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingWorkspaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingWorkspaceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingWorkspaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingWorkspaceResponseSuccess = pricingWorkspaceResponse200 & {
+  headers: Headers;
+};
+export type pricingWorkspaceResponseError = (
+  | pricingWorkspaceResponse400
+  | pricingWorkspaceResponse401
+  | pricingWorkspaceResponse403
+  | pricingWorkspaceResponse404
+  | pricingWorkspaceResponse409
+  | pricingWorkspaceResponse422
+  | pricingWorkspaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingWorkspaceResponse =
+  pricingWorkspaceResponseSuccess | pricingWorkspaceResponseError;
+
+export const getPricingWorkspaceUrl = () => {
+  return `/api/v1/pricing/workspace/`;
+};
+
+export const pricingWorkspace = async (
+  priceRequestRequest: PriceRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingWorkspaceResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingWorkspaceResponse>(getPricingWorkspaceUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
@@ -9445,6 +15289,648 @@ export const productionCncWorkspace = async (
   });
 };
 
+export type fieldWorkspaceResponse200 = {
+  data: FieldWorkspace;
+  status: 200;
+};
+
+export type fieldWorkspaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldWorkspaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldWorkspaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldWorkspaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldWorkspaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldWorkspaceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldWorkspaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldWorkspaceResponseSuccess = fieldWorkspaceResponse200 & {
+  headers: Headers;
+};
+export type fieldWorkspaceResponseError = (
+  | fieldWorkspaceResponse400
+  | fieldWorkspaceResponse401
+  | fieldWorkspaceResponse403
+  | fieldWorkspaceResponse404
+  | fieldWorkspaceResponse409
+  | fieldWorkspaceResponse422
+  | fieldWorkspaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldWorkspaceResponse = fieldWorkspaceResponseSuccess | fieldWorkspaceResponseError;
+
+export const getFieldWorkspaceUrl = () => {
+  return `/api/v1/production/field/`;
+};
+
+export const fieldWorkspace = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldWorkspaceResponse> => {
+  return apiMutator<fieldWorkspaceResponse>(getFieldWorkspaceUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type fieldAssetAccessResponse200 = {
+  data: FieldAssetAccess;
+  status: 200;
+};
+
+export type fieldAssetAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldAssetAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldAssetAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldAssetAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldAssetAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldAssetAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldAssetAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldAssetAccessResponseSuccess = fieldAssetAccessResponse200 & {
+  headers: Headers;
+};
+export type fieldAssetAccessResponseError = (
+  | fieldAssetAccessResponse400
+  | fieldAssetAccessResponse401
+  | fieldAssetAccessResponse403
+  | fieldAssetAccessResponse404
+  | fieldAssetAccessResponse409
+  | fieldAssetAccessResponse422
+  | fieldAssetAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldAssetAccessResponse =
+  fieldAssetAccessResponseSuccess | fieldAssetAccessResponseError;
+
+export const getFieldAssetAccessUrl = (assetId: string) => {
+  return `/api/v1/production/field/assets/${assetId}/access/`;
+};
+
+export const fieldAssetAccess = async (
+  assetId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldAssetAccessResponse> => {
+  return apiMutator<fieldAssetAccessResponse>(getFieldAssetAccessUrl(assetId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type fieldScheduleResponse201 = {
+  data: FieldReceipt;
+  status: 201;
+};
+
+export type fieldScheduleResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldScheduleResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldScheduleResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldScheduleResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldScheduleResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldScheduleResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldScheduleResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldScheduleResponseSuccess = fieldScheduleResponse201 & {
+  headers: Headers;
+};
+export type fieldScheduleResponseError = (
+  | fieldScheduleResponse400
+  | fieldScheduleResponse401
+  | fieldScheduleResponse403
+  | fieldScheduleResponse404
+  | fieldScheduleResponse409
+  | fieldScheduleResponse422
+  | fieldScheduleResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldScheduleResponse = fieldScheduleResponseSuccess | fieldScheduleResponseError;
+
+export const getFieldScheduleUrl = () => {
+  return `/api/v1/production/field/schedule/`;
+};
+
+export const fieldSchedule = async (
+  fieldScheduleRequest: FieldScheduleRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldScheduleResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<fieldScheduleResponse>(getFieldScheduleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(fieldScheduleRequest),
+  });
+};
+
+export type fieldCommandResponse200 = {
+  data: FieldReceipt;
+  status: 200;
+};
+
+export type fieldCommandResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldCommandResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldCommandResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldCommandResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldCommandResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldCommandResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldCommandResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldCommandResponseSuccess = fieldCommandResponse200 & {
+  headers: Headers;
+};
+export type fieldCommandResponseError = (
+  | fieldCommandResponse400
+  | fieldCommandResponse401
+  | fieldCommandResponse403
+  | fieldCommandResponse404
+  | fieldCommandResponse409
+  | fieldCommandResponse422
+  | fieldCommandResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldCommandResponse = fieldCommandResponseSuccess | fieldCommandResponseError;
+
+export const getFieldCommandUrl = (visitId: string) => {
+  return `/api/v1/production/field/visits/${visitId}/commands/`;
+};
+
+export const fieldCommand = async (
+  visitId: string,
+  fieldCommandRequest: FieldCommandRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldCommandResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<fieldCommandResponse>(getFieldCommandUrl(visitId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(fieldCommandRequest),
+  });
+};
+
+export type fieldReviewResponse200 = {
+  data: FieldReviewResponse;
+  status: 200;
+};
+
+export type fieldReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fieldReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fieldReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fieldReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fieldReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fieldReviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fieldReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fieldReviewResponseSuccess = fieldReviewResponse200 & {
+  headers: Headers;
+};
+export type fieldReviewResponseError = (
+  | fieldReviewResponse400
+  | fieldReviewResponse401
+  | fieldReviewResponse403
+  | fieldReviewResponse404
+  | fieldReviewResponse409
+  | fieldReviewResponse422
+  | fieldReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type fieldReviewResponse = fieldReviewResponseSuccess | fieldReviewResponseError;
+
+export const getFieldReviewUrl = (visitId: string) => {
+  return `/api/v1/production/field/visits/${visitId}/review/`;
+};
+
+export const fieldReview = async (
+  visitId: string,
+  fieldReviewRequest: FieldReviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fieldReviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<fieldReviewResponse>(getFieldReviewUrl(visitId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(fieldReviewRequest),
+  });
+};
+
+export type productionGlassOrderResponse200ApplicationJson = {
+  data: GlassOrder;
+  status: 200;
+};
+
+export type productionGlassOrderResponse200ApplicationPdf = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionGlassOrderResponse200TextCsv = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionGlassOrderResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionGlassOrderResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionGlassOrderResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionGlassOrderResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionGlassOrderResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionGlassOrderResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionGlassOrderResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionGlassOrderResponseSuccess = (
+  | productionGlassOrderResponse200ApplicationJson
+  | productionGlassOrderResponse200ApplicationPdf
+  | productionGlassOrderResponse200TextCsv
+) & {
+  headers: Headers;
+};
+export type productionGlassOrderResponseError = (
+  | productionGlassOrderResponse400
+  | productionGlassOrderResponse401
+  | productionGlassOrderResponse403
+  | productionGlassOrderResponse404
+  | productionGlassOrderResponse409
+  | productionGlassOrderResponse422
+  | productionGlassOrderResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionGlassOrderResponse =
+  productionGlassOrderResponseSuccess | productionGlassOrderResponseError;
+
+export const getProductionGlassOrderUrl = (params: ProductionGlassOrderParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/production/glass-orders/?${stringifiedParams}`
+    : `/api/v1/production/glass-orders/`;
+};
+
+export const productionGlassOrder = async (
+  params: ProductionGlassOrderParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionGlassOrderResponse> => {
+  return apiMutator<productionGlassOrderResponse>(getProductionGlassOrderUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionOperatorStationResponse200 = {
+  data: OperatorStation;
+  status: 200;
+};
+
+export type productionOperatorStationResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOperatorStationResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOperatorStationResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOperatorStationResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOperatorStationResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOperatorStationResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOperatorStationResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOperatorStationResponseSuccess = productionOperatorStationResponse200 & {
+  headers: Headers;
+};
+export type productionOperatorStationResponseError = (
+  | productionOperatorStationResponse400
+  | productionOperatorStationResponse401
+  | productionOperatorStationResponse403
+  | productionOperatorStationResponse404
+  | productionOperatorStationResponse409
+  | productionOperatorStationResponse422
+  | productionOperatorStationResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOperatorStationResponse =
+  productionOperatorStationResponseSuccess | productionOperatorStationResponseError;
+
+export const getProductionOperatorStationUrl = () => {
+  return `/api/v1/production/operator-station/`;
+};
+
+export const productionOperatorStation = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOperatorStationResponse> => {
+  return apiMutator<productionOperatorStationResponse>(getProductionOperatorStationUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionOperatorStationSelectResponse200 = {
+  data: OperatorStation;
+  status: 200;
+};
+
+export type productionOperatorStationSelectResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOperatorStationSelectResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOperatorStationSelectResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOperatorStationSelectResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOperatorStationSelectResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOperatorStationSelectResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOperatorStationSelectResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOperatorStationSelectResponseSuccess =
+  productionOperatorStationSelectResponse200 & {
+    headers: Headers;
+  };
+export type productionOperatorStationSelectResponseError = (
+  | productionOperatorStationSelectResponse400
+  | productionOperatorStationSelectResponse401
+  | productionOperatorStationSelectResponse403
+  | productionOperatorStationSelectResponse404
+  | productionOperatorStationSelectResponse409
+  | productionOperatorStationSelectResponse422
+  | productionOperatorStationSelectResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOperatorStationSelectResponse =
+  productionOperatorStationSelectResponseSuccess | productionOperatorStationSelectResponseError;
+
+export const getProductionOperatorStationSelectUrl = () => {
+  return `/api/v1/production/operator-station/`;
+};
+
+export const productionOperatorStationSelect = async (
+  operatorStationRequestRequest: OperatorStationRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOperatorStationSelectResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOperatorStationSelectResponse>(
+    getProductionOperatorStationSelectUrl(),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(operatorStationRequestRequest),
+    },
+  );
+};
+
 export type productionOrdersResponse200 = {
   data: ProductionOrderList;
   status: 200;
@@ -9503,14 +15989,27 @@ export type productionOrdersResponseError = (
 export type productionOrdersResponse =
   productionOrdersResponseSuccess | productionOrdersResponseError;
 
-export const getProductionOrdersUrl = () => {
-  return `/api/v1/production/orders/`;
+export const getProductionOrdersUrl = (params?: ProductionOrdersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/production/orders/?${stringifiedParams}`
+    : `/api/v1/production/orders/`;
 };
 
 export const productionOrders = async (
+  params?: ProductionOrdersParams,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<productionOrdersResponse> => {
-  return apiMutator<productionOrdersResponse>(getProductionOrdersUrl(), {
+  return apiMutator<productionOrdersResponse>(getProductionOrdersUrl(params), {
     ...options,
     method: "GET",
   });
@@ -9819,6 +16318,89 @@ export const productionOrderCncFile = async (
   );
 };
 
+export type productionOrderCncPreviewResponse200 = {
+  data: CncPreview;
+  status: 200;
+};
+
+export type productionOrderCncPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderCncPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderCncPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderCncPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderCncPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderCncPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderCncPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderCncPreviewResponseSuccess = productionOrderCncPreviewResponse200 & {
+  headers: Headers;
+};
+export type productionOrderCncPreviewResponseError = (
+  | productionOrderCncPreviewResponse400
+  | productionOrderCncPreviewResponse401
+  | productionOrderCncPreviewResponse403
+  | productionOrderCncPreviewResponse404
+  | productionOrderCncPreviewResponse409
+  | productionOrderCncPreviewResponse422
+  | productionOrderCncPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderCncPreviewResponse =
+  productionOrderCncPreviewResponseSuccess | productionOrderCncPreviewResponseError;
+
+export const getProductionOrderCncPreviewUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/cnc/preview/`;
+};
+
+export const productionOrderCncPreview = async (
+  orderId: string,
+  cncPreviewRequestRequest: CncPreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderCncPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderCncPreviewResponse>(getProductionOrderCncPreviewUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(cncPreviewRequestRequest),
+  });
+};
+
 export type productionOrderCncProgramsResponse200 = {
   data: CncProgramList;
   status: 200;
@@ -10111,15 +16693,31 @@ export type productionOrderCutPackResponseError = (
 export type productionOrderCutPackResponse =
   productionOrderCutPackResponseSuccess | productionOrderCutPackResponseError;
 
-export const getProductionOrderCutPackUrl = (orderId: string) => {
-  return `/api/v1/production/orders/${orderId}/cut-pack/`;
+export const getProductionOrderCutPackUrl = (
+  orderId: string,
+  params?: ProductionOrderCutPackParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/production/orders/${orderId}/cut-pack/?${stringifiedParams}`
+    : `/api/v1/production/orders/${orderId}/cut-pack/`;
 };
 
 export const productionOrderCutPack = async (
   orderId: string,
+  params?: ProductionOrderCutPackParams,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<productionOrderCutPackResponse> => {
-  return apiMutator<productionOrderCutPackResponse>(getProductionOrderCutPackUrl(orderId), {
+  return apiMutator<productionOrderCutPackResponse>(getProductionOrderCutPackUrl(orderId, params), {
     ...options,
     method: "GET",
   });
@@ -11916,6 +18514,97 @@ export const productionOrderPacking = async (
   });
 };
 
+export type productionOrderPieceLabelsResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionOrderPieceLabelsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderPieceLabelsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderPieceLabelsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderPieceLabelsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderPieceLabelsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderPieceLabelsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderPieceLabelsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderPieceLabelsResponseSuccess = productionOrderPieceLabelsResponse200 & {
+  headers: Headers;
+};
+export type productionOrderPieceLabelsResponseError = (
+  | productionOrderPieceLabelsResponse400
+  | productionOrderPieceLabelsResponse401
+  | productionOrderPieceLabelsResponse403
+  | productionOrderPieceLabelsResponse404
+  | productionOrderPieceLabelsResponse409
+  | productionOrderPieceLabelsResponse422
+  | productionOrderPieceLabelsResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderPieceLabelsResponse =
+  productionOrderPieceLabelsResponseSuccess | productionOrderPieceLabelsResponseError;
+
+export const getProductionOrderPieceLabelsUrl = (
+  orderId: string,
+  params?: ProductionOrderPieceLabelsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/production/orders/${orderId}/piece-labels/?${stringifiedParams}`
+    : `/api/v1/production/orders/${orderId}/piece-labels/`;
+};
+
+export const productionOrderPieceLabels = async (
+  orderId: string,
+  params?: ProductionOrderPieceLabelsParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderPieceLabelsResponse> => {
+  return apiMutator<productionOrderPieceLabelsResponse>(
+    getProductionOrderPieceLabelsUrl(orderId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export type productionOrderPackResponse200 = {
   data: Blob;
   status: 200;
@@ -11985,6 +18674,89 @@ export const productionOrderPack = async (
   return apiMutator<productionOrderPackResponse>(getProductionOrderPackUrl(orderId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type productionQcRemakeResponse201 = {
+  data: ProductionOrderDetail;
+  status: 201;
+};
+
+export type productionQcRemakeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionQcRemakeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionQcRemakeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionQcRemakeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionQcRemakeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionQcRemakeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionQcRemakeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionQcRemakeResponseSuccess = productionQcRemakeResponse201 & {
+  headers: Headers;
+};
+export type productionQcRemakeResponseError = (
+  | productionQcRemakeResponse400
+  | productionQcRemakeResponse401
+  | productionQcRemakeResponse403
+  | productionQcRemakeResponse404
+  | productionQcRemakeResponse409
+  | productionQcRemakeResponse422
+  | productionQcRemakeResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionQcRemakeResponse =
+  productionQcRemakeResponseSuccess | productionQcRemakeResponseError;
+
+export const getProductionQcRemakeUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/qc-remake/`;
+};
+
+export const productionQcRemake = async (
+  orderId: string,
+  qcRemakeRequestRequest: QcRemakeRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionQcRemakeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionQcRemakeResponse>(getProductionQcRemakeUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(qcRemakeRequestRequest),
   });
 };
 
@@ -12441,6 +19213,82 @@ export const productionStepTransition = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(stepTransitionRequestRequest),
   });
+};
+
+export type productionVersionHardwarePickingResponse200 = {
+  data: VersionHardwarePicking;
+  status: 200;
+};
+
+export type productionVersionHardwarePickingResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionVersionHardwarePickingResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionVersionHardwarePickingResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionVersionHardwarePickingResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionVersionHardwarePickingResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionVersionHardwarePickingResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionVersionHardwarePickingResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionVersionHardwarePickingResponseSuccess =
+  productionVersionHardwarePickingResponse200 & {
+    headers: Headers;
+  };
+export type productionVersionHardwarePickingResponseError = (
+  | productionVersionHardwarePickingResponse400
+  | productionVersionHardwarePickingResponse401
+  | productionVersionHardwarePickingResponse403
+  | productionVersionHardwarePickingResponse404
+  | productionVersionHardwarePickingResponse409
+  | productionVersionHardwarePickingResponse422
+  | productionVersionHardwarePickingResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionVersionHardwarePickingResponse =
+  productionVersionHardwarePickingResponseSuccess | productionVersionHardwarePickingResponseError;
+
+export const getProductionVersionHardwarePickingUrl = (versionId: string) => {
+  return `/api/v1/production/versions/${versionId}/hardware-picking/`;
+};
+
+export const productionVersionHardwarePicking = async (
+  versionId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionVersionHardwarePickingResponse> => {
+  return apiMutator<productionVersionHardwarePickingResponse>(
+    getProductionVersionHardwarePickingUrl(versionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type productionReleaseResponse200 = {
@@ -13305,6 +20153,161 @@ export const projectsClone = async (
   });
 };
 
+export type collectionReminderPrepareResponse200 = {
+  data: CollectionReminder;
+  status: 200;
+};
+
+export type collectionReminderPrepareResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type collectionReminderPrepareResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type collectionReminderPrepareResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type collectionReminderPrepareResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type collectionReminderPrepareResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type collectionReminderPrepareResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type collectionReminderPrepareResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type collectionReminderPrepareResponseSuccess = collectionReminderPrepareResponse200 & {
+  headers: Headers;
+};
+export type collectionReminderPrepareResponseError = (
+  | collectionReminderPrepareResponse400
+  | collectionReminderPrepareResponse401
+  | collectionReminderPrepareResponse403
+  | collectionReminderPrepareResponse404
+  | collectionReminderPrepareResponse409
+  | collectionReminderPrepareResponse422
+  | collectionReminderPrepareResponse503
+) & {
+  headers: Headers;
+};
+
+export type collectionReminderPrepareResponse =
+  collectionReminderPrepareResponseSuccess | collectionReminderPrepareResponseError;
+
+export const getCollectionReminderPrepareUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/collection-reminder/`;
+};
+
+export const collectionReminderPrepare = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<collectionReminderPrepareResponse> => {
+  return apiMutator<collectionReminderPrepareResponse>(getCollectionReminderPrepareUrl(projectId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type collectionReminderSendResponse202 = {
+  data: MailRecord;
+  status: 202;
+};
+
+export type collectionReminderSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type collectionReminderSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type collectionReminderSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type collectionReminderSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type collectionReminderSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type collectionReminderSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type collectionReminderSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type collectionReminderSendResponseSuccess = collectionReminderSendResponse202 & {
+  headers: Headers;
+};
+export type collectionReminderSendResponseError = (
+  | collectionReminderSendResponse400
+  | collectionReminderSendResponse401
+  | collectionReminderSendResponse403
+  | collectionReminderSendResponse404
+  | collectionReminderSendResponse409
+  | collectionReminderSendResponse422
+  | collectionReminderSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type collectionReminderSendResponse =
+  collectionReminderSendResponseSuccess | collectionReminderSendResponseError;
+
+export const getCollectionReminderSendUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/collection-reminder/send/`;
+};
+
+export const collectionReminderSend = async (
+  projectId: string,
+  collectionReminderSendRequest: CollectionReminderSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<collectionReminderSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<collectionReminderSendResponse>(getCollectionReminderSendUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(collectionReminderSendRequest),
+  });
+};
+
 export type projectCreditNoteAccessResponse200 = {
   data: ProjectCreditNoteAccess;
   status: 200;
@@ -13544,6 +20547,160 @@ export const projectCreditNoteDteEnvioSend = async (
       body: JSON.stringify(siiEnvioSendRequest),
     },
   );
+};
+
+export type fiscalSimulationsResponse200 = {
+  data: FiscalSimulations;
+  status: 200;
+};
+
+export type fiscalSimulationsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fiscalSimulationsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fiscalSimulationsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fiscalSimulationsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fiscalSimulationsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fiscalSimulationsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fiscalSimulationsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fiscalSimulationsResponseSuccess = fiscalSimulationsResponse200 & {
+  headers: Headers;
+};
+export type fiscalSimulationsResponseError = (
+  | fiscalSimulationsResponse400
+  | fiscalSimulationsResponse401
+  | fiscalSimulationsResponse403
+  | fiscalSimulationsResponse404
+  | fiscalSimulationsResponse409
+  | fiscalSimulationsResponse422
+  | fiscalSimulationsResponse503
+) & {
+  headers: Headers;
+};
+
+export type fiscalSimulationsResponse =
+  fiscalSimulationsResponseSuccess | fiscalSimulationsResponseError;
+
+export const getFiscalSimulationsUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/fiscal-simulations/`;
+};
+
+export const fiscalSimulations = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fiscalSimulationsResponse> => {
+  return apiMutator<fiscalSimulationsResponse>(getFiscalSimulationsUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type fiscalSimulateResponse201 = {
+  data: FiscalSimulation;
+  status: 201;
+};
+
+export type fiscalSimulateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type fiscalSimulateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type fiscalSimulateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type fiscalSimulateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type fiscalSimulateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type fiscalSimulateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type fiscalSimulateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type fiscalSimulateResponseSuccess = fiscalSimulateResponse201 & {
+  headers: Headers;
+};
+export type fiscalSimulateResponseError = (
+  | fiscalSimulateResponse400
+  | fiscalSimulateResponse401
+  | fiscalSimulateResponse403
+  | fiscalSimulateResponse404
+  | fiscalSimulateResponse409
+  | fiscalSimulateResponse422
+  | fiscalSimulateResponse503
+) & {
+  headers: Headers;
+};
+
+export type fiscalSimulateResponse = fiscalSimulateResponseSuccess | fiscalSimulateResponseError;
+
+export const getFiscalSimulateUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/fiscal-simulations/`;
+};
+
+export const fiscalSimulate = async (
+  projectId: string,
+  fiscalSimulationRequestRequest: FiscalSimulationRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<fiscalSimulateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<fiscalSimulateResponse>(getFiscalSimulateUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(fiscalSimulationRequestRequest),
+  });
 };
 
 export type projectImportsListResponse200 = {
@@ -13916,11 +21073,22 @@ export const getProjectInvoiceEmitUrl = (projectId: string) => {
 
 export const projectInvoiceEmit = async (
   projectId: string,
+  internalDocumentRequestRequest?: InternalDocumentRequestRequest,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<projectInvoiceEmitResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
   return apiMutator<projectInvoiceEmitResponse>(getProjectInvoiceEmitUrl(projectId), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(internalDocumentRequestRequest),
   });
 };
 
@@ -14566,6 +21734,339 @@ export const projectInvoiceDteEnvioSend = async (
   );
 };
 
+export type projectOperationsUndoResponse200 = {
+  data: ProjectOpsResult;
+  status: 200;
+};
+
+export type projectOperationsUndoResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsUndoResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsUndoResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsUndoResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsUndoResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsUndoResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsUndoResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsUndoResponseSuccess = projectOperationsUndoResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsUndoResponseError = (
+  | projectOperationsUndoResponse400
+  | projectOperationsUndoResponse401
+  | projectOperationsUndoResponse403
+  | projectOperationsUndoResponse404
+  | projectOperationsUndoResponse409
+  | projectOperationsUndoResponse422
+  | projectOperationsUndoResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsUndoResponse =
+  projectOperationsUndoResponseSuccess | projectOperationsUndoResponseError;
+
+export const getProjectOperationsUndoUrl = (projectId: string, operationId: string) => {
+  return `/api/v1/projects/${projectId}/operations/${operationId}/undo/`;
+};
+
+export const projectOperationsUndo = async (
+  projectId: string,
+  operationId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsUndoResponse> => {
+  return apiMutator<projectOperationsUndoResponse>(
+    getProjectOperationsUndoUrl(projectId, operationId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export type projectOperationsApplyResponse200 = {
+  data: ProjectOpsResult;
+  status: 200;
+};
+
+export type projectOperationsApplyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsApplyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsApplyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsApplyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsApplyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsApplyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsApplyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsApplyResponseSuccess = projectOperationsApplyResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsApplyResponseError = (
+  | projectOperationsApplyResponse400
+  | projectOperationsApplyResponse401
+  | projectOperationsApplyResponse403
+  | projectOperationsApplyResponse404
+  | projectOperationsApplyResponse409
+  | projectOperationsApplyResponse422
+  | projectOperationsApplyResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsApplyResponse =
+  projectOperationsApplyResponseSuccess | projectOperationsApplyResponseError;
+
+export const getProjectOperationsApplyUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/operations/apply/`;
+};
+
+export const projectOperationsApply = async (
+  projectId: string,
+  projectOpsApplyRequest: ProjectOpsApplyRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsApplyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectOperationsApplyResponse>(getProjectOperationsApplyUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(projectOpsApplyRequest),
+  });
+};
+
+export type projectOperationsPreviewResponse200 = {
+  data: ProjectOpsPreviewResponse;
+  status: 200;
+};
+
+export type projectOperationsPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsPreviewResponseSuccess = projectOperationsPreviewResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsPreviewResponseError = (
+  | projectOperationsPreviewResponse400
+  | projectOperationsPreviewResponse401
+  | projectOperationsPreviewResponse403
+  | projectOperationsPreviewResponse404
+  | projectOperationsPreviewResponse409
+  | projectOperationsPreviewResponse422
+  | projectOperationsPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsPreviewResponse =
+  projectOperationsPreviewResponseSuccess | projectOperationsPreviewResponseError;
+
+export const getProjectOperationsPreviewUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/operations/preview/`;
+};
+
+export const projectOperationsPreview = async (
+  projectId: string,
+  projectOpsPreviewRequest: ProjectOpsPreviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectOperationsPreviewResponse>(getProjectOperationsPreviewUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(projectOpsPreviewRequest),
+  });
+};
+
+export type projectOperationsStateResponse200 = {
+  data: ProjectOpsState;
+  status: 200;
+};
+
+export type projectOperationsStateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectOperationsStateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectOperationsStateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectOperationsStateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectOperationsStateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectOperationsStateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectOperationsStateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectOperationsStateResponseSuccess = projectOperationsStateResponse200 & {
+  headers: Headers;
+};
+export type projectOperationsStateResponseError = (
+  | projectOperationsStateResponse400
+  | projectOperationsStateResponse401
+  | projectOperationsStateResponse403
+  | projectOperationsStateResponse404
+  | projectOperationsStateResponse409
+  | projectOperationsStateResponse422
+  | projectOperationsStateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectOperationsStateResponse =
+  projectOperationsStateResponseSuccess | projectOperationsStateResponseError;
+
+export const getProjectOperationsStateUrl = (
+  projectId: string,
+  params: ProjectOperationsStateParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/projects/${projectId}/operations/state/?${stringifiedParams}`
+    : `/api/v1/projects/${projectId}/operations/state/`;
+};
+
+export const projectOperationsState = async (
+  projectId: string,
+  params: ProjectOperationsStateParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectOperationsStateResponse> => {
+  return apiMutator<projectOperationsStateResponse>(
+    getProjectOperationsStateUrl(projectId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export type projectPaymentLinksListResponse200 = {
   data: PaymentLinksResponse;
   status: 200;
@@ -15036,6 +22537,162 @@ export const projectPaymentVoid = async (
   });
 };
 
+export type paymentMailPreviewResponse200 = {
+  data: MailPreview;
+  status: 200;
+};
+
+export type paymentMailPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type paymentMailPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type paymentMailPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type paymentMailPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type paymentMailPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type paymentMailPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type paymentMailPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type paymentMailPreviewResponseSuccess = paymentMailPreviewResponse200 & {
+  headers: Headers;
+};
+export type paymentMailPreviewResponseError = (
+  | paymentMailPreviewResponse400
+  | paymentMailPreviewResponse401
+  | paymentMailPreviewResponse403
+  | paymentMailPreviewResponse404
+  | paymentMailPreviewResponse409
+  | paymentMailPreviewResponse422
+  | paymentMailPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type paymentMailPreviewResponse =
+  paymentMailPreviewResponseSuccess | paymentMailPreviewResponseError;
+
+export const getPaymentMailPreviewUrl = (projectId: string, paymentId: string) => {
+  return `/api/v1/projects/${projectId}/payments/${paymentId}/mail/`;
+};
+
+export const paymentMailPreview = async (
+  projectId: string,
+  paymentId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<paymentMailPreviewResponse> => {
+  return apiMutator<paymentMailPreviewResponse>(getPaymentMailPreviewUrl(projectId, paymentId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type paymentMailSendResponse200 = {
+  data: MailRecord;
+  status: 200;
+};
+
+export type paymentMailSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type paymentMailSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type paymentMailSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type paymentMailSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type paymentMailSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type paymentMailSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type paymentMailSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type paymentMailSendResponseSuccess = paymentMailSendResponse200 & {
+  headers: Headers;
+};
+export type paymentMailSendResponseError = (
+  | paymentMailSendResponse400
+  | paymentMailSendResponse401
+  | paymentMailSendResponse403
+  | paymentMailSendResponse404
+  | paymentMailSendResponse409
+  | paymentMailSendResponse422
+  | paymentMailSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type paymentMailSendResponse = paymentMailSendResponseSuccess | paymentMailSendResponseError;
+
+export const getPaymentMailSendUrl = (projectId: string, paymentId: string) => {
+  return `/api/v1/projects/${projectId}/payments/${paymentId}/mail/`;
+};
+
+export const paymentMailSend = async (
+  projectId: string,
+  paymentId: string,
+  mailSendRequest: MailSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<paymentMailSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<paymentMailSendResponse>(getPaymentMailSendUrl(projectId, paymentId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(mailSendRequest),
+  });
+};
+
 export type projectPaymentReceiptResponse200 = {
   data: PaymentReceiptAccess;
   status: 200;
@@ -15344,6 +23001,180 @@ export const projectQuoteLinkCreate = async (
   });
 };
 
+export type projectQuoteLinkDeadlineResponse200 = {
+  data: ApprovalRecord[];
+  status: 200;
+};
+
+export type projectQuoteLinkDeadlineResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectQuoteLinkDeadlineResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectQuoteLinkDeadlineResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectQuoteLinkDeadlineResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectQuoteLinkDeadlineResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectQuoteLinkDeadlineResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectQuoteLinkDeadlineResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectQuoteLinkDeadlineResponseSuccess = projectQuoteLinkDeadlineResponse200 & {
+  headers: Headers;
+};
+export type projectQuoteLinkDeadlineResponseError = (
+  | projectQuoteLinkDeadlineResponse400
+  | projectQuoteLinkDeadlineResponse401
+  | projectQuoteLinkDeadlineResponse403
+  | projectQuoteLinkDeadlineResponse404
+  | projectQuoteLinkDeadlineResponse409
+  | projectQuoteLinkDeadlineResponse422
+  | projectQuoteLinkDeadlineResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectQuoteLinkDeadlineResponse =
+  projectQuoteLinkDeadlineResponseSuccess | projectQuoteLinkDeadlineResponseError;
+
+export const getProjectQuoteLinkDeadlineUrl = (projectId: string, approvalId: string) => {
+  return `/api/v1/projects/${projectId}/quote-links/${approvalId}/deadline/`;
+};
+
+export const projectQuoteLinkDeadline = async (
+  projectId: string,
+  approvalId: string,
+  linkDeadlineRequest: LinkDeadlineRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectQuoteLinkDeadlineResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectQuoteLinkDeadlineResponse>(
+    getProjectQuoteLinkDeadlineUrl(projectId, approvalId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(linkDeadlineRequest),
+    },
+  );
+};
+
+export type projectQuoteLinkRegenerateResponse200 = {
+  data: ShareQuoteResponse;
+  status: 200;
+};
+
+export type projectQuoteLinkRegenerateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectQuoteLinkRegenerateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectQuoteLinkRegenerateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectQuoteLinkRegenerateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectQuoteLinkRegenerateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectQuoteLinkRegenerateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectQuoteLinkRegenerateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectQuoteLinkRegenerateResponseSuccess = projectQuoteLinkRegenerateResponse200 & {
+  headers: Headers;
+};
+export type projectQuoteLinkRegenerateResponseError = (
+  | projectQuoteLinkRegenerateResponse400
+  | projectQuoteLinkRegenerateResponse401
+  | projectQuoteLinkRegenerateResponse403
+  | projectQuoteLinkRegenerateResponse404
+  | projectQuoteLinkRegenerateResponse409
+  | projectQuoteLinkRegenerateResponse422
+  | projectQuoteLinkRegenerateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectQuoteLinkRegenerateResponse =
+  projectQuoteLinkRegenerateResponseSuccess | projectQuoteLinkRegenerateResponseError;
+
+export const getProjectQuoteLinkRegenerateUrl = (projectId: string, approvalId: string) => {
+  return `/api/v1/projects/${projectId}/quote-links/${approvalId}/regenerate/`;
+};
+
+export const projectQuoteLinkRegenerate = async (
+  projectId: string,
+  approvalId: string,
+  linkRegenerateRequest: LinkRegenerateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectQuoteLinkRegenerateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectQuoteLinkRegenerateResponse>(
+    getProjectQuoteLinkRegenerateUrl(projectId, approvalId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(linkRegenerateRequest),
+    },
+  );
+};
+
 export type projectQuoteLinkRevokeResponse200 = {
   data: ApprovalRecord[];
   status: 200;
@@ -15421,6 +23252,160 @@ export const projectQuoteLinkRevoke = async (
       method: "POST",
     },
   );
+};
+
+export type quoteMailPreviewResponse200 = {
+  data: MailPreview;
+  status: 200;
+};
+
+export type quoteMailPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quoteMailPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quoteMailPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quoteMailPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quoteMailPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quoteMailPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quoteMailPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quoteMailPreviewResponseSuccess = quoteMailPreviewResponse200 & {
+  headers: Headers;
+};
+export type quoteMailPreviewResponseError = (
+  | quoteMailPreviewResponse400
+  | quoteMailPreviewResponse401
+  | quoteMailPreviewResponse403
+  | quoteMailPreviewResponse404
+  | quoteMailPreviewResponse409
+  | quoteMailPreviewResponse422
+  | quoteMailPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type quoteMailPreviewResponse =
+  quoteMailPreviewResponseSuccess | quoteMailPreviewResponseError;
+
+export const getQuoteMailPreviewUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/quote-mail/`;
+};
+
+export const quoteMailPreview = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quoteMailPreviewResponse> => {
+  return apiMutator<quoteMailPreviewResponse>(getQuoteMailPreviewUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type quoteMailSendResponse200 = {
+  data: MailRecord;
+  status: 200;
+};
+
+export type quoteMailSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type quoteMailSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type quoteMailSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type quoteMailSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type quoteMailSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type quoteMailSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type quoteMailSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type quoteMailSendResponseSuccess = quoteMailSendResponse200 & {
+  headers: Headers;
+};
+export type quoteMailSendResponseError = (
+  | quoteMailSendResponse400
+  | quoteMailSendResponse401
+  | quoteMailSendResponse403
+  | quoteMailSendResponse404
+  | quoteMailSendResponse409
+  | quoteMailSendResponse422
+  | quoteMailSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type quoteMailSendResponse = quoteMailSendResponseSuccess | quoteMailSendResponseError;
+
+export const getQuoteMailSendUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/quote-mail/`;
+};
+
+export const quoteMailSend = async (
+  projectId: string,
+  mailSendRequest: MailSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<quoteMailSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<quoteMailSendResponse>(getQuoteMailSendUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(mailSendRequest),
+  });
 };
 
 export type projectsResetPricingResponse200 = {
@@ -15503,6 +23488,161 @@ export const projectsResetPricing = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(resetPricingRequest),
+  });
+};
+
+export type projectExtraServicesResponse200 = {
+  data: ServicesResponse;
+  status: 200;
+};
+
+export type projectExtraServicesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectExtraServicesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectExtraServicesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectExtraServicesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectExtraServicesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectExtraServicesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectExtraServicesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectExtraServicesResponseSuccess = projectExtraServicesResponse200 & {
+  headers: Headers;
+};
+export type projectExtraServicesResponseError = (
+  | projectExtraServicesResponse400
+  | projectExtraServicesResponse401
+  | projectExtraServicesResponse403
+  | projectExtraServicesResponse404
+  | projectExtraServicesResponse409
+  | projectExtraServicesResponse422
+  | projectExtraServicesResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectExtraServicesResponse =
+  projectExtraServicesResponseSuccess | projectExtraServicesResponseError;
+
+export const getProjectExtraServicesUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/services/`;
+};
+
+export const projectExtraServices = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectExtraServicesResponse> => {
+  return apiMutator<projectExtraServicesResponse>(getProjectExtraServicesUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectExtraServicesSaveResponse200 = {
+  data: ServicesResponse;
+  status: 200;
+};
+
+export type projectExtraServicesSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectExtraServicesSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectExtraServicesSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectExtraServicesSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectExtraServicesSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectExtraServicesSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectExtraServicesSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectExtraServicesSaveResponseSuccess = projectExtraServicesSaveResponse200 & {
+  headers: Headers;
+};
+export type projectExtraServicesSaveResponseError = (
+  | projectExtraServicesSaveResponse400
+  | projectExtraServicesSaveResponse401
+  | projectExtraServicesSaveResponse403
+  | projectExtraServicesSaveResponse404
+  | projectExtraServicesSaveResponse409
+  | projectExtraServicesSaveResponse422
+  | projectExtraServicesSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectExtraServicesSaveResponse =
+  projectExtraServicesSaveResponseSuccess | projectExtraServicesSaveResponseError;
+
+export const getProjectExtraServicesSaveUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/services/`;
+};
+
+export const projectExtraServicesSave = async (
+  projectId: string,
+  servicesWriteRequest: ServicesWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectExtraServicesSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectExtraServicesSaveResponse>(getProjectExtraServicesSaveUrl(projectId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(servicesWriteRequest),
   });
 };
 
@@ -15596,6 +23736,237 @@ export const projectsStartSuccessor = async (
   });
 };
 
+export type projectThermalReportResponse200 = {
+  data: ThermalReport;
+  status: 200;
+};
+
+export type projectThermalReportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectThermalReportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectThermalReportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectThermalReportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectThermalReportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectThermalReportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectThermalReportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectThermalReportResponseSuccess = projectThermalReportResponse200 & {
+  headers: Headers;
+};
+export type projectThermalReportResponseError = (
+  | projectThermalReportResponse400
+  | projectThermalReportResponse401
+  | projectThermalReportResponse403
+  | projectThermalReportResponse404
+  | projectThermalReportResponse409
+  | projectThermalReportResponse422
+  | projectThermalReportResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectThermalReportResponse =
+  projectThermalReportResponseSuccess | projectThermalReportResponseError;
+
+export const getProjectThermalReportUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/thermal/`;
+};
+
+export const projectThermalReport = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectThermalReportResponse> => {
+  return apiMutator<projectThermalReportResponse>(getProjectThermalReportUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectThermalSaveResponse200 = {
+  data: ThermalReport;
+  status: 200;
+};
+
+export type projectThermalSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectThermalSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectThermalSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectThermalSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectThermalSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectThermalSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectThermalSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectThermalSaveResponseSuccess = projectThermalSaveResponse200 & {
+  headers: Headers;
+};
+export type projectThermalSaveResponseError = (
+  | projectThermalSaveResponse400
+  | projectThermalSaveResponse401
+  | projectThermalSaveResponse403
+  | projectThermalSaveResponse404
+  | projectThermalSaveResponse409
+  | projectThermalSaveResponse422
+  | projectThermalSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectThermalSaveResponse =
+  projectThermalSaveResponseSuccess | projectThermalSaveResponseError;
+
+export const getProjectThermalSaveUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/thermal/`;
+};
+
+export const projectThermalSave = async (
+  projectId: string,
+  thermalWriteRequest: ThermalWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectThermalSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectThermalSaveResponse>(getProjectThermalSaveUrl(projectId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(thermalWriteRequest),
+  });
+};
+
+export type thermalCompliantAlternativeResponse200 = {
+  data: ThermalAlternative;
+  status: 200;
+};
+
+export type thermalCompliantAlternativeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type thermalCompliantAlternativeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type thermalCompliantAlternativeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type thermalCompliantAlternativeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type thermalCompliantAlternativeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type thermalCompliantAlternativeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type thermalCompliantAlternativeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type thermalCompliantAlternativeResponseSuccess = thermalCompliantAlternativeResponse200 & {
+  headers: Headers;
+};
+export type thermalCompliantAlternativeResponseError = (
+  | thermalCompliantAlternativeResponse400
+  | thermalCompliantAlternativeResponse401
+  | thermalCompliantAlternativeResponse403
+  | thermalCompliantAlternativeResponse404
+  | thermalCompliantAlternativeResponse409
+  | thermalCompliantAlternativeResponse422
+  | thermalCompliantAlternativeResponse503
+) & {
+  headers: Headers;
+};
+
+export type thermalCompliantAlternativeResponse =
+  thermalCompliantAlternativeResponseSuccess | thermalCompliantAlternativeResponseError;
+
+export const getThermalCompliantAlternativeUrl = (projectId: string, positionId: string) => {
+  return `/api/v1/projects/${projectId}/thermal/${positionId}/alternatives/`;
+};
+
+export const thermalCompliantAlternative = async (
+  projectId: string,
+  positionId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<thermalCompliantAlternativeResponse> => {
+  return apiMutator<thermalCompliantAlternativeResponse>(
+    getThermalCompliantAlternativeUrl(projectId, positionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export type projectDesignOptionsResponse200 = {
   data: DesignOptions;
   status: 200;
@@ -15665,6 +24036,170 @@ export const projectDesignOptions = async (
   return apiMutator<projectDesignOptionsResponse>(getProjectDesignOptionsUrl(systemId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type positionExtrasPreviewResponse200 = {
+  data: ExtrasPreviewResponse;
+  status: 200;
+};
+
+export type positionExtrasPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type positionExtrasPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type positionExtrasPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type positionExtrasPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type positionExtrasPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type positionExtrasPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type positionExtrasPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type positionExtrasPreviewResponseSuccess = positionExtrasPreviewResponse200 & {
+  headers: Headers;
+};
+export type positionExtrasPreviewResponseError = (
+  | positionExtrasPreviewResponse400
+  | positionExtrasPreviewResponse401
+  | positionExtrasPreviewResponse403
+  | positionExtrasPreviewResponse404
+  | positionExtrasPreviewResponse409
+  | positionExtrasPreviewResponse422
+  | positionExtrasPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type positionExtrasPreviewResponse =
+  positionExtrasPreviewResponseSuccess | positionExtrasPreviewResponseError;
+
+export const getPositionExtrasPreviewUrl = () => {
+  return `/api/v1/projects/extras-preview/`;
+};
+
+export const positionExtrasPreview = async (
+  extrasPreviewRequestRequest: ExtrasPreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<positionExtrasPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<positionExtrasPreviewResponse>(getPositionExtrasPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(extrasPreviewRequestRequest),
+  });
+};
+
+export type projectFinishPreviewResponse200 = {
+  data: FinishPreviewResponse;
+  status: 200;
+};
+
+export type projectFinishPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectFinishPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectFinishPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectFinishPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectFinishPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectFinishPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectFinishPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectFinishPreviewResponseSuccess = projectFinishPreviewResponse200 & {
+  headers: Headers;
+};
+export type projectFinishPreviewResponseError = (
+  | projectFinishPreviewResponse400
+  | projectFinishPreviewResponse401
+  | projectFinishPreviewResponse403
+  | projectFinishPreviewResponse404
+  | projectFinishPreviewResponse409
+  | projectFinishPreviewResponse422
+  | projectFinishPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectFinishPreviewResponse =
+  projectFinishPreviewResponseSuccess | projectFinishPreviewResponseError;
+
+export const getProjectFinishPreviewUrl = () => {
+  return `/api/v1/projects/finish-preview/`;
+};
+
+export const projectFinishPreview = async (
+  finishPreviewRequestRequest: FinishPreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectFinishPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectFinishPreviewResponse>(getProjectFinishPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(finishPreviewRequestRequest),
   });
 };
 
@@ -15757,6 +24292,489 @@ export const projectPaymentFlowConfirm = async (
       ...getHeaders(options?.headers),
     },
     body: formUrlEncoded,
+  });
+};
+
+export type flowSimulationStatusResponse200 = {
+  data: FlowSimulation;
+  status: 200;
+};
+
+export type flowSimulationStatusResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowSimulationStatusResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowSimulationStatusResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowSimulationStatusResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowSimulationStatusResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowSimulationStatusResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowSimulationStatusResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowSimulationStatusResponseSuccess = flowSimulationStatusResponse200 & {
+  headers: Headers;
+};
+export type flowSimulationStatusResponseError = (
+  | flowSimulationStatusResponse400
+  | flowSimulationStatusResponse401
+  | flowSimulationStatusResponse403
+  | flowSimulationStatusResponse404
+  | flowSimulationStatusResponse409
+  | flowSimulationStatusResponse422
+  | flowSimulationStatusResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowSimulationStatusResponse =
+  flowSimulationStatusResponseSuccess | flowSimulationStatusResponseError;
+
+export const getFlowSimulationStatusUrl = (linkId: string, params: FlowSimulationStatusParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/projects/flow/simulated/${linkId}/?${stringifiedParams}`
+    : `/api/v1/projects/flow/simulated/${linkId}/`;
+};
+
+export const flowSimulationStatus = async (
+  linkId: string,
+  params: FlowSimulationStatusParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowSimulationStatusResponse> => {
+  return apiMutator<flowSimulationStatusResponse>(getFlowSimulationStatusUrl(linkId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type flowSimulationConfirmResponse200 = {
+  data: FlowSimulation;
+  status: 200;
+};
+
+export type flowSimulationConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowSimulationConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowSimulationConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowSimulationConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowSimulationConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowSimulationConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowSimulationConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowSimulationConfirmResponseSuccess = flowSimulationConfirmResponse200 & {
+  headers: Headers;
+};
+export type flowSimulationConfirmResponseError = (
+  | flowSimulationConfirmResponse400
+  | flowSimulationConfirmResponse401
+  | flowSimulationConfirmResponse403
+  | flowSimulationConfirmResponse404
+  | flowSimulationConfirmResponse409
+  | flowSimulationConfirmResponse422
+  | flowSimulationConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowSimulationConfirmResponse =
+  flowSimulationConfirmResponseSuccess | flowSimulationConfirmResponseError;
+
+export const getFlowSimulationConfirmUrl = (linkId: string) => {
+  return `/api/v1/projects/flow/simulated/${linkId}/`;
+};
+
+export const flowSimulationConfirm = async (
+  linkId: string,
+  flowSimulationRequestRequest: FlowSimulationRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowSimulationConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<flowSimulationConfirmResponse>(getFlowSimulationConfirmUrl(linkId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(flowSimulationRequestRequest),
+  });
+};
+
+export type hardwarePreviewResponse200 = {
+  data: HardwarePreview;
+  status: 200;
+};
+
+export type hardwarePreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type hardwarePreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type hardwarePreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type hardwarePreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type hardwarePreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type hardwarePreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type hardwarePreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type hardwarePreviewResponseSuccess = hardwarePreviewResponse200 & {
+  headers: Headers;
+};
+export type hardwarePreviewResponseError = (
+  | hardwarePreviewResponse400
+  | hardwarePreviewResponse401
+  | hardwarePreviewResponse403
+  | hardwarePreviewResponse404
+  | hardwarePreviewResponse409
+  | hardwarePreviewResponse422
+  | hardwarePreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type hardwarePreviewResponse = hardwarePreviewResponseSuccess | hardwarePreviewResponseError;
+
+export const getHardwarePreviewUrl = () => {
+  return `/api/v1/projects/hardware-preview/`;
+};
+
+export const hardwarePreview = async (
+  hardwarePreviewRequestRequest: HardwarePreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<hardwarePreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<hardwarePreviewResponse>(getHardwarePreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(hardwarePreviewRequestRequest),
+  });
+};
+
+export type mountingPreviewResponse200 = {
+  data: MountingPreviewResponse;
+  status: 200;
+};
+
+export type mountingPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type mountingPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type mountingPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type mountingPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type mountingPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type mountingPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type mountingPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type mountingPreviewResponseSuccess = mountingPreviewResponse200 & {
+  headers: Headers;
+};
+export type mountingPreviewResponseError = (
+  | mountingPreviewResponse400
+  | mountingPreviewResponse401
+  | mountingPreviewResponse403
+  | mountingPreviewResponse404
+  | mountingPreviewResponse409
+  | mountingPreviewResponse422
+  | mountingPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type mountingPreviewResponse = mountingPreviewResponseSuccess | mountingPreviewResponseError;
+
+export const getMountingPreviewUrl = () => {
+  return `/api/v1/projects/mounting-preview/`;
+};
+
+export const mountingPreview = async (
+  mountingPreviewRequest: MountingPreviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<mountingPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<mountingPreviewResponse>(getMountingPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(mountingPreviewRequest),
+  });
+};
+
+export type designOperationsRegistryResponse200 = {
+  data: OperationsRegistry;
+  status: 200;
+};
+
+export type designOperationsRegistryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type designOperationsRegistryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type designOperationsRegistryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type designOperationsRegistryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type designOperationsRegistryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type designOperationsRegistryResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type designOperationsRegistryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type designOperationsRegistryResponseSuccess = designOperationsRegistryResponse200 & {
+  headers: Headers;
+};
+export type designOperationsRegistryResponseError = (
+  | designOperationsRegistryResponse400
+  | designOperationsRegistryResponse401
+  | designOperationsRegistryResponse403
+  | designOperationsRegistryResponse404
+  | designOperationsRegistryResponse409
+  | designOperationsRegistryResponse422
+  | designOperationsRegistryResponse503
+) & {
+  headers: Headers;
+};
+
+export type designOperationsRegistryResponse =
+  designOperationsRegistryResponseSuccess | designOperationsRegistryResponseError;
+
+export const getDesignOperationsRegistryUrl = () => {
+  return `/api/v1/projects/operations/registry/`;
+};
+
+export const designOperationsRegistry = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<designOperationsRegistryResponse> => {
+  return apiMutator<designOperationsRegistryResponse>(getDesignOperationsRegistryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type designOperationsSimulateResponse200 = {
+  data: Simulation;
+  status: 200;
+};
+
+export type designOperationsSimulateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type designOperationsSimulateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type designOperationsSimulateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type designOperationsSimulateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type designOperationsSimulateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type designOperationsSimulateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type designOperationsSimulateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type designOperationsSimulateResponseSuccess = designOperationsSimulateResponse200 & {
+  headers: Headers;
+};
+export type designOperationsSimulateResponseError = (
+  | designOperationsSimulateResponse400
+  | designOperationsSimulateResponse401
+  | designOperationsSimulateResponse403
+  | designOperationsSimulateResponse404
+  | designOperationsSimulateResponse409
+  | designOperationsSimulateResponse422
+  | designOperationsSimulateResponse503
+) & {
+  headers: Headers;
+};
+
+export type designOperationsSimulateResponse =
+  designOperationsSimulateResponseSuccess | designOperationsSimulateResponseError;
+
+export const getDesignOperationsSimulateUrl = () => {
+  return `/api/v1/projects/operations/simulate/`;
+};
+
+export const designOperationsSimulate = async (
+  simulateOpsRequest: SimulateOpsRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<designOperationsSimulateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<designOperationsSimulateResponse>(getDesignOperationsSimulateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(simulateOpsRequest),
   });
 };
 
@@ -15918,6 +24936,158 @@ export const projectPaymentIntegrationSave = async (
   });
 };
 
+export type purchasingNeedsResponse200 = {
+  data: PurchaseNeeds;
+  status: 200;
+};
+
+export type purchasingNeedsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type purchasingNeedsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type purchasingNeedsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type purchasingNeedsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type purchasingNeedsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type purchasingNeedsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type purchasingNeedsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type purchasingNeedsResponseSuccess = purchasingNeedsResponse200 & {
+  headers: Headers;
+};
+export type purchasingNeedsResponseError = (
+  | purchasingNeedsResponse400
+  | purchasingNeedsResponse401
+  | purchasingNeedsResponse403
+  | purchasingNeedsResponse404
+  | purchasingNeedsResponse409
+  | purchasingNeedsResponse422
+  | purchasingNeedsResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchasingNeedsResponse = purchasingNeedsResponseSuccess | purchasingNeedsResponseError;
+
+export const getPurchasingNeedsUrl = () => {
+  return `/api/v1/purchasing/needs/`;
+};
+
+export const purchasingNeeds = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<purchasingNeedsResponse> => {
+  return apiMutator<purchasingNeedsResponse>(getPurchasingNeedsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type purchasingNeedsConfirmResponse200 = {
+  data: PurchaseNeedsResult;
+  status: 200;
+};
+
+export type purchasingNeedsConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type purchasingNeedsConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type purchasingNeedsConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type purchasingNeedsConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type purchasingNeedsConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type purchasingNeedsConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type purchasingNeedsConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type purchasingNeedsConfirmResponseSuccess = purchasingNeedsConfirmResponse200 & {
+  headers: Headers;
+};
+export type purchasingNeedsConfirmResponseError = (
+  | purchasingNeedsConfirmResponse400
+  | purchasingNeedsConfirmResponse401
+  | purchasingNeedsConfirmResponse403
+  | purchasingNeedsConfirmResponse404
+  | purchasingNeedsConfirmResponse409
+  | purchasingNeedsConfirmResponse422
+  | purchasingNeedsConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchasingNeedsConfirmResponse =
+  purchasingNeedsConfirmResponseSuccess | purchasingNeedsConfirmResponseError;
+
+export const getPurchasingNeedsConfirmUrl = () => {
+  return `/api/v1/purchasing/needs/confirm/`;
+};
+
+export const purchasingNeedsConfirm = async (
+  purchaseNeedsConfirmRequest: PurchaseNeedsConfirmRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<purchasingNeedsConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<purchasingNeedsConfirmResponse>(getPurchasingNeedsConfirmUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(purchaseNeedsConfirmRequest),
+  });
+};
+
 export type purchasingOrdersIndexResponse200 = {
   data: OrderIndexResponse;
   status: 200;
@@ -16069,6 +25239,161 @@ export const purchasingCancelOrder = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(sendOrderRequestRequest),
+  });
+};
+
+export type purchasingMailPreviewResponse200 = {
+  data: PurchaseMailPreview;
+  status: 200;
+};
+
+export type purchasingMailPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type purchasingMailPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type purchasingMailPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type purchasingMailPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type purchasingMailPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type purchasingMailPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type purchasingMailPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type purchasingMailPreviewResponseSuccess = purchasingMailPreviewResponse200 & {
+  headers: Headers;
+};
+export type purchasingMailPreviewResponseError = (
+  | purchasingMailPreviewResponse400
+  | purchasingMailPreviewResponse401
+  | purchasingMailPreviewResponse403
+  | purchasingMailPreviewResponse404
+  | purchasingMailPreviewResponse409
+  | purchasingMailPreviewResponse422
+  | purchasingMailPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchasingMailPreviewResponse =
+  purchasingMailPreviewResponseSuccess | purchasingMailPreviewResponseError;
+
+export const getPurchasingMailPreviewUrl = (orderId: string) => {
+  return `/api/v1/purchasing/orders/${orderId}/mail/`;
+};
+
+export const purchasingMailPreview = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<purchasingMailPreviewResponse> => {
+  return apiMutator<purchasingMailPreviewResponse>(getPurchasingMailPreviewUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type purchasingMailSendResponse200 = {
+  data: PurchaseMailResult;
+  status: 200;
+};
+
+export type purchasingMailSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type purchasingMailSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type purchasingMailSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type purchasingMailSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type purchasingMailSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type purchasingMailSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type purchasingMailSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type purchasingMailSendResponseSuccess = purchasingMailSendResponse200 & {
+  headers: Headers;
+};
+export type purchasingMailSendResponseError = (
+  | purchasingMailSendResponse400
+  | purchasingMailSendResponse401
+  | purchasingMailSendResponse403
+  | purchasingMailSendResponse404
+  | purchasingMailSendResponse409
+  | purchasingMailSendResponse422
+  | purchasingMailSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type purchasingMailSendResponse =
+  purchasingMailSendResponseSuccess | purchasingMailSendResponseError;
+
+export const getPurchasingMailSendUrl = (orderId: string) => {
+  return `/api/v1/purchasing/orders/${orderId}/mail/`;
+};
+
+export const purchasingMailSend = async (
+  orderId: string,
+  purchaseMailRequestRequest: PurchaseMailRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<purchasingMailSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<purchasingMailSendResponse>(getPurchasingMailSendUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(purchaseMailRequestRequest),
   });
 };
 

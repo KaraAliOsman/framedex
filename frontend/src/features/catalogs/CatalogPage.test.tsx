@@ -16,6 +16,7 @@ import type {
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { ConfirmProvider } from "../../ui";
 import { CatalogPage } from "./CatalogPage";
+import type { Capability } from "../canvas/physicalOpenings";
 
 const identity = vi.hoisted(() => ({
   id: "00000000-0000-4000-8000-000000000001",
@@ -41,6 +42,15 @@ const PROVENANCE = {
   technical_reviewed_at: null,
   technical_reviewed_by: null,
   review_pending: false,
+  authority_provenance: {
+    state: "DECLARED",
+    evidence_count: 0,
+    current_evidence_count: 0,
+    missing_fields: [],
+    reviewed_at: null,
+    reviewer: null,
+    reason: "Fuente pendiente",
+  },
 };
 const SAVED_REVISION = `sha256:${"b".repeat(64)}`;
 
@@ -80,6 +90,7 @@ function system(): SystemResponse {
     version: 1,
     is_active: true,
     is_global: true,
+    system_family: null,
     is_demo: true,
     readiness: { quote_ready: true, scope: "WHITE_FIXED_CATALOG", reasons: [] },
     revision: REVISION,
@@ -150,6 +161,15 @@ function article(overrides: Partial<ArticleResponse> = {}): ArticleResponse {
     section_revision: 1,
     section_revised_at: null,
     section_revised_by: null,
+    section_facts: {
+      state: "UNKNOWN",
+      valid: false,
+      reasons: ["section_missing"],
+      bounds: null,
+      orientation: null,
+      local_origin: null,
+      interpretation_declared: false,
+    },
     ...PROVENANCE,
     ...overrides,
   };
@@ -208,8 +228,12 @@ function button(key: TranslationKey) {
   return screen.getByRole("button", { name: t(key) });
 }
 
-// Section navigation is a real tablist — tabs are role=tab, not button.
+// CRUD navigation opens its record list, leaving one technical navigation
+// in the system sheet. It remains usable if the aggregate cannot load.
 function navTab(key: TranslationKey) {
+  if (!screen.queryByRole("tab", { name: t(key) })) {
+    fireEvent.click(screen.getByRole("button", { name: "Abrir lista de registros" }));
+  }
   return screen.getByRole("tab", { name: t(key) });
 }
 
@@ -274,6 +298,7 @@ async function declareSection() {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(client.catalogEvidenceList).mockResolvedValue(ok({ items: [] }));
   identity.role = "OWNER";
 
   vi.mocked(client.catalogSystemList).mockResolvedValue(ok({ items: [system()] }));
@@ -447,7 +472,7 @@ describe("CatalogPage typed kit editor", () => {
       within(opening)
         .getAllByRole("option")
         .map((option) => option.getAttribute("value")),
-    ).toEqual(["", "TURN", "TILT_TURN", "SLIDING", "DOOR", "AWNING"]);
+    ).toEqual(["", "TURN", "TILT", "TILT_TURN", "SLIDING", "DOOR", "AWNING"]);
 
     change("catalog.field.name", expected.name);
     change("catalog.field.opening_type", "SLIDING");
@@ -684,7 +709,7 @@ describe("CatalogPage article section editor", () => {
 
     fireEvent.submit(editorForm());
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(t("catalog.errorValidation"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Revisa los campos indicados");
     expectNoWrites();
   });
 
@@ -694,5 +719,86 @@ describe("CatalogPage article section editor", () => {
     expect(
       screen.queryByRole("checkbox", { name: t("catalog.section.declare") }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("CatalogPage sourced physical opening authority", () => {
+  const cap: Capability = {
+    use: "WINDOW",
+    movement: "TURN",
+    direction: "OUTWARD",
+    leaf_role: "SINGLE",
+    fixed_in_sash: false,
+    hinge_sides: ["LEFT", "RIGHT"],
+    hardware_kit_skus: ["TEST-KIT"],
+    source: "Ficha sintética de apertura",
+    handle_rule: {
+      vertical_reference: "LEAF_BOTTOM",
+      default_height_mm: "1050.125",
+      minimum_from_top_mm: "100.00",
+      minimum_from_bottom_mm: "120.00",
+      closing_edge_offset_mm: "37.50",
+      source: "Ficha sintética de manilla",
+    },
+  };
+  function authority() {
+    return {
+      ...system(),
+      name: "Serie de aperturas de prueba",
+      system_family: "CASEMENT" as const,
+      is_global: false,
+      is_demo: false,
+      read_only: false,
+      opening_capabilities: [cap],
+      paired_leaf_rule: null,
+    };
+  }
+  async function open(readOnly = false) {
+    const row = authority();
+    vi.mocked(client.catalogSystemList).mockResolvedValue(ok({ items: [row] }));
+    await mount();
+    fireEvent.click(navTab("catalog.systems"));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `${t(readOnly ? "catalog.view" : "catalog.edit")} ${row.name}`,
+      }),
+    );
+  }
+  it("saves sourced motion and exact handle heights without manufacturing a default", async () => {
+    vi.mocked(client.catalogSystemUpdate).mockResolvedValue(ok(authority()));
+    await open();
+    fireEvent.change(screen.getByLabelText("Fuente de la capacidad"), {
+      target: { value: "Ficha revisada" },
+    });
+    fireEvent.submit(editorForm());
+    await waitFor(() => expect(client.catalogSystemUpdate).toHaveBeenCalledOnce());
+    expect(vi.mocked(client.catalogSystemUpdate).mock.calls[0]![1]?.opening_capabilities).toEqual([
+      { ...cap, source: "Ficha revisada" },
+    ]);
+  });
+  it("keeps a source-less capability local and names its missing authority", async () => {
+    await open();
+    fireEvent.change(screen.getByLabelText("Fuente de la capacidad"), { target: { value: "" } });
+    fireEvent.submit(editorForm());
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Capacidad 1: falta la fuente del fabricante",
+    );
+    expectNoWrites();
+  });
+  it("invalidates hardware and height when changing motion until a source is supplied", async () => {
+    await open();
+    fireEvent.change(screen.getByLabelText("Movimiento"), { target: { value: "TILT" } });
+    fireEvent.submit(editorForm());
+    expect(await screen.findByRole("alert")).toHaveTextContent("elige los herrajes compatibles");
+    expectNoWrites();
+    expect(screen.queryByLabelText("Altura de fuente · mm")).not.toBeInTheDocument();
+  });
+  it("exposes sources to the estimator with all authority controls disabled", async () => {
+    identity.role = "ESTIMATOR";
+    await open(true);
+    expect(screen.getByLabelText("Fuente de la capacidad")).toBeDisabled();
+    expect(screen.getByLabelText("Movimiento")).toBeDisabled();
+    expect(screen.getByLabelText("Altura de fuente · mm")).toBeDisabled();
+    expectNoWrites();
   });
 });

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "cargando-light-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "error-light-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "sin-permiso-light-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "bloqueado-light-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "vacio-light-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "cargando-dark-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "error-dark-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "sin-permiso-dark-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "bloqueado-dark-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  },
+  {
+    "name": "vacio-dark-1024",
+    "overflow": false,
+    "errors": [],
+    "text": [],
+    "presentation": []
+  }
+]

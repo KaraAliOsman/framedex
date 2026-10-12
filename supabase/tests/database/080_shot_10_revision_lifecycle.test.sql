@@ -40,16 +40,18 @@ SELECT ok(to_regclass('public.uk_global_system_singleton_profile_role') IS NOT N
   'global singleton profile roles have an atomic database constraint');
 SELECT ok(
   pg_get_indexdef('public.uk_tenant_system_singleton_profile_role'::regclass)
-    LIKE '%INVERSOR%' AND
-  pg_get_indexdef('public.uk_tenant_system_singleton_profile_role'::regclass)
-    LIKE '%ADDITIONAL%',
+    LIKE '%role <> ALL%' AND
+  (SELECT array_agg(parts[1]) FROM regexp_matches(
+    pg_get_indexdef('public.uk_tenant_system_singleton_profile_role'::regclass),
+    '''([A-Z_]+)''','g') parts) = ARRAY['GLAZING_BEAD','COUPLER'],
   'tenant singleton index covers every singleton profile role'
 );
 SELECT ok(
   pg_get_indexdef('public.uk_global_system_singleton_profile_role'::regclass)
-    LIKE '%INVERSOR%' AND
-  pg_get_indexdef('public.uk_global_system_singleton_profile_role'::regclass)
-    LIKE '%ADDITIONAL%',
+    LIKE '%role <> ALL%' AND
+  (SELECT array_agg(parts[1]) FROM regexp_matches(
+    pg_get_indexdef('public.uk_global_system_singleton_profile_role'::regclass),
+    '''([A-Z_]+)''','g') parts) = ARRAY['GLAZING_BEAD','COUPLER'],
   'global singleton index covers every singleton profile role'
 );
 SELECT has_trigger('public','profile_articles','guard_singleton_profile_role',
@@ -60,7 +62,7 @@ INSERT INTO public.profile_systems
 SELECT (jsonb_populate_record(NULL::public.profile_systems,to_jsonb(source)||
   jsonb_build_object('id','77000000-0000-4000-8000-0000000000AA'::uuid,'code','PGTAP10',
     'is_demo',false,'technical_locked',false))).*
-FROM public.profile_systems source WHERE code='DEMO_60';
+FROM public.profile_systems source WHERE code='DEMO_60' AND version=1;
 INSERT INTO public.profile_articles (system_id, sku, name, role, face_width_mm)
 VALUES ('77000000-0000-4000-8000-0000000000AA','PGTAP10-FRAME','Global frame','FRAME',60.00);
 SELECT throws_ok($$

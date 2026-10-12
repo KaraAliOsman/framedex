@@ -3,12 +3,19 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { AppRoutes } from "./App";
+import { AppRoutes, DEV_ONLY_ROUTE_PATHS, visibleDevOnlyRoutePaths } from "./App";
 import { AuthSessionContext, type AuthSessionContextValue } from "./auth/AuthSessionProvider";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import { ConfirmProvider } from "./ui";
+// Compile the real lazy destination during test setup. The route assertion
+// verifies navigation/rendering, independently of concurrent Vite transforms.
+import "./features/projects/ProjectPages";
 vi.mock("./api/generated/dekopen", () => ({
   projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
+  analyticsToday: vi.fn().mockResolvedValue({
+    status: 200,
+    data: { today: "2026-10-09", actions: [], pipeline: [], source: "Compromisos" },
+  }),
 }));
 
 function authValue(status: AuthSessionContextValue["status"]): AuthSessionContextValue {
@@ -78,10 +85,18 @@ describe("SHOT-04 application routes", () => {
 
   it("opens the real project list from the authenticated shell", async () => {
     renderRoute("/dashboard", authValue("ready"));
-    expect(screen.getByTestId("app-shell")).toBeInTheDocument();
+    expect(await screen.findByTestId("app-shell")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Proyectos" })).toHaveAttribute("href", "/projects");
     fireEvent.click(screen.getByRole("link", { name: "Proyectos" }));
     expect(await screen.findByRole("heading", { name: "Todos los proyectos" })).toBeInTheDocument();
+  });
+
+  it("lets an operator explicitly open their role-scoped Today queue", async () => {
+    const auth = authValue("ready");
+    auth.me!.active_organization!.role = "OPERATOR";
+    renderRoute("/dashboard", auth);
+    expect(await screen.findByRole("heading", { name: "Hoy" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Precios" })).not.toBeInTheDocument();
   });
 
   it("routes an OWNER requiring aal2 to the MFA flow", async () => {
@@ -98,11 +113,17 @@ describe("SHOT-04 application routes", () => {
     expect(selector).toBeInTheDocument();
   });
 
-  it("switches and persists the dual theme", () => {
+  it("switches and persists the dual theme", async () => {
     window.localStorage.setItem("dekopen.theme", "light");
     renderRoute("/dashboard", authValue("ready"));
-    fireEvent.click(screen.getByRole("button", { name: "Cambiar tema" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Cambiar tema" }));
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(window.localStorage.getItem("dekopen.theme")).toBe("dark");
+  });
+
+  it("keeps dev-only routes out of production routing", () => {
+    expect(DEV_ONLY_ROUTE_PATHS).toContain("/projects/demo/positions/g1/edit");
+    expect(visibleDevOnlyRoutePaths({ DEV: false })).toEqual([]);
+    expect(visibleDevOnlyRoutePaths({ DEV: true })).toEqual(DEV_ONLY_ROUTE_PATHS);
   });
 });

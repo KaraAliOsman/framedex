@@ -44,6 +44,7 @@ const SEARCH_GROUP_LABEL: Record<string, TranslationKey> = {
   articles: "search.groupArticles",
   orders: "search.groupOrders",
   documents: "search.groupDocuments",
+  quotes: "nav.quotes",
   inventory: "search.groupInventory",
 };
 
@@ -52,6 +53,7 @@ export function CommandPalette({
   onNavigate,
   organizationId = null,
   openRequested = 0,
+  contextKey = "",
 }: {
   navItems: NavCommandItem[];
   onNavigate(to: string): void;
@@ -59,6 +61,7 @@ export function CommandPalette({
   /** Incremental open signal — the topbar search entry pokes the palette open
    * the same way ⌘K toggles it. */
   openRequested?: number;
+  contextKey?: string;
 }): JSX.Element | null {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -71,23 +74,36 @@ export function CommandPalette({
   const [invalidParam, setInvalidParam] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const searchSeq = useRef(0);
+  const searchAbort = useRef<AbortController | null>(null);
+  const [searchState, setSearchState] = useState<"idle" | "loading" | "error" | "ready">("idle");
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const wasOpen = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const paletteRef = useRef<HTMLDivElement>(null);
   const surface = useCommandSurface();
 
   const close = useCallback(() => {
+    searchSeq.current += 1;
+    searchAbort.current?.abort();
     setOpen(false);
     setQuery("");
     setCursor(0);
     setPending(null);
     setSearchResults([]);
+    setSearchState("idle");
+    if (wasOpen.current) returnFocus.current?.focus();
+    wasOpen.current = false;
   }, []);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setOpen((previous) => !previous);
+        if (open) close();
+        else {
+          window.dispatchEvent(new Event("dekopen:shell-overlay"));
+          setOpen(true);
+        }
       } else if (event.key === "/" && !open) {
         // Chrome owns Ctrl+K while the omnibox has focus — "/" stays reachable.
         const target = event.target as HTMLElement | null;
@@ -99,6 +115,7 @@ export function CommandPalette({
             target.isContentEditable);
         if (!inField) {
           event.preventDefault();
+          window.dispatchEvent(new Event("dekopen:shell-overlay"));
           setOpen(true);
         }
       } else if (event.key === "Escape" && open) {
@@ -115,7 +132,11 @@ export function CommandPalette({
         // aria-activedescendant).
         const root = paletteRef.current;
         const focusables = root
-          ? Array.from(root.querySelectorAll<HTMLElement>("input, button:not([disabled])"))
+          ? Array.from(
+              root.querySelectorAll<HTMLElement>(
+                'input, button:not([disabled]):not([tabindex="-1"])',
+              ),
+            )
           : [];
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
@@ -140,29 +161,72 @@ export function CommandPalette({
   }, [openRequested]);
 
   useEffect(() => {
+    if (open) {
+      returnFocus.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      wasOpen.current = true;
+    }
+  }, [open]);
+  useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open, pending]);
+
+  // Commands bind to the live selection. Never execute a captured command
+  // after the editor registers a different selection or disabled context.
+  useEffect(() => {
+    if (pending && !surface?.commands.includes(pending.command)) {
+      setPending(null);
+      setQuery("");
+      setCursor(0);
+      setInvalidParam(false);
+    }
+  }, [surface, pending]);
+
+  useEffect(() => {
+    close();
+  }, [organizationId, contextKey, close]);
+  useEffect(() => {
+    const dismiss = () => close();
+    window.addEventListener("dekopen:shell-overlay", dismiss);
+    return () => window.removeEventListener("dekopen:shell-overlay", dismiss);
+  }, [close]);
 
   // Debounced global search — results land in `searchResults` and merge into
   // the same navigable list below local commands/navigation.
   useEffect(() => {
+    const seq = ++searchSeq.current;
+    searchAbort.current?.abort();
+    const controller = new AbortController();
+    searchAbort.current = controller;
+    setSearchResults([]);
+    setSearchState("idle");
     const needle = query.trim();
     if (!open || pending || !organizationId || needle.length < 2) {
       setSearchResults([]);
       return;
     }
-    const seq = ++searchSeq.current;
+    setSearchState("loading");
     const timer = window.setTimeout(() => {
-      void globalSearch({ q: needle }, { headers: { "X-Organization-ID": organizationId } })
+      void globalSearch(
+        { q: needle },
+        { signal: controller.signal, headers: { "X-Organization-ID": organizationId } },
+      )
         .then((response) => {
           if (response.status !== 200) throw new ApiError(response.status, response.data);
-          if (searchSeq.current === seq) setSearchResults(response.data.results);
+          if (searchSeq.current === seq && !controller.signal.aborted) {
+            setSearchResults(response.data.results);
+            setSearchState("ready");
+          }
         })
         .catch(() => {
-          if (searchSeq.current === seq) setSearchResults([]);
+          if (searchSeq.current === seq && !controller.signal.aborted) setSearchState("error");
         });
     }, 250);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+      searchSeq.current += 1;
+    };
   }, [query, open, pending, organizationId]);
 
   const items = useMemo<Listed[]>(() => {
@@ -369,8 +433,20 @@ export function CommandPalette({
                   </button>
                 </li>
               ))}
-              {items.length === 0 && <li className="command-palette-hint">{t("cmd.noResults")}</li>}
+              {items.length === 0 && searchState !== "loading" && searchState !== "error" && (
+                <li className="command-palette-hint">{t("cmd.noResults")}</li>
+              )}
             </ul>
+            {searchState === "loading" && (
+              <p className="command-palette-hint" role="status">
+                Buscando en la organización…
+              </p>
+            )}
+            {searchState === "error" && (
+              <p className="command-palette-hint" role="alert">
+                No se pudo completar la búsqueda. Revisa la conexión y vuelve a escribir el código.
+              </p>
+            )}
             {(() => {
               const described = (surface?.commands ?? [])
                 .find((command) => command.id === items[cursor]?.key && !command.params?.length)

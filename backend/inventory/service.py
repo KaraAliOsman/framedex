@@ -8,7 +8,7 @@ quantity; order status advances through PARTIALLY_RECEIVED / FULFILLED."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
 from typing import Any
 from uuid import UUID
@@ -44,6 +44,11 @@ def stock_variant_key(
     openings)."""
     if physical_stock_identity:
         return str(physical_stock_identity)
+    if str(category or "") == "FITTING" and isinstance(specification, dict) and specification.get("oriented_height_mm") is not None:
+        # A cut-to-length transmission is not fungible with the same article
+        # at another length. Keep historical counted fittings' empty bucket.
+        length = Decimal(str(specification["oriented_height_mm"]))
+        return "LENGTH:" + format(length.normalize(), "f")
     if str(category or "") in _SPEC_KEYED_CATEGORIES and isinstance(
         specification, dict
     ) and specification:
@@ -103,25 +108,14 @@ def list_stock(*, org_id: UUID) -> dict[str, object]:
     # Incoming needs Python-side matching: a line's stock bucket derives from
     # psi-or-spec-hash (stock_variant_key), which SQL cannot express without
     # duplicating the canonical hash.
-    incoming: dict[tuple[str, str], object] = {}
-    # order_requirement_lines / purchase_allocations are documentary-backend
-    # tables — no SELECT grant to `authenticated`. The incoming read crosses
-    # roles explicitly; RLS still applies via request.jwt.claims.
+    incoming: dict[tuple[str, str], Decimal] = {}
+    incoming_specs: dict[tuple[str, str], dict] = {}
+    # The guarded projection gives stock readers physical quantities only.
+    # Estimators retain no SELECT over confidential supplier orders/lines.
     with documentary_backend():
         open_lines = rows(
             """
-            SELECT l.line_snapshot,
-                   l.quantity - COALESCE(r.received_qty, 0) AS open_qty
-            FROM public.order_requirement_lines l
-            JOIN public.orders o
-                ON o.id = l.order_id AND o.org_id = l.org_id
-                AND o.status IN ('SENT', 'PARTIALLY_RECEIVED')
-            LEFT JOIN (
-                SELECT order_line_id, SUM(received_qty) AS received_qty
-                FROM public.order_receipt_lines
-                GROUP BY order_line_id
-            ) r ON r.order_line_id = l.id
-            WHERE l.org_id = %s AND l.released_at IS NULL
+            SELECT line_snapshot,open_qty FROM private.stock_incoming(%s)
             """,
             [str(org_id)],
         )
@@ -138,20 +132,43 @@ def list_stock(*, org_id: UUID) -> dict[str, object]:
             ),
         )
         incoming[key] = incoming.get(key, Decimal(0)) + Decimal(str(line["open_qty"]))
+        incoming_specs[key] = snapshot
     keys = {(str(item["sku"]), str(item["variant_key"])): item for item in items}
     for (sku, variant_key), qty in incoming.items():
         item = keys.get((sku, variant_key))
         if item is not None:
             item["incoming_qty"] = qty
+        else:
+            snapshot = incoming_specs[(sku, variant_key)]
+            items.append({"item_id": None, **_line_item_identity(snapshot),
+                          "on_hand_qty": Decimal(0), "reserved_qty": Decimal(0),
+                          "available_qty": Decimal(0), "incoming_qty": qty,
+                          "attributes": snapshot.get("specification"), "racks": None})
+    holds = rows(
+        "SELECT m.item_id,o.id AS order_id,o.order_code, "
+        "SUM(CASE WHEN m.movement_type='RESERVATION' THEN m.quantity "
+        "WHEN m.movement_type IN ('RELEASE','CONSUMPTION') THEN -m.quantity ELSE 0 END) AS quantity "
+        "FROM public.inventory_movements m JOIN public.orders o ON o.id=m.order_id AND o.org_id=m.org_id "
+        "WHERE m.org_id=%s AND o.order_type='WORKSHOP_OT' GROUP BY m.item_id,o.id,o.order_code "
+        "HAVING SUM(CASE WHEN m.movement_type='RESERVATION' THEN m.quantity "
+        "WHEN m.movement_type IN ('RELEASE','CONSUMPTION') THEN -m.quantity ELSE 0 END)>0",
+        [str(org_id)],
+    )
     for item in items:
+        item["reservations"] = [{"order_id": str(h["order_id"]), "order_code": h["order_code"],
+                                "quantity": str(h["quantity"])} for h in holds
+                               if str(h["item_id"]) == str(item["item_id"])]
         item["spec_text"] = _spec_text(item.get("attributes"))
         item.pop("attributes", None)
     return {"items": items}
 
 
 def _spec_text(attributes: object) -> str:
-    """Flat searchable text from the stored specification — glass composition,
-    treatments, dims. Searching '4-16-4' or 'Float' must find the item."""
+    """Human specification from declared fields, never internal identities.
+
+    This also remains searchable (composition, finish and exact dimensions).
+    New authority metadata must not accidentally become visible stock copy.
+    """
     if isinstance(attributes, str):
         try:
             attributes = json.loads(attributes)
@@ -159,22 +176,51 @@ def _spec_text(attributes: object) -> str:
             return ""
     if not isinstance(attributes, dict):
         return ""
-    seen: list[str] = []
+    parts: list[str] = []
+    for key in ("name", "title", "composition", "manufacturer_name"):
+        value = attributes.get(key)
+        if isinstance(value, str) and value.strip() and value.strip() not in parts:
+            parts.append(value.strip())
+    color = attributes.get("color")
+    if isinstance(color, str) and color:
+        parts.append({"WHITE": "Blanco", "FOILED": "Foliado"}.get(color, color))
 
-    def walk(value: object) -> None:
-        if isinstance(value, dict):
-            for child in value.values():
-                walk(child)
-        elif isinstance(value, (list, tuple)):
-            for child in value:
-                walk(child)
-        elif value is not None:
-            text = str(value).strip()
-            if text and text not in seen:
-                seen.append(text)
+    def mm(key: str) -> str | None:
+        value = attributes.get(key)
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            number = Decimal(str(value))
+        except InvalidOperation:
+            return None
+        if not number.is_finite():
+            return None
+        integer, _, fraction = format(number, "f").partition(".")
+        fraction = fraction.rstrip("0")
+        grouped = format(int(integer), ",").replace(",", "\u202f")
+        return grouped + ("," + fraction if fraction else "")
 
-    walk(attributes)
-    return " ".join(seen)
+    width = mm("oriented_width_mm") or mm("width_mm")
+    height = mm("oriented_height_mm") or mm("height_mm")
+    if width and height:
+        parts.append(f"{width} × {height} mm")
+    elif width or height:
+        parts.append(f"{'Ancho' if width else 'Alto'} {width or height} mm · Sin dato en la otra medida")
+    for key, label in (("stock_length_mm", "Largo"), ("thickness_mm", "Espesor")):
+        value = mm(key)
+        if value:
+            parts.append(f"{label} {value} mm")
+    polishing = attributes.get("polishing")
+    if isinstance(polishing, dict):
+        edges = [label for key, label in (
+            ("top", "superior"), ("right", "derecho"),
+            ("bottom", "inferior"), ("left", "izquierdo"),
+        ) if polishing.get(key) is True]
+        if edges:
+            parts.append("Cantos pulidos: " + ", ".join(edges))
+        elif all(polishing.get(key) is False for key in ("top", "right", "bottom", "left")):
+            parts.append("Sin pulido")
+    return " · ".join(parts)
 
 
 def list_movements(*, org_id: UUID, item_id: UUID | None, limit: int) -> dict[str, object]:
@@ -184,18 +230,26 @@ def list_movements(*, org_id: UUID, item_id: UUID | None, limit: int) -> dict[st
         clauses.append("m.item_id = %s")
         parameters.append(str(item_id))
     parameters.append(limit)
-    items = rows(
-        f"""
-        SELECT m.id, m.item_id, m.movement_type::text, m.quantity, m.order_id,
-               m.order_line_id, m.lot_code, m.rack_location, m.note,
-               m.actor_id, m.actor_label, m.created_at
-        FROM public.inventory_movements m
-        WHERE {' AND '.join(clauses)}
-        ORDER BY m.created_at DESC
-        LIMIT %s
-        """,
-        parameters,
-    )
+    with documentary_backend():
+        items = rows(
+            f"""
+            SELECT m.id, m.item_id, m.movement_type::text, m.quantity, m.order_id,
+                   m.order_line_id, m.lot_code, m.rack_location, m.note,
+                   m.actor_id, m.actor_label, m.created_at,
+                   CASE WHEN o.order_type='WORKSHOP_OT' THEN o.order_code
+                        ELSE private.entity_code(o.org_id,'OC',o.id,o.order_code) END AS order_code,
+                   private.entity_code(rc.org_id,'REC',rc.id) AS receipt_code,
+                   rc.supplier_document,rc.received_on
+            FROM public.inventory_movements m
+            LEFT JOIN public.orders o ON o.id=m.order_id AND o.org_id=m.org_id
+            LEFT JOIN public.order_receipt_lines rl ON rl.id=m.receipt_line_id
+            LEFT JOIN public.order_receipts rc ON rc.id=rl.receipt_id AND rc.org_id=m.org_id
+            WHERE {' AND '.join(clauses)}
+            ORDER BY m.created_at DESC
+            LIMIT %s
+            """,
+            parameters,
+        )
     return {"movements": items}
 
 
@@ -203,7 +257,8 @@ def order_receiving(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     with documentary_backend():
         order = one(
             """
-            SELECT id, order_code, order_type::text, status::text, supplier_name
+            SELECT id, private.entity_code(org_id, 'OC', id, order_code) AS order_code,
+                   order_type::text, status::text, supplier_name
             FROM public.orders WHERE id = %s AND org_id = %s
             """,
             [str(order_id), str(org_id)],
@@ -228,7 +283,8 @@ def order_receiving(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         )
         receipts = rows(
             """
-            SELECT id, receipt_key, note, received_by, created_at
+            SELECT id, private.entity_code(org_id, 'REC', id) AS receipt_code,
+                   receipt_key, note, received_by, created_at,supplier_document,received_on
             FROM public.order_receipts
             WHERE order_id = %s AND org_id = %s
             ORDER BY created_at
@@ -304,6 +360,9 @@ def receive_order(
     note: str | None,
     lines: list[dict[str, Any]],
     actor_label: str | None = None,
+    supplier_document: str | None = None,
+    received_on=None,
+    confirm_over_receipt: bool = False,
 ) -> tuple[dict[str, object], bool]:
     """Record a physical receipt against a SENT/partial order. Idempotent per
     (org, receipt_key): a replayed key returns the existing receipt."""
@@ -340,17 +399,30 @@ def receive_order(
         order_lines = {
             str(row["id"]): row
             for row in rows(
-                "SELECT id, quantity, line_snapshot FROM public.order_requirement_lines "
-                "WHERE order_id = %s AND org_id = %s",
+                "SELECT l.id,l.quantity,l.line_snapshot,COALESCE(r.usable_qty,0) AS usable_qty "
+                "FROM public.order_requirement_lines l LEFT JOIN (SELECT order_line_id, "
+                "SUM(received_qty-damaged_qty) AS usable_qty FROM public.order_receipt_lines GROUP BY order_line_id) r "
+                "ON r.order_line_id=l.id WHERE l.order_id=%s AND l.org_id=%s",
                 [str(order_id), str(org_id)],
             )
         }
+        if len({str(entry['order_line_id']) for entry in lines}) != len(lines):
+            raise DocumentaryError("receipt_line_duplicate", detail="Repite cada línea una sola vez en la recepción.")
+        current = {line_id:max(Decimal(str(line['quantity']))-Decimal(str(line.get('usable_qty') or 0)),Decimal(0))
+                   for line_id,line in order_lines.items()}
+        for entry in lines:
+            line_id = str(entry['order_line_id'])
+            if line_id not in current:
+                raise DocumentaryError("receipt_line_unknown")
+            if entry['received_qty']-entry['damaged_qty'] > current[line_id] and not confirm_over_receipt:
+                raise DocumentaryError("receipt_surplus_confirmation_required",
+                    detail="La cantidad útil supera lo pendiente. Revisa el excedente y confirma la sobre-recepción.")
         receipt = one(
             """
-            INSERT INTO public.order_receipts(org_id, order_id, receipt_key, note, received_by)
-            VALUES (%s, %s, %s, %s, %s) RETURNING id
+            INSERT INTO public.order_receipts(org_id, order_id, receipt_key, note, received_by,supplier_document,received_on)
+            VALUES (%s, %s, %s, %s, %s,%s,%s) RETURNING id
             """,
-            [str(org_id), str(order_id), receipt_key, note, str(actor_id)],
+            [str(org_id), str(order_id), receipt_key, note, str(actor_id), supplier_document,received_on],
         )
         receipt_id = receipt["id"]
         for entry in lines:

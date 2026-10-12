@@ -1,0 +1,13 @@
+{
+  "order": "OT-P-000005-REV-A-02",
+  "remnant": "RT-000062",
+  "compatible": true,
+  "reserved": true,
+  "source": "motor de corte y plan completo",
+  "newPurchaseRequired": [
+    {
+      "sku": "COMPRA-ACERO-MARCO",
+      "short": "1.00"
+    }
+  ]
+}

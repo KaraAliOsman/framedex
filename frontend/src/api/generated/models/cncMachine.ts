@@ -7,6 +7,13 @@
  */
 
 export interface CncMachine {
+  authority_revision: string;
+  machine_type: string;
+  profile_setups: unknown[];
+  /** @nullable */
+  axes: unknown[] | null;
+  clamps_declared: boolean;
+  authority_source: string;
   id: string;
   code: string;
   name: string;

@@ -1,0 +1,20 @@
+.brand-mark,
+.brand-wordmark,
+.brand-lockup {
+  display: block;
+  flex: none;
+  fill: currentColor;
+  color: var(--g-950);
+}
+:root[data-theme="dark"] .brand-mark,
+:root[data-theme="dark"] .brand-wordmark,
+:root[data-theme="dark"] .brand-lockup {
+  color: var(--g-25);
+}
+@media print {
+  .brand-mark,
+  .brand-wordmark,
+  .brand-lockup {
+    color: var(--g-950);
+  }
+}

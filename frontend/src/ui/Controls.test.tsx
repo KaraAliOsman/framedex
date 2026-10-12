@@ -52,7 +52,7 @@ describe("NumberField", () => {
     const input = screen.getByRole("textbox");
     expect(input).toHaveValue("12.500,50");
     fireEvent.focus(input);
-    expect(input).toHaveValue("12500.5");
+    expect(input).toHaveValue("12500,5");
     fireEvent.change(input, { target: { value: "12500.75" } });
     expect(onValueChange).toHaveBeenLastCalledWith("12500.75");
   });

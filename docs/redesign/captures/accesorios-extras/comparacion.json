@@ -1,0 +1,914 @@
+[
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 37,
+    "after": 1,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": true,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 37,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 38,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 38,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 37,
+    "after": 1,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": true,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 37,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 38,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 38,
+    "after": 2,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 21,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/projects/payment-integration/",
+        "status": 403
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 21,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/projects/payment-integration/",
+        "status": 403
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 21,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/projects/payment-integration/",
+        "status": 403
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 21,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/projects/payment-integration/",
+        "status": 403
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 21,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/projects/payment-integration/",
+        "status": 403
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 21,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/projects/payment-integration/",
+        "status": 403
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 21,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/projects/payment-integration/",
+        "status": 403
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "proyecto",
+    "route": [
+      "proyecto-detalle",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 21,
+    "after": 13,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/projects/payment-integration/",
+        "status": 403
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "precios",
+    "route": [
+      "precios-proyecto",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 3,
+    "after": 1,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "light",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "light",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "light",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "light",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "dark",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "dark",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "dark",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "ajustes",
+    "route": [
+      "ajustes",
+      "OWNER",
+      "dark",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 0,
+    "after": 0,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+        "status": 500
+      }
+    ],
+    "http_after": [],
+    "console_before": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    ],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "390x844"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1280x800"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1024x768"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1440x900"
+    ],
+    "baseline_ref": "b0873d1a",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  }
+]

@@ -1,6 +1,7 @@
 """Project and position routes."""
 
 from django.urls import path
+from projects.thermal_views import ProjectThermalView, ThermalAlternativesView
 
 from projects.views import (
     ClientView,
@@ -35,8 +36,53 @@ from projects.views import (
     ProjectInvoiceDteEnvioView,
 )
 from projects.options import DesignOptionsView
+from projects.company_views import CompanyView,CompanyUsersView,CompanyUserView,CompanyInvitationsView,CompanyInvitationView,InvitationInspectView,InvitationAcceptView,CompanyNumberingView,CompanyPreviewView
+from projects.client_views import ClientDirectoryView, ClientDossierView, ClientNotesView, ClientMergePreviewView, ClientMergeView
+from projects.ops_registry import OperationsRegistryView, SimulateOpsView
+from projects.project_ops import ProjectOpsPreviewView, ProjectOpsApplyView, ProjectOpsUndoView, ProjectOpsStateView
+from projects.hardware import HardwarePreviewView
+from projects.finishes import FinishPreviewView
+from projects.extras import ExtraPolicyView, ProjectServicesView, ExtrasPreviewView
+from projects.mounting import MountingRulesView, MountingPreviewView, MeasurementConfirmView, RectificationView
+from projects.collection_views import CollectionSettingsView, FlowSimulationView, FiscalSimulationView, CollectionReminderView, CollectionReminderSendView
 
 urlpatterns = [
+    path("projects/<uuid:project_id>/thermal/", ProjectThermalView.as_view()),
+    path("projects/<uuid:project_id>/thermal/<uuid:position_id>/alternatives/", ThermalAlternativesView.as_view()),
+    path("organization/company/",CompanyView.as_view()),
+    path("organization/users/",CompanyUsersView.as_view()),
+    path("organization/users/<uuid:identity>/",CompanyUserView.as_view()),
+    path("organization/invitations/",CompanyInvitationsView.as_view()),
+    path("organization/invitations/<uuid:identity>/",CompanyInvitationView.as_view()),
+    path("auth/invitation/",InvitationInspectView.as_view()),
+    path("auth/invitation/accept/",InvitationAcceptView.as_view()),
+    path("organization/numbering/",CompanyNumberingView.as_view()),
+    path("organization/document-preview/",CompanyPreviewView.as_view()),
+    path("clients/directory/", ClientDirectoryView.as_view()),
+    path("clients/<uuid:client_id>/dossier/", ClientDossierView.as_view()),
+    path("clients/<uuid:client_id>/notes/", ClientNotesView.as_view()),
+    path("clients/<uuid:client_id>/merge-preview/", ClientMergePreviewView.as_view()),
+    path("clients/<uuid:client_id>/merge/", ClientMergeView.as_view()),
+    path("organization/collections/", CollectionSettingsView.as_view()),
+    path("projects/<uuid:project_id>/collection-reminder/", CollectionReminderView.as_view()),
+    path("projects/<uuid:project_id>/collection-reminder/send/", CollectionReminderSendView.as_view()),
+    path("projects/flow/simulated/<uuid:link_id>/", FlowSimulationView.as_view()),
+    path("projects/<uuid:project_id>/fiscal-simulations/", FiscalSimulationView.as_view()),
+    path("projects/<uuid:project_id>/operations/state/", ProjectOpsStateView.as_view()),
+    path("projects/<uuid:project_id>/operations/preview/", ProjectOpsPreviewView.as_view()),
+    path("projects/<uuid:project_id>/operations/apply/", ProjectOpsApplyView.as_view()),
+    path("projects/<uuid:project_id>/operations/<uuid:operation_id>/undo/", ProjectOpsUndoView.as_view()),
+    path("projects/operations/registry/", OperationsRegistryView.as_view()),
+    path("projects/operations/simulate/", SimulateOpsView.as_view()),
+    path('organization/mounting/<uuid:system_id>/', MountingRulesView.as_view()),
+    path('projects/mounting-preview/', MountingPreviewView.as_view()),
+    path('positions/<uuid:position_id>/measurements/confirm/', MeasurementConfirmView.as_view()),
+    path('positions/<uuid:position_id>/measurements/rectify/', RectificationView.as_view()),
+    path("organization/extras/", ExtraPolicyView.as_view()),
+    path("projects/extras-preview/", ExtrasPreviewView.as_view()),
+    path("projects/<uuid:project_id>/services/", ProjectServicesView.as_view()),
+    path("projects/finish-preview/", FinishPreviewView.as_view()),
+    path("projects/hardware-preview/", HardwarePreviewView.as_view()),
     path("projects/design-options/<uuid:system_id>/", DesignOptionsView.as_view()),
     path("projects/flow/confirm/<uuid:link_id>/", FlowPaymentConfirmView.as_view()),
     path("organization/branding/", OrganizationBrandingView.as_view()),

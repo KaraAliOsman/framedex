@@ -1,0 +1,34 @@
+[
+  {
+    "document": "acta-prueba",
+    "pages": 2,
+    "paper": [
+      [
+        612.0,
+        792.0
+      ],
+      [
+        612.0,
+        792.0
+      ]
+    ],
+    "sha256": "dfe0811b19d19061518814bf920dd59dc23e3cef0b9134cef89f3c83adfced30",
+    "assertions": "PASA"
+  },
+  {
+    "document": "guia-prueba",
+    "pages": 2,
+    "paper": [
+      [
+        612.0,
+        792.0
+      ],
+      [
+        612.0,
+        792.0
+      ]
+    ],
+    "sha256": "764a55b8c5c405452c7107fce17a852ab5bc73dbb04d85670a2bce65d4a7e9cc",
+    "assertions": "PASA"
+  }
+]

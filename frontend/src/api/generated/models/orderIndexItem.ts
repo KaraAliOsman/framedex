@@ -14,6 +14,9 @@ export interface OrderIndexItem {
   order_type: OrderTypeEnum;
   status: OrderStatusEnum;
   /** @nullable */
+  net_amount?: string | null;
+  currency?: string;
+  /** @nullable */
   supplier_identity: string | null;
   /** @nullable */
   supplier_name: string | null;

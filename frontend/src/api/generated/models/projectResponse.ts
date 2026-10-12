@@ -28,9 +28,16 @@ export interface ProjectResponse {
   client_address?: string;
   /** @nullable */
   client_id?: string | null;
+  /** @nullable */
+  client_address_id?: string | null;
   delivery_address?: string;
   notes_commercial?: string;
   notes_internal?: string;
+  /** @nullable */
+  accepted_version_id?: string | null;
+  /** @nullable */
+  accepted_revision?: string | null;
+  accepted_source?: string;
   id: string;
   code: string;
   status: ProjectResponseStatusEnum;
@@ -47,4 +54,7 @@ export interface ProjectResponse {
   updated_at: string;
   positions?: PositionResponse[];
   versions?: ProjectVersionResponse[];
+  /** @nullable */
+  quotation_valid_until?: string | null;
+  quotation_validity_source?: string;
 }

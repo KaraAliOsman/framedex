@@ -2,6 +2,7 @@ import { t } from "../../i18n/es-CL";
 import type { IntentNode } from "./intentEditing";
 import type { MemberGeometry, MemberSpec } from "./members";
 import { normalizedSection } from "./Product3DScene";
+import { fmtMm } from "../../format";
 
 /** §05-G technical output — a horizontal cut through a bay (the "detalle
  * de nodo" every fenestration drawing carries). The SAME normalized
@@ -106,56 +107,62 @@ export function SectionView({
   }
   const viewW = span + PAD * 2;
   const viewH = depth + PAD * 2 + 24;
+  const declaredDepth = members.frame.section?.depth_mm;
+  const approximate = members_drawn.some((spec) => sectionPath(spec).approximate);
   return (
-    <svg
-      className="section-view"
-      viewBox={`${-PAD} ${-PAD - 18} ${viewW} ${viewH}`}
-      role="img"
-      aria-label={t("assembly.sectionView")}
-    >
-      <defs>
-        <marker id="section-arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-          <path d="M0,0 L6,3 L0,6 Z" className="section-dim__arrow" />
-        </marker>
-      </defs>
-      {/* exterior/interior labels */}
-      <text x={-PAD + 2} y={-8} className="section-label">
-        {t("assembly.sectionExterior")}
-      </text>
-      <text x={-PAD + 2} y={depth + 16} className="section-label">
-        {t("assembly.sectionInterior")}
-      </text>
-      {/* member sections — declared polygons or dashed approximation */}
-      {members_drawn.map((spec, index) => {
-        const { d, approximate } = sectionPath(spec);
-        return (
-          <path
-            key={`m-${index}`}
-            d={d}
-            className={`section-member section-member--${spec.spec.material.toLowerCase()}${approximate ? " section-member--approx" : ""}`}
-          />
-        );
-      })}
-      {/* glass line at its declared plane */}
-      <rect
-        x={members.frame.faceWidthMm + bead}
-        y={glassZ}
-        width={Math.max(span - 2 * (members.frame.faceWidthMm + bead), 2)}
-        height={Math.min(glassT, 8)}
-        className="section-glass"
-      />
-      {/* conventional break marks where a wide span is cropped */}
-      {cropped &&
-        [span * 0.42, span * 0.58].map((x, index) => (
-          <path
-            key={`break-${index}`}
-            d={`M ${x - 6} ${glassZ + Math.min(glassT, 8) + 4} l 12 ${-(Math.min(glassT, 8) + 8)}`}
-            className="section-break"
-          />
-        ))}
-      {/* gasket dots at the glazing seat */}
-      {[members.frame.faceWidthMm + bead - GASKET_MM, span - members.frame.faceWidthMm - bead].map(
-        (x, index) => (
+    <figure className="section-view">
+      <span className="section-label">{t("assembly.sectionExterior")}</span>
+      <svg
+        className="section-view__drawing"
+        viewBox={`${-PAD} ${-PAD - 18} ${viewW} ${viewH}`}
+        role="img"
+        aria-label={t("assembly.sectionView")}
+      >
+        <defs>
+          <marker
+            id="section-arrow"
+            markerWidth="6"
+            markerHeight="6"
+            refX="3"
+            refY="3"
+            orient="auto"
+          >
+            <path d="M0,0 L6,3 L0,6 Z" className="section-dim__arrow" />
+          </marker>
+        </defs>
+        {/* member sections — declared polygons or dashed approximation */}
+        {members_drawn.map((spec, index) => {
+          const { d, approximate } = sectionPath(spec);
+          return (
+            <path
+              key={`m-${index}`}
+              d={d}
+              className={`section-member section-member--${spec.spec.material.toLowerCase()}${approximate ? " section-member--approx" : ""}`}
+            />
+          );
+        })}
+        {/* glass line at its declared plane */}
+        <rect
+          x={members.frame.faceWidthMm + bead}
+          y={glassZ}
+          width={Math.max(span - 2 * (members.frame.faceWidthMm + bead), 2)}
+          height={Math.min(glassT, 8)}
+          className="section-glass"
+        />
+        {/* conventional break marks where a wide span is cropped */}
+        {cropped &&
+          [span * 0.42, span * 0.58].map((x, index) => (
+            <path
+              key={`break-${index}`}
+              d={`M ${x - 6} ${glassZ + Math.min(glassT, 8) + 4} l 12 ${-(Math.min(glassT, 8) + 8)}`}
+              className="section-break"
+            />
+          ))}
+        {/* gasket dots at the glazing seat */}
+        {[
+          members.frame.faceWidthMm + bead - GASKET_MM,
+          span - members.frame.faceWidthMm - bead,
+        ].map((x, index) => (
           <rect
             key={`g-${index}`}
             x={x}
@@ -164,32 +171,34 @@ export function SectionView({
             height={GASKET_MM}
             className="section-gasket"
           />
-        ),
-      )}
-      {/* depth dimension */}
-      <line
-        x1={span + 10}
-        y1={0}
-        x2={span + 10}
-        y2={depth}
-        className="section-dim"
-        markerStart="url(#section-arrow)"
-        markerEnd="url(#section-arrow)"
-      />
-      <text
-        x={span + 14}
-        y={depth / 2}
-        className="section-dim__text"
-        transform={`rotate(90 ${span + 14} ${depth / 2})`}
-      >
-        {depth.toFixed(0)}
-      </text>
-      {/* legend note when any member is approximate */}
-      {members_drawn.some((spec) => sectionPath(spec).approximate) && (
-        <text x={-PAD + 2} y={depth + 30} className="section-approx">
-          {t("assembly.sectionApproxNote")}
-        </text>
-      )}
-    </svg>
+        ))}
+        {/* Only the declared frame depth has numeric authority. */}
+        {declaredDepth && Number(declaredDepth) > 0 ? (
+          <line
+            x1={span + 10}
+            y1={0}
+            x2={span + 10}
+            y2={depth}
+            className="section-dim"
+            markerStart="url(#section-arrow)"
+            markerEnd="url(#section-arrow)"
+          />
+        ) : null}
+      </svg>
+      <figcaption>
+        <span className="section-label">{t("assembly.sectionInterior")}</span>
+        <span>
+          Profundidad del marco:{" "}
+          {declaredDepth && Number(declaredDepth) > 0 ? (
+            <span className="section-depth">{fmtMm(declaredDepth)} mm</span>
+          ) : (
+            "Sin dato · declara la sección en Catálogo."
+          )}
+        </span>
+        {approximate ? (
+          <span className="section-approx">{t("assembly.sectionApproxNote")}</span>
+        ) : null}
+      </figcaption>
+    </figure>
   );
 }

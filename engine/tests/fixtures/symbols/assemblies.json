@@ -1,0 +1,383 @@
+[
+  {
+    "name": "bahias",
+    "label": "Bahías desiguales y cotas cortas",
+    "authority": "DEMO · gramática de dibujo sin acoplador autorizado",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "2400",
+            "height_mm": "1000",
+            "tree": {
+              "id": "v1",
+              "type": "SPLIT_V",
+              "split_offset_mm": "600",
+              "children": [
+                {
+                  "id": "v2",
+                  "type": "SPLIT_V",
+                  "split_offset_mm": "300",
+                  "children": [
+                    {
+                      "id": "a",
+                      "type": "BAY",
+                      "opening_type": "FIXED"
+                    },
+                    {
+                      "id": "b",
+                      "type": "BAY",
+                      "opening_type": "FIXED"
+                    }
+                  ]
+                },
+                {
+                  "id": "h1",
+                  "type": "SPLIT_H",
+                  "split_offset_mm": "350",
+                  "children": [
+                    {
+                      "id": "c",
+                      "type": "BAY",
+                      "opening_type": "FIXED"
+                    },
+                    {
+                      "id": "d",
+                      "type": "BAY",
+                      "opening_type": "FIXED"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "m2",
+            "width_mm": "2400",
+            "height_mm": "1000",
+            "tree": {
+              "id": "e",
+              "type": "BAY",
+              "opening_type": "FIXED"
+            }
+          }
+        ],
+        "couplings": [
+          {
+            "id": "c1",
+            "kind": "INLINE",
+            "modules": [
+              "m1",
+              "m2"
+            ],
+            "edges": [
+              "right",
+              "left"
+            ]
+          }
+        ]
+      }
+    },
+    "elevation": {
+      "min_x_mm": "0",
+      "min_y_mm": "0",
+      "width_mm": "4800",
+      "height_mm": "1000"
+    },
+    "drawing": {
+      "m1": {
+        "width_mm": "2400",
+        "height_mm": "1000",
+        "chains": [
+          {
+            "axis": "V",
+            "level": 0,
+            "segments": [
+              {
+                "start_mm": "0",
+                "end_mm": "600",
+                "value_mm": "600"
+              },
+              {
+                "start_mm": "600",
+                "end_mm": "2400",
+                "value_mm": "1800"
+              }
+            ]
+          },
+          {
+            "axis": "V",
+            "level": 1,
+            "segments": [
+              {
+                "start_mm": "0",
+                "end_mm": "300",
+                "value_mm": "300"
+              },
+              {
+                "start_mm": "300",
+                "end_mm": "600",
+                "value_mm": "300"
+              }
+            ]
+          },
+          {
+            "axis": "H",
+            "level": 0,
+            "segments": [
+              {
+                "start_mm": "0",
+                "end_mm": "350",
+                "value_mm": "350"
+              },
+              {
+                "start_mm": "350",
+                "end_mm": "1000",
+                "value_mm": "650"
+              }
+            ]
+          }
+        ],
+        "bays": [
+          {
+            "bay_id": "a",
+            "x_mm": "0",
+            "y_mm": "0",
+            "width_mm": "300",
+            "height_mm": "1000"
+          },
+          {
+            "bay_id": "b",
+            "x_mm": "300",
+            "y_mm": "0",
+            "width_mm": "300",
+            "height_mm": "1000"
+          },
+          {
+            "bay_id": "c",
+            "x_mm": "600",
+            "y_mm": "0",
+            "width_mm": "1800",
+            "height_mm": "350"
+          },
+          {
+            "bay_id": "d",
+            "x_mm": "600",
+            "y_mm": "350",
+            "width_mm": "1800",
+            "height_mm": "650"
+          }
+        ],
+        "authored_handles": []
+      },
+      "m2": {
+        "width_mm": "2400",
+        "height_mm": "1000",
+        "chains": [],
+        "bays": [
+          {
+            "bay_id": "e",
+            "x_mm": "0",
+            "y_mm": "0",
+            "width_mm": "2400",
+            "height_mm": "1000"
+          }
+        ],
+        "authored_handles": []
+      }
+    }
+  },
+  {
+    "name": "apilado",
+    "label": "Conjunto apilado",
+    "authority": "DEMO · gramática de dibujo sin acoplador autorizado",
+    "product": {
+      "version": "product-v2",
+      "assembly": {
+        "modules": [
+          {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1200",
+            "tree": {
+              "id": "h2",
+              "type": "SPLIT_H",
+              "split_offset_mm": "300",
+              "children": [
+                {
+                  "id": "f",
+                  "type": "BAY",
+                  "opening_type": "FIXED"
+                },
+                {
+                  "id": "v4",
+                  "type": "SPLIT_V",
+                  "split_offset_mm": "400",
+                  "children": [
+                    {
+                      "id": "g1",
+                      "type": "BAY",
+                      "opening_type": "FIXED"
+                    },
+                    {
+                      "id": "g2",
+                      "type": "BAY",
+                      "opening_type": "FIXED"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "m2",
+            "width_mm": "1200",
+            "height_mm": "400",
+            "tree": {
+              "id": "v3",
+              "type": "SPLIT_V",
+              "split_offset_mm": "600",
+              "children": [
+                {
+                  "id": "h",
+                  "type": "BAY",
+                  "opening_type": "FIXED"
+                },
+                {
+                  "id": "i",
+                  "type": "BAY",
+                  "opening_type": "FIXED"
+                }
+              ]
+            }
+          }
+        ],
+        "couplings": [
+          {
+            "id": "c2",
+            "kind": "STACKED",
+            "modules": [
+              "m1",
+              "m2"
+            ],
+            "edges": [
+              "top",
+              "bottom"
+            ]
+          }
+        ]
+      }
+    },
+    "elevation": {
+      "min_x_mm": "0",
+      "min_y_mm": "0",
+      "width_mm": "1200",
+      "height_mm": "1600"
+    },
+    "drawing": {
+      "m1": {
+        "width_mm": "1200",
+        "height_mm": "1200",
+        "chains": [
+          {
+            "axis": "H",
+            "level": 0,
+            "segments": [
+              {
+                "start_mm": "0",
+                "end_mm": "300",
+                "value_mm": "300"
+              },
+              {
+                "start_mm": "300",
+                "end_mm": "1200",
+                "value_mm": "900"
+              }
+            ]
+          },
+          {
+            "axis": "V",
+            "level": 0,
+            "segments": [
+              {
+                "start_mm": "0",
+                "end_mm": "400",
+                "value_mm": "400"
+              },
+              {
+                "start_mm": "400",
+                "end_mm": "1200",
+                "value_mm": "800"
+              }
+            ]
+          }
+        ],
+        "bays": [
+          {
+            "bay_id": "f",
+            "x_mm": "0",
+            "y_mm": "0",
+            "width_mm": "1200",
+            "height_mm": "300"
+          },
+          {
+            "bay_id": "g1",
+            "x_mm": "0",
+            "y_mm": "300",
+            "width_mm": "400",
+            "height_mm": "900"
+          },
+          {
+            "bay_id": "g2",
+            "x_mm": "400",
+            "y_mm": "300",
+            "width_mm": "800",
+            "height_mm": "900"
+          }
+        ],
+        "authored_handles": []
+      },
+      "m2": {
+        "width_mm": "1200",
+        "height_mm": "400",
+        "chains": [
+          {
+            "axis": "V",
+            "level": 0,
+            "segments": [
+              {
+                "start_mm": "0",
+                "end_mm": "600",
+                "value_mm": "600"
+              },
+              {
+                "start_mm": "600",
+                "end_mm": "1200",
+                "value_mm": "600"
+              }
+            ]
+          }
+        ],
+        "bays": [
+          {
+            "bay_id": "h",
+            "x_mm": "0",
+            "y_mm": "0",
+            "width_mm": "600",
+            "height_mm": "400"
+          },
+          {
+            "bay_id": "i",
+            "x_mm": "600",
+            "y_mm": "0",
+            "width_mm": "600",
+            "height_mm": "400"
+          }
+        ],
+        "authored_handles": []
+      }
+    }
+  }
+]

@@ -2,3 +2,6 @@
 engine/tests/golden_example.json text eol=lf
 backend/openapi.yaml text eol=lf
 frontend/src/api/generated/** text eol=lf
+docs/redesign/captures/cnc-mecanizado/programa.json -text
+docs/redesign/captures/cnc-mecanizado/programa.csv -text
+docs/redesign/captures/cnc-mecanizado/manifiesto.json -text

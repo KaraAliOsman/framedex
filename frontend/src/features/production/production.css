@@ -14,147 +14,40 @@
 .production-page [role="alert"] {
   color: var(--theme-danger);
 }
-/* Action refusals (422 shortage/gate/role) surface where the operator is
-   looking — a fixed toast — not a banner scrolled off the top of a long
-   order detail. */
 .production-action-error {
   position: fixed;
   left: 50%;
   bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
-  z-index: 60;
+  z-index: var(--z-toast);
   max-width: min(34rem, calc(100vw - 2rem));
   margin: 0;
   padding: 0.65rem 1rem;
   border: 1px solid var(--theme-danger);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--r-2);
   background: var(--theme-surface-panel);
-  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.18));
+  box-shadow: none;
   font-weight: 600;
 }
 .production-layout {
   display: grid;
-  grid-template-columns: minmax(16rem, 22rem) 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
 }
-.production-orders,
 .production-detail {
-  /* Grid items default to min-width:auto — a single wide child (the
-     scrollable filter row, a long mono code) would stretch the whole track
-     and overflow the page on narrow screens. */
   min-width: 0;
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.5rem;
+  border-radius: var(--r-2);
   padding: 1rem;
   background: var(--theme-surface-panel);
-}
-.production-filters {
-  display: flex;
-  /* Nine+ chips ragged-wrap onto two lines; one scrollable row stays clean. */
-  flex-wrap: nowrap;
-  gap: var(--space-1);
-  margin-bottom: var(--space-3);
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-}
-
-.production-filter {
-  border: 1px solid var(--theme-border);
-  border-radius: var(--radius-md);
-  background: var(--theme-surface);
-  color: var(--theme-text-muted);
-  cursor: pointer;
-  flex: none;
-  font: inherit;
-  font-size: var(--text-xs);
-  padding: var(--space-1) var(--space-2);
-  white-space: nowrap;
-}
-
-.production-filter:hover {
-  color: var(--theme-text);
-}
-
-.production-filter.is-active {
-  background: var(--theme-accent-soft);
-  border-color: var(--theme-accent);
-  color: var(--theme-accent-ink);
-  font-weight: 600;
-}
-
-/* Clear-filters reads as a control, not a placeholder — same solid chrome as
- * the preset filters, de-emphasized by color only (review m12). */
-.production-filter-clear {
-  color: var(--theme-text);
-}
-
-.production-next {
-  align-items: center;
-  background: var(--theme-accent-soft);
-  border: 1px solid var(--theme-accent);
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-}
-
-.production-next-label {
-  font-size: var(--text-sm);
-}
-
-/* §11 station controls: the next-step bar is the operator's primary touch
- * target — large hit area and type readable from the workstation. */
-.production-next .production-step-actions button {
-  min-height: 52px;
-  min-width: 120px;
-  padding: 0.6rem 1.1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: var(--radius-md);
-}
-
-.production-orders ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.5rem;
-}
-.production-order {
-  /* Chips wrap onto their own row instead of squashing or overflowing the
-     card when the order carries several states at once. */
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  width: 100%;
-  text-align: left;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.375rem;
-  background: var(--theme-bg-canvas);
-  color: var(--theme-text-primary);
-}
-.production-order .production-order-progress {
-  flex: 1 1 auto;
-}
-.production-order .production-order-next {
-  flex-basis: 100%;
-  order: 9;
-}
-.production-order.active {
-  border-color: var(--theme-accent);
 }
 .production-order-code {
   font-family: var(--theme-font-mono);
   font-weight: 600;
 }
 .production-order-progress {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 .production-detail-head {
@@ -163,9 +56,7 @@
   flex-wrap: wrap;
   gap: 0.75rem;
 }
-.production-detail-head .production-chip,
-.production-order .production-chip {
-  /* Chip text wraps inside the chip before it ever overflows it. */
+.production-detail-head .production-chip {
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -175,76 +66,35 @@
   margin: 0.75rem 0;
   padding: 0.75rem;
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.375rem;
+  border-radius: var(--r-2);
 }
 .production-materials div {
   display: grid;
   gap: 0.15rem;
 }
 .production-materials dt {
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 .production-materials dd {
   margin: 0;
   font-family: var(--theme-font-mono);
-  font-size: 1.1rem;
-}
-.production-steps {
-  list-style: none;
-  margin: 1rem 0;
-  padding: 0;
-  display: grid;
-  gap: 0.5rem;
-}
-.production-step {
-  align-items: center;
-  background: var(--theme-bg-canvas);
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.375rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.55rem 0.75rem;
-}
-.production-step.step-done {
-  opacity: 0.75;
-}
-.production-step.step-blocked {
-  border-color: var(--theme-warning, #e56a32);
-}
-.production-step-head {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-.production-step-seq {
-  font-family: var(--theme-font-mono);
-  color: var(--theme-text-secondary);
-}
-.production-step-center {
-  font-size: 0.8rem;
-  color: var(--theme-text-secondary);
-}
-.production-step-note {
-  color: var(--theme-text-secondary);
-  flex-basis: 100%;
-  font-size: 0.9rem;
-  margin: 0.2rem 0 0;
+  font-size: var(--type-title-l);
 }
 .production-step-actions {
+  flex-wrap: wrap;
   display: flex;
   gap: 0.5rem;
   margin-left: auto;
 }
-.production-step-actions button,
-.production-order {
+.production-step-actions button {
   cursor: pointer;
 }
 .production-step-actions button {
+  min-height: var(--density-loose);
   padding: 0.4rem 0.7rem;
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.25rem;
+  border-radius: var(--r-2);
   background: var(--theme-surface-panel);
   color: var(--theme-text-primary);
 }
@@ -256,16 +106,16 @@
   align-items: center;
   color: var(--theme-text-secondary);
   display: inline-flex;
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
   font-style: italic;
   padding: 0.4rem 0.2rem;
 }
 .production-remake {
   padding: 0.35rem 0.7rem;
-  border: 1px solid var(--theme-mark);
-  border-radius: 0.25rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
   background: transparent;
-  color: var(--theme-mark);
+  color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -278,28 +128,27 @@
 .production-cnc button {
   padding: 0.35rem 0.7rem;
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.25rem;
+  border-radius: var(--r-2);
   background: var(--theme-surface-panel);
   color: var(--theme-text-primary);
-  font-family: var(--theme-font-mono, monospace);
-  font-size: 0.8rem;
+  font-family: var(--theme-font-mono);
+  font-size: var(--type-body);
   cursor: pointer;
 }
 .production-cnc button:hover:not(:disabled) {
-  border-color: var(--theme-accent, #0f817a);
+  border-color: var(--theme-accent);
 }
 .production-cnc button:disabled {
   cursor: wait;
   opacity: 0.6;
 }
 .production-cnc .production-cutpack {
-  border-color: var(--theme-accent, #0f817a);
+  border-color: var(--theme-accent);
   background: var(--theme-accent-soft);
   font-weight: 600;
 }
-
 .production-remake:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--theme-mark) 12%, transparent);
+  background: var(--surface-hover);
 }
 .production-remake:disabled {
   cursor: default;
@@ -315,28 +164,7 @@
   color: var(--theme-text-primary);
   border: 1px solid var(--theme-border-subtle);
   padding: 0.6rem;
-  border-radius: 0.25rem;
-}
-.production-events ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.35rem;
-}
-.production-events li {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-  flex-wrap: wrap;
-}
-.production-events li > span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.production-events time {
-  color: var(--theme-text-secondary);
-  font-family: var(--theme-font-mono);
+  border-radius: var(--r-2);
 }
 .production-pick {
   color: var(--theme-text-secondary);
@@ -346,15 +174,13 @@
     grid-template-columns: 1fr;
   }
 }
-
 .production-optimize {
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.25rem;
+  border-radius: var(--r-2);
   padding: 0.9rem;
   margin-bottom: 1rem;
   background: var(--theme-surface-panel);
-  /* Plan tables are wider than a phone — scroll inside the section, never
-     stretch the page. */
+
   overflow-x: auto;
 }
 .production-optimize-head {
@@ -365,12 +191,12 @@
 }
 .production-optimize-head h3 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--type-workshop);
 }
 .production-optimize-head time {
   color: var(--theme-text-secondary);
   font-family: var(--theme-font-mono);
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
 }
 .production-optimize-controls {
   display: flex;
@@ -382,7 +208,7 @@
   color: var(--theme-text-primary);
   border: 1px solid var(--theme-border-subtle);
   padding: 0.5rem 0.6rem;
-  border-radius: 0.25rem;
+  border-radius: var(--r-2);
   font-family: var(--theme-font-mono);
   width: 10rem;
 }
@@ -396,15 +222,15 @@
 }
 .production-optimize-empty {
   color: var(--theme-text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   margin: 0.5rem 0 0;
 }
 .production-invalidated {
   margin: 0 0 var(--space-3);
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--theme-danger);
-  border-radius: var(--radius-md);
-  background: var(--theme-danger-soft, #fbe9e7);
+  border-radius: var(--r-2);
+  background: var(--theme-danger-soft);
   color: var(--theme-danger);
   font-weight: 600;
 }
@@ -416,10 +242,10 @@
   list-style: none;
   margin: 0 0 var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-left: 3px solid var(--theme-warning, #b7791f);
-  background: var(--theme-warning-soft, #fdf3e0);
+  border-left: 3px solid var(--theme-warning);
+  background: var(--theme-warning-soft);
   color: var(--theme-text);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .production-blockers li + li {
   margin-top: var(--space-1);
@@ -428,13 +254,13 @@
   display: block;
   color: var(--theme-text-secondary);
   font-style: normal;
-  font-size: 0.82rem;
+  font-size: var(--type-body);
   margin-top: 0.125rem;
 }
 .production-remake-provenance {
   margin: 0 0 var(--space-3);
   color: var(--theme-text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .production-remake-provenance strong {
   color: var(--theme-text-primary);
@@ -442,7 +268,7 @@
 .production-plan {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   margin-top: 0.6rem;
 }
 .production-plan th {
@@ -462,46 +288,47 @@
   color: var(--theme-text-secondary);
 }
 .production-optimize-purchases {
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
   margin: 0.6rem 0 0;
 }
 .production-optimize-unnested {
-  font-size: 0.85rem;
-  color: var(--theme-warning, #b45309);
+  font-size: var(--type-body);
+  color: var(--theme-warning);
   margin: 0.6rem 0 0;
 }
-
 .production-dispatch {
-  border: 1px solid var(--accent, #0f817a);
-  background: var(--accent, #0f817a);
+  border: 1px solid var(--accent);
+  background: var(--accent);
   color: var(--theme-surface-panel);
 }
-
 .production-dispatch.production-void {
   background: transparent;
-  color: var(--theme-danger, #b3261e);
-  border-color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
+  border-color: var(--theme-danger);
 }
-
 .production-dispatch.is-voided {
   background: transparent;
-  color: var(--theme-text-muted, #7d8794);
-  border-color: var(--theme-border-subtle, #c8ced6);
+  color: var(--theme-text-muted);
+  border-color: var(--theme-border-subtle);
   text-decoration: line-through;
 }
-
 .production-packing {
-  margin-block: var(--space-4, 16px);
-  /* Packing tables can exceed a phone's width — scroll inside the section. */
+  margin-block: var(--space-4);
+  scroll-margin-block-start: var(--space-64px);
+
   overflow-x: auto;
 }
-
+.production-label-blocker a {
+  color: var(--interactive);
+}
+#production-cut-plan {
+  scroll-margin-block-start: var(--space-64px);
+}
 .production-label-code {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.85em;
 }
-
 .production-labels {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -513,11 +340,12 @@
 .production-label {
   display: grid;
   gap: 6px;
-  border: 1px solid var(--line-strong, #2e3338);
+  border: 1px solid var(--border-strong);
   padding: 12px;
   text-align: center;
 }
 .production-label-qr svg {
+  background: var(--paper);
   width: 100%;
   max-width: 140px;
   height: auto;
@@ -528,13 +356,10 @@
   font-weight: 600;
 }
 .production-label-parts {
-  font-size: var(--text-s, 12px);
-  color: var(--ink-muted, #6b7280);
+  font-size: var(--text-s);
+  color: var(--ink-muted);
 }
 @media print {
-  /* The label sheet lives inside .app-body > .workspace — hiding any ancestor
-     of .production-labels prints a blank page, so each level hides only the
-     label path's siblings. */
   .app-shell > :not(.app-body),
   .app-body > :not(.workspace),
   .workspace > :not(.production-page),
@@ -566,11 +391,16 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    color: var(--g-950);
+    background: var(--paper);
   }
   .production-label {
     break-inside: avoid;
-    border: 0.4pt solid var(--theme-border);
+    border: 0.4pt solid var(--g-700);
     padding: 4mm;
+  }
+  .production-label-parts {
+    color: var(--g-700);
   }
 }
 .production-delivery {
@@ -584,7 +414,7 @@
 }
 .production-delivery-facts dt {
   color: var(--ink-muted);
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
 }
 .production-delivery-facts dd {
   margin: 0;
@@ -598,7 +428,7 @@
 .production-delivery-form label {
   display: grid;
   gap: 4px;
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
   color: var(--ink-muted);
 }
 .production-delivery-wide {
@@ -622,31 +452,31 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--paper-2, #faf9f7);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
 }
 .production-delivery-trip-date {
   font-weight: 600;
 }
 .production-delivery-trip-units {
   color: var(--ink-muted);
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
 }
 .production-delivery-pending {
   margin: 8px 0 0;
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
   color: var(--ink-muted);
 }
 .production-delivery-units {
   grid-column: 1 / -1;
   margin: 10px 0 0;
   padding: 8px 10px;
-  border: 1px dashed var(--line);
-  border-radius: 8px;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-2);
 }
 .production-delivery-units legend {
-  font-size: var(--text-s, 12px);
+  font-size: var(--text-s);
   color: var(--ink-muted);
   padding: 0 4px;
 }
@@ -657,10 +487,9 @@
 }
 .production-delivery-units-hint {
   margin: 6px 0 0;
-  font-size: var(--text-xs, 11px);
+  font-size: var(--text-xs);
   color: var(--ink-muted);
 }
-
 .signature-pad {
   position: relative;
   margin-top: 4px;
@@ -671,11 +500,10 @@
   width: 100%;
   max-width: 480px;
   height: 160px;
-  border: 1px solid var(--line, #d8dde2);
-  border-radius: var(--radius-sm);
-  /* The pad is paper, not a theme surface: the captured PNG seals into the
-     printed POD, so it stays white with dark ink in either theme. */
-  background: #fff;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+
+  background: var(--paper);
   touch-action: none;
   cursor: crosshair;
 }
@@ -684,8 +512,8 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: var(--text-s, 12px);
-  color: var(--ink-faint, #98a2ab);
+  font-size: var(--text-s);
+  color: var(--ink-faint);
   pointer-events: none;
 }
 .production-confirm-collect {
@@ -694,7 +522,6 @@
   align-items: center;
   gap: 8px;
 }
-
 .cutplan {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 240px;
@@ -714,23 +541,25 @@
 }
 .cutplan-bar-row figcaption,
 .cutplan-sheet-card figcaption {
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
   font-family: "IBM Plex Mono", monospace;
 }
 .cutplan-bar {
   display: block;
   width: 100%;
-  height: auto;
+  height: 96px;
 }
 .cutplan-piece-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: var(--space-1) var(--space-2);
   list-style: none;
   margin: 4px 0 0;
   padding: 0;
-  font-size: 0.75rem;
+  font-size: var(--type-dim);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 .cutplan-piece-legend button {
   background: none;
@@ -768,6 +597,9 @@
 .cutplan-cut rect,
 .cutplan-nest rect {
   stroke-width: 1;
+}
+.cutplan-cut[role="button"] rect,
+.cutplan-nest[role="button"] rect {
   cursor: pointer;
 }
 .cutplan-piece-pvc rect {
@@ -797,15 +629,15 @@
   stroke-width: 2.2;
 }
 .cutplan-cut-id {
-  font-size: 15px;
+  font-size: var(--type-dim);
   font-weight: 600;
-  fill: var(--theme-text-primary);
+  fill: var(--g-950);
   font-family: "IBM Plex Mono", monospace;
 }
 .cutplan-cut-len {
-  font-size: 13px;
+  font-size: var(--type-dim);
   font-weight: 600;
-  fill: var(--theme-text-secondary);
+  fill: var(--g-700);
   font-family: "IBM Plex Mono", monospace;
 }
 .cutplan-miter-notch {
@@ -813,8 +645,8 @@
   opacity: 0.85;
 }
 .cutplan-nest text {
-  font-size: 9px;
-  fill: var(--theme-text-primary);
+  font-size: var(--type-dim);
+  fill: var(--g-950);
   font-family: "IBM Plex Mono", monospace;
   pointer-events: none;
 }
@@ -832,9 +664,31 @@
   stroke-width: 0.6;
   stroke-dasharray: 3 3;
 }
+.cutplan-mode {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.cutplan-mode [aria-pressed="true"] {
+  border-color: var(--border-focus);
+  background: var(--surface-selected);
+}
+.cutplan-cut-group {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-default);
+}
+.cutplan-cut-group h4,
+.cutplan-cut-group p {
+  margin: 0 0 var(--space-2);
+}
+.cutplan-destination {
+  padding: var(--space-2) 0;
+  overflow-wrap: anywhere;
+}
 .cutplan-detail {
   border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-2);
   background: var(--theme-surface-panel);
   padding: 10px 12px;
   align-self: start;
@@ -843,7 +697,7 @@
   margin: 0;
   display: grid;
   gap: 6px;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
 }
 .cutplan-detail dt {
   color: var(--theme-text-secondary);
@@ -858,7 +712,7 @@
 }
 .cutplan-detail-empty {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 @media (max-width: 860px) {
@@ -870,8 +724,6 @@
   margin-top: 0.75rem;
   overflow-x: auto;
 }
-/* Operator-card tables (pieces/ops/cuts) scroll inside their section on
-   narrow screens instead of pushing the whole card wider than the viewport. */
 .operator-section,
 div:has(> table.production-plan) {
   overflow-x: auto;
@@ -880,14 +732,13 @@ div:has(> table.production-plan) {
   font-weight: 600;
   border-top: 2px solid var(--theme-border-subtle);
 }
-
 .production-remnant-tag {
-  color: var(--theme-accent-ink, #1d4e33);
-  background: var(--theme-accent-soft, #e4f0e8);
-  border: 1px solid var(--theme-accent, #2f6f4f);
-  font-size: 0.78em;
+  color: var(--theme-accent-ink);
+  background: var(--theme-accent-soft);
+  border: 1px solid var(--theme-accent);
+  font-size: var(--type-label);
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--r-2);
   padding: 0.05em 0.55em;
   white-space: nowrap;
 }
@@ -896,96 +747,72 @@ div:has(> table.production-plan) {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
   margin: 0.4rem 0 0;
 }
-
 .production-stock-reserve h4 {
   margin: 0 0 0.5em;
   font-size: 0.95em;
 }
+.production-stock-reserve {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.production-trace-plan,
+.production-trace-stock {
+  max-width: 100%;
+  overflow-x: auto;
+}
 .production-stock-short {
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
 }
 .production-stock-unmapped {
-  color: var(--theme-warning, #b45309);
+  color: var(--theme-warning);
   font-size: 0.9em;
 }
-
-/* §11 work-order traceability */
 .production-trace {
   margin-top: 1.25rem;
-  border-top: 1px solid var(--line, #d9dce2);
+  border-top: 1px solid var(--border-default);
   padding-top: 1rem;
 }
 .production-trace-chain {
   margin: 0 0 0.75rem;
   font-variant-numeric: tabular-nums;
-  color: var(--text-dim, #5a6270);
+  color: var(--text-dim);
 }
 .production-trace-plan table,
 .production-trace-stock table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 0.75rem;
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
 }
 .production-trace-plan th,
 .production-trace-stock th {
   text-align: left;
   font-weight: 600;
   padding: 0.25rem 0.5rem;
-  border-bottom: 1px solid var(--line, #d9dce2);
+  border-bottom: 1px solid var(--border-default);
 }
 .production-trace-plan td,
 .production-trace-stock td {
   padding: 0.25rem 0.5rem;
-  border-bottom: 1px solid var(--line-soft, #eceef2);
+  border-bottom: 1px solid var(--line-soft);
   font-variant-numeric: tabular-nums;
 }
 .production-trace-remnants,
 .production-trace-matches {
   margin: 0.5rem 0 0;
   padding-left: 1.25rem;
-  font-size: 0.8125rem;
-  color: var(--text-dim, #5a6270);
-}
-.production-trace-lookup {
-  display: flex;
-  gap: 0.75rem;
-  align-items: end;
-  margin-top: 0.75rem;
-}
-.production-trace-lookup label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8125rem;
-  flex: 1;
-  min-width: 0;
-}
-.production-trace-lookup input {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  min-width: 0;
-  width: 100%;
+  font-size: var(--type-body);
+  color: var(--text-dim);
 }
 @media (max-width: 480px) {
-  .production-trace-lookup {
-    flex-wrap: wrap;
-  }
-  .production-trace-lookup label {
-    flex-basis: 100%;
-  }
 }
 .production-trace-empty {
-  font-size: 0.8125rem;
-  color: var(--text-dim, #5a6270);
-}
-/* Sidebar piece lookup (PM-M6): the control lives outside the order detail,
-   so it takes the sidebar width and matches open the order on click. */
-.production-orders .production-trace-lookup {
-  margin: 0.5rem 0.75rem 0;
+  font-size: var(--type-body);
+  color: var(--text-dim);
 }
 .production-trace-match {
   background: none;
@@ -995,40 +822,20 @@ div:has(> table.production-plan) {
   color: inherit;
   text-align: left;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--r-2);
 }
 .production-trace-match:hover,
 .production-trace-match:focus-visible {
-  color: var(--ink, #1c2027);
+  color: var(--ink);
   outline: none;
   text-decoration: underline;
 }
-
-/* §12 operator step card */
-.production-step-operator {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  font-weight: 600;
-  color: var(--ink, #1d2530);
-  cursor: pointer;
-  text-align: left;
-}
-.production-step-operator:hover {
-  text-decoration: underline;
-}
-.production-step.step-operator {
-  outline: 2px solid var(--accent, #3156c5);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
 .operator-card {
   margin-top: 1rem;
-  border: 1px solid var(--line, #d9dce2);
-  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
   padding: 1rem;
-  background: var(--surface-raised, #fbfcfe);
+  background: var(--surface-panel);
 }
 .operator-card-head {
   display: flex;
@@ -1045,19 +852,17 @@ div:has(> table.production-plan) {
   flex-direction: column;
   gap: 0.75rem;
 }
-/* Persistent primary action: the step's live transitions stay pinned to the
-   bottom of the viewport while the card's materials/ops scroll beneath. */
 .operator-card-actions {
   position: sticky;
   bottom: 0;
   margin: 0.75rem -1rem -1rem;
   padding: 0.6rem 1rem;
-  border-top: 1px solid var(--line, #d9dce2);
-  border-radius: 0 0 8px 8px;
-  background: var(--surface-raised, #fbfcfe);
+  border-top: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  background: var(--surface-panel);
   display: flex;
   justify-content: flex-end;
-  z-index: 2;
+  z-index: var(--z-sticky);
 }
 .operator-card-actions .production-step-actions {
   margin-left: 0;
@@ -1066,58 +871,57 @@ div:has(> table.production-plan) {
   min-height: 44px;
   min-width: 110px;
   padding: 0.55rem 1rem;
-  font-size: 0.95rem;
+  font-size: var(--type-workshop);
   font-weight: 600;
 }
 .operator-section h4 {
   margin: 0 0 0.375rem;
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-dim, #5a6270);
+  color: var(--text-dim);
 }
 .operator-blockers {
   margin: 0;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--warning, #b45309);
+  border: 1px solid var(--warning);
   border-left-width: 4px;
-  border-radius: 6px;
-  background: var(--warning-soft, #fff7ed);
-  color: var(--warning, #b45309);
+  border-radius: var(--r-2);
+  background: var(--warning-soft);
+  color: var(--warning);
   font-weight: 600;
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
 }
 .operator-remnants {
   margin: 0.5rem 0 0;
   padding-left: 1.25rem;
-  font-size: 0.8125rem;
-  color: var(--text-dim, #5a6270);
+  font-size: var(--type-body);
+  color: var(--text-dim);
 }
 .operator-row-short td {
-  background: var(--warning-soft, #fff7ed);
+  background: var(--warning-soft);
 }
 .operator-ops,
 .operator-pieces {
   margin-bottom: 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--type-body);
 }
 .operator-summary {
   margin: 0;
-  font-size: 0.8125rem;
-  color: var(--text-dim, #5a6270);
+  font-size: var(--type-body);
+  color: var(--text-dim);
 }
-
 .production-prep {
   margin-bottom: 0.75rem;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--radius-card, 10px);
-  background: var(--theme-surface-raised, transparent);
+  border-radius: var(--r-2);
+  background: var(--surface-card, transparent);
 }
-.production-prep h3 {
+.production-prep h2 {
   margin: 0 0 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: var(--type-body);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--theme-text-secondary);
@@ -1135,15 +939,15 @@ div:has(> table.production-plan) {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .production-prep-release {
   padding: 0.15rem 0.6rem;
-  border-radius: var(--radius-pill);
+  border-radius: var(--r-2);
   border: 1px solid var(--theme-accent);
   background: transparent;
   color: var(--theme-accent);
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   font-weight: 600;
   cursor: pointer;
 }
@@ -1151,77 +955,14 @@ div:has(> table.production-plan) {
   opacity: 0.5;
   cursor: default;
 }
-.production-station-queue {
-  margin-bottom: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: var(--radius-card, 10px);
-}
-.production-station-queue h3 {
-  margin: 0 0 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--theme-text-secondary);
-}
-.production-station-queue > ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.production-station-queue li ul {
-  list-style: none;
-  margin: 0.25rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.production-station-counts {
-  display: block;
-  margin-left: 0.4rem;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--theme-text-secondary);
-}
-.production-station-empty {
-  margin: 0 0 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px dashed var(--theme-border-subtle);
-  border-radius: var(--radius-card, 10px);
-  font-size: 0.82rem;
-  color: var(--theme-text-secondary);
-}
-.production-station-empty button {
-  margin-left: 0.4rem;
-  padding: 0.15rem 0.6rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--theme-accent);
-  background: transparent;
-  color: var(--theme-accent);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.production-order-next {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--theme-text-secondary);
-}
-
-/* QC check ledger + entry form — large controls, high contrast for gloves. */
 .operator-qc-ledger td strong {
-  font-size: 0.78rem;
+  font-size: var(--type-body);
 }
 .qc-result-pass {
-  color: var(--theme-success, #1a7f4b);
+  color: var(--theme-success);
 }
 .qc-result-fail {
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
 }
 .operator-qc-form {
   display: grid;
@@ -1234,25 +975,25 @@ div:has(> table.production-plan) {
 .operator-qc-form input {
   min-height: 44px;
   padding: 0.45rem 0.6rem;
-  font-size: 0.9rem;
+  font-size: var(--type-workshop);
 }
 .operator-qc-form button {
   min-height: 44px;
   padding: 0.45rem 1rem;
-  border-radius: var(--radius-sm, 6px);
-  font-size: 0.9rem;
-  font-weight: 700;
+  border-radius: var(--r-2);
+  font-size: var(--type-workshop);
+  font-weight: 600;
   cursor: pointer;
 }
 .qc-submit-pass {
-  border: 1px solid var(--theme-success, #1a7f4b);
-  background: var(--theme-success, #1a7f4b);
+  border: 1px solid var(--theme-success);
+  background: var(--theme-success);
   color: var(--theme-surface-panel);
 }
 .qc-submit-fail {
-  border: 1px solid var(--theme-danger, #b3261e);
+  border: 1px solid var(--theme-danger);
   background: transparent;
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
 }
 .operator-qc-form button:disabled {
   opacity: 0.45;
@@ -1263,7 +1004,6 @@ div:has(> table.production-plan) {
     grid-template-columns: 1fr 1fr;
   }
 }
-
 .production-compare {
   background: transparent;
   border: 1px solid var(--theme-accent);
@@ -1274,16 +1014,16 @@ div:has(> table.production-plan) {
   flex-wrap: wrap;
   gap: 0.35rem;
   margin: 0.5rem 0;
-  font-size: 0.8rem;
+  font-size: var(--type-body);
   color: var(--theme-text-secondary);
 }
 .production-optimize-stats strong {
   color: var(--theme-text);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .production-optimize-inputs {
   margin: 0.4rem 0;
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   line-height: 1.45;
   color: var(--theme-text-secondary);
   max-width: 70ch;
@@ -1292,387 +1032,438 @@ div:has(> table.production-plan) {
   margin-top: 0.4rem;
 }
 .production-compare-table .production-compare-best {
-  background: color-mix(in srgb, var(--theme-success, #1a7f4b) 10%, transparent);
+  background: color-mix(in srgb, var(--theme-success) 10%, transparent);
 }
 .production-compare-note {
   margin: 0.3rem 0 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--type-dense);
   color: var(--theme-text-secondary);
 }
-
 .production-making {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
   align-items: baseline;
-  font-size: 0.95rem;
+  font-size: var(--type-workshop);
   margin: 0.25rem 0 0.5rem;
   color: var(--theme-text-secondary);
 }
 .production-making strong {
   color: var(--theme-text);
-  font-size: 1.05rem;
+  font-size: var(--type-workshop);
 }
 .production-making-location {
   color: var(--theme-accent);
 }
-
 .production-packing-missing {
-  color: var(--theme-danger, #b3261e);
+  color: var(--theme-danger);
   font-weight: 600;
 }
-
-/* CNC readiness — per-member machining verdicts and programs. */
-.cnc-panel {
-  margin-top: 0.6rem;
-  border: 1px solid var(--theme-border, #d8d4cd);
-  border-radius: 8px;
-  background: var(--theme-surface, #fff);
+/* CNC: reviewed physical authority, one expanded member at a time. */
+.cnc-panel,
+.cnc-workspace {
+  margin-top: var(--space-4);
+  min-width: 0;
 }
-.cnc-panel-toggle {
-  width: 100%;
+.cnc-panel h3,
+.cnc-panel h4,
+.cnc-panel h5,
+.cnc-workspace h4,
+.cnc-workspace h5 {
+  margin: 0 0 var(--space-2);
+}
+.cnc-panel h5,
+.cnc-workspace h5 {
+  font-size: var(--type-body);
+}
+.cnc-panel p,
+.cnc-workspace p {
+  margin: var(--space-2) 0;
+}
+.cnc-heading {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  background: none;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--theme-text);
+  gap: var(--space-3);
 }
-.cnc-panel-body {
-  padding: 0.4rem 0.75rem 0.75rem;
-  /* The members×machines grid is inherently wide — scroll it inside the
-     panel instead of stretching the whole production page. */
-  overflow-x: auto;
-}
-.cnc-empty {
-  color: var(--theme-text-secondary);
-  font-size: 0.85rem;
-  margin: 0.25rem 0;
-}
-.cnc-error {
-  color: var(--theme-danger, #b3261e);
-  font-size: 0.85rem;
-  margin: 0.25rem 0;
-}
-.cnc-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  table-layout: auto;
+.cnc-heading > div,
+.cnc-heading > p {
   min-width: 0;
 }
-.cnc-table th,
-.cnc-table td {
-  word-break: break-word;
+.cnc-heading > button {
+  flex-shrink: 0;
 }
-.cnc-workspace-grid > div {
-  min-width: 0;
-  overflow-x: auto;
+.cnc-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
-.cnc-member-meta {
-  font-size: 0.75rem;
-  color: var(--theme-text-muted, #6b675f);
+.cnc-panel small,
+.cnc-workspace small {
+  font-size: var(--type-dense);
+  line-height: var(--line-dense);
 }
-.cnc-hint {
-  font-size: 0.75rem;
-  color: var(--theme-text-muted, #6b675f);
-  margin: 0 0 0.35rem;
+.cnc-panel a,
+.cnc-workspace a,
+.cutplan a,
+.production-shortages a {
+  color: var(--interactive);
 }
-.cnc-required-tools {
-  font-size: 0.8rem;
-  color: var(--theme-text-muted, #6b675f);
-  margin: 0.15rem 0 0.4rem;
-}
-.cnc-table th,
-.cnc-table td {
-  text-align: left;
-  padding: 0.3rem 0.4rem;
-  border-bottom: 1px solid var(--theme-border, #d8d4cd);
-  vertical-align: top;
-}
-.cnc-member-label {
-  background: none;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  color: var(--theme-accent);
+.production-shortages a,
+.cutplan-unnested a {
   display: inline-flex;
-  gap: 0.25rem;
   align-items: center;
+  min-height: var(--density-loose);
+  padding-block: var(--space-2);
 }
-.cnc-verdict {
-  display: inline-block;
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+.cnc-panel .ui-button:disabled .ui-button__label,
+.cnc-workspace .ui-button:disabled .ui-button__label {
+  color: var(--text-secondary);
 }
-.cnc-verdict-pass {
-  background: color-mix(in srgb, var(--theme-success, #1a7f4b) 15%, transparent);
-  color: var(--theme-success, #1a7f4b);
+.cnc-diff dd {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
-.cnc-verdict-warn {
-  background: color-mix(in srgb, var(--theme-warning, #b26a00) 15%, transparent);
-  color: var(--theme-warning, #b26a00);
+.cnc-controls,
+.cnc-form-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
 }
-.cnc-verdict-block {
-  background: color-mix(in srgb, var(--theme-danger, #b3261e) 12%, transparent);
-  color: var(--theme-danger, #b3261e);
+.cnc-controls {
+  grid-template-columns: 1fr 1fr;
 }
-.cnc-verdict-unverified {
-  background: color-mix(in srgb, var(--theme-fg, #444) 10%, transparent);
-  color: var(--theme-fg, #444);
+.cnc-member-card {
+  border-bottom: 1px solid var(--border-default);
 }
-.cnc-issues {
-  margin: 0 0 0.75rem;
-  padding: 0.55rem 0.9rem;
-  border-left: 3px solid var(--theme-warning, #b26a00);
-  background: color-mix(in srgb, var(--theme-warning, #b26a00) 8%, transparent);
-  font-size: 0.85rem;
-  line-height: 1.5;
-  list-style: none;
-}
-.cnc-issues li + li {
-  margin-top: 0.3rem;
-}
-.cnc-generate {
-  margin-right: 0.4rem;
-  font-size: 0.8rem;
-}
-.cnc-member-ops td {
-  background: var(--theme-bg, #faf9f7);
-}
-.cnc-ops {
+.cnc-member-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8rem;
-}
-.cnc-ops th,
-.cnc-ops td {
-  padding: 0.2rem 0.4rem;
-  border-bottom: 1px dashed var(--theme-border, #d8d4cd);
+  min-height: 44px;
+  padding: var(--space-3);
+  background: var(--surface-panel);
+  border: 0;
   text-align: left;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.cnc-member-heading > span:first-child {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: var(--space-1);
+}
+.cnc-member-heading[aria-expanded="true"] {
+  outline: 1px solid var(--theme-accent);
+  outline-offset: -1px;
+  background: var(--surface-selected);
+}
+.cnc-member-heading strong {
+  font-family: var(--font-mono);
+}
+.cnc-member-body {
+  padding: var(--space-3);
+}
+.cnc-operation-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-3);
+}
+.cnc-operation {
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+}
+.cnc-operation.is-selected {
+  background: var(--surface-selected);
+  outline: 1px solid var(--theme-accent);
+}
+.cnc-operation-select {
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  min-height: 44px;
+  text-align: left;
+  cursor: pointer;
+}
+.cnc-panel dl,
+.cnc-workspace dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+.cnc-panel dl > div,
+.cnc-workspace dl > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) 2fr;
+  gap: var(--space-3);
+}
+.cnc-panel dt,
+.cnc-workspace dt {
+  color: var(--text-secondary);
+}
+.cnc-panel dd,
+.cnc-workspace dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.cnc-panel pre,
+.cnc-workspace pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.cnc-gap-region {
+  padding: var(--space-3) 0;
+  border-block: 1px solid var(--border-default);
+  margin: var(--space-4) 0;
+}
+.cnc-gap-region > ul {
+  padding-left: var(--space-5);
+  display: grid;
+  gap: var(--space-3);
+}
+.cnc-gap-region li::marker {
+  color: var(--theme-warning);
+}
+.cnc-person,
+.cnc-permission {
+  border-left: 2px solid var(--theme-warning);
+  padding-left: var(--space-3);
+}
+.cnc-verdicts {
+  margin-block: var(--space-4);
+}
+.cnc-machine-verdict {
+  border-top: 1px solid var(--border-default);
+  padding: var(--space-3) 0;
+}
+.cnc-findings {
+  display: grid;
+  gap: var(--space-2);
+  padding-left: var(--space-5);
+}
+.cnc-review {
+  border-left: 2px solid var(--theme-warning);
+  padding: var(--space-3);
+  margin-block: var(--space-4);
+  background: var(--surface-panel);
+}
+.cnc-review > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.cnc-confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  margin-block: var(--space-3);
+  cursor: pointer;
+}
+.cnc-confirm input,
+.cnc-choices input {
+  accent-color: var(--theme-accent);
+  flex-shrink: 0;
 }
 .cnc-programs {
-  margin-top: 0.75rem;
+  margin-top: var(--space-5);
 }
-.cnc-programs h4 {
-  margin: 0 0 0.35rem;
-  font-size: 0.85rem;
-  color: var(--theme-text-secondary);
-}
-.cnc-programs ul {
+.cnc-programs ul,
+.cnc-history {
   list-style: none;
-  margin: 0;
   padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
 }
-.cnc-program {
+.cnc-programs li,
+.cnc-history li {
+  border-top: 1px solid var(--border-default);
+  padding-block: var(--space-3);
+}
+.cnc-file-actions,
+.cnc-mark-selectors {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
-  align-items: center;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid var(--theme-border, #d8d4cd);
-  font-size: 0.85rem;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
 }
-.cnc-program-stale {
-  opacity: 0.65;
+.cnc-file-actions button,
+.cnc-mark-selectors button,
+.cnc-workspace .ui-button {
+  min-height: 44px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
-.cnc-program-no {
-  font-family: var(--font-mono, monospace);
-  font-weight: 600;
+.cnc-drawing {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface-sheet);
+  border: 1px solid var(--border-default);
 }
-.cnc-program-meta {
-  color: var(--theme-text-secondary);
-}
-.cnc-stale {
-  color: var(--theme-danger, #b3261e);
-  font-weight: 600;
-  font-size: 0.78rem;
-}
-.cnc-program-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 0.4rem;
-}
-.cnc-program-file {
-  font-size: 0.78rem;
-  padding: 0.15rem 0.5rem;
-}
-
-/* CNC workspace — machine + tool authority management. */
-.cnc-workspace {
-  margin-top: 0.75rem;
-  border: 1px solid var(--theme-border, #d8d4cd);
-  border-radius: 8px;
-  background: var(--theme-surface, #fff);
-}
-.cnc-workspace-grid {
-  display: grid;
-  gap: 1rem;
-}
-.cnc-section-head {
+.cnc-drawing figcaption {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.35rem;
+  gap: var(--space-3);
 }
-.cnc-section-head h3 {
-  margin: 0;
-  font-size: 0.9rem;
-}
-.cnc-add {
-  font-size: 0.8rem;
-  padding: 0.2rem 0.6rem;
-}
-.cnc-form {
-  margin-top: 0.5rem;
-  padding: 0.6rem;
-  border: 1px dashed var(--theme-border, #d8d4cd);
-  border-radius: 6px;
-  display: grid;
-  gap: 0.5rem;
-}
-.cnc-form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.5rem;
-}
-.cnc-form-row label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  font-size: 0.78rem;
-  color: var(--theme-text-secondary);
-}
-.cnc-form-group {
-  border: none;
-  padding: 0;
-  margin: 0;
-}
-.cnc-form-group legend {
-  font-size: 0.78rem;
-  color: var(--theme-text-secondary);
-  padding: 0;
-}
-.cnc-checks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.9rem;
-  font-size: 0.8rem;
-}
-.cnc-checks label {
-  display: inline-flex;
-  gap: 0.3rem;
-  align-items: center;
-}
-.cnc-form-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* Member ops diagram — operator visual check before program generation. */
-.cnc-diagram {
-  margin: 0.35rem 0 0.6rem;
-}
-.cnc-diagram svg {
+.cnc-drawing > svg {
   width: 100%;
-  max-width: 720px;
   display: block;
 }
-.cnc-diagram-datum {
-  font-size: 10px;
-  fill: var(--theme-text-secondary);
-  font-weight: 600;
+.cnc-drawing-datums {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--type-dense);
+  margin-top: var(--space-3);
 }
-.cnc-diagram-datum-line {
-  stroke: var(--theme-text-secondary);
-  stroke-dasharray: 3 2;
-  stroke-width: 1;
-}
-.cnc-diagram-bar {
-  fill: var(--theme-surface-alt, #f1efe9);
-  stroke: var(--theme-border, #d8d4cd);
+.cnc-outline {
+  fill: var(--surface-card);
+  stroke: var(--border-strong);
   stroke-width: 1.5;
 }
-.cnc-diagram-op {
-  cursor: pointer;
-}
-.cnc-diagram-op .cnc-mark {
-  fill: var(--op-mark);
-  stroke: var(--op-mark-edge);
+.cnc-axis {
+  stroke: var(--text-secondary);
   stroke-width: 1;
+  stroke-dasharray: 3 2;
 }
-.cnc-diagram-op .cnc-mark-drill {
-  fill: var(--op-drill);
-  stroke: var(--op-drill-edge);
+.cnc-mark {
+  stroke: var(--theme-accent);
+  fill: var(--surface-sheet);
+  stroke-width: 1.5;
 }
-.cnc-diagram-op .cnc-mark-drainage {
-  fill: var(--op-water);
-  stroke: var(--op-water-edge);
+.cnc-mark.is-selected {
+  stroke-width: 2.5;
+  fill: var(--surface-selected);
 }
-.cnc-diagram-op .cnc-mark-ventilation {
-  fill: var(--op-water);
-  stroke: var(--op-water-edge);
+.cnc-mark-selectors button[aria-pressed="true"] {
+  outline: 1px solid var(--theme-accent);
+  background: var(--surface-selected);
 }
-.cnc-diagram-op .cnc-mark-slot {
-  fill: var(--op-cut);
-  stroke: var(--op-cut-edge);
+.cnc-section-view {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: var(--space-3);
+  align-items: center;
 }
-.cnc-diagram-op .cnc-mark-routing {
-  fill: var(--op-cut);
-  stroke: var(--op-cut-edge);
+.cnc-section-view > svg {
+  width: 100%;
 }
-.cnc-diagram-op .cnc-mark-milling {
-  fill: var(--op-mill);
-  stroke: var(--op-mill-edge);
+.cnc-section-polygon {
+  fill: var(--surface-card);
+  stroke: var(--text-primary);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
 }
-.cnc-diagram-op .cnc-mark-edge {
-  fill: var(--op-edge-work);
-  stroke: var(--op-edge-work-edge);
-}
-.cnc-diagram-op .cnc-mark-custom {
-  fill: var(--op-edge-work);
-  stroke: var(--op-edge-work-edge);
-}
-.cnc-diagram-op .cnc-mark-hardware circle,
-.cnc-diagram-op .cnc-mark-hardware line {
-  fill: none;
-  stroke: var(--op-hardware);
-  stroke-width: 1.6;
-}
-.cnc-diagram-op.is-selected .cnc-mark,
-.cnc-diagram-op.is-selected .cnc-mark-hardware circle,
-.cnc-diagram-op.is-selected .cnc-mark-hardware line {
-  stroke: var(--theme-danger);
+.cnc-section-polygon.has-end-work {
+  fill: var(--surface-selected);
+  stroke: var(--theme-accent);
   stroke-width: 2;
 }
-.cnc-diagram-seq {
-  font-size: 9px;
-  fill: var(--theme-text-secondary);
-  pointer-events: none;
-}
-.cnc-diagram-legend {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.78rem;
-  color: var(--theme-text-secondary);
-  margin: 0.15rem 0 0;
-}
-.cnc-diagram-missing {
-  color: var(--op-hardware);
-}
-.cnc-op-row {
+.cnc-workspace > summary {
+  min-height: 44px;
+  padding: var(--space-3);
+  background: var(--surface-panel);
+  border-block: 1px solid var(--border-default);
   cursor: pointer;
+  font-weight: 600;
 }
-.cnc-op-row.is-selected td {
-  background: var(--op-selected-row);
+.cnc-authority-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-3);
+}
+.cnc-form {
+  border-block: 1px solid var(--border-strong);
+  padding: var(--space-3) 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.cnc-form-lock {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cnc-choices {
+  margin: 0;
+  padding: var(--space-2) 0;
+  border: 0;
+}
+.cnc-choices legend {
+  font-weight: 600;
+}
+.cnc-choices > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+.cnc-choices label {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 44px;
+}
+.cnc-setup {
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--border-default);
+}
+.cnc-workspace .ui-data-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.cnc-workspace .ui-data-table th,
+.cnc-workspace .ui-data-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.cnc-workspace .ui-data-table td:first-child {
+  width: 25%;
+}
+.cnc-workspace .ui-data-table td:last-child {
+  width: 22%;
+}
+.cnc-workspace .ui-data-table td > button {
+  display: block;
+  margin-top: var(--space-2);
+  width: 100%;
+}
+@media (max-width: 700px) {
+  .cnc-heading,
+  .cnc-member-heading,
+  .cnc-review > header,
+  .cnc-drawing figcaption {
+    flex-wrap: wrap;
+  }
+  .cnc-controls {
+    grid-template-columns: 1fr;
+  }
+  .cnc-section-view {
+    grid-template-columns: 110px 1fr;
+  }
+  .cnc-drawing-datums {
+    font-size: var(--type-dense);
+  }
+  .cnc-panel dl > div,
+  .cnc-workspace dl > div {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+  .cnc-workspace .ui-data-table th,
+  .cnc-workspace .ui-data-table td {
+    padding: var(--space-2);
+    font-size: var(--type-dense);
+  }
 }
 .operator-member-strips {
   display: flex;
@@ -1689,12 +1480,12 @@ div:has(> table.production-plan) {
   display: block;
 }
 .operator-member-strip figcaption {
-  font-size: 0.78rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--theme-text-secondary);
 }
 .operator-member-datum {
-  font-size: 10px;
+  font-size: var(--type-micro);
   fill: var(--theme-text-secondary);
   font-weight: 600;
 }
@@ -1704,8 +1495,8 @@ div:has(> table.production-plan) {
   stroke-width: 1;
 }
 .operator-member-bar {
-  fill: var(--theme-surface-alt, #f1efe9);
-  stroke: var(--theme-border, #d8d4cd);
+  fill: var(--surface-card);
+  stroke: var(--border-default);
   stroke-width: 1.5;
 }
 .operator-member-op {
@@ -1713,6 +1504,356 @@ div:has(> table.production-plan) {
   stroke-width: 2;
 }
 .operator-member-seq {
-  font-size: 9px;
+  font-size: var(--type-micro);
   fill: var(--theme-text-secondary);
+}
+.production-hardware {
+  border-top: 1px solid var(--border-default);
+  padding: var(--space-4) 0;
+}
+.production-hardware h3 {
+  font-size: var(--type-title-m);
+  margin: 0 0 var(--space-2);
+}
+.production-hardware summary {
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+.production-hardware-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.production-hardware-rows > li {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-3) 0;
+}
+.production-hardware-rows > li > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.production-hardware-quantity {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.production-hardware-rows p,
+.production-hardware-gaps p {
+  overflow-wrap: anywhere;
+}
+.production-hardware-gaps {
+  color: var(--state-warning-ink);
+}
+
+.production-board-filters,
+.production-station-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-4);
+}
+.production-board-filters label,
+.production-station-choice label,
+.production-piece-scanner label,
+.production-station-form label {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.production-board-filters :is(input, select),
+.production-station-choice select,
+.production-piece-scanner input {
+  max-width: 100%;
+}
+.production-board-filters :is(input, select, button),
+.production-prep-release,
+.production-closed button,
+.production-piece-scanner :is(input, button) {
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  padding: var(--space-2);
+  font: inherit;
+}
+.production-board-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+.production-board-station {
+  border-top: 2px solid var(--border-strong);
+  min-width: 0;
+}
+.production-board-cards {
+  max-height: 24rem;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.production-board-station > header,
+.production-station-task > header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3) 0;
+}
+.production-board-station h2 {
+  font-size: var(--type-title-m);
+  margin: 0;
+}
+.production-board-order {
+  display: grid;
+  width: 100%;
+  text-align: left;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-2);
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  font: inherit;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.production-board-order:hover {
+  background: var(--surface-hover);
+  border-color: var(--interactive);
+}
+.production-requires-person {
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--state-person);
+  color: var(--text-primary);
+}
+.production-board-empty,
+.production-detail-context {
+  color: var(--text-secondary);
+}
+.production-back {
+  margin-bottom: var(--space-3);
+}
+.production-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3) 0;
+  gap: var(--space-1);
+}
+.production-stepper button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-2);
+  text-align: left;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font: inherit;
+  padding: var(--space-2);
+  cursor: pointer;
+}
+.production-stepper button > span:last-child {
+  grid-column: 2;
+  color: var(--text-secondary);
+}
+.production-stepper button[aria-pressed="true"] {
+  border-color: var(--interactive);
+  background: var(--surface-selected);
+}
+.production-detail .ui-tabs {
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.production-history ol,
+.production-closed ul,
+.production-glass-batch ul,
+.production-touch-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.production-history li {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-3) 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.production-glass-batch,
+.production-closed {
+  margin-top: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border-default);
+}
+.production-glass-batch ul {
+  max-height: 24rem;
+  overflow-y: auto;
+}
+.production-glass-batch li {
+  padding: var(--space-2) 0;
+}
+.production-piece-scanner {
+  margin-bottom: var(--space-4);
+}
+.production-piece-scanner form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: end;
+}
+.production-piece-scanner label {
+  flex: 1 1 15rem;
+}
+.production-piece-scanner video {
+  max-width: 100%;
+  max-height: 22rem;
+}
+.production-operator {
+  font-size: var(--type-workshop);
+  background: var(--bg-app);
+  color: var(--text-primary);
+  padding: var(--space-4);
+}
+.production-operator :is(button, a, input, select, textarea, summary) {
+  min-height: 44px;
+  min-width: 44px;
+  font: inherit;
+}
+.production-operator :is(input, select, textarea, button) {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-2);
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  padding: var(--space-2) var(--space-3);
+}
+.production-operator button {
+  cursor: pointer;
+}
+.production-operator button:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+.production-operator :is(button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.production-operator [aria-pressed="true"] {
+  border-color: var(--interactive);
+  background: var(--surface-selected);
+}
+.production-operator-queue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.production-station-task {
+  border-top: 2px solid var(--border-strong);
+  padding-top: var(--space-2);
+}
+.production-piece-code {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-display);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  margin: var(--space-2) 0;
+}
+.production-piece-measure {
+  font-size: var(--type-title-l);
+  margin: var(--space-2) 0;
+}
+.production-station-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+.production-station-actions button {
+  min-height: 56px;
+  min-width: 120px;
+}
+.production-operator [data-variant="primary"] {
+  color: var(--text-on-fill);
+  background: var(--interactive-fill);
+  border-color: var(--interactive-fill);
+}
+.production-station-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-block: 1px solid var(--border-strong);
+}
+.production-station-form textarea {
+  min-height: 88px;
+}
+.production-touch-check {
+  display: flex !important;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+}
+.production-touch-check input[type="checkbox"] {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+.production-touch-list li {
+  border-top: 1px solid var(--border-subtle);
+  padding-block: var(--space-2);
+}
+.production-touch-pieces {
+  margin-top: var(--space-4);
+}
+.production-touch-pieces button {
+  text-align: left;
+}
+.production-operator .ui-tech {
+  margin-top: var(--space-4);
+}
+.production-station-message {
+  padding: var(--space-3);
+  border-left: 2px solid var(--interactive);
+}
+.production-shortages {
+  border-left: 2px solid var(--state-person);
+  padding: var(--space-3);
+  margin-block: var(--space-3);
+}
+.production-shortages ul {
+  list-style: none;
+  padding: 0;
+}
+.production-shortages li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+@media (max-width: 600px) {
+  .production-operator {
+    padding: var(--space-2);
+  }
+  .production-station-choice {
+    display: grid;
+  }
+  .production-station-choice select {
+    width: 100%;
+  }
+  .production-station-actions button {
+    flex: 1;
+  }
+  .production-piece-code {
+    font-size: var(--type-display);
+  }
+  .production-detail {
+    padding: var(--space-2);
+  }
 }

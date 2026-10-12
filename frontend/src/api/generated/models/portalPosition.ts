@@ -5,8 +5,21 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CommercialHardware } from "./commercialHardware";
+import type { PortalOpening } from "./portalOpening";
+import type { ResolvedFinish } from "./resolvedFinish";
 
 export interface PortalPosition {
+  system_name?: string;
+  is_demo?: boolean;
+  /** @nullable */
+  unit_price_gross?: string | null;
+  /** @nullable */
+  line_price_gross?: string | null;
+  /** @nullable */
+  unit_rounding_adjustment?: string | null;
+  opening_leaves?: unknown[];
+  resolved_finish?: ResolvedFinish | null;
   id: string;
   /** @nullable */
   position_index: number | null;
@@ -18,11 +31,13 @@ export interface PortalPosition {
   location_tag: string | null;
   width_mm: string;
   height_mm: string;
+  opening_measurements?: PortalOpening[];
   /** @nullable */
   color_interior: string | null;
   /** @nullable */
   color_exterior: string | null;
   glass_specs: string[];
+  commercial_hardware?: CommercialHardware[];
   /** @nullable */
   finish: string | null;
   /** @nullable */

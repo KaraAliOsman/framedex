@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { SlidingPanelFactsKindEnum } from "./slidingPanelFactsKindEnum";
+import type { SlidingPanelFactsTravel } from "./slidingPanelFactsTravel";
 
 export interface SlidingPanelFacts {
   slot: string;
@@ -14,4 +15,5 @@ export interface SlidingPanelFacts {
   track: number | null;
   /** @nullable */
   leaf_id: string | null;
+  travel?: (typeof SlidingPanelFactsTravel)[keyof typeof SlidingPanelFactsTravel] | null;
 }

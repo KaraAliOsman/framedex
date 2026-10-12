@@ -15,6 +15,21 @@ from pricing.xlsx_import import parse_xlsx
 MAPPING = {'sku':'SKU','description':'Description','unit':'Unit','unit_cost':'Cost'}
 
 
+def test_indicative_price_rejects_organization_removed_during_simulation(monkeypatch):
+    from contextlib import nullcontext
+
+    from authentication.errors import ContractAPIException
+    from projects import ops_registry
+
+    monkeypatch.setattr(ops_registry, 'design_from_product', lambda *_: {})
+    monkeypatch.setattr(ops_registry, 'commercial_backend', nullcontext)
+    monkeypatch.setattr(ops_registry, 'rows', lambda *_: [])
+    with pytest.raises(ContractAPIException) as rejected:
+        ops_registry.sale_price('removed-org', {}, 'system', 'WHITE')
+    assert rejected.value.status_code == 404
+    assert rejected.value.contract_code == 'organization_not_found'
+
+
 def workbook_bytes(rows):
     book = Workbook()
     sheet = book.active
@@ -90,7 +105,7 @@ def test_pricing_request_cannot_supply_cost_or_actor():
     assert not PriceRequestSerializer(data=data).is_valid()
 
 
-def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
+def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch, legacy_glass_read_model):
     """A contoured glass piece prices by polygon area, never by bounding box."""
     from types import SimpleNamespace
 
@@ -111,7 +126,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
     )
     result = SimpleNamespace(
         profile_cuts=[], reinforcements=[], glasses=[glass],
-        panels=[], hardware_items=[], fittings=[], leaf_weights=[],
+        panels=[], hardware_items=[], fittings=[], leaf_weights=[], finish=None, extras=[],
     )
 
     class Cursor:
@@ -132,6 +147,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
 
     class Repo:
         org_id = "org"
+        currency = "CLP"
 
         def cost(self, sku, unit):
             assert (sku, unit) == ("V4", "M2")
@@ -140,16 +156,15 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
     position = {
         "system_id": "sys", "width_mm": Decimal("2000"),
         "height_mm": Decimal("1000"),
-        "parametric_tree": {"id": "B1", "glass_article_sku": "V4"},
+        "parametric_tree": {"id": "B1", "type": "BAY", "glass_article_sku": "V4"},
         "color_interior": "WHITE", "color_exterior": "WHITE",
     }
     params_repo = SimpleNamespace(
-        load_visible=lambda *a, **k: None,
+        load_visible=lambda *a, **k: SimpleNamespace(extra_authority=None),
         load_coupler_articles=lambda *a, **k: {},
     )
     monkeypatch.setattr(service, "connection", Conn())
-    monkeypatch.setattr(service, "SystemParamsRepository", lambda: params_repo)
-    monkeypatch.setattr(service, "CuttingRepository", lambda: SimpleNamespace())
+    monkeypatch.setattr("pricing.resolved.safe_technical", lambda *_: (params_repo.load_visible(),{}, {},{}))
     monkeypatch.setattr(
         service, "engine_result_from_api", lambda **kwargs: result
     )
@@ -162,7 +177,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
     assert total == Decimal("180")
 
 
-def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch):
+def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch, legacy_glass_read_model):
     """Frameless fittings are real material: each declared SKU must resolve an
     'EA' cost-list entry or the quote fails — never silently priced at zero."""
     from types import SimpleNamespace
@@ -175,10 +190,10 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch):
         area_m2=Decimal("1.00"), weight_kg=Decimal("2.50"),
         thickness_net_mm=Decimal("4.00"),
     )
-    fitting = SimpleNamespace(sku="CLAMP-SQ", qty=4)
+    fitting = SimpleNamespace(sku="CLAMP-SQ", qty=4, extra_code=None)
     result = SimpleNamespace(
         profile_cuts=[], reinforcements=[], glasses=[glass],
-        panels=[], hardware_items=[], fittings=[fitting], leaf_weights=[],
+        panels=[], hardware_items=[], fittings=[fitting], leaf_weights=[], finish=None, extras=[],
     )
 
     class Cursor:
@@ -201,6 +216,7 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch):
 
     class Repo:
         org_id = "org"
+        currency = "CLP"
 
         def cost(self, sku, unit):
             calls.append((sku, unit))
@@ -214,12 +230,11 @@ def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch):
         "color_interior": "WHITE", "color_exterior": "WHITE",
     }
     params_repo = SimpleNamespace(
-        load_visible=lambda *a, **k: None,
+        load_visible=lambda *a, **k: SimpleNamespace(extra_authority=None),
         load_coupler_articles=lambda *a, **k: {},
     )
     monkeypatch.setattr(service, "connection", Conn())
-    monkeypatch.setattr(service, "SystemParamsRepository", lambda: params_repo)
-    monkeypatch.setattr(service, "CuttingRepository", lambda: SimpleNamespace())
+    monkeypatch.setattr("pricing.resolved.safe_technical", lambda *_: (params_repo.load_visible(),{}, {},{}))
     monkeypatch.setattr(
         service, "engine_result_from_api", lambda **kwargs: result
     )

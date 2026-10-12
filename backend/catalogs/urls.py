@@ -1,8 +1,15 @@
 from django.urls import path
+from projects.thermal_views import ThermalCatalogView, ThermalReviewView
 
 from catalogs import views
+from catalogs.glass_views import GlassPreviewView, GlassRulesView, GlassVariantView
 
 urlpatterns = [
+    path("systems/<uuid:system_id>/thermal/", ThermalCatalogView.as_view()),
+    path("systems/<uuid:system_id>/thermal/<uuid:report_id>/review/", ThermalReviewView.as_view()),
+    path("glass/preview/", GlassPreviewView.as_view(), name="catalog-glass-preview"),
+    path("glass/rules/", GlassRulesView.as_view(), name="catalog-glass-rules"),
+    path("glass/variants/", GlassVariantView.as_view(), name="catalog-glass-variants"),
     path("systems/", views.SystemCollectionView.as_view(), name="catalog-system-list"),
     path(
         "systems/<uuid:row_id>/",

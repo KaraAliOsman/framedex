@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Any
 from uuid import UUID
 
@@ -36,6 +38,16 @@ class JobContext:
 
 
 ProgressReporter = Callable[[float], None]
+CURRENT_PHASE: ContextVar[str | None] = ContextVar("job_phase", default=None)
+
+
+@contextmanager
+def progress_phase(phase):
+    token = CURRENT_PHASE.set(phase)
+    try:
+        yield
+    finally:
+        CURRENT_PHASE.reset(token)
 JobRunner = Callable[[dict[str, Any], JobContext, ProgressReporter], dict[str, Any]]
 PayloadAuthorizer = Callable[[dict[str, Any], str], bool]
 

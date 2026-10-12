@@ -1,0 +1,211 @@
+{
+  "concurrentAuthorityRejected": true,
+  "restorationAudited": true,
+  "records": [
+    {
+      "name": "despues-1440-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "tarjeta-veredictos",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "comparacion-1440-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "vista-previa-diff",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-1440-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "formulario-1440-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "despues-1440-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "comparacion-1440-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-1440-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "formulario-1440-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "despues-1280-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "comparacion-1280-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-1280-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "formulario-1280-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "despues-1280-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "comparacion-1280-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-1280-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "formulario-1280-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "despues-1024-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "comparacion-1024-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-1024-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "formulario-1024-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "despues-1024-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "comparacion-1024-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-1024-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "formulario-1024-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "despues-390-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "comparacion-390-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-390-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "formulario-390-claro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "despues-390-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "comparacion-390-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-390-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "formulario-390-oscuro",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "autoridad-obsoleta",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "restauracion-revisada",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "estado-vacio",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "estado-sin-permiso",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "estado-error",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "name": "estado-carga",
+      "overflow": false,
+      "findings": []
+    }
+  ],
+  "keyboardOperationSelection": true,
+  "visibleFocus": {
+    "outline": "solid",
+    "width": "2px"
+  }
+}

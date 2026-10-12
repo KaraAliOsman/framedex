@@ -184,6 +184,30 @@ def arc_length(p0: PlanPoint, p1: PlanPoint, sagitta: Decimal) -> Decimal:
     return radius * span * _PI / Decimal("180")
 
 
+def contour_bounds(contour: Contour) -> tuple[Decimal, Decimal, Decimal, Decimal]:
+    """Exact boundary extrema, including cardinal points inside each arc.
+
+    A sampled polyline is suitable for painting, but its highest sample is
+    not the dimension of the circular crown. Return left, bottom, right, top.
+    """
+    xs = [point.x_mm for point in contour.vertices]
+    ys = [point.y_mm for point in contour.vertices]
+    full_turn = Decimal("360")
+    for index in range(len(contour.vertices)):
+        p0, p1, bulge = _edge(contour, index)
+        if not bulge:
+            continue
+        center, radius, span = arc_params(p0, p1, bulge)
+        start = atan2_degrees(p0.y_mm - center.y_mm, p0.x_mm - center.x_mm)
+        sign = Decimal("1") if bulge > 0 else Decimal("-1")
+        for angle, dx, dy in ((0, 1, 0), (90, 0, 1), (180, -1, 0), (270, 0, -1)):
+            travel = (((Decimal(angle) - start) * sign) % full_turn + full_turn) % full_turn
+            if travel <= span:
+                xs.append(center.x_mm + radius * dx)
+                ys.append(center.y_mm + radius * dy)
+    return min(xs), min(ys), max(xs), max(ys)
+
+
 def edge_length(contour: Contour, index: int) -> Decimal:
     p0, p1, bulge = _edge(contour, index)
     if bulge:
@@ -492,7 +516,7 @@ def offset_contour(contour: Contour, distance_mm: Decimal) -> Contour:
         new_radius = radius - distance_mm if bulge > 0 else radius + distance_mm
         new_chord = _dist(vertices[i], vertices[(i + 1) % n])
         under = new_radius * new_radius - (new_chord / _TWO) ** 2
-        if under <= 0:
+        if under < 0:
             raise ValueError(f"edge {i}: offset degenerates the arc chord")
         new_sagitta = new_radius - under.sqrt()
         bulges.append(new_sagitta if bulge > 0 else -new_sagitta)

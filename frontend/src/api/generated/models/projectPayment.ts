@@ -21,6 +21,9 @@ export interface ProjectPayment {
   note: string | null;
   /** @nullable */
   recorded_by: string | null;
+  /** @nullable */
+  actor_label: string | null;
+  simulated: boolean;
   recorded_at: string;
   /** @nullable */
   voided_at: string | null;

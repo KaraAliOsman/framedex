@@ -1,0 +1,16 @@
+BEGIN;
+CREATE EXTENSION IF NOT EXISTS pgtap;
+SET LOCAL search_path=public,extensions,pg_temp;
+SELECT plan(10);
+SELECT has_column('public','project_positions','display_order','presentation order exists');
+SELECT col_type_is('public','project_positions','display_order','integer','order is exact integer');
+SELECT has_column('public','project_positions','placement','declared site grouping exists');
+SELECT col_type_is('public','project_positions','placement','jsonb','grouping is structured');
+SELECT ok(has_column_privilege('authenticated','public.project_positions','display_order','SELECT'),'member can read additive order');
+SELECT ok(has_column_privilege('authenticated','public.project_positions','placement','SELECT'),'member can read grouping');
+SELECT ok(NOT has_column_privilege('anon','public.project_positions','placement','SELECT'),'anonymous cannot read grouping');
+SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.project_positions'::regclass),'tenant RLS remains enabled');
+SELECT has_trigger('public','project_positions','guard_project_workspace','closed revision metadata guarded');
+SELECT has_index('public','project_positions','project_positions_display_order','tenant presentation ordering indexed');
+SELECT * FROM finish();
+ROLLBACK;

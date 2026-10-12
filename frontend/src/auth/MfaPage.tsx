@@ -1,7 +1,9 @@
+import { ValidatedForm } from "../ui/FormValidation";
 import { type FormEvent, useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
+import { Wordmark } from "../brand/Brand";
 import { telemetry } from "../telemetry/telemetry";
 import { useAuthSession } from "./AuthSessionProvider";
 import { consumeReturnTo } from "./returnTo";
@@ -15,6 +17,9 @@ type FactorState = {
 
 export function MfaPage(): JSX.Element {
   const auth = useAuthSession();
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const configuring = params.get("configure") === "1";
   const [factor, setFactor] = useState<FactorState | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadingFactors, setLoadingFactors] = useState(true);
@@ -46,7 +51,7 @@ export function MfaPage(): JSX.Element {
     };
   }, []);
 
-  if (auth.status === "ready") return <Navigate to={consumeReturnTo()} replace />;
+  if (auth.status === "ready" && !configuring) return <Navigate to={consumeReturnTo()} replace />;
 
   async function enroll(): Promise<void> {
     if (supabase === null) return;
@@ -102,14 +107,19 @@ export function MfaPage(): JSX.Element {
     }
     telemetry.capture("mfa_verified", { aal: "aal2" });
     await auth.refreshContext();
+    if (configuring)
+      navigate(
+        sessionStorage.getItem("dekopen.pending-invitation")
+          ? "/invitation"
+          : "/settings/general?section=account",
+      );
   }
 
   return (
     <main className="auth-screen" data-testid="mfa-page">
       <section className="auth-card">
         <div className="auth-card__brand">
-          <span className="brand">{t("app.brand")}</span>
-          <span className="brand-os">{t("app.brandOs")}</span>
+          <Wordmark width={176} />
         </div>
         <header className="auth-card__header">
           <p className="eyebrow">{t("auth.mfaEyebrow")}</p>
@@ -138,7 +148,7 @@ export function MfaPage(): JSX.Element {
                 {t("auth.mfaManual")} <code data-testid="totp-secret">{factor.secret}</code>
               </p>
             ) : null}
-            <form className="auth-form" onSubmit={(event) => void verify(event)}>
+            <ValidatedForm className="auth-form" onSubmit={(event) => void verify(event)}>
               <label htmlFor="totp-code">{t("auth.mfaCode")}</label>
               <input
                 id="totp-code"
@@ -156,7 +166,7 @@ export function MfaPage(): JSX.Element {
               >
                 {busy ? t("auth.mfaVerifying") : t("auth.mfaVerify")}
               </button>
-            </form>
+            </ValidatedForm>
           </>
         )}
         {error ? (

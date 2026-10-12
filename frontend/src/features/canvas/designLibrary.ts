@@ -1,5 +1,14 @@
 import type { TranslationKey } from "../../i18n/es-CL";
+import { t } from "../../i18n/es-CL";
+import type { DesignOptions } from "../../api/generated/models";
+import {
+  choicePatch,
+  openingChoices,
+  type OpeningLeafFact,
+  type AdvancedPreview,
+} from "./physicalOpenings";
 import type { IntentNode, Opening } from "./intentEditing";
+import { declareSlidingTravel, SLIDING_PRESETS } from "./intentEditing";
 import {
   makeArchModule,
   makeBowProduct,
@@ -11,14 +20,68 @@ import {
 } from "./productEditing";
 
 function starterTree(opening: Opening): IntentNode {
-  return { id: crypto.randomUUID(), type: "BAY", opening_type: opening };
+  const layout = SLIDING_PRESETS[opening];
+  return {
+    id: crypto.randomUUID(),
+    type: "BAY",
+    opening_type: opening,
+    ...(opening === "DOOR_ENTRY" ? { door_handedness: "LEFT" as const } : {}),
+    ...(layout ? { sliding_layout: declareSlidingTravel(layout) } : {}),
+  };
 }
 
 export interface StarterDefinition {
   key: string;
   titleKey: TranslationKey;
   hintKey: TranslationKey;
+  title?: string;
+  hint?: string;
+  nominal?: { widthMm: number; heightMm: number };
+  previewLeaves?: OpeningLeafFact[];
+  recipeCode?: string;
   build(widthMm: number, heightMm: number): ProductJson;
+}
+
+export const starterTitle = (definition: StarterDefinition): string =>
+  definition.title ?? t(definition.titleKey);
+export const starterHint = (definition: StarterDefinition): string =>
+  definition.hint ?? t(definition.hintKey);
+export const starterSize = (definition: StarterDefinition): { widthMm: number; heightMm: number } =>
+  definition.nominal ?? starterNominalSize(definition.key);
+
+/** Catalog recipes create intent; every preview coordinate comes from the engine. */
+export function catalogStarters(options?: DesignOptions): StarterDefinition[] {
+  const previews = (options?.advanced_previews ?? []) as unknown as AdvancedPreview[];
+  return openingChoices(options)
+    .filter((choice) => choice.recipe)
+    .map((choice) => {
+      const recipe = choice.recipe!;
+      const preview = previews.find(
+        (item) =>
+          item.recipe_code === recipe.code &&
+          item.movement === choice.opening.movement &&
+          item.use === choice.use,
+      );
+      return {
+        key: `advanced-${choice.id}`,
+        titleKey: "assembly.starter.fixed",
+        hintKey: "assembly.starter.fixedHint",
+        title: recipe.name,
+        hint: preview?.reason || "Receta del catálogo · medidas iniciales declaradas",
+        nominal: {
+          widthMm: Number(recipe.starter_width_mm),
+          heightMm: Number(recipe.starter_height_mm),
+        },
+        recipeCode: recipe.code,
+        previewLeaves: preview?.opening_leaves ?? [],
+        build: (w, h) =>
+          wrapTreeAsProduct(
+            { id: crypto.randomUUID(), type: "BAY", ...choicePatch(choice) },
+            String(w),
+            String(h),
+          ),
+      };
+    });
 }
 
 /** Coupled pair of two independent bays joined by a coupler. */
@@ -68,6 +131,31 @@ function splitBay(
     widthMm.toFixed(2),
     heightMm.toFixed(2),
   );
+}
+
+function threeModuleBow(widthMm: number, heightMm: number, angle: string): ProductJson {
+  const modules = [starterTree("TURN_LEFT"), starterTree("FIXED"), starterTree("TURN_RIGHT")].map(
+    (tree, index) => ({
+      id: crypto.randomUUID(),
+      width_mm: String(Math.round(widthMm * (index === 1 ? 0.5 : 0.25) * 100) / 100),
+      height_mm: String(heightMm),
+      tree,
+    }),
+  );
+  return {
+    version: "product-v2",
+    assembly: {
+      modules,
+      couplings: [0, 1].map((index) => ({
+        id: crypto.randomUUID(),
+        angle_deg: angle,
+        coupler_profile_sku: null,
+        kind: "INLINE",
+        modules: [modules[index]!.id, modules[index + 1]!.id],
+        edges: ["right", "left"],
+      })),
+    },
+  };
 }
 
 /** Design library: creation recipes that produce a compositional product.
@@ -126,7 +214,7 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     key: "doorSide",
     titleKey: "assembly.starter.doorSide",
     hintKey: "assembly.starter.doorSideHint",
-    build: (w, h) => coupledModules(starterTree("DOOR_ENTRY"), starterTree("FIXED"), 0.4, w, h),
+    build: (w, h) => coupledModules(starterTree("DOOR_ENTRY"), starterTree("FIXED"), 0.65, w, h),
   },
   {
     key: "slidingFixed",
@@ -138,7 +226,58 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     key: "bow3",
     titleKey: "assembly.starter.bow3",
     hintKey: "assembly.starter.bow3Hint",
-    build: (w, h) => makeBowProduct({ moduleCount: 3, widthMm: w, heightMm: h, angleDeg: 15 }),
+    build: (w, h) => threeModuleBow(w, h, "22.5"),
+  },
+  {
+    key: "bay3",
+    titleKey: "assembly.starter.bay3",
+    hintKey: "assembly.starter.bay3Hint",
+    build: (w, h) => threeModuleBow(w, h, "45"),
+  },
+  {
+    key: "windowTransom",
+    titleKey: "assembly.starter.windowTransom",
+    hintKey: "assembly.starter.windowTransomHint",
+    build: (w, h) => {
+      const base = {
+        id: crypto.randomUUID(),
+        width_mm: String(w),
+        height_mm: String(Math.round(h * 0.75 * 100) / 100),
+        tree: starterTree("TILT_TURN_LEFT"),
+      };
+      const top = {
+        id: crypto.randomUUID(),
+        width_mm: String(w),
+        height_mm: String(Math.round(h * 0.25 * 100) / 100),
+        tree: starterTree("FIXED"),
+      };
+      return {
+        version: "product-v2",
+        assembly: {
+          modules: [base, top],
+          couplings: [
+            {
+              id: crypto.randomUUID(),
+              angle_deg: "0",
+              coupler_profile_sku: null,
+              kind: "STACKED",
+              modules: [base.id, top.id],
+              edges: ["top", "bottom"],
+            },
+          ],
+        },
+      };
+    },
+  },
+  {
+    key: "corner90",
+    titleKey: "assembly.starter.corner90",
+    hintKey: "assembly.starter.corner90Hint",
+    build: (w, h) => {
+      const product = coupledModules(starterTree("FIXED"), starterTree("FIXED"), 0.5, w, h);
+      product.assembly.couplings[0]!.angle_deg = "90";
+      return product;
+    },
   },
   {
     key: "bow5",
@@ -208,7 +347,10 @@ export type StarterKey = (typeof STARTER_DEFINITIONS)[number]["key"];
 export function starterNominalSize(key: string): { widthMm: number; heightMm: number } {
   switch (key) {
     case "bow3":
-      return { widthMm: 2400, heightMm: 1400 };
+    case "bay3":
+      return { widthMm: 2400, heightMm: 1200 };
+    case "corner90":
+      return { widthMm: 2400, heightMm: 1200 };
     case "bow5":
       return { widthMm: 3000, heightMm: 1400 };
     case "doorSide":

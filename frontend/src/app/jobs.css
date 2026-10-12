@@ -1,0 +1,62 @@
+.jobs-filter {
+  min-width: 10rem;
+}
+.jobs-list {
+  grid-column: 1 / -1;
+}
+.jobs-list {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.job-row {
+  align-items: center;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--r-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+.job-row-main {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  gap: var(--space-2);
+  min-width: 12rem;
+}
+.job-row-meta {
+  color: var(--theme-text-secondary);
+  display: flex;
+  font-size: var(--type-dense);
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.job-row-object {
+  margin: 0;
+}
+.job-row-object a {
+  color: var(--interactive);
+  overflow-wrap: anywhere;
+}
+.job-row-object a:focus-visible {
+  outline: var(--space-2px) solid var(--border-focus);
+  outline-offset: var(--space-2px);
+}
+.job-row-meta span,
+.job-row-meta time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.job-row-meta time {
+  font-variant-numeric: tabular-nums;
+}
+.job-row-error {
+  color: var(--theme-danger);
+  flex-basis: 100%;
+  font-size: var(--type-body);
+  margin: 0.125rem 0 0;
+}

@@ -215,14 +215,23 @@ describe("rectangular intent", () => {
       intentBays(withExtra).find((node) => node.id === "bay-a"),
     );
     expect(baySpec(bay)).toEqual({
+      opening: null,
+      opening_use: null,
+      opening_recipe_code: null,
+      hinged_layout: null,
       opening_type: "FIXED",
       sliding_layout: null,
       door_handedness: null,
       glass_thickness_mm: "24.00",
       glass_spec: "4-16-4",
+      glass_product: null,
+      glass_processing: null,
+      sill_height_mm: null,
+      is_sidelight: false,
       glass_article_sku: "GLASS-A",
       panel_article_sku: null,
       hardware_set_sku: null,
+      hardware_selection: null,
       handle_height_mm: null,
     });
   });

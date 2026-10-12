@@ -5,6 +5,7 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from engine_api.serializers import DecimalStringField
+from documents.quote_serializers import CommercialTermsSerializer
 
 
 class StrictSerializer(serializers.Serializer):
@@ -111,7 +112,7 @@ class AccessoryScheduleSerializer(StrictSerializer):
 class PositionDocumentaryInputSerializer(StrictSerializer):
     position_id = serializers.UUIDField()
     calculation_hash = serializers.RegexField(r"^sha256:[0-9a-f]{64}$")
-    location_tag = serializers.CharField(max_length=100, allow_blank=False, trim_whitespace=True)
+    location_tag = serializers.CharField(max_length=120, allow_blank=False, trim_whitespace=True)
     manufacturing_placement_policy_id = serializers.UUIDField()
     handle_requirement_policy_id = serializers.UUIDField()
     reinforcement_cut_policy_id = serializers.UUIDField()
@@ -126,6 +127,8 @@ class PositionDocumentaryInputSerializer(StrictSerializer):
 class DocumentaryInputsSerializer(StrictSerializer):
     payment_terms = serializers.CharField(max_length=2000, allow_blank=False, trim_whitespace=True)
     quotation_valid_until = serializers.DateField()
+    commercial_terms = CommercialTermsSerializer(required=False)
+    alternative_version_ids = serializers.ListField(child=serializers.UUIDField(), max_length=3, required=False)
     positions = PositionDocumentaryInputSerializer(many=True, allow_empty=False)
 
 
@@ -157,9 +160,13 @@ class HandleRequirementSerializer(serializers.Serializer):
     # Null on door rows whose leaf hasn't declared handedness yet — there
     # is no host stile to name until the product says which edge hinges.
     host_member_side = serializers.ChoiceField(
-        choices=["LEFT", "RIGHT"], allow_null=True
+        choices=["LEFT", "RIGHT", "TOP", "BOTTOM"], allow_null=True
     )
     requires_handedness = serializers.BooleanField(default=False)
+    default_height_mm = serializers.CharField(required=False)
+    default_height_from_leaf_top_mm = serializers.CharField(required=False)
+    default_vertical_reference = serializers.CharField(required=False)
+    source = serializers.CharField(required=False)
     outer_height_mm = DecimalStringField(max_digits=14, decimal_places=4)
     mounting_min_from_leaf_top_mm = DecimalStringField(
         max_digits=14, decimal_places=4
@@ -230,10 +237,13 @@ class DocumentaryPreparationPositionSerializer(PositionDocumentaryInputSerialize
 
 
 class DocumentaryPreparationResponseSerializer(serializers.Serializer):
+    missing = serializers.ListField(child=serializers.JSONField(), required=False)
     project_id = serializers.UUIDField()
     revision_code = serializers.RegexField(r"^REV-[A-Z]+$")
     payment_terms = serializers.CharField(allow_blank=True)
     quotation_valid_until = serializers.DateField(allow_null=True)
+    commercial_terms = CommercialTermsSerializer(required=False)
+    alternative_version_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
     positions = DocumentaryPreparationPositionSerializer(many=True)
 
 

@@ -1,0 +1,13 @@
+[
+  {
+    "flow": "1024 oscuro: QR real, cola de Corte, completar, cambiar puesto, bloqueo con motivo, tablero y Hoy, supervisor desbloquea",
+    "result": "PASA"
+  },
+  {
+    "flow": "Ruta real hasta QC; medición falla sin bloqueo, bloqueo explícito, remake confirmado y retry idempotente conserva pieza",
+    "result": "PASA",
+    "order": "OT-P-000538-REV-A-01",
+    "remake": "OT-P-000538-REV-A-01-RM-02",
+    "piece": "P01-U01-I01"
+  }
+]

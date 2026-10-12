@@ -1,0 +1,110 @@
+[
+  {
+    "name": "editor-1440-light",
+    "screenshot": "editor-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1440-light",
+    "screenshot": "tecnica-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1280-light",
+    "screenshot": "editor-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1280-light",
+    "screenshot": "tecnica-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1024-light",
+    "screenshot": "editor-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1024-light",
+    "screenshot": "tecnica-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1440-dark",
+    "screenshot": "editor-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1440-dark",
+    "screenshot": "tecnica-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1280-dark",
+    "screenshot": "editor-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1280-dark",
+    "screenshot": "tecnica-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1024-dark",
+    "screenshot": "editor-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "tecnica-1024-dark",
+    "screenshot": "tecnica-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  }
+]

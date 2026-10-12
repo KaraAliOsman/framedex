@@ -1,0 +1,1808 @@
+{
+  "DEMO_60-FOILED": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 16,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 6,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "turn",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "turn",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.0660",
+        "article_sku": null,
+        "bay_id": "fixed",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1300.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "21.32",
+        "width_mm": "820.00"
+      },
+      {
+        "area_m2": "0.7999",
+        "article_sku": null,
+        "bay_id": "turn",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1166.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "16.00",
+        "width_mm": "686.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "turn",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TURN",
+        "leaf_id": null,
+        "name": "Kit PVC practicable 60 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "turn",
+        "hardware_weight_kg": "2.56",
+        "infill_weight_kg": "16.00",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.76",
+        "steel_weight_kg": "7.02",
+        "total_weight_kg": "31.33",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1288.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "MULLION_V",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-POSTE-V"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "822.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "fixed",
+        "leaf_id": null,
+        "length_mm": "829.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "fixed",
+        "leaf_id": null,
+        "length_mm": "1309.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "695.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1175.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1278.00",
+        "parent_profile_sku": "DEMO_60-POSTE-V",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_60-ACERO-POSTE-V",
+        "role": "MULLION_V",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "792.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DEMO_60-WHITE": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 16,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 6,
+        "sku": "DEMO_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "turn",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.0745",
+        "article_sku": null,
+        "bay_id": "fixed",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1304.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "21.49",
+        "width_mm": "824.00"
+      },
+      {
+        "area_m2": "0.8073",
+        "article_sku": null,
+        "bay_id": "turn",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1170.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "16.15",
+        "width_mm": "690.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "turn",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_60-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_60-KIT-TURN",
+        "leaf_id": null,
+        "name": "Kit PVC practicable 60 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "turn",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "16.15",
+        "leaf_id": null,
+        "pvc_weight_kg": "5.76",
+        "steel_weight_kg": "4.32",
+        "total_weight_kg": "28.76",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1288.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "MULLION_V",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-POSTE-V"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "822.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "fixed",
+        "leaf_id": null,
+        "length_mm": "833.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "fixed",
+        "leaf_id": null,
+        "length_mm": "1313.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "699.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1179.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_60-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1278.00",
+        "parent_profile_sku": "DEMO_60-POSTE-V",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_60-ACERO-POSTE-V",
+        "role": "MULLION_V",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1272.00",
+        "parent_profile_sku": "DEMO_60-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DEMO_70-FOILED": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 16,
+        "sku": "DEMO_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 6,
+        "sku": "DEMO_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "turn",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 8,
+        "sku": "DEMO_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "turn",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.0368",
+        "article_sku": null,
+        "bay_id": "fixed",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1280.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "20.74",
+        "width_mm": "810.00"
+      },
+      {
+        "area_m2": "0.7747",
+        "article_sku": null,
+        "bay_id": "turn",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1146.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "15.49",
+        "width_mm": "676.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "turn",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_70-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_70-KIT-TURN",
+        "leaf_id": null,
+        "name": "Kit PVC practicable 70 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "turn",
+        "hardware_weight_kg": "2.56",
+        "infill_weight_kg": "15.49",
+        "leaf_id": null,
+        "pvc_weight_kg": "4.95",
+        "steel_weight_kg": "6.92",
+        "total_weight_kg": "29.91",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1268.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "MULLION_V",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-POSTE-V"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "812.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1282.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "fixed",
+        "leaf_id": null,
+        "length_mm": "819.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "fixed",
+        "leaf_id": null,
+        "length_mm": "1289.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "685.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1155.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1258.00",
+        "parent_profile_sku": "DEMO_70-POSTE-V",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_70-ACERO-POSTE-V",
+        "role": "MULLION_V",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "782.00",
+        "parent_profile_sku": "DEMO_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_70-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1252.00",
+        "parent_profile_sku": "DEMO_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_70-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DEMO_70-WHITE": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 16,
+        "sku": "DEMO_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 6,
+        "sku": "DEMO_70-TORNILLO-REF"
+      },
+      {
+        "bay_id": "turn",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_70-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "1.0452",
+        "article_sku": null,
+        "bay_id": "fixed",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1284.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "20.90",
+        "width_mm": "814.00"
+      },
+      {
+        "area_m2": "0.7820",
+        "article_sku": null,
+        "bay_id": "turn",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1150.00",
+        "leaf_id": null,
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "15.64",
+        "width_mm": "680.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "turn",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_70-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "HINGE",
+            "name": "Bisagra DEMO",
+            "qty": "2",
+            "sku": "DEMO_70-BISAGRA",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_70-KIT-TURN",
+        "leaf_id": null,
+        "name": "Kit PVC practicable 70 mm · practicable",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "turn",
+        "hardware_weight_kg": "2.54",
+        "infill_weight_kg": "15.64",
+        "leaf_id": null,
+        "pvc_weight_kg": "4.95",
+        "steel_weight_kg": "4.26",
+        "total_weight_kg": "27.38",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1268.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "MULLION_V",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-POSTE-V"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "812.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1282.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-HOJA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "fixed",
+        "leaf_id": null,
+        "length_mm": "823.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "fixed",
+        "leaf_id": null,
+        "length_mm": "1293.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "689.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1159.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_70-JQ-10"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_70-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_70-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1258.00",
+        "parent_profile_sku": "DEMO_70-POSTE-V",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_70-ACERO-POSTE-V",
+        "role": "MULLION_V",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "turn",
+        "leaf_id": null,
+        "length_mm": "1252.00",
+        "parent_profile_sku": "DEMO_70-HOJA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_70-ACERO-HOJA",
+        "role": "SASH",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DEMO_CORREDERA_60-FOILED": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 16,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L1",
+        "qty": 8,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L1",
+        "qty": 10,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L1",
+        "qty": 5,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L2",
+        "qty": 8,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L2",
+        "qty": 10,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L2",
+        "qty": 5,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.8102",
+        "article_sku": null,
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1116.00",
+        "leaf_id": "bay:L1",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "16.20",
+        "width_mm": "726.00"
+      },
+      {
+        "area_m2": "0.8102",
+        "article_sku": null,
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1116.00",
+        "leaf_id": "bay:L2",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "16.20",
+        "width_mm": "726.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_CORREDERA_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "ROLLER",
+            "name": "Carro DEMO",
+            "qty": "2",
+            "sku": "DEMO_CORREDERA_60-CARRO",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_CORREDERA_60-KIT-SLIDING",
+        "leaf_id": "bay:L1",
+        "name": "Kit PVC corredera 60 mm · corredera",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_CORREDERA_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "ROLLER",
+            "name": "Carro DEMO",
+            "qty": "2",
+            "sku": "DEMO_CORREDERA_60-CARRO",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_CORREDERA_60-KIT-SLIDING",
+        "leaf_id": "bay:L2",
+        "name": "Kit PVC corredera 60 mm · corredera",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.57",
+        "infill_weight_kg": "16.20",
+        "leaf_id": "bay:L1",
+        "pvc_weight_kg": "7.39",
+        "steel_weight_kg": "9.27",
+        "total_weight_kg": "35.42",
+        "weight_unknown_reasons": []
+      },
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.57",
+        "infill_weight_kg": "16.20",
+        "leaf_id": "bay:L2",
+        "pvc_weight_kg": "7.39",
+        "steel_weight_kg": "9.27",
+        "total_weight_kg": "35.42",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "735.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1125.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "735.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1125.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "866.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1256.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "866.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1256.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1256.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INTERLOCK",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-ENCUENTRO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1256.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INTERLOCK",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-ENCUENTRO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1680.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "RAIL",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-RIEL"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "856.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1246.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "856.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1246.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1246.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-ENCUENTRO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-ENCUENTRO",
+        "role": "INTERLOCK",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1246.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-ENCUENTRO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-ENCUENTRO",
+        "role": "INTERLOCK",
+        "sagitta_mm": null
+      }
+    ]
+  },
+  "DEMO_CORREDERA_60-WHITE": {
+    "fittings": [
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 16,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": null,
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": null,
+        "qty": 12,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L1",
+        "qty": 10,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L1",
+        "qty": 5,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L2",
+        "qty": 10,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      },
+      {
+        "bay_id": "bay",
+        "kind": "REINFORCEMENT_SCREW",
+        "leaf_id": "bay:L2",
+        "qty": 5,
+        "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+      }
+    ],
+    "glasses": [
+      {
+        "area_m2": "0.8176",
+        "article_sku": null,
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1120.00",
+        "leaf_id": "bay:L1",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "16.35",
+        "width_mm": "730.00"
+      },
+      {
+        "area_m2": "0.8176",
+        "article_sku": null,
+        "bay_id": "bay",
+        "exposed_edges": null,
+        "glass_spec": "4-16-4 Float Incoloro",
+        "height_mm": "1120.00",
+        "leaf_id": "bay:L2",
+        "shape": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "16.35",
+        "width_mm": "730.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_CORREDERA_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "ROLLER",
+            "name": "Carro DEMO",
+            "qty": "2",
+            "sku": "DEMO_CORREDERA_60-CARRO",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_CORREDERA_60-KIT-SLIDING",
+        "leaf_id": "bay:L1",
+        "name": "Kit PVC corredera 60 mm · corredera",
+        "qty": 1,
+        "unit": "kit"
+      },
+      {
+        "bay_id": "bay",
+        "contents": [
+          {
+            "category": "HANDLE",
+            "name": "Manilla DEMO",
+            "qty": "1",
+            "sku": "DEMO_CORREDERA_60-MANILLA",
+            "unit": "EA"
+          },
+          {
+            "category": "ROLLER",
+            "name": "Carro DEMO",
+            "qty": "2",
+            "sku": "DEMO_CORREDERA_60-CARRO",
+            "unit": "EA"
+          }
+        ],
+        "kit_sku": "DEMO_CORREDERA_60-KIT-SLIDING",
+        "leaf_id": "bay:L2",
+        "name": "Kit PVC corredera 60 mm · corredera",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "16.35",
+        "leaf_id": "bay:L1",
+        "pvc_weight_kg": "7.39",
+        "steel_weight_kg": "6.35",
+        "total_weight_kg": "32.64",
+        "weight_unknown_reasons": []
+      },
+      {
+        "bay_id": "bay",
+        "hardware_weight_kg": "2.55",
+        "infill_weight_kg": "16.35",
+        "leaf_id": "bay:L2",
+        "pvc_weight_kg": "7.39",
+        "steel_weight_kg": "6.35",
+        "total_weight_kg": "32.64",
+        "weight_unknown_reasons": []
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1806.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "739.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1129.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "739.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1129.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-JQ-10"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "866.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1256.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "866.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1256.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1256.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INTERLOCK",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-ENCUENTRO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1256.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "INTERLOCK",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-ENCUENTRO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": "bay",
+        "leaf_id": null,
+        "length_mm": "1680.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "RAIL",
+        "sagitta_mm": null,
+        "sku": "DEMO_CORREDERA_60-RIEL"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1776.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1376.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-MARCO",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+        "role": "FRAME",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1246.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1246.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+        "qty": 2,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+        "role": "SLIDING_SASH",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L1",
+        "length_mm": "1246.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-ENCUENTRO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-ENCUENTRO",
+        "role": "INTERLOCK",
+        "sagitta_mm": null
+      },
+      {
+        "bay_id": "bay",
+        "leaf_id": "bay:L2",
+        "length_mm": "1246.00",
+        "parent_profile_sku": "DEMO_CORREDERA_60-ENCUENTRO",
+        "qty": 1,
+        "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-ENCUENTRO",
+        "role": "INTERLOCK",
+        "sagitta_mm": null
+      }
+    ]
+  }
+}

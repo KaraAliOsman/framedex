@@ -1,0 +1,69 @@
+{
+  "result": "PASS",
+  "records": [
+    {
+      "name": "etiquetas-unidad-1440-light",
+      "scope": ".production-labels",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-unidad-1440-dark",
+      "scope": ".production-labels",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-unidad-1280-light",
+      "scope": ".production-labels",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-unidad-1280-dark",
+      "scope": ".production-labels",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-unidad-1024-light",
+      "scope": ".production-labels",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-unidad-1024-dark",
+      "scope": ".production-labels",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-unidad-390-light",
+      "scope": ".production-labels",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-unidad-390-dark",
+      "scope": ".production-labels",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    }
+  ]
+}

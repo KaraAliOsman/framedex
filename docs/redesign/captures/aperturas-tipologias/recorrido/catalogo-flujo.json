@@ -1,0 +1,47 @@
+{
+  "importPublishUndo": true,
+  "exactCsvExport": true,
+  "openingCapabilityUpdate": true,
+  "empty": true,
+  "blockedMissingSource": true,
+  "readOnlyEstimator": true,
+  "system_id": "c546b8db-6e9a-474d-ab2d-74687b209d2b",
+  "capabilities": [
+    {
+      "direction": "INWARD",
+      "fixed_in_sash": false,
+      "handle_rule": null,
+      "hardware_kit_skus": [],
+      "hinge_sides": [
+        "NONE"
+      ],
+      "leaf_role": "SINGLE",
+      "movement": "FIXED",
+      "source": "DEMO · fuente editada D03, sin certificación",
+      "use": "WINDOW"
+    },
+    {
+      "direction": "INWARD",
+      "fixed_in_sash": false,
+      "handle_rule": {
+        "closing_edge_offset_mm": "37.50",
+        "default_height_mm": null,
+        "minimum_from_bottom_mm": "100.00",
+        "minimum_from_top_mm": "100.00",
+        "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+        "vertical_reference": "CENTER"
+      },
+      "hardware_kit_skus": [
+        "DEMO_60-KIT-TURN"
+      ],
+      "hinge_sides": [
+        "LEFT",
+        "RIGHT"
+      ],
+      "leaf_role": "SINGLE",
+      "movement": "TURN",
+      "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+      "use": "WINDOW"
+    }
+  ]
+}

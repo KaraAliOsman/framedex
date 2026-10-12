@@ -1,0 +1,19 @@
+[
+  {
+    "role": "estimator",
+    "mountErrors": [],
+    "errors": [
+      {
+        "status": 403,
+        "path": "/api/v1/pricing/admin/fx/"
+      }
+    ],
+    "text": "Volver al proyecto\nCotización comercial\nCotización comercial del proyecto\nModo de precio\nMargen sobre venta\nPrecio por m² y tipología\nMatriz dimensional\nLista comercial con descuentos\n\nPrecio = costo ÷ (1 − margen). Con costo 100 y margen 25 %, el precio es 133,33 antes del redondeo — no es un recargo sobre el costo.\n\nLista comercial / contexto\n\nEl modo Costo más margen no usa contexto comercial.\n\nMoneda\nCLP\nUSD\nFecha efectiva\nRegistro de tipo de cambio (opcional)\nSin tipo de cambio asociado\n\nOpcional — elige un tipo de cambio registrado en Precios → Tipos de cambio.\n\nDescuento (%)\nSegmento del cliente\nParticular\nArquitecto\nConstructora\n\nParticular: sin descuento · Arquitecto: 8–12 % · Constructora: 18–25 %\n\nLos accesorios se calculan en el editor. Revisa instalación, retiro y flete en Servicios del proyecto antes de cotizar.\n\nMotivo del cambio\nConfirmo expresamente el descuento solicitado y su advertencia de margen crítico.\nCalcular y revisar\nOperaciones comerciales guardadas\nEstado\nTodas\nPendiente\nAplicada\nRechazada\nRetirada\nBorrador\nRecargar\n\n$163.138 Precios aplicados al proyecto.\n\nP-000514 · Fábrica de ventanas Sur · P25 DEMO · REV-A · demo-estimator@fixture.dekopen.local · P09 · preparación de matriz · 08-10-2026 22:14\n\nRevisar operación"
+  },
+  {
+    "role": "owner",
+    "mountErrors": [],
+    "errors": [],
+    "text": "Volver al proyecto\nCotización comercial\nCotización comercial del proyecto\nModo de precio\nMargen sobre venta\nPrecio por m² y tipología\nMatriz dimensional\nMargen objetivo del proyecto\nLista comercial con descuentos\n\nPrecio = costo ÷ (1 − margen). Con costo 100 y margen 25 %, el precio es 133,33 antes del redondeo — no es un recargo sobre el costo.\n\nLista comercial / contexto\n\nEl modo Costo más margen no usa contexto comercial.\n\nMoneda\nCLP\nUSD\nFecha efectiva\nRegistro de tipo de cambio (opcional)\nSin tipo de cambio asociado\n\nOpcional — elige un tipo de cambio registrado en Precios → Tipos de cambio.\n\nDescuento (%)\nSegmento del cliente\nParticular\nArquitecto\nConstructora\n\nParticular: sin descuento · Arquitecto: 8–12 % · Constructora: 18–25 %\n\nLos accesorios se calculan en el editor. Revisa instalación, retiro y flete en Servicios del proyecto antes de cotizar.\n\nMotivo del cambio\nConfirmo expresamente el descuento solicitado y su advertencia de margen crítico.\nCalcular y revisar\nOperaciones comerciales guardadas\nEstado\nTodas\nPendiente\nAplicada\nRechazada\nRetirada\nBorrador\nRecargar\n\n$163.138 Precios aplicados al proyecto.\n\nP-000514 · Fábrica de ventanas Sur · P25 DEMO · REV-A · demo-estimator@fixture.dekopen.local · P09 · preparación de matriz · 08-10-2026 22:14\n\nRevisar operación"
+  }
+]

@@ -25,7 +25,7 @@ INSERT INTO public.profile_systems
 SELECT (jsonb_populate_record(NULL::public.profile_systems, to_jsonb(source) ||
     jsonb_build_object('id', gen_random_uuid(), 'code', 'PGTAP144',
         'technical_locked', false, 'is_demo', false))).*
-FROM public.profile_systems source WHERE code = 'DEMO_60';
+FROM public.profile_systems source WHERE code = 'DEMO_60' AND version=1;
 
 PREPARE good AS
     INSERT INTO public.profile_articles

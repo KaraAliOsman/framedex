@@ -1,0 +1,26 @@
+{
+  "loading": true,
+  "errorAndRetry": true,
+  "realEstimatorPatchDenied": 403,
+  "authorityUnchanged": true,
+  "records": [
+    {
+      "name": "catalogo-capacidades-error",
+      "screenshot": "catalogo-capacidades-error.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    },
+    {
+      "name": "catalogo-capacidades-recuperado",
+      "screenshot": "catalogo-capacidades-recuperado.png",
+      "width": 1440,
+      "overflow": false,
+      "errors": [],
+      "findings": [],
+      "presentation": []
+    }
+  ]
+}

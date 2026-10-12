@@ -1,0 +1,26 @@
+[
+  {
+    "state": "bloqueado y deshacer",
+    "result": "PASA"
+  },
+  {
+    "state": "vacío",
+    "result": "PASA"
+  },
+  {
+    "state": "carga y resolución",
+    "result": "PASA"
+  },
+  {
+    "state": "error",
+    "result": "PASA"
+  },
+  {
+    "state": "sin permiso",
+    "result": "PASA"
+  },
+  {
+    "state": "Catálogo estructurado y fuente DEMO",
+    "result": "PASA"
+  }
+]

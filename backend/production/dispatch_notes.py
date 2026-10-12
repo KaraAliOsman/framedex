@@ -65,6 +65,7 @@ def _manifest_units(payload: dict) -> list[dict]:
             {
                 "unit_index": unit.get("unit_index"),
                 "label_code": unit.get("label_code"),
+                "qr_value": unit.get("qr_value"),
                 "profiles": unit.get("profiles"),
                 "reinforcements": unit.get("reinforcements"),
                 "glasses": unit.get("glasses"),

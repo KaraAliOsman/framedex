@@ -1,0 +1,30 @@
+[
+  {
+    "state": "vacio",
+    "findings": []
+  },
+  {
+    "state": "carga",
+    "findings": []
+  },
+  {
+    "state": "error",
+    "findings": []
+  },
+  {
+    "flow": "Reintento recupera biblioteca real",
+    "result": "PASA"
+  },
+  {
+    "state": "bloqueado",
+    "findings": []
+  },
+  {
+    "flow": "Error angular conduce al acoplador exacto",
+    "result": "PASA"
+  },
+  {
+    "state": "sin-permiso",
+    "findings": []
+  }
+]

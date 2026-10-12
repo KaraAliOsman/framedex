@@ -141,6 +141,12 @@ def _grounding_values(context: Any, question: str) -> set[Decimal]:
         number = _parse_number(match.group(0))
         if number is not None:
             values.add(number)
+    # Percentage intent uses the domain's fractional transport. This is a
+    # unit normalization of the user's explicit value, never a model claim.
+    for match in re.finditer(r"(\d+(?:[.,]\d+)?)\s*(?:%|por ciento)", question, re.I):
+        number = _parse_number(match.group(1))
+        if number is not None:
+            values.add(number / Decimal("100"))
     return values
 
 

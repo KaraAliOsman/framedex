@@ -1,0 +1,15 @@
+[
+  {
+    "flow": "Hoy → búsqueda exacta → 12 posiciones con bow → cascada del motor → aplicar precio",
+    "result": "PASA",
+    "net": "4846906",
+    "gross": "5767818"
+  },
+  {
+    "flow": "Checklist → PDF real → confirmación humana → emitir/enviar → cliente móvil → seguimiento",
+    "result": "PASA",
+    "pdfBytes": 83800,
+    "pdfHash": "1ffc30ff5570a0c9c03364c59f0ea851eab6122a1330ace7e17a1d79e62c2c65",
+    "revision": "REV-A"
+  }
+]

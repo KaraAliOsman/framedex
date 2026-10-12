@@ -1,0 +1,56 @@
+{
+  "verified_ref": "75bd60c70b7ad6c1943b5fd855d4672ae3a29f31",
+  "evaluation_ref": "041cb622836c745897c04e52a354d10bbf16a8b4",
+  "later_changes": [
+    "backend/ai_gateway/providers.py",
+    "backend/tests/test_ai_multimodal.py",
+    "frontend/src/features/assistant/AiSettingsSection.tsx"
+  ],
+  "later_changes_scope": "PDF-only wire representation and settings success copy; agent requests, operations and grounding unchanged after the complete evaluation",
+  "transport_ref": "d660f72054c0777b542a6bb1ef5b65c2477b6310",
+  "database_gate_ref": "041cb622836c745897c04e52a354d10bbf16a8b4",
+  "database_gate_later_changes": "PDF transport, PDF request tests and one UI success message; schema, SQL and permissions unchanged",
+  "gates": {
+    "lint": "PASA",
+    "typecheck": "PASA",
+    "test": "PASA",
+    "build": "PASA",
+    "test-db": "PASA"
+  },
+  "tests": {
+    "engine_passed": 744,
+    "engine_xfail": 2,
+    "backend_passed": 1241,
+    "frontend_passed": 817,
+    "pgtap": 1137,
+    "integration": 395,
+    "e2e": 11,
+    "populated_upgrades_pg16": 8,
+    "focused_unit": 82,
+    "provider_integration": 15,
+    "real_transport_oracles": 6
+  },
+  "logs_sha256": {
+    "ia3-review-gates-complete.log": "3d7b1a1fdca2e9ae5b4efdf5b3d2ab02abfc7a14e05028a8b67ae9e8cd5ab5ea",
+    "ia3-review-db.log": "795db61825344213e4a05abf8690557fd91b6523ac099bb84942f74b19a82bdb",
+    "ia3-review-unit-final.log": "000f138f5455643bb00abdbdcc16cb4d096dcafb0761ad2545f3e48113701bed",
+    "ia3-review-integration3.log": "ff791d847d27c80ccd9c990a6884251a8572c54f6e61becf5362605ec8fe541f",
+    "ia3-browser-review2.log": "34b3ad893c2df9302e5de6a4dc35cea82236cb769b12e7b53b7ee569ecab0ae8",
+    "ia3-transport-review-final.log": "ee0ea6a93a9b31cf98c3b2057754a64a87c3a9681252879bc52bed08de79b6be",
+    "ia3-budget-copy-browser2.log": "c84787bc4ec7859a94ca6aa109cf1ac8d09c812393f46e7c937a9a8bc45b0fa8"
+  },
+  "comparison_records": 32,
+  "new_findings": 0,
+  "domain_audit_wallet_unchanged": true,
+  "observed_browser_phases": [
+    "CONSULTING_PROJECT"
+  ],
+  "notes": [
+    "Historical complete evaluations remain separate; no best-case mixing.",
+    "The first browser attempt captured a stale query before the probe finished. The completed route and enabled button are awaited; no detector was weakened.",
+    "The initial real all-text multipart PDF probe failed; the corrected complete six-oracle run is preserved separately.",
+    "Inherited assistant findings remain explicit for P17.",
+    "The final success copy has its own browser budget check and screenshot on 75bd60c7.",
+    "CI e5350f76 passed 1137 pgTAP and 395 integrations but the catalog-kit test raced its systems request. The same failure reproduced locally; waiting for all four HTTP-200 collections fixes synchronization without changing assertions, timeouts, retries or the product. The targeted real E2E passes."
+  ]
+}

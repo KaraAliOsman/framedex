@@ -11,6 +11,7 @@ import type { StockKindEnum } from "./stockKindEnum";
 
 export interface Remnant {
   id: string;
+  code: string;
   kind: StockKindEnum;
   /** @nullable */
   stock_authority_id: string | null;
@@ -57,4 +58,6 @@ export interface Remnant {
   article_sku?: string | null;
   created_at: string;
   updated_at: string;
+  age_days?: number;
+  age_alert?: boolean;
 }

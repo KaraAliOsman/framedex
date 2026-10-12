@@ -1,0 +1,156 @@
+{
+  "generatedAt": "2026-10-09T16:39:28.331Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "reachedPath": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "reachedPath": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "reachedPath": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "reachedPath": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "reachedPath": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "reachedPath": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "reachedPath": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "reachedPath": "/projects/fcca267e-bfe4-49b1-9d4f-8762eb8dfcec/positions/e5dfde83-2b9b-4784-ad1f-4e72074e59e9/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label GLAZING"
+        },
+        {
+          "kind": "font-under-11",
+          "sample": "text.section-preview__axis-label WEB"
+        }
+      ]
+    }
+  ],
+  "topFindings": [
+    {
+      "key": "font-under-11",
+      "count": 8,
+      "routes": [
+        "posicion-edicion"
+      ],
+      "sample": "text.section-preview__axis-label GLAZING"
+    }
+  ]
+}

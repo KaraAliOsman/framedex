@@ -1,0 +1,679 @@
+{
+  "result": "PASA",
+  "method": "MANUAL",
+  "originalIdentical": true,
+  "humanReview": true,
+  "published": true,
+  "gate": {
+    "data_provenance": "IMPORT",
+    "technical_reviewed_at": "2026-10-12T11:30:10.741029-05:00",
+    "technical_reviewed_by": "657fe3ca-c620-46e2-8694-bdca6015575a",
+    "review_pending": false,
+    "authority_provenance": {
+      "state": "REVIEWED",
+      "evidence_count": 21,
+      "current_evidence_count": 20,
+      "missing_fields": [
+        "dimensional_limits"
+      ],
+      "reviewed_at": "2026-10-12T11:30:10.741029-05:00",
+      "reviewer": "Encargado de taller",
+      "reason": "La revisión técnica no certifica valores sin evidencia vigente"
+    },
+    "extra_authority": null,
+    "system_family": "CASEMENT",
+    "sliding_parameters": null,
+    "dimensional_limits": [],
+    "opening_capabilities": null,
+    "paired_leaf_rule": null,
+    "finish_authority": null,
+    "name": "Serie manual P20 DEMO",
+    "code": "P20-154754-XLSX-MANUAL",
+    "depth_mm": "60.00",
+    "material": "PVC",
+    "chamber_count": 5,
+    "sash_overlap_mm": "8.00",
+    "glass_clearance_white_mm": "3.00",
+    "glass_clearance_foil_mm": "5.00",
+    "pulley_height_mm": null,
+    "central_overlap_mm": null,
+    "sliding_lateral_clearance_mm": null,
+    "sliding_end_add_mm": null,
+    "corner_bracket_loss_mm": "0.00",
+    "hook_depth_mm": "0.00",
+    "door_threshold_mm": "30.00",
+    "door_bottom_clearance_mm": "20.00",
+    "rail_type": null,
+    "sliding_glazing_deduction_width_mm": null,
+    "sliding_glazing_deduction_height_mm": null,
+    "door_leaf_side_clearance_mm": "7.00",
+    "rebate_depth_mm": "15.00",
+    "end_milling_overlap_mm": "4.00",
+    "chamber_clearance_mm": null,
+    "version": 1,
+    "is_active": true,
+    "manufacturer": "Proveedor sintetico de prueba",
+    "family": null,
+    "applications": [],
+    "finishes": [
+      "[\"WHITE\", \"FOILED\"]"
+    ],
+    "process_profile_id": null,
+    "readiness": {
+      "state": "BLOCK",
+      "authority_gate": null,
+      "quote_ready": false,
+      "scope": "WHITE_FIXED_CATALOG",
+      "reasons": [
+        "technical_catalog",
+        "inspection",
+        "manufacturing"
+      ],
+      "levels": [
+        {
+          "level": "DESIGN_VALID",
+          "ok": false,
+          "blockers": [
+            {
+              "code": "technical_catalog",
+              "missing_authority": "serie, marco y junquillos compatibles",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin serie completa el motor no puede construir el producto",
+              "action": "completar la ficha técnica del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "system_family",
+                  "label": "completar la ficha técnica del sistema",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=system_family"
+                }
+              ]
+            },
+            {
+              "code": "inspection",
+              "missing_authority": "parámetros de inspección del sistema",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "la geometría máxima/mínima no es verificable sin inspección declarada",
+              "action": "completar los parámetros de inspección",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "dimensional_limits",
+                  "label": "completar los parámetros de inspección",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=dimensional_limits"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": "QUOTE_READY",
+          "ok": false,
+          "blockers": [
+            {
+              "code": "technical_catalog",
+              "missing_authority": "serie, marco y junquillos compatibles",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin serie completa el motor no puede construir el producto",
+              "action": "completar la ficha técnica del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "system_family",
+                  "label": "completar la ficha técnica del sistema",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=system_family"
+                }
+              ]
+            },
+            {
+              "code": "inspection",
+              "missing_authority": "parámetros de inspección del sistema",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "la geometría máxima/mínima no es verificable sin inspección declarada",
+              "action": "completar los parámetros de inspección",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "dimensional_limits",
+                  "label": "completar los parámetros de inspección",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=dimensional_limits"
+                }
+              ]
+            },
+            {
+              "code": "manufacturing",
+              "missing_authority": "políticas de fabricación (posición, manilla, refuerzo)",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin políticas el taller no puede derivar mecanizados ni herrajes",
+              "action": "completar las políticas de fabricación del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "placement",
+                  "label": "Colocación de perfiles y junquillos",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-placement"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "handles",
+                  "label": "Manillas y referencias de montaje",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-handles"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "reinforcement",
+                  "label": "Corte del refuerzo",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-reinforcement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": "MANUFACTURING_INCOMPLETE",
+          "state": "INCOMPLETE",
+          "blockers": [
+            {
+              "code": "manufacturing",
+              "missing_authority": "políticas de fabricación (posición, manilla, refuerzo)",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin políticas el taller no puede derivar mecanizados ni herrajes",
+              "action": "completar las políticas de fabricación del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "placement",
+                  "label": "Colocación de perfiles y junquillos",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-placement"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "handles",
+                  "label": "Manillas y referencias de montaje",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-handles"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "reinforcement",
+                  "label": "Corte del refuerzo",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-reinforcement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": "PRODUCTION_READY",
+          "ok": false,
+          "blockers": [
+            {
+              "code": "technical_catalog",
+              "missing_authority": "serie, marco y junquillos compatibles",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin serie completa el motor no puede construir el producto",
+              "action": "completar la ficha técnica del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "system_family",
+                  "label": "completar la ficha técnica del sistema",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=system_family"
+                }
+              ]
+            },
+            {
+              "code": "inspection",
+              "missing_authority": "parámetros de inspección del sistema",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "la geometría máxima/mínima no es verificable sin inspección declarada",
+              "action": "completar los parámetros de inspección",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "dimensional_limits",
+                  "label": "completar los parámetros de inspección",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=dimensional_limits"
+                }
+              ]
+            },
+            {
+              "code": "manufacturing",
+              "missing_authority": "políticas de fabricación (posición, manilla, refuerzo)",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin políticas el taller no puede derivar mecanizados ni herrajes",
+              "action": "completar las políticas de fabricación del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "placement",
+                  "label": "Colocación de perfiles y junquillos",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-placement"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "handles",
+                  "label": "Manillas y referencias de montaje",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-handles"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "reinforcement",
+                  "label": "Corte del refuerzo",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-reinforcement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": "CNC_READY",
+          "ok": false,
+          "blockers": [
+            {
+              "code": "technical_catalog",
+              "missing_authority": "serie, marco y junquillos compatibles",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin serie completa el motor no puede construir el producto",
+              "action": "completar la ficha técnica del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "system_family",
+                  "label": "completar la ficha técnica del sistema",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=system_family"
+                }
+              ]
+            },
+            {
+              "code": "inspection",
+              "missing_authority": "parámetros de inspección del sistema",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "la geometría máxima/mínima no es verificable sin inspección declarada",
+              "action": "completar los parámetros de inspección",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "dimensional_limits",
+                  "label": "completar los parámetros de inspección",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=dimensional_limits"
+                }
+              ]
+            },
+            {
+              "code": "manufacturing",
+              "missing_authority": "políticas de fabricación (posición, manilla, refuerzo)",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin políticas el taller no puede derivar mecanizados ni herrajes",
+              "action": "completar las políticas de fabricación del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "placement",
+                  "label": "Colocación de perfiles y junquillos",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-placement"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "handles",
+                  "label": "Manillas y referencias de montaje",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-handles"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "reinforcement",
+                  "label": "Corte del refuerzo",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-reinforcement"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "process_via": null
+    },
+    "revision": "sha256:d84b17356866ef0b6c3a53f6ec51706ad1146b5291702ef77224ac8c15192144",
+    "read_only": false,
+    "id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+    "is_global": false,
+    "is_demo": false
+  },
+  "source": "Plantilla oficial con autoridad sintética P20 DEMO; sin certificación",
+  "readinessParity": {
+    "result": "PASA",
+    "levels": [
+      {
+        "ready": false,
+        "text": "Diseño válido\npendiente"
+      },
+      {
+        "ready": false,
+        "text": "Cotizable\npendiente"
+      },
+      {
+        "ready": false,
+        "text": "Fabricación\nincompleto"
+      },
+      {
+        "ready": false,
+        "text": "Producción\npendiente"
+      },
+      {
+        "ready": false,
+        "text": "CNC\npendiente"
+      }
+    ],
+    "distinctBlockers": 3,
+    "sharedGate": {
+      "state": "BLOCK",
+      "authority_gate": null,
+      "quote_ready": false,
+      "scope": "WHITE_FIXED_CATALOG",
+      "reasons": [
+        "technical_catalog",
+        "inspection",
+        "manufacturing"
+      ],
+      "levels": [
+        {
+          "level": "DESIGN_VALID",
+          "ok": false,
+          "blockers": [
+            {
+              "code": "technical_catalog",
+              "missing_authority": "serie, marco y junquillos compatibles",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin serie completa el motor no puede construir el producto",
+              "action": "completar la ficha técnica del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "system_family",
+                  "label": "completar la ficha técnica del sistema",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=system_family"
+                }
+              ]
+            },
+            {
+              "code": "inspection",
+              "missing_authority": "parámetros de inspección del sistema",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "la geometría máxima/mínima no es verificable sin inspección declarada",
+              "action": "completar los parámetros de inspección",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "dimensional_limits",
+                  "label": "completar los parámetros de inspección",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=dimensional_limits"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": "QUOTE_READY",
+          "ok": false,
+          "blockers": [
+            {
+              "code": "technical_catalog",
+              "missing_authority": "serie, marco y junquillos compatibles",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin serie completa el motor no puede construir el producto",
+              "action": "completar la ficha técnica del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "system_family",
+                  "label": "completar la ficha técnica del sistema",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=system_family"
+                }
+              ]
+            },
+            {
+              "code": "inspection",
+              "missing_authority": "parámetros de inspección del sistema",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "la geometría máxima/mínima no es verificable sin inspección declarada",
+              "action": "completar los parámetros de inspección",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "dimensional_limits",
+                  "label": "completar los parámetros de inspección",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=dimensional_limits"
+                }
+              ]
+            },
+            {
+              "code": "manufacturing",
+              "missing_authority": "políticas de fabricación (posición, manilla, refuerzo)",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin políticas el taller no puede derivar mecanizados ni herrajes",
+              "action": "completar las políticas de fabricación del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "placement",
+                  "label": "Colocación de perfiles y junquillos",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-placement"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "handles",
+                  "label": "Manillas y referencias de montaje",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-handles"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "reinforcement",
+                  "label": "Corte del refuerzo",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-reinforcement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": "MANUFACTURING_INCOMPLETE",
+          "state": "INCOMPLETE",
+          "blockers": [
+            {
+              "code": "manufacturing",
+              "missing_authority": "políticas de fabricación (posición, manilla, refuerzo)",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin políticas el taller no puede derivar mecanizados ni herrajes",
+              "action": "completar las políticas de fabricación del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "placement",
+                  "label": "Colocación de perfiles y junquillos",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-placement"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "handles",
+                  "label": "Manillas y referencias de montaje",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-handles"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "reinforcement",
+                  "label": "Corte del refuerzo",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-reinforcement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": "PRODUCTION_READY",
+          "ok": false,
+          "blockers": [
+            {
+              "code": "technical_catalog",
+              "missing_authority": "serie, marco y junquillos compatibles",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin serie completa el motor no puede construir el producto",
+              "action": "completar la ficha técnica del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "system_family",
+                  "label": "completar la ficha técnica del sistema",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=system_family"
+                }
+              ]
+            },
+            {
+              "code": "inspection",
+              "missing_authority": "parámetros de inspección del sistema",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "la geometría máxima/mínima no es verificable sin inspección declarada",
+              "action": "completar los parámetros de inspección",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "dimensional_limits",
+                  "label": "completar los parámetros de inspección",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=dimensional_limits"
+                }
+              ]
+            },
+            {
+              "code": "manufacturing",
+              "missing_authority": "políticas de fabricación (posición, manilla, refuerzo)",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin políticas el taller no puede derivar mecanizados ni herrajes",
+              "action": "completar las políticas de fabricación del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "placement",
+                  "label": "Colocación de perfiles y junquillos",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-placement"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "handles",
+                  "label": "Manillas y referencias de montaje",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-handles"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "reinforcement",
+                  "label": "Corte del refuerzo",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-reinforcement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "level": "CNC_READY",
+          "ok": false,
+          "blockers": [
+            {
+              "code": "technical_catalog",
+              "missing_authority": "serie, marco y junquillos compatibles",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin serie completa el motor no puede construir el producto",
+              "action": "completar la ficha técnica del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "system_family",
+                  "label": "completar la ficha técnica del sistema",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=system_family"
+                }
+              ]
+            },
+            {
+              "code": "inspection",
+              "missing_authority": "parámetros de inspección del sistema",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "la geometría máxima/mínima no es verificable sin inspección declarada",
+              "action": "completar los parámetros de inspección",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "dimensional_limits",
+                  "label": "completar los parámetros de inspección",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&resource=systems&record=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&field=dimensional_limits"
+                }
+              ]
+            },
+            {
+              "code": "manufacturing",
+              "missing_authority": "políticas de fabricación (posición, manilla, refuerzo)",
+              "affected": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+              "why": "sin políticas el taller no puede derivar mecanizados ni herrajes",
+              "action": "completar las políticas de fabricación del sistema",
+              "targets": [
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "placement",
+                  "label": "Colocación de perfiles y junquillos",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-placement"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "handles",
+                  "label": "Manillas y referencias de montaje",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-handles"
+                },
+                {
+                  "resource": "systems",
+                  "row_id": "4ff90bac-a873-444a-84f1-5fcf6c2cbe22",
+                  "field": "reinforcement",
+                  "label": "Corte del refuerzo",
+                  "href": "/catalogs/systems?system=4ff90bac-a873-444a-84f1-5fcf6c2cbe22&tab=reglas&anchor=ws.policy-reinforcement"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "process_via": null
+    }
+  }
+}

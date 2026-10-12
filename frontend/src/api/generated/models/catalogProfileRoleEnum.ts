@@ -16,6 +16,15 @@
  * * `COUPLER` - COUPLER
  * * `ADDITIONAL` - ADDITIONAL
  * * `THRESHOLD` - THRESHOLD
+ * * `CHANNEL` - CHANNEL
+ * * `SLIDING_SASH` - SLIDING_SASH
+ * * `INTERLOCK` - INTERLOCK
+ * * `RAIL` - RAIL
+ * * `DOOR_SASH` - DOOR_SASH
+ * * `FRAME_EXTENSION` - FRAME_EXTENSION
+ * * `SILL` - SILL
+ * * `COVER_TRIM` - COVER_TRIM
+ * * `PLINTH` - PLINTH
  */
 export type CatalogProfileRoleEnum =
   (typeof CatalogProfileRoleEnum)[keyof typeof CatalogProfileRoleEnum];
@@ -30,4 +39,13 @@ export const CatalogProfileRoleEnum = {
   COUPLER: "COUPLER",
   ADDITIONAL: "ADDITIONAL",
   THRESHOLD: "THRESHOLD",
+  CHANNEL: "CHANNEL",
+  SLIDING_SASH: "SLIDING_SASH",
+  INTERLOCK: "INTERLOCK",
+  RAIL: "RAIL",
+  DOOR_SASH: "DOOR_SASH",
+  FRAME_EXTENSION: "FRAME_EXTENSION",
+  SILL: "SILL",
+  COVER_TRIM: "COVER_TRIM",
+  PLINTH: "PLINTH",
 } as const;

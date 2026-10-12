@@ -13,6 +13,7 @@
  * * `FAILED` - FAILED
  * * `UNCERTAIN` - UNCERTAIN
  * * `CANCELLED` - CANCELLED
+ * * `EXPIRED` - EXPIRED
  */
 export type PaymentLinkStatusEnum =
   (typeof PaymentLinkStatusEnum)[keyof typeof PaymentLinkStatusEnum];
@@ -24,4 +25,5 @@ export const PaymentLinkStatusEnum = {
   FAILED: "FAILED",
   UNCERTAIN: "UNCERTAIN",
   CANCELLED: "CANCELLED",
+  EXPIRED: "EXPIRED",
 } as const;

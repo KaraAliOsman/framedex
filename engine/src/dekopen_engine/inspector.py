@@ -15,6 +15,7 @@ from dekopen_engine.inspection_models import (
     WorkshopAnnotations,
 )
 from dekopen_engine.models import BayOpeningType, RailType
+from dekopen_engine.glass_composition import assess_glass
 
 _D = Decimal
 _PASS = RuleEvaluationStatus.PASS
@@ -118,6 +119,11 @@ def inspect(data: InspectorInput, config: InspectorConfig) -> InspectorResult:
 
     for leaf in data.computation.leaves:
         bay, leaf_id = leaf.bay_id, leaf.leaf_id
+        if leaf.opening_type is BayOpeningType.FIXED:
+            # Fixed-in-sash has mass and glazing, but no moving hardware.
+            for rule in ("R01", "R02", "R03", "R08", "R11"):
+                record(rule, _NA, bay, leaf_id)
+            continue
         kit = leaf.selected_kit
         weight = leaf.exact_weight
         candidates = [c for c in leaf.candidates if c.opening_match and c.rail_match]
@@ -163,7 +169,8 @@ def inspect(data: InspectorInput, config: InspectorConfig) -> InspectorResult:
             state = (_MISSING if opening is None else _NA if opening.width_mm <= config.R12.width_trigger_mm
                      else _MISSING if ix is None else _FAIL if ix < config.R12.minimum_ix_cm4 else _PASS)
             record("R12", state, bay, leaf_id)
-        if leaf.opening_type is BayOpeningType.AWNING:
+        if leaf.opening_type is BayOpeningType.AWNING and (
+                leaf.opening is None or leaf.opening.movement.value == "TOP_HUNG"):
             state = (_PASS if h <= config.R13.height_trigger_mm else _MISSING if kit is None else
                      _FAIL if kit.stay_arms_qty < config.R13.required_stay_arms else _PASS)
             record("R13", state, bay, leaf_id)
@@ -178,6 +185,19 @@ def inspect(data: InspectorInput, config: InspectorConfig) -> InspectorResult:
     for infill in data.computation.infills:
         if infill.kind == "PANEL":
             record("R04", _NA, infill.bay_id, infill.leaf_id)
+        elif infill.glass_product is not None:
+            product = infill.glass_product
+            limits = product.limits
+            bounded = bool(limits.source) and (limits.max_area_m2 is not None or
+                (limits.max_width_mm is not None and limits.max_height_mm is not None))
+            checks = assess_glass(product, width_mm=infill.width_mm, height_mm=infill.height_mm,
+                bead_thicknesses=(infill.thickness_mm,) if infill.bead_supported else ())
+            unknown = not bounded or any(check.code in {"mass_unknown", "interlayer_unknown"} for check in checks)
+            failed = any(check.blocking for check in checks)
+            record("R04", _MISSING if unknown else _FAIL if failed else _PASS,
+                infill.bay_id, infill.leaf_id,
+                diagnosis=("Sin dato · falta un límite de área o dimensiones máximas con fuente, o el peso de la composición."
+                    if unknown else "La pieza supera los límites de vidrio declarados. Fuente: " + str(limits.source)))
         else:
             glass_class = _glass_class(infill.glass_spec)
             limit = (config.R04.monolithic_4_max_area_m2 if glass_class == "MONOLITHIC_4" else

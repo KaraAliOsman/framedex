@@ -6,8 +6,20 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CncMachineRequestRequestClampZonesItem } from "./cncMachineRequestRequestClampZonesItem";
+import type { CncMachineRequestRequestProfileSetupsItem } from "./cncMachineRequestRequestProfileSetupsItem";
 
 export interface CncMachineRequestRequest {
+  /** @maxLength 40 */
+  machine_type?: string;
+  profile_setups?: CncMachineRequestRequestProfileSetupsItem[];
+  /**
+   * @nullable
+   * @items.minLength 1
+   */
+  axes?: string[] | null;
+  clamps_declared?: boolean;
+  /** @maxLength 500 */
+  authority_source?: string;
   /**
    * @minLength 1
    * @maxLength 40
@@ -22,10 +34,7 @@ export interface CncMachineRequestRequest {
   manufacturer?: string;
   /** @maxLength 120 */
   model?: string;
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
+  /** @maxLength 80 */
   controller_family?: string;
   /** @items.minLength 1 */
   coordinate_systems?: string[];
@@ -46,15 +55,9 @@ export interface CncMachineRequestRequest {
   clamp_zones?: CncMachineRequestRequestClampZonesItem[];
   /** @items.minLength 1 */
   tool_ids?: string[];
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
+  /** @maxLength 80 */
   postprocessor_id?: string;
-  /**
-   * @minLength 1
-   * @maxLength 40
-   */
+  /** @maxLength 40 */
   postprocessor_version?: string;
   /**
    * @minLength 1

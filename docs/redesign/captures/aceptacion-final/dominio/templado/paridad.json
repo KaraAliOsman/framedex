@@ -1,0 +1,609 @@
+{
+  "result": "PASA",
+  "syntheticAuthority": true,
+  "positions": 35,
+  "workOrders": 35,
+  "pricing": {
+    "net": "27215331",
+    "tax": "5170913",
+    "gross": "32386244"
+  },
+  "pdfHash": "6ae334763f3d095ccfa37713c9dee81d1c44f225b58c4c7e51040b4615a567d8",
+  "rows": [
+    {
+      "key": "1-DEMO_60-MONO-TEMPERED",
+      "typology": "TURN-LEFT-INWARD",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-01",
+      "result": "PASA",
+      "designHash": "e39831cf16dd84cadcbf6244c5e96f8084a28536495197e414ce2ed5bffdc7c1",
+      "calculationHash": "sha256:e7bc80eab6436fa29e6607ded3897a5196402c62782c8ea6af05303e3c7aba0c",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "2-DEMO_60-MONO-TEMPERED",
+      "typology": "TURN-RIGHT-INWARD",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-02",
+      "result": "PASA",
+      "designHash": "4bacdfc34cd1884a35d705c20e25959f2bea77b38a372c1d71acdaa2fa6abdb9",
+      "calculationHash": "sha256:a73a475765ca45c142bc3b4ffe568c14b3706d23df11538d15d4ea8d610b28ed",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "3-DEMO_60-MONO-TEMPERED",
+      "typology": "TILT_TURN-LEFT-INWARD",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-03",
+      "result": "PASA",
+      "designHash": "6d906a01ad0e34f0265b89544b5d10611c91feb1389e00a4152073708511508c",
+      "calculationHash": "sha256:a8446d49d8f5949508bf3c2b1e7cb494e2d1edec3ae4bb5ae0bae77fe3e86371",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "4-DEMO_60-MONO-TEMPERED",
+      "typology": "TILT_TURN-RIGHT-INWARD",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-04",
+      "result": "PASA",
+      "designHash": "99533f02b0c1bb9820574e880d75a57172b2627f8a152384514c40c4ec542201",
+      "calculationHash": "sha256:8d3d8f4e60f2370e25d41c68e8b47886859b39dc6abb7fcd64e204760f11c49d",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "5-DEMO_ALU_PRACTICABLE-MONO-TEMPERED",
+      "typology": "TURN-LEFT-OUTWARD",
+      "glass": "DEMO_ALU_PRACTICABLE-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-05",
+      "result": "PASA",
+      "designHash": "8adf1f23e7a1019d765b5e428c5096a84b15322e21c217bc3689d1cb92080ed4",
+      "calculationHash": "sha256:dc110d106dd81255aa699e6f724f8785ffe1e46da993e27110da3619b34593f8",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "6-DEMO_60-MONO-TEMPERED",
+      "typology": "FRENCH-LEFT",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-06",
+      "result": "PASA",
+      "designHash": "06897531522bf4fba2cac45b17cff069c08d00147fe9a7435e9f047e1fc9ed0f",
+      "calculationHash": "sha256:a976a7815deda7dddd6fcc9dba501091aaeec5ac16107998e1c5e9396b730b3f",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "7-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOOR-LEFT-INWARD",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-07",
+      "result": "PASA",
+      "designHash": "28f5caccd887ed9fb7641a11d7909eb2e3dfddd8fd5caa92dcc054525e1d56ba",
+      "calculationHash": "sha256:ef255e4b5ccd94487a7a2f335133e4b380d379767f8f42dd7878b7bd0f6692e2",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "8-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOUBLE-DOOR-LEFT-INWARD",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-08",
+      "result": "PASA",
+      "designHash": "8b7aa4d26c24c03a3d6ba530ea628f4054a0b372c815ee2138e7a964eec6189c",
+      "calculationHash": "sha256:42de2e21a37ba3fdd7d0cf63dd583532cfd9b641d77bc7ad10a17725efb44dde",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "9-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOOR-LEFT-OUTWARD",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-09",
+      "result": "PASA",
+      "designHash": "4c98a5163a987bf10aca4d84511b68b49ee6996c33b7ddcd6a56e4d287e1c2e2",
+      "calculationHash": "sha256:da98f0448573914d7adf6b7294e9931c1be18e6822fdf5b9b8ba653a5b80de7b",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "10-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOUBLE-DOOR-LEFT-OUTWARD",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-10",
+      "result": "PASA",
+      "designHash": "2838a55deee5c90afc8885ff5bbd8aba16589046f01083856f0286b8dd1cea1b",
+      "calculationHash": "sha256:e394d7d1d242c61d5d58ab6afc02c2e3dd34ac1aadc57cdfb2619965e3ac5d16",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "11-DEMO_ALU_PRACTICABLE-MONO-TEMPERED",
+      "typology": "TURN-RIGHT-OUTWARD",
+      "glass": "DEMO_ALU_PRACTICABLE-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-11",
+      "result": "PASA",
+      "designHash": "5aa4649a192f0afcd9a4f7987002a45900dd8a080a54b04afb5084441ce4785d",
+      "calculationHash": "sha256:263f963336d2d6c5aff18b32be59a0616116b53a96fded4e6cea9ffc11d37f21",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "12-DEMO_60-MONO-TEMPERED",
+      "typology": "FRENCH-RIGHT",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-12",
+      "result": "PASA",
+      "designHash": "eabd5544ecf931317d1465c59c631ae7e4a4c3b4555642a2dd88c1996eec4fad",
+      "calculationHash": "sha256:9f4ef752ef0edd4efdcf923e3d2a25667f5949b9bf520e7c4a443f31ba487393",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "13-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOOR-RIGHT-INWARD",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-13",
+      "result": "PASA",
+      "designHash": "4c14521a7e543d2ebc4a9997f8dbf7571bd8dfa39e1f4122eea8df1c03eca466",
+      "calculationHash": "sha256:33f3e7c0b5a50f450acd7858ec57b6b1a233b94dca3e3d35a3e89ff28443fb8e",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "14-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOUBLE-DOOR-RIGHT-INWARD",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-14",
+      "result": "PASA",
+      "designHash": "d2034a4a445b891b3934d91355ea5aa6f5d9856974331b0d7bd9caaeefab7879",
+      "calculationHash": "sha256:87d1abf6ca9f08cbc7a05173a2b4d555272c08e4b4d25549806f80e6164b2720",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "15-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOOR-RIGHT-OUTWARD",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-15",
+      "result": "PASA",
+      "designHash": "fbb0376b944b13ef3a6cf2edec44ce40da2733d4058a98b731f9dcfc20d93a1d",
+      "calculationHash": "sha256:544d79f1ac5777274e89d72ab2bfcba0ac8d52568062643d02da4f699aa1a759",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "16-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOUBLE-DOOR-RIGHT-OUTWARD",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-16",
+      "result": "PASA",
+      "designHash": "b40196588814206dd6df239a19db7425a07f8b80f372597cdf35ea926bebd607",
+      "calculationHash": "sha256:6be20829a8412533734f2e5831cf12a4eb0ad697679a11c6af697dcd7762e7e0",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "17-DEMO_60-MONO-TEMPERED",
+      "typology": "TILT",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-17",
+      "result": "PASA",
+      "designHash": "a1a97a31d0517d48e262417c741b70cc3d4f2177f83d011cf1c11ea28042660f",
+      "calculationHash": "sha256:fe8e211f3f9662af0a06a11b6c78109bdf808120c9799f68eced2063ca1526a4",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "18-DEMO_ALU_PRACTICABLE-MONO-TEMPERED",
+      "typology": "TOP-HUNG",
+      "glass": "DEMO_ALU_PRACTICABLE-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-18",
+      "result": "PASA",
+      "designHash": "dae1bd0bb10c9ba04ea3c404313cf0651ce242e97431cedee5709c5b5bbf4c8b",
+      "calculationHash": "sha256:213bd23b99e64d4e6a2b2014d0b3165603451cb5d4616430f17dabbcbf5c8d55",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "19-DEMO_60-MONO-TEMPERED",
+      "typology": "FIXED-FRAME",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-19",
+      "result": "PASA",
+      "designHash": "dd2ea7889b3f2cf1467d65734df7b0f5b9ae48ed34b4b89b9f98b15dfb200f98",
+      "calculationHash": "sha256:1c9fbe0bdbe57aabd3be8c3ea335ff1dee009a3b968850edb1e68af5699ffd97",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "20-DEMO_60-MONO-TEMPERED",
+      "typology": "FIXED-SASH",
+      "glass": "DEMO_60-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-20",
+      "result": "PASA",
+      "designHash": "c881bd351871da04a8faa52356c523ebc1f0f4e702689c39c65aca7d4b95a69c",
+      "calculationHash": "sha256:350e81c4dab9da30c009c53f5c1ad33524b4dd6fb2954a90eb53d07f6a7d2daf",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "21-DEMO_PUERTA_70-MONO-TEMPERED",
+      "typology": "DOOR-SIDELIGHT",
+      "glass": "DEMO_PUERTA_70-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-21",
+      "result": "PASA",
+      "designHash": "1725b3ffb49401163c3329ab777413933849a767b4865ed867eb0f0db41c06bd",
+      "calculationHash": "sha256:fe04a9ded4b7cbf7f8e098b0117f8cd9ce030b7d175548feb6b7934aadcf3fb8",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "22-DEMO_HST-MONO-TEMPERED",
+      "typology": "DEMO_HST/A",
+      "glass": "DEMO_HST-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-22",
+      "result": "PASA",
+      "designHash": "deeb585f759ca234a106986dc39eeffde84fb71a5865c650e44682847639c3c5",
+      "calculationHash": "sha256:a4522efeacf50805cf7bff7963c2cf36bd86c90c99969f7aa5c6301a4e41ad70",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "23-DEMO_HST-MONO-TEMPERED",
+      "typology": "DEMO_HST/C",
+      "glass": "DEMO_HST-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-23",
+      "result": "PASA",
+      "designHash": "3122fcd96eeb3b166b8d8d0a1b51da1571248e7750208cde925cce4d61caf379",
+      "calculationHash": "sha256:04228c97caeb61ff8e16766dbc886e34d4f23bb2cd2f4ffbf574c614c374f424",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "24-DEMO_PSK-MONO-TEMPERED",
+      "typology": "DEMO_PSK/XO",
+      "glass": "DEMO_PSK-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-24",
+      "result": "PASA",
+      "designHash": "c5c84fe9775401140626938d6ac5bf31953bda1a4b2f10aba113f03a2b5a80da",
+      "calculationHash": "sha256:941ce2d06077be4d0c7e2bfcbc93dcbda85436bd64db3c2f74e38fe9e1fb2a14",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "25-DEMO_PLEGABLE-MONO-TEMPERED",
+      "typology": "DEMO_PLEGABLE/3+0-SIN-PASO",
+      "glass": "DEMO_PLEGABLE-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-25",
+      "result": "PASA",
+      "designHash": "ca7bce32dc822085602bb585247e047b6fcbd9a9c049e2d0c67a316940f7355a",
+      "calculationHash": "sha256:5c376c2cf5c11534f72002d245e8f08ff4d716931b640e219fb9db1e82527bcf",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "26-DEMO_PLEGABLE-MONO-TEMPERED",
+      "typology": "DEMO_PLEGABLE/3+0-PASO",
+      "glass": "DEMO_PLEGABLE-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-26",
+      "result": "PASA",
+      "designHash": "4d15f7938ba6b158b4680f62bf923ed58ac52c70143dff86dc9109b989616642",
+      "calculationHash": "sha256:cc2509a046d3e5d7c0a2a365ce0e65a63d57048f2f2cce6a4f86dffc9f361120",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "27-DEMO_PLEGABLE-MONO-TEMPERED",
+      "typology": "DEMO_PLEGABLE/2+1-SIN-PASO",
+      "glass": "DEMO_PLEGABLE-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-27",
+      "result": "PASA",
+      "designHash": "71dbe2e74fbe3b43adbfcaa54fc4d9133b50b7675873f05298f9ba97329e4945",
+      "calculationHash": "sha256:0c9deba3d4707e9399b78520cdd9d5fa33ca28e3f6b783fc4e950951236b37b8",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "28-DEMO_PLEGABLE-MONO-TEMPERED",
+      "typology": "DEMO_PLEGABLE/2+1-PASO",
+      "glass": "DEMO_PLEGABLE-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-28",
+      "result": "PASA",
+      "designHash": "2bbf91f545fec360caea75965f2f4ea588faf971853a95109acdc9f30dc23f53",
+      "calculationHash": "sha256:ff7e5aa5812f6701ad76193c1903d0e046523acbcca207fbeebe0970dfd6dced",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "29-DEMO_PIVOT_V-MONO-TEMPERED",
+      "typology": "DEMO_PIVOT_V/EJE-30",
+      "glass": "DEMO_PIVOT_V-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-29",
+      "result": "PASA",
+      "designHash": "c377532f77d96831eed49a615c5420e777b85c70758cedcc78a0258fd33ba22b",
+      "calculationHash": "sha256:de2b2fd8b50ccfd5747f58dab0873b15370f08a5dc4ef70bcad09f9d56a545b2",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "30-DEMO_PIVOT_H-MONO-TEMPERED",
+      "typology": "DEMO_PIVOT_H/EJE-30",
+      "glass": "DEMO_PIVOT_H-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-30",
+      "result": "PASA",
+      "designHash": "64406efc274ddfab0eb4b68089c498b9cac79d8396bb8553a35e013a6470d52d",
+      "calculationHash": "sha256:f2792a4ef9e35099307fa3f2187963b0318b774c95629d1687d58a1b65797d95",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "31-DEMO_GUILLOTINA-MONO-TEMPERED",
+      "typology": "DEMO_GUILLOTINA/SIMPLE-MUELLES",
+      "glass": "DEMO_GUILLOTINA-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-31",
+      "result": "PASA",
+      "designHash": "acfee8ee11fb4857dbfb70ae7407f5c24193127da7077a52a1e737ab21c3bd74",
+      "calculationHash": "sha256:67696f3f27d37f8adf865b4ed79b92833a5cb3d317c8568ab0ea636bc74678bd",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "32-DEMO_GUILLOTINA-MONO-TEMPERED",
+      "typology": "DEMO_GUILLOTINA/DOBLE-MUELLES",
+      "glass": "DEMO_GUILLOTINA-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-32",
+      "result": "PASA",
+      "designHash": "51e761a8ddcbda794cf606954d21cc377e4f01f0b5deedf873640bf13d1d4a5d",
+      "calculationHash": "sha256:410fa300104df6da2df3bdf51f7ec34dc88d2ae8d563a6dcc70446e2c1530abe",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "33-DEMO_GUILLOTINA-MONO-TEMPERED",
+      "typology": "DEMO_GUILLOTINA/SIMPLE-CONTRAPESOS",
+      "glass": "DEMO_GUILLOTINA-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-33",
+      "result": "PASA",
+      "designHash": "012c83375efda95a89673e57e839170593aa9c30595eacb7feeed445d7772603",
+      "calculationHash": "sha256:cb7ccfba0868fc35809daa8d9a47b4d5ac615c7b2f9e8e1b9d3c8bae149a817a",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "34-DEMO_GUILLOTINA-MONO-TEMPERED",
+      "typology": "DEMO_GUILLOTINA/DOBLE-CONTRAPESOS",
+      "glass": "DEMO_GUILLOTINA-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-34",
+      "result": "PASA",
+      "designHash": "c23176a83aafc20dc540d5f6e34c6a1e471343044afb654c4d16cb520412e60a",
+      "calculationHash": "sha256:d6205a8405c825fa75b3c6a6090c24e1192aee0016218d0e8196d6119b3e0a40",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    },
+    {
+      "key": "35-DEMO_PUERTA_CORREDERA-MONO-TEMPERED",
+      "typology": "DEMO_PUERTA_CORREDERA/XO",
+      "glass": "DEMO_PUERTA_CORREDERA-P20-MONO-TEMPERED",
+      "orderCode": "OT-P-000014-REV-A-35",
+      "result": "PASA",
+      "designHash": "f7a396d82f62858e4659e0b5f426c68e2cf4b6093a8d19b4fed73925ba617b6b",
+      "calculationHash": "sha256:8598a972b858b8e2cf512d11c68efdc855423567a1d54685cd6c65ea056d4d9e",
+      "compared": [
+        "editor-save-reload",
+        "portal-design",
+        "portal-dimensions",
+        "portal-price",
+        "production-materials",
+        "current-confirmed-mounting"
+      ]
+    }
+  ]
+}

@@ -5,7 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { EnvironmentEnum } from "./environmentEnum";
+import type { PaymentLinkEnvironmentEnum } from "./paymentLinkEnvironmentEnum";
 import type { PaymentLinkStatusEnum } from "./paymentLinkStatusEnum";
 
 export interface PaymentLink {
@@ -16,7 +16,11 @@ export interface PaymentLink {
   payer_email: string;
   subject: string;
   status: PaymentLinkStatusEnum;
-  environment: EnvironmentEnum;
+  environment: PaymentLinkEnvironmentEnum;
+  /** @nullable */
+  expires_at: string | null;
+  /** @nullable */
+  deal_revision: string | null;
   /** @nullable */
   url: string | null;
   /** @nullable */

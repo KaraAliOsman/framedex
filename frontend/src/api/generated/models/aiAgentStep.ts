@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AiAgentStepItemsItem } from "./aiAgentStepItemsItem";
-import type { AiAgentStepOpsItem } from "./aiAgentStepOpsItem";
+import type { DesignOperation } from "./designOperation";
 
 export interface AiAgentStep {
   kind: string;
@@ -14,6 +14,7 @@ export interface AiAgentStep {
   label: string;
   path?: string;
   action?: string;
-  ops?: AiAgentStepOpsItem[];
+  ops?: DesignOperation[];
   items?: AiAgentStepItemsItem[];
+  simulation?: unknown;
 }

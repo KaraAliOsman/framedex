@@ -7,13 +7,22 @@
  */
 import type { CostLineResponse } from "./costLineResponse";
 import type { CurrencyEnum } from "./currencyEnum";
+import type { DocumentExtraPricesEnum } from "./documentExtraPricesEnum";
 import type { LineResponse } from "./lineResponse";
 import type { PositionBreakdown } from "./positionBreakdown";
 import type { PriceResponseExtrasItem } from "./priceResponseExtrasItem";
 import type { PriceResponseRules } from "./priceResponseRules";
-import type { PriceResponseStateEnum } from "./priceResponseStateEnum";
+import type { PricingOperationStateEnum } from "./pricingOperationStateEnum";
 
 export interface PriceResponse {
+  workspace?: unknown;
+  resulted_in_issue?: boolean;
+  notification_unread?: boolean;
+  costs_visible: boolean;
+  /** @nullable */
+  costs_reason: string | null;
+  services?: unknown[];
+  document_extra_prices?: DocumentExtraPricesEnum;
   id: string;
   project_id: string;
   project_code: string;
@@ -24,7 +33,7 @@ export interface PriceResponse {
   discount_pct: string;
   pricing_mode: string;
   segment: string;
-  state: PriceResponseStateEnum;
+  state: PricingOperationStateEnum;
   currency: CurrencyEnum;
   lines: LineResponse[];
   cost_lines: CostLineResponse[];
@@ -33,7 +42,8 @@ export interface PriceResponse {
   positions_breakdown: PositionBreakdown[];
   authorities: unknown[];
   rules: PriceResponseRules;
-  total_cost: string;
+  /** @nullable */
+  total_cost: string | null;
   project_net: string;
   project_tax: string;
   project_gross: string;

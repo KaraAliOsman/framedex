@@ -1,0 +1,123 @@
+{
+  "records": [
+    {
+      "surface": "corte",
+      "width": 1440,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "formatos",
+      "width": 1440,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "corte",
+      "width": 1440,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "formatos",
+      "width": 1440,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "corte",
+      "width": 1280,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "formatos",
+      "width": 1280,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "corte",
+      "width": 1280,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "formatos",
+      "width": 1280,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "corte",
+      "width": 1024,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "formatos",
+      "width": 1024,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "corte",
+      "width": 1024,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "formatos",
+      "width": 1024,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "corte",
+      "width": 390,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "formatos",
+      "width": 390,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "corte",
+      "width": 390,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": 0
+    },
+    {
+      "surface": "formatos",
+      "width": 390,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": 0
+    }
+  ],
+  "states": {
+    "loading": true,
+    "errorRetry": true,
+    "empty": true,
+    "blocked": true,
+    "denied": true
+  }
+}

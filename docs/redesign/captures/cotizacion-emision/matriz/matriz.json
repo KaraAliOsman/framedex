@@ -1,0 +1,668 @@
+[
+  {
+    "id": "vacio",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "vacio-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "global-seleccion",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "global-seleccion-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "bloqueado-sin-precio",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "bloqueado-sin-precio-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga-preparacion",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "carga-preparacion-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "formulario-completo",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "formulario-completo-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ocho-campos-visibles",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "ocho-campos-visibles-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "pdf-real-confirmacion",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "pdf-real-confirmacion-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "historial-sellado",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "historial-sellado-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error-transporte",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "error-transporte-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ajustes-vigencias",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "ajustes-vigencias-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "sin-permiso-1440-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "vacio",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "vacio-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "global-seleccion",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "global-seleccion-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "bloqueado-sin-precio",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "bloqueado-sin-precio-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga-preparacion",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "carga-preparacion-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "formulario-completo",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "formulario-completo-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ocho-campos-visibles",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "ocho-campos-visibles-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "pdf-real-confirmacion",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "pdf-real-confirmacion-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "historial-sellado",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "historial-sellado-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error-transporte",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "error-transporte-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ajustes-vigencias",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "ajustes-vigencias-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "sin-permiso-1440-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "vacio",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "vacio-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "global-seleccion",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "global-seleccion-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "bloqueado-sin-precio",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "bloqueado-sin-precio-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga-preparacion",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "carga-preparacion-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "formulario-completo",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "formulario-completo-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ocho-campos-visibles",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "ocho-campos-visibles-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "pdf-real-confirmacion",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "pdf-real-confirmacion-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "historial-sellado",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "historial-sellado-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error-transporte",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "error-transporte-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ajustes-vigencias",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "ajustes-vigencias-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "sin-permiso-1280-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "vacio",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "vacio-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "global-seleccion",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "global-seleccion-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "bloqueado-sin-precio",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "bloqueado-sin-precio-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga-preparacion",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "carga-preparacion-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "formulario-completo",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "formulario-completo-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ocho-campos-visibles",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "ocho-campos-visibles-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "pdf-real-confirmacion",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "pdf-real-confirmacion-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "historial-sellado",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "historial-sellado-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error-transporte",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "error-transporte-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ajustes-vigencias",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "ajustes-vigencias-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "sin-permiso-1280-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "vacio",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "vacio-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "global-seleccion",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "global-seleccion-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "bloqueado-sin-precio",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "bloqueado-sin-precio-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga-preparacion",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "carga-preparacion-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "formulario-completo",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "formulario-completo-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ocho-campos-visibles",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "ocho-campos-visibles-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "pdf-real-confirmacion",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "pdf-real-confirmacion-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "historial-sellado",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "historial-sellado-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error-transporte",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "error-transporte-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ajustes-vigencias",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "ajustes-vigencias-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "sin-permiso-1024-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "vacio",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "vacio-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "global-seleccion",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "global-seleccion-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "bloqueado-sin-precio",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "bloqueado-sin-precio-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "carga-preparacion",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "carga-preparacion-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "formulario-completo",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "formulario-completo-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ocho-campos-visibles",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "ocho-campos-visibles-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "pdf-real-confirmacion",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "pdf-real-confirmacion-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "historial-sellado",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "historial-sellado-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "error-transporte",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "error-transporte-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "ajustes-vigencias",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "ajustes-vigencias-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "sin-permiso",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "sin-permiso-1024-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "hoy",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "hoy-390-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "portal-aprobada",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "portal-aprobada-390-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "portal-reemplazada",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "portal-reemplazada-390-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "portal-revocada",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "portal-revocada-390-light.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "hoy",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "hoy-390-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "portal-aprobada",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "portal-aprobada-390-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "portal-reemplazada",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "portal-reemplazada-390-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  },
+  {
+    "id": "portal-revocada",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "portal-revocada-390-dark.png",
+    "overflow": false,
+    "escaped": [],
+    "findings": []
+  }
+]

@@ -2,6 +2,8 @@ import { useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
+import { Wordmark } from "../brand/Brand";
+import { DimLoader } from "../ui/Signature";
 
 import { useAuthSession } from "./AuthSessionProvider";
 import { consumeReturnTo } from "./returnTo";
@@ -23,7 +25,13 @@ export function AuthCallbackPage(): JSX.Element {
   useEffect(() => {
     // consumeReturnTo reads the path the guard stashed before the magic-link
     // round trip — a validated internal path only, never an open redirect.
-    if (auth.status === "ready") navigate(consumeReturnTo(), { replace: true });
+    if (auth.status === "ready")
+      navigate(
+        consumeReturnTo(sessionStorage.getItem("dekopen.pending-invitation") ? "/invitation" : "/"),
+        { replace: true },
+      );
+    if (auth.status === "no_membership" && sessionStorage.getItem("dekopen.pending-invitation"))
+      navigate(consumeReturnTo("/invitation"), { replace: true });
     if (auth.status === "mfa_required") navigate("/auth/mfa", { replace: true });
     if (auth.status === "organization_required") {
       navigate("/select-organization", { replace: true });
@@ -32,22 +40,28 @@ export function AuthCallbackPage(): JSX.Element {
 
   if (["anonymous", "error", "no_membership"].includes(auth.status)) {
     return (
-      <main className="auth-screen">
-        <p role="alert">
-          {linkError.expired
-            ? t("auth.linkExpired")
-            : t(auth.status === "no_membership" ? "auth.noMembership" : "auth.callbackError")}
-        </p>
-        <Link className="ui-backlink ui-backlink--back" to="/login">
-          {t("auth.returnToLogin")}
-        </Link>
+      <main className="auth-screen" data-density="office">
+        <section className="auth-card" aria-label="Acceso por enlace">
+          <Wordmark width={176} />
+          <p role="alert">
+            {linkError.expired
+              ? t("auth.linkExpired")
+              : t(auth.status === "no_membership" ? "auth.noMembership" : "auth.callbackError")}
+          </p>
+          <Link className="ui-button ui-button--primary" to="/login">
+            {t("auth.returnToLogin")}
+          </Link>
+        </section>
       </main>
     );
   }
 
   return (
-    <main className="auth-screen" data-testid="auth-callback">
-      <p role="status">{t("auth.callback")}</p>
+    <main className="auth-screen" data-density="office" data-testid="auth-callback">
+      <section className="auth-card" aria-label="Comprobando acceso">
+        <Wordmark width={176} />
+        <DimLoader label={t("auth.callback")} />
+      </section>
     </main>
   );
 }

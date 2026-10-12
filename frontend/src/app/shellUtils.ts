@@ -53,9 +53,11 @@ export function useDismiss<T extends HTMLElement>(open: boolean, onClose: () => 
     }
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("dekopen:shell-overlay", onClose);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("dekopen:shell-overlay", onClose);
     };
   }, [open, onClose]);
   return ref;

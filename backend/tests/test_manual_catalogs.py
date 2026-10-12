@@ -65,10 +65,17 @@ def test_invalid_component_quantity(quantity):
 def test_kit_opening_choices_match_current_operable_engine():
     assert set(KIT_OPENING_TYPES) == {
         "TURN",
+        "TILT",
         "TILT_TURN",
         "SLIDING",
         "AWNING",
         "DOOR",
+        "LIFT_SLIDE",
+        "PARALLEL_SLIDE",
+        "FOLD",
+        "PIVOT_V",
+        "PIVOT_H",
+        "VERTICAL_SLIDE",
     }
 
 
@@ -137,8 +144,7 @@ def test_new_system_requires_explicit_added_geometry():
     serializer = SystemWriteSerializer(data={})
     assert not serializer.is_valid()
     assert {
-        "sliding_glazing_deduction_width_mm",
-        "sliding_glazing_deduction_height_mm",
+        "system_family",
         "door_leaf_side_clearance_mm",
     } <= set(serializer.errors)
 
@@ -379,6 +385,35 @@ def test_response_serializers_emit_provenance_triple():
     assert output["technical_reviewed_at"] is None
     assert output["technical_reviewed_by"] is None
     assert output["review_pending"] is True
+
+
+def test_physical_catalog_response_retains_exact_nested_json_decimals():
+    from catalogs.serializers import OpeningAuthorityJSONField
+    from rest_framework.renderers import JSONRenderer
+
+    # JSONB numeric values are decoded as Decimal by the catalog repository.
+    # The renderer must not turn them back into binary floating-point values.
+    value = [{"movement": "TURN", "fixed_in_sash": False, "handle_rule": {
+        "default_height_mm": Decimal("1050.005"), "minimum_from_top_mm": Decimal("100.00"),
+        "minimum_from_bottom_mm": Decimal("120.00"), "closing_edge_offset_mm": Decimal("37.50")}}]
+    rendered = json.loads(JSONRenderer().render(OpeningAuthorityJSONField().to_representation(value)))
+    assert rendered[0]["handle_rule"] == {
+        "default_height_mm": "1050.005", "minimum_from_top_mm": "100.00",
+        "minimum_from_bottom_mm": "120.00", "closing_edge_offset_mm": "37.50"}
+    assert rendered[0]["fixed_in_sash"] is False
+    paired = {"meeting_gap_mm": Decimal("0.005"), "source": "Ficha sintética"}
+    assert OpeningAuthorityJSONField().to_representation(paired)["meeting_gap_mm"] == "0.005"
+
+
+def test_physical_authority_survives_http_then_service_validation():
+    from catalogs.demo_openings import opening_manifest
+
+    capabilities = opening_manifest()[0]["params"]["opening_capabilities"]
+    first = SystemWriteSerializer(data={"opening_capabilities": capabilities}, partial=True)
+    assert first.is_valid(), first.errors
+    second = SystemWriteSerializer(data=first.validated_data, partial=True)
+    assert second.is_valid(), second.errors
+    assert second.validated_data == first.validated_data
 
 
 def test_review_requires_matching_revision(monkeypatch):

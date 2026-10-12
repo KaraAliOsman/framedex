@@ -1,0 +1,23 @@
+{
+  "audit_id": "86c9823c-630c-44e4-8a2a-62aab9990cd4",
+  "model": "DEKOPEN Diseñador™",
+  "credits_debited": 10,
+  "ops": [
+    {
+      "op": "set_opening",
+      "module": "m1",
+      "opening": {
+        "movement": "TURN",
+        "hinge_side": "RIGHT",
+        "direction": "OUTWARD",
+        "leaf_role": "SINGLE",
+        "fixed_in_sash": false
+      },
+      "opening_use": "WINDOW",
+      "hinged_layout": null,
+      "sliding_layout": null
+    }
+  ],
+  "rejected": [],
+  "notes": "Se cambió la apertura de m1 a 'Abatible hacia afuera — bisagras a la derecha' (TURN, OUTWARD, bisagra derecha, hoja simple), copiada del catálogo. No se tocaron medidas (1000 x 1400 mm), vidrio ni acabado, por lo que se conservan tal cual."
+}

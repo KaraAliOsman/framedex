@@ -1,0 +1,14 @@
+[
+  {
+    "case": "Empresa con RUT, dos contactos y dos direcciones creada por UI; duplicado rechazado y nota con autor",
+    "result": "PASA"
+  },
+  {
+    "case": "Obra desde ficha con dirección Sur; motor real, precio aplicado y emisión humana por UI",
+    "result": "PASA"
+  },
+  {
+    "case": "DOC-01 real descargado y ficha con historia",
+    "result": "PASA"
+  }
+]

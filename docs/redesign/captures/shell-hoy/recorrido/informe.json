@@ -1,0 +1,99 @@
+[
+  {
+    "name": "buscar-P-000012",
+    "result": "PASA",
+    "group": "projects"
+  },
+  {
+    "name": "buscar-OC-000003",
+    "result": "PASA",
+    "group": "orders"
+  },
+  {
+    "name": "buscar-RT-000045",
+    "result": "PASA",
+    "group": "inventory"
+  },
+  {
+    "name": "buscar-OT-P-000005-REV-A-03",
+    "result": "PASA",
+    "group": "orders"
+  },
+  {
+    "name": "buscar-Cliente Prat · P03 DEMO",
+    "result": "PASA",
+    "group": "clients"
+  },
+  {
+    "name": "buscar-P-000005",
+    "result": "PASA",
+    "group": "quotes"
+  },
+  {
+    "name": "atajos-campana-390",
+    "simulation": null,
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  },
+  {
+    "name": "cambio-organizacion-busqueda-tardia",
+    "result": "PASA"
+  },
+  {
+    "name": "estado-vacio",
+    "simulation": "HTTP controlled to exercise UI state; domain not mutated",
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  },
+  {
+    "name": "estado-error",
+    "simulation": "HTTP controlled to exercise UI state; domain not mutated",
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  },
+  {
+    "name": "estado-carga",
+    "simulation": "HTTP controlled to exercise UI state; domain not mutated",
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  },
+  {
+    "name": "estado-sin-permiso",
+    "simulation": null,
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  },
+  {
+    "name": "rechazo-en-hoy",
+    "simulation": null,
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  },
+  {
+    "name": "lectura-rechazo",
+    "simulation": null,
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  },
+  {
+    "name": "aprobacion-en-hoy",
+    "simulation": null,
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  },
+  {
+    "name": "lectura-aprobacion",
+    "simulation": null,
+    "findings": [],
+    "overflow": false,
+    "serious": []
+  }
+]

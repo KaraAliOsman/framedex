@@ -13,17 +13,21 @@ import {
   positionsRetrieve,
   positionsUpdate,
   projectDesignOptions,
+  designOperationsSimulate,
+  projectsRetrieve,
 } from "../../api/generated/dekopen";
 import type {
   EngineAssemblyCalculateResponse,
   EngineCalculateResponse,
   PositionResponse,
+  ProjectResponse,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore } from "../canvas/canvasStore";
 import type { ProductJson } from "../canvas/productEditing";
 import { ProjectPositionEditor } from "./ProjectPositionEditor";
 import { ApiError } from "../../api/apiMutator";
+import { productFingerprint } from "../canvas/designOps";
 
 const identity = vi.hoisted(() => ({
   id: "org-a",
@@ -54,6 +58,8 @@ vi.mock("../../api/generated/dekopen", () => ({
   positionsRetrieve: vi.fn(),
   positionsUpdate: vi.fn(),
   projectDesignOptions: vi.fn(),
+  designOperationsSimulate: vi.fn(),
+  projectsRetrieve: vi.fn(),
 }));
 
 const evaluate = vi.mocked(engineAssemblyCalculate);
@@ -169,19 +175,40 @@ function bowPosition(): PositionResponse {
           id: "m1",
           width_mm: "700.00",
           height_mm: "1400.00",
-          tree: { id: "b1", type: "BAY", opening_type: "TILT_TURN_LEFT" },
+          tree: {
+            id: "b1",
+            type: "BAY",
+            opening_type: "TILT_TURN_LEFT",
+            glass_spec: "4-16-4",
+            glass_thickness_mm: "24.00",
+            glass_article_sku: "GLASS-24",
+          },
         },
         {
           id: "m2",
           width_mm: "700.00",
           height_mm: "1400.00",
-          tree: { id: "b2", type: "BAY", opening_type: "TILT_TURN_LEFT" },
+          tree: {
+            id: "b2",
+            type: "BAY",
+            opening_type: "TILT_TURN_LEFT",
+            glass_spec: "4-16-4",
+            glass_thickness_mm: "24.00",
+            glass_article_sku: "GLASS-24",
+          },
         },
         {
           id: "m3",
           width_mm: "700.00",
           height_mm: "1400.00",
-          tree: { id: "b3", type: "BAY", opening_type: "TILT_TURN_LEFT" },
+          tree: {
+            id: "b3",
+            type: "BAY",
+            opening_type: "TILT_TURN_LEFT",
+            glass_spec: "4-16-4",
+            glass_thickness_mm: "24.00",
+            glass_article_sku: "GLASS-24",
+          },
         },
       ],
       couplings: [
@@ -249,10 +276,69 @@ function mount(path = "/projects/project-a/positions/position-a/edit") {
 }
 
 function change(key: TranslationKey, value: string) {
-  fireEvent.change(screen.getByLabelText(t(key)), {
-    target: { value },
-  });
+  if (key === "projects.system" && !screen.queryByRole("combobox", { name: t(key) })) {
+    fireEvent.click(document.querySelector<HTMLButtonElement>(".editor-system-chip")!);
+  }
+  if (key === "projects.color" && !screen.queryByRole("combobox", { name: t(key) })) {
+    fireEvent.click(screen.getByRole("button", { name: /Acabado/ }));
+  }
+  fireEvent.change(
+    key === "projects.system" || key === "projects.color"
+      ? screen.getByRole("combobox", { name: t(key) })
+      : screen.getByLabelText(t(key)),
+    {
+      target: { value },
+    },
+  );
 }
+
+it.each(["network", "http"])(
+  "retries the same position after a %s load failure",
+  async (failure) => {
+    retrieve.mockRejectedValueOnce(
+      failure === "http"
+        ? new ApiError(502, { error: { code: "upstream_unavailable" } })
+        : new TypeError("Failed to fetch"),
+    );
+    mount();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("No se pudo abrir la posición");
+    expect(
+      screen.getByRole("heading", { level: 1, name: "No se pudo abrir la posición" }),
+    ).toBeInTheDocument();
+    expect(alert).not.toHaveTextContent("⚠");
+    expect(screen.queryByRole("button", { name: t("projects.save") })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: t("ui.retry") }));
+    await ready();
+    expect(retrieve).toHaveBeenCalledTimes(2);
+    expect(retrieve.mock.calls[1]).toEqual(retrieve.mock.calls[0]);
+    expect(alert).not.toBeInTheDocument();
+  },
+);
+
+it("restores the cached BOM on undo and never authorizes saving a pending color", async () => {
+  const options = await projectDesignOptions("system-a");
+  if (options.status !== 200) throw new Error("Expected fixture options");
+  vi.mocked(projectDesignOptions).mockResolvedValue(
+    ok({ ...options.data, colors: ["WHITE", "FOILED"] }),
+  );
+  mount();
+  await ready();
+  const pending = deferred<Awaited<ReturnType<typeof engineAssemblyCalculate>>>();
+  evaluate.mockReturnValueOnce(pending.promise);
+  change("projects.color", "FOILED");
+  await waitFor(() => expect(evaluate).toHaveBeenCalledTimes(2));
+  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
+  fireEvent.click(screen.getAllByRole("button", { name: t("projects.undo") })[0]!);
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: t("projects.save") })).toBeEnabled(),
+  );
+  save();
+  await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
+  expect(update.mock.calls[0]![1].design.color).toBe("WHITE");
+  await act(async () => pending.resolve(ok(assemblyEval("CUT-FOILED"))));
+  expect(screen.queryByText("CUT-FOILED")).not.toBeInTheDocument();
+});
 
 function save() {
   fireEvent.click(screen.getByRole("button", { name: t("projects.save") }));
@@ -261,18 +347,44 @@ function save() {
 async function ready(location = "Cocina", sku = "CUT-A") {
   await screen.findByRole("heading", { name: location });
   await waitFor(() => expect(evaluate).toHaveBeenCalled());
+  await showBom();
   await screen.findByText(sku);
   await waitFor(() =>
     expect(screen.getByRole("button", { name: t("projects.save") })).toBeEnabled(),
   );
 }
 
+async function showBom() {
+  const button = await screen.findByRole("button", { name: t("projects.bom") });
+  if (button.getAttribute("aria-expanded") === "false") fireEvent.click(button);
+}
+
 beforeEach(() => {
   vi.resetAllMocks();
   vi.spyOn(window, "confirm").mockReturnValue(true);
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    },
+  );
   identity.id = "org-a";
   identity.role = "OWNER";
   useCanvasStore.getState().reset();
+
+  vi.mocked(projectsRetrieve).mockResolvedValue(
+    ok({
+      id: "project-a",
+      name: "Obra DEMO",
+      status: "DRAFT",
+      versions: [],
+      positions: [],
+      current_revision: "REV-A",
+      current_pricing_operation_id: null,
+    } as unknown as ProjectResponse),
+  );
 
   vi.mocked(engineSystems).mockResolvedValue(
     ok({
@@ -281,6 +393,8 @@ beforeEach(() => {
           id: "system-a",
           code: "A",
           name: "Sistema A",
+          system_id: "3067da09-3119-5ad0-a1d5-498cd2dfd753",
+          system_family: null,
           is_demo: false,
           quote_ready: true,
           readiness_reasons: [],
@@ -289,6 +403,8 @@ beforeEach(() => {
           id: "system-b",
           code: "B",
           name: "Sistema B",
+          system_id: "3067da09-3119-5ad0-a1d5-498cd2dfd753",
+          system_family: null,
           is_demo: false,
           quote_ready: true,
           readiness_reasons: [],
@@ -298,6 +414,11 @@ beforeEach(() => {
   );
   vi.mocked(projectDesignOptions).mockResolvedValue(
     ok({
+      system_id: "3067da09-3119-5ad0-a1d5-498cd2dfd753",
+      system_family: null,
+      is_demo: false,
+      compatible_openings: [],
+      dimensional_limits: [],
       profiles: [
         {
           sku: "MULL-60",
@@ -337,7 +458,18 @@ beforeEach(() => {
       ],
       coupler_skus: ["ACOPLE-60"],
       coupler_profiles: [
-        { sku: "ACOPLE-60", name: "Coplana 60", material: "PVC", face_width_mm: "90.00" },
+        {
+          sku: "ACOPLE-60",
+          name: "Coplana 60",
+          material: "PVC",
+          face_width_mm: "90.00",
+          coupling_rule: {
+            min_angle_deg: "0",
+            max_angle_deg: "60",
+            development_mm: "0",
+            source: "Ficha de acople del fixture",
+          },
+        },
       ],
       glazing_beads: [{ glass_thickness_mm: "24.00", bead_width_mm: "18.00", sku: "BEAD-24" }],
       panel_skus: [],
@@ -367,6 +499,9 @@ afterEach(() => {
 
 it("opens a new position directly on the canvas editor", async () => {
   mount("/projects/project-a/positions/new");
+  await screen.findByRole("heading", { name: t("projects.position") });
+  change("projects.system", "system-a");
+  fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
   // A blank window is already on the canvas — no product-type decision exists.
   expect(useCanvasStore.getState().inputs.product).not.toBeNull();
@@ -430,8 +565,9 @@ it("keeps save disabled only while the product is invalid", async () => {
   evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "INVALID")));
   mount();
   await screen.findByRole("heading", { name: "Cocina" });
-  await screen.findByText("CUT-A");
   await waitFor(() => expect(evaluate).toHaveBeenCalled());
+  await showBom();
+  await screen.findByText("CUT-A");
   expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
   expect(update).not.toHaveBeenCalled();
 });
@@ -442,8 +578,9 @@ it("saves a manufacturing-incomplete assembly as a draft", async () => {
   evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "MANUFACTURING_INCOMPLETE")));
   mount();
   await screen.findByRole("heading", { name: "Cocina" });
-  await screen.findByText("CUT-A");
   await waitFor(() => expect(evaluate).toHaveBeenCalled());
+  await showBom();
+  await screen.findByText("CUT-A");
   const button = screen.getByRole("button", { name: t("projects.save") });
   expect(button).toBeEnabled();
   fireEvent.click(button);
@@ -453,6 +590,9 @@ it("saves a manufacturing-incomplete assembly as a draft", async () => {
 
 it("builds a five-unit bow from the design library and edits a joint angle on plan", async () => {
   mount("/projects/project-a/positions/new");
+  await screen.findByRole("heading", { name: t("projects.position") });
+  change("projects.system", "system-a");
+  fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
 
   fireEvent.click(screen.getByRole("button", { name: /Bow ×5/ }));
@@ -464,9 +604,12 @@ it("builds a five-unit bow from the design library and edits a joint angle on pl
 
 it("auto-resolves the catalog coupler when only one exists", async () => {
   mount("/projects/project-a/positions/new");
+  await screen.findByRole("heading", { name: t("projects.position") });
+  change("projects.system", "system-a");
+  fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
 
-  fireEvent.click(screen.getByRole("button", { name: /Bow ×3/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Bow 3 módulos/ }));
 
   // Starters ship null couplers; the catalog's single coupler fills them in.
   change("projects.system", "system-a");
@@ -481,6 +624,11 @@ it("auto-resolves the catalog coupler when only one exists", async () => {
 it("fills glass defaults when the catalog has a single glazing thickness", async () => {
   vi.mocked(projectDesignOptions).mockResolvedValue(
     ok({
+      system_id: "3067da09-3119-5ad0-a1d5-498cd2dfd753",
+      system_family: null,
+      is_demo: false,
+      compatible_openings: [],
+      dimensional_limits: [],
       profiles: [],
       glazing_thicknesses: ["4.00"],
       handle_policy: null,
@@ -499,8 +647,12 @@ it("fills glass defaults when the catalog has a single glazing thickness", async
     }),
   );
   mount("/projects/project-a/positions/new");
+  await screen.findByRole("heading", { name: t("projects.position") });
+  change("projects.system", "system-a");
+  fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
   // The system <select> only commits once its options exist.
+  fireEvent.click(document.querySelector<HTMLButtonElement>(".editor-system-chip")!);
   await screen.findByRole("option", { name: /Sistema A/ });
 
   change("projects.system", "system-a");
@@ -527,13 +679,62 @@ it("fills glass defaults when the catalog has a single glazing thickness", async
 
 it("removes a selected module with Delete and undoes it", async () => {
   mount("/projects/project-a/positions/new");
+  await screen.findByRole("heading", { name: t("projects.position") });
+  change("projects.system", "system-a");
+  fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
-  fireEvent.click(screen.getByRole("button", { name: /Bow ×3/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Bow 3 módulos/ }));
 
-  useCanvasStore.getState().select("m2");
+  const before = useCanvasStore.getState().inputs.product!;
+  const removedId = before.assembly.modules[1]!.id;
+  const after: ProductJson = {
+    ...before,
+    assembly: {
+      modules: [before.assembly.modules[0]!, before.assembly.modules[2]!],
+      couplings: [
+        {
+          ...before.assembly.couplings[0]!,
+          modules: [before.assembly.modules[0]!.id, before.assembly.modules[2]!.id],
+          edges: ["right", "left"],
+          kind: "INLINE",
+        },
+      ],
+    },
+  };
+  vi.mocked(designOperationsSimulate).mockResolvedValue(
+    ok({
+      registry_version: "design-ops-v1",
+      product: after,
+      system_id: "system-a",
+      color: "WHITE",
+      valid: true,
+      status: "VALID",
+      issues: [],
+      engine: {},
+      price: {},
+      before: {},
+      diff: [],
+      ops: [
+        {
+          op: "remove_unit",
+          module: removedId,
+          base_sig: productFingerprint(before),
+          result: after,
+        },
+      ],
+    }) as never,
+  );
+
+  act(() => useCanvasStore.getState().select(removedId));
   fireEvent.keyDown(window, { key: "Delete" });
 
-  expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(2);
+  await waitFor(() =>
+    expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(2),
+  );
+  expect(designOperationsSimulate).toHaveBeenCalledWith(
+    expect.objectContaining({ product: before, ops: [{ op: "remove_unit", module: removedId }] }),
+    expect.anything(),
+  );
 
   fireEvent.click(screen.getByRole("button", { name: t("projects.undo") }));
   expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(3);
@@ -703,7 +904,12 @@ it.each(["http", "network"] as const)(
       update.mockResolvedValueOnce({
         status: 409,
         headers: new Headers(),
-        data: { error: { code: "stale_position", detail: "Rejected" } },
+        data: {
+          error: {
+            code: "stale_edit",
+            detail: "Otra persona guardó el vano. Recarga para comparar.",
+          },
+        },
       });
     }
     mount();
@@ -713,7 +919,11 @@ it.each(["http", "network"] as const)(
     const designBefore = useCanvasStore.getState().inputs;
 
     save();
-    await screen.findByText(t("projects.saveError"));
+    await screen.findByText(
+      failure === "http"
+        ? "Otra persona guardó el vano. Recarga para comparar."
+        : t("projects.saveError"),
+    );
 
     expect(screen.getByLabelText(t("projects.location"))).toHaveValue("Entrada editada");
     expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue("9");
@@ -817,6 +1027,8 @@ it("does not offer FOILED or a catalog the backend marks incomplete", async () =
           id: "system-a",
           code: "A",
           name: "Sistema A",
+          system_id: "3067da09-3119-5ad0-a1d5-498cd2dfd753",
+          system_family: null,
           is_demo: false,
           quote_ready: true,
           readiness_reasons: [],
@@ -825,6 +1037,8 @@ it("does not offer FOILED or a catalog the backend marks incomplete", async () =
           id: "system-b",
           code: "B",
           name: "Incomplete system",
+          system_id: "3067da09-3119-5ad0-a1d5-498cd2dfd753",
+          system_family: null,
           is_demo: false,
           quote_ready: false,
           readiness_reasons: ["manufacturing"],
@@ -840,16 +1054,23 @@ it("does not offer FOILED or a catalog the backend marks incomplete", async () =
 
 it("renders the design library with rendered starter cards", async () => {
   mount("/projects/project-a/positions/new");
+  await screen.findByRole("heading", { name: t("projects.position") });
+  change("projects.system", "system-a");
+  fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   const list = await screen.findByRole("list", {
     name: t("assembly.starterLibrary"),
   });
-  expect(within(list).getAllByRole("listitem")).toHaveLength(15);
+  expect(within(list).getAllByRole("listitem")).toHaveLength(17);
+  expect(within(list).queryByRole("button", { name: /Esquina 90°/ })).not.toBeInTheDocument();
   // Every card previews through the same front-elevation renderer.
   expect(within(list).getAllByTestId("product-front").length).toBeGreaterThan(0);
 });
 
 it("picking a sliding starter card builds a sliding product", async () => {
   mount("/projects/project-a/positions/new");
+  await screen.findByRole("heading", { name: t("projects.position") });
+  change("projects.system", "system-a");
+  fireEvent.click(screen.getByRole("button", { name: "Biblioteca de tipologías" }));
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
   fireEvent.click(screen.getByRole("button", { name: /Corredera 2 hojas/ }));
   const product = useCanvasStore.getState().inputs.product;

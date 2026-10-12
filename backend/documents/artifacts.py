@@ -80,6 +80,7 @@ def _order_snapshot(order_id: UUID, project_version_id: UUID, org_id: UUID) -> t
 ]:
     order = one(
         "SELECT id,project_id,project_version_id,org_id,order_type::text,order_code,status,"
+        "private.entity_code(org_id,'OC',id,order_code) AS human_code,"
         "supplier_name,payload_json::text,bom_hash,revision_snapshot_sha256,"
         "order_snapshot_hash,confirmed_at,expected_at,sent_at FROM public.orders "
         "WHERE id=%s AND project_version_id=%s AND org_id=%s",
@@ -96,6 +97,7 @@ def _order_snapshot(order_id: UUID, project_version_id: UUID, org_id: UUID) -> t
     # send time, after the snapshot was sealed at confirmation.
     order_block = snapshot.get("order")
     if isinstance(order_block, dict):
+        order_block["order_code"] = order.get("human_code", order["order_code"])
         order_block["expected_at"] = (
             None if order["expected_at"] is None else str(order["expected_at"])
         )
@@ -145,6 +147,7 @@ def generate_artifact(
             frozen: dict[str, object] = frozen_revision
             if order_id is not None:
                 order, frozen = _order_snapshot(order_id, project_version_id, org_id)
+                frozen["is_demo"] = frozen_revision.get("is_demo", False)
             existing = rows(
                 "SELECT * FROM public.document_artifacts "
                 "WHERE org_id=%s AND project_version_id=%s AND artifact_scope=%s "
@@ -160,8 +163,12 @@ def generate_artifact(
                 if order is None else str(order["order_snapshot_hash"])
             )
             if file_format == "PDF":
+                render_options = {}
+                if document_type == "DOC-01":
+                    from portal.document_links import document_portal_url
+                    render_options["portal_url"] = document_portal_url(org_id=org_id, version=version, actor_id=actor_id)
                 content, media_type = render_pdf_document(
-                    document_type, frozen, pdf_identifier=identifier
+                    document_type, frozen, pdf_identifier=identifier, **render_options
                 )
                 extension = "pdf"
             else:

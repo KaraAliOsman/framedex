@@ -7,6 +7,8 @@
  */
 
 export interface Reinforcement {
+  /** @nullable */
+  extra_code?: string | null;
   parent_profile_sku: string;
   /** @nullable */
   reinforcement_sku: string | null;

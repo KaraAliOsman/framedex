@@ -1,0 +1,162 @@
+[
+  {
+    "name": "inspector-light-1440",
+    "screenshot": "inspector-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montajes-light-1440",
+    "screenshot": "montajes-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "inspector-light-1280",
+    "screenshot": "inspector-light-1280.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montajes-light-1280",
+    "screenshot": "montajes-light-1280.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "inspector-light-1024",
+    "screenshot": "inspector-light-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montajes-light-1024",
+    "screenshot": "montajes-light-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "inspector-dark-1440",
+    "screenshot": "inspector-dark-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montajes-dark-1440",
+    "screenshot": "montajes-dark-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "inspector-dark-1280",
+    "screenshot": "inspector-dark-1280.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montajes-dark-1280",
+    "screenshot": "montajes-dark-1280.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "inspector-dark-1024",
+    "screenshot": "inspector-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montajes-dark-1024",
+    "screenshot": "montajes-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "estado-sin-montaje",
+    "screenshot": "estado-sin-montaje.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "estado-error-reintento",
+    "screenshot": "estado-error-reintento.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "estado-sin-permiso",
+    "screenshot": "estado-sin-permiso.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "estado-revision-cerrada",
+    "screenshot": "estado-revision-cerrada.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  }
+]

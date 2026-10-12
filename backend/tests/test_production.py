@@ -1232,7 +1232,7 @@ def test_release_denies_estimator(monkeypatch) -> None:
 def test_orders_list_allows_installer(monkeypatch) -> None:
     client, _, _ = _client_with_scope(monkeypatch, "INSTALLER")
     monkeypatch.setattr(
-        service, "list_production_orders", lambda *, org_id: {"orders": []}
+        service, "list_production_orders", lambda *, org_id, actor_role, project_id=None: {"orders": []}
     )
     response = client.get("/api/v1/production/orders/")
     assert response.status_code == 200
@@ -1347,6 +1347,8 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
     seen = {}
 
     def fake_one(query, params=(), code=None):
+        if "document_preferences" in query:
+            return {"document_preferences": {"remnant_destination":"Recepción DEMO"}}
         if "FOR UPDATE" in query:
             return {
                 "id": order_id, "order_code": "OT-P-REV-A-01",
@@ -1469,6 +1471,8 @@ def test_optimize_routes_shaped_glass_to_unnested() -> None:
     }
 
     def fake_one(query, params=(), code=None):
+        if "document_preferences" in query:
+            return {"document_preferences": {"remnant_destination":"Recepción DEMO"}}
         if "FOR UPDATE" in query:
             return {
                 "id": order_id, "order_code": "OT-P-REV-A-01",
@@ -1518,6 +1522,23 @@ def test_optimize_routes_shaped_glass_to_unnested() -> None:
     assert flagged["kind"] == "GLASS"
     assert flagged["reason"] == "shaped_glass_outline"
     assert flagged["shape"] == shape
+
+
+def test_sheet_rule_equal_area_order_is_independent_of_database_rows(monkeypatch) -> None:
+    from decimal import Decimal
+    from production import service
+
+    stock = [{"sku":"IGUAL", "name":"Proveedor", "attributes":{
+        "sheet_width_mm":width, "sheet_height_mm":height, "sheet_edge_trim_mm":"0",
+        "glass_sku":"VIDRIO-BASE",
+    }} for width, height in (("2400", "1800"), ("1800", "2400"))]
+    monkeypatch.setattr(service, "rows", lambda *_: stock)
+    first = service._sheet_rules(uuid4())["by_glass"]["VIDRIO-BASE"]
+    stock.reverse()
+    second = service._sheet_rules(uuid4())["by_glass"]["VIDRIO-BASE"]
+    assert [(r.sheet_width_mm, r.sheet_height_mm) for r in first] == [
+        (r.sheet_width_mm, r.sheet_height_mm) for r in second]
+    assert first[0].sheet_width_mm == Decimal("1800")
 
 
 def test_pick_sheet_rule_prefers_smallest_fitting() -> None:
@@ -1668,19 +1689,25 @@ def test_optimize_rejects_cancelled_order() -> None:
 
 
 def test_cnc_generate_rejects_cancelled_order() -> None:
+    from contextlib import nullcontext
     from production import cnc
 
     order_id = uuid4()
     bundle = {
         "order": {"id": order_id, "order_code": "OT", "status": "CANCELLED"}
     }
-    with patch("production.cnc._order_ops", return_value=bundle):
+    with (
+        patch("production.cnc.transaction.atomic", return_value=nullcontext()),
+        patch("production.cnc.documentary_backend", return_value=nullcontext()),
+        patch("production.cnc.one", return_value=bundle["order"]) as locked_lookup,
+    ):
         with pytest.raises(DocumentaryError) as error:
             cnc.generate_program(
                 org_id=uuid4(), order_id=order_id, machine_id=uuid4(),
                 member_id="M-1", actor_id=uuid4(),
             )
     assert error.value.code == "work_order_cancelled"
+    assert "FOR UPDATE" in locked_lookup.call_args.args[0]
 
 
 def test_cnc_generate_rejects_malformed_machine_id(monkeypatch) -> None:
@@ -1692,7 +1719,8 @@ def test_cnc_generate_rejects_malformed_machine_id(monkeypatch) -> None:
     )
     response = client.post(
         f"/api/v1/production/orders/{uuid4()}/cnc/programs/",
-        {"machine_id": "not-a-uuid", "member_id": "M-1"},
+        {"machine_id": "not-a-uuid", "member_id": "M-1", "confirmed": True,
+         "expected_preview": "0" * 64},
         format="json",
     )
     assert response.status_code == 400
@@ -2000,6 +2028,8 @@ def test_optimize_sheet_piece_ids_unique_per_unit() -> None:
     }
 
     def fake_one(query, params=(), code=None):
+        if "document_preferences" in query:
+            return {"document_preferences": {"remnant_destination":"Recepción DEMO"}}
         if "FOR UPDATE" in query:
             return {
                 "id": order_id, "order_code": "OT-P-REV-A-01",
@@ -2523,8 +2553,8 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
     assert sorted(out["files"]) == ["bars.dxf", "sheet_1.dxf"]
     sheet = stored["files"]["sheet_1.dxf"]
     assert sheet.startswith("0\nSECTION\n2\nHEADER") and sheet.endswith("0\nEOF\n")
-    # ASCII-only labels (AC1015-era DXF) and AcDb subclass markers.
-    assert "AC1015" in sheet and "V-01-U2 800x600" in sheet
+    # UTF-8 (DXF 2007) and AcDb subclass markers.
+    assert "AC1021" in sheet and "UTF-8" in sheet and "V-01-U2 800x600" in sheet
     assert "100\nAcDbPolyline" in sheet and "100\nAcDbText" in sheet
     bars = stored["files"]["bars.dxf"]
     assert "M-02-U1 1200 45.0/45.0" in bars and "MARCO-60" in bars
@@ -3176,7 +3206,11 @@ def test_packing_labels_render_qr_per_unit(monkeypatch) -> None:
     assert len(out["labels"]) == 1
     label = out["labels"][0]
     assert label["pieces"] == 20
-    assert label["qr_payload"] == "DEKOPEN|OT-LBL-1|OT-LBL-1-U01|20"
+    from urllib.parse import parse_qs, urlsplit
+
+    address = urlsplit(label["qr_payload"])
+    assert address.path == "/production"
+    assert parse_qs(address.query) == {"order": [str(order_id)], "piece": ["OT-LBL-1-U01"], "identity": [f"{order_id}:U1"]}
     assert label["qr_svg"].startswith("<svg") and "path" in label["qr_svg"]
 
 
@@ -3192,6 +3226,24 @@ def test_packing_labels_require_manifest(monkeypatch) -> None:
     monkeypatch.setattr(service.transaction, "atomic", _atomic)
     with pytest.raises(DocumentaryError, match="packing_required"):
         service.packing_labels(org_id=uuid4(), order_id=uuid4())
+
+
+@pytest.mark.parametrize("optimization", [{}, {"invalidated": True, "bars": {"workshop_cut_plan": [{"piece_code": "P01-U01-M01"}]}}])
+def test_packing_labels_preserve_unit_history_but_block_stale_piece_labels(monkeypatch, optimization) -> None:
+    order = {"id": uuid4(), "order_code": "OT-LBL-3", "status": "RELEASED",
+        "project_version_id": uuid4(), "payload_json": json.dumps({
+            "packing": {"units": [{"unit_index": 1, "label_code": "OT-LBL-3-U01", "profiles": 6}]},
+            "optimization": optimization,
+        })}
+    monkeypatch.setattr(service, "one", lambda *a, **k: order)
+    monkeypatch.setattr(service, "documentary_backend", _atomic)
+    monkeypatch.setattr(service.transaction, "atomic", _atomic)
+    with patch("production.pieces.addressed_plan") as projected:
+        result = service.packing_labels(org_id=uuid4(), order_id=order["id"])
+    projected.assert_not_called()
+    assert result["labels"][0]["label_code"] == "OT-LBL-3-U01"
+    assert result["piece_labels"] == []
+    assert "Optimiza la orden" in result["piece_labels_blocked_reason"]
 
 
 def test_installation_requires_dispatched_and_is_idempotent(monkeypatch) -> None:
@@ -4388,7 +4440,7 @@ def test_cut_pack_resolves_physical_piece_identity_per_unit() -> None:
     )
     for code in (
         "P02-U01-M01", "P02-U01-M02", "P02-U02-M01", "P02-U02-M02",
-        "P02-U01-M02·R", "P02-U02-M02·R",
+        "P02-U01-M02-R", "P02-U02-M02-R",
     ):
         # once in the diagram label plus once in the table row — no third
         # occurrence would mean a physical piece printed twice.

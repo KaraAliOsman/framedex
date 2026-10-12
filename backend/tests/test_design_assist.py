@@ -24,6 +24,24 @@ def _position():
     return {"id": uuid4(), "project_id": uuid4(), "system_id": uuid4()}
 
 
+@pytest.mark.parametrize("passive_side,active_side", [("LEFT", "RIGHT"), ("RIGHT", "LEFT")])
+def test_catalog_skips_paired_choices_without_the_opposite_passive_hinge(passive_side, active_side):
+    from dekopen_engine.models import HingeSide, LeafRole
+    from engine.tests.opening_cases import opening_params
+
+    params = opening_params("DEMO_60")
+    params = params.model_copy(update={"opening_capabilities": tuple(
+        cap.model_copy(update={"hinge_sides": (HingeSide(passive_side),)})
+        if cap.leaf_role is LeafRole.PASSIVE else cap
+        for cap in params.opening_capabilities)})
+    choices = design_assist._opening_choices(params)
+    paired = [choice for choice in choices if choice.get("hinged_layout")]
+    assert paired and {choice["opening"]["hinge_side"] for choice in paired} == {active_side}
+    assert any(choice["opening"]["movement"] == "FIXED" for choice in choices)
+    assert any(choice["opening"]["movement"] == "TURN" and not choice.get("hinged_layout")
+               for choice in choices)
+
+
 def _catalog(**overrides):
     catalog = {
         "glass_skus": {"GLASS-4MM", "DVH-4-12-4"},
@@ -519,6 +537,16 @@ def test_sign_binding_is_lexical_not_spacing_based(monkeypatch):
     for prompt in ("ángulos 30°; -20°", "+30°/-20°", "30, -20", "30 y -20"):
         declared = values(prompt)
         assert Decimal("-20") in declared and Decimal("30") in declared
+
+
+@pytest.mark.parametrize("separator", [" ", "\u00a0", "\u2009", "\u202f"])
+def test_displayed_thousands_ground_the_whole_measure_only(separator):
+    values = design_assist._declared_values
+    assert values(f"Ancho 1{separator}250 mm") == {Decimal("1250")}
+    assert values(f"Ancho 1{separator}250,5 mm") == {Decimal("1250.5")}
+    assert values(f"Ancho 1{separator}250 cm") == {Decimal("12500")}
+    assert values(f"Medida 1{separator}250") == {Decimal("1250")}
+    assert values("Cantidad 1 2 3") == {Decimal("1"), Decimal("2"), Decimal("3")}
 
 
 def test_stable_refs_address_modules_and_survive_structural_ops(monkeypatch):

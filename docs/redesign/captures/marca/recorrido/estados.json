@@ -1,0 +1,450 @@
+[
+  {
+    "id": "onboarding-vacio",
+    "width": 1440,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-carga",
+    "width": 1440,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-error",
+    "width": 1440,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-bloqueado",
+    "width": 1440,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-sin-permiso",
+    "width": 1440,
+    "theme": "light",
+    "source": "Rol real jefe de taller; sin permiso de creación",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "callback-enlace-vencido",
+    "width": 1440,
+    "theme": "light",
+    "source": "Hash de enlace vencido, sin token",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "seleccion-organizacion",
+    "width": 1440,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-vacio",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-carga",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-error",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-bloqueado",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-sin-permiso",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Rol real jefe de taller; sin permiso de creación",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "callback-enlace-vencido",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Hash de enlace vencido, sin token",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "seleccion-organizacion",
+    "width": 1440,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-vacio",
+    "width": 1280,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-carga",
+    "width": 1280,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-error",
+    "width": 1280,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-bloqueado",
+    "width": 1280,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-sin-permiso",
+    "width": 1280,
+    "theme": "light",
+    "source": "Rol real jefe de taller; sin permiso de creación",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "callback-enlace-vencido",
+    "width": 1280,
+    "theme": "light",
+    "source": "Hash de enlace vencido, sin token",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "seleccion-organizacion",
+    "width": 1280,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-vacio",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-carga",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-error",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-bloqueado",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-sin-permiso",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Rol real jefe de taller; sin permiso de creación",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "callback-enlace-vencido",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Hash de enlace vencido, sin token",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "seleccion-organizacion",
+    "width": 1280,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-vacio",
+    "width": 1024,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-carga",
+    "width": 1024,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-error",
+    "width": 1024,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-bloqueado",
+    "width": 1024,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-sin-permiso",
+    "width": 1024,
+    "theme": "light",
+    "source": "Rol real jefe de taller; sin permiso de creación",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "callback-enlace-vencido",
+    "width": 1024,
+    "theme": "light",
+    "source": "Hash de enlace vencido, sin token",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "seleccion-organizacion",
+    "width": 1024,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-vacio",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-carga",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-error",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-bloqueado",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-sin-permiso",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Rol real jefe de taller; sin permiso de creación",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "callback-enlace-vencido",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Hash de enlace vencido, sin token",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "seleccion-organizacion",
+    "width": 1024,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-vacio",
+    "width": 390,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-carga",
+    "width": 390,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-error",
+    "width": 390,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-bloqueado",
+    "width": 390,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-sin-permiso",
+    "width": 390,
+    "theme": "light",
+    "source": "Rol real jefe de taller; sin permiso de creación",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "callback-enlace-vencido",
+    "width": 390,
+    "theme": "light",
+    "source": "Hash de enlace vencido, sin token",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "seleccion-organizacion",
+    "width": 390,
+    "theme": "light",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-vacio",
+    "width": 390,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-carga",
+    "width": 390,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-error",
+    "width": 390,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-bloqueado",
+    "width": 390,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding-sin-permiso",
+    "width": 390,
+    "theme": "dark",
+    "source": "Rol real jefe de taller; sin permiso de creación",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "callback-enlace-vencido",
+    "width": 390,
+    "theme": "dark",
+    "source": "Hash de enlace vencido, sin token",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "seleccion-organizacion",
+    "width": 390,
+    "theme": "dark",
+    "source": "Intercepción de estado declarada; no muta el servidor",
+    "overflow": false,
+    "findings": []
+  }
+]

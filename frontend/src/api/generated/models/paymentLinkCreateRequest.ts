@@ -23,4 +23,6 @@ export interface PaymentLinkCreateRequest {
   payer_email: string;
   /** @maxLength 200 */
   subject?: string;
+  simulated?: boolean;
+  expires_at?: string;
 }

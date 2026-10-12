@@ -1,0 +1,122 @@
+[
+  {
+    "routeId": "inicio",
+    "path": "/",
+    "reachedPath": "/",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "inicio__ESTIMATOR__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at section\n    at main\n    at LandingPage\n    at HomeRedirect (http://127.0.0.1:5173/src/App.tsx?t=1791477449913:111:15)\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4886:19)\n    at RouteErrorBoundary (http://127.0.0.1:5173/src/app/RouteErrorBoundary.tsx:9:8)\n    at AppRoutes\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at RenderErrorBoundary (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4135:3)\n    at DataRoutes2 (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4772:24)\n    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4838:29)\n    at RouterProvider (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4581:27)\n    at RouterProvider2\n    at div\n    at ConnectionBoundary (http://127.0.0.1:5173/src/app/RecoveryPage.tsx:98:38)\n    at App\n    at ToastProvider (http://127.0.0.1:5173/src/ui/Toast.tsx:8:33)\n    at ConfirmProvider (http://127.0.0.1:5173/src/ui/ConfirmDialog.tsx?t=1791476554183:20:35)\n    at AuthSessionProvider (http://127.0.0.1:5173/src/auth/AuthSessionProvider.tsx?t=1791476554183:30:39)\n    at ThemeProvider (http://127.0.0.1:5173/src/theme/ThemeProvider.tsx:14:33)\n    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=290c6f45:14:30)"
+    ],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "inicio",
+    "path": "/",
+    "reachedPath": "/",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "inicio__ESTIMATOR__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at section\n    at main\n    at LandingPage\n    at HomeRedirect (http://127.0.0.1:5173/src/App.tsx?t=1791477449913:111:15)\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4886:19)\n    at RouteErrorBoundary (http://127.0.0.1:5173/src/app/RouteErrorBoundary.tsx:9:8)\n    at AppRoutes\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at RenderErrorBoundary (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4135:3)\n    at DataRoutes2 (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4772:24)\n    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4838:29)\n    at RouterProvider (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4581:27)\n    at RouterProvider2\n    at div\n    at ConnectionBoundary (http://127.0.0.1:5173/src/app/RecoveryPage.tsx:98:38)\n    at App\n    at ToastProvider (http://127.0.0.1:5173/src/ui/Toast.tsx:8:33)\n    at ConfirmProvider (http://127.0.0.1:5173/src/ui/ConfirmDialog.tsx?t=1791476554183:20:35)\n    at AuthSessionProvider (http://127.0.0.1:5173/src/auth/AuthSessionProvider.tsx?t=1791476554183:30:39)\n    at ThemeProvider (http://127.0.0.1:5173/src/theme/ThemeProvider.tsx:14:33)\n    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=290c6f45:14:30)"
+    ],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "inicio",
+    "path": "/",
+    "reachedPath": "/",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "inicio__ESTIMATOR__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at section\n    at main\n    at LandingPage\n    at HomeRedirect (http://127.0.0.1:5173/src/App.tsx?t=1791477449913:111:15)\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4886:19)\n    at RouteErrorBoundary (http://127.0.0.1:5173/src/app/RouteErrorBoundary.tsx:9:8)\n    at AppRoutes\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at RenderErrorBoundary (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4135:3)\n    at DataRoutes2 (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4772:24)\n    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4838:29)\n    at RouterProvider (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4581:27)\n    at RouterProvider2\n    at div\n    at ConnectionBoundary (http://127.0.0.1:5173/src/app/RecoveryPage.tsx:98:38)\n    at App\n    at ToastProvider (http://127.0.0.1:5173/src/ui/Toast.tsx:8:33)\n    at ConfirmProvider (http://127.0.0.1:5173/src/ui/ConfirmDialog.tsx?t=1791476554183:20:35)\n    at AuthSessionProvider (http://127.0.0.1:5173/src/auth/AuthSessionProvider.tsx?t=1791476554183:30:39)\n    at ThemeProvider (http://127.0.0.1:5173/src/theme/ThemeProvider.tsx:14:33)\n    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=290c6f45:14:30)"
+    ],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "inicio",
+    "path": "/",
+    "reachedPath": "/",
+    "role": "ESTIMATOR",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "inicio__ESTIMATOR__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at section\n    at main\n    at LandingPage\n    at HomeRedirect (http://127.0.0.1:5173/src/App.tsx?t=1791477449913:111:15)\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4886:19)\n    at RouteErrorBoundary (http://127.0.0.1:5173/src/app/RouteErrorBoundary.tsx:9:8)\n    at AppRoutes\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at RenderErrorBoundary (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4135:3)\n    at DataRoutes2 (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4772:24)\n    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4838:29)\n    at RouterProvider (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4581:27)\n    at RouterProvider2\n    at div\n    at ConnectionBoundary (http://127.0.0.1:5173/src/app/RecoveryPage.tsx:98:38)\n    at App\n    at ToastProvider (http://127.0.0.1:5173/src/ui/Toast.tsx:8:33)\n    at ConfirmProvider (http://127.0.0.1:5173/src/ui/ConfirmDialog.tsx?t=1791476554183:20:35)\n    at AuthSessionProvider (http://127.0.0.1:5173/src/auth/AuthSessionProvider.tsx?t=1791476554183:30:39)\n    at ThemeProvider (http://127.0.0.1:5173/src/theme/ThemeProvider.tsx:14:33)\n    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=290c6f45:14:30)"
+    ],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "inicio",
+    "path": "/",
+    "reachedPath": "/",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "inicio__ESTIMATOR__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at section\n    at main\n    at LandingPage\n    at HomeRedirect (http://127.0.0.1:5173/src/App.tsx?t=1791477449913:111:15)\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4886:19)\n    at RouteErrorBoundary (http://127.0.0.1:5173/src/app/RouteErrorBoundary.tsx:9:8)\n    at AppRoutes\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at RenderErrorBoundary (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4135:3)\n    at DataRoutes2 (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4772:24)\n    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4838:29)\n    at RouterProvider (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4581:27)\n    at RouterProvider2\n    at div\n    at ConnectionBoundary (http://127.0.0.1:5173/src/app/RecoveryPage.tsx:98:38)\n    at App\n    at ToastProvider (http://127.0.0.1:5173/src/ui/Toast.tsx:8:33)\n    at ConfirmProvider (http://127.0.0.1:5173/src/ui/ConfirmDialog.tsx?t=1791476554183:20:35)\n    at AuthSessionProvider (http://127.0.0.1:5173/src/auth/AuthSessionProvider.tsx?t=1791476554183:30:39)\n    at ThemeProvider (http://127.0.0.1:5173/src/theme/ThemeProvider.tsx:14:33)\n    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=290c6f45:14:30)"
+    ],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "inicio",
+    "path": "/",
+    "reachedPath": "/",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "inicio__ESTIMATOR__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at section\n    at main\n    at LandingPage\n    at HomeRedirect (http://127.0.0.1:5173/src/App.tsx?t=1791477449913:111:15)\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4886:19)\n    at RouteErrorBoundary (http://127.0.0.1:5173/src/app/RouteErrorBoundary.tsx:9:8)\n    at AppRoutes\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at RenderErrorBoundary (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4135:3)\n    at DataRoutes2 (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4772:24)\n    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4838:29)\n    at RouterProvider (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4581:27)\n    at RouterProvider2\n    at div\n    at ConnectionBoundary (http://127.0.0.1:5173/src/app/RecoveryPage.tsx:98:38)\n    at App\n    at ToastProvider (http://127.0.0.1:5173/src/ui/Toast.tsx:8:33)\n    at ConfirmProvider (http://127.0.0.1:5173/src/ui/ConfirmDialog.tsx?t=1791476554183:20:35)\n    at AuthSessionProvider (http://127.0.0.1:5173/src/auth/AuthSessionProvider.tsx?t=1791476554183:30:39)\n    at ThemeProvider (http://127.0.0.1:5173/src/theme/ThemeProvider.tsx:14:33)\n    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=290c6f45:14:30)"
+    ],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "inicio",
+    "path": "/",
+    "reachedPath": "/",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "inicio__ESTIMATOR__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at section\n    at main\n    at LandingPage\n    at HomeRedirect (http://127.0.0.1:5173/src/App.tsx?t=1791477449913:111:15)\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4886:19)\n    at RouteErrorBoundary (http://127.0.0.1:5173/src/app/RouteErrorBoundary.tsx:9:8)\n    at AppRoutes\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at RenderErrorBoundary (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4135:3)\n    at DataRoutes2 (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4772:24)\n    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4838:29)\n    at RouterProvider (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4581:27)\n    at RouterProvider2\n    at div\n    at ConnectionBoundary (http://127.0.0.1:5173/src/app/RecoveryPage.tsx:98:38)\n    at App\n    at ToastProvider (http://127.0.0.1:5173/src/ui/Toast.tsx:8:33)\n    at ConfirmProvider (http://127.0.0.1:5173/src/ui/ConfirmDialog.tsx?t=1791476554183:20:35)\n    at AuthSessionProvider (http://127.0.0.1:5173/src/auth/AuthSessionProvider.tsx?t=1791476554183:30:39)\n    at ThemeProvider (http://127.0.0.1:5173/src/theme/ThemeProvider.tsx:14:33)\n    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=290c6f45:14:30)"
+    ],
+    "httpErrors": [],
+    "findings": []
+  },
+  {
+    "routeId": "inicio",
+    "path": "/",
+    "reachedPath": "/",
+    "role": "ESTIMATOR",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "inicio__ESTIMATOR__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority \n    at img\n    at figure\n    at section\n    at main\n    at LandingPage\n    at HomeRedirect (http://127.0.0.1:5173/src/App.tsx?t=1791477449913:111:15)\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4886:19)\n    at RouteErrorBoundary (http://127.0.0.1:5173/src/app/RouteErrorBoundary.tsx:9:8)\n    at AppRoutes\n    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4204:26)\n    at RenderErrorBoundary (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4135:3)\n    at DataRoutes2 (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4772:24)\n    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4838:29)\n    at RouterProvider (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=290c6f45:4581:27)\n    at RouterProvider2\n    at div\n    at ConnectionBoundary (http://127.0.0.1:5173/src/app/RecoveryPage.tsx:98:38)\n    at App\n    at ToastProvider (http://127.0.0.1:5173/src/ui/Toast.tsx:8:33)\n    at ConfirmProvider (http://127.0.0.1:5173/src/ui/ConfirmDialog.tsx?t=1791476554183:20:35)\n    at AuthSessionProvider (http://127.0.0.1:5173/src/auth/AuthSessionProvider.tsx?t=1791476554183:30:39)\n    at ThemeProvider (http://127.0.0.1:5173/src/theme/ThemeProvider.tsx:14:33)\n    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=290c6f45:14:30)"
+    ],
+    "httpErrors": [],
+    "findings": []
+  }
+]

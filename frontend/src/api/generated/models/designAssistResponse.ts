@@ -5,15 +5,17 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { DesignAssistResponseOpsItem } from "./designAssistResponseOpsItem";
 import type { DesignAssistResponseRejectedItem } from "./designAssistResponseRejectedItem";
+import type { DesignOperation } from "./designOperation";
 
 export interface DesignAssistResponse {
   audit_id: string;
   model: string;
   credits_debited: number;
-  ops: DesignAssistResponseOpsItem[];
+  ops: DesignOperation[];
   rejected: DesignAssistResponseRejectedItem[];
   /** @nullable */
   notes: string | null;
+  simulation?: unknown | null;
+  clarify?: unknown | null;
 }

@@ -1,0 +1,11 @@
+BEGIN;
+SELECT plan(7);
+SELECT ok(NOT has_table_privilege('authenticated','public.profile_systems','SELECT'),'no broad catalog read overrides the private column');
+SELECT ok(NOT has_column_privilege('authenticated','public.profile_systems','extra_authority','SELECT'),'members cannot read purchase tariffs directly');
+SELECT ok(has_column_privilege('authenticated','public.profile_systems','name','SELECT'),'public technical catalog fields remain readable');
+SELECT ok(has_column_privilege('catalog_backend','public.profile_systems','extra_authority','SELECT'),'trusted engine/catalog backend retains exact authority');
+SELECT ok(has_function_privilege('authenticated','public.catalog_extra_authority(uuid,uuid)','EXECUTE'),'members can request selling authority');
+SELECT ok(NOT has_function_privilege('anon','public.catalog_extra_authority(uuid,uuid)','EXECUTE'),'anonymous callers cannot request authority');
+SELECT is((SELECT rolbypassrls FROM pg_roles WHERE oid=(SELECT proowner FROM pg_proc WHERE oid='public.catalog_extra_authority(uuid,uuid)'::regprocedure)),FALSE,'projection owner cannot bypass tenant RLS');
+SELECT * FROM finish();
+ROLLBACK;

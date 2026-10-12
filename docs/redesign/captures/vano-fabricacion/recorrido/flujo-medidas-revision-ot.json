@@ -1,0 +1,24 @@
+{
+  "versionA": "12d6a301-b0db-46f3-aac6-b58b592bec17",
+  "versionB": "b4142bea-cbcd-4c8a-b805-82a42bf6aacd",
+  "unchangedPdf": true,
+  "revision": "REV-B",
+  "price_change": {
+    "reason": null,
+    "currency": "CLP",
+    "after_net": "331020",
+    "delta_net": "16745.00",
+    "before_net": "314275.00"
+  },
+  "confirmedRelease": [
+    {
+      "id": "6358e737-a277-4474-af2e-09493d06fbd1",
+      "code": "OT-P-000300-REV-B-01"
+    }
+  ],
+  "pendingGate": "production_measurements_unconfirmed",
+  "fabrication": {
+    "width_mm": "1600.00",
+    "height_mm": "1200.00"
+  }
+}

@@ -1,0 +1,19 @@
+[
+  {
+    "case": "PDF ausente bloquea; preparar usa job real de la emisión exacta",
+    "result": "PASA",
+    "controlled": "Solo la primera respuesta omite metadata; generación y bytes reales"
+  },
+  {
+    "case": "Respuesta perdida tras commit, recarga y confirmación conservan una operación",
+    "result": "PASA",
+    "same_intent": true,
+    "exact_pdf_attachment": true
+  },
+  {
+    "case": "Revocación previa bloquea SMTP; acción nueva abre cotización y exige otra confirmación",
+    "result": "PASA",
+    "previous_mail_unchanged": true,
+    "new_record": true
+  }
+]

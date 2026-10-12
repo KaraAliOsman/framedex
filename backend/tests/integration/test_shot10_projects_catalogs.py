@@ -60,7 +60,7 @@ def position_data(system_id, width="1000.00"):
 @pytest.fixture
 def manual_pair(documentary_tenant):
     org, other, users, other_user = documentary_tenant
-    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND is_global")["id"]
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1 AND is_global")["id"]
     result = []
     for tenant, actor in ((org, users["OWNER"]), (other, other_user)):
         with as_user(actor):
@@ -174,6 +174,7 @@ def test_save_update_reopen_matches_engine_exactly(manual_pair):
     with as_user(users["OWNER"]):
         reopened = service.position_public(
             service.position_row(org, position_id),
+            org_id=org,
         )
         persisted = one(
             "SELECT parametric_tree::text AS tree, bom_snapshot::text AS bom "
@@ -308,7 +309,7 @@ def test_catalog_write_denied_in_postgresql(documentary_tenant, role):
         "to_jsonb(s) || jsonb_build_object("
         "'id',%s::text,'org_id',%s::text,'code',%s::text,"
         "'is_global',false,'is_demo',false,'technical_locked',false))).* "
-        "FROM public.profile_systems s WHERE code='DEMO_60' AND is_global "
+        "FROM public.profile_systems s WHERE code='DEMO_60' AND version=1 AND is_global "
         "RETURNING id",
         [str(catalog_id), str(org), f"TEST-{catalog_id.hex}"],
     )

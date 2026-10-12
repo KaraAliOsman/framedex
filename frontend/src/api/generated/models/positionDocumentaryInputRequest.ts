@@ -20,7 +20,7 @@ export interface PositionDocumentaryInputRequest {
   calculation_hash: string;
   /**
    * @minLength 1
-   * @maxLength 100
+   * @maxLength 120
    */
   location_tag: string;
   manufacturing_placement_policy_id: string;

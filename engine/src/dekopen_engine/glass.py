@@ -8,8 +8,13 @@ mass several times the real one."""
 
 from decimal import ROUND_HALF_UP, Decimal
 import re
+from typing import Any, TypedDict
 
 from dekopen_engine.models import GlassPiece
+from dekopen_engine.glass_composition import (
+    GlassComposition, GlassProduct, GlassProcessing, glass_mass_per_m2, net_glass_thickness,
+    parse_glass_notation, total_glass_thickness,
+)
 
 FLOAT_GLASS_DENSITY_KG_M3 = Decimal("2500")
 GLASS_WEIGHT_FACTOR_KG_M2_PER_MM = Decimal("2.50")
@@ -20,6 +25,31 @@ _THICKNESS_OUTPUT_QUANTUM = Decimal("0.01")
 _SQUARE_MILLIMETRES_PER_SQUARE_METRE = Decimal("1000000")
 _MONOLITHIC_PREFIX = re.compile(r"^\d+(?:\.\d+)?")
 _PANE_TOKEN = re.compile(r"^\d+(?:\.\d+)?$")
+
+
+class GlassMetadata(TypedDict, total=False):
+    composition: GlassComposition
+    thickness_total_mm: Decimal | None
+    billable_area_m2: Decimal
+    processing: GlassProcessing
+
+
+def glass_piece_metadata(product: GlassProduct | None, processing: GlassProcessing | None,
+                         area_m2: Decimal) -> GlassMetadata:
+    extra: GlassMetadata = {}
+    if product is not None:
+        total = total_glass_thickness(product.composition)
+        if total is not None:
+            scaled = total.quantize(_THICKNESS_OUTPUT_QUANTUM)
+            if scaled != total:
+                raise ValueError("El espesor total no puede perder precisión en el BOM.")
+            total = scaled
+        extra = {"composition": product.composition,
+                 "thickness_total_mm": total,
+                 "billable_area_m2": max(area_m2, product.billing.minimum_area_m2)}
+    if processing is not None:
+        extra["processing"] = processing
+    return extra
 
 
 def _parse_pane_thickness(pane: str) -> Decimal | None:
@@ -63,10 +93,14 @@ def exact_glass_area_m2(width_mm: Decimal, height_mm: Decimal) -> Decimal:
 
 def exact_glass_weight(
     width_mm: Decimal, height_mm: Decimal, glass_spec: str,
+    product: GlassProduct | None = None,
 ) -> Decimal | None:
     """Exact mass, or None when the composition authority is unreadable."""
     if width_mm <= Decimal("0") or height_mm <= Decimal("0"):
         raise ValueError("Glass dimensions must be positive")
+    if product is not None:
+        mass = glass_mass_per_m2(product)
+        return None if mass is None else exact_glass_area_m2(width_mm, height_mm) * mass
     net = derive_net_glass_thickness(glass_spec)
     if net is None:
         return None
@@ -81,12 +115,16 @@ def build_glass_piece(
     height_mm: Decimal,
     glass_spec: str,
     article_sku: str | None = None,
+    product: GlassProduct | None = None,
+    processing: GlassProcessing | None = None,
 ) -> GlassPiece:
     """Build the public glass result while avoiding any double rounding."""
 
-    thickness_net_exact_mm = derive_net_glass_thickness(glass_spec)
+    thickness_net_exact_mm = (net_glass_thickness(product.composition)
+                             if product is not None else derive_net_glass_thickness(glass_spec))
     area_m2_exact = exact_glass_area_m2(width_mm, height_mm)
-    weight_kg_exact = exact_glass_weight(width_mm, height_mm, glass_spec)
+    weight_kg_exact = exact_glass_weight(width_mm, height_mm, glass_spec, product)
+    extra = glass_piece_metadata(product, processing, area_m2_exact)
 
     return GlassPiece(
         bay_id=bay_id,
@@ -104,4 +142,19 @@ def build_glass_piece(
         ),
         glass_spec=glass_spec,
         article_sku=article_sku,
+        **extra,
     )
+
+
+def migrate_glass_spec(spec: str | None) -> dict[str, Any]:
+    """Additive upgrade for catalog metadata; never rewrite a sealed BOM."""
+    try:
+        composition = parse_glass_notation(spec or "")
+    except ValueError as error:
+        return {"status": "UNKNOWN", "composition": None, "review_required": True,
+                "reason": str(error)}
+    reasons = []
+    if total_glass_thickness(composition) is None:
+        reasons.append("Falta el espesor del PVB.")
+    return {"status": "PARSED", "composition": composition.model_dump(mode="json"),
+            "review_required": bool(reasons), "reason": " ".join(reasons)}

@@ -1,5 +1,5 @@
 // frontend/src/features/commands/CommandPalette.test.tsx
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useMemo, useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 
@@ -9,24 +9,34 @@ import { useRegisterCommands } from "./registry";
 import type { ResolvedCommand } from "./types";
 
 const searchMock = vi.fn(
-  async (): Promise<{
+  async (
+    ...args: unknown[]
+  ): Promise<{
     status: number;
     data: { results: import("../../api/generated/models").SearchResult[] };
-  }> => ({ status: 200, data: { results: [] } }),
+  }> => {
+    void args;
+    return { status: 200, data: { results: [] } };
+  },
 );
 vi.mock("../../api/generated/dekopen", async (importOriginal) => {
   const original = await importOriginal<typeof import("../../api/generated/dekopen")>();
-  return { ...original, globalSearch: () => searchMock() };
+  return { ...original, globalSearch: (...args: unknown[]) => searchMock(...args) };
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  searchMock.mockClear();
+});
 
 function Harness({
   commands,
   organizationId = null,
+  contextKey = "",
 }: {
   commands: ResolvedCommand[];
   organizationId?: string | null;
+  contextKey?: string;
 }) {
   const surface = useMemo(() => ({ commands }), [commands]);
   useRegisterCommands(surface);
@@ -37,6 +47,7 @@ function Harness({
         navItems={[{ to: "/projects", label: "Proyectos" }]}
         onNavigate={setNavigated}
         organizationId={organizationId}
+        contextKey={contextKey}
       />
       <output data-testid="navigated">{navigated}</output>
     </>
@@ -47,6 +58,24 @@ function openPalette() {
   fireEvent.keyDown(window, { key: "k", ctrlKey: true });
   return screen.getByRole("dialog");
 }
+
+it("contains Tab and Shift+Tab on the input while options use active-descendant navigation", () => {
+  render(<Harness commands={[{ id: "first", title: "Primero", run: vi.fn() }]} />);
+  openPalette();
+  const input = screen.getByPlaceholderText(t("cmd.placeholder"));
+  expect(input).toHaveFocus();
+  for (const shiftKey of [false, true]) {
+    const event = new KeyboardEvent("keydown", {
+      key: "Tab",
+      shiftKey,
+      bubbles: true,
+      cancelable: true,
+    });
+    fireEvent(input, event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(input).toHaveFocus();
+  }
+});
 
 it("opens with Ctrl+K, filters by keyword, and runs navigation", () => {
   const run = vi.fn();
@@ -72,6 +101,91 @@ it("opens with Ctrl+K, filters by keyword, and runs navigation", () => {
   openPalette();
   fireEvent.click(screen.getByRole("option", { name: /Igualar anchos/ }));
   expect(run).toHaveBeenCalledWith({});
+});
+
+it("aborts a tenant search and cannot resurrect its result after an organization switch", async () => {
+  let resolve!: (value: Awaited<ReturnType<typeof searchMock>>) => void;
+  searchMock.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    const commands: ResolvedCommand[] = [];
+    const view = render(<Harness commands={commands} organizationId="old-org" />);
+    openPalette();
+    fireEvent.change(screen.getByPlaceholderText(t("cmd.placeholder")), {
+      target: { value: "cliente" },
+    });
+    await vi.advanceTimersByTimeAsync(300);
+    const options = searchMock.mock.calls[0]![1] as { signal: AbortSignal };
+    view.rerender(<Harness commands={commands} organizationId="new-org" />);
+    expect(options.signal.aborted).toBe(true);
+    await act(async () =>
+      resolve({
+        status: 200,
+        data: {
+          results: [
+            {
+              group: "clients",
+              id: "old",
+              title: "Cliente anterior",
+              subtitle: null,
+              path: "/clients/old",
+            },
+          ],
+        },
+      }),
+    );
+    openPalette();
+    expect(screen.queryByRole("option", { name: /Cliente anterior/ })).toBeNull();
+    expect(screen.getByPlaceholderText(t("cmd.placeholder"))).toHaveValue("");
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("drops a captured command when the editor selection changes while collecting parameters", () => {
+  const oldRun = vi.fn(),
+    newRun = vi.fn();
+  const command = {
+    id: "width",
+    title: "Definir ancho",
+    params: [{ kind: "number" as const, id: "width", label: "Ancho" }],
+    run: oldRun,
+  };
+  const view = render(<Harness commands={[command]} />);
+  openPalette();
+  fireEvent.click(screen.getByRole("option", { name: /Definir ancho/ }));
+  fireEvent.change(screen.getByPlaceholderText("Ancho"), { target: { value: "700" } });
+  view.rerender(<Harness commands={[{ ...command, run: newRun }]} />);
+  expect(screen.queryByPlaceholderText("Ancho")).toBeNull();
+  expect(screen.getByPlaceholderText(t("cmd.placeholder"))).toHaveValue("");
+  expect(oldRun).not.toHaveBeenCalled();
+  expect(newRun).not.toHaveBeenCalled();
+});
+
+it("restores focus after a parameter step and closes on a different route", () => {
+  const commands = [
+    {
+      id: "width",
+      title: "Definir ancho",
+      params: [{ kind: "number" as const, id: "width", label: "Ancho" }],
+      run: vi.fn(),
+    },
+  ];
+  const origin = document.createElement("button");
+  document.body.append(origin);
+  origin.focus();
+  const view = render(<Harness commands={commands} contextKey="position-one" />);
+  openPalette();
+  fireEvent.click(screen.getByRole("option", { name: /Definir ancho/ }));
+  view.rerender(<Harness commands={commands} contextKey="position-two" />);
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(document.activeElement).toBe(origin);
+  origin.remove();
 });
 
 it("collects a number parameter before running", () => {

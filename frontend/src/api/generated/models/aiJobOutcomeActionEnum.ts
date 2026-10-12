@@ -10,6 +10,7 @@
  * * `applied` - applied
  * * `declined` - declined
  * * `apply_failed` - apply_failed
+ * * `undone` - undone
  */
 export type AiJobOutcomeActionEnum =
   (typeof AiJobOutcomeActionEnum)[keyof typeof AiJobOutcomeActionEnum];
@@ -18,4 +19,5 @@ export const AiJobOutcomeActionEnum = {
   applied: "applied",
   declined: "declined",
   apply_failed: "apply_failed",
+  undone: "undone",
 } as const;

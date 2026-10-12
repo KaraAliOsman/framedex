@@ -1,0 +1,101 @@
+{
+  "records": [
+    {
+      "surface": "compras",
+      "width": 1440,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "inventario",
+      "width": 1440,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "compras",
+      "width": 1440,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "inventario",
+      "width": 1440,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "compras",
+      "width": 1280,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "inventario",
+      "width": 1280,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "compras",
+      "width": 1280,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "inventario",
+      "width": 1280,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "compras",
+      "width": 1024,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "inventario",
+      "width": 1024,
+      "theme": "light",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "compras",
+      "width": 1024,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": []
+    },
+    {
+      "surface": "inventario",
+      "width": 1024,
+      "theme": "dark",
+      "overflow": false,
+      "pageErrors": []
+    }
+  ],
+  "states": {
+    "loading": true,
+    "errorRetry": true,
+    "empty": true,
+    "denied": true
+  },
+  "inventoryStates": {
+    "loading": true,
+    "errorRetry": true,
+    "empty": true,
+    "denied": true,
+    "blocked": "RT desechado: sin reserva/movimiento; historia y etiqueta conservadas"
+  }
+}

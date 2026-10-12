@@ -19,12 +19,21 @@ from dekopen_engine import (
     SlidingLayout,
     SlidingPanel,
     SlidingPanelKind,
+    SlidingTravel,
     SystemParams,
     calculate_geometry,
     evaluate_product,
 )
 from dekopen_engine.contour import Contour
-from dekopen_engine.models import PlanPoint
+from dekopen_engine.catalog_rules import CatalogRuleError
+from dekopen_engine.finishes import resolve_finish
+from dekopen_engine.weight import MissingFabricationAuthority
+from dekopen_engine.models import PlanPoint, Opening, OpeningUse, HingedLayout, HardwareSelection
+from dekopen_engine.openings import OpeningCapabilityError
+from dekopen_engine.glass_composition import GlassProduct, GlassProcessing
+from dekopen_engine.extra_models import ExtraSelection, ExtraContext
+from pydantic import TypeAdapter
+import json
 from dekopen_engine.product import (
     ConnectionKind,
     EdgeSide,
@@ -46,6 +55,7 @@ class UnsupportedEngineContract(ValueError):
 
 
 _NODE_FIELDS = {
+    "extras", "extra_context",
     "id",
     "type",
     "width_mm",
@@ -54,12 +64,19 @@ _NODE_FIELDS = {
     "mullion_profile_sku",
     "children",
     "opening_type",
+    "opening", "opening_use", "opening_recipe_code", "hinged_layout",
     "glass_thickness_mm",
     "glass_spec",
     "glass_article_sku",
+    "glass_product",
+    "glass_processing",
+    "sill_height_mm",
+    "is_sidelight",
     "panel_article_sku",
     "hardware_set_sku",
+    "hardware_selection",
     "handle_height_mm",
+    "sill_height_mm",
     "door_handedness",
     "sliding_layout",
 }
@@ -95,8 +112,26 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         raise InvalidEngineRequest("Every node requires string id and type")
 
     values: dict[str, object] = {"id": raw["id"]}
+    if "extras" in raw:
+        try:
+            values["extras"] = TypeAdapter(list[ExtraSelection]).validate_json(json.dumps(raw["extras"], allow_nan=False))
+        except (ValueError, TypeError) as error:
+            raise InvalidEngineRequest("Revisa los extras, sus lados, vuelos y hojas compatibles.") from error
+    if raw.get("extra_context") is not None:
+        try:
+            values["extra_context"] = ExtraContext.model_validate_json(json.dumps(raw["extra_context"], allow_nan=False))
+        except (ValueError, TypeError) as error:
+            raise InvalidEngineRequest("Revisa las medidas declaradas del vano de obra.") from error
+    for field, model in (("opening", Opening), ("hinged_layout", HingedLayout), ("hardware_selection", HardwareSelection)):
+        if raw.get(field) is not None:
+            try:
+                values[field] = model.model_validate_json(json.dumps(raw[field], allow_nan=False))
+            except (ValueError, TypeError) as error:
+                raise InvalidEngineRequest("Revisa el movimiento, las bisagras y las hojas activa/pasiva.") from error
     try:
         values["type"] = NodeType(cast(str, raw["type"]))
+        if raw.get("opening_use") is not None:
+            values["opening_use"] = OpeningUse(cast(str, raw["opening_use"]))
         if "opening_type" in raw and raw["opening_type"] is not None:
             if not isinstance(raw["opening_type"], str):
                 raise InvalidEngineRequest("opening_type must be a string")
@@ -113,6 +148,7 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         "glass_article_sku",
         "panel_article_sku",
         "hardware_set_sku",
+        "opening_recipe_code",
     ):
         if field_name in raw and raw[field_name] is not None:
             if not isinstance(raw[field_name], str):
@@ -121,6 +157,17 @@ def parse_parametric_node(payload: object) -> ParametricNode:
 
     if "sliding_layout" in raw and raw["sliding_layout"] is not None:
         values["sliding_layout"] = _parse_sliding_layout(raw["sliding_layout"])
+
+    for field, model_type in (("glass_product", GlassProduct), ("glass_processing", GlassProcessing)):
+        if raw.get(field) is not None:
+            try:
+                values[field] = model_type.model_validate_json(json.dumps(raw[field], allow_nan=False))
+            except (ValueError, TypeError) as error:
+                raise InvalidEngineRequest("Revisa la composición y los procesos del vidrio.") from error
+    if "is_sidelight" in raw:
+        if not isinstance(raw["is_sidelight"], bool):
+            raise InvalidEngineRequest("is_sidelight must be a boolean")
+        values["is_sidelight"] = raw["is_sidelight"]
 
     if "door_handedness" in raw and raw["door_handedness"] is not None:
         if raw["door_handedness"] not in ("LEFT", "RIGHT"):
@@ -154,7 +201,7 @@ def _parse_sliding_layout(payload: object) -> SlidingLayout:
     parsed_panels: list[SlidingPanel] = []
     for index, panel in enumerate(panels):
         panel_raw = _require_dict(panel, f"sliding_layout.panels[{index}]")
-        unexpected_panel = set(panel_raw) - {"slot", "kind", "track"}
+        unexpected_panel = set(panel_raw) - {"slot", "kind", "track", "travel"}
         if unexpected_panel:
             raise InvalidEngineRequest(
                 "sliding_layout.panels contains unsupported fields: "
@@ -173,9 +220,15 @@ def _parse_sliding_layout(payload: object) -> SlidingLayout:
             not isinstance(track, int) or isinstance(track, bool)
         ):
             raise InvalidEngineRequest("sliding_layout.panels[].track must be an integer or null")
-        parsed_panels.append(
-            SlidingPanel(slot=panel_raw["slot"], kind=kind, track=track)
-        )
+        travel_values = {}
+        if "travel" in panel_raw:
+            try:
+                travel_values["travel"] = (None if panel_raw["travel"] is None
+                                           else SlidingTravel(panel_raw["travel"]))
+            except (ValueError, TypeError) as error:
+                raise InvalidEngineRequest("El recorrido debe ser izquierda o derecha.") from error
+        parsed_panels.append(SlidingPanel(slot=panel_raw["slot"], kind=kind, track=track,
+                                        **travel_values))
     return SlidingLayout(tracks=raw["tracks"], panels=parsed_panels)
 
 
@@ -325,6 +378,7 @@ def normalized_root_from_api(
     color: str,
     params: SystemParams,
 ) -> ParametricNode:
+    resolve_finish(params, color)
     if color not in params.finishes:
         raise InvalidEngineRequest(
             f"finish '{color}' is not declared for system {params.system_code}"
@@ -350,9 +404,11 @@ def calculate_from_api(
         nominal_height_mm=nominal_height_mm, color=color, params=params,
     )
     try:
-        return calculate_geometry(root, params, is_foiled=color != "WHITE")
+        return calculate_geometry(root, params, is_foiled=color != "WHITE", finish=color)
     except NotImplementedError as error:
         raise UnsupportedEngineContract(str(error)) from error
+    except (CatalogRuleError, MissingFabricationAuthority, OpeningCapabilityError):
+        raise
     except ValueError as error:
         raise InvalidEngineRequest(str(error)) from error
 
@@ -544,6 +600,7 @@ def evaluate_assembly_from_api(
     params: SystemParams,
     coupler_articles: dict[str, EffectiveProfileArticle] | None = None,
 ) -> ProductEvaluation:
+    resolve_finish(params, color)
     if color not in params.finishes:
         raise InvalidEngineRequest(
             f"finish '{color}' is not declared for system {params.system_code}"
@@ -553,9 +610,10 @@ def evaluate_assembly_from_api(
         if isinstance(product, ProductModel)
         else parse_product_model(product)
     )
-    return evaluate_product(
-        model, params, coupler_articles=coupler_articles, is_foiled=color != "WHITE"
+    evaluation = evaluate_product(
+        model, params, coupler_articles=coupler_articles, is_foiled=color != "WHITE", finish=color
     )
+    return evaluation
 
 
 def is_product_tree(payload: object) -> bool:

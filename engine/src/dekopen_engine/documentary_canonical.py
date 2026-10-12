@@ -9,7 +9,7 @@ from enum import Enum
 from hashlib import sha256
 import json
 import numbers
-from typing import TypeAlias
+from typing import TypeAlias, cast
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -30,6 +30,24 @@ def _datetime_text(value: datetime) -> str:
 
 
 def _documentary_value(value: object) -> DocumentaryValue:
+    # Decoded sealed snapshots overwhelmingly contain exact JSON builtins.
+    # Resolve those without traversing model/number ABCs at every leaf; typed
+    # subclasses still go through the original authority conversion below.
+    kind = type(value)
+    if value is None or kind in (str, bool):
+        return cast(DocumentaryValue, value)
+    if kind is int:
+        integer = cast(int, value)
+        if abs(integer) > MAX_SAFE_INTEGER:
+            raise ValueError("Documentary integers must be JSON-safe")
+        return integer
+    if kind is dict:
+        mapping = cast(dict[object, object], value)
+        if not all(isinstance(key, str) for key in mapping):
+            raise ValueError("Documentary object keys must be strings")
+        return {cast(str, key): _documentary_value(item) for key, item in mapping.items()}
+    if kind is list:
+        return [_documentary_value(item) for item in cast(list[object], value)]
     if isinstance(value, BaseModel):
         return _documentary_value(value.model_dump(mode="python", by_alias=True))
     if isinstance(value, Enum):

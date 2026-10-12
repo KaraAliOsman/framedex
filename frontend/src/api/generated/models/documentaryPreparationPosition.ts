@@ -18,7 +18,7 @@ export interface DocumentaryPreparationPosition {
   position_id: string;
   /** @pattern ^sha256:[0-9a-f]{64}$ */
   calculation_hash: string;
-  /** @maxLength 100 */
+  /** @maxLength 120 */
   location_tag: string;
   /** @nullable */
   manufacturing_placement_policy_id: string | null;

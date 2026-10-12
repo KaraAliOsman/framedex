@@ -1,0 +1,171 @@
+[
+  {
+    "name": "sin-credencial-light-1440",
+    "screenshot": "sin-credencial-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "error-proveedor-light-1440",
+    "screenshot": "error-proveedor-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "presupuesto-bloqueado-light-1440",
+    "screenshot": "presupuesto-bloqueado-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "conexion-verificada-light-1440",
+    "screenshot": "conexion-verificada-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "presupuesto-conserva-conexion",
+    "passed": true
+  },
+  {
+    "name": "trabajo-costo-traza-light-1440",
+    "screenshot": "trabajo-costo-traza-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "trabajos-vacio-light-1440",
+    "screenshot": "trabajos-vacio-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "asistente-real-light-1440",
+    "screenshot": "asistente-real-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "agente-costo-traza-light-1440",
+    "screenshot": "agente-costo-traza-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "fases-reales",
+    "phases": [
+      "CONSULTING_PROJECT"
+    ],
+    "job_state": "SUCCEEDED"
+  },
+  {
+    "name": "ajustes-carga-light-1440",
+    "screenshot": "ajustes-carga-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-sin-permiso-light-1440",
+    "screenshot": "ajustes-sin-permiso-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-error-red-light-1440",
+    "screenshot": "ajustes-error-red-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "recuperacion-red-light",
+    "passed": true
+  },
+  {
+    "name": "ajustes-carga-dark-1024",
+    "screenshot": "ajustes-carga-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-sin-permiso-dark-1024",
+    "screenshot": "ajustes-sin-permiso-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-error-red-dark-1024",
+    "screenshot": "ajustes-error-red-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "recuperacion-red-dark",
+    "passed": true
+  },
+  {
+    "name": "presupuesto-conserva-conexion-light-1440",
+    "screenshot": "presupuesto-conserva-conexion-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  }
+]

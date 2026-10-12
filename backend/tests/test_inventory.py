@@ -16,6 +16,23 @@ from documents.repository import DocumentaryError
 from inventory import service, views as inventory_views
 
 
+def test_stock_specification_is_human_and_preserves_declared_dimensions() -> None:
+    attributes = {
+        "color": "WHITE", "stock_length_mm": "6000.00",
+        "manufacturer_name": "Catálogo DEMO", "cutting_profile_id": str(uuid4()),
+        "source_trace": {"private_id": str(uuid4()), "hash": "abcdef0123456789"},
+    }
+    assert service._spec_text(json.dumps(attributes)) == "Catálogo DEMO · Blanco · Largo 6\u202f000 mm"
+    assert service._spec_text({
+        "composition": "4-16-4 Float Incoloro", "oriented_width_mm": "810.25",
+        "oriented_height_mm": "510.00", "location_tag": "Destino privado",
+        "polishing": {"top": True, "right": False, "bottom": False, "left": True},
+    }) == "4-16-4 Float Incoloro · 810,25 × 510 mm · Cantos pulidos: superior, izquierdo"
+    assert service._spec_text({"width_mm": "1000.00"}) == "Ancho 1\u202f000 mm · Sin dato en la otra medida"
+    assert service._spec_text({"width_mm": "NaN", "height_mm": False}) == ""
+    assert service._spec_text("invalid") == ""
+
+
 def test_list_stock_returns_view_rows() -> None:
     org_id = uuid4()
     stock_row = {
@@ -32,7 +49,9 @@ def test_list_stock_returns_view_rows() -> None:
     }
 
     def fake_rows(query, params=()):
-        if "order_requirement_lines" in query:
+        if "GROUP BY m.item_id" in query:
+            return []
+        if "private.stock_incoming" in query:
             return []
         return [stock_row]
 
@@ -70,7 +89,9 @@ def test_list_stock_incoming_keys_by_spec_variant() -> None:
     )
 
     def fake_rows(query, params=()):
-        if "order_requirement_lines" in query:
+        if "GROUP BY m.item_id" in query:
+            return []
+        if "private.stock_incoming" in query:
             return [{"line_snapshot": line_snapshot, "open_qty": Decimal(2)}]
         return [stock_row]
 
@@ -370,6 +391,7 @@ def _remnant_row(remnant_id, order_id):
 
     return {
         "id": remnant_id,
+        "code": "RT-000001",
         "kind": "BAR",
         "stock_authority_id": uuid4(),
         "sheet_workshop_sku": None,
@@ -929,6 +951,8 @@ def test_list_bar_authorities_merges_profiles_and_reinforcement() -> None:
             return [profile_row]
         if "reinforcement_articles" in query:
             return [reinforce_row]
+        if "catalog_color_skus" in query:
+            return []
         raise AssertionError(query)
 
     with patch("inventory.remnants.rows", side_effect=fake_rows):
@@ -986,7 +1010,11 @@ def test_remnant_label_returns_qr_and_identity() -> None:
 
     # Identity is the authority's commercial SKU, not the internal psi UUID.
     assert output["identity"] == "PROF-60-W"
-    assert f"DEKOPEN|REMNANT|{remnant_id}" == output["qr_payload"]
+    from urllib.parse import parse_qs, urlsplit
+
+    address = urlsplit(output["qr_payload"])
+    assert address.path == "/inventory"
+    assert parse_qs(address.query) == {"remnant": [str(remnant_id)], "code": ["RT-000001"]}
     assert "<svg" in output["qr_svg"]
     assert output["remnant"]["id"] == str(remnant_id)
 

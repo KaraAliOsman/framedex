@@ -4,10 +4,14 @@
  * Narrow views over the trace payload's open dicts — every value shown is
  * evidence stored at seal time, never recomputed client-side. */
 
-import { fmtMm } from "../../format";
+import { fmtMm, formatDecimal } from "../../format";
+import { EntityCode } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import {
   opFaceLabel,
+  cutRoleLabel,
+  movementLabel,
+  stockSourceLabel,
   opKindLabel,
   opReferenceLabel,
   remnantStatusLabel,
@@ -43,10 +47,12 @@ type TraceMovement = {
   created_at?: string;
   sku?: string;
   variant_key?: string;
+  unit?: string;
 };
 
 type TraceRemnant = {
   id?: string;
+  code?: string;
   kind?: string;
   status?: string;
   length_mm?: string;
@@ -124,7 +130,7 @@ export function TracePlan({ plan }: { plan: ProductionOrderTracePlan }) {
                   {bar.material ? ` · ${bar.material}` : ""}
                   {bar.color ? ` · ${bar.color}` : ""}
                 </td>
-                <td>{bar.source ?? "NEW"}</td>
+                <td>{stockSourceLabel(bar.source)}</td>
                 <td>{bar.cuts?.length ?? 0}</td>
               </tr>
             ))}
@@ -146,7 +152,7 @@ export function TracePlan({ plan }: { plan: ProductionOrderTracePlan }) {
               <tr key={sheet.sheet_index ?? index}>
                 <td>{sheet.sheet_index ?? index + 1}</td>
                 <td>{sheet.workshop_sku ?? "—"}</td>
-                <td>{sheet.source ?? "NEW"}</td>
+                <td>{stockSourceLabel(sheet.source)}</td>
                 <td>{sheet.pieces?.length ?? 0}</td>
               </tr>
             ))}
@@ -178,9 +184,14 @@ export function TraceStock({ stock }: { stock: ProductionOrderTraceStock }) {
           <tbody>
             {movements.map((movement) => (
               <tr key={movement.id}>
-                <td>{movement.movement_type}</td>
+                <td>{movementLabel(movement.movement_type)}</td>
                 <td>{movement.sku}</td>
-                <td>{movement.quantity}</td>
+                <td className="mono">
+                  {formatDecimal(
+                    movement.quantity,
+                    movement.unit === "KG" ? 1 : ["M", "M2"].includes(movement.unit ?? "") ? 2 : 0,
+                  )}
+                </td>
                 <td>{movement.note ?? "—"}</td>
               </tr>
             ))}
@@ -191,6 +202,7 @@ export function TraceStock({ stock }: { stock: ProductionOrderTraceStock }) {
         <ul className="production-trace-remnants">
           {remnants.map((remnant) => (
             <li key={remnant.id}>
+              <EntityCode kind="retazo" code={remnant.code} /> ·{" "}
               {remnant.rack_location ? <strong>{remnant.rack_location} · </strong> : null}
               {stockKindLabel(remnant.kind)} · {remnantStatusLabel(remnant.status)}
               {remnant.length_mm ? ` · ${fmtMm(remnant.length_mm)} mm` : ""}
@@ -239,7 +251,7 @@ export function TracePieceMatches({
               : ""}
             {match.location?.position_code ? ` · ${match.location.position_code}` : ""}
             {match.location?.location_code ? ` · ${match.location.location_code}` : ""}
-            {match.location?.piece?.role ? ` · ${match.location.piece.role}` : ""}
+            {match.location?.piece?.role ? ` · ${cutRoleLabel(match.location.piece.role)}` : ""}
             {match.location?.piece?.length_mm
               ? ` · ${fmtMm(match.location.piece.length_mm)} mm`
               : ""}
@@ -253,10 +265,10 @@ export function TracePieceMatches({
                     {op.member_label ? `${op.member_label} · ` : ""}
                     {op.sequence_no ? `${op.sequence_no}. ` : ""}
                     {opKindLabel(op.kind)}
-                    {op.u_mm ? ` · u ${op.u_mm} mm` : ""}
+                    {op.u_mm ? ` · u ${fmtMm(op.u_mm)} mm` : ""}
                     {op.reference ? ` · ${opReferenceLabel(op.reference)}` : ""}
                     {op.face ? ` · ${opFaceLabel(op.face)}` : ""}
-                    {op.depth_mm ? ` · ${op.depth_mm} mm` : ""}
+                    {op.depth_mm ? ` · ${fmtMm(op.depth_mm)} mm` : ""}
                     {op.tool_id ? ` · ${op.tool_id}` : ""}
                   </li>
                 ))}

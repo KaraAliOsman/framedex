@@ -1,0 +1,261 @@
+{
+  "result": "PASS",
+  "records": [
+    {
+      "name": "direccion-invalida-1440-light",
+      "scope": ".production-action-error",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "requiere-orden-1440-light",
+      "scope": ".production-action-error",
+      "simulation": "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-invalidado-1440-light",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-sin-plan-1440-light",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "direccion-invalida-1440-dark",
+      "scope": ".production-action-error",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "requiere-orden-1440-dark",
+      "scope": ".production-action-error",
+      "simulation": "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-invalidado-1440-dark",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-sin-plan-1440-dark",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "direccion-invalida-1280-light",
+      "scope": ".production-action-error",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "requiere-orden-1280-light",
+      "scope": ".production-action-error",
+      "simulation": "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-invalidado-1280-light",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-sin-plan-1280-light",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "direccion-invalida-1280-dark",
+      "scope": ".production-action-error",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "requiere-orden-1280-dark",
+      "scope": ".production-action-error",
+      "simulation": "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-invalidado-1280-dark",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-sin-plan-1280-dark",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "direccion-invalida-1024-light",
+      "scope": ".production-action-error",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "requiere-orden-1024-light",
+      "scope": ".production-action-error",
+      "simulation": "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-invalidado-1024-light",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-sin-plan-1024-light",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "direccion-invalida-1024-dark",
+      "scope": ".production-action-error",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "requiere-orden-1024-dark",
+      "scope": ".production-action-error",
+      "simulation": "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-invalidado-1024-dark",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-sin-plan-1024-dark",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "direccion-invalida-390-light",
+      "scope": ".production-action-error",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "requiere-orden-390-light",
+      "scope": ".production-action-error",
+      "simulation": "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-invalidado-390-light",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-sin-plan-390-light",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "direccion-invalida-390-dark",
+      "scope": ".production-action-error",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "requiere-orden-390-dark",
+      "scope": ".production-action-error",
+      "simulation": "HTTP 422 injected; the real 101-order boundary is verified by PostgreSQL integration.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-invalidado-390-dark",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiquetas-sin-plan-390-dark",
+      "scope": ".production-packing",
+      "simulation": "HTTP labels response injected from the real fixture manifest; stale/missing plans are covered in backend tests.",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    }
+  ]
+}

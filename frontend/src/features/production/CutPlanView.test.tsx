@@ -149,7 +149,7 @@ describe("CutPlanView", () => {
     const aside = container.querySelector(".cutplan-detail") as Element;
     expect(aside.textContent).toContain("M-60 · B1-1");
     expect(aside.textContent).toContain("Marco");
-    expect(aside.textContent).toContain("2000 mm");
+    expect(aside.textContent).toContain("2\u2009000 mm");
     // member key = interchangeable spec (location+role+sku+measure+angles)
     // — M-01 (2000 mm) and M-02 (3035 mm) are different physical pieces.
     const members = container.querySelectorAll(".is-member");
@@ -166,6 +166,25 @@ describe("CutPlanView", () => {
     expect(nest.classList.contains("is-selected")).toBe(true);
     const aside = container.querySelector(".cutplan-detail") as Element;
     expect(aside.textContent).toContain("VID-4MM · S1-2");
-    expect(aside.textContent).toContain("1400×1000");
+    expect(aside.textContent).toContain("1\u2009400 × 1\u2009000");
+  });
+
+  it("preserves declared square and fractional angles while keeping an absent end unknown", () => {
+    const plan = structuredClone(optimization);
+    const cut = plan.bars?.workshop_cut_plan?.[0]?.cuts[0];
+    if (!cut) throw new Error("The fixture must declare a cut");
+    cut.angle_left = "22.5000";
+    cut.angle_right = "90.0000";
+    const { container, rerender } = render(<CutPlanView optimization={plan} />);
+    const legend = () => container.querySelector(".cutplan-piece-legend button") as HTMLElement;
+    expect(legend().textContent).toContain("22,5° / 90°");
+    fireEvent.click(legend());
+    expect(container.querySelector(".cutplan-detail")!.textContent).toContain("22,5° / 90°");
+    expect(cut.angle_left).toBe("22.5000");
+    cut.angle_right = null;
+    rerender(<CutPlanView optimization={plan} />);
+    expect(legend().textContent).toContain("22,5° / Sin dato");
+    fireEvent.click(legend());
+    expect(container.querySelector(".cutplan-detail")!.textContent).toContain("22,5° / Sin dato");
   });
 });

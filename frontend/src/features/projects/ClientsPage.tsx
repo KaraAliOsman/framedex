@@ -1,550 +1,620 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
-
 import { ApiError } from "../../api/apiMutator";
-import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import {
+  clientDirectory,
+  clientDossier,
+  clientMerge,
+  clientMergePreview,
+  clientNoteAdd,
   clientsCreate,
   clientsDeactivate,
-  clientsList,
+  clientsRetrieve,
   clientsUpdate,
-  projectsList,
 } from "../../api/generated/dekopen";
-import type { ClientResponse, ProjectResponse } from "../../api/generated/models";
-import type { PatchedClientUpdateRequest } from "../../api/generated/models/patchedClientUpdateRequest";
+import type { ClientWriteRequest, ClientMergePreview } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
-import { t } from "../../i18n/es-CL";
-import { Button, DeniedState, Field, PageHeader, useConfirm } from "../../ui";
-import "./projects.css";
-import { isValidEmail, isValidRut } from "../../format";
-import { formatDate } from "../money";
+import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
+import {
+  BlockedState,
+  Button,
+  DeniedState,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+  StatusBadge,
+  ValidatedForm,
+  useConfirm,
+} from "../../ui";
+import { ClientEditor, customerKinds } from "./ClientEditor";
+import { CustomerHistory } from "./CustomerHistory";
+import "./clients.css";
 
-const clientFields = [
-  ["name", "clients.name", "text", 255],
-  ["rut", "clients.rut", "text", 50],
-  ["email", "clients.email", "email", undefined],
-  ["phone", "clients.phone", "tel", 50],
-  ["address", "clients.address", "textarea", undefined],
-  ["giro", "clients.giro", "text", 80],
-  ["comuna", "clients.comuna", "text", 20],
-  ["notes", "clients.notes", "textarea", undefined],
-] as const;
-
-const projectStatusKey: Record<string, Parameters<typeof t>[0]> = {
-  DRAFT: "projects.draft",
-  QUOTED: "projects.quoted",
-  APPROVED: "projects.approved",
-  IN_PRODUCTION: "projects.production",
-  COMPLETED: "projects.completed",
-  CANCELLED: "projects.cancelled",
-};
-
-type Draft = {
-  value: PatchedClientUpdateRequest;
-  expectedUpdatedAt?: string;
-};
-
-function empty(): Draft {
-  return {
-    value: {
-      name: "",
-      rut: "",
-      email: "",
-      phone: "",
-      address: "",
-      giro: "",
-      comuna: "",
-      notes: "",
-    },
-  };
-}
-
-function filled(client: ClientResponse): Draft {
-  return {
-    value: {
-      name: client.name,
-      rut: client.rut,
-      email: client.email,
-      phone: client.phone,
-      address: client.address,
-      giro: client.giro ?? "",
-      comuna: client.comuna ?? "",
-      notes: client.notes,
-    },
-    expectedUpdatedAt: client.updated_at,
-  };
-}
-
-function lastActivity(client: ClientResponse, projects: ProjectResponse[]): string {
-  return projects.reduce(
-    (latest, project) => (project.updated_at > latest ? project.updated_at : latest),
-    client.updated_at,
-  );
-}
-
-/** Client registry: master list on the left, the client's whole commercial
- * story on the right — contact data, their projects, last activity. */
-export function ClientsPage(): JSX.Element {
-  const auth = useAuthSession();
-  const org = auth.me?.active_organization;
-
-  if (!org || !["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role)) {
-    return <DeniedState reason={t("clients.denied")} />;
+export function customerError(error: unknown): string {
+  if (error instanceof ApiError) {
+    const value = error.payload as { error?: { detail?: string } };
+    if (value.error?.detail) return value.error.detail;
   }
+  return "No se pudo completar la acción. Revisa la conexión y vuelve a cargar la ficha antes de reintentar.";
+}
+
+export function ClientsPage(): JSX.Element {
+  const org = useAuthSession().me?.active_organization;
+  if (!org || !["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role))
+    return (
+      <DeniedState reason="El dueño, estimador o jefe de taller consulta clientes. Pide acceso al dueño de tu organización." />
+    );
   return (
-    <ClientsWorkspace
-      key={org.id}
-      orgId={org.id}
-      canWrite={org.role === "OWNER" || org.role === "ESTIMATOR"}
-    />
+    <ClientsWorkspace key={org.id} orgId={org.id} canWrite={org.role !== "WORKSHOP_MANAGER"} />
   );
 }
 
 function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolean }): JSX.Element {
-  const confirm = useConfirm();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { id: routeClientId } = useParams();
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [editing, setEditing] = useState<string | null>(null);
-  // /clients/:id deep-links straight to a client's detail — selection mirrors
-  // the route so the address bar and the shell rail stay truthful (review m10).
-  const [selected, setSelected] = useState<string | null>(routeClientId ?? null);
-  const [creating, setCreating] = useState(false);
+  const confirm = useConfirm();
+  const options = useMemo(() => ({ headers: { "X-Organization-ID": orgId } }), [orgId]);
   const [search, setSearch] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [q, setQ] = useState("");
+  const [active, setActive] = useState(false);
+  const [balance, setBalance] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [draft, setDraft] = useState<ClientWriteRequest | null>(null);
+  const [expected, setExpected] = useState<string>();
+  const [editing, setEditing] = useState<string>();
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const lifetime = useRef<AbortController | null>(null);
-
-  const selectClient = (clientId: string | null) => {
-    setSelected(clientId);
-    navigate(clientId ? `/clients/${clientId}` : "/clients");
-  };
-
-  // Browser back/forward or a pasted link changes the route first — selection
-  // follows it, so the detail pane never disagrees with the address bar.
+  const [busy, setBusy] = useState(false);
+  const [target, setTarget] = useState("");
+  const [targetSearch, setTargetSearch] = useState("");
+  const [mergeReview, setMergeReview] = useState<ClientMergePreview | null>(null);
+  const [reason, setReason] = useState("");
+  const [note, setNote] = useState("");
+  const [noteKey, setNoteKey] = useState(() => crypto.randomUUID());
   useEffect(() => {
-    setSelected(routeClientId ?? null);
-  }, [routeClientId]);
-
+    const timer = setTimeout(() => {
+      setQ(search);
+      setOffset(0);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [search]);
   useEffect(() => {
-    const controller = new AbortController();
-    lifetime.current = controller;
-    return () => controller.abort();
-  }, []);
-
-  const query = useQuery<ClientResponse[]>({
-    queryKey: ["clients", orgId],
-    queryFn: async ({ signal }) => {
-      const response = await clientsList({
-        signal,
-        headers: { "X-Organization-ID": orgId },
-      });
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
-      return response.data.items;
-    },
-    retry: false,
-    gcTime: 0,
-    refetchOnWindowFocus: false,
-  });
-
-  const projectsQuery = useQuery<ProjectResponse[]>({
-    queryKey: ["clients", orgId, "projects"],
-    queryFn: async ({ signal }) => {
-      const response = await projectsList({
-        signal,
-        headers: { "X-Organization-ID": orgId },
-      });
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
-      return response.data.items;
-    },
-    staleTime: 60_000,
-  });
-
-  // A workspace leads with the work — land on the first client's ficha
-  // instead of an empty hint pane (same pattern as /production).
-  useEffect(() => {
-    if (routeClientId || creating || !query.data || query.data.length === 0) return;
-    navigate(`/clients/${query.data[0]!.id}`, { replace: true });
-  }, [routeClientId, creating, query.data, navigate]);
-
-  const allProjects = projectsQuery.data ?? [];
-  const projectsByClient = new Map<string, ProjectResponse[]>();
-  for (const project of allProjects) {
-    if (!project.client_id) continue;
-    const list = projectsByClient.get(project.client_id) ?? [];
-    list.push(project);
-    projectsByClient.set(project.client_id, list);
-  }
-
-  async function save(): Promise<void> {
-    const controller = lifetime.current;
-    if (!draft || !controller || controller.signal.aborted) return;
-    if (!isValidRut(draft.value.rut ?? "")) {
-      setError(t("clients.rutInvalid"));
-      return;
-    }
-    if (!isValidEmail(draft.value.email ?? "")) {
-      setError(t("clients.emailInvalid"));
-      return;
-    }
-    setBusy(true);
+    setMergeReview(null);
+    setTarget("");
+    setReason("");
+    setNote("");
     setError("");
-    setNotice("");
-    const options = { signal: controller.signal, headers: { "X-Organization-ID": orgId } };
-    try {
-      if (editing) {
-        const response = await clientsUpdate(
-          editing,
-          { ...draft.value, expected_updated_at: draft.expectedUpdatedAt },
-          options,
-        );
-        if (response.status !== 200) throw new ApiError(response.status, response.data);
-        setNotice(t("clients.saved"));
-      } else {
-        const response = await clientsCreate(
-          {
-            name: draft.value.name ?? "",
-            rut: draft.value.rut ?? "",
-            email: draft.value.email ?? "",
-            phone: draft.value.phone ?? "",
-            address: draft.value.address ?? "",
-            giro: draft.value.giro ?? "",
-            comuna: draft.value.comuna ?? "",
-            notes: draft.value.notes ?? "",
-          },
-          options,
-        );
-        if (response.status !== 201) throw new ApiError(response.status, response.data);
-        setNotice(t("clients.saved"));
-      }
-      if (controller.signal.aborted) return;
-      setDraft(null);
-      setEditing(null);
-      setCreating(false);
-      void query.refetch();
-    } catch (caught) {
-      if (controller.signal.aborted) return;
-      const status = caught instanceof ApiError ? caught.status : null;
-      setError(
-        t(
-          status === 409
-            ? "projects.conflict"
-            : status === 400 || status === 422
-              ? "projects.invalid"
-              : "projects.uncertain",
-        ),
+    setNoteKey(crypto.randomUUID());
+  }, [id]);
+  const directory = useQuery({
+    queryKey: ["clients", orgId, q, active, balance, offset],
+    queryFn: async ({ signal }) => {
+      const result = await clientDirectory(
+        { q, with_active_projects: active, with_balance: balance, offset, limit: 50 },
+        { ...options, signal },
       );
-    } finally {
-      if (!controller.signal.aborted) setBusy(false);
-    }
-  }
-
-  async function deactivate(client: ClientResponse): Promise<void> {
-    const controller = lifetime.current;
-    if (!controller || controller.signal.aborted) return;
-    if (!(await confirm({ title: t("clients.deactivateConfirm"), danger: true }))) return;
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      return result.data;
+    },
+  });
+  const destinations = useQuery({
+    queryKey: ["client-merge-destinations", orgId, targetSearch],
+    enabled: canWrite && Boolean(id),
+    queryFn: async ({ signal }) => {
+      const result = await clientDirectory({ q: targetSearch, limit: 100 }, { ...options, signal });
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      return result.data;
+    },
+  });
+  const dossier = useQuery({
+    queryKey: ["client-dossier", orgId, id],
+    enabled: Boolean(id) && canWrite,
+    queryFn: async ({ signal }) => {
+      const result = await clientDossier(id!, { ...options, signal });
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      return result.data;
+    },
+  });
+  const master = useQuery({
+    queryKey: ["client-master", orgId, id],
+    enabled: Boolean(id) && !canWrite,
+    queryFn: async ({ signal }) => {
+      const result = await clientsRetrieve(id!, { ...options, signal });
+      if (result.status !== 200) throw new ApiError(result.status, result.data);
+      return result.data;
+    },
+  });
+  const client = dossier.data?.client ?? master.data;
+  const refresh = async () => {
+    await Promise.all([
+      directory.refetch(),
+      ...(id ? [canWrite ? dossier.refetch() : master.refetch()] : []),
+    ]);
+  };
+  async function run(action: () => Promise<void>): Promise<void> {
+    if (busy) return;
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      const response = await clientsDeactivate(client.id, {
-        signal: controller.signal,
-        headers: { "X-Organization-ID": orgId },
-      });
-      if (response.status !== 204) throw new ApiError(response.status, response.data);
-      if (controller.signal.aborted) return;
-      setNotice(t("clients.deactivated"));
-      void query.refetch();
+      await action();
     } catch (caught) {
-      if (!controller.signal.aborted) setError(t("projects.uncertain"));
+      setError(customerError(caught));
     } finally {
-      if (!controller.signal.aborted) setBusy(false);
+      setBusy(false);
     }
   }
-
-  if (query.isPending) return <p role="status">{t("projects.loading")}</p>;
-  if (query.isError) {
-    return (
-      <section className="projects-page">
-        <p role="alert">{t("projects.loadError")}</p>
-        <button onClick={() => void query.refetch()}>{t("projects.reload")}</button>
-      </section>
-    );
-  }
-
-  const needle = search.toLocaleLowerCase("es-CL");
-  const visible = query.data.filter((item) =>
-    `${item.name} ${item.rut} ${item.email}`.toLocaleLowerCase("es-CL").includes(needle),
-  );
-  const selectedClient = query.data.find((item) => item.id === selected) ?? null;
-  const selectedProjects = selectedClient
-    ? (projectsByClient.get(selectedClient.id) ?? []).sort((a, b) =>
-        b.updated_at.localeCompare(a.updated_at),
-      )
-    : [];
-
+  const create = () => {
+    setEditing(undefined);
+    setExpected(undefined);
+    setDraft({
+      name: "",
+      party_kind: "COMPANY",
+      rut: "",
+      giro: "",
+      address: "",
+      comuna: "",
+      contacts: [],
+      addresses: [],
+    });
+  };
+  const edit = () => {
+    if (!client) return;
+    setEditing(client.id);
+    setExpected(client.updated_at);
+    setDraft({
+      name: client.name,
+      rut: client.rut,
+      party_kind: client.party_kind ?? "UNKNOWN",
+      giro: client.giro ?? "",
+      address: client.address,
+      comuna: client.comuna ?? "",
+      contacts:
+        client.contacts?.map(({ id, name, contact_role, email, phone, is_primary }) => ({
+          id,
+          name,
+          contact_role,
+          email,
+          phone,
+          is_primary,
+        })) ?? [],
+      addresses:
+        client.addresses?.map(({ id, label, address, comuna }) => ({
+          id,
+          label,
+          address,
+          comuna,
+        })) ?? [],
+    });
+  };
   return (
-    <section className="projects-page" aria-busy={busy || query.isFetching}>
-      <UnsavedChangesGuard dirty={draft !== null} message={t("projects.leaveUnsaved")} />
+    <section className="customers" aria-busy={busy} data-density="office">
+      <UnsavedChangesGuard
+        dirty={draft !== null}
+        message="Tienes cambios sin guardar en el cliente."
+      />
       <PageHeader
+        title="Clientes"
+        context="Ficha e historia de obras"
         actions={
-          canWrite && !creating ? (
-            <Button
-              disabled={busy}
-              onClick={() => {
-                setCreating(true);
-                setEditing(null);
-                selectClient(null);
-                setDraft(empty());
-              }}
-              variant="primary"
-            >
-              {t("clients.new")}
+          canWrite && !draft ? (
+            <Button variant="primary" onClick={create}>
+              Nuevo cliente
             </Button>
           ) : undefined
         }
-        title={t("clients.title")}
       />
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p role="alert" className="form-error">
+          {error}
+        </p>
+      )}
       {notice && <p role="status">{notice}</p>}
-
       {draft ? (
-        <form
-          className="project-metadata-form"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!busy) void save();
-          }}
-        >
-          <fieldset disabled={busy}>
-            <legend>{t(editing ? "clients.edit" : "clients.new")}</legend>
-            {clientFields.map(([name, label, type, maxLength]) => {
-              const props = {
-                name,
-                value: (draft.value[name] as string | undefined) ?? "",
-                required: name === "name",
-                "aria-label": t(label),
-                maxLength,
-                onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-                  setDraft({
-                    ...draft,
-                    value: { ...draft.value, [name]: event.target.value },
-                  }),
-              };
-              return (
-                <label key={name}>
-                  <span>
-                    {t(label)}
-                    {name === "name" ? (
-                      <span className="form-required" aria-hidden="true">
-                        {" "}
-                        *
-                      </span>
-                    ) : null}
-                  </span>
-                  {type === "textarea" ? <textarea {...props} /> : <input {...props} type={type} />}
-                  {name === "rut" && props.value !== "" && !isValidRut(props.value) ? (
-                    <span className="field-hint" role="alert">
-                      {t("clients.rutInvalid")}
-                    </span>
-                  ) : null}
-                  {name === "email" && props.value !== "" && !isValidEmail(props.value) ? (
-                    <span className="field-hint" role="alert">
-                      {t("clients.emailInvalid")}
-                    </span>
-                  ) : null}
-                </label>
-              );
-            })}
-            <div className="form-actions">
-              <button type="submit">{t("projects.save")}</button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  void confirm({ title: t("projects.discard") }).then((ok) => {
-                    if (ok) {
-                      setDraft(null);
-                      setEditing(null);
-                      setCreating(false);
-                      // The form's validation banner belongs to the form —
-                      // it must not linger on the list after cancel.
-                      setError("");
-                    }
-                  });
-                }}
-              >
-                {t("projects.cancel")}
-              </button>
-            </div>
-          </fieldset>
-        </form>
+        <ClientEditor
+          value={draft}
+          setValue={setDraft}
+          busy={busy}
+          historicalRut={editing ? client?.rut : undefined}
+          onCancel={() => setDraft(null)}
+          onSave={() =>
+            void run(async () => {
+              const result = editing
+                ? await clientsUpdate(editing, { ...draft, expected_updated_at: expected }, options)
+                : await clientsCreate(draft, options);
+              if (result.status !== 200 && result.status !== 201)
+                throw new ApiError(result.status, result.data);
+              setDraft(null);
+              navigate(`/clients/${result.data.id}`);
+              setNotice("Ficha guardada. Los proyectos emitidos conservan sus datos.");
+              await refresh();
+            })
+          }
+        />
       ) : (
-        <div className="clients-desk">
-          <div className="clients-list">
-            <Field label={t("clients.search")}>
+        <div className="customer-desk">
+          <aside className="customer-directory" aria-label="Buscar clientes">
+            <label>
+              Nombre o RUT
+              <input value={search} onChange={(event) => setSearch(event.target.value)} />
+            </label>
+            <label>
               <input
-                className="ui-field__input"
-                onChange={(event) => setSearch(event.target.value)}
-                value={search}
+                type="checkbox"
+                checked={active}
+                onChange={(event) => {
+                  setActive(event.target.checked);
+                  setOffset(0);
+                }}
               />
-            </Field>
-            <ul>
-              {visible.map((item) => {
-                const clientProjects = projectsByClient.get(item.id) ?? [];
-                const active = selected === item.id;
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      className={`clients-row${active ? " is-active" : ""}`}
-                      aria-current={active ? "true" : undefined}
-                      onClick={() => selectClient(item.id)}
-                    >
-                      <span className="clients-row-name">{item.name}</span>
-                      <span className="clients-row-meta">{item.rut || item.email || "—"}</span>
-                      <span className="clients-row-meta">
-                        {t(
-                          clientProjects.length === 1
-                            ? "clients.projectsCountOne"
-                            : "clients.projectsCount",
-                        ).replace("{count}", String(clientProjects.length))}
-                        {" · "}
-                        <time dateTime={lastActivity(item, clientProjects)}>
-                          {formatDate(lastActivity(item, clientProjects))}
-                        </time>
-                      </span>
-                      {!item.is_active && (
-                        <span className="status-chip" data-status="cancelled">
-                          {t("clients.inactive")}
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-              {visible.length === 0 && (
-                <li className="clients-empty">
-                  {t("clients.empty")}
-                  {canWrite && (
-                    <button
-                      type="button"
-                      className="clients-empty__cta"
-                      onClick={() => {
-                        setCreating(true);
-                        setEditing(null);
-                        selectClient(null);
-                        setDraft(empty());
-                      }}
-                    >
-                      {t("clients.new")}
-                    </button>
-                  )}
-                </li>
-              )}
-            </ul>
-          </div>
-
-          <div className="clients-detail">
-            {selectedClient === null ? (
-              <p className="clients-empty">{t("clients.selectHint")}</p>
+              Con proyectos activos
+            </label>
+            {canWrite && (
+              <label>
+                <input
+                  type="checkbox"
+                  checked={balance}
+                  onChange={(event) => {
+                    setBalance(event.target.checked);
+                    setOffset(0);
+                  }}
+                />
+                Con saldo
+              </label>
+            )}
+            {directory.isPending ? (
+              <LoadingState label="Buscando clientes" />
+            ) : directory.isError ? (
+              <ErrorState
+                body="No pudimos consultar la lista. Reintenta la conexión."
+                onRetry={() => void directory.refetch()}
+              />
             ) : (
               <>
-                <header className="clients-detail-head">
+                <p className="customer-hint">
+                  <span className="customer-number">{directory.data.total}</span> clientes
+                  encontrados
+                </p>
+                <ul className="customer-list">
+                  {directory.data.items.map((item) => (
+                    <li key={item.id}>
+                      <Link
+                        to={`/clients/${item.id}`}
+                        aria-current={id === item.id ? "page" : undefined}
+                      >
+                        <strong>{item.name}</strong>
+                        <span className="customer-number">{item.rut || "RUT sin registrar"}</span>
+                        <span>
+                          {item.has_active_projects
+                            ? "Obras activas"
+                            : item.is_active
+                              ? "Disponible"
+                              : "Inactivo"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {!directory.data.items.length && (
+                  <EmptyState
+                    title="Sin clientes en esta búsqueda"
+                    body="Cambia los filtros o registra un cliente para crear su primera obra."
+                  />
+                )}
+                <div className="customer-actions">
+                  <Button
+                    disabled={offset === 0}
+                    onClick={() => setOffset(Math.max(0, offset - 50))}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    disabled={directory.data.next_offset === null}
+                    onClick={() => setOffset(directory.data!.next_offset!)}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              </>
+            )}
+          </aside>
+          <article className="customer-dossier" aria-label="Ficha de cliente">
+            {!id ? (
+              <EmptyState
+                title="Elige un cliente"
+                body="Abre su ficha para consultar contactos, direcciones e historia."
+              />
+            ) : (canWrite ? dossier : master).isPending ? (
+              <LoadingState label="Cargando ficha e historia" />
+            ) : (canWrite ? dossier : master).isError ? (
+              <ErrorState
+                body="No pudimos cargar esta ficha. Revisa tu acceso y vuelve a intentar."
+                onRetry={() => void refresh()}
+              />
+            ) : client ? (
+              <>
+                <header className="customer-heading">
                   <div>
-                    <h2>{selectedClient.name}</h2>
-                    <p className="clients-detail-meta">
-                      {selectedClient.rut || "—"}
-                      {selectedClient.giro ? ` · ${selectedClient.giro}` : ""}
-                      {selectedClient.comuna ? ` · ${selectedClient.comuna}` : ""}
+                    <p className="ui-spec-label">{customerKinds[client.party_kind ?? "UNKNOWN"]}</p>
+                    <h2>{client.name}</h2>
+                    <p>
+                      {client.rut || "RUT sin registrar"}
+                      {client.giro ? ` · ${client.giro}` : ""}
                     </p>
                   </div>
-                  {canWrite && (
-                    <div className="clients-detail-actions">
-                      <button
-                        type="button"
-                        className="ui-button"
-                        disabled={busy}
-                        onClick={() => {
-                          setEditing(selectedClient.id);
-                          setDraft(filled(selectedClient));
-                        }}
-                      >
-                        {t("projects.edit")}
-                      </button>
-                      {selectedClient.is_active && (
-                        <button
-                          type="button"
-                          className="ui-button ui-button--danger"
+                  {canWrite && !client.merged_into_id && (
+                    <div className="customer-actions">
+                      <Button disabled={busy} onClick={edit}>
+                        Editar ficha
+                      </Button>
+                      {client.is_active && (
+                        <Button
                           disabled={busy}
-                          onClick={() => void deactivate(selectedClient)}
+                          onClick={() =>
+                            void run(async () => {
+                              if (
+                                await confirm({
+                                  title: "Desactivar cliente",
+                                  body: "Se conservarán sus proyectos y documentos. El cliente saldrá del selector de nuevas obras.",
+                                  danger: true,
+                                })
+                              ) {
+                                await clientsDeactivate(client.id, options);
+                                await refresh();
+                              }
+                            })
+                          }
                         >
-                          {t("clients.deactivate")}
-                        </button>
+                          Desactivar
+                        </Button>
                       )}
                     </div>
                   )}
                 </header>
-
-                <dl className="clients-facts">
-                  {selectedClient.email && (
-                    <div>
-                      <dt>{t("clients.email")}</dt>
-                      <dd>{selectedClient.email}</dd>
-                    </div>
-                  )}
-                  {selectedClient.phone && (
-                    <div>
-                      <dt>{t("clients.phone")}</dt>
-                      <dd>{selectedClient.phone}</dd>
-                    </div>
-                  )}
-                  {selectedClient.address && (
-                    <div>
-                      <dt>{t("clients.address")}</dt>
-                      <dd>{selectedClient.address}</dd>
-                    </div>
-                  )}
-                  {selectedClient.notes && (
-                    <div>
-                      <dt>{t("clients.notes")}</dt>
-                      <dd>{selectedClient.notes}</dd>
-                    </div>
-                  )}
-                </dl>
-
-                <section aria-label={t("clients.projectsTitle")}>
-                  <h3 className="eyebrow">{t("clients.projectsTitle")}</h3>
-                  {selectedProjects.length === 0 ? (
-                    <p className="clients-empty">{t("clients.noProjects")}</p>
-                  ) : (
-                    <ul className="clients-projects">
-                      {selectedProjects.map((project) => (
-                        <li key={project.id}>
-                          <Link to={`/projects/${project.id}`} className="clients-project-row">
-                            <span className="dashboard-row-code">{project.code}</span>
-                            <span className="dashboard-row-name">{project.name}</span>
-                            <span
-                              className="status-chip"
-                              data-status={project.status.toLowerCase()}
-                            >
-                              {t(projectStatusKey[project.status] ?? "projects.draft")}
-                            </span>
-                            <time dateTime={project.updated_at}>
-                              {formatDate(project.updated_at)}
-                            </time>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
+                {client.rut_valid === false && (
+                  <BlockedState
+                    reason="El RUT histórico no pasa la validación. Verifica el dígito antes de usarlo en nuevos documentos."
+                    action={
+                      canWrite && !client.merged_into_id ? (
+                        <Button onClick={edit}>Corregir ficha</Button>
+                      ) : undefined
+                    }
+                  />
+                )}
+                {client.merged_into_id && (
+                  <BlockedState
+                    reason="Esta ficha fue fusionada. Su historia se conserva y se reúne en la ficha destino."
+                    action={
+                      <Link className="ui-button" to={`/clients/${client.merged_into_id}`}>
+                        Abrir ficha consolidada
+                      </Link>
+                    }
+                  />
+                )}
+                <div className="customer-identity">
+                  <section>
+                    <h3>Contactos</h3>
+                    {client.contacts?.length ? (
+                      <ul>
+                        {client.contacts.map((contact) => (
+                          <li key={contact.id}>
+                            <strong>{contact.name || "Contacto sin nombre"}</strong>
+                            {contact.contact_role && ` · ${contact.contact_role}`}{" "}
+                            {contact.is_primary && <StatusBadge label="Principal" tone="neutral" />}
+                            <p>{[contact.email, contact.phone].filter(Boolean).join(" · ")}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>Sin contactos. Edita la ficha para registrar correo o teléfono.</p>
+                    )}
+                  </section>
+                  <section>
+                    <h3>Direcciones de obra</h3>
+                    {client.addresses?.length ? (
+                      <ul>
+                        {client.addresses.map((address) => (
+                          <li key={address.id}>
+                            <strong>{address.label}</strong>
+                            <p>
+                              {address.address}
+                              {address.comuna ? `, ${address.comuna}` : ""}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>Sin direcciones de obra. Decláralas al editar la ficha.</p>
+                    )}
+                    {client.address && (
+                      <p className="customer-hint">
+                        Facturación: {client.address}
+                        {client.comuna ? `, ${client.comuna}` : ""}
+                      </p>
+                    )}
+                  </section>
+                </div>
+                {canWrite ? (
+                  dossier.data && <CustomerHistory history={dossier.data} />
+                ) : (
+                  <DeniedState reason="Tu rol consulta contactos y obras desde Proyectos. El dueño o estimador consulta pagos, saldo y notas." />
+                )}
+                {canWrite && !client.merged_into_id && (
+                  <>
+                    <ValidatedForm
+                      className="customer-note"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void run(async () => {
+                          await clientNoteAdd(
+                            client.id,
+                            { body: note, operation_key: noteKey },
+                            options,
+                          );
+                          setNote("");
+                          setNoteKey(crypto.randomUUID());
+                          await dossier.refetch();
+                        });
+                      }}
+                    >
+                      <label>
+                        Agregar nota al historial
+                        <textarea
+                          required
+                          maxLength={4000}
+                          value={note}
+                          onChange={(event) => setNote(event.target.value)}
+                        />
+                      </label>
+                      <Button type="submit" disabled={busy || !note.trim()}>
+                        Registrar nota
+                      </Button>
+                    </ValidatedForm>
+                    <details className="customer-merge">
+                      <summary>Fusionar una ficha duplicada</summary>
+                      <p>
+                        Revisa el destino y el efecto. Se conserva la historia de ambas fichas; solo
+                        se completan campos vacíos.
+                      </p>
+                      <label>
+                        Buscar ficha destino
+                        <input
+                          value={targetSearch}
+                          onChange={(event) => {
+                            setTargetSearch(event.target.value);
+                            setTarget("");
+                            setMergeReview(null);
+                          }}
+                        />
+                      </label>
+                      {destinations.isError && (
+                        <ErrorState
+                          body="No pudimos buscar fichas de destino."
+                          onRetry={() => void destinations.refetch()}
+                        />
+                      )}
+                      <label>
+                        Ficha destino
+                        <select
+                          aria-label="Ficha destino"
+                          value={target}
+                          onChange={(event) => {
+                            setTarget(event.target.value);
+                            setMergeReview(null);
+                          }}
+                        >
+                          <option value="">Elige un cliente de los resultados</option>
+                          {destinations.data?.items
+                            .filter((item) => item.id !== client.id && !item.merged_into_id)
+                            .map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.name}
+                                {item.rut ? ` · ${item.rut}` : ""}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                      <Button
+                        disabled={busy || !target}
+                        onClick={() =>
+                          void run(async () => {
+                            const result = await clientMergePreview(
+                              client.id,
+                              { target_id: target },
+                              options,
+                            );
+                            if (result.status !== 200)
+                              throw new ApiError(result.status, result.data);
+                            setMergeReview(result.data);
+                          })
+                        }
+                      >
+                        Revisar fusión
+                      </Button>
+                      {mergeReview && (
+                        <>
+                          <p>{mergeReview.consequence}</p>
+                          {mergeReview.blockers.map((blocker) => (
+                            <BlockedState key={blocker} reason={blocker} action={null} />
+                          ))}
+                          <dl>
+                            {mergeReview.adopted_fields.map((field) => (
+                              <div key={field.field}>
+                                <dt>
+                                  {
+                                    (
+                                      {
+                                        rut: "RUT",
+                                        email: "Correo",
+                                        phone: "Teléfono",
+                                        address: "Facturación",
+                                        giro: "Giro",
+                                        comuna: "Comuna",
+                                        party_kind: "Tipo",
+                                      } as Record<string, string>
+                                    )[field.field]
+                                  }
+                                </dt>
+                                <dd>{customerKinds[field.after ?? ""] ?? field.after}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                          <p>
+                            {mergeReview.added_contacts.length} contactos y{" "}
+                            {mergeReview.added_addresses.length} direcciones se añadirán a{" "}
+                            {mergeReview.target.name}.
+                          </p>
+                          <label>
+                            Motivo de la fusión
+                            <textarea
+                              value={reason}
+                              maxLength={2000}
+                              onChange={(event) => setReason(event.target.value)}
+                            />
+                          </label>
+                          <Button
+                            disabled={busy || !!mergeReview.blockers.length || !reason.trim()}
+                            onClick={() =>
+                              void run(async () => {
+                                if (
+                                  !(await confirm({
+                                    title: "Confirmar fusión",
+                                    body: `La ficha ${mergeReview.source.name} quedará cerrada en ${mergeReview.target.name}. Esta decisión queda auditada.`,
+                                  }))
+                                )
+                                  return;
+                                const result = await clientMerge(
+                                  client.id,
+                                  {
+                                    target_id: target,
+                                    reason,
+                                    confirmed: true,
+                                    expected_source_updated_at: mergeReview.source.updated_at,
+                                    expected_target_updated_at: mergeReview.target.updated_at,
+                                  },
+                                  options,
+                                );
+                                if (result.status !== 200)
+                                  throw new ApiError(result.status, result.data);
+                                navigate(`/clients/${result.data.id}`);
+                                setMergeReview(null);
+                                setNotice("Fusión registrada. La ficha conserva toda la historia.");
+                                await refresh();
+                              })
+                            }
+                          >
+                            Confirmar fusión
+                          </Button>
+                        </>
+                      )}
+                    </details>
+                  </>
+                )}
               </>
-            )}
-          </div>
+            ) : null}
+          </article>
         </div>
       )}
     </section>

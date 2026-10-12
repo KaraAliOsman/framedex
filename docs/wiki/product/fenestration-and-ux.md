@@ -24,6 +24,11 @@ Therefore:
 
 Compatibility belongs in domain data/rules, not visual guesswork.
 
+D01 makes this boundary executable for new products using catalog family and
+per-opening dimensional limits. Saved historical authority is preserved rather
+than silently recalculated. See [catalog authority](catalog-authority.md) for the
+migration and reviewed-import contract.
+
 ## Opening graphics are semantic
 
 Opening symbols must communicate:
@@ -36,7 +41,16 @@ Opening symbols must communicate:
 
 A stylish but ambiguous symbol is a defect.
 
+D03 implements sourced physical motion and active/passive compositions with
+matching engine handles and interior-view drawings. The historical icon board
+has the opposite apex convention; constitution §3.6 governs the current product.
+See [physical openings](physical-openings.md) for verified behavior and limits.
+
 Use one coherent grammar across Studio, quotations and manufacturing documents, with deliberate simplification by audience.
+
+P05 makes that grammar executable in Python/TS/PDF with shared fixtures,
+declared slider travel and both views. Exact contour extrema govern total arch
+height. See [opening drawings](opening-drawings.md) and its acceptance evidence.
 
 ## Composition
 

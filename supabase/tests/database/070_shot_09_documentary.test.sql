@@ -28,11 +28,11 @@ INSERT INTO projects(id,org_id,code,name,client_name,created_by) VALUES
  ('88620000-0000-4000-8000-000000000002','88600000-0000-4000-8000-000000000001','S09-A2','Doc A2','Fixture','88610000-0000-4000-8000-000000000001'),
  ('88620000-0000-4000-8000-000000000003','88600000-0000-4000-8000-000000000001','S09-A3','Doc A3','Fixture','88610000-0000-4000-8000-000000000001');
 INSERT INTO project_positions(id,org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot)
- SELECT '88630000-0000-4000-8000-000000000001','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000001',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60';
+ SELECT '88630000-0000-4000-8000-000000000001','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000001',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60' AND version=1;
 INSERT INTO project_positions(id,org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot)
- SELECT '88630000-0000-4000-8000-000000000002','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000002',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60';
+ SELECT '88630000-0000-4000-8000-000000000002','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000002',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60' AND version=1;
 INSERT INTO project_positions(id,org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot)
- SELECT '88630000-0000-4000-8000-000000000003','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000003',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60';
+ SELECT '88630000-0000-4000-8000-000000000003','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000003',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60' AND version=1;
 INSERT INTO pricing_operations(id,org_id,project_id,requested_by,request,input_snapshot,result,source_revision,state,reason) VALUES
  ('88640000-0000-4000-8000-000000000001','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000001','88610000-0000-4000-8000-000000000001','{}','{}','{}','REV-A','PREVIEW','shot09 preview fixture'),
  ('88640000-0000-4000-8000-000000000002','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000001','88610000-0000-4000-8000-000000000001','{}','{}','{}','REV-A','APPLIED','shot09 applied fixture'),
@@ -47,17 +47,17 @@ SELECT lives_ok($$INSERT INTO position_documentary_inputs(position_id,project_id
    AND placement.org_id IS NULL AND handles.org_id IS NULL AND steel.org_id IS NULL
    AND handles.version=(SELECT max(h2.version) FROM handle_requirement_policies h2 WHERE h2.system_id=handles.system_id AND h2.org_id IS NULL)
    AND placement.version=(SELECT max(p2.version) FROM manufacturing_placement_policies p2 WHERE p2.system_id=placement.system_id AND p2.org_id IS NULL)
-   AND placement.system_id=(SELECT id FROM profile_systems WHERE code='DEMO_60')$$,'typed position inputs accept global scoped policies');
+   AND placement.system_id=(SELECT id FROM profile_systems WHERE code='DEMO_60' AND version=1)$$,'typed position inputs accept global scoped policies');
 INSERT INTO manufacturing_placement_policies(id,system_id,org_id,version,authority)
  SELECT '88690000-0000-4000-8000-000000000009',id,'88600000-0000-4000-8000-000000000002',1,
         '{"schema_version":1,"policy_id":"B-POLICY","version":1,"sliding_leaf_offsets":{},"sliding_infill_offsets":{},"bead_offsets":{}}'
- FROM profile_systems WHERE code='DEMO_60';
+ FROM profile_systems WHERE code='DEMO_60' AND version=1;
 SELECT throws_ok($$INSERT INTO position_documentary_inputs(position_id,project_id,org_id,manufacturing_placement_policy_id,handle_requirement_policy_id,reinforcement_cut_policy_id,workshop_annotations,structural_inputs,glass_polishing,handle_intents,accessory_schedule,created_by)
  SELECT '88630000-0000-4000-8000-000000000003','88620000-0000-4000-8000-000000000003','88600000-0000-4000-8000-000000000001','88690000-0000-4000-8000-000000000009',handles.id,steel.id,'[]','[]','[]','[]','{"coverage":"NONE_REQUIRED","items":[]}','88610000-0000-4000-8000-000000000001'
  FROM handle_requirement_policies handles,reinforcement_cut_policies steel
  WHERE handles.system_id=steel.system_id AND handles.org_id IS NULL AND steel.org_id IS NULL
    AND handles.version=(SELECT max(h2.version) FROM handle_requirement_policies h2 WHERE h2.system_id=handles.system_id AND h2.org_id IS NULL)
-   AND handles.system_id=(SELECT id FROM profile_systems WHERE code='DEMO_60')$$,'23503','documentary_policy_scope_mismatch','foreign tenant policy cannot bind');
+   AND handles.system_id=(SELECT id FROM profile_systems WHERE code='DEMO_60' AND version=1)$$,'23503','documentary_policy_scope_mismatch','foreign tenant policy cannot bind');
 
 SELECT throws_ok($$INSERT INTO project_versions(project_id,org_id,revision_code,snapshot_json,emitted_by,pricing_operation_id,canonical_version,bom_hash,snapshot_sha256,production_allowed,documentary_complete)
  VALUES('88620000-0000-4000-8000-000000000001','88600000-0000-4000-8000-000000000001','REV-A','{}','88610000-0000-4000-8000-000000000001','88640000-0000-4000-8000-000000000001','DOCUMENTARY_CANONICAL_V1','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',TRUE,TRUE)$$,'23514','applied_pricing_authority_required','preview operation cannot seal a revision');

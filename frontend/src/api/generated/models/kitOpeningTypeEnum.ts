@@ -9,16 +9,30 @@
 /**
  * * `AWNING` - AWNING
  * * `DOOR` - DOOR
+ * * `FOLD` - FOLD
+ * * `LIFT_SLIDE` - LIFT_SLIDE
+ * * `PARALLEL_SLIDE` - PARALLEL_SLIDE
+ * * `PIVOT_H` - PIVOT_H
+ * * `PIVOT_V` - PIVOT_V
  * * `SLIDING` - SLIDING
+ * * `TILT` - TILT
  * * `TILT_TURN` - TILT_TURN
  * * `TURN` - TURN
+ * * `VERTICAL_SLIDE` - VERTICAL_SLIDE
  */
 export type KitOpeningTypeEnum = (typeof KitOpeningTypeEnum)[keyof typeof KitOpeningTypeEnum];
 
 export const KitOpeningTypeEnum = {
   AWNING: "AWNING",
   DOOR: "DOOR",
+  FOLD: "FOLD",
+  LIFT_SLIDE: "LIFT_SLIDE",
+  PARALLEL_SLIDE: "PARALLEL_SLIDE",
+  PIVOT_H: "PIVOT_H",
+  PIVOT_V: "PIVOT_V",
   SLIDING: "SLIDING",
+  TILT: "TILT",
   TILT_TURN: "TILT_TURN",
   TURN: "TURN",
+  VERTICAL_SLIDE: "VERTICAL_SLIDE",
 } as const;

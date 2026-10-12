@@ -15,6 +15,7 @@ from dekopen_engine.documentary_canonical import (
     documentary_canonical_json_v1,
     documentary_sha256_v1,
 )
+from dekopen_engine.inventory import purchase_total
 
 from documents.renderers import _piece_labels
 from documents.repository import DocumentaryError, decoded, documentary_backend, json_text, one, rows, write
@@ -35,6 +36,16 @@ def _public(value: object) -> object:
     return json.loads(json_text(value))
 
 
+def _purchase_amount(payload: object) -> Decimal | None:
+    snapshot=decoded(payload) if payload else {}
+    lines=snapshot.get('lines') or []
+    if not lines:
+        return None
+    return purchase_total([(Decimal(str(line['quantity'])),
+                           Decimal(str(line['unit_price'])) if line.get('unit_price') is not None else None)
+                          for line in lines])
+
+
 def _object(value: object, code: str) -> dict[str, object]:
     parsed = decoded(value)
     if not isinstance(parsed, dict) or not all(isinstance(key, str) for key in parsed):
@@ -49,20 +60,30 @@ def _array(value: object, code: str) -> list[object]:
     return parsed
 
 
-def _version(version_id: UUID, org_id: UUID) -> dict[str, object]:
+def _version(version_id: UUID, org_id: UUID, *, for_purchase=False) -> dict[str, object]:
     version = one(
         "SELECT version.id,version.project_id,version.org_id,version.revision_code,"
         "version.authority_version,version.bom_hash,version.snapshot_sha256,"
         "version.production_allowed,version.documentary_complete,version.emitted_at,"
-        "project.code AS project_code "
+        "project.code AS project_code,c.selected_version_id AS accepted_version_id "
         "FROM public.project_versions version JOIN public.projects project "
         "ON project.id=version.project_id AND project.org_id=version.org_id "
+        "LEFT JOIN public.project_versions offered ON offered.org_id=project.org_id AND offered.project_id=project.id AND offered.revision_code=project.current_revision "
+        "LEFT JOIN LATERAL private.quotation_choice(project.org_id,offered.id) c ON c.kind='APPROVED' "
         "WHERE version.id=%s AND version.org_id=%s",
         [version_id, org_id],
         "project_version_not_found",
     )
     if version["authority_version"] not in ("SHOT09_V1", "SHOT10_V1"):
         raise DocumentaryError("legacy_version_not_eligible")
+    if for_purchase:
+        from documents.agreements import lock_quote
+        lock_quote(org_id,version['project_id'])
+        # Re-read after the shared lock: a decision may have committed while
+        # this purchase waited. Reading history itself remains available.
+        version = _version(version_id,org_id)
+        if version.get('accepted_version_id') and str(version['accepted_version_id']) != str(version_id):
+            raise DocumentaryError('quote_solution_not_selected', detail='Esta revisión no es la solución aceptada por el cliente. Abre la revisión elegida antes de confirmar una compra.')
     return version
 
 
@@ -191,7 +212,7 @@ def _unclaimed_requirements(version_id: UUID, org_id: UUID,
         for row in rows(
             "SELECT requirement_line_id, SUM(quantity - released_qty) AS covered_qty "
             "FROM public.order_requirement_lines "
-            "WHERE project_version_id=%s AND org_id=%s "
+            "WHERE project_version_id=%s AND org_id=%s AND field_authorization_id IS NULL "
             "GROUP BY requirement_line_id",
             [version_id, org_id],
         )
@@ -229,6 +250,11 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
         requirements = [
             _line_snapshot(item, labels) for item in _requirements(version_id, org_id)
         ]
+        from dekopen_engine.inventory import purchase_source_ledger
+        source_snapshot = _object(one("SELECT snapshot_json FROM public.project_versions WHERE org_id=%s AND id=%s", [org_id,version_id])["snapshot_json"], "invalid_frozen_revision_snapshot")
+        source_ledger = purchase_source_ledger(source_snapshot)
+        for requirement in requirements:
+            requirement["source_position_ids"] = sorted({source_ledger[source][0] for source in requirement["source_trace"] if source in source_ledger})
         eligibilities = rows(
             "SELECT id,order_type::text,supplier_identity,supplier_name,supplier_details::text,"
             "eligible_requirement_keys::text,evidence::text,version,content_hash,created_at "
@@ -250,9 +276,9 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             [version_id, org_id],
         )
         orders = rows(
-            "SELECT o.id,o.order_code,o.order_type::text,o.status::text,o.supplier_identity,"
+            "SELECT o.id,private.entity_code(o.org_id,'OC',o.id,o.order_code) AS order_code,o.order_type::text,o.status::text,o.supplier_identity,"
             "o.supplier_name,o.order_snapshot_hash,o.confirmed_at,o.sent_at,o.expected_at,"
-            "o.sent_to,o.cancelled_at,o.supplier_details::text AS supplier_details,"
+            "o.sent_to,o.cancelled_at,o.supplier_details::text AS supplier_details,o.payload_json,"
             "l.line_count,l.total_qty,l.released_qty,l.lines_preview::text AS lines_preview,"
             "r.damaged_qty,r.receipt_count "
             "FROM public.orders o LEFT JOIN ("
@@ -280,12 +306,15 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             [version_id, org_id],
         )
         allocated = {str(item["requirement_line_id"]) for item in allocations}
+        for order in orders:
+            order['net_amount']=_purchase_amount(order.pop('payload_json',None))
+            order['currency']='CLP'
         coverage = {
             str(row["requirement_line_id"]): Decimal(str(row["covered_qty"]))
             for row in rows(
                 "SELECT requirement_line_id, SUM(quantity - released_qty) AS covered_qty "
                 "FROM public.order_requirement_lines "
-                "WHERE project_version_id=%s AND org_id=%s "
+                "WHERE project_version_id=%s AND org_id=%s AND field_authorization_id IS NULL "
                 "GROUP BY requirement_line_id",
                 [version_id, org_id],
             )
@@ -461,11 +490,14 @@ def allocate_requirement(
 def confirm_order_type_batch(
     *, org_id: UUID, actor_id: UUID, version_id: UUID,
     order_type: str, confirmed: bool,
+    quantities: dict[str, Decimal] | None = None,
+    unit_prices: dict[str, Decimal | None] | None = None,
+    field_replacement: dict | None = None,
 ) -> tuple[list[dict[str, object]], bool]:
     if not confirmed:
         raise DocumentaryError("order_batch_confirmation_required")
     with documentary_backend():
-        version = _version(version_id, org_id)
+        version = _version(version_id, org_id, for_purchase=True)
         labels = _trace_labels(version_id, org_id)
         with connection.cursor() as cursor:
             cursor.execute(
@@ -480,7 +512,38 @@ def confirm_order_type_batch(
         )
         # Requirements already claimed by a live order line stay claimed — a
         # re-confirm only covers lines released by a cancellation.
-        requirement_rows = _unclaimed_requirements(version_id, org_id, order_type)
+        requirement_rows = (
+            [{**r, 'open_qty': r['quantity']} for r in _requirements(version_id, org_id, order_type)]
+            if field_replacement is not None else _unclaimed_requirements(version_id, org_id, order_type)
+        )
+        if field_replacement is not None:
+            # This is an additional, explicitly reviewed physical loss. It
+            # never releases or edits the original purchasing claims.
+            from production.field import live_role, SUPERVISORS, reject
+            if live_role(org_id, actor_id) not in SUPERVISORS:
+                reject('El jefe de taller autoriza material adicional.', 'field_permission', 403)
+            case = one("SELECT * FROM public.field_incidents WHERE org_id=%s AND id=%s FOR UPDATE",
+                       [org_id, field_replacement['id']], 'field_incident_not_found')
+            if case['kind'] != 'MISSING' or case['status'] != 'OPEN' or quantities is None:
+                reject('La compra adicional requiere un faltante abierto y una cantidad confirmada.')
+            offered = {str(r['id']): r for r in requirement_rows}
+            from dekopen_engine.inventory import purchase_source_ledger
+            source_snapshot = _object(one("SELECT snapshot_json FROM public.project_versions WHERE org_id=%s AND id=%s", [org_id,version_id])["snapshot_json"], "invalid_frozen_revision_snapshot")
+            source_ledger = purchase_source_ledger(source_snapshot)
+            if any(rid not in offered or not any(entry in source_ledger and source_ledger[entry][0] == str(case['position_id']) for entry in
+                   _array(offered[rid]['source_trace'], 'invalid_purchase_requirement')) for rid in quantities):
+                reject('El requerimiento no pertenece a la posición del faltante.')
+        if quantities is not None:
+            offered={str(r['id']):r for r in requirement_rows}
+            if any(rid not in offered or qty<=0 or qty>Decimal(str(offered[rid]['open_qty']))
+                   for rid,qty in quantities.items()):
+                raise DocumentaryError('purchase_choice_invalid')
+            requirement_rows=[{**offered[rid],'open_qty':qty} for rid,qty in quantities.items()]
+        if field_replacement is not None:
+            for requirement in requirement_rows:
+                authorization = one("INSERT INTO public.field_purchase_authorizations(org_id,visit_id,incident_id,requirement_line_id,quantity,created_by) "
+                    "VALUES(%s,%s,%s,%s,%s,%s) RETURNING id", [org_id,field_replacement['visit_id'],field_replacement['id'],requirement['id'],requirement['open_qty'],actor_id])
+                requirement['field_authorization_id'] = authorization['id']
         attempt = 1
         if existing_batch:
             # Idempotent while the batch covers the type and nothing was
@@ -492,7 +555,7 @@ def confirm_order_type_batch(
                 return (
                     [
                         _public(item) for item in rows(
-                            "SELECT id,order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
+                            "SELECT id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
                             "FROM public.orders "
                             "WHERE project_version_id=%s AND org_id=%s AND order_type=%s "
                             "AND status <> 'CANCELLED' ORDER BY supplier_name,id",
@@ -552,6 +615,8 @@ def confirm_order_type_batch(
                 "requirement_key": str(requirement["requirement_key"]),
                 "supplier_eligibility_id": eligibility_id,
                 "eligibility_content_hash": str(allocation["content_hash"]),
+                **({'quantity':requirement['open_qty'],'unit_price':(unit_prices or {}).get(str(requirement['id']))}
+                   if quantities is not None else {}),
             })
         allocation_hash = documentary_sha256_v1({
             "schema_version": 1,
@@ -559,6 +624,7 @@ def confirm_order_type_batch(
             "order_type": order_type,
             "attempt": attempt,
             "allocations": allocation_preimage,
+            **({'field_incident': str(field_replacement['id'])} if field_replacement is not None else {}),
         })
         confirmed_at = datetime.now(timezone.utc)
         batch = one(
@@ -586,11 +652,23 @@ def confirm_order_type_batch(
                 _line_snapshot(item, labels, quantity_override=item.get("open_qty"))
                 for item, _ in values
             ]
+            if field_replacement is not None:
+                for line in line_snapshots:
+                    line['field_incident'] = {'id': str(field_replacement['id']), 'code': field_replacement['code']}
+            if unit_prices is not None:
+                for line in line_snapshots:
+                    line['unit_price']=unit_prices.get(line['id'])
+                    line['currency']='CLP'
             order_id = uuid5(
                 NAMESPACE_URL,
                 f"https://dekopen.local/order/{batch_id}/{eligibility_id}",
             )
-            order_code = f"PO-{order_id.hex[:12].upper()}"
+            # Reserve inside this transaction before sealing. A rollback also
+            # rolls back the counter; a replay reuses the same entity address.
+            order_code = str(one(
+                "SELECT private.assign_entity_code(%s,'OC',%s) AS code",
+                [org_id, order_id],
+            )["code"])
             allocation_identity = documentary_sha256_v1({
                 "batch_allocation_hash": allocation_hash,
                 "supplier_eligibility_id": eligibility_id,
@@ -639,6 +717,8 @@ def confirm_order_type_batch(
                 "allocation_identity": allocation_identity,
                 "supplier_eligibility": eligibility_snapshot,
                 "lines": line_snapshots,
+                **({'field_incident': {'id': str(field_replacement['id']), 'code': field_replacement['code']}}
+                   if field_replacement is not None else {}),
                 # Issuer identity for the letterhead — sealed with the order so
                 # re-renders keep the same branding.
                 "organization": org_branding.branding_for_snapshot(org_id=org_id),
@@ -666,12 +746,12 @@ def confirm_order_type_batch(
                 one(
                     "INSERT INTO public.order_requirement_lines("
                     "order_id,requirement_line_id,project_id,project_version_id,org_id,order_type,"
-                    "bom_hash,revision_snapshot_sha256,quantity,line_snapshot,line_hash) "
-                    "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s) RETURNING id",
+                    "bom_hash,revision_snapshot_sha256,quantity,line_snapshot,line_hash,field_authorization_id) "
+                    "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) RETURNING id",
                     [order_id, requirement_row["id"], version["project_id"], version_id,
                      org_id, order_type, version["bom_hash"], version["snapshot_sha256"],
                      line["quantity"], documentary_canonical_json_v1(line).decode("utf-8"),
-                     line_hash],
+                     line_hash, requirement_row.get('field_authorization_id')],
                 )
             outputs.append({
                 "id": str(order_id), "order_code": order_code, "order_type": order_type,
@@ -689,7 +769,7 @@ def send_order(
         raise DocumentaryError("order_send_confirmation_required")
     with documentary_backend():
         order = one(
-            "SELECT id,order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
+            "SELECT id,project_version_id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,supplier_name,order_snapshot_hash "
             "FROM public.orders WHERE id=%s AND org_id=%s FOR UPDATE",
             [order_id, org_id],
             "order_not_found",
@@ -700,13 +780,15 @@ def send_order(
             return {key: str(value) for key, value in order.items()}
         if order["status"] != "DRAFT":
             raise DocumentaryError("order_state_invalid")
+        if order.get('project_version_id'):
+            _version(order['project_version_id'], org_id, for_purchase=True)
         sent_at = datetime.now(timezone.utc)
         if sent_to is not None:
             sent_to = str(sent_to).strip() or None
         updated = one(
             "UPDATE public.orders SET status='SENT',sent_by=%s,sent_at=%s,"
             "expected_at=%s,sent_to=%s,updated_at=%s "
-            "WHERE id=%s AND org_id=%s RETURNING id,order_code,order_type::text,status::text,"
+            "WHERE id=%s AND org_id=%s RETURNING id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,"
             "supplier_name,order_snapshot_hash,expected_at,sent_to",
             [actor_id, sent_at, expected_at, sent_to, sent_at, order_id, org_id],
         )
@@ -726,7 +808,7 @@ def cancel_order(
         raise DocumentaryError("order_cancel_confirmation_required")
     with documentary_backend():
         order = one(
-            "SELECT id,order_code,order_type::text,status::text,supplier_name,"
+            "SELECT id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,status::text,supplier_name,"
             "order_snapshot_hash,cancelled_by,cancelled_at,expected_at "
             "FROM public.orders WHERE id=%s AND org_id=%s FOR UPDATE",
             [order_id, org_id],
@@ -742,7 +824,7 @@ def cancel_order(
         updated = one(
             "UPDATE public.orders SET status='CANCELLED',cancelled_by=%s,"
             "cancelled_at=%s,updated_at=%s "
-            "WHERE id=%s AND org_id=%s RETURNING id,order_code,order_type::text,"
+            "WHERE id=%s AND org_id=%s RETURNING id,private.entity_code(org_id,'OC',id,order_code) AS order_code,order_type::text,"
             "status::text,supplier_name,order_snapshot_hash,cancelled_by,"
             "cancelled_at,expected_at",
             [actor_id, cancelled_at, cancelled_at, order_id, org_id],
@@ -775,8 +857,8 @@ def orders_index(org_id: UUID, status: str | None = None) -> dict[str, object]:
         params.append(status)
     with documentary_backend():
         orders = rows(
-            "SELECT o.id,o.order_code,o.order_type::text,o.status::text,o.supplier_identity,"
-            "o.supplier_name,o.expected_at,o.sent_at,o.sent_to,o.created_at,"
+            "SELECT o.id,private.entity_code(o.org_id,'OC',o.id,o.order_code) AS order_code,o.order_type::text,o.status::text,o.supplier_identity,"
+            "o.supplier_name,o.expected_at,o.sent_at,o.sent_to,o.created_at,o.payload_json,"
             "v.revision_code,v.id AS project_version_id,"
             "p.id AS project_id,p.code AS project_code,"
             "COALESCE(l.line_count,0) AS line_count,l.total_qty,l.released_qty,"
@@ -810,9 +892,11 @@ def orders_index(org_id: UUID, status: str | None = None) -> dict[str, object]:
         result = []
         for item in orders:
             item = dict(item)
+            item['net_amount']=_purchase_amount(item.pop('payload_json',None))
+            item['currency']='CLP'
             total = Decimal(str(item.get("total_qty") or 0))
             good = Decimal(str(item.get("good_qty") or 0))
-            item["outstanding_qty"] = total - good
+            item["outstanding_qty"] = max(total - good - Decimal(str(item.get("released_qty") or 0)), Decimal(0))
             result.append(_public(item))
         return {"orders": result}
 

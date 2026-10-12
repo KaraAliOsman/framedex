@@ -5,6 +5,9 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ClientAddress } from "./clientAddress";
+import type { ClientContact } from "./clientContact";
+import type { PartyKindEnum } from "./partyKindEnum";
 
 export interface ClientResponse {
   id: string;
@@ -20,4 +23,11 @@ export interface ClientResponse {
   notes: string;
   is_active: boolean;
   updated_at: string;
+  party_kind?: PartyKindEnum;
+  /** @nullable */
+  merged_into_id?: string | null;
+  /** @nullable */
+  rut_valid?: boolean | null;
+  contacts?: ClientContact[];
+  addresses?: ClientAddress[];
 }

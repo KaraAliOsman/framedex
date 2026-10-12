@@ -1,0 +1,39 @@
+{
+  "result": "PASA",
+  "magic_link": "autenticacion.json",
+  "messages": [
+    {
+      "kind": "QUOTE",
+      "result": "PASA",
+      "images_resolved": 1,
+      "source": "Bytes MIME de Mailpit; enlace omitido en evidencia",
+      "attachments": [
+        "cotizacion.pdf"
+      ]
+    },
+    {
+      "kind": "APPROVAL",
+      "result": "PASA",
+      "images_resolved": 1,
+      "source": "Bytes MIME de Mailpit; enlace omitido en evidencia",
+      "attachments": []
+    },
+    {
+      "kind": "PAYMENT",
+      "result": "PASA",
+      "images_resolved": 1,
+      "source": "Bytes MIME de Mailpit; enlace omitido en evidencia",
+      "attachments": [
+        "comprobante.pdf"
+      ]
+    },
+    {
+      "kind": "ORDER_BLOCKED",
+      "result": "PASA",
+      "images_resolved": 1,
+      "source": "Bytes MIME de Mailpit; enlace omitido en evidencia",
+      "attachments": []
+    }
+  ],
+  "blocked_event": "Evento BLOCK real previamente verificado; devuelto a PENDING"
+}

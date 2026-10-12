@@ -1,0 +1,184 @@
+{
+  "generatedAt": "2026-10-07T14:46:24.655Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "reachedPath": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__390x844.png",
+      "overflowX": true,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "reachedPath": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "span.brand DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "reachedPath": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "span.brand DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "reachedPath": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "reachedPath": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__390x844.png",
+      "overflowX": true,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "reachedPath": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "span.brand DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "reachedPath": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        }
+      ]
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "reachedPath": "/projects/32e57194-34da-40d1-b3ad-77ee2e3c884f/positions/3f45801f-789f-4a25-915e-72a6f1c19e14/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": [
+        {
+          "kind": "font-under-11",
+          "sample": "span.brand DEKOPEN"
+        },
+        {
+          "kind": "radius-over-4",
+          "sample": "details.starter-library "
+        }
+      ]
+    }
+  ],
+  "topFindings": [
+    {
+      "key": "radius-over-4",
+      "count": 8,
+      "routes": [
+        "posicion-edicion"
+      ],
+      "sample": "details.starter-library "
+    },
+    {
+      "key": "font-under-11",
+      "count": 4,
+      "routes": [
+        "posicion-edicion"
+      ],
+      "sample": "span.brand DEKOPEN"
+    }
+  ]
+}

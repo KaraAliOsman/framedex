@@ -17,7 +17,10 @@ export interface RemnantCreateRequest {
    * @nullable
    */
   sheet_workshop_sku?: string | null;
-  /** @nullable */
+  /**
+   * @minLength 1
+   * @nullable
+   */
   physical_stock_identity?: string | null;
   /**
    * @minLength 1

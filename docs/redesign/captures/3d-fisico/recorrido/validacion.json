@@ -1,0 +1,150 @@
+[
+  {
+    "surface": "editor",
+    "width": 1440,
+    "theme": "light",
+    "opening": "PSK abierta/abatida",
+    "export": "PASA",
+    "save": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "editor",
+    "width": 1440,
+    "theme": "dark",
+    "opening": "PSK abierta/abatida",
+    "export": "PASA",
+    "save": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "editor",
+    "width": 1280,
+    "theme": "light",
+    "opening": "PSK abierta/abatida",
+    "export": "PASA",
+    "save": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "editor",
+    "width": 1280,
+    "theme": "dark",
+    "opening": "PSK abierta/abatida",
+    "export": "PASA",
+    "save": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "editor",
+    "width": 1024,
+    "theme": "light",
+    "opening": "PSK abierta/abatida",
+    "export": "PASA",
+    "save": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "editor",
+    "width": 1024,
+    "theme": "dark",
+    "opening": "PSK abierta/abatida",
+    "export": "PASA",
+    "save": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "portal",
+    "width": 1440,
+    "theme": "light",
+    "sealedPositions": 14,
+    "publicCatalogRequests": 0,
+    "interactive": true,
+    "export": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "portal",
+    "width": 1440,
+    "theme": "dark",
+    "sealedPositions": 14,
+    "publicCatalogRequests": 0,
+    "interactive": true,
+    "export": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "portal",
+    "width": 1280,
+    "theme": "light",
+    "sealedPositions": 14,
+    "publicCatalogRequests": 0,
+    "interactive": true,
+    "export": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "portal",
+    "width": 1280,
+    "theme": "dark",
+    "sealedPositions": 14,
+    "publicCatalogRequests": 0,
+    "interactive": true,
+    "export": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "portal",
+    "width": 1024,
+    "theme": "light",
+    "sealedPositions": 14,
+    "publicCatalogRequests": 0,
+    "interactive": true,
+    "export": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "portal",
+    "width": 1024,
+    "theme": "dark",
+    "sealedPositions": 14,
+    "publicCatalogRequests": 0,
+    "interactive": true,
+    "export": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "portal",
+    "width": 390,
+    "theme": "light",
+    "sealedPositions": 14,
+    "publicCatalogRequests": 0,
+    "interactive": true,
+    "export": "PASA",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "surface": "portal",
+    "width": 390,
+    "theme": "dark",
+    "sealedPositions": 14,
+    "publicCatalogRequests": 0,
+    "interactive": true,
+    "export": "PASA",
+    "overflow": false,
+    "errors": []
+  }
+]

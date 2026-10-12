@@ -1,0 +1,796 @@
+{
+  "bow_22_5": {
+    "issues": [],
+    "measures": {
+      "coupling_width_mm": "0.00",
+      "developed_width_mm": "2400.00",
+      "front_width_mm": "2308.65",
+      "height_mm": "1200.00",
+      "modules": [
+        {
+          "developed_x_mm": "0.00",
+          "height_mm": "1200.00",
+          "module_id": "m1",
+          "projected_width_mm": "554.33",
+          "projected_x_mm": "0.00",
+          "sill_mm": "0.00",
+          "width_mm": "600.00"
+        },
+        {
+          "developed_x_mm": "600.00",
+          "height_mm": "1200.00",
+          "module_id": "m2",
+          "projected_width_mm": "1200.00",
+          "projected_x_mm": "554.33",
+          "sill_mm": "0.00",
+          "width_mm": "1200.00"
+        },
+        {
+          "developed_x_mm": "1800.00",
+          "height_mm": "1200.00",
+          "module_id": "m3",
+          "projected_width_mm": "554.32",
+          "projected_x_mm": "1754.33",
+          "sill_mm": "0.00",
+          "width_mm": "600.00"
+        }
+      ],
+      "projection_mm": "229.61",
+      "source": "Motor geométrico; suma desarrollada con acoples declarados; cuerda y salida perpendicular de la cadena frontal."
+    },
+    "plan": {
+      "couplings": [
+        {
+          "coupling_id": "c1",
+          "polygon": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "622.96",
+              "y_mm": "-55.43"
+            }
+          ]
+        },
+        {
+          "coupling_id": "c2",
+          "polygon": [
+            {
+              "x_mm": "1708.66",
+              "y_mm": "459.22"
+            },
+            {
+              "x_mm": "1731.62",
+              "y_mm": "403.79"
+            },
+            {
+              "x_mm": "1751.08",
+              "y_mm": "416.79"
+            }
+          ]
+        }
+      ],
+      "front_chain": [
+        {
+          "x_mm": "0.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "600.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "1708.66",
+          "y_mm": "459.22"
+        },
+        {
+          "x_mm": "2132.92",
+          "y_mm": "883.48"
+        }
+      ],
+      "height_mm": "943.48",
+      "min_x_mm": "0.00",
+      "min_y_mm": "-60.00",
+      "modules": [
+        {
+          "corners": [
+            {
+              "x_mm": "0.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "0.00",
+              "y_mm": "-60.00"
+            }
+          ],
+          "module_id": "m1"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "1708.66",
+              "y_mm": "459.22"
+            },
+            {
+              "x_mm": "1731.62",
+              "y_mm": "403.79"
+            },
+            {
+              "x_mm": "622.96",
+              "y_mm": "-55.43"
+            }
+          ],
+          "module_id": "m2"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "1708.66",
+              "y_mm": "459.22"
+            },
+            {
+              "x_mm": "2132.92",
+              "y_mm": "883.48"
+            },
+            {
+              "x_mm": "2175.35",
+              "y_mm": "841.06"
+            },
+            {
+              "x_mm": "1751.08",
+              "y_mm": "416.79"
+            }
+          ],
+          "module_id": "m3"
+        }
+      ],
+      "width_mm": "2175.35"
+    },
+    "status": "VALID"
+  },
+  "bow_45": {
+    "issues": [],
+    "measures": {
+      "coupling_width_mm": "0.00",
+      "developed_width_mm": "2400.00",
+      "front_width_mm": "2048.53",
+      "height_mm": "1200.00",
+      "modules": [
+        {
+          "developed_x_mm": "0.00",
+          "height_mm": "1200.00",
+          "module_id": "m1",
+          "projected_width_mm": "424.26",
+          "projected_x_mm": "0.00",
+          "sill_mm": "0.00",
+          "width_mm": "600.00"
+        },
+        {
+          "developed_x_mm": "600.00",
+          "height_mm": "1200.00",
+          "module_id": "m2",
+          "projected_width_mm": "1200.00",
+          "projected_x_mm": "424.26",
+          "sill_mm": "0.00",
+          "width_mm": "1200.00"
+        },
+        {
+          "developed_x_mm": "1800.00",
+          "height_mm": "1200.00",
+          "module_id": "m3",
+          "projected_width_mm": "424.26",
+          "projected_x_mm": "1624.27",
+          "sill_mm": "0.00",
+          "width_mm": "600.00"
+        }
+      ],
+      "projection_mm": "424.26",
+      "source": "Motor geométrico; suma desarrollada con acoples declarados; cuerda y salida perpendicular de la cadena frontal."
+    },
+    "plan": {
+      "couplings": [
+        {
+          "coupling_id": "c1",
+          "polygon": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "642.43",
+              "y_mm": "-42.43"
+            }
+          ]
+        },
+        {
+          "coupling_id": "c2",
+          "polygon": [
+            {
+              "x_mm": "1448.53",
+              "y_mm": "848.53"
+            },
+            {
+              "x_mm": "1490.95",
+              "y_mm": "806.10"
+            },
+            {
+              "x_mm": "1508.53",
+              "y_mm": "848.53"
+            }
+          ]
+        }
+      ],
+      "front_chain": [
+        {
+          "x_mm": "0.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "600.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "1448.53",
+          "y_mm": "848.53"
+        },
+        {
+          "x_mm": "1448.53",
+          "y_mm": "1448.53"
+        }
+      ],
+      "height_mm": "1508.53",
+      "min_x_mm": "0.00",
+      "min_y_mm": "-60.00",
+      "modules": [
+        {
+          "corners": [
+            {
+              "x_mm": "0.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "0.00",
+              "y_mm": "-60.00"
+            }
+          ],
+          "module_id": "m1"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "1448.53",
+              "y_mm": "848.53"
+            },
+            {
+              "x_mm": "1490.95",
+              "y_mm": "806.10"
+            },
+            {
+              "x_mm": "642.43",
+              "y_mm": "-42.43"
+            }
+          ],
+          "module_id": "m2"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "1448.53",
+              "y_mm": "848.53"
+            },
+            {
+              "x_mm": "1448.53",
+              "y_mm": "1448.53"
+            },
+            {
+              "x_mm": "1508.53",
+              "y_mm": "1448.53"
+            },
+            {
+              "x_mm": "1508.53",
+              "y_mm": "848.53"
+            }
+          ],
+          "module_id": "m3"
+        }
+      ],
+      "width_mm": "1508.53"
+    },
+    "status": "VALID"
+  },
+  "bow_espaciado": {
+    "issues": [],
+    "measures": {
+      "coupling_width_mm": "48.00",
+      "developed_width_mm": "2448.00",
+      "front_width_mm": "2355.73",
+      "height_mm": "1200.00",
+      "modules": [
+        {
+          "developed_x_mm": "0.00",
+          "height_mm": "1200.00",
+          "module_id": "m1",
+          "projected_width_mm": "554.33",
+          "projected_x_mm": "0.00",
+          "sill_mm": "0.00",
+          "width_mm": "600.00"
+        },
+        {
+          "developed_x_mm": "624.00",
+          "height_mm": "1200.00",
+          "module_id": "m2",
+          "projected_width_mm": "1199.99",
+          "projected_x_mm": "577.87",
+          "sill_mm": "0.00",
+          "width_mm": "1200.00"
+        },
+        {
+          "developed_x_mm": "1848.00",
+          "height_mm": "1200.00",
+          "module_id": "m3",
+          "projected_width_mm": "554.32",
+          "projected_x_mm": "1801.41",
+          "sill_mm": "0.00",
+          "width_mm": "600.00"
+        }
+      ],
+      "projection_mm": "234.30",
+      "source": "Motor geométrico; suma desarrollada con acoples declarados; cuerda y salida perpendicular de la cadena frontal."
+    },
+    "plan": {
+      "couplings": [
+        {
+          "coupling_id": "c1",
+          "polygon": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "646.50",
+              "y_mm": "-50.75"
+            },
+            {
+              "x_mm": "623.54",
+              "y_mm": "4.68"
+            }
+          ]
+        },
+        {
+          "coupling_id": "c2",
+          "polygon": [
+            {
+              "x_mm": "1732.19",
+              "y_mm": "463.90"
+            },
+            {
+              "x_mm": "1755.16",
+              "y_mm": "408.47"
+            },
+            {
+              "x_mm": "1794.58",
+              "y_mm": "434.81"
+            },
+            {
+              "x_mm": "1752.15",
+              "y_mm": "477.24"
+            }
+          ]
+        }
+      ],
+      "front_chain": [
+        {
+          "x_mm": "0.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "600.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "623.54",
+          "y_mm": "4.68"
+        },
+        {
+          "x_mm": "1732.19",
+          "y_mm": "463.90"
+        },
+        {
+          "x_mm": "1752.15",
+          "y_mm": "477.24"
+        },
+        {
+          "x_mm": "2176.41",
+          "y_mm": "901.50"
+        }
+      ],
+      "height_mm": "961.50",
+      "min_x_mm": "0.00",
+      "min_y_mm": "-60.00",
+      "modules": [
+        {
+          "corners": [
+            {
+              "x_mm": "0.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "0.00",
+              "y_mm": "-60.00"
+            }
+          ],
+          "module_id": "m1"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "623.54",
+              "y_mm": "4.68"
+            },
+            {
+              "x_mm": "1732.19",
+              "y_mm": "463.90"
+            },
+            {
+              "x_mm": "1755.16",
+              "y_mm": "408.47"
+            },
+            {
+              "x_mm": "646.50",
+              "y_mm": "-50.75"
+            }
+          ],
+          "module_id": "m2"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "1752.15",
+              "y_mm": "477.24"
+            },
+            {
+              "x_mm": "2176.41",
+              "y_mm": "901.50"
+            },
+            {
+              "x_mm": "2218.84",
+              "y_mm": "859.07"
+            },
+            {
+              "x_mm": "1794.58",
+              "y_mm": "434.81"
+            }
+          ],
+          "module_id": "m3"
+        }
+      ],
+      "width_mm": "2218.84"
+    },
+    "status": "VALID"
+  },
+  "esquina_90": {
+    "issues": [],
+    "measures": {
+      "coupling_width_mm": "0.00",
+      "developed_width_mm": "1800.00",
+      "front_width_mm": "1341.64",
+      "height_mm": "1200.00",
+      "modules": [
+        {
+          "developed_x_mm": "0.00",
+          "height_mm": "1200.00",
+          "module_id": "m1",
+          "projected_width_mm": "268.33",
+          "projected_x_mm": "0.00",
+          "sill_mm": "0.00",
+          "width_mm": "600.00"
+        },
+        {
+          "developed_x_mm": "600.00",
+          "height_mm": "1200.00",
+          "module_id": "m2",
+          "projected_width_mm": "1073.31",
+          "projected_x_mm": "268.33",
+          "sill_mm": "0.00",
+          "width_mm": "1200.00"
+        }
+      ],
+      "projection_mm": "536.66",
+      "source": "Motor geométrico; suma desarrollada con acoples declarados; cuerda y salida perpendicular de la cadena frontal."
+    },
+    "plan": {
+      "couplings": [
+        {
+          "coupling_id": "c1",
+          "polygon": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "660.00",
+              "y_mm": "-0.00"
+            }
+          ]
+        }
+      ],
+      "front_chain": [
+        {
+          "x_mm": "0.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "600.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "600.00",
+          "y_mm": "1200.00"
+        }
+      ],
+      "height_mm": "1260.00",
+      "min_x_mm": "0.00",
+      "min_y_mm": "-60.00",
+      "modules": [
+        {
+          "corners": [
+            {
+              "x_mm": "0.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "0.00",
+              "y_mm": "-60.00"
+            }
+          ],
+          "module_id": "m1"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "1200.00"
+            },
+            {
+              "x_mm": "660.00",
+              "y_mm": "1200.00"
+            },
+            {
+              "x_mm": "660.00",
+              "y_mm": "-0.00"
+            }
+          ],
+          "module_id": "m2"
+        }
+      ],
+      "width_mm": "660.00"
+    },
+    "status": "VALID"
+  },
+  "rechazo_89": {
+    "issues": [
+      {
+        "code": "assembly_folds_back",
+        "params": {
+          "heading_deg": "178.00"
+        },
+        "severity": "error",
+        "target": "coupling:c2"
+      },
+      {
+        "code": "coupler_angle_incompatible",
+        "params": {
+          "angle_deg": "89",
+          "field": "coupler_profile_sku",
+          "max_angle_deg": "60",
+          "min_angle_deg": "0",
+          "sku": "FUENTE-ARTICULO",
+          "source": "Fixture de autoridad revisada; sin certificación"
+        },
+        "severity": "error",
+        "target": "coupling:c1"
+      },
+      {
+        "code": "coupler_angle_incompatible",
+        "params": {
+          "angle_deg": "89",
+          "field": "coupler_profile_sku",
+          "max_angle_deg": "60",
+          "min_angle_deg": "0",
+          "sku": "FUENTE-ARTICULO",
+          "source": "Fixture de autoridad revisada; sin certificación"
+        },
+        "severity": "error",
+        "target": "coupling:c2"
+      }
+    ],
+    "measures": null,
+    "plan": {
+      "couplings": [
+        {
+          "coupling_id": "c1",
+          "polygon": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "659.99",
+              "y_mm": "-1.05"
+            }
+          ]
+        },
+        {
+          "coupling_id": "c2",
+          "polygon": [
+            {
+              "x_mm": "620.94",
+              "y_mm": "1199.82"
+            },
+            {
+              "x_mm": "680.93",
+              "y_mm": "1198.77"
+            },
+            {
+              "x_mm": "623.04",
+              "y_mm": "1259.78"
+            }
+          ]
+        }
+      ],
+      "front_chain": [
+        {
+          "x_mm": "0.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "600.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "620.94",
+          "y_mm": "1199.82"
+        },
+        {
+          "x_mm": "21.31",
+          "y_mm": "1220.76"
+        }
+      ],
+      "height_mm": "1340.72",
+      "min_x_mm": "0.00",
+      "min_y_mm": "-60.00",
+      "modules": [
+        {
+          "corners": [
+            {
+              "x_mm": "0.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "600.00",
+              "y_mm": "-60.00"
+            },
+            {
+              "x_mm": "0.00",
+              "y_mm": "-60.00"
+            }
+          ],
+          "module_id": "m1"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "600.00",
+              "y_mm": "0.00"
+            },
+            {
+              "x_mm": "620.94",
+              "y_mm": "1199.82"
+            },
+            {
+              "x_mm": "680.93",
+              "y_mm": "1198.77"
+            },
+            {
+              "x_mm": "659.99",
+              "y_mm": "-1.05"
+            }
+          ],
+          "module_id": "m2"
+        },
+        {
+          "corners": [
+            {
+              "x_mm": "620.94",
+              "y_mm": "1199.82"
+            },
+            {
+              "x_mm": "21.31",
+              "y_mm": "1220.76"
+            },
+            {
+              "x_mm": "23.40",
+              "y_mm": "1280.72"
+            },
+            {
+              "x_mm": "623.04",
+              "y_mm": "1259.78"
+            }
+          ],
+          "module_id": "m3"
+        }
+      ],
+      "width_mm": "680.93"
+    },
+    "status": "INVALID"
+  }
+}

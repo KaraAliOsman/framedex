@@ -8,8 +8,10 @@ import type { JobRun } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { jobErrorKey } from "../features/jobs/jobError";
 import { formatDateTime } from "../format";
-import { EmptyState, PageHeader } from "../ui";
+import { EmptyState, PageHeader, StatusChip, LoadingState, ErrorState, DeniedState } from "../ui";
 import { t, tDynamic, type TranslationKey } from "../i18n/es-CL";
+import { AiWorkList } from "../features/assistant/AiWorkList";
+import { AI_CAPABILITIES } from "../features/assistant/providerLabels";
 
 const STATE_KEYS: Record<string, TranslationKey> = {
   QUEUED: "jobs.state.QUEUED",
@@ -19,7 +21,11 @@ const STATE_KEYS: Record<string, TranslationKey> = {
   CANCELED: "jobs.state.CANCELED",
 };
 
-const TERMINAL_RETRYABLE = new Set(["FAILED", "CANCELED"]);
+function duration(value: number | null | undefined): string {
+  if (value == null) return "Sin dato: aún no comenzó";
+  const seconds = Math.floor(value / 1000);
+  return seconds >= 60 ? `${Math.floor(seconds / 60)} min ${seconds % 60} s` : `${seconds} s`;
+}
 
 function typeLabel(type: string): string {
   return tDynamic("jobs.type", type);
@@ -44,9 +50,7 @@ function jobFailure(error: JobRun["error"]): JobFailure | null {
 
 /** Background work made visible: what ran, what's running, what failed —
  * with the recovery action (reintentar) next to the failure it fixes.
- * Retry stays available on every terminal job: the endpoint reauthorizes
- * the current actor, so a failure whose cause was fixed (restored access,
- * repaired storage) recovers through it. */
+ * The backend declares retry eligibility and reauthorizes each attempt. */
 const PAGE_SIZE = 100;
 
 export function JobsPage(): JSX.Element {
@@ -55,11 +59,12 @@ export function JobsPage(): JSX.Element {
   const [notice, setNotice] = useState("");
   const client = useQueryClient();
   const stateFilter = params.get("state") ?? "";
+  const capabilityFilter = params.get("capability") ?? "";
   const [pages, setPages] = useState(1);
 
   const query = useQuery<JobRun[]>({
     queryKey: ["jobs", "list", org?.id, stateFilter, pages],
-    enabled: org !== undefined,
+    enabled: org !== undefined && !capabilityFilter,
     // A running job is a living row — poll fast while anything can still
     // move; idle keeps a slow beat so jobs started elsewhere still appear.
     refetchInterval: (result) =>
@@ -117,26 +122,53 @@ export function JobsPage(): JSX.Element {
     <section className="dashboard jobs-page" aria-labelledby="page-title">
       <PageHeader
         actions={
-          <label className="ui-field jobs-filter">
-            <span className="ui-field__label">{t("jobs.filter.state")}</span>
-            <select
-              className="ui-field__input"
-              value={stateFilter}
-              onChange={(event) => {
-                const next = new URLSearchParams(params);
-                if (event.target.value === "") next.delete("state");
-                else next.set("state", event.target.value);
-                setParams(next, { replace: true });
-              }}
-            >
-              <option value="">{t("jobs.filter.all")}</option>
-              {Object.keys(STATE_KEYS).map((state) => (
-                <option key={state} value={state}>
-                  {t(STATE_KEYS[state] ?? "jobs.state.QUEUED")}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="ai-work-filters">
+            <label className="ui-field jobs-filter">
+              <span className="ui-field__label">Capacidad</span>
+              <select
+                className="ui-field__input"
+                value={capabilityFilter}
+                onChange={(event) => {
+                  const next = new URLSearchParams(params);
+                  if (event.target.value) next.set("capability", event.target.value);
+                  else next.delete("capability");
+                  setPages(1);
+                  setParams(next, { replace: true });
+                }}
+              >
+                <option value="">Todos los trabajos</option>
+                <option value="all_ai">Todas las llamadas de IA</option>
+                {["design_assist", "agent", "context_assist", "catalog_import"].map(
+                  (capability) => (
+                    <option key={capability} value={capability}>
+                      {AI_CAPABILITIES[capability]}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+            <label className="ui-field jobs-filter">
+              <span className="ui-field__label">{t("jobs.filter.state")}</span>
+              <select
+                className="ui-field__input"
+                value={stateFilter}
+                onChange={(event) => {
+                  const next = new URLSearchParams(params);
+                  if (event.target.value === "") next.delete("state");
+                  else next.set("state", event.target.value);
+                  setParams(next, { replace: true });
+                  setPages(1);
+                }}
+              >
+                <option value="">{t("jobs.filter.all")}</option>
+                {Object.keys(STATE_KEYS).map((state) => (
+                  <option key={state} value={state}>
+                    {t(STATE_KEYS[state] ?? "jobs.state.QUEUED")}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         }
         context={t("jobs.subtitle")}
         headingId="page-title"
@@ -144,24 +176,29 @@ export function JobsPage(): JSX.Element {
       />
 
       {notice !== "" && <p role="status">{notice}</p>}
-      {query.isPending ? (
-        <p role="status">{t("dashboard.attentionLoading")}</p>
+      {capabilityFilter ? (
+        <AiWorkList capability={capabilityFilter} state={stateFilter} />
+      ) : query.isPending ? (
+        <LoadingState label="Cargando trabajos" />
       ) : query.isError ? (
-        <p role="alert">{t("jobs.error")}</p>
+        query.error instanceof ApiError && query.error.status === 403 ? (
+          <DeniedState reason="Pide al dueño, a un estimador o al jefe de taller que revise el trabajo." />
+        ) : (
+          <ErrorState title={t("jobs.error")} onRetry={() => void query.refetch()} />
+        )
       ) : items.length === 0 ? (
         <EmptyState title={t("jobs.empty")} />
       ) : (
         <ul className="jobs-list">
           {items.map((job) => {
+            const queueState = job.state;
             const failure = jobFailure(job.error);
             const failureKey = failure ? jobErrorKey(failure.detail) : null;
             return (
               <li key={job.id} className="job-row" data-state={job.state.toLowerCase()}>
                 <div className="job-row-main">
                   <strong>{typeLabel(job.type)}</strong>
-                  <span className="status-chip" data-status={job.state.toLowerCase()}>
-                    {t(STATE_KEYS[job.state] ?? "jobs.state.QUEUED")}
-                  </span>
+                  <StatusChip status={queueState} />
                   {job.ai_job_id ? (
                     <Link
                       className="ui-button ui-button--small ui-button--ghost"
@@ -171,30 +208,34 @@ export function JobsPage(): JSX.Element {
                     </Link>
                   ) : null}
                 </div>
+                <p className="job-row-object">
+                  {job.context_url ? (
+                    <Link to={job.context_url}>{job.context_label}</Link>
+                  ) : (
+                    (job.context_label ?? "Trabajo de organización")
+                  )}
+                </p>
                 <div className="job-row-meta">
+                  <span>{job.actor_label ?? "Usuario no disponible"}</span>
+                  <span>Duración: {duration(job.duration_ms)}</span>
                   <span>
                     {t("jobs.attempt")
                       .replace("{attempt}", String(job.attempt))
                       .replace("{max}", String(job.max_attempts))}
                   </span>
-                  <span>{t("jobs.progress").replace("{percent}", job.progress)}</span>
                   <time dateTime={job.created_at}>{formatDateTime(job.created_at)}</time>
                 </div>
+                <p>{job.result_label}</p>
                 {job.state === "FAILED" && failure !== null && failureKey !== null && (
-                  <p className="job-row-error">
-                    {t(failureKey)}
-                    {/* A snake_case domain code is a useful diagnostic tail;
-                        exception text (IntegrityError:, tracebacks) is not —
-                        it never reaches the user. */}
-                    {/^[a-z0-9_]+$/.test(failure.detail) && failure.detail !== failureKey && (
-                      <>
-                        {" "}
-                        <code className="job-row-code">{failure.detail}</code>
-                      </>
-                    )}
-                  </p>
+                  <p className="job-row-error">{t(failureKey)}</p>
                 )}
-                {TERMINAL_RETRYABLE.has(job.state) && (
+                {job.state === "FAILED" && failure && /^[a-z0-9_]+$/.test(failure.detail) && (
+                  <details className="ui-tech">
+                    <summary>Detalles técnicos</summary>
+                    <code>{failure.detail}</code>
+                  </details>
+                )}
+                {job.can_retry === true && (
                   <button
                     type="button"
                     className="ui-button ui-button--small"
@@ -212,7 +253,7 @@ export function JobsPage(): JSX.Element {
           })}
         </ul>
       )}
-      {!query.isPending && !query.isError && hasMore && (
+      {!capabilityFilter && !query.isPending && !query.isError && hasMore && (
         <button
           type="button"
           className="ui-button"

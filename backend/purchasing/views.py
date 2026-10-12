@@ -4,6 +4,9 @@ from uuid import UUID
 
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
+from purchasing import needs, supplier_mail
+from purchasing.serializers import (PurchaseNeedsSerializer,PurchaseNeedsConfirmSerializer,PurchaseNeedsResultSerializer,
+                                   PurchaseMailRequestSerializer,PurchaseMailPreviewSerializer,PurchaseMailResultSerializer)
 from rest_framework.views import APIView
 
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
@@ -122,6 +125,42 @@ class ConfirmBatchView(APIView):
                 confirmed=data["confirmed"],
             )
         return Response(output, status=201 if created else 200)
+
+
+class PurchasingNeedsView(APIView):
+    @extend_schema(operation_id='purchasing_needs',parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   responses={200:PurchaseNeedsSerializer,**ERRORS},tags=['purchasing'])
+    def get(self,request):
+        with documentary_scope(request,_READERS) as (_,_,org_id):
+            output=needs.proposal(org_id=org_id)
+        return Response(output)
+
+
+class PurchasingNeedsConfirmView(APIView):
+    @extend_schema(operation_id='purchasing_needs_confirm',parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   request=PurchaseNeedsConfirmSerializer,responses={200:PurchaseNeedsResultSerializer,**ERRORS},tags=['purchasing'])
+    def post(self,request):
+        data=validate(PurchaseNeedsConfirmSerializer,request.data)
+        with documentary_scope(request,_ALLOWED) as (token,_,org_id):
+            output=needs.confirm_proposal(org_id=org_id,actor_id=token.user_id,data=data)
+        return Response(output)
+
+
+class PurchaseMailView(APIView):
+    @extend_schema(operation_id='purchasing_mail_preview',parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   responses={200:PurchaseMailPreviewSerializer,**ERRORS},tags=['purchasing'])
+    def get(self,request,order_id:UUID):
+        with documentary_scope(request,_ALLOWED) as (_,_,org_id):
+            output=supplier_mail.preview(org_id=org_id,order_id=order_id)
+        return Response(output)
+
+    @extend_schema(operation_id='purchasing_mail_send',parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   request=PurchaseMailRequestSerializer,responses={200:PurchaseMailResultSerializer,**ERRORS},tags=['purchasing'])
+    def post(self,request,order_id:UUID):
+        data=validate(PurchaseMailRequestSerializer,request.data)
+        with documentary_scope(request,_ALLOWED) as (token,tenant,org_id):
+            output=supplier_mail.send(org_id=org_id,order_id=order_id,actor_id=token.user_id,role=tenant.active_organization.role,**data)
+        return Response(output)
 
 
 class SendOrderView(APIView):

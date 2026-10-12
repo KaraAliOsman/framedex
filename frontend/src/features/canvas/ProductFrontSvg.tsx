@@ -1,12 +1,29 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 
-import type { ProductIssue } from "../../api/generated/models";
-import { fmtMm, parseLocaleNumber } from "../../format";
+import type { AssemblyMeasure, ProductIssue } from "../../api/generated/models";
+import { fmtMm, formatDecimal, parseLocaleNumber } from "../../format";
 import { t } from "../../i18n/es-CL";
 import type { IntentNode } from "./intentEditing";
-import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
+import {
+  isSlidingOpening,
+  resolvedSlidingLayout,
+  slidingTravel,
+  walkIntent,
+} from "./intentEditing";
 import { OPENING_OPTIONS } from "./openings";
 import { memberSurface, type MemberSurface } from "./materials";
+import { finishColorCss } from "./finishColors";
+import { bayHardwareColor } from "./finishHardware";
+import type { CSSProperties } from "react";
 import { contourOutset, contourPathD, insetContourPoints, pointsPathD } from "./contourGeometry";
 import type { MemberGeometry } from "./members";
 import {
@@ -23,6 +40,18 @@ import { useViewportScale } from "./CanvasViewport";
 // keeps the renderer self-contained: surfaces outside the editor
 // (/benchmark, thumbnails, alternatives) get the same real drawing.
 import "./canvas.css";
+import { visualOpening, physicalLabel, type OpeningLeafFact } from "./physicalOpenings";
+import type { DrawingEnvelope, DrawingFacts } from "../../api/generated/models";
+import { OpeningSymbol } from "../../ui/OpeningSymbol";
+import { legacySymbolOpening } from "../../ui/openingSymbols";
+
+const ExteriorTextContext = createContext(false);
+
+const PhysicalFactsContext = createContext<{ leaves: OpeningLeafFact[]; x: number; y: number }>({
+  leaves: [],
+  x: 0,
+  y: 0,
+});
 
 /** Front elevation of the compositional product as a real fenestration
  * drawing: frame/sash/mullion/bead/threshold members at their catalog face
@@ -62,6 +91,7 @@ function SvgDim({
   disabled: boolean;
   onCommit(normalized: string): void;
 }): JSX.Element {
+  const exterior = useContext(ExteriorTextContext);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [invalid, setInvalid] = useState(false);
@@ -71,7 +101,7 @@ function SvgDim({
       setInvalid(false);
     }
   }, [value, editing]);
-  const fontSize = 34;
+  const fontSize = Math.max(34, 13 / useViewportScale());
   if (!editing || disabled) {
     // Click target: an invisible padded pill around the glyphs — the text
     // alone is a few px at fit zoom, so most clicks used to miss and hit the
@@ -102,6 +132,7 @@ function SvgDim({
         />
         <text
           className="canvas-dim"
+          transform={exterior ? `translate(${2 * x} 0) scale(-1 1)` : undefined}
           x={x}
           y={y}
           fontSize={fontSize}
@@ -115,9 +146,16 @@ function SvgDim({
     );
   }
   return (
-    <foreignObject x={x - 70} y={y - fontSize} width={140} height={fontSize + 26}>
+    <foreignObject
+      x={x - fontSize * 3}
+      y={y - fontSize}
+      width={fontSize * 6}
+      height={fontSize + 26}
+      transform={exterior ? `translate(${2 * x} 0) scale(-1 1)` : undefined}
+    >
       <input
         className={`canvas-dim-input${invalid ? " is-invalid" : ""}`}
+        style={{ fontSize }}
         aria-label={label}
         aria-invalid={invalid || undefined}
         autoFocus
@@ -179,6 +217,7 @@ export function OpeningGlyph({
   w,
   h,
   doorHinge,
+  view = "interior",
 }: {
   opening: string | null | undefined;
   x: number;
@@ -186,72 +225,15 @@ export function OpeningGlyph({
   w: number;
   h: number;
   doorHinge?: "left" | "right";
+  view?: "interior" | "exterior";
 }): JSX.Element {
-  const padX = w * 0.2;
-  const padY = h * 0.2;
-  const left = x + padX;
-  const right = x + w - padX;
-  const top = y + padY;
-  const bottom = y + h - padY;
-  const cx = x + w / 2;
-  const cy = y + h / 2;
   const kind = opening ?? "FIXED";
+  const physical = legacySymbolOpening(
+    kind,
+    doorHinge?.toUpperCase() as "LEFT" | "RIGHT" | undefined,
+  );
   return (
-    <g className={`opening-glyph opening-${kind.toLowerCase()}`} aria-hidden="true">
-      {kind.includes("RIGHT") && (
-        <polyline points={`${right},${top} ${left},${cy} ${right},${bottom}`} fill="none" />
-      )}
-      {kind.includes("LEFT") && (
-        <polyline points={`${left},${top} ${right},${cy} ${left},${bottom}`} fill="none" />
-      )}
-      {kind.startsWith("TILT") && (
-        <polyline points={`${left},${bottom} ${cx},${top} ${right},${bottom}`} fill="none" />
-      )}
-      {/* Awning is top-hinged — its triangle mirrors the issued doc (base at
-          the top edge), not the tilt glyph. */}
-      {kind === "AWNING" && (
-        <polyline points={`${left},${top} ${cx},${bottom} ${right},${top}`} fill="none" />
-      )}
-      {kind.startsWith("SLIDING") &&
-        (() => {
-          const panes = { SLIDING_3L: 3, SLIDING_4L: 4 }[kind] ?? 2;
-          const paneW = (right - left) / panes;
-          return Array.from({ length: panes }, (_, index) => {
-            const boundary = left + paneW * index;
-            const mid = boundary + paneW / 2;
-            const arrow = paneW * 0.22;
-            return (
-              <g key={`sliding-${index}`}>
-                {index > 0 && <line x1={boundary} y1={top} x2={boundary} y2={bottom} />}
-                <path
-                  d={`M${mid - arrow} ${cy} H${mid + arrow} M${mid + arrow * 0.5} ${cy - h * 0.05} L${mid + arrow} ${cy}`}
-                  fill="none"
-                />
-              </g>
-            );
-          });
-        })()}
-      {/* A door glyph shows its swing: quarter-arc centred on the bottom
-       * hinge corner plus a jamb tick on the hinge side. */}
-      {kind === "DOOR_ENTRY" &&
-        (() => {
-          const hingeX = doorHinge === "right" ? right : left;
-          const sweepTo =
-            doorHinge === "right" ? right - Math.min(w, h) * 0.8 : left + Math.min(w, h) * 0.8;
-          const arcR = Math.min(w, h) * 0.8;
-          const sweep = doorHinge === "right" ? 1 : 0;
-          return (
-            <>
-              <line x1={hingeX} y1={top} x2={hingeX} y2={bottom} opacity={0.5} />
-              <path
-                d={`M ${sweepTo} ${bottom} A ${arcR} ${arcR} 0 0 ${sweep} ${hingeX} ${bottom - arcR}`}
-                fill="none"
-              />
-            </>
-          );
-        })()}
-      {kind === "FIXED" && <line x1={left} y1={top} x2={right} y2={bottom} opacity={0.18} />}
-    </g>
+    <OpeningSymbol opening={physical} x={x} y={y} width={w} height={h} view={view} mirror={false} />
   );
 }
 
@@ -565,10 +547,11 @@ function Bay({
    * declared handle height measures up from (OUTER_BOTTOM authority). */
   moduleBottom?: number;
 }): JSX.Element {
-  const opening = node.opening_type ?? "FIXED";
+  const opening = visualOpening(node);
+  const physicalFacts = useContext(PhysicalFactsContext);
   const bead = members.beadFor(node.glass_thickness_mm ?? null);
   const insulated = Number(node.glass_thickness_mm ?? "0") >= 12;
-  const sashSurface = memberSurface(members.sash.material);
+  const sashSurface = memberSurface(members.sash.material, members.sash.faceFinish);
   const baySelectProps = onSelect
     ? {
         onClick: (event: React.MouseEvent) => {
@@ -576,7 +559,7 @@ function Bay({
           onSelect();
         },
         role: "button" as const,
-        "aria-label": `${t("intent.bay")} · ${t(OPENING_OPTIONS.find(([value]) => value === opening)?.[1] ?? "intent.fixed")}`,
+        "aria-label": `${t("intent.bay")} · ${node.opening ? physicalLabel(node.opening, node.opening_use ?? "WINDOW") : t(OPENING_OPTIONS.find(([value]) => value === opening)?.[1] ?? "intent.fixed")}`,
         tabIndex: 0,
         onKeyDown: (event: React.KeyboardEvent) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -602,6 +585,133 @@ function Bay({
   // wide, a moving leaf covers its slot plus the meeting-stile overlap;
   // rear track draws first so the front leaf covers the interlock. Fixed
   // panels glaze their slot directly like a fixed bay.
+  if (
+    node.opening &&
+    (node.opening.movement !== "SLIDE" || Boolean(node.opening_recipe_code)) &&
+    (node.opening.movement !== "FIXED" || node.opening.fixed_in_sash)
+  ) {
+    const leaves = physicalFacts.leaves.filter((leaf) => leaf.bay_id === node.id);
+    return (
+      <g
+        className={`module-bay module-bay--structured${node.opening_use === "DOOR" ? " module-bay--door" : ""}${selected ? " is-selected" : ""}`}
+        style={
+          {
+            "--finish-handle-color": bayHardwareColor(members, node)
+              ? finishColorCss(bayHardwareColor(members, node)!)
+              : undefined,
+          } as CSSProperties
+        }
+        {...baySelectProps}
+      >
+        {leaves.length ? (
+          leaves.map((leaf) => {
+            const x = physicalFacts.x + Number(leaf.x_mm),
+              y = physicalFacts.y + Number(leaf.y_mm);
+            const width = Number(leaf.width_mm),
+              height = Number(leaf.height_mm);
+            const thickness = leaf.advanced
+              ? Number(leaf.advanced.profile_face_mm)
+              : members.sash.faceWidthMm;
+            const glass = leaf.advanced
+              ? {
+                  x: physicalFacts.x + Number(leaf.advanced.glass_x_mm),
+                  y: physicalFacts.y + Number(leaf.advanced.glass_y_mm),
+                  w: Number(leaf.advanced.glass_width_mm),
+                  h: Number(leaf.advanced.glass_height_mm),
+                }
+              : {
+                  x: x + thickness + bead,
+                  y: y + thickness + bead,
+                  w: Math.max(width - (thickness + bead) * 2, 0),
+                  h: Math.max(height - (thickness + bead) * 2, 0),
+                };
+            return (
+              <g key={leaf.leaf_id ?? "single"} data-physical-leaf={leaf.leaf_id ?? "single"}>
+                <title>
+                  {leaf.opening.leaf_role === "PASSIVE"
+                    ? "Hoja pasiva con falleba"
+                    : (leaf.advanced?.recipe_name ?? physicalLabel(leaf.opening, leaf.use))}
+                </title>
+                {thickness > 0 && (
+                  <Member
+                    x={x}
+                    y={y}
+                    w={width}
+                    h={height}
+                    surface={sashSurface}
+                    className="member-sash"
+                  />
+                )}
+                <rect
+                  className="member-bead"
+                  x={x + thickness}
+                  y={y + thickness}
+                  width={Math.max(width - thickness * 2, 0)}
+                  height={Math.max(height - thickness * 2, 0)}
+                />
+                <rect
+                  className="module-glass"
+                  data-engine-glass={leaf.advanced ? "true" : undefined}
+                  x={glass.x}
+                  y={glass.y}
+                  width={glass.w}
+                  height={glass.h}
+                />
+                <g className="opening-glyph">
+                  <OpeningSymbol
+                    opening={leaf.opening}
+                    view={members.viewFace}
+                    mirror={false}
+                    travel={leaf.advanced?.travel}
+                    axis={{
+                      x:
+                        leaf.advanced?.pivot_x_mm != null
+                          ? physicalFacts.x + Number(leaf.advanced.pivot_x_mm)
+                          : null,
+                      y:
+                        leaf.advanced?.pivot_y_mm != null
+                          ? physicalFacts.y + Number(leaf.advanced.pivot_y_mm)
+                          : null,
+                      closingSide: leaf.handle?.side,
+                    }}
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                  />
+                </g>
+                {leaf.handle && (
+                  <g
+                    data-engine-handle="true"
+                    data-handle-side={leaf.handle.side}
+                    className="handle-lever"
+                    transform={`translate(${x + Number(leaf.handle.x_mm)} ${y + Number(leaf.handle.y_mm)})`}
+                  >
+                    <title>{`Manilla · ${leaf.handle.source}`}</title>
+                    {["TOP", "BOTTOM"].includes(leaf.handle.side) ? (
+                      <path d="M-12 0h24M0 0v15" />
+                    ) : (
+                      <path d={`M0 -12v24M0 0h${leaf.handle.side === "LEFT" ? 18 : -18}`} />
+                    )}{" "}
+                  </g>
+                )}
+              </g>
+            );
+          })
+        ) : (
+          <text
+            className="leaf-role-label"
+            x={region.x + region.w / 2}
+            y={region.y + region.h / 2}
+            textAnchor="middle"
+          >
+            Sin cálculo de la hoja
+          </text>
+        )}
+        {selectRing}
+      </g>
+    );
+  }
   if (isSlidingOpening(opening)) {
     const layout = resolvedSlidingLayout(node);
     const panels = layout?.panels ?? [];
@@ -615,6 +725,13 @@ function Bay({
     return (
       <g
         className={`module-bay module-bay--sliding${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
+        style={
+          {
+            "--finish-handle-color": bayHardwareColor(members, node)
+              ? finishColorCss(bayHardwareColor(members, node)!)
+              : undefined,
+          } as CSSProperties
+        }
         {...baySelectProps}
       >
         {/* Rail notation: two head/sill grooves behind the leaves — the
@@ -663,9 +780,6 @@ function Bay({
           const beadY = region.y + leafSashT;
           const beadW = leafW - leafSashT * 2;
           const beadH = region.h - leafSashT * 2;
-          const midX = leafX + leafW / 2;
-          const midY = region.y + region.h / 2;
-          const arrow = Math.min(leafW, region.h) * 0.16;
           return (
             <g
               key={`leaf-${index}`}
@@ -703,22 +817,29 @@ function Bay({
                   }}
                 />
               )}
-              <path
+              <g
                 className="sliding-arrow"
-                // Travel convention shared with the 3D pose: a leaf opens
-                // toward its neighbouring slot — leaves in the left half of
-                // the bay slide right, the right half slides left. The
-                // product model declares no travel, so this stays a
-                // presentation convention, not manufacturing truth.
-                d={(() => {
-                  const dir = index * 2 < panels.length ? 1 : -1;
-                  const tip = midX + arrow * dir;
-                  const tail = midX - arrow * dir;
-                  const barb = tip - dir * arrow * 0.5;
-                  return `M${tail} ${midY} H${tip} M${barb} ${midY - arrow * 0.4} L${tip} ${midY} L${barb} ${midY + arrow * 0.4}`;
-                })()}
-                fill="none"
-              />
+                data-travel={slidingTravel(panel, index, panels.length)}
+                data-travel-inferred={!panel.travel || undefined}
+              >
+                {!panel.travel && <title>Dirección inferida</title>}
+                <OpeningSymbol
+                  opening={{
+                    movement: "SLIDE",
+                    hinge_side: "NONE",
+                    direction: "INWARD",
+                    leaf_role: "SINGLE",
+                    fixed_in_sash: false,
+                  }}
+                  travel={slidingTravel(panel, index, panels.length)}
+                  view={members.viewFace}
+                  mirror={false}
+                  x={leafX}
+                  y={region.y}
+                  width={leafW}
+                  height={region.h}
+                />
+              </g>
             </g>
           );
         })}
@@ -760,7 +881,7 @@ function Bay({
   const isPanel = Boolean(node.panel_article_sku);
   // DIN: the opening name is the hinge side; the handle sits opposite. A
   // door carries no side in its opening type — the declared
-  // `door_handedness` (hinge side) decides, defaulting to hinge-left.
+  // `door_handedness` (hinge side) decides; absence stays unknown.
   const handleSide = opening.includes("LEFT")
     ? "right"
     : opening.includes("RIGHT")
@@ -768,14 +889,16 @@ function Bay({
       : isDoor
         ? node.door_handedness === "RIGHT"
           ? "left"
-          : "right"
+          : node.door_handedness === "LEFT"
+            ? "right"
+            : null
         : null;
   // OUTER_BOTTOM datum resolution shared with the 3D scene: a declared
   // height that lands off the leaf is reported (is-datum-invalid flag),
   // not silently clamped into a plausible-looking position.
   const declaredRaw = Number(node.handle_height_mm);
   const declaredMm = Number.isFinite(declaredRaw) && declaredRaw > 0 ? declaredRaw : null;
-  const heightMm = declaredMm ?? 1050;
+  const heightMm = declaredMm ?? 0;
   const rawDatum =
     moduleBottom !== undefined ? moduleBottom - heightMm : sashArea.y + sashArea.h - heightMm;
   const datumInvalid =
@@ -784,7 +907,14 @@ function Bay({
 
   return (
     <g
-      className={`module-bay${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
+      className={`module-bay${isDoor ? " module-bay--door" : ""}${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
+      style={
+        {
+          "--finish-handle-color": bayHardwareColor(members, node)
+            ? finishColorCss(bayHardwareColor(members, node)!)
+            : undefined,
+        } as CSSProperties
+      }
       {...baySelectProps}
     >
       {operable && (
@@ -826,7 +956,7 @@ function Bay({
           />
           {/* The sheen only belongs on inert glass — under an operable leaf
            * it crosses the opening glyph and reads as a scribble. */}
-          {pane.w > 30 && pane.h > 30 && !node.opening_type && (
+          {pane.w > 30 && pane.h > 30 && node.opening_type == null && node.opening == null && (
             <line
               className="glass-sheen"
               x1={pane.x + pane.w * 0.18}
@@ -844,7 +974,10 @@ function Bay({
           y={region.y + region.h - thresholdH}
           w={region.w}
           h={thresholdH}
-          surface={memberSurface(members.threshold?.material ?? members.frame.material)}
+          surface={memberSurface(
+            members.threshold?.material ?? members.frame.material,
+            members.threshold?.faceFinish ?? members.frame.faceFinish,
+          )}
           className="member-threshold"
         />
       )}
@@ -855,10 +988,17 @@ function Bay({
           y={pane.y}
           w={pane.w}
           h={pane.h}
-          doorHinge={node.door_handedness === "RIGHT" ? "right" : "left"}
+          doorHinge={
+            node.door_handedness === "RIGHT"
+              ? "right"
+              : node.door_handedness === "LEFT"
+                ? "left"
+                : undefined
+          }
+          view={members.viewFace}
         />
       )}
-      {handleSide && operable && (
+      {handleSide && operable && declaredMm !== null && (
         <HandleLever
           x={
             handleSide === "right"
@@ -867,7 +1007,7 @@ function Bay({
           }
           // The lever mounts at the declared height measured up from the
           // module's outer bottom edge — the OUTER_BOTTOM datum the
-          // manufacturing authority resolves (1050 mm when undeclared). A
+          // manufacturing authority resolves. An absent datum is unknown. A
           // declared value that lands off the leaf draws clamped AND
           // flagged — the incompatibility is shown, never hidden.
           y={datumY}
@@ -876,7 +1016,7 @@ function Bay({
           declaredMm={declaredMm ?? undefined}
         />
       )}
-      {isDoor && operable && (
+      {isDoor && operable && handleSide && (
         <g className="door-hinges" aria-hidden="true">
           {[0.18, 0.5, 0.82].map((ratio) => (
             <rect
@@ -1054,18 +1194,12 @@ function ModuleTree({
           y={bar.y}
           w={Math.max(bar.w, 0)}
           h={Math.max(bar.h, 0)}
-          surface={memberSurface(mullion?.material ?? members.frame.material)}
+          surface={memberSurface(
+            mullion?.material ?? members.frame.material,
+            mullion?.faceFinish ?? members.frame.faceFinish,
+          )}
           className={`member-mullion${selectedDivisionId === node.id ? " is-selected" : ""}`}
         />
-        {showSplitDims && (
-          <text
-            className="split-dim"
-            x={vertical ? bar.x + bar.w + 6 : bar.x + 8}
-            y={vertical ? bar.y + 16 : bar.y - 6}
-          >
-            {offset.toFixed(0)}
-          </text>
-        )}
         {(onDividerDown || onSelectDivision) && (
           <rect
             className={`divider-grip${vertical ? " is-vertical" : " is-horizontal"}${selectedDivisionId === node.id ? " is-selected" : ""}`}
@@ -1120,6 +1254,348 @@ const TOP_GUTTER = 150;
 const SIDE_GUTTER = 130;
 const BOTTOM_GUTTER = 120;
 const LEFT_GUTTER = 195;
+
+function TechnicalChains({
+  facts,
+  x,
+  top,
+  width,
+  height,
+  exterior,
+  handles,
+  rightEdge,
+  bottomEdge,
+  laneOffset,
+  bottomLaneOffset,
+  pitch,
+  showMemberHeight,
+}: {
+  facts: DrawingFacts | null | undefined;
+  x: number;
+  top: number;
+  width: number;
+  height: number;
+  exterior: boolean;
+  handles: OpeningLeafFact[];
+  rightEdge: number;
+  bottomEdge: number;
+  laneOffset: number;
+  bottomLaneOffset: number;
+  pitch: number;
+  showMemberHeight: boolean;
+}): JSX.Element {
+  const labelSize = Math.max(30, 13 / useViewportScale());
+  const hLevels = Math.max(
+    0,
+    ...(facts?.chains.filter((chain) => chain.axis === "H").map((chain) => (chain.level + 1) * 2) ??
+      []),
+  );
+  const historicalHandles = (facts?.authored_handles ?? []).filter(
+    (datum) => !handles.some((leaf) => leaf.bay_id === datum.bay_id),
+  );
+  const textTransform = (anchor: number) =>
+    exterior ? `translate(${2 * anchor} 0) scale(-1 1)` : undefined;
+  return (
+    <g className="technical-chains" aria-label="Cotas a ejes y alturas de manilla">
+      {(facts?.chains ?? []).map((chain, index) => {
+        const vertical = chain.axis === "H";
+        const at = vertical
+          ? rightEdge + 110 + (laneOffset + chain.level * 2) * pitch
+          : bottomEdge + 80 + (1 + bottomLaneOffset + chain.level * 2) * pitch + labelSize / 2;
+        const labels = chain.segments.map((segment) => `${formatDecimal(segment.value_mm, 0)} mm`);
+        const centers = chain.segments.map(
+          (segment) => (Number(segment.start_mm) + Number(segment.end_mm)) / 2,
+        );
+        const stagger =
+          centers.length === 2 &&
+          Math.abs(centers[1]! - centers[0]!) <
+            labelSize * ((labels[0]!.length + labels[1]!.length) * 0.325 + 0.5);
+        const marks = chain.segments
+          .flatMap((segment) => [Number(segment.start_mm), Number(segment.end_mm)])
+          .map((mark) => mark + (vertical ? top : x));
+        return (
+          <g key={index} data-dimension-level={chain.level}>
+            {!stagger && (
+              <DimRun
+                marks={marks}
+                edge={vertical ? x + width : top + height}
+                at={at}
+                vertical={vertical}
+              />
+            )}
+            {chain.segments.map((segment, atIndex) => {
+              const midpoint = (Number(segment.start_mm) + Number(segment.end_mm)) / 2;
+              const segmentAt = at + (stagger ? atIndex * pitch : 0);
+              const tx = vertical ? segmentAt - labelSize / 2 : x + midpoint;
+              const ty = vertical ? top + midpoint : segmentAt - labelSize / 2;
+              return (
+                <g key={atIndex} data-dimension-label-lane={stagger ? atIndex : 0}>
+                  {stagger && (
+                    <DimRun
+                      marks={[Number(segment.start_mm), Number(segment.end_mm)].map(
+                        (mark) => mark + (vertical ? top : x),
+                      )}
+                      edge={vertical ? x + width : top + height}
+                      at={segmentAt}
+                      vertical={vertical}
+                    />
+                  )}
+                  <text
+                    className="technical-dim"
+                    style={{ fontSize: labelSize }}
+                    x={tx}
+                    y={ty}
+                    transform={`${textTransform(tx) ?? ""}${vertical ? ` rotate(-90 ${tx} ${ty})` : ""}`}
+                    textAnchor="middle"
+                  >
+                    {labels[atIndex]}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+      {showMemberHeight && facts && (
+        <g data-member-height="true">
+          <DimRun
+            marks={[top, top + height]}
+            edge={x + width}
+            at={rightEdge + 110 + (laneOffset + hLevels) * pitch}
+            vertical
+          />
+          <text
+            className="technical-dim"
+            style={{ fontSize: labelSize }}
+            x={rightEdge + 110 + (laneOffset + hLevels) * pitch - labelSize / 2}
+            y={top + height / 2}
+            textAnchor="middle"
+            transform={`${textTransform(rightEdge + 110 + (laneOffset + hLevels) * pitch - labelSize / 2) ?? ""} rotate(-90 ${rightEdge + 110 + (laneOffset + hLevels) * pitch - labelSize / 2} ${top + height / 2})`}
+          >
+            {formatDecimal(facts.height_mm, 0)} mm
+          </text>
+        </g>
+      )}
+      {handles
+        .filter((leaf) => leaf.handle)
+        .map((leaf, index) => {
+          const handle = leaf.handle!;
+          const at =
+            rightEdge + 110 + (laneOffset + hLevels + (showMemberHeight ? 1 : 0) + index) * pitch;
+          const bottom = top + Number(leaf.y_mm) + Number(leaf.height_mm);
+          const y = top + Number(leaf.y_mm) + Number(handle.y_mm);
+          const tx = at - 18;
+          const ty = (bottom + y) / 2;
+          return (
+            <g key={leaf.leaf_id ?? leaf.bay_id} data-handle-dimension="true">
+              <DimRun marks={[bottom, y]} edge={x + width} at={at} vertical />
+              <text
+                className="technical-dim"
+                style={{ fontSize: labelSize }}
+                x={tx}
+                y={ty}
+                transform={`${textTransform(tx) ?? ""} rotate(-90 ${tx} ${ty})`}
+                textAnchor="middle"
+              >
+                {formatDecimal(handle.height_from_bottom_mm, 0)} mm
+              </text>
+              <title>Altura de manilla desde la base de la hoja · {handle.source}</title>
+            </g>
+          );
+        })}
+      {historicalHandles.map((datum, index) => {
+        const at =
+          rightEdge +
+          110 +
+          (laneOffset +
+            hLevels +
+            (showMemberHeight ? 1 : 0) +
+            handles.filter((leaf) => leaf.handle).length +
+            index) *
+            pitch;
+        const tx = at - 18,
+          bottom = top + Number(datum.bottom_mm),
+          y = top + Number(datum.y_mm),
+          ty = (bottom + y) / 2;
+        return (
+          <g key={datum.bay_id} data-handle-dimension="true">
+            <DimRun marks={[bottom, y]} edge={x + width} at={at} vertical />
+            <text
+              className="technical-dim"
+              style={{ fontSize: labelSize }}
+              x={tx}
+              y={ty}
+              textAnchor="middle"
+              transform={`${textTransform(tx) ?? ""} rotate(-90 ${tx} ${ty})`}
+            >
+              {formatDecimal(datum.height_from_bottom_mm, 0)} mm
+            </text>
+            <title>Altura declarada de manilla desde la base del marco</title>
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+function slidingPlans(layout: FrontLayout, facts: Record<string, DrawingFacts | null>) {
+  return layout.rects.flatMap(({ module, x }) => {
+    const bays = facts[module.id]?.bays;
+    if (!bays?.length) return [];
+    const nodes = new Map(walkIntent(module.tree).map((node) => [node.id, node]));
+    return bays.flatMap((bay) => {
+      const sliding = nodes.get(bay.bay_id)?.sliding_layout;
+      return sliding
+        ? [
+            {
+              bayId: `${module.id}|${bay.bay_id}`,
+              left: x + Number(bay.x_mm),
+              width: Number(bay.width_mm),
+              layout: sliding,
+            },
+          ]
+        : [];
+    });
+  });
+}
+
+function technicalGutters(
+  front: FrontLayout,
+  facts: Record<string, DrawingFacts | null>,
+  handles: Record<string, OpeningLeafFact[]> = {},
+) {
+  const lanes = new Map<string, number>();
+  const bottomLanes = new Map<string, number>();
+  const pitch = Math.max(95, front.totalW / 20, (front.height + front.lift + front.dip) / 15);
+  let count = 0;
+  let bottomCount = 0;
+  for (const { module } of front.rects) {
+    lanes.set(module.id, count);
+    bottomLanes.set(module.id, bottomCount);
+    bottomCount += Math.max(
+      0,
+      ...(facts[module.id]?.chains
+        .filter((chain) => chain.axis === "V")
+        .map((chain) => (chain.level + 1) * 2) ?? []),
+    );
+    count +=
+      Math.max(
+        0,
+        ...(facts[module.id]?.chains
+          .filter((chain) => chain.axis === "H")
+          .map((chain) => (chain.level + 1) * 2) ?? []),
+      ) +
+      (handles[module.id] ?? []).filter((leaf) => leaf.handle).length +
+      (facts[module.id]?.authored_handles.length ?? 0) +
+      1;
+  }
+  const planHeight = slidingPlans(front, facts).reduce(
+    (sum, bay) => sum + 220 + bay.layout.tracks * 64,
+    0,
+  );
+  return {
+    lanes,
+    bottomLanes,
+    pitch,
+    right: count * pitch + 220,
+    planHeight,
+    bottom: bottomCount * pitch,
+  };
+}
+
+function SlidingPlan({
+  front,
+  facts,
+  y,
+  width,
+  exterior,
+}: {
+  front: FrontLayout;
+  facts: Record<string, DrawingFacts | null>;
+  y: number;
+  width: number;
+  exterior: boolean;
+}): JSX.Element | null {
+  const labelSize = Math.max(30, 13 / useViewportScale());
+  const bays = slidingPlans(front, facts);
+  if (!bays.length) return null;
+  let offset = 0;
+  const textTransform = (anchor: number) =>
+    exterior ? `translate(${2 * anchor} 0) scale(-1 1)` : undefined;
+  return (
+    <g
+      style={{ fontSize: labelSize }}
+      textAnchor={exterior ? "end" : "start"}
+      className="sliding-plan"
+      aria-label="Planta de corredera · carriles desde el exterior al interior"
+    >
+      {bays.map((bay) => {
+        const layout = bay.layout;
+        const left = bay.left,
+          usable = bay.width;
+        const rowY = y + offset;
+        offset += 220 + layout.tracks * 64;
+        return (
+          <g key={bay.bayId}>
+            <text className="plan-label" x={left} y={rowY} transform={textTransform(left)}>
+              EXTERIOR
+            </text>
+            {Array.from({ length: layout.tracks }, (_, track) => {
+              const ty = rowY + 60 + track * 64;
+              return (
+                <g key={track}>
+                  <line className="plan-rail" x1={left} x2={left + usable} y1={ty} y2={ty} />
+                  <text
+                    className="plan-label"
+                    x={width + 30}
+                    y={ty + 10}
+                    transform={textTransform(width + 30)}
+                  >
+                    Carril {track + 1}
+                  </text>
+                  {layout.panels.map((panel, index) =>
+                    panel.track === track ? (
+                      <line
+                        key={panel.slot}
+                        className="plan-panel"
+                        data-plan-slot={panel.slot}
+                        x1={left + (usable * index) / layout.panels.length + 6}
+                        x2={left + (usable * (index + 1)) / layout.panels.length - 6}
+                        y1={ty}
+                        y2={ty}
+                      />
+                    ) : null,
+                  )}
+                </g>
+              );
+            })}
+            <text
+              className="plan-label"
+              x={left}
+              y={rowY + 70 + layout.tracks * 64}
+              transform={textTransform(left)}
+            >
+              INTERIOR
+            </text>
+            {layout.panels.some((panel) => panel.kind === "FIXED" && panel.track == null) && (
+              <text
+                className="plan-note"
+                x={left}
+                y={rowY + 110 + layout.tracks * 64}
+                transform={textTransform(left)}
+              >
+                Paños fijos: plano sin dato
+              </text>
+            )}
+          </g>
+        );
+      })}
+      <text className="plan-note" x={0} y={y + offset} transform={textTransform(0)}>
+        Orden de carriles: convención de dibujo
+      </text>
+    </g>
+  );
+}
 
 /** Architectural dimension run: extension lines from the measured edge out
  * to the dim line (overshooting it slightly), diagonal ticks at each mark,
@@ -1276,7 +1752,11 @@ export interface FrontLayout {
  * top edge), and narrower members centre. Couplers overlay their seam: an
  * INLINE seam draws vertically between columns, a STACKED contact draws
  * horizontally across the hanging member. */
-export function frontLayout(product: ProductJson): FrontLayout {
+export function frontLayout(
+  product: ProductJson,
+  measures?: AssemblyMeasure | null,
+  projected = false,
+): FrontLayout {
   const { pairs, stackParent, stackRoot } = resolveStacks(product);
   const layoutMm = elevationLayoutMm(product);
   const rects: FrontModuleRect[] = layoutMm.members.map((member) => ({
@@ -1287,6 +1767,29 @@ export function frontLayout(product: ProductJson): FrontLayout {
     h: member.h,
   }));
   const columns: FrontColumn[] = layoutMm.columns;
+  if (measures) {
+    for (const rect of rects) {
+      const fact = measures.modules.find((item) => item.module_id === rect.module.id);
+      if (fact) {
+        rect.x = Number(projected ? fact.projected_x_mm : fact.developed_x_mm);
+        rect.w = Number(projected ? fact.projected_width_mm : fact.width_mm);
+        rect.sill = Number(fact.sill_mm);
+      }
+    }
+    for (const column of columns) {
+      const rect = rects.find((item) => item.module.id === column.rootId);
+      if (rect) {
+        column.x = rect.x;
+        column.w = rect.w;
+        column.top = rects
+          .filter(
+            (item) =>
+              item.module.id === column.rootId || stackRoot.get(item.module.id) === column.rootId,
+          )
+          .reduce((maximum, item) => Math.max(maximum, item.sill + item.h), 0);
+      }
+    }
+  }
 
   // A stacked member wider than its column protrudes past the column band —
   // shift the whole layout so the leftmost member edge lands at x=0 and
@@ -1327,7 +1830,7 @@ export function frontLayout(product: ProductJson): FrontLayout {
     joints.push({
       couplingId: coupling?.id ?? null,
       kind: "column",
-      x: left.x + left.w,
+      x: (left.x + left.w + right.x) / 2,
       top: Math.min(left.top, right.top),
       w: Math.min(left.w, right.w),
       y: 0,
@@ -1339,12 +1842,13 @@ export function frontLayout(product: ProductJson): FrontLayout {
   }
   for (const [memberId, couplingId] of memberCoupling) {
     const rect = rectById.get(memberId);
+    const lower = rectById.get(stackParent.get(memberId) ?? "");
     if (rect) {
       joints.push({
         couplingId,
         kind: "stack",
         x: rect.x,
-        y: rect.sill,
+        y: lower ? (rect.sill + lower.sill + lower.h) / 2 : rect.sill,
         w: rect.w,
         top: 0,
         angleDeg: null,
@@ -1395,13 +1899,26 @@ function asLayout(value: ProductJson | FrontLayout): FrontLayout {
 }
 
 /** The drawable extent of the front elevation including gutters and chains. */
-export function frontBounds(source: ProductJson | FrontLayout) {
-  const { totalW, height, lift, dip, leftOver, rightOver } = asLayout(source);
+export function frontBounds(
+  source: ProductJson | FrontLayout,
+  drawingFacts: Record<string, DrawingFacts | null> = {},
+  technical = false,
+  openingFacts: Record<string, OpeningLeafFact[]> = {},
+) {
+  const front = asLayout(source);
+  const { totalW, height, lift, dip, leftOver, rightOver } = front;
+  const gutters = technicalGutters(front, drawingFacts, openingFacts);
   return {
     x: -LEFT_GUTTER - leftOver,
     y: -TOP_GUTTER,
-    w: totalW + LEFT_GUTTER + SIDE_GUTTER + leftOver + rightOver,
-    h: height + TOP_GUTTER + BOTTOM_GUTTER + lift + dip,
+    w: totalW + LEFT_GUTTER + SIDE_GUTTER + leftOver + rightOver + (technical ? gutters.right : 0),
+    h:
+      height +
+      TOP_GUTTER +
+      BOTTOM_GUTTER +
+      lift +
+      dip +
+      (technical ? 350 + gutters.bottom + gutters.planHeight : 0),
   };
 }
 
@@ -1474,6 +1991,8 @@ function bayRegions(
 
 export function ProductFrontContent({
   product,
+  assemblyMeasures,
+  projected = false,
   members,
   selectedId,
   selectedBayId = null,
@@ -1481,6 +2000,7 @@ export function ProductFrontContent({
   issues,
   disabled,
   preview = false,
+  hideOverallWidth = false,
   divideTool = null,
   dimLevel = "design",
   onSelectModule,
@@ -1495,8 +2015,15 @@ export function ProductFrontContent({
   onCommitDivide,
   onMoveDivision,
   onResizeSeam,
+  glassNotices = {},
+  onGlassNotice,
+  openingFacts = {},
+  drawingFacts = {},
+  elevation,
 }: {
   product: ProductJson;
+  assemblyMeasures?: AssemblyMeasure | null;
+  projected?: boolean;
   members: MemberGeometry;
   selectedId: string | null;
   issues: ProductIssue[];
@@ -1505,6 +2032,7 @@ export function ProductFrontContent({
    * affordance (roles, tab stops, handlers) so it can live inside a
    * single outer button. */
   preview?: boolean;
+  hideOverallWidth?: boolean;
   /** Armed divide tool — hovering shows where the mullion lands and
    * clicking splits the leaf bay under the cursor at the cursor offset. */
   divideTool?: "SPLIT_V" | "SPLIT_H" | null;
@@ -1535,19 +2063,29 @@ export function ProductFrontContent({
   onCommitDivide?(moduleId: string, bayId: string | null, offsetMm?: string): void;
   onMoveDivision?(moduleId: string, divisionId: string, offsetMm: string): void;
   onResizeSeam?(seamIndex: number, deltaMm: number): void;
+  glassNotices?: Record<
+    string,
+    { message: string; alternativeSku?: string; alternativeName?: string }
+  >;
+  onGlassNotice?(moduleId: string, bayId: string, alternativeSku?: string): void;
+  openingFacts?: Record<string, OpeningLeafFact[]>;
+  drawingFacts?: Record<string, DrawingFacts | null>;
+  elevation?: DrawingEnvelope | null;
 }): JSX.Element {
   const { couplings } = product.assembly;
   const frameT = members.frame.faceWidthMm;
-  const frameSurface = memberSurface(members.frame.material);
+  const frameSurface = memberSurface(members.frame.material, members.frame.faceFinish);
   // Layout derivation runs over every module — memoize so seam/division
   // drags (per-pointermove renders) don't rebuild the whole elevation.
-  const { rects, columns, joints, totalW, height, lift } = useMemo(
-    () => frontLayout(product),
-    [product],
+  const front = useMemo(
+    () => frontLayout(product, assemblyMeasures, projected),
+    [product, assemblyMeasures, projected],
   );
+  const { rects, columns, joints, totalW, height, lift } = front;
+  const technicalLayout = technicalGutters(front, drawingFacts, openingFacts);
   const issueMap = useMemo(() => severityByModule(issues), [issues]);
   const midY = height / 2;
-  const interactive = !preview && !disabled;
+  const interactive = !preview && !disabled && !projected;
   const sheetScale = useViewportScale();
   // ~12px on screen is the smallest usable drag target (W3C pointer
   // guidance); never wider than a third of the smallest affected span.
@@ -1773,319 +2311,432 @@ export function ProductFrontContent({
       : null;
 
   return (
-    <g className="product-front-svg" data-testid="product-front" ref={frontRef}>
-      {/* overall width chain — untranslated so it always clears the
+    <g
+      className={`product-front-svg${members.viewFace === "exterior" ? " is-exterior" : ""}`}
+      data-testid="product-front"
+      ref={frontRef}
+      style={
+        {
+          "--finish-bead-color": members.frame.faceFinish
+            ? finishColorCss(members.frame.faceFinish)
+            : undefined,
+        } as CSSProperties
+      }
+      transform={members.viewFace === "exterior" ? `translate(${totalW} 0) scale(-1 1)` : undefined}
+    >
+      <ExteriorTextContext.Provider value={members.viewFace === "exterior"}>
+        {/* overall width chain — untranslated so it always clears the
           tallest silhouette point (arc crowns sit at viewBox y ≥ 0). */}
-      <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
-      <SvgDim
-        x={totalW / 2}
-        y={-70}
-        value={totalW.toFixed(2)}
-        label={t("assembly.totalWidth")}
-        disabled={disabled}
-        onCommit={onCommitTotalWidth}
-      />
-      {/* the drawing band lifts for arc overshoot: sill stays shared. */}
-      <g transform={`translate(0 ${lift})`}>
-        {/* height chain */}
-        <DimRun marks={[0, height]} edge={0} at={-160} vertical={true} />
-        <g transform={`rotate(-90 ${-160} ${midY})`}>
-          <SvgDim
-            x={-160}
-            y={midY}
-            value={height.toFixed(2)}
-            label={t("assembly.height")}
-            disabled={disabled}
-            onCommit={onCommitHeight}
-          />
-        </g>
-        {/* per-column width chain — stacked members share the column span
-            (design/technical only: overview keeps the overall W/H). */}
-        {dimLevel !== "overview" && (
+        {!preview && hideOverallWidth === false && (
           <>
-            <DimRun
-              marks={columns.flatMap((column) => [column.x, column.x + column.w])}
-              edge={height}
-              at={height + 80}
-              vertical={false}
+            <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
+            <SvgDim
+              x={totalW / 2}
+              y={-70}
+              value={
+                assemblyMeasures
+                  ? projected
+                    ? assemblyMeasures.front_width_mm
+                    : assemblyMeasures.developed_width_mm
+                  : totalW.toFixed(2)
+              }
+              label={t("assembly.totalWidth")}
+              disabled={disabled || projected}
+              onCommit={onCommitTotalWidth}
             />
-            {columns.map((column) => (
-              <SvgDim
-                key={`dim-${column.rootId}`}
-                x={column.x + column.w / 2}
-                y={height + 80}
-                value={column.w.toFixed(2)}
-                label={`${t("assembly.module")} ${column.rootId} ${t("assembly.width")}`}
-                active={column.rootId === selectedId}
-                disabled={disabled}
-                onCommit={(value) => onCommitModuleWidth(column.rootId, value)}
-              />
-            ))}
           </>
         )}
-        {/* technical adds member heights for stacked columns — a transom
-            over a unit is dimensioned like a shop drawing, right gutter. */}
-        {dimLevel === "technical" &&
-          columns.map((column, columnIndex) => {
-            const membersOf = rects.filter(
-              (rect) =>
-                rect.x + rect.w / 2 >= column.x && rect.x + rect.w / 2 <= column.x + column.w,
-            );
-            if (membersOf.length < 2) return null;
-            const marks = [
-              ...new Set(
-                membersOf.flatMap((rect) => [height - rect.sill, height - rect.sill - rect.h]),
-              ),
-            ].sort((a, b) => a - b);
-            return (
-              <g key={`member-dims-${column.rootId}-${columnIndex}`}>
-                <DimRun
-                  marks={marks}
-                  edge={column.x + column.w}
-                  at={column.x + column.w + 30}
-                  vertical={true}
+        {/* the drawing band lifts for arc overshoot: sill stays shared. */}
+        <g transform={`translate(0 ${lift})`}>
+          {/* height chain */}
+          {!preview && (
+            <>
+              <DimRun
+                marks={
+                  elevation && dimLevel === "technical" ? [-lift, height + front.dip] : [0, height]
+                }
+                edge={0}
+                at={-160}
+                vertical={true}
+              />
+              <g transform={`rotate(-90 ${-160} ${midY})`}>
+                <SvgDim
+                  x={-160}
+                  y={midY}
+                  value={
+                    elevation && dimLevel === "technical" ? elevation.height_mm : height.toFixed(2)
+                  }
+                  label={
+                    front.lift > 0 && dimLevel !== "technical"
+                      ? "Alto hasta arranque del arco"
+                      : t("assembly.height")
+                  }
+                  disabled={disabled || (dimLevel === "technical" && front.lift > 0)}
+                  onCommit={onCommitHeight}
                 />
-                {membersOf.map((rect) => (
-                  <text
-                    key={`member-dim-${rect.module.id}`}
-                    className="member-dim"
-                    x={column.x + column.w + 38}
-                    y={height - rect.sill - rect.h / 2}
-                  >
-                    {rect.h.toFixed(0)}
-                  </text>
-                ))}
+              </g>
+            </>
+          )}
+          {/* per-column width chain — stacked members share the column span
+            (design/technical only: overview keeps the overall W/H). */}
+          {!preview && dimLevel !== "overview" && (
+            <>
+              <DimRun
+                marks={columns.flatMap((column) => [column.x, column.x + column.w])}
+                edge={height}
+                at={height + 80}
+                vertical={false}
+              />
+              {columns.map((column) => (
+                <SvgDim
+                  key={`dim-${column.rootId}`}
+                  x={column.x + column.w / 2}
+                  y={height + 80}
+                  value={
+                    assemblyMeasures?.modules.find((item) => item.module_id === column.rootId)
+                      ?.width_mm ?? column.w.toFixed(2)
+                  }
+                  label={`${t("assembly.module")} ${column.rootId} ${t("assembly.width")}`}
+                  active={column.rootId === selectedId}
+                  disabled={disabled || projected}
+                  onCommit={(value) => onCommitModuleWidth(column.rootId, value)}
+                />
+              ))}
+            </>
+          )}
+          {dimLevel === "technical" &&
+            rects.map(({ module, x, w, sill, h }) => (
+              <TechnicalChains
+                key={`chains-${module.id}`}
+                facts={drawingFacts[module.id]}
+                x={x}
+                top={height - sill - h}
+                width={w}
+                height={h}
+                exterior={members.viewFace === "exterior"}
+                handles={openingFacts[module.id] ?? []}
+                rightEdge={totalW}
+                bottomEdge={height}
+                laneOffset={technicalLayout.lanes.get(module.id) ?? 0}
+                bottomLaneOffset={technicalLayout.bottomLanes.get(module.id) ?? 0}
+                pitch={technicalLayout.pitch}
+                showMemberHeight={rects.length > 1}
+              />
+            ))}
+          {dimLevel === "technical" && (
+            <SlidingPlan
+              front={front}
+              facts={drawingFacts}
+              width={totalW}
+              y={height + 300 + technicalLayout.bottom}
+              exterior={members.viewFace === "exterior"}
+            />
+          )}
+          {!preview && (
+            <>
+              <AddHandle
+                x={-70}
+                y={midY}
+                label={t("assembly.addUnitLeft")}
+                disabled={disabled}
+                onAdd={() => onAddUnit("left")}
+              />
+              <AddHandle
+                x={totalW + 70}
+                y={midY}
+                label={t("assembly.addUnitRight")}
+                disabled={disabled}
+                onAdd={() => onAddUnit("right")}
+              />
+            </>
+          )}
+          {rects.map(({ module, x, w: layoutWidth, sill, h }, moduleIndex) => {
+            const w = Number(module.width_mm);
+            const ratio = layoutWidth / w;
+            const top = height - sill - h;
+            return (
+              <g
+                key={module.id}
+                data-module-id={module.id}
+                transform={
+                  projected ? `translate(${x} 0) scale(${ratio} 1) translate(${-x} 0)` : undefined
+                }
+                className={`front-module${module.id === selectedId ? " is-selected" : ""}${issueMap.get(module.id) === "error" ? " has-error" : issueMap.get(module.id) === "warning" ? " has-warning" : ""}${divideTool ? " is-divide-target" : ""}`}
+                {...(preview
+                  ? { role: "presentation", "aria-hidden": true }
+                  : {
+                      role: "group",
+                      "aria-label": `${t("assembly.module")} ${moduleIndex + 1}`,
+                      "aria-current": module.id === selectedId ? "true" : undefined,
+                      "aria-keyshortcuts": "Enter Space",
+                      tabIndex: disabled ? -1 : 0,
+                      onClick: (event) =>
+                        divideTool
+                          ? endDivide(module.id, event.clientX, event.clientY)
+                          : onSelectModule(module.id),
+                      onContextMenu: (event) => {
+                        if (!onContextMenuModule) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onContextMenuModule(module.id, { x: event.clientX, y: event.clientY });
+                      },
+                      onKeyDown: (event: KeyboardEvent) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          if (divideTool) endDivide(module.id);
+                          else onSelectModule(module.id);
+                        }
+                      },
+                      onPointerMove: divideTool ? previewDivide(module.id) : undefined,
+                      onPointerLeave: divideTool
+                        ? () => {
+                            setDividePreview(null);
+                            divideHover.current = null;
+                          }
+                        : undefined,
+                    })}
+              >
+                {module.frameless ? (
+                  <g transform={`translate(${x} ${top})`}>
+                    <FramelessModule spec={module.frameless} x={0} top={0} w={w} h={h} />
+                  </g>
+                ) : module.contour ? (
+                  <g transform={`translate(${x} ${top})`}>
+                    <path
+                      className="member-frame"
+                      d={contourPathD(module.contour, h)}
+                      fill={frameSurface.fill}
+                      stroke={frameSurface.edge}
+                      strokeWidth={2}
+                    />
+                    <path
+                      className="module-glass"
+                      d={pointsPathD(insetContourPoints(module.contour, frameT), h)}
+                    />
+                  </g>
+                ) : (
+                  <>
+                    <Member
+                      x={x}
+                      y={top}
+                      w={w}
+                      h={h}
+                      surface={frameSurface}
+                      className="member-frame"
+                    />
+                    <rect
+                      className="module-opening"
+                      x={x + frameT}
+                      y={top + frameT}
+                      width={Math.max(w - frameT * 2, 0)}
+                      height={Math.max(h - frameT * 2, 0)}
+                    />
+                    <PhysicalFactsContext.Provider
+                      value={{ leaves: openingFacts[module.id] ?? [], x, y: top }}
+                    >
+                      <ModuleTree
+                        moduleId={module.id}
+                        selectedBayId={selectedBayId}
+                        onSelectBay={
+                          interactive && !divideTool && onSelectBay
+                            ? (bayId) => onSelectBay(module.id, bayId)
+                            : undefined
+                        }
+                        selectedDivisionId={selectedDivisionId}
+                        onSelectDivision={
+                          interactive && !divideTool && onSelectDivision
+                            ? (divisionId) => onSelectDivision(module.id, divisionId)
+                            : undefined
+                        }
+                        showSplitDims={dimLevel === "technical"}
+                        node={module.tree}
+                        region={{
+                          x: x + frameT,
+                          y: top + frameT,
+                          w: w - frameT * 2,
+                          h: h - frameT * 2,
+                        }}
+                        localOrigin={{ x, y: top }}
+                        moduleBottom={top + h}
+                        members={members}
+                        liveOffsets={liveOffsets}
+                        hitMm={hitMm}
+                        onDividerDown={
+                          interactive && onMoveDivision && !divideTool
+                            ? beginDividerDrag(module.id)
+                            : undefined
+                        }
+                      />
+                    </PhysicalFactsContext.Provider>
+                  </>
+                )}
+                {!preview &&
+                  onGlassNotice &&
+                  bayRegions(
+                    module.tree,
+                    { x: x + frameT, y: top + frameT, w: w - frameT * 2, h: h - frameT * 2 },
+                    { x, y: top },
+                    members,
+                  ).map(({ id, region }) => {
+                    const notice = glassNotices[`${module.id}/${id}`];
+                    if (!notice) return null;
+                    const badgeW = Math.min(region.w, 240 / sheetScale);
+                    const badgeH = 40 / sheetScale;
+                    const badgeX = region.x + (region.w - badgeW) / 2;
+                    const badgeY = region.y + region.h / 2 - badgeH / 2;
+                    return (
+                      <g
+                        key={id}
+                        className="glass-bay-notice"
+                        role="button"
+                        tabIndex={disabled ? -1 : 0}
+                        aria-label={`${notice.message}${notice.alternativeName ? ` · ${t("glass.useAlternative")} ${notice.alternativeName}` : ""}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!disabled) onGlassNotice(module.id, id, notice.alternativeSku);
+                        }}
+                        onKeyDown={(event) => {
+                          if ((event.key === "Enter" || event.key === " ") && !disabled) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onGlassNotice(module.id, id, notice.alternativeSku);
+                          }
+                        }}
+                      >
+                        <title>
+                          {notice.message}
+                          {notice.alternativeName
+                            ? ` · ${t("glass.useAlternative")} ${notice.alternativeName}`
+                            : ""}
+                        </title>
+                        <rect x={badgeX} y={badgeY} width={badgeW} height={badgeH} />
+                        <text
+                          x={badgeX + 8 / sheetScale}
+                          y={badgeY + 15 / sheetScale}
+                          fontSize={11 / sheetScale}
+                        >
+                          {t("glass.notice")} · {t("glass.selector")}
+                        </text>
+                        <text
+                          x={badgeX + 8 / sheetScale}
+                          y={badgeY + 31 / sheetScale}
+                          fontSize={11 / sheetScale}
+                        >
+                          {notice.alternativeName
+                            ? `${t("glass.useAlternative")} ${notice.alternativeName.slice(0, 26)}${notice.alternativeName.length > 26 ? "…" : ""}`
+                            : t("glass.reviewRequired")}
+                        </text>
+                      </g>
+                    );
+                  })}
+                {dividePreview?.moduleId === module.id && (
+                  <line className="divide-preview-line" {...dividePreview.line} />
+                )}
               </g>
             );
           })}
-        <AddHandle
-          x={-70}
-          y={midY}
-          label={t("assembly.addUnitLeft")}
-          disabled={disabled}
-          onAdd={() => onAddUnit("left")}
-        />
-        <AddHandle
-          x={totalW + 70}
-          y={midY}
-          label={t("assembly.addUnitRight")}
-          disabled={disabled}
-          onAdd={() => onAddUnit("right")}
-        />
-        {rects.map(({ module, x, w, sill, h }) => {
-          const top = height - sill - h;
-          return (
-            <g
-              key={module.id}
-              className={`front-module${module.id === selectedId ? " is-selected" : ""}${issueMap.get(module.id) === "error" ? " has-error" : issueMap.get(module.id) === "warning" ? " has-warning" : ""}${divideTool ? " is-divide-target" : ""}`}
-              {...(preview
-                ? { role: "presentation", "aria-hidden": true }
-                : {
-                    role: "button",
-                    "aria-label": `${t("assembly.module")} ${module.id}`,
-                    "aria-pressed": module.id === selectedId,
-                    tabIndex: disabled ? -1 : 0,
-                    onClick: (event) =>
-                      divideTool
-                        ? endDivide(module.id, event.clientX, event.clientY)
-                        : onSelectModule(module.id),
-                    onContextMenu: (event) => {
-                      if (!onContextMenuModule) return;
-                      event.preventDefault();
-                      event.stopPropagation();
-                      onContextMenuModule(module.id, { x: event.clientX, y: event.clientY });
-                    },
-                    onKeyDown: (event: KeyboardEvent) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        if (divideTool) endDivide(module.id);
-                        else onSelectModule(module.id);
-                      }
-                    },
-                    onPointerMove: divideTool ? previewDivide(module.id) : undefined,
-                    onPointerLeave: divideTool
-                      ? () => {
-                          setDividePreview(null);
-                          divideHover.current = null;
-                        }
-                      : undefined,
-                  })}
-            >
-              {module.frameless ? (
-                <g transform={`translate(${x} ${top})`}>
-                  <FramelessModule spec={module.frameless} x={0} top={0} w={w} h={h} />
-                </g>
-              ) : module.contour ? (
-                <g transform={`translate(${x} ${top})`}>
-                  <path
-                    className="member-frame"
-                    d={contourPathD(module.contour, h)}
-                    fill={frameSurface.fill}
-                    stroke={frameSurface.edge}
-                    strokeWidth={2}
-                  />
-                  <path
-                    className="module-opening module-opening--lite"
-                    d={pointsPathD(insetContourPoints(module.contour, frameT), h)}
-                  />
-                </g>
-              ) : (
-                <>
-                  <Member
-                    x={x}
-                    y={top}
-                    w={w}
-                    h={h}
-                    surface={frameSurface}
-                    className="member-frame"
-                  />
-                  <rect
-                    className="module-opening"
-                    x={x + frameT}
-                    y={top + frameT}
-                    width={Math.max(w - frameT * 2, 0)}
-                    height={Math.max(h - frameT * 2, 0)}
-                  />
-                  <ModuleTree
-                    moduleId={module.id}
-                    selectedBayId={selectedBayId}
-                    onSelectBay={
-                      interactive && !divideTool && onSelectBay
-                        ? (bayId) => onSelectBay(module.id, bayId)
-                        : undefined
-                    }
-                    selectedDivisionId={selectedDivisionId}
-                    onSelectDivision={
-                      interactive && !divideTool && onSelectDivision
-                        ? (divisionId) => onSelectDivision(module.id, divisionId)
-                        : undefined
-                    }
-                    showSplitDims={dimLevel === "technical"}
-                    node={module.tree}
-                    region={{
-                      x: x + frameT,
-                      y: top + frameT,
-                      w: w - frameT * 2,
-                      h: h - frameT * 2,
-                    }}
-                    localOrigin={{ x, y: top }}
-                    moduleBottom={top + h}
-                    members={members}
-                    liveOffsets={liveOffsets}
-                    hitMm={hitMm}
-                    onDividerDown={
-                      interactive && onMoveDivision && !divideTool
-                        ? beginDividerDrag(module.id)
-                        : undefined
-                    }
-                  />
-                </>
-              )}
-              {dividePreview?.moduleId === module.id && (
-                <line className="divide-preview-line" {...dividePreview.line} />
-              )}
-            </g>
-          );
-        })}
-        {joints.map((joint, index) => {
-          const coupling = joint.couplingId
-            ? couplings.find((item) => item.id === joint.couplingId)
-            : undefined;
-          const width =
-            members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? 60;
-          const surface = memberSurface(
-            members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ??
-              members.frame.material,
-          );
-          const pickable = interactive && !divideTool && onSelectCoupling && joint.couplingId;
-          const jointRect =
-            joint.kind === "column"
-              ? { x: joint.x - width / 2, y: height - joint.top, w: width, h: joint.top }
-              : { x: joint.x, y: height - joint.y - width / 2, w: joint.w, h: width };
-          const selectedJoint = selectedId === joint.couplingId;
-          return (
-            <g key={joint.couplingId ?? `joint-${index}`}>
-              <Member
-                x={jointRect.x}
-                y={jointRect.y}
-                w={jointRect.w}
-                h={jointRect.h}
-                surface={surface}
-                className={`member-coupler${selectedJoint ? " is-selected" : ""}`}
-              />
-              {pickable && (
-                <rect
-                  className={`joint-hit${selectedJoint ? " is-selected" : ""}`}
+          {joints.map((joint, index) => {
+            const coupling = joint.couplingId
+              ? couplings.find((item) => item.id === joint.couplingId)
+              : undefined;
+            const width =
+              members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? 60;
+            const surface = memberSurface(
+              members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ??
+                members.frame.material,
+              members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceFinish ??
+                members.frame.faceFinish,
+            );
+            const pickable = interactive && !divideTool && onSelectCoupling && joint.couplingId;
+            const jointRect =
+              joint.kind === "column"
+                ? { x: joint.x - width / 2, y: height - joint.top, w: width, h: joint.top }
+                : { x: joint.x, y: height - joint.y - width / 2, w: joint.w, h: width };
+            const selectedJoint = selectedId === joint.couplingId;
+            return (
+              <g key={joint.couplingId ?? `joint-${index}`}>
+                <Member
                   x={jointRect.x}
                   y={jointRect.y}
-                  width={jointRect.w}
-                  height={jointRect.h}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (joint.couplingId) onSelectCoupling?.(joint.couplingId);
-                  }}
+                  w={jointRect.w}
+                  h={jointRect.h}
+                  surface={surface}
+                  className={`member-coupler${selectedJoint ? " is-selected" : ""}`}
                 />
-              )}
-            </g>
-          );
-        })}
-        {/* Seam grips render above the coupler members so the drag target is
-          not swallowed by the coupler rect — one grip per column boundary. */}
-        {interactive &&
-          onResizeSeam &&
-          !divideTool &&
-          columns.slice(0, -1).map((column, index) => {
-            const neighbor = columns[index + 1];
-            const seamW = Math.min(
-              hitMm,
-              Math.max(12, Math.min(column.w, neighbor?.w ?? column.w) * 0.5),
-            );
-            return (
-              <g key={`seam-${index}`}>
-                <rect
-                  className="seam-grip"
-                  x={column.x + column.w - seamW / 2}
-                  y={0}
-                  width={seamW}
-                  height={height}
-                  onPointerDown={beginSeamDrag(index)}
-                />
-                {/* Resting drag affordance: three dots mid-seam so the grip
-                  doesn't need a lucky hover to be discovered. */}
-                {height > seamW * 2.4 &&
-                  [-1, 0, 1].map((slot) => (
-                    <circle
-                      key={slot}
-                      className="seam-grip-dot"
-                      cx={column.x + column.w}
-                      cy={height / 2 + slot * seamW * 0.5}
-                      r={Math.max(seamW * 0.1, 1.4)}
-                      pointerEvents="none"
-                    />
-                  ))}
+                {pickable && (
+                  <rect
+                    className={`joint-hit${selectedJoint ? " is-selected" : ""}`}
+                    x={jointRect.x}
+                    y={jointRect.y}
+                    width={jointRect.w}
+                    height={jointRect.h}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (joint.couplingId) onSelectCoupling?.(joint.couplingId);
+                    }}
+                  />
+                )}
               </g>
             );
           })}
-        {seamDrag && seamLeftMm !== null && seamRightMm !== null && (
-          <g className="seam-preview" aria-hidden="true">
-            <line
-              className="seam-preview-line"
-              x1={columns[seamDrag.index]!.x + columns[seamDrag.index]!.w + seamDrag.deltaMm}
-              y1={0}
-              x2={columns[seamDrag.index]!.x + columns[seamDrag.index]!.w + seamDrag.deltaMm}
-              y2={height}
-            />
-            <text
-              className="seam-preview-label"
-              x={columns[seamDrag.index]!.x + columns[seamDrag.index]!.w + seamDrag.deltaMm}
-              y={-40}
-              textAnchor="middle"
-            >
-              {`${seamLeftMm.toFixed(0)} | ${seamRightMm.toFixed(0)}`}
-            </text>
-          </g>
-        )}
-      </g>
+          {/* Seam grips render above the coupler members so the drag target is
+          not swallowed by the coupler rect — one grip per column boundary. */}
+          {interactive &&
+            onResizeSeam &&
+            !divideTool &&
+            columns.slice(0, -1).map((column, index) => {
+              const neighbor = columns[index + 1];
+              const seamW = Math.min(
+                hitMm,
+                Math.max(12, Math.min(column.w, neighbor?.w ?? column.w) * 0.5),
+              );
+              return (
+                <g key={`seam-${index}`}>
+                  <rect
+                    className="seam-grip"
+                    x={column.x + column.w - seamW / 2}
+                    y={0}
+                    width={seamW}
+                    height={height}
+                    onPointerDown={beginSeamDrag(index)}
+                  />
+                  {/* Resting drag affordance: three dots mid-seam so the grip
+                  doesn't need a lucky hover to be discovered. */}
+                  {height > seamW * 2.4 &&
+                    [-1, 0, 1].map((slot) => (
+                      <circle
+                        key={slot}
+                        className="seam-grip-dot"
+                        cx={column.x + column.w}
+                        cy={height / 2 + slot * seamW * 0.5}
+                        r={Math.max(seamW * 0.1, 1.4)}
+                        pointerEvents="none"
+                      />
+                    ))}
+                </g>
+              );
+            })}
+          {seamDrag && seamLeftMm !== null && seamRightMm !== null && (
+            <g className="seam-preview" aria-hidden="true">
+              <line
+                className="seam-preview-line"
+                x1={columns[seamDrag.index]!.x + columns[seamDrag.index]!.w + seamDrag.deltaMm}
+                y1={0}
+                x2={columns[seamDrag.index]!.x + columns[seamDrag.index]!.w + seamDrag.deltaMm}
+                y2={height}
+              />
+              <text
+                className="seam-preview-label"
+                x={columns[seamDrag.index]!.x + columns[seamDrag.index]!.w + seamDrag.deltaMm}
+                y={-40}
+                textAnchor="middle"
+              >
+                {`${seamLeftMm.toFixed(0)} | ${seamRightMm.toFixed(0)}`}
+              </text>
+            </g>
+          )}
+        </g>
+      </ExteriorTextContext.Provider>
     </g>
   );
 }

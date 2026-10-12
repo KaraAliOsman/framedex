@@ -1,0 +1,32 @@
+[
+  {
+    "name": "minimo-tres-puntos",
+    "screenshot": "minimo-tres-puntos.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "fijacion-incoherente",
+    "screenshot": "fijacion-incoherente.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "confirmacion-explicita",
+    "screenshot": "confirmacion-explicita.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  }
+]

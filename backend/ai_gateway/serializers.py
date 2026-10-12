@@ -2,6 +2,8 @@ import json
 
 from rest_framework import serializers
 
+from projects.operation_serializers import DesignOperationSerializer
+
 MAX_INPUT_BYTES = 65_536
 
 
@@ -31,6 +33,8 @@ class AiInvokeResponseSerializer(serializers.Serializer):
     tokens_completion = serializers.IntegerField()
     latency_ms = serializers.IntegerField()
     credits_debited = serializers.IntegerField()
+    test_mode = serializers.BooleanField(required=False)
+    usage_id = serializers.UUIDField(required=False, allow_null=True)
 
 
 class AiAskRequestSerializer(serializers.Serializer):
@@ -125,9 +129,20 @@ class AiAgentStepSerializer(serializers.Serializer):
     label = serializers.CharField()
     path = serializers.CharField(required=False)
     action = serializers.CharField(required=False)
-    ops = serializers.ListField(child=serializers.DictField(), required=False)
+    ops = DesignOperationSerializer(many=True, required=False)
     # §08-WC batch edits: validated ops grouped per position.
     items = serializers.ListField(child=serializers.DictField(), required=False)
+    simulation = serializers.JSONField(required=False)
+
+
+class ClarifyOptionSerializer(serializers.Serializer):
+    label = serializers.CharField()
+    value = serializers.CharField()
+
+
+class ClarifySerializer(serializers.Serializer):
+    question = serializers.CharField()
+    options = ClarifyOptionSerializer(many=True)
 
 
 class AiAgentQuerySerializer(serializers.Serializer):
@@ -171,6 +186,7 @@ class AiAgentRunSerializer(serializers.Serializer):
 
 
 class AiAgentResultSerializer(serializers.Serializer):
+    test_mode = serializers.BooleanField(required=False)
     """The payload act() stores on the job's `result` column — the envelope
     fields (audit/job ids, state, transcript) live on the job row itself."""
 
@@ -181,6 +197,8 @@ class AiAgentResultSerializer(serializers.Serializer):
     claims = serializers.ListField(child=serializers.DictField())
     references = serializers.ListField(child=serializers.CharField())
     questions = serializers.ListField(child=serializers.CharField())
+    clarify = ClarifySerializer(required=False, allow_null=True)
+    metrics = serializers.JSONField(required=False)
     artifacts = serializers.ListField(child=serializers.DictField())
     steps = AiAgentStepSerializer(many=True)
     queries = AiAgentQuerySerializer(many=True)
@@ -229,7 +247,7 @@ class AiJobOutcomeSerializer(serializers.Serializer):
     turn_index = serializers.IntegerField(min_value=0, max_value=1000)
     step_index = serializers.IntegerField(min_value=0, max_value=1000)
     action = serializers.ChoiceField(
-        choices=["applied", "declined", "apply_failed"]
+        choices=["applied", "declined", "apply_failed", "undone"]
     )
     ops = serializers.ListField(
         child=serializers.CharField(max_length=80),
@@ -244,6 +262,7 @@ class AiJobOutcomeResponseSerializer(serializers.Serializer):
 
 
 class AiMetricsSerializer(serializers.Serializer):
+    work = serializers.ListField(child=serializers.DictField(), required=False)
     window_days = serializers.IntegerField()
     jobs = serializers.DictField()
     commands = serializers.DictField()
@@ -255,6 +274,27 @@ class AiMetricsSerializer(serializers.Serializer):
 
 class AiJobDetailSerializer(AiJobSerializer):
     transcript = serializers.ListField()
+
+
+class AiPresenceQuerySerializer(serializers.Serializer):
+    surface = serializers.CharField(min_length=2, max_length=80)
+    refs = serializers.CharField(max_length=8000, required=False, default="{}")
+
+    def validate_refs(self, value):
+        try:
+            decoded = json.loads(value)
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Las referencias no son válidas.") from None
+        refs = _RefsDictField().run_validation(decoded)
+        if len(refs) > 30 or any(len(key) > 80 or not isinstance(value, str) or len(value) > 200 for key, value in refs.items()):
+            raise serializers.ValidationError("Las referencias deben ser identificadores breves.")
+        return refs
+
+
+class AiPresenceSerializer(serializers.Serializer):
+    context_label = serializers.CharField()
+    context_url = serializers.CharField(allow_null=True)
+    job = AiJobSerializer(allow_null=True)
 
 
 class AiAgentResumeRequestSerializer(serializers.Serializer):

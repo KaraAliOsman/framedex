@@ -23,26 +23,26 @@ export function TechDetails({
     <details className="ui-tech">
       <summary className="ui-tech__summary">
         <span>{summary ?? t("ui.details")}</span>
-        {diagnostic !== undefined ? (
-          <button
-            className="ui-tech__copy"
-            onClick={async (event) => {
-              // Keep the click from toggling the <details> disclosure.
-              event.preventDefault();
-              try {
-                await navigator.clipboard.writeText(diagnostic);
-                setCopied(true);
-                window.setTimeout(() => setCopied(false), 1600);
-              } catch {
-                setCopied(false);
-              }
-            }}
-            type="button"
-          >
-            {copied ? t("ui.copied") : t("ui.copyDiagnostics")}
-          </button>
-        ) : null}
       </summary>
+      {diagnostic !== undefined ? (
+        <button
+          className="ui-tech__copy"
+          onClick={async (event) => {
+            // Keep the click from toggling the <details> disclosure.
+            event.preventDefault();
+            try {
+              await navigator.clipboard.writeText(diagnostic);
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1600);
+            } catch {
+              setCopied(false);
+            }
+          }}
+          type="button"
+        >
+          {copied ? t("ui.copied") : t("ui.copyDiagnostics")}
+        </button>
+      ) : null}
       {children ? (
         <div className="ui-tech__body">{children}</div>
       ) : diagnostic !== undefined ? (

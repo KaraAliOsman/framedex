@@ -5,6 +5,8 @@ DECLARE
     demo_system_count INT;
     demo_profile_authority_count INT;
     demo_glazing_rule_count INT;
+    demo_family_count INT;
+    demo_family_profile_count INT;
 BEGIN
     IF current_setting('server_version_num')::INT < 160000
         OR current_setting('server_version_num')::INT >= 170000 THEN
@@ -83,6 +85,8 @@ BEGIN
     INTO demo_system_count
     FROM public.profile_systems
     WHERE code = 'DEMO_60'
+      AND version = 1
+      AND legacy_authority = TRUE
       AND org_id IS NULL
       AND is_global = TRUE
       AND is_demo = TRUE
@@ -98,6 +102,10 @@ BEGIN
     JOIN public.profile_systems AS profile_system
       ON profile_system.id = article.system_id
     WHERE profile_system.code = 'DEMO_60'
+      AND profile_system.version = 1
+      AND profile_system.legacy_authority = TRUE
+      AND profile_system.org_id IS NULL
+      AND article.org_id IS NULL
       AND (
           (article.role = 'FRAME' AND article.face_width_mm = 60.00 AND article.reinforcement_gap_mm = 15.00)
           OR (article.role = 'SASH' AND article.face_width_mm = 75.00 AND article.reinforcement_gap_mm = 15.00)
@@ -117,6 +125,10 @@ BEGIN
     JOIN public.profile_systems AS profile_system
       ON profile_system.id = bead_rule.system_id
     WHERE profile_system.code = 'DEMO_60'
+      AND profile_system.version = 1
+      AND profile_system.legacy_authority = TRUE
+      AND profile_system.org_id IS NULL
+      AND bead_rule.org_id IS NULL
       AND bead_rule.cut_add_mm = 9.00;
 
     IF demo_glazing_rule_count <> 5 THEN
@@ -124,5 +136,56 @@ BEGIN
             'Expected five DEMO_60 glazing rules with cut_add_mm 9.00, got %',
             demo_glazing_rule_count;
     END IF;
+
+    SELECT count(*) INTO demo_family_count
+    FROM public.profile_systems
+    WHERE code = ANY(ARRAY['DEMO_60','DEMO_70','DEMO_CORREDERA_60',
+                           'DEMO_ALU_CORREDERA','DEMO_ALU_PRACTICABLE'])
+      AND version = 2 AND org_id IS NULL AND is_global AND is_demo
+      AND NOT legacy_authority AND system_family IS NOT NULL;
+    IF demo_family_count <> 5 THEN
+        RAISE EXCEPTION 'Expected five separately declared DEMO v2 families, got %', demo_family_count;
+    END IF;
+
+    SELECT count(*) INTO demo_family_profile_count
+    FROM public.profile_articles article
+    JOIN public.profile_systems profile_system ON profile_system.id = article.system_id
+    WHERE profile_system.code = ANY(ARRAY['DEMO_60','DEMO_70','DEMO_CORREDERA_60',
+                                         'DEMO_ALU_CORREDERA','DEMO_ALU_PRACTICABLE'])
+      AND profile_system.version = 2 AND profile_system.org_id IS NULL
+      AND profile_system.is_global AND profile_system.is_demo
+      AND NOT profile_system.legacy_authority AND article.org_id IS NULL
+      AND article.cut_rule IS NOT NULL;
+    IF demo_family_profile_count <> 39 THEN
+        RAISE EXCEPTION 'Expected 39 sourced DEMO v2 profile cut authorities, got %', demo_family_profile_count;
+    END IF;
 END;
 $$;
+
+-- P12: the independent gate also exercises Supabase's user key contract.
+-- Fixture writes are rolled back, preserving all canonical seed checks above.
+BEGIN;
+DO $$
+DECLARE
+    fixture_org UUID := '20400000-0000-4000-8000-000000000001';
+    fixture_user UUID := '20400000-0000-4000-8000-000000000002';
+BEGIN
+    INSERT INTO public.tenancy_organizations(id, name, tax_id)
+    VALUES(fixture_org, 'P12 independent PG16 DEMO', 'P12-PG16');
+    INSERT INTO auth.users(id) VALUES(fixture_user);
+    INSERT INTO public.production_operator_stations(org_id, user_id, station_code)
+    VALUES(fixture_org, fixture_user, 'CUT');
+    BEGIN
+        INSERT INTO public.production_operator_stations(org_id, user_id, station_code)
+        VALUES(fixture_org, '20400000-0000-4000-8000-000000000099', 'QC');
+        RAISE EXCEPTION 'Station accepted a nonexistent auth user';
+    EXCEPTION WHEN foreign_key_violation THEN
+        NULL;
+    END;
+    DELETE FROM auth.users WHERE id = fixture_user;
+    IF EXISTS(SELECT 1 FROM public.production_operator_stations WHERE org_id = fixture_org) THEN
+        RAISE EXCEPTION 'Removing auth user left an orphan workstation';
+    END IF;
+END;
+$$;
+ROLLBACK;

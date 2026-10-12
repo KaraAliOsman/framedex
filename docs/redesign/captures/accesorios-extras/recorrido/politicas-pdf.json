@@ -1,0 +1,14 @@
+[
+  {
+    "policy": "ITEMIZED",
+    "project_id": "dd774ee3-78a5-4f6d-a85a-4c9cb1d2172d",
+    "priced_id": "7b04d47d-8016-4ab6-a052-454fbd58c911",
+    "version_id": "dfe6c78c-4625-4bf0-905b-8cd97e7f2812"
+  },
+  {
+    "policy": "GROUPED",
+    "project_id": "d0226726-d10a-4203-b120-0d9522d1027f",
+    "priced_id": "524e510c-032f-412a-b4fe-7a4fb25a0ab1",
+    "version_id": "2b21ba1f-14dd-4ce8-90d5-d07d714e6c51"
+  }
+]

@@ -1,0 +1,312 @@
+.glass-selector {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+:is(.glass-selector, .glass-composer, .glass-rules, .glass-order, .glass-batch)
+  button.ghost-button[type="button"] {
+  border-radius: var(--r-1);
+}
+.glass-products {
+  display: grid;
+  gap: var(--space-1);
+}
+.glass-selector .glass-product {
+  display: grid;
+  gap: var(--space-1);
+  text-align: left;
+  padding: var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  background: var(--theme-surface-panel);
+  color: var(--theme-text-primary);
+  font: inherit;
+  width: 100%;
+}
+.glass-product strong {
+  font-weight: 500;
+}
+.glass-product small,
+.glass-help {
+  color: var(--theme-text-secondary);
+  font-size: var(--type-dense);
+}
+.glass-product[aria-pressed="true"] {
+  border-color: var(--theme-accent);
+  background: var(--theme-accent-soft);
+  border-left-width: var(--space-1);
+}
+.glass-product:hover:not(:disabled) {
+  background: var(--theme-surface-hover);
+}
+.glass-product:disabled {
+  cursor: not-allowed;
+}
+.glass-product:disabled:not([aria-pressed="true"]) {
+  color: var(--theme-text-muted);
+}
+.glass-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.glass-field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--type-dense);
+  margin-block: var(--space-1);
+}
+:is(.glass-selector, .glass-composer, .glass-rules) label.glass-field input,
+:is(.glass-selector, .glass-composer, .glass-rules) label.glass-field select {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--control-height);
+  font: inherit;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-1);
+  background: var(--theme-surface-panel);
+  color: var(--theme-text-primary);
+  padding: var(--space-1) var(--space-2);
+}
+.glass-field input[inputmode="decimal"],
+.glass-field input[inputmode="numeric"] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.glass-layer,
+.glass-edit-fields {
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border-default);
+  min-width: 0;
+}
+.glass-edit-fields {
+  padding: 0;
+  border: 0;
+}
+.glass-layer {
+  margin-block: var(--space-2);
+}
+.glass-layer legend {
+  font-size: var(--type-dense);
+  font-weight: 500;
+}
+.glass-layer__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--theme-border-subtle);
+  padding-bottom: var(--space-2);
+}
+.glass-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--type-dense);
+  min-height: var(--control-height);
+}
+.glass-check input {
+  flex: none;
+}
+.glass-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-block: var(--space-2);
+}
+.glass-findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.glass-findings li {
+  background: var(--theme-warning-soft);
+  color: var(--state-warning-ink);
+  border-left: var(--space-1) solid var(--theme-warning);
+  padding: var(--space-2);
+  font-size: var(--type-dense);
+}
+.glass-findings li[data-blocking="true"] {
+  color: var(--theme-danger-ink);
+  background: var(--theme-danger-soft);
+  border-color: var(--theme-danger);
+}
+.glass-selector .glass-findings small,
+.glass-composer .glass-findings small {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--type-micro);
+}
+.glass-section {
+  margin: var(--space-2) 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border-default);
+  background: var(--theme-bg-canvas);
+}
+.glass-section figcaption {
+  font-weight: 500;
+  font-size: var(--type-dense);
+}
+.glass-section__ends {
+  display: flex;
+  justify-content: space-between;
+  margin-block: var(--space-2);
+  font-size: var(--type-micro);
+}
+.glass-section svg {
+  width: 100%;
+  height: var(--space-7);
+}
+.glass-section__pane {
+  fill: var(--theme-glass-tint);
+  stroke: var(--theme-accent);
+  stroke-width: 0.15;
+}
+.glass-section__chamber {
+  fill: var(--theme-surface-panel);
+  stroke: var(--theme-border-strong);
+  stroke-width: 0.15;
+}
+.glass-section__pvb {
+  fill: var(--theme-accent);
+}
+.glass-section ol {
+  padding-left: var(--space-4);
+  font-size: var(--type-micro);
+}
+.glass-composer {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+.glass-composer > .glass-section {
+  position: sticky;
+  top: 0;
+  margin: 0;
+}
+.glass-composer .glass-recipe {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.glass-composer .glass-recipe > :not(.glass-field),
+.glass-composer > :not(.glass-section):not(.glass-edit-fields) {
+  grid-column: 1 / -1;
+}
+.glass-composer .glass-recipe > .glass-layer {
+  margin: 0;
+}
+.glass-facts {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--type-dense);
+}
+.glass-facts > div {
+  border-bottom: 1px solid var(--theme-border-subtle);
+  padding-block: var(--space-1);
+}
+.glass-facts dt {
+  color: var(--theme-text-secondary);
+}
+.glass-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.glass-selector details > summary {
+  cursor: pointer;
+  padding-block: var(--space-2);
+  font-weight: 500;
+  font-size: var(--type-dense);
+}
+.glass-publication {
+  border-left: var(--space-1) solid var(--theme-accent);
+  padding: var(--space-2);
+}
+.glass-bay-notice rect {
+  fill: var(--theme-warning-soft);
+  stroke: var(--theme-warning);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.glass-bay-notice text {
+  fill: var(--state-warning-ink);
+  font-family: var(--font-sans);
+}
+.glass-bay-notice {
+  cursor: pointer;
+}
+.glass-bay-notice:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+.glass-rules {
+  display: grid;
+  gap: var(--space-3);
+}
+.glass-rules a {
+  color: var(--theme-accent-ink);
+  text-decoration: underline;
+}
+.glass-rule {
+  border: 1px solid var(--border-default);
+  padding: var(--space-3);
+  min-width: 0;
+}
+.glass-rule-fields {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.glass-order {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
+}
+.glass-order-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.glass-order-rows {
+  padding-left: var(--space-5);
+}
+.glass-order-rows li {
+  border-bottom: 1px solid var(--theme-border-subtle);
+  padding-block: var(--space-2);
+  overflow-wrap: anywhere;
+}
+.glass-batch {
+  margin-block: var(--space-3);
+  border-block: 1px solid var(--theme-border-subtle);
+  padding-block: var(--space-2);
+}
+.glass-batch summary {
+  cursor: pointer;
+}
+.glass-batch-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  font-size: var(--type-dense);
+}
+.glass-order-controls button,
+.glass-batch button {
+  min-height: var(--density-loose);
+  min-width: var(--density-loose);
+}
+@media (max-width: 720px) {
+  .glass-rule-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .glass-composer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .glass-composer > .glass-section {
+    position: static;
+  }
+}

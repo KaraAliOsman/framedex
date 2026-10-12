@@ -1,0 +1,482 @@
+[
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "390x844"
+    ],
+    "baseline": "antes-editor",
+    "baseline_ref": "4d50de83",
+    "before": 54,
+    "after": 54,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": true,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1440x900"
+    ],
+    "baseline": "antes-editor",
+    "baseline_ref": "4d50de83",
+    "before": 55,
+    "after": 55,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1024x768"
+    ],
+    "baseline": "antes-editor",
+    "baseline_ref": "4d50de83",
+    "before": 54,
+    "after": 54,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "light",
+      "1280x800"
+    ],
+    "baseline": "antes-editor",
+    "baseline_ref": "4d50de83",
+    "before": 55,
+    "after": 55,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "390x844"
+    ],
+    "baseline": "antes-editor",
+    "baseline_ref": "4d50de83",
+    "before": 54,
+    "after": 54,
+    "new": [],
+    "overflow_before": true,
+    "overflow_after": true,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1024x768"
+    ],
+    "baseline": "antes-editor",
+    "baseline_ref": "4d50de83",
+    "before": 54,
+    "after": 54,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1440x900"
+    ],
+    "baseline": "antes-editor",
+    "baseline_ref": "4d50de83",
+    "before": 55,
+    "after": 55,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "editor",
+    "route": [
+      "posicion-edicion",
+      "ESTIMATOR",
+      "dark",
+      "1280x800"
+    ],
+    "baseline": "antes-editor",
+    "baseline_ref": "4d50de83",
+    "before": 55,
+    "after": 55,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "produccion",
+    "route": [
+      "produccion",
+      "WORKSHOP_MANAGER",
+      "light",
+      "390x844"
+    ],
+    "baseline": "base-poblada-produccion",
+    "baseline_ref": "4d50de83",
+    "before": 209,
+    "after": 195,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "produccion",
+    "route": [
+      "produccion",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1440x900"
+    ],
+    "baseline": "base-poblada-produccion",
+    "baseline_ref": "4d50de83",
+    "before": 192,
+    "after": 176,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "produccion",
+    "route": [
+      "produccion",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1280x800"
+    ],
+    "baseline": "base-poblada-produccion",
+    "baseline_ref": "4d50de83",
+    "before": 192,
+    "after": 176,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "produccion",
+    "route": [
+      "produccion",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1024x768"
+    ],
+    "baseline": "base-poblada-produccion",
+    "baseline_ref": "4d50de83",
+    "before": 187,
+    "after": 171,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "produccion",
+    "route": [
+      "produccion",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "390x844"
+    ],
+    "baseline": "base-poblada-produccion",
+    "baseline_ref": "4d50de83",
+    "before": 208,
+    "after": 194,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "produccion",
+    "route": [
+      "produccion",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1280x800"
+    ],
+    "baseline": "base-poblada-produccion",
+    "baseline_ref": "4d50de83",
+    "before": 191,
+    "after": 175,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "produccion",
+    "route": [
+      "produccion",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1440x900"
+    ],
+    "baseline": "base-poblada-produccion",
+    "baseline_ref": "4d50de83",
+    "before": 191,
+    "after": 175,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "produccion",
+    "route": [
+      "produccion",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1024x768"
+    ],
+    "baseline": "base-poblada-produccion",
+    "baseline_ref": "4d50de83",
+    "before": 186,
+    "after": 170,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "390x844"
+    ],
+    "baseline": "base-poblada-catalogo",
+    "baseline_ref": "4d50de83",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1024x768"
+    ],
+    "baseline": "base-poblada-catalogo",
+    "baseline_ref": "4d50de83",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1280x800"
+    ],
+    "baseline": "base-poblada-catalogo",
+    "baseline_ref": "4d50de83",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "light",
+      "1440x900"
+    ],
+    "baseline": "base-poblada-catalogo",
+    "baseline_ref": "4d50de83",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "390x844"
+    ],
+    "baseline": "base-poblada-catalogo",
+    "baseline_ref": "4d50de83",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1024x768"
+    ],
+    "baseline": "base-poblada-catalogo",
+    "baseline_ref": "4d50de83",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1280x800"
+    ],
+    "baseline": "base-poblada-catalogo",
+    "baseline_ref": "4d50de83",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  },
+  {
+    "surface": "catalogo",
+    "route": [
+      "catalogo",
+      "WORKSHOP_MANAGER",
+      "dark",
+      "1440x900"
+    ],
+    "baseline": "base-poblada-catalogo",
+    "baseline_ref": "4d50de83",
+    "before": 10,
+    "after": 10,
+    "new": [],
+    "overflow_before": false,
+    "overflow_after": false,
+    "http_before": [],
+    "http_after": [],
+    "console_before": [],
+    "console_after": []
+  }
+]

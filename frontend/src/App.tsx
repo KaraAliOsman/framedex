@@ -1,21 +1,83 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type PropsWithChildren } from "react";
 import { createBrowserRouter, Navigate, Route, RouterProvider, Routes } from "react-router-dom";
 
 import { t } from "./i18n/es-CL";
 
-import { AppShell } from "./app/AppShell";
 import { RouteErrorBoundary } from "./app/RouteErrorBoundary";
-import { DashboardPage } from "./app/DashboardPage";
-import { JobsPage } from "./app/JobsPage";
-import { SettingsPage } from "./app/SettingsPage";
+import { ConnectionBoundary, RecoveryPage } from "./app/RecoveryPage";
 import { AuthCallbackPage } from "./auth/AuthCallbackPage";
+import { InvitationPage } from "./auth/InvitationPage";
 import { ReadyGuard, SessionGuard } from "./auth/AuthGuards";
 import { useAuthSession } from "./auth/AuthSessionProvider";
 import { LoginPage } from "./auth/LoginPage";
 import { MfaPage } from "./auth/MfaPage";
 import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
 import { consumeReturnTo } from "./auth/returnTo";
-import { LandingPage } from "./features/landing/LandingPage";
+import { homeFor } from "./app/navigation";
+import { DimLoader } from "./ui/Signature";
+import { publicProposalRoutes } from "./features/portal/PublicProposalApp";
+
+// Public proposals should not fetch the estimator's shell, assistant and
+// settings before they can show the manufacturer's document.
+const LazyAppShell = lazy(async () => ({ default: (await import("./app/AppShell")).AppShell }));
+const DashboardPage = lazy(async () => ({
+  default: (await import("./app/DashboardPage")).DashboardPage,
+}));
+const JobsPage = lazy(async () => ({ default: (await import("./app/JobsPage")).JobsPage }));
+const AnalyticsPage = lazy(async () => ({
+  default: (await import("./features/analytics/AnalyticsPage")).AnalyticsPage,
+}));
+const FieldPage = lazy(async () => ({
+  default: (await import("./features/field/FieldPage")).FieldPage,
+}));
+const SettingsPage = lazy(async () => ({
+  default: (await import("./app/SettingsPage")).SettingsPage,
+}));
+const LazyLandingPage = lazy(async () => ({
+  default: (await import("./features/landing/LandingPage")).LandingPage,
+}));
+const LazyAboutPage = lazy(async () => ({
+  default: (await import("./brand/AboutPage")).AboutPage,
+}));
+
+function LandingPage(): JSX.Element {
+  return (
+    <Suspense fallback={<DimLoader label="Cargando el inicio" />}>
+      <LazyLandingPage />
+    </Suspense>
+  );
+}
+function AboutPage(): JSX.Element {
+  return (
+    <Suspense fallback={<DimLoader label="Cargando datos de la aplicación" />}>
+      <LazyAboutPage />
+    </Suspense>
+  );
+}
+
+function AppShell({ children }: PropsWithChildren): JSX.Element {
+  return (
+    <Suspense fallback={<DimLoader label="Cargando su espacio de trabajo" />}>
+      <LazyAppShell>{children}</LazyAppShell>
+    </Suspense>
+  );
+}
+
+export const DEV_ONLY_ROUTE_PATHS = import.meta.env.DEV
+  ? ([
+      "/projects/demo/positions/g1/edit",
+      "/benchmark",
+      "/dev/ui",
+      "/dev/marca",
+      "/dev/correos",
+    ] as const)
+  : [];
+
+export function visibleDevOnlyRoutePaths(
+  env: Pick<ImportMetaEnv, "DEV"> = import.meta.env,
+): readonly string[] {
+  return env.DEV ? DEV_ONLY_ROUTE_PATHS : [];
+}
 const WalletPage = lazy(async () => ({
   default: (await import("./features/billing/WalletPage")).WalletPage,
 }));
@@ -45,6 +107,9 @@ const ClientsPage = lazy(async () => ({
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
 }));
+const SheetFormatsPage = lazy(async () => ({
+  default: (await import("./features/catalogs/SheetFormatsPage")).SheetFormatsPage,
+}));
 const AssistantWorkspacePage = lazy(async () => ({
   default: (await import("./features/assistant/AssistantWorkspacePage")).AssistantWorkspacePage,
 }));
@@ -71,28 +136,31 @@ const PurchasingPage = lazy(async () => {
   const module = await import("./features/purchasing/PurchasingPage");
   return { default: module.PurchasingPage };
 });
+const InventoryPage = lazy(async () => ({
+  default: (await import("./features/purchasing/InventoryPage")).InventoryPage,
+}));
+const QuotationsPage = lazy(async () => ({
+  default: (await import("./features/quotations/QuotationsPage")).QuotationsPage,
+}));
 
 const ProductionPage = lazy(async () => {
   const module = await import("./features/production/ProductionPage");
   return { default: module.ProductionPage };
 });
 
-const PortalQuotePage = lazy(async () => {
-  const module = await import("./features/portal/PortalQuotePage");
-  return { default: module.PortalQuotePage };
-});
-const PaymentReturnPage = lazy(async () => {
-  const module = await import("./features/portal/PaymentReturnPage");
-  return { default: module.PaymentReturnPage };
-});
 const BenchmarkPage = lazy(async () => {
   const module = await import("./features/benchmark/BenchmarkPage");
   return { default: module.BenchmarkPage };
 });
-
-function isFloorRole(role: string | undefined): boolean {
-  return ["INSTALLER", "OPERATOR"].includes(role ?? "");
-}
+const UiPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/UiPage")).UiPage }))
+  : null;
+const BrandPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/BrandPage")).BrandPage }))
+  : null;
+const MailExamplesPage = import.meta.env.DEV
+  ? lazy(async () => ({ default: (await import("./dev/MailExamplesPage")).MailExamplesPage }))
+  : null;
 
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
@@ -104,9 +172,8 @@ function HomeRedirect(): JSX.Element {
     return <Navigate to="/select-organization" replace />;
   }
   if (auth.status === "ready") {
-    // Floor roles live on the production floor — the commercial dashboard
-    // would deny its queries and greet them with errors.
-    const home = isFloorRole(auth.me?.active_organization?.role) ? "/production" : "/dashboard";
+    // The operator starts at the station; other roles start with their work.
+    const home = homeFor(auth.me?.active_organization?.role);
     // A magic link can land on `/` instead of /auth/callback when the site
     // URL differs from the requested origin — still honor the stashed
     // destination rather than dropping it on the dashboard.
@@ -116,14 +183,9 @@ function HomeRedirect(): JSX.Element {
   return <LandingPage />;
 }
 
-/** /dashboard is a commercial surface: its queries are role-gated, so a floor
- * role deep-linking here met a wall of 403s. Redirect them to the floor home
- * instead (review: OPERATOR on /dashboard). */
+/** Hoy authorizes its projection for all five roles. The operator's default
+ * entry still opens the station; an explicit Inicio link opens their queue. */
 function DashboardRoute(): JSX.Element {
-  const auth = useAuthSession();
-  if (isFloorRole(auth.me?.active_organization?.role)) {
-    return <Navigate to="/production" replace />;
-  }
   return (
     <AppShell>
       <DashboardPage />
@@ -173,18 +235,64 @@ export function AppRoutes(): JSX.Element {
             </ReadyGuard>
           }
         />
-        <Route
-          path="/projects/demo/positions/g1/edit"
-          element={
-            <ReadyGuard>
-              <AppShell>
-                <Suspense fallback={<p role="status">{t("canvas.loading")}</p>}>
-                  <CanvasEditor2DView demoRoute />
+        {import.meta.env.DEV && visibleDevOnlyRoutePaths().length > 0 && (
+          <>
+            {BrandPage ? (
+              <Route
+                path="/dev/marca"
+                element={
+                  <Suspense fallback={<p role="status">Cargando marca</p>}>
+                    <BrandPage />
+                  </Suspense>
+                }
+              />
+            ) : null}
+            {MailExamplesPage ? (
+              <Route
+                path="/dev/correos"
+                element={
+                  <ReadyGuard>
+                    <Suspense fallback={<p role="status">Cargando correos</p>}>
+                      <MailExamplesPage />
+                    </Suspense>
+                  </ReadyGuard>
+                }
+              />
+            ) : null}
+            {UiPage ? (
+              <Route
+                path="/dev/ui"
+                element={
+                  <ReadyGuard>
+                    <Suspense fallback={<p role="status">Cargando el manual de componentes</p>}>
+                      <UiPage />
+                    </Suspense>
+                  </ReadyGuard>
+                }
+              />
+            ) : null}
+            <Route
+              path="/projects/demo/positions/g1/edit"
+              element={
+                <ReadyGuard>
+                  <AppShell>
+                    <Suspense fallback={<p role="status">{t("canvas.loading")}</p>}>
+                      <CanvasEditor2DView demoRoute />
+                    </Suspense>
+                  </AppShell>
+                </ReadyGuard>
+              }
+            />
+            <Route
+              path="/benchmark"
+              element={
+                <Suspense fallback={<p role="status" />}>
+                  <BenchmarkPage />
                 </Suspense>
-              </AppShell>
-            </ReadyGuard>
-          }
-        />
+              }
+            />
+          </>
+        )}
         <Route
           path="/pricing/commercial"
           element={
@@ -211,31 +319,26 @@ export function AppRoutes(): JSX.Element {
         />
         <Route path="/" element={<HomeRedirect />} />
         <Route
-          path="/cotizacion/:token"
+          path="/analytics"
           element={
-            <Suspense fallback={<p role="status">{t("portal.loading")}</p>}>
-              <PortalQuotePage />
-            </Suspense>
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<DimLoader label="Cargando Analítica" />}>
+                  <AnalyticsPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
           }
         />
         <Route
-          path="/pago/retorno"
+          path="/about"
           element={
-            <Suspense fallback={<p role="status" />}>
-              <PaymentReturnPage />
-            </Suspense>
+            <ReadyGuard>
+              <AboutPage />
+            </ReadyGuard>
           }
         />
-        {import.meta.env.DEV && (
-          <Route
-            path="/benchmark"
-            element={
-              <Suspense fallback={<p role="status" />}>
-                <BenchmarkPage />
-              </Suspense>
-            }
-          />
-        )}
+        {publicProposalRoutes()}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route
@@ -311,6 +414,26 @@ export function AppRoutes(): JSX.Element {
           }
         />
         <Route
+          path="/field"
+          element={
+            <Suspense fallback={<DimLoader label="Cargando Terreno" />}>
+              <FieldPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dispatch"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<DimLoader label="Cargando despacho y postventa" />}>
+                  <FieldPage office />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
+        <Route
           path="/projects/:id/positions/:posId/edit"
           element={
             <ReadyGuard>
@@ -324,6 +447,18 @@ export function AppRoutes(): JSX.Element {
         />
         <Route path="/projects" element={<ProjectSurface />} />
         <Route path="/catalogs" element={<Navigate to="/catalogs/systems" replace />} />
+        <Route
+          path="/catalogs/sheet-formats"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<p role="status">Cargando formatos de lámina…</p>}>
+                  <SheetFormatsPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
         <Route
           path="/assistant"
           element={
@@ -370,12 +505,34 @@ export function AppRoutes(): JSX.Element {
             </ReadyGuard>
           }
         />
-        {/* Bare guesses land on their real surface instead of silently
-         * bouncing home — /inventory lives inside Purchasing, /settings
-         * inside General. */}
+        {/* Keep general settings and inventory entry addresses usable. */}
         <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
-        <Route path="/inventory" element={<Navigate to="/purchasing" replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/invitation" element={<InvitationPage />} />
+        <Route
+          path="/inventory"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<p role="status">Cargando inventario…</p>}>
+                  <InventoryPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
+        <Route
+          path="/quotes"
+          element={
+            <ReadyGuard>
+              <AppShell>
+                <Suspense fallback={<p role="status">Cargando cotizaciones…</p>}>
+                  <QuotationsPage />
+                </Suspense>
+              </AppShell>
+            </ReadyGuard>
+          }
+        />
+        <Route path="*" element={<RecoveryPage kind="not-found" />} />
       </Routes>
     </RouteErrorBoundary>
   );
@@ -384,5 +541,9 @@ export function AppRoutes(): JSX.Element {
 const router = createBrowserRouter([{ path: "*", element: <AppRoutes /> }]);
 
 export function App(): JSX.Element {
-  return <RouterProvider router={router} />;
+  return (
+    <ConnectionBoundary>
+      <RouterProvider router={router} />
+    </ConnectionBoundary>
+  );
 }

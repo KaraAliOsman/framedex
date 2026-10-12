@@ -27,7 +27,7 @@ SELECT is(
     (
         SELECT count(*)
         FROM public.profile_systems
-        WHERE code = 'DEMO_60'
+        WHERE code = 'DEMO_60' AND version=1
           AND org_id IS NULL
           AND is_global = TRUE
           AND is_demo = TRUE
@@ -40,14 +40,14 @@ SELECT is(
 );
 SELECT is(
     (SELECT count(*) FROM public.profile_articles WHERE system_id = (
-        SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'
+        SELECT id FROM public.profile_systems WHERE code = 'DEMO_60' AND version=1
     )),
     11::BIGINT,
     'DEMO_60 contains eleven canonical profile articles'
 );
 SELECT is(
     (SELECT count(*) FROM public.glazing_bead_matrix WHERE system_id = (
-        SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'
+        SELECT id FROM public.profile_systems WHERE code = 'DEMO_60' AND version=1
     )),
     5::BIGINT,
     'DEMO_60 contains five canonical glazing mappings'
@@ -57,7 +57,7 @@ SELECT is(
         SELECT count(*)
         FROM public.profile_articles
         WHERE system_id = (
-            SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'
+            SELECT id FROM public.profile_systems WHERE code = 'DEMO_60' AND version=1
         )
           AND (
               (role = 'FRAME' AND face_width_mm = 60.00 AND reinforcement_gap_mm = 15.00)
@@ -74,7 +74,7 @@ SELECT is(
         SELECT count(*)
         FROM public.glazing_bead_matrix
         WHERE system_id = (
-            SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'
+            SELECT id FROM public.profile_systems WHERE code = 'DEMO_60' AND version=1
         )
           AND cut_add_mm = 9.00
     ),
@@ -82,6 +82,12 @@ SELECT is(
     'DEMO_60 glazing mappings use the canonical 9.00 mm cut addition'
 );
 
+CREATE TEMP TABLE expected_catalog_visibility AS SELECT
+ (SELECT count(*) FROM public.profile_systems WHERE org_id IS NULL AND is_global) systems,
+ (SELECT count(*) FROM public.profile_articles a JOIN public.profile_systems s ON s.id=a.system_id WHERE a.org_id IS NULL AND s.org_id IS NULL AND s.is_global) articles,
+ (SELECT count(*) FROM public.hardware_kits a JOIN public.profile_systems s ON s.id=a.system_id WHERE a.org_id IS NULL AND s.org_id IS NULL AND s.is_global) kits,
+ (SELECT count(*) FROM public.glazing_bead_matrix a JOIN public.profile_systems s ON s.id=a.system_id WHERE a.org_id IS NULL AND s.org_id IS NULL AND s.is_global) beads;
+GRANT SELECT ON expected_catalog_visibility TO authenticated;
 SET LOCAL ROLE authenticated;
 SELECT set_config(
     'request.jwt.claims',
@@ -94,10 +100,10 @@ SELECT set_config(
     TRUE
 );
 
-SELECT is((SELECT count(*) FROM public.profile_systems), 3::BIGINT, 'tenant A sees the three reference families');
-SELECT is((SELECT count(*) FROM public.profile_articles), 33::BIGINT, 'tenant A sees profiles');
-SELECT is((SELECT count(*) FROM public.hardware_kits), 15::BIGINT, 'tenant A sees hardware');
-SELECT is((SELECT count(*) FROM public.glazing_bead_matrix), 12::BIGINT, 'tenant A sees beads');
+SELECT is((SELECT count(*) FROM public.profile_systems), (SELECT systems FROM expected_catalog_visibility), 'tenant A sees every global family');
+SELECT is((SELECT count(*) FROM public.profile_articles), (SELECT articles FROM expected_catalog_visibility), 'tenant A sees every global profile');
+SELECT is((SELECT count(*) FROM public.hardware_kits), (SELECT kits FROM expected_catalog_visibility), 'tenant A sees every global kit');
+SELECT is((SELECT count(*) FROM public.glazing_bead_matrix), (SELECT beads FROM expected_catalog_visibility), 'tenant A sees every global bead');
 
 RESET ROLE;
 SET LOCAL ROLE authenticated;
@@ -112,10 +118,10 @@ SELECT set_config(
     TRUE
 );
 
-SELECT is((SELECT count(*) FROM public.profile_systems), 3::BIGINT, 'tenant B sees the three reference families');
-SELECT is((SELECT count(*) FROM public.profile_articles), 33::BIGINT, 'tenant B sees profiles');
-SELECT is((SELECT count(*) FROM public.hardware_kits), 15::BIGINT, 'tenant B sees hardware');
-SELECT is((SELECT count(*) FROM public.glazing_bead_matrix), 12::BIGINT, 'tenant B sees beads');
+SELECT is((SELECT count(*) FROM public.profile_systems), (SELECT systems FROM expected_catalog_visibility), 'tenant B sees every global family');
+SELECT is((SELECT count(*) FROM public.profile_articles), (SELECT articles FROM expected_catalog_visibility), 'tenant B sees every global profile');
+SELECT is((SELECT count(*) FROM public.hardware_kits), (SELECT kits FROM expected_catalog_visibility), 'tenant B sees every global kit');
+SELECT is((SELECT count(*) FROM public.glazing_bead_matrix), (SELECT beads FROM expected_catalog_visibility), 'tenant B sees every global bead');
 
 RESET ROLE;
 SELECT ok(

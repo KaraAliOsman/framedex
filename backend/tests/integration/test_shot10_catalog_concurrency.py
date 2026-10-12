@@ -68,7 +68,7 @@ def test_concurrent_catalog_change_rejects_stale_save(committed_commercial_rows)
 
 
 def _bare_system(org):
-    source = one("SELECT * FROM public.profile_systems WHERE code='DEMO_60' AND is_global")
+    source = one("SELECT * FROM public.profile_systems WHERE code='DEMO_60' AND version=1 AND is_global")
     identity = uuid4()
     one(
         "INSERT INTO public.profile_systems SELECT (jsonb_populate_record("
@@ -176,7 +176,7 @@ def test_concurrent_singleton_role_writes_are_serialized(
 
 
 def _unreferenced_global_system(role):
-    source = one("SELECT * FROM public.profile_systems WHERE code='DEMO_60' AND is_global")
+    source = one("SELECT * FROM public.profile_systems WHERE code='DEMO_60' AND version=1 AND is_global")
     identity = uuid4()
     one(
         "INSERT INTO public.profile_systems SELECT (jsonb_populate_record("

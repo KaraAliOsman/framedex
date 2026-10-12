@@ -1,0 +1,27 @@
+[
+  {
+    "state": "vacio",
+    "text": "Nuevo vano\n‹ Proyecto\nNuevo vano\nCant.\nElegir serie\nAcabado · Sin dato\nBorrador\n↶\n↷\nPrecio · Sin dato\nElegir serie\nGuardar\nSeleccionar\nV\nDividir vertical\n|\nDividir horizontal\n–\nApertura\nVidrio\nAcoplar\nMedir\nTipologías\nConjunto\nAtajos\n?\nBiblioteca de tipologías\n×\n\nElige una serie para ver sus tipologías compatibles.\n\nVista interior\nVista exterior\nSimbología\n1 000\n1 000\n1 000\n−\n106%\n+\nCentrar\n1 000 × 1 000 mm\nVista 3D\nInspector\nVista general\nDiseño\nTécnica\nMódulo 1\nMEDIDAS\nAncho\nmm\nAlto\nmm\nAPERTURA\n\nElige una serie para consultar sus vidrios.\n\nElige un producto; el motor selecciona su junquillo por el espesor total.\n\nAvanzado · composición y procesos\nComposición\nSin dato · elige vidrio\nEspesor\nSin dato · elige vidrio\nHoja · ancho\nNo requiere · paño fijo\nHoja · alto\nNo requiere · paño fijo\nKit derivado\nNo requiere · paño fijo\nManilla · lado\nNo requiere · paño fijo\nFuente\n¿De dónde sale?\nAVANZADO · MONTAJE, EXTRAS Y PERFILES\nModificar con DEKOPEN\nAsistente y alternativas\nElige una serie para calcular el conjunto.\n1 000 × 1 000 mm\nMódulo 1\nPosiciones del proyecto\nValida el diseño para ver un despiece actualizado.",
+    "overflow": false
+  },
+  {
+    "state": "sin-permiso",
+    "text": "Sin acceso\n\nTu rol no permite editar proyectos.\n\nVolver al panel",
+    "overflow": false
+  },
+  {
+    "state": "bloqueado",
+    "text": "Revisión cerrada para edición\n\nEsta revisión ya fue emitida, cotizada o aprobada — sus vanos no pueden modificarse. Desde el proyecto puedes abrir una nueva revisión para seguir editando.\n\nVolver al proyecto",
+    "overflow": false
+  },
+  {
+    "state": "carga",
+    "text": "Cargando el proyecto",
+    "overflow": false
+  },
+  {
+    "state": "error",
+    "text": "No se pudo abrir el proyecto\n\nRevisa la conexión y los datos. Si continúa, comparte los detalles con el dueño de la organización.\n\nReintentar",
+    "overflow": false
+  }
+]

@@ -3,6 +3,10 @@
 from decimal import Decimal
 
 from rest_framework import serializers
+from projects.collection_serializers import CollectionIntegrationSerializer, CollectionMilestoneSerializer
+
+from projects.operation_serializers import DesignOperationSerializer
+from documents.quote_serializers import DocumentPreferencesSerializer, DocumentPreferencesPatchSerializer
 
 from engine_api.serializers import (
     EngineCalculateRequestSerializer,
@@ -10,6 +14,14 @@ from engine_api.serializers import (
     DecimalStringField,
 )
 from pricing.serializers import StrictSerializer
+from projects.client_serializers import (
+    ClientAddressSerializer, ClientAddressWriteSerializer,
+    ClientContactSerializer, ClientContactWriteSerializer,
+    ClientNoteSerializer, ClientMergeRecordSerializer,
+    ClientProjectHistorySerializer, ClientQuoteHistorySerializer,
+    ClientDocumentSerializer, ClientPaymentHistorySerializer, ClientBalanceSerializer,
+    ClientMergeFieldSerializer,
+)
 
 
 class ProjectWriteSerializer(StrictSerializer):
@@ -22,6 +34,7 @@ class ProjectWriteSerializer(StrictSerializer):
     client_comuna = serializers.CharField(max_length=20, required=False, allow_blank=True)
     client_address = serializers.CharField(max_length=70, required=False, allow_blank=True)
     client_id = serializers.UUIDField(required=False, allow_null=True)
+    client_address_id = serializers.UUIDField(required=False, allow_null=True)
     delivery_address = serializers.CharField(required=False, allow_blank=True)
     notes_commercial = serializers.CharField(required=False, allow_blank=True)
     notes_internal = serializers.CharField(required=False, allow_blank=True)
@@ -52,10 +65,40 @@ class PositionDesignSerializer(EngineCalculateRequestSerializer, StrictSerialize
     color = serializers.CharField(max_length=50)
 
 
+def validate_measurement_input(value, design):
+    # Reject oversized lists before constructing every survey. A position can
+    # have at most one survey per actual frame, without an arbitrary module cap.
+    tree = design.get('parametric_tree', {}) if isinstance(design, dict) else {}
+    assembly = tree.get('assembly', {}) if isinstance(tree, dict) and tree.get('version') == 'product-v2' else {}
+    modules = assembly.get('modules', []) if isinstance(assembly, dict) else []
+    count = len(modules) if isinstance(tree, dict) and tree.get('version') == 'product-v2' and isinstance(modules, list) else 1
+    if not isinstance(value, list) or not value or len(value) > count:
+        raise serializers.ValidationError('Declara una medición como máximo por marco del diseño.')
+    from pydantic import TypeAdapter
+    from dekopen_engine.mounting import OpeningSurvey
+    from pricing.repository import json_text
+    try:
+        return [item.model_dump(mode='json') for item in TypeAdapter(list[OpeningSurvey]).validate_json(json_text(value))]
+    except (ValueError, TypeError) as error:
+        raise serializers.ValidationError(str(error)) from error
+
+
+class PositionPlacementSerializer(StrictSerializer):
+    floor = serializers.CharField(max_length=80, allow_blank=True, required=False)
+    room = serializers.CharField(max_length=80, allow_blank=True, required=False)
+    axis = serializers.CharField(max_length=80, allow_blank=True, required=False)
+
+
 class PositionWriteSerializer(StrictSerializer):
-    location_tag = serializers.CharField(max_length=100, allow_blank=True)
+    location_tag = serializers.CharField(max_length=120, allow_blank=True)
     quantity = serializers.IntegerField(min_value=1, max_value=2147483647)
     design = PositionDesignSerializer()
+    measurements = serializers.JSONField(required=False)
+    measurement_reason = serializers.CharField(max_length=1000, required=False)
+    placement = PositionPlacementSerializer(required=False)
+
+    def validate_measurements(self, value):
+        return validate_measurement_input(value, self.initial_data.get('design'))
 
 
 class PositionUpdateSerializer(PositionWriteSerializer):
@@ -74,6 +117,12 @@ class PositionResponseSerializer(serializers.Serializer):
     design = PositionDesignSerializer()
     bom = EngineCalculateResponseSerializer()
     updated_at = serializers.DateTimeField()
+    measurements = serializers.JSONField(allow_null=True, required=False)
+    display_order = serializers.IntegerField(required=False)
+    placement = PositionPlacementSerializer(required=False)
+    system_name = serializers.CharField(required=False)
+    system_demo = serializers.BooleanField(required=False)
+    commercial = serializers.JSONField(allow_null=True, required=False)
 
 
 class ClientWriteSerializer(StrictSerializer):
@@ -84,7 +133,10 @@ class ClientWriteSerializer(StrictSerializer):
     address = serializers.CharField(required=False, allow_blank=True)
     giro = serializers.CharField(max_length=80, required=False, allow_blank=True)
     comuna = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    notes = serializers.CharField(required=False, allow_blank=True)
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=4000)
+    party_kind = serializers.ChoiceField(choices=('PERSON','COMPANY','UNKNOWN'), required=False)
+    contacts = ClientContactWriteSerializer(many=True, required=False, max_length=1000)
+    addresses = ClientAddressWriteSerializer(many=True, required=False, max_length=1000)
 
 
 class ClientUpdateSerializer(ClientWriteSerializer):
@@ -103,10 +155,40 @@ class ClientResponseSerializer(serializers.Serializer):
     notes = serializers.CharField()
     is_active = serializers.BooleanField()
     updated_at = serializers.DateTimeField()
+    party_kind = serializers.ChoiceField(choices=('PERSON','COMPANY','UNKNOWN'), required=False)
+    merged_into_id = serializers.UUIDField(allow_null=True, required=False)
+    rut_valid = serializers.BooleanField(allow_null=True, required=False)
+    contacts = ClientContactSerializer(many=True, required=False)
+    addresses = ClientAddressSerializer(many=True, required=False)
 
 
 class ClientListResponseSerializer(serializers.Serializer):
     items = ClientResponseSerializer(many=True)
+
+
+class ClientDossierResponseSerializer(serializers.Serializer):
+    client = ClientResponseSerializer()
+    requested_id = serializers.UUIDField()
+    financial_access = serializers.BooleanField()
+    active_projects = serializers.IntegerField()
+    unknown_projects = serializers.IntegerField()
+    projects = ClientProjectHistorySerializer(many=True)
+    quotations = ClientQuoteHistorySerializer(many=True)
+    payments = ClientPaymentHistorySerializer(many=True)
+    documents = ClientDocumentSerializer(many=True)
+    balances = ClientBalanceSerializer(many=True)
+    notes = ClientNoteSerializer(many=True)
+    merges = ClientMergeRecordSerializer(many=True)
+
+
+class ClientMergePreviewSerializer(serializers.Serializer):
+    source = ClientResponseSerializer()
+    target = ClientResponseSerializer()
+    adopted_fields = ClientMergeFieldSerializer(many=True)
+    added_contacts = ClientContactSerializer(many=True)
+    added_addresses = ClientAddressSerializer(many=True)
+    blockers = serializers.ListField(child=serializers.CharField())
+    consequence = serializers.CharField()
 
 
 class ProjectVersionResponseSerializer(serializers.Serializer):
@@ -125,6 +207,9 @@ class ProjectVersionResponseSerializer(serializers.Serializer):
 
 
 class ProjectResponseSerializer(ProjectWriteSerializer):
+    accepted_version_id = serializers.UUIDField(required=False, allow_null=True)
+    accepted_revision = serializers.CharField(required=False, allow_null=True)
+    accepted_source = serializers.CharField(required=False)
     id = serializers.UUIDField()
     code = serializers.CharField()
     status = serializers.ChoiceField(
@@ -148,6 +233,8 @@ class ProjectResponseSerializer(ProjectWriteSerializer):
     updated_at = serializers.DateTimeField()
     positions = PositionResponseSerializer(many=True, required=False)
     versions = ProjectVersionResponseSerializer(many=True, required=False)
+    quotation_valid_until = serializers.DateField(allow_null=True, required=False)
+    quotation_validity_source = serializers.CharField(required=False)
 
 
 class ProjectListResponseSerializer(serializers.Serializer):
@@ -181,6 +268,7 @@ class PaymentRecordSerializer(StrictSerializer):
     reference = serializers.CharField(max_length=200, required=False, allow_blank=True)
     note = serializers.CharField(max_length=2000, required=False, allow_blank=True)
     recorded_at = serializers.DateTimeField(required=False)
+    recorded_on = serializers.DateField(required=False)
 
 
 class PaymentVoidSerializer(StrictSerializer):
@@ -209,6 +297,8 @@ class ProjectPaymentSerializer(serializers.Serializer):
     reference = serializers.CharField(allow_null=True)
     note = serializers.CharField(allow_null=True)
     recorded_by = serializers.CharField(allow_null=True)
+    actor_label = serializers.CharField(allow_null=True)
+    simulated = serializers.BooleanField()
     recorded_at = serializers.CharField()
     voided_at = serializers.CharField(allow_null=True)
     void_reason = serializers.CharField(allow_null=True)
@@ -268,6 +358,7 @@ class ProjectInvoiceSerializer(serializers.Serializer):
     invoice_code = serializers.CharField()
     project_id = serializers.UUIDField()
     revision_code = serializers.CharField(allow_null=True)
+    document_kind = serializers.ChoiceField(choices=("FACTURA", "BOLETA"))
     credit_note = ProjectCreditNoteSerializer(allow_null=True)
     dte = ProjectDteSerializer(allow_null=True, required=False)
     created_at = serializers.CharField()
@@ -363,6 +454,13 @@ class PaymentsSummarySerializer(serializers.Serializer):
     currency = serializers.ChoiceField(choices=("CLP", "USD"))
     status = serializers.ChoiceField(choices=("NO_DEAL", "PENDING", "PARTIAL", "PAID"))
     sealed_revision = serializers.CharField(allow_null=True)
+    collected_percent = serializers.CharField(allow_null=True)
+    excess = serializers.CharField()
+    overdue = serializers.CharField()
+    includes_simulation = serializers.BooleanField()
+    schedule = CollectionMilestoneSerializer(many=True)
+    source = serializers.CharField()
+    integrations = CollectionIntegrationSerializer()
 
 
 class PaymentRecordResponseSerializer(PaymentsSummarySerializer):
@@ -378,6 +476,8 @@ class PaymentLinkCreateSerializer(StrictSerializer):
     amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"))
     payer_email = serializers.EmailField(max_length=200)
     subject = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    simulated = serializers.BooleanField(required=False, default=False)
+    expires_at = serializers.DateTimeField(required=False)
 
 
 class PaymentLinkSerializer(serializers.Serializer):
@@ -388,9 +488,11 @@ class PaymentLinkSerializer(serializers.Serializer):
     payer_email = serializers.CharField()
     subject = serializers.CharField()
     status = serializers.ChoiceField(
-        choices=("DISPATCHING", "PENDING", "PAID", "FAILED", "UNCERTAIN", "CANCELLED")
+        choices=("DISPATCHING", "PENDING", "PAID", "FAILED", "UNCERTAIN", "CANCELLED", "EXPIRED")
     )
-    environment = serializers.ChoiceField(choices=("sandbox", "production"))
+    environment = serializers.ChoiceField(choices=("sandbox", "production", "simulated"))
+    expires_at = serializers.DateTimeField(allow_null=True)
+    deal_revision = serializers.CharField(allow_null=True)
     url = serializers.CharField(allow_null=True)
     project_payment_id = serializers.CharField(allow_null=True)
     created_at = serializers.CharField()
@@ -475,12 +577,15 @@ class DesignAssistResponseSerializer(serializers.Serializer):
     audit_id = serializers.CharField()
     model = serializers.CharField()
     credits_debited = serializers.IntegerField()
-    ops = serializers.ListField(child=serializers.DictField())
+    ops = DesignOperationSerializer(many=True)
     rejected = serializers.ListField(child=serializers.DictField())
     notes = serializers.CharField(allow_null=True)
+    simulation = serializers.JSONField(required=False, allow_null=True)
+    clarify = serializers.JSONField(required=False, allow_null=True)
 
 
 class OrgBrandingSerializer(serializers.Serializer):
+    updated_at = serializers.DateTimeField(required=False)
     """Org white-label identity rendered on emitted documents."""
 
     name = serializers.CharField()
@@ -492,15 +597,28 @@ class OrgBrandingSerializer(serializers.Serializer):
     brand_email = serializers.CharField(allow_null=True, allow_blank=True)
     brand_logo_key = serializers.CharField(allow_null=True, allow_blank=True)
     brand_logo_sha256 = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_primary_color = serializers.CharField()
+    brand_effective_color = serializers.CharField()
+    brand_color_fallback = serializers.BooleanField()
+    document_attribution = serializers.BooleanField()
+    portal_attribution = serializers.BooleanField()
+    notification_email = serializers.EmailField(allow_null=True, allow_blank=True)
+    internal_mail_enabled = serializers.BooleanField()
+    document_preferences = DocumentPreferencesSerializer()
 
 
 class OrgBrandingWriteSerializer(StrictSerializer):
+    document_preferences = DocumentPreferencesPatchSerializer(required=False)
+    expected_updated_at = serializers.DateTimeField(required=False)
+    brand_primary_color = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
+    document_attribution = serializers.BooleanField(required=False)
+    portal_attribution = serializers.BooleanField(required=False)
+    notification_email = serializers.EmailField(required=False, allow_null=True, allow_blank=True)
+    internal_mail_enabled = serializers.BooleanField(required=False)
     commercial_name = serializers.CharField(
         allow_null=True, allow_blank=True, required=False, max_length=255
     )
-    giro = serializers.CharField(
-        allow_null=True, allow_blank=True, required=False, max_length=255
-    )
+    giro = serializers.CharField(allow_null=True, allow_blank=True, required=False, max_length=255)
     brand_address = serializers.CharField(
         allow_null=True, allow_blank=True, required=False, max_length=255
     )

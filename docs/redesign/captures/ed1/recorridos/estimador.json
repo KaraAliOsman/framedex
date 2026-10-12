@@ -1,0 +1,16 @@
+[
+  {
+    "flow": "Estimador: Hoy → búsqueda exacta → proyecto → editor/vistas DIN/sección → cascada → aplicar precio por clic",
+    "result": "PASA",
+    "positions": 3,
+    "net": "68211",
+    "gross": "81171",
+    "cascadeCloses": true
+  },
+  {
+    "flow": "Estimador: preparación/checklist → confirmación humana → emisión → worker → DOC-01 sellado real",
+    "result": "PASA",
+    "pdfBytes": 37458,
+    "hash": "14e271d9d7ba99d1d2cf211387ef2a420ae865a5937c615aaf4072f99313eb02"
+  }
+]

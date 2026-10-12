@@ -29,7 +29,7 @@ INSERT INTO public.profile_systems
 SELECT (jsonb_populate_record(NULL::public.profile_systems, to_jsonb(source) ||
     jsonb_build_object('id', gen_random_uuid(), 'code', 'PGTAP145',
         'technical_locked', false, 'is_demo', false))).*
-FROM public.profile_systems source WHERE code = 'DEMO_60';
+FROM public.profile_systems source WHERE code = 'DEMO_60' AND version=1;
 
 PREPARE bad_prov AS
     UPDATE public.profile_systems SET data_provenance = 'AUTOMAGIC'
@@ -82,7 +82,7 @@ SELECT lives_ok('locked_review_clear',
     'a locked system accepts a review write that clears the pending marker');
 
 SELECT ok((SELECT data_provenance FROM public.profile_systems
-           WHERE code = 'DEMO_60' AND is_global LIMIT 1)
+           WHERE code = 'DEMO_60' AND version=1 AND is_global LIMIT 1)
           IN ('SEED_SYNTHETIC', 'LEGACY_UNVERIFIED', 'MANUAL', 'IMPORT'),
     'DEMO_60 carries a declared provenance, never an unlabeled row');
 

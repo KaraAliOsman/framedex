@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+from contextlib import nullcontext
 
 import pytest
 
@@ -19,6 +20,7 @@ def fake_rows(monkeypatch):
         return responses.pop(0) if responses else []
 
     monkeypatch.setattr(service, "rows", _rows)
+    monkeypatch.setattr(service, "documentary_backend", nullcontext)
     return calls, responses
 
 
@@ -26,6 +28,7 @@ def _seed(responses):
     pid, pos, aid = uuid4(), uuid4(), uuid4()
     responses.extend(
         [
+            [],  # current issued quotations
             [{"id": pid, "code": "PRJ-1", "name": "Hotel Sur", "client_name": "Inmobiliaria"}],
             [{"id": uuid4(), "name": "Inmobiliaria Sur", "rut": "76.123.456-7"}],
             [
@@ -76,10 +79,11 @@ def test_every_group_maps_row_to_result(fake_rows):
     assert by_group["positions"][0]["path"] == f"/projects/{pid}/positions/{pos}/edit"
     assert by_group["systems"][0]["title"] == "DEMO_60 · Demo 60"
     assert len(by_group["articles"]) == 2
-    assert by_group["orders"][0]["path"] == "/production"
+    order = by_group["orders"][0]
+    assert order["path"] == f"/production?order={order['id']}"
     assert by_group["documents"][0]["title"] == "FAC-3"
     assert by_group["documents"][1]["title"] == "GD-2"
-    assert by_group["inventory"][0]["path"] == "/purchasing"
+    assert by_group["inventory"][0]["path"] == "/inventory?sku=SIL-1"
 
 
 def test_queries_are_org_scoped_and_pattern_safe(fake_rows):

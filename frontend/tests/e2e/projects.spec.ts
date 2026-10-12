@@ -1,4 +1,4 @@
-import { expect, type Page, type TestInfo } from "@playwright/test";
+import { expect, type Page, type Request, type TestInfo } from "@playwright/test";
 
 import type {
   EngineAssemblyCalculateResponse,
@@ -17,16 +17,35 @@ async function responseTo<T>(
   status: number,
   action: () => Promise<unknown>,
 ): Promise<T> {
-  const [response] = await Promise.all([
-    page.waitForResponse(
-      (candidate) =>
-        candidate.request().method() === method && new URL(candidate.url()).pathname === path,
-      { timeout: 20_000 },
-    ),
-    action(),
-  ]);
-  expect(response.status(), `${method} ${path}`).toBe(status);
-  return (await response.json()) as T;
+  // Clone navigation can still have a GET in flight when reload starts.
+  // Capture only new requests, then read their body before action() completes.
+  const started = new Set<Request>();
+  const remember = (request: Request) => {
+    if (request.method() === method && new URL(request.url()).pathname === path) {
+      started.add(request);
+    }
+  };
+  page.on("request", remember);
+  try {
+    const [body] = await Promise.all([
+      page
+        .waitForResponse(
+          (candidate) =>
+            candidate.request().method() === method &&
+            new URL(candidate.url()).pathname === path &&
+            started.has(candidate.request()),
+          { timeout: 20_000 },
+        )
+        .then(async (response) => {
+          expect(response.status(), `${method} ${path}`).toBe(status);
+          return (await response.json()) as T;
+        }),
+      action(),
+    ]);
+    return body;
+  } finally {
+    page.off("request", remember);
+  }
 }
 
 async function screenshot(page: Page, info: TestInfo, name: string): Promise<void> {
@@ -41,11 +60,16 @@ async function screenshot(page: Page, info: TestInfo, name: string): Promise<voi
   await info.attach(name, { path, contentType: "image/png" });
 }
 
-/** The desk grid is select-then-act: click the vano's row so the side pane
- * offers its actions, then return the action link inside it. */
+/** Secondary position details live in the drawer; the main collection keeps
+ * its selection and the editor opens the exact physical position. */
 async function card(page: Page, location: string, action: string) {
-  await page.locator(".position-grid [role='option']").filter({ hasText: location }).click();
-  return page.locator(".project-desk__side").getByRole("link", { name: action, exact: true });
+  await page
+    .getByRole("list", { name: "Posiciones" })
+    .getByRole("listitem")
+    .filter({ hasText: location })
+    .click();
+  await page.getByRole("button", { name: "Ficha de posición", exact: true }).click();
+  return page.getByRole("dialog").getByRole("link", { name: action, exact: true });
 }
 
 test("SHOT-10 real project core path and visual evidence", async ({ page, manual }, info) => {
@@ -53,14 +77,25 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   const projectName = `E2E sintético ${crypto.randomUUID()}`;
   const save = () => page.getByRole("button", { name: "Guardar", exact: true }).click();
-  // Navigation uses the editor's own backlink ("Volver al proyecto"). React
+  // Navigation uses the editor's accessible project backlink. React
   // Query may serve the project from its fresh cache without a fetch, so the
   // reload makes the backend round-trip (and in-memory reset) explicit.
   const back = () => page.getByRole("link", { name: /Volver al proyecto/ }).click();
-  const toProjects = () => page.getByRole("link", { name: /‹ Proyectos/ }).click();
+  const toProjects = () =>
+    page
+      .getByRole("navigation", { name: "Ruta de navegación" })
+      .getByRole("link", { name: "Proyectos", exact: true })
+      .click();
   const freshRead = () => page.reload();
 
-  await page.goto("/projects");
+  const emptyProjects = await responseTo<{ items: ProjectResponse[] }>(
+    page,
+    "GET",
+    "/api/v1/projects/",
+    200,
+    () => page.goto("/projects"),
+  );
+  expect(emptyProjects.items).toEqual([]);
   await expect(page.getByText("No hay proyectos que coincidan.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
   // Extended identity fields live under the collapsed "Datos adicionales" section.
@@ -93,28 +128,33 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   const projectApi = `/api/v1/projects/${project.id}/`;
   await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
   await expect(page.getByRole("heading", { level: 1 })).toContainText(projectName);
-  await expect(page.getByRole("link", { name: "Añadir vano" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Agregar vanos", exact: true })).toBeVisible();
   await screenshot(page, info, "01-project-created");
 
-  await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
+  await page.getByRole("link", { name: "Agregar vanos", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina original");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
 
+  await page.locator(".editor-system-chip").click();
   await responseTo(page, "GET", `/api/v1/projects/design-options/${manual.systemId}/`, 200, () =>
     page
       .getByRole("combobox", { name: "Serie de perfiles", exact: true })
       .selectOption(manual.systemId),
   );
 
-  // The compositional canvas evaluates live: picking the glazing thickness in
-  // the contextual inspector is enough to reach VALID (the spec seeds itself).
+  // Choosing the catalog product derives thickness and evaluates the live canvas.
   await responseTo<EngineAssemblyCalculateResponse>(
     page,
     "POST",
     "/api/v1/engine/assembly/calculate/",
     200,
     () =>
-      page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("20.00"),
+      page
+        .getByRole("combobox", { name: "Vidrio", exact: true })
+        .selectOption("DEMO_60-VIDRIO-4-16-4"),
+  );
+  await expect(page.getByRole("combobox", { name: "Vidrio", exact: true })).toHaveValue(
+    "DEMO_60-VIDRIO-4-16-4",
   );
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
 
@@ -127,7 +167,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   );
   // Single-unit saves fold to the classic contract; the saved BOM is the
   // engine result for the folded design (bay ids are unnamespaced there).
-  expect(initial.bom?.glasses?.[0]?.thickness_net_mm).toBe("20.00");
+  expect(initial.bom?.glasses?.[0]?.thickness_net_mm).toBe("8.00");
   expect(initial.bom?.profile_cuts?.length).toBeGreaterThan(0);
   expect(initial.quantity).toBe(2);
   const positionApi = `/api/v1/positions/${initial.id}/`;
@@ -135,28 +175,37 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page).toHaveURL(new RegExp(`${editPath}$`));
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
-  // Invalid intent cannot expose a previous result as the current calculation.
-  await page.getByRole("textbox", { name: "Ancho mm" }).fill("10.00");
-  await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByRole("textbox", { name: "Ancho mm" }).press("Enter"),
+  // The shared registry refuses invalid edits atomically. The field returns
+  // to the accepted design and a cause explains that the edit was not applied.
+  await page.getByRole("textbox", { name: "Ancho", exact: true }).fill("10.00");
+  const refused = await responseTo<{ error: { code: string } }>(
+    page,
+    "POST",
+    "/api/v1/projects/operations/simulate/",
+    422,
+    () => page.getByRole("textbox", { name: "Ancho", exact: true }).press("Enter"),
   );
-  await expect(page.getByTestId("assembly-status")).toHaveText(/inválida|incompleta/);
-  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("10.00");
-  await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeDisabled();
-  await expect(page.locator("details.project-bom")).toHaveCount(0);
+  expect(refused.error.code).toBe("dimension_invalid");
+  await expect(page.getByRole("alert")).toContainText("Revisa el ancho y alto del marco.");
+  await expect(page.getByRole("textbox", { name: "Ancho", exact: true })).toHaveValue("1000");
+  expect(
+    (await manual.readRows("project_positions", `id=eq.${initial.id}&select=width_mm::text`))[0]
+      ?.width_mm,
+  ).toBe("1000.00");
 
   // Exercise a real update, not only an unsaved creation preview.
-  await page.getByRole("textbox", { name: "Ancho mm" }).fill("1100.25");
+  await page.getByRole("textbox", { name: "Ancho", exact: true }).fill("1100.25");
   await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByRole("textbox", { name: "Ancho mm" }).press("Enter"),
+    page.getByRole("textbox", { name: "Ancho", exact: true }).press("Enter"),
   );
   // Drafts are uncommitted until blur/Enter — the live model (and its
   // evaluation) is unchanged until the field commits.
-  await page.getByRole("textbox", { name: "Alto mm" }).fill("1050.50");
+  await page.getByRole("textbox", { name: "Alto", exact: true }).fill("1050.50");
 
   await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByRole("textbox", { name: "Alto mm" }).press("Enter"),
+    page.getByRole("textbox", { name: "Alto", exact: true }).press("Enter"),
   );
+  await page.locator(".editor-opening-trigger").click();
   const editedBom = (
     await responseTo<EngineAssemblyCalculateResponse>(
       page,
@@ -165,12 +214,18 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       200,
       () =>
         page
-          .locator(".opening-grid")
-          .getByRole("button", { name: "Abatible derecha", exact: true })
+          .locator(".opening-palette")
+          .getByRole("button", {
+            name: "Abatible hacia adentro — bisagras a la derecha",
+            exact: true,
+          })
           .click(),
     )
   ).bom!;
-  expect(editedBom.hardware_items![0]!.kit_sku).toBe("KIT-TURN");
+  expect(editedBom.hardware_items![0]!.kit_sku).toBe("DEMO_60-HW4-TURN-STANDARD");
+  expect(editedBom.hardware_items![0]).toMatchObject({
+    resolution: { class_name: "Estándar · DEMO", synthetic: true },
+  });
 
   // Inject a transport failure only; successful writes still use the real backend.
   await page.route(`**${positionApi}`, async (route) => {
@@ -180,7 +235,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await save();
   await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
-  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
+  await expect(page.getByRole("textbox", { name: "Ancho", exact: true })).toHaveValue("1100,25");
   const beforeRetry = await manual.readRows(
     "project_positions",
     `id=eq.${initial.id}&select=width_mm::text`,
@@ -192,17 +247,27 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     system_id: manual.systemId,
     nominal_width_mm: "1100.25",
     nominal_height_mm: "1050.50",
-    parametric_tree: { type: "BAY", opening_type: "TURN_RIGHT" },
+    parametric_tree: {
+      type: "BAY",
+      opening_use: "WINDOW",
+      opening: {
+        movement: "TURN",
+        hinge_side: "RIGHT",
+        direction: "INWARD",
+        leaf_role: "SINGLE",
+        fixed_in_sash: false,
+      },
+    },
   });
   expect(saved.bom?.hardware_items).toHaveLength(1);
-  expect(saved.bom?.hardware_items?.[0]?.kit_sku).toBe("KIT-TURN");
+  expect(saved.bom?.hardware_items?.[0]?.kit_sku).toBe("DEMO_60-HW4-TURN-STANDARD");
+  expect(saved.bom?.hardware_items?.[0]).toMatchObject({
+    resolution: { class_name: "Estándar · DEMO", synthetic: true },
+  });
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
-  const bom = page.locator("details.project-bom");
-  await bom.waitFor({ state: "attached" });
-  await bom.evaluate((element) => {
-    (element as HTMLDetailsElement).open = true;
-  });
+  await page.getByRole("button", { name: "Despiece y materiales", exact: true }).click();
+  const bom = page.locator(".editor-bottom-panel .project-bom-content");
   const profileRows = bom.locator("table").first().locator("tbody tr");
   await expect(profileRows).toHaveCount(editedBom.profile_cuts.length);
   for (const [index, cut] of editedBom.profile_cuts.entries()) {
@@ -262,33 +327,82 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     card(page, "Cocina original", "Abrir diseño").then((link) => link.click()),
   );
   expect(reopened).toEqual(saved);
-  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
-  await expect(page.getByRole("textbox", { name: "Alto mm" })).toHaveValue("1050.50");
+  await expect(page.getByRole("textbox", { name: "Ancho", exact: true })).toHaveValue("1100,25");
+  await expect(page.getByRole("textbox", { name: "Alto", exact: true })).toHaveValue("1050,5");
+  await page.locator(".editor-opening-trigger").click();
   await expect(
-    page.locator(".opening-grid").getByRole("button", { name: "Abatible derecha", exact: true }),
+    page.locator(".opening-palette").getByRole("button", {
+      name: "Abatible hacia adentro — bisagras a la derecha",
+      exact: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
-  // The canvas sheet overlays the summary on this layout; open the details
-  // declaratively instead of clicking through the overlay.
-  await bom.waitFor({ state: "attached" });
-  await bom.evaluate((element) => {
-    (element as HTMLDetailsElement).open = true;
-  });
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Despiece y materiales", exact: true }).click();
+  await bom.waitFor({ state: "visible" });
   await bom.scrollIntoViewIfNeeded();
   await screenshot(page, info, "03-reopened-bom");
 
   await back();
   await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
-  await responseTo(page, "GET", positionApi, 200, () =>
-    card(page, "Cocina original", "Duplicar vano").then((link) => link.click()),
+  await page.getByLabel(`Seleccionar posición ${saved.position_index}`, { exact: true }).check();
+  const proposal = await responseTo<{ diff: { kind: string }[] }>(
+    page,
+    "POST",
+    `${projectApi}operations/preview/`,
+    200,
+    () => page.getByRole("button", { name: "Duplicar lote", exact: true }).click(),
   );
-  await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
+  expect(proposal.diff).toHaveLength(1);
+  expect(proposal.diff[0]!.kind).toBe("add");
+  expect(
+    await manual.readRows("project_positions", `project_id=eq.${project.id}&select=id`),
+  ).toHaveLength(1);
+  const applied = await responseTo<{
+    operation_id: string;
+    state: string;
+    project: ProjectResponse;
+  }>(page, "POST", `${projectApi}operations/apply/`, 200, () =>
+    page.getByRole("button", { name: "Aplicar cambios revisados", exact: true }).click(),
+  );
+  const copied = applied.project.positions!.find((item) => item.id !== saved.id)!;
+  expect(copied.id).not.toBe(saved.id);
+  expect(copied.design).toEqual(saved.design);
+  expect(copied.bom).toEqual(saved.bom);
+  expect(copied.measurements).toBeNull();
+  expect(applied.state).toBe("APPLIED");
+  const history = await manual.readRows(
+    "project_edit_operations",
+    `id=eq.${applied.operation_id}&org_id=eq.${manual.organizationId}` +
+      "&select=id,org_id,project_id,state,request,before_state,after_state",
+  );
+  expect(history).toHaveLength(1);
+  expect(history[0]).toMatchObject({
+    id: applied.operation_id,
+    org_id: manual.organizationId,
+    project_id: project.id,
+    state: "APPLIED",
+    request: [{ op: "duplicate_positions", position_ids: [saved.id] }],
+  });
+  expect((history[0]!.before_state as { positions: unknown[] }).positions).toHaveLength(1);
+  expect((history[0]!.after_state as { positions: unknown[] }).positions).toHaveLength(2);
+  const copyRow = page
+    .getByRole("list", { name: "Posiciones" })
+    .getByRole("listitem")
+    .filter({
+      has: page.getByLabel(`Seleccionar posición ${copied.position_index}`, { exact: true }),
+    });
+  await responseTo(page, "GET", `/api/v1/positions/${copied.id}/`, 200, () =>
+    copyRow.press("Enter"),
+  );
+  await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina duplicada");
+  await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
 
   const duplicate = await responseTo<PositionResponse>(
     page,
-    "POST",
-    `${projectApi}positions/`,
-    201,
+    "PUT",
+    `/api/v1/positions/${copied.id}/`,
+    200,
     save,
   );
   expect(duplicate.id).not.toBe(saved.id);
@@ -301,7 +415,13 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
   const source = await responseTo<ProjectResponse>(page, "GET", projectApi, 200, freshRead);
   expect(source.position_count).toBe(2);
-  expect(source.positions!.find((item) => item.id === saved.id)).toEqual(saved);
+  expect(source.positions!.find((item) => item.id === saved.id)).toEqual({
+    ...saved,
+    // Project collection metadata is separate from the persisted design/BOM.
+    system_name: manual.systemName,
+    system_demo: true,
+    commercial: null,
+  });
 
   const clone = await responseTo<ProjectResponse>(page, "POST", `${projectApi}clone/`, 201, () =>
     page
@@ -337,7 +457,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     () => page.reload(),
   );
   expect(reopenedClone.positions).toEqual(clone.positions);
-  await expect(page.locator(".position-grid [role='option']")).toHaveCount(2);
+  await expect(page.getByRole("list", { name: "Posiciones" }).getByRole("listitem")).toHaveCount(2);
   await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
   await screenshot(page, info, "04-reopened-draft-clone");
 
@@ -349,7 +469,17 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await screenshot(page, info, "05-project-dark");
   // Estimators can browse the catalog (and run supplier imports); structural
   // edits stay owner/manager-only.
-  await page.goto("/catalogs/systems");
+  // A cold route first resolves the real catalog authority. Wait for that
+  // request (with the same bounded API contract used above), then keep the
+  // screen and permission assertions; a transport failure must still fail.
+  const catalog = await responseTo<{ items: { id: string }[] }>(
+    page,
+    "GET",
+    "/api/v1/catalogs/systems/",
+    200,
+    () => page.goto("/catalogs/systems"),
+  );
+  expect(catalog.items.length).toBeGreaterThan(0);
   await expect(page.getByRole("heading", { name: "Catálogo técnico", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Crear serie", exact: true })).toHaveCount(0);
 });

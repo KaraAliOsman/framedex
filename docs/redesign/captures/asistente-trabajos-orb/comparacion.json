@@ -1,0 +1,24 @@
+[
+  {
+    "surface": "asistente",
+    "beforeViews": 16,
+    "afterViews": 24,
+    "beforeFindings": 224,
+    "afterFindings": 0,
+    "newFindings": [],
+    "overflows": 0,
+    "httpErrors": 0,
+    "consoleErrors": 0
+  },
+  {
+    "surface": "trabajos",
+    "beforeViews": 16,
+    "afterViews": 24,
+    "beforeFindings": 0,
+    "afterFindings": 0,
+    "newFindings": [],
+    "overflows": 0,
+    "httpErrors": 0,
+    "consoleErrors": 0
+  }
+]

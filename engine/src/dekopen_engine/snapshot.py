@@ -16,10 +16,12 @@ if TYPE_CHECKING:
 JsonValue: TypeAlias = None | bool | int | str | list["JsonValue"] | dict[str, "JsonValue"]
 
 
-def _json_value(value: object, field: str = "") -> JsonValue:
+def _json_value(value: object, field: str = "", *, exact_recipe: bool = False) -> JsonValue:
     if isinstance(value, Decimal):
         if not value.is_finite():
             raise ValueError("Canonical numbers must be finite")
+        if exact_recipe:
+            return format(value, "f")
         quantum = (
             Decimal("0.01") if field.endswith("_mm") or field.endswith("_kg")
             else Decimal("0.0001") if field == "area_m2"
@@ -36,9 +38,21 @@ def _json_value(value: object, field: str = "") -> JsonValue:
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
             raise ValueError("Canonical object keys must be strings")
-        return {key: _json_value(item, key) for key, item in value.items()}
+        # Supplier recipes retain their declared Decimal representation. They
+        # are additive metadata, not cut dimensions; rescaling their plies
+        # here would drift from the immutable catalog at documentary sealing.
+        # Structured pairs can have exact half hundredths of a millimetre
+        # (e.g. 800.005 mm). Only their additive result contract preserves the
+        # full precision; historical BOM bytes and hashes retain their scale.
+        # Expanded hardware carries exact component lengths and masses. Its
+        # additive resolution contract must survive save/reopen even for
+        # sliding leaves, which do not carry opening_leaves. Legacy kits have
+        # no resolution and therefore retain their canonical byte scale.
+        structured = bool(value.get("opening_leaves")) or value.get("resolution") is not None
+        return {key: _json_value(item, key, exact_recipe=exact_recipe or structured or key in {"composition", "glass_product", "finish"})
+                for key, item in value.items()}
     if isinstance(value, (list, tuple)):
-        return [_json_value(item) for item in value]
+        return [_json_value(item, exact_recipe=exact_recipe) for item in value]
     raise ValueError("Unsupported canonical value; technical numbers require Decimal")
 
 

@@ -1,0 +1,191 @@
+[
+  {
+    "name": "E02-propuesta-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "E04-propuesta-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "E08-aclaracion-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "E08-continuacion-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "J03-diff-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "J03-aplicado-restaurado-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "J03-deshacer-restaurado-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "J02-incompatibilidad-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "E06-alternativas-reales-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "proyecto-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "asistente-light-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-light-1280",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "proyecto-light-1280",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "asistente-light-1280",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-light-1024",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "proyecto-light-1024",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "asistente-light-1024",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-dark-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "proyecto-dark-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "asistente-dark-1440",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-dark-1280",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "proyecto-dark-1280",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "asistente-dark-1280",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-dark-1024",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "proyecto-dark-1024",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "asistente-dark-1024",
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  }
+]

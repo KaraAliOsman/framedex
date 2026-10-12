@@ -50,6 +50,19 @@ def test_checkout_form_uses_integral_clp():
     assert flow.redirect_url(response) == 'https://sandbox.flow.cl/pay.php?token=checkout'
 
 
+def test_checkout_expiry_is_signed_and_sent_in_seconds():
+    def handler(request):
+        data = {key: values[0] for key, values in parse_qs(request.content.decode()).items()}
+        assert data['timeout'] == '604800'
+        signature = data.pop('s')
+        data.pop('apiKey')
+        assert signature == signed_parameters(data, 'merchant-fixture', 'secret-fixture')['s']
+        return httpx.Response(200, json={'token': 'checkout', 'url': 'https://sandbox.flow.cl/pay.php'})
+    client(handler).create_payment(order='expiry', subject='Plan', amount=Decimal('43857'),
+        email='fixture@example.com', confirmation_url='https://api.example/callback',
+        return_url='https://app.example/return', timeout_seconds=604800)
+
+
 @pytest.mark.parametrize('operation,path,parameters', [
     (lambda f: f.create_subscription(customer_id='customer', plan_id='plan'),
      '/api/subscription/create', {'customerId': ['customer'], 'planId': ['plan']}),

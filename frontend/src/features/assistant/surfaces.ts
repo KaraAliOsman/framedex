@@ -1,9 +1,35 @@
+import { domainLabels } from "../../i18n/domainLabels";
+
+/** Keep the provider's wording and grounded numbers; translate known API
+ * enums when a response quotes them. Hyphenated catalog SKUs stay intact. */
+export function assistantText(value: string | undefined): string {
+  // Restored history keeps its original audit. Localize only presentation,
+  // preserving literal URLs, routes, code spans and catalog identifiers.
+  return (value ?? "")
+    .split(/(https?:\/\/[^\s<>()]+|\/[^\s<>()]+|`[^`]*`)/g)
+    .map((part, index) =>
+      index % 2
+        ? part
+        : part
+            .replace(/(?<![\w/.-])dashboard(?![\w/.-])/gi, "panel de inicio")
+            .replace(
+              /(?<![\w/.-])(?:calculate_position|validate_position|price_position|price_project|explain_price_delta|list_catalog_options|get_blockers|simulate_ops|preview_project_operations)(?![\w/.-])/g,
+              (word) => SURFACE_LABELS[word] ?? word,
+            )
+            .replace(
+              /(?<![\w-])[A-Z]+(?:_[A-Z0-9]+)+(?![\w-])/g,
+              (word) => domainLabels[word] ?? word,
+            ),
+    )
+    .join("");
+}
+
 /** One surface dictionary — dock, workspace, and the route map all read from
  * here so a new surface name never drifts into three spellings. The values
  * are the Spanish domain words the UI shows next to state chips and headers. */
 export const SURFACE_LABELS: Record<string, string> = {
   // Job/workflow surfaces
-  morning_brief: "brief del día",
+  morning_brief: "resumen del día",
   purchase_plan: "plan de compras",
   production_plan: "plan de producción",
   quotation_complete: "completar cotización",
@@ -26,4 +52,14 @@ export const SURFACE_LABELS: Record<string, string> = {
   assistant: "asistente",
   jobs: "trabajos",
   onboarding: "inicio guiado",
+  // Read-only engine tools share this dictionary with restored transcripts.
+  calculate_position: "cálculo del vano",
+  validate_position: "validación del vano",
+  price_position: "venta del vano",
+  price_project: "precios del proyecto",
+  explain_price_delta: "diferencia de precio",
+  list_catalog_options: "opciones del catálogo",
+  get_blockers: "impedimentos del motor",
+  simulate_ops: "simulación del diseño",
+  preview_project_operations: "simulación del proyecto",
 };

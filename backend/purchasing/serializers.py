@@ -1,6 +1,7 @@
 """Strict supplier eligibility and order action transports for S19."""
 
 from rest_framework import serializers
+from decimal import Decimal
 
 from documents.serializers import ArtifactResponseSerializer, StrictSerializer
 
@@ -52,6 +53,97 @@ class ConfirmBatchRequestSerializer(StrictSerializer):
     confirmed = serializers.BooleanField()
 
 
+class PurchaseNeedChoiceSerializer(StrictSerializer):
+    requirement_id = serializers.UUIDField()
+    quantity = serializers.DecimalField(max_digits=18,decimal_places=4,min_value=Decimal(1))
+    unit_price = serializers.DecimalField(max_digits=16,decimal_places=2,min_value=Decimal(0),allow_null=True,required=False)
+
+    def validate_quantity(self, value):
+        if value != value.to_integral_value():
+            raise serializers.ValidationError('La compra requiere unidades completas. Revisa la cantidad.')
+        return value.to_integral_value()
+
+
+class PurchaseNeedsConfirmSerializer(StrictSerializer):
+    operation_key = serializers.CharField(min_length=8,max_length=120)
+    preview_hash = serializers.RegexField(r'^[0-9a-f]{64}$')
+    confirmed = serializers.BooleanField()
+    lines = PurchaseNeedChoiceSerializer(many=True,allow_empty=False)
+
+
+class PurchaseNeedOriginSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    code = serializers.CharField()
+    quantity = serializers.CharField()
+
+
+class PurchaseNeedSerializer(serializers.Serializer):
+    is_demo = serializers.BooleanField()
+    requirement_id = serializers.UUIDField()
+    version_id = serializers.UUIDField()
+    project_id = serializers.UUIDField()
+    project_code = serializers.CharField()
+    revision_code = serializers.CharField()
+    order_type = serializers.ChoiceField(choices=ORDER_TYPES)
+    sku = serializers.CharField()
+    unit = serializers.CharField()
+    specification = serializers.DictField()
+    required = serializers.CharField()
+    reserved = serializers.CharField()
+    stock = serializers.CharField()
+    incoming = serializers.CharField()
+    draft = serializers.CharField()
+    purchase = serializers.CharField()
+    uncovered = serializers.CharField()
+    maximum = serializers.CharField()
+    cause = serializers.CharField(allow_null=True)
+    supplier_eligibility_id = serializers.UUIDField(allow_null=True)
+    supplier_name = serializers.CharField(allow_null=True)
+    orders = PurchaseNeedOriginSerializer(many=True)
+
+
+class PurchaseNeedRemnantSerializer(serializers.Serializer):
+    remnant_id = serializers.UUIDField()
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    reserved = serializers.BooleanField()
+
+
+class PurchaseNeedBlockerSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    cause = serializers.CharField()
+    code = serializers.CharField()
+
+
+class PurchaseNeedsSerializer(serializers.Serializer):
+    preview_hash = serializers.CharField()
+    lines = PurchaseNeedSerializer(many=True)
+    remnant_offers = PurchaseNeedRemnantSerializer(many=True)
+    blockers = PurchaseNeedBlockerSerializer(many=True)
+
+
+class PurchaseNeedsResultSerializer(serializers.Serializer):
+    orders = serializers.ListField(child=serializers.DictField())
+
+
+class PurchaseMailRequestSerializer(StrictSerializer):
+    confirmed=serializers.BooleanField()
+    expected_recipient=serializers.EmailField()
+
+
+class PurchaseMailPreviewSerializer(serializers.Serializer):
+    recipient=serializers.CharField()
+    subject=serializers.CharField()
+    text=serializers.CharField()
+    document_type=serializers.CharField()
+
+
+class PurchaseMailResultSerializer(serializers.Serializer):
+    id=serializers.UUIDField()
+    state=serializers.CharField()
+
+
 class SendOrderRequestSerializer(StrictSerializer):
     confirmed = serializers.BooleanField()
     expected_at = serializers.DateField(required=False, allow_null=True, default=None)
@@ -97,6 +189,8 @@ class OrderResponseSerializer(serializers.Serializer):
     order_code = serializers.CharField()
     order_type = serializers.ChoiceField(choices=ORDER_TYPES)
     status = serializers.ChoiceField(choices=ORDER_STATUSES)
+    net_amount=serializers.CharField(allow_null=True,required=False)
+    currency=serializers.CharField(required=False)
     supplier_name = serializers.CharField()
     order_snapshot_hash = serializers.RegexField(r"^[0-9a-f]{64}$")
     confirmed_at = serializers.CharField(required=False, allow_null=True)
@@ -120,6 +214,8 @@ class OrderIndexItemSerializer(serializers.Serializer):
     order_code = serializers.CharField()
     order_type = serializers.ChoiceField(choices=ORDER_TYPES)
     status = serializers.ChoiceField(choices=ORDER_STATUSES)
+    net_amount=serializers.CharField(allow_null=True,required=False)
+    currency=serializers.CharField(required=False)
     supplier_identity = serializers.CharField(allow_null=True)
     supplier_name = serializers.CharField(allow_null=True)
     expected_at = serializers.DateField(allow_null=True)

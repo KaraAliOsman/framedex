@@ -23,7 +23,7 @@ def fraction(**kwargs):
 class StrictSerializer(serializers.Serializer):
     def to_internal_value(self, data):
         if not isinstance(data,dict) or set(data)-set(self.fields):
-            raise serializers.ValidationError('Unknown input fields')
+            raise serializers.ValidationError({'non_field_errors': ['Unknown input fields']})
         return super().to_internal_value(data)
 
 
@@ -53,6 +53,16 @@ class RulesSerializer(StrictSerializer):
         min_value=Decimal('0.08'),max_value=Decimal('0.08'))
     labor_rate_per_m2 = serializers.DecimalField(max_digits=14,decimal_places=2,min_value=Decimal('0'))
     installation_rate_per_m2 = serializers.DecimalField(max_digits=14,decimal_places=2,min_value=Decimal('0'))
+    minimum_margin_pct = fraction(required=False)
+    maximum_margin_pct = fraction(required=False)
+    discount_approval_pct = fraction(required=False)
+
+    def validate(self, attrs):
+        minimum = attrs.get('minimum_margin_pct',Decimal('0'))
+        maximum = attrs.get('maximum_margin_pct',Decimal('0.9999'))
+        if not minimum <= attrs['default_margin_pct'] <= maximum or maximum >= 1:
+            raise serializers.ValidationError('Revisa mínimo, objetivo y máximo de la banda.')
+        return attrs
 
 
 class ConfigurationSerializer(StrictSerializer):
@@ -114,7 +124,7 @@ class PriceRequestSerializer(StrictSerializer):
     effective_date = serializers.DateField()
     fx_snapshot_id = serializers.UUIDField(required=False,allow_null=True)
     discount_pct = fraction(default=Decimal('0'))
-    target_margin = fraction(default=Decimal('0.35'))
+    target_margin = fraction(required=False)
     segment = serializers.ChoiceField(choices=['RETAIL','ARCHITECT','CONSTRUCTION'],default='RETAIL')
     extras = serializers.ListField(
         child=ExtraChargeSerializer(), required=False, default=list, max_length=10)
@@ -133,6 +143,8 @@ class WithdrawSerializer(StrictSerializer):
 
 
 class LineResponseSerializer(serializers.Serializer):
+    base_net = serializers.CharField(required=False)
+    sublines = serializers.ListField(child=serializers.JSONField(),required=False)
     position_index = serializers.IntegerField()
     line_net = serializers.CharField()
     quantity = serializers.IntegerField(allow_null=True, required=False)
@@ -166,6 +178,13 @@ class PositionBreakdownSerializer(serializers.Serializer):
 
 
 class PriceResponseSerializer(serializers.Serializer):
+    workspace = serializers.JSONField(required=False)
+    resulted_in_issue = serializers.BooleanField(required=False)
+    notification_unread = serializers.BooleanField(required=False)
+    costs_visible = serializers.BooleanField()
+    costs_reason = serializers.CharField(allow_null=True)
+    services = serializers.ListField(child=serializers.JSONField(),required=False)
+    document_extra_prices = serializers.ChoiceField(choices=['ITEMIZED','GROUPED'],required=False)
     id = serializers.UUIDField()
     project_id = serializers.UUIDField()
     project_code = serializers.CharField(allow_blank=True)
@@ -184,7 +203,7 @@ class PriceResponseSerializer(serializers.Serializer):
     positions_breakdown = PositionBreakdownSerializer(many=True)
     authorities = serializers.ListField(child=serializers.JSONField())
     rules = serializers.DictField()
-    total_cost = serializers.CharField()
+    total_cost = serializers.CharField(allow_null=True)
     project_net = serializers.CharField()
     project_tax = serializers.CharField()
     project_gross = serializers.CharField()
@@ -194,6 +213,22 @@ class PriceResponseSerializer(serializers.Serializer):
     approved_by = serializers.CharField(allow_null=True)
     approved_at = serializers.CharField(allow_null=True)
     created_at = serializers.CharField()
+
+
+class WorkspaceResponseSerializer(PriceResponseSerializer):
+    id = serializers.UUIDField(allow_null=True)
+    created_at = serializers.CharField(allow_null=True)
+
+
+class PricingOptionsSerializer(serializers.Serializer):
+    default_currency = serializers.ChoiceField(choices=('CLP','USD'))
+    fx = serializers.ListField(child=serializers.DictField())
+    commercial_lists = serializers.ListField(child=serializers.DictField())
+    band = serializers.DictField(allow_null=True)
+
+
+class AcknowledgeSerializer(StrictSerializer):
+    operation_ids = serializers.ListField(child=serializers.UUIDField(),max_length=100)
 
 
 class DraftPositionSerializer(EngineCalculateRequestSerializer):
@@ -269,6 +304,8 @@ class DesignBatchPreviewItemResponseSerializer(serializers.Serializer):
 
 
 class DesignBatchPreviewResponseSerializer(serializers.Serializer):
+    costs_visible = serializers.BooleanField()
+    costs_reason = serializers.CharField(allow_null=True)
     currency = serializers.CharField()
     items = DesignBatchPreviewItemResponseSerializer(many=True)
 

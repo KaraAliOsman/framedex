@@ -1,0 +1,26 @@
+{
+  "import_id": "958cb215-2a2b-4f11-acbd-c050e2a9afcd",
+  "provider": [
+    {
+      "provider": "MIMO",
+      "provider_model": "primalabs-ai/MiMo-V2.6-Pro"
+    }
+  ],
+  "status": "REVIEW_READY",
+  "candidate_count": 31,
+  "sheets": [
+    "Colores y SKU por color",
+    "Herrajes",
+    "Límites",
+    "Perfiles",
+    "Refuerzos",
+    "Roles y reglas de corte",
+    "Sistemas",
+    "Vidrios"
+  ],
+  "unknown_fields": 27,
+  "verified_fields": 324,
+  "review_error_count": 31,
+  "published": false,
+  "warnings": []
+}

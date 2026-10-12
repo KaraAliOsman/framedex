@@ -172,3 +172,14 @@ def test_logo_bytes_404_without_logo(monkeypatch):
         assert False, "expected 404"
     except APIException as error:
         assert error.get_codes() == "brand_logo_not_found"
+
+
+def test_logo_read_returns_exact_binary_png(monkeypatch):
+    client, _ = _client(monkeypatch, "OWNER")
+    payload = _png()
+    monkeypatch.setattr(org_branding, "logo_bytes", lambda **kwargs: (payload, "image/png"))
+    response = client.get("/api/v1/organization/branding/logo/")
+    assert response.status_code == 200
+    assert response.content == payload
+    assert response["Content-Type"] == "image/png"
+    assert response["Cache-Control"] == "private, max-age=300"

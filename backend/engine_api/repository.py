@@ -10,6 +10,7 @@ from typing import cast
 from uuid import UUID
 
 from django.db import connection
+from authentication.rls import catalog_backend
 
 from dekopen_engine import (
     EffectiveProfileArticle,
@@ -22,8 +23,18 @@ from dekopen_engine import (
     ProfileRole,
     RailType,
     SystemParams,
+    SystemFamily,
+    SlidingSystemParameters,
+    SystemDimensionalLimit,
+    ProfileCutRule,
+    ProfileReinforcementRule,
 )
+from pydantic import TypeAdapter
 from dekopen_engine.manufacturing import HandleRequirementPolicyV1, handle_policy_from_json
+from dekopen_engine.models import OpeningCapability, PairedLeafRule, HardwareClassAuthority
+from dekopen_engine.hardware_classes import parse_hardware_class
+from dekopen_engine.finish_models import FinishAuthority
+from dekopen_engine.extra_models import ExtraAuthority
 
 
 class SystemNotFound(LookupError):
@@ -40,6 +51,7 @@ class VisibleProfileSystem:
     code: str
     name: str
     is_demo: bool
+    system_family: str | None = None
 
     def public_dict(self) -> dict[str, object]:
         return {
@@ -47,6 +59,7 @@ class VisibleProfileSystem:
             "code": self.code,
             "name": self.name,
             "is_demo": self.is_demo,
+            "system_family": self.system_family,
         }
 
 
@@ -63,6 +76,17 @@ def _decimal_or_none(value: object) -> Decimal | None:
     return None if value is None else _decimal(value)
 
 
+def _hardware_class(value: object) -> HardwareClassAuthority | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise UnsupportedCatalogContract("Hardware class must be raw JSON text")
+    try:
+        return parse_hardware_class(value)
+    except ValueError as error:
+        raise UnsupportedCatalogContract("invalid_hardware_class_authority") from error
+
+
 def _section(value: object) -> ProfileSection | None:
     if value is None:
         return None
@@ -74,6 +98,7 @@ def _section(value: object) -> ProfileSection | None:
 
 
 def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectiveProfileArticle:
+    from dekopen_engine.models import CouplerRule
     return EffectiveProfileArticle(
         sku=str(row[offset]),
         role=ProfileRole(str(row[offset + 1])),
@@ -88,6 +113,12 @@ def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectivePro
         steel_weight_kg_m=_decimal_or_none(row[offset + 6]),
         reinforcement_sku=(str(row[offset + 7]) if row[offset + 7] is not None else None),
         commercial_length_mm=_decimal_or_none(row[offset + 10]),
+        cut_rule=(ProfileCutRule.model_validate_json(str(row[offset + 11]))
+                  if len(row) > offset + 11 and row[offset + 11] is not None else None),
+        reinforcement_rule=(ProfileReinforcementRule.model_validate_json(str(row[offset + 12]))
+                            if len(row) > offset + 12 and row[offset + 12] is not None else None),
+        coupling_rule=(CouplerRule.model_validate_json(str(row[offset + 13]))
+                       if len(row) > offset + 13 and row[offset + 13] is not None else None),
     )
 
 
@@ -106,27 +137,34 @@ class SystemParamsRepository:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, code, name, is_demo
-                FROM public.profile_systems
-                WHERE is_active = TRUE
+                SELECT id, code, name, is_demo, system_family FROM (
+                SELECT DISTINCT ON (org_id,code) id, code, name, is_demo, system_family, version
+                FROM public.profile_systems WHERE is_active = TRUE
+                  AND system_family IS NOT NULL
+                  AND NOT legacy_authority
                   AND (is_global = TRUE OR org_id = %s)
+                ORDER BY org_id,code,version DESC,id) versions
                 ORDER BY is_demo DESC, code ASC, id ASC
                 """,
                 [active_org_id],
             )
-            rows: Sequence[tuple[object, object, object, object]] = cursor.fetchall()
+            rows: Sequence[tuple[object, ...]] = cursor.fetchall()
         return tuple(
             VisibleProfileSystem(
                 id=row[0] if isinstance(row[0], UUID) else UUID(str(row[0])),
                 code=str(row[1]),
                 name=str(row[2]),
                 is_demo=bool(row[3]),
+                system_family=str(row[4]) if len(row) > 4 and row[4] is not None else None,
             )
             for row in rows
         )
 
     def load_visible(self, system_id: UUID, active_org_id: UUID) -> SystemParams:
-        with connection.cursor() as cursor:
+        # The pure engine needs exact purchase authority to compute costs.
+        # This role remains bound to the verified caller's tenant RLS claims;
+        # serializers project selling evidence at the HTTP boundary.
+        with catalog_backend(), connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT code, depth_mm, material::text, sash_overlap_mm,
@@ -138,7 +176,9 @@ class SystemParamsRepository:
                        sliding_glazing_deduction_width_mm,
                        sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
                        rail_count, rebate_depth_mm, end_milling_overlap_mm,
-                       finishes::text
+                       finishes::text, system_family, sliding_parameters::text,
+                       dimensional_limits::text, legacy_authority,
+                       opening_capabilities::text,paired_leaf_rule::text,finish_authority::text,extra_authority::text
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -148,6 +188,8 @@ class SystemParamsRepository:
             system = cursor.fetchone()
         if system is None:
             raise SystemNotFound
+        if len(system) > 25 and system[22] is None and not system[25]:
+            raise UnsupportedCatalogContract("Sin dato: declara la familia del sistema.")
 
         articles = self._load_articles(system_id, active_org_id)
         rules = self._load_glazing_rules(system_id, active_org_id)
@@ -155,9 +197,21 @@ class SystemParamsRepository:
         frame = articles.get(ProfileRole.FRAME)
         if frame is None:
             raise UnsupportedCatalogContract("FRAME effective article is required")
+        extra_authority = self._load_extras(system[29], active_org_id) if len(system) > 29 else None
 
         return SystemParams(
             system_code=str(system[0]),
+            system_family=SystemFamily(str(system[22])) if len(system) > 22 and system[22] is not None else None,
+            legacy_authority=bool(system[25]) if len(system) > 25 else False,
+            sliding=(SlidingSystemParameters.model_validate_json(str(system[23]))
+                     if len(system) > 23 and system[23] is not None else None),
+            dimensional_limits=(TypeAdapter(tuple[SystemDimensionalLimit, ...]).validate_json(str(system[24]))
+                                if len(system) > 24 and system[24] is not None else ()),
+            opening_capabilities=(TypeAdapter(tuple[OpeningCapability, ...]).validate_json(str(system[26]))
+                if len(system) > 26 and system[26] is not None else ()),
+            paired_leaf_rule=(PairedLeafRule.model_validate_json(str(system[27]))
+                if len(system) > 27 and system[27] is not None else None),
+            compatible_opening_systems=self.load_opening_systems(active_org_id) if len(system) > 26 else (),
             depth_mm=_decimal(system[1]),
             material=MaterialType(str(system[2])),
             effective_profile_articles=articles,
@@ -165,25 +219,61 @@ class SystemParamsRepository:
             sash_overlap_mm=_decimal(system[3]),
             glass_clearance_white_mm=_decimal(system[4]),
             glass_clearance_foil_mm=_decimal(system[5]),
-            pulley_height_mm=_decimal(system[6]),
-            central_overlap_mm=_decimal(system[7]),
-            sliding_lateral_clearance_mm=_decimal(system[8]),
-            sliding_end_add_mm=_decimal(system[9]),
+            pulley_height_mm=_decimal_or_none(system[6]),
+            central_overlap_mm=_decimal_or_none(system[7]),
+            sliding_lateral_clearance_mm=_decimal_or_none(system[8]),
+            sliding_end_add_mm=_decimal_or_none(system[9]),
             corner_bracket_loss_mm=_decimal(system[10]),
             hook_depth_mm=_decimal(system[11]),
             door_threshold_mm=_decimal(system[12]),
             door_bottom_clearance_mm=_decimal(system[13]),
-            rail_type=RailType(str(system[14])),
-            sliding_glazing_deduction_width_mm=_decimal(system[15]),
-            sliding_glazing_deduction_height_mm=_decimal(system[16]),
+            rail_type=RailType(str(system[14])) if system[14] is not None else None,
+            sliding_glazing_deduction_width_mm=_decimal_or_none(system[15]),
+            sliding_glazing_deduction_height_mm=_decimal_or_none(system[16]),
             door_leaf_side_clearance_mm=_decimal(system[17]),
             rail_count=None if system[18] is None else int(system[18]),
             rebate_depth_mm=_decimal_or_none(system[19]),
             end_milling_overlap_mm=_decimal_or_none(system[20]),
             finishes=tuple(json.loads(system[21])) if system[21] else ("WHITE",),
+            **({"finish_authority": FinishAuthority.model_validate_json(system[28]),
+                "finish_profile_skus": self._load_finish_skus(system_id, active_org_id)}
+               if len(system) > 28 and system[28] is not None else {}),
+            **({"extra_authority": extra_authority} if extra_authority is not None else {}),
             available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
         )
+
+    def _load_extras(self, value: object, org_id: UUID) -> ExtraAuthority | None:
+        from projects.extras import load_policy
+        authority = ExtraAuthority.model_validate_json(str(value)) if value is not None else None
+        policy = load_policy(org_id)
+        services = [item for item in policy.services if item.scope == "POSITION"]
+        if not services:
+            return authority
+        return ExtraAuthority(schema_version=1, definitions=[*(authority.definitions if authority else []), *services],
+            source="; ".join([*( [authority.source] if authority else []), "Servicios declarados por la organización"]))
+
+    def load_opening_systems(self, active_org_id: UUID) -> tuple[tuple[str, tuple[OpeningCapability, ...]], ...]:
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT DISTINCT ON (org_id,code) name,opening_capabilities::text
+                FROM public.profile_systems WHERE is_active AND opening_capabilities IS NOT NULL
+                AND (is_global OR org_id=%s) ORDER BY org_id,code,version DESC,id""", [active_org_id])
+            data = cursor.fetchall()
+        adapter = TypeAdapter(tuple[OpeningCapability, ...])
+        return tuple((str(row[0]), adapter.validate_json(str(row[1]))) for row in data)
+
+    def _load_finish_skus(self, system_id: UUID, org_id: UUID) -> dict[str, dict[str, str]]:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT c.finish,a.sku,c.commercial_sku FROM public.catalog_color_skus c "
+                "JOIN public.profile_articles a ON a.id=c.profile_article_id "
+                "WHERE c.system_id=%s AND c.is_active AND (c.org_id=%s OR c.org_id IS NULL) ORDER BY c.finish,a.sku", [system_id, org_id])
+            values = cursor.fetchall()
+        result: dict[str, dict[str, str]] = {}
+        for code, sku, commercial in values:
+            if sku in result.setdefault(code, {}):
+                raise UnsupportedCatalogContract("Hay SKU por color contradictorios. Revisa el catálogo.")
+            result[code][sku] = commercial
+        return result
 
     def _load_articles(
         self, system_id: UUID, active_org_id: UUID
@@ -194,7 +284,7 @@ class SystemParamsRepository:
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
                        reinforcement_sku, material::text, section::text,
-                       commercial_length_mm
+                       commercial_length_mm, cut_rule::text, reinforcement_rule::text, coupling_rule::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                 ORDER BY sku
@@ -230,7 +320,7 @@ class SystemParamsRepository:
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
                        reinforcement_sku, material::text, section::text,
-                       commercial_length_mm
+                       commercial_length_mm, cut_rule::text, reinforcement_rule::text, coupling_rule::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                   AND role = 'COUPLER'
@@ -274,7 +364,8 @@ class SystemParamsRepository:
                        article.welding_loss_mm, article.reinforcement_gap_mm,
                        article.weight_kg_m, article.steel_weight_kg_m,
                        article.reinforcement_sku, article.material::text,
-                       article.section::text, article.commercial_length_mm
+                       article.section::text, article.commercial_length_mm,
+                       article.cut_rule::text, article.reinforcement_rule::text
                 FROM public.glazing_bead_matrix AS matrix
                 JOIN public.profile_articles AS article
                   ON article.id = matrix.bead_article_id
@@ -336,7 +427,8 @@ class SystemParamsRepository:
                 SELECT sku, name, opening_type, min_leaf_width_mm,
                        max_leaf_width_mm, min_leaf_height_mm, max_leaf_height_mm,
                        max_leaf_weight_kg, rail_type, carriages_qty,
-                       stay_arms_qty, contents::text, weight_kg, carriage_capacity_kg
+                       stay_arms_qty, contents::text, weight_kg, carriage_capacity_kg,
+                       class_authority::text
                 FROM public.hardware_kits
                 WHERE system_id = %s AND is_active = TRUE
                   AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
@@ -361,6 +453,7 @@ class SystemParamsRepository:
                 contents=_hardware_contents(row[11]),
                 weight_kg=_decimal(row[12]) if row[12] is not None else None,
                 carriage_capacity_kg=_decimal(row[13]) if row[13] is not None else None,
+                class_authority=_hardware_class(row[14]),
             )
             for row in rows
         ]

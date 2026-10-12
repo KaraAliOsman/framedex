@@ -1,0 +1,49 @@
+[
+  {
+    "surface": "clientes-vacio",
+    "state": "vacío real por búsqueda",
+    "result": "PASA",
+    "overflow": false
+  },
+  {
+    "surface": "clientes-carga",
+    "state": "carga retenida por Playwright",
+    "result": "PASA",
+    "overflow": false
+  },
+  {
+    "surface": "clientes-error",
+    "state": "error 503 inyectado por Playwright con reintento",
+    "result": "PASA",
+    "overflow": false
+  },
+  {
+    "surface": "clientes-bloqueado",
+    "state": "ficha fusionada real, conserva historia",
+    "result": "PASA",
+    "overflow": false
+  },
+  {
+    "surface": "clientes",
+    "state": "sin permiso real · operario",
+    "result": "PASA"
+  },
+  {
+    "surface": "ajustes-carga",
+    "state": "carga retenida por Playwright",
+    "result": "PASA",
+    "overflow": false
+  },
+  {
+    "surface": "ajustes-error",
+    "state": "error 503 inyectado por Playwright con reintento",
+    "result": "PASA",
+    "overflow": false
+  },
+  {
+    "surface": "ajustes-sin-permiso",
+    "state": "sin permiso real · estimador",
+    "result": "PASA",
+    "overflow": false
+  }
+]

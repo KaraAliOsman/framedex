@@ -1,10 +1,12 @@
 """Tenant-scoped catalog persistence; callers enter authenticated RLS first."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from contextlib import nullcontext
+from datetime import date, datetime, timezone
 from decimal import Decimal
 import json
 from hashlib import sha256
+from uuid import UUID
 
 from django.db import connection
 
@@ -24,6 +26,7 @@ class Resource:
     table: str
     serializer: type
     extra_columns: tuple[str, ...] = ()
+    backend_lock: bool = False
 
     @property
     def fields(self):
@@ -33,7 +36,8 @@ class Resource:
     def projection(self):
         columns = ("id", "org_id", *self.fields, *self.extra_columns)
         return ", ".join(
-            f"{name}::text AS {name}" if name in _JSONB_FIELDS else name for name in columns
+            "public.catalog_extra_authority(id, %s)::text AS extra_authority" if name == "extra_authority"
+            else f"{name}::text AS {name}" if name in _JSONB_FIELDS else name for name in columns
         )
 
 
@@ -67,12 +71,12 @@ def _not_found():
     return contract_error(404, "catalog_not_found", "catalogs.errors.not_found")
 
 
-def _fetch(resource, where, params, *, lock=False):
+def _fetch(resource, where, params, *, lock=False, org_id=None):
     suffix = " FOR UPDATE" if lock else " ORDER BY id"
     with connection.cursor() as cursor:
         cursor.execute(
             f"SELECT {resource.projection} FROM public.{resource.table} WHERE {where}{suffix}",
-            params,
+            [org_id, *params] if "extra_authority" in resource.fields else params,
         )
         names = [column[0] for column in cursor.description]
         result = [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
@@ -85,9 +89,11 @@ def _fetch(resource, where, params, *, lock=False):
                 row[name] = json.loads(
                     row[name],
                     parse_float=Decimal,
-                    parse_int=Decimal,
+                    parse_int=int if name in {"class_authority", "finish_authority", "extra_authority"} else Decimal,
                 )
         row["revision"] = catalog_revision(row)
+    from catalogs.provenance import decorate
+    decorate(resource, result, org_id)
     return result
 
 
@@ -167,7 +173,7 @@ def list_rows(resource, org_id, system_id=None):
     if system_id is not None:
         where += " AND system_id = %s"
         params.append(system_id)
-    values = _fetch(resource, where, params)
+    values = _fetch(resource, where, params, org_id=org_id)
     if resource is SYSTEMS:
         from catalogs.readiness import catalog_readiness
         for value in values:
@@ -176,12 +182,16 @@ def list_rows(resource, org_id, system_id=None):
 
 
 def retrieve(resource, org_id, row_id, *, lock=False):
-    records = _fetch(
-        resource,
-        f"id = %s AND {_visibility(resource)}",
-        [row_id, org_id],
-        lock=lock,
-    )
+    # Import-only resources have no browser write privileges. Lock under the
+    # tenant-scoped backend role rather than granting UPDATE to authenticated.
+    with catalog_backend() if lock and resource.backend_lock else nullcontext():
+        records = _fetch(
+            resource,
+            f"id = %s AND {_visibility(resource)}",
+            [row_id, org_id],
+            lock=lock,
+            org_id=org_id,
+        )
     if not records:
         raise _not_found()
     if resource is SYSTEMS:
@@ -254,12 +264,14 @@ def _contents_json(components):
             + str(component["qty"])
             + ',"unit":'
             + json.dumps(component["unit"])
+            + (',"category":' + json.dumps(component["category"]) if "category" in component else "")
             + "}"
         )
     return "[" + ",".join(encoded) + "]"
 
 
-_JSONB_FIELDS = {"contents", "section", "finishes"}
+_JSONB_FIELDS = {"coupling_rule", "extra_authority", "finish_authority", "class_authority", "opening_capabilities", "paired_leaf_rule", "product", "contents", "section", "finishes", "sliding_parameters",
+                 "dimensional_limits", "cut_rule", "reinforcement_rule", "provenance"}
 
 
 def _json_value(value):
@@ -277,6 +289,8 @@ def _json_value(value):
         return "[" + ",".join(_json_value(item) for item in value) + "]"
     if isinstance(value, Decimal):
         return str(value)
+    if isinstance(value, (UUID, date, datetime)):
+        return json.dumps(str(value))
     return json.dumps(value)
 
 
@@ -289,7 +303,7 @@ def _parameters(values):
         _contents_json(value)
         if name == "contents"
         else _jsonb(value)
-        if name in ("section", "finishes")
+        if name in _JSONB_FIELDS
         else value
         for name, value in values.items()
     ]
@@ -344,6 +358,9 @@ SINGLETON_ROLES = {
     "INVERSOR",
     "ADDITIONAL",
     "THRESHOLD",
+    "CHANNEL",
+    "SLIDING_SASH", "INTERLOCK", "RAIL", "DOOR_SASH", "FRAME_EXTENSION",
+    "SILL", "COVER_TRIM", "PLINTH",
 }
 
 
@@ -466,6 +483,11 @@ def review(resource, org_id, row_id, user_id, expected_revision=None):
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
     require_revision(current, expected_revision)
+    if resource is ARTICLES and current.get("section") is not None:
+        from catalogs.provenance import section_facts
+        if not section_facts(current)["valid"]:
+            raise contract_error(422, "catalog_section_review_invalid",
+                "Revisa la sección: profundidad, origen local y orientación deben corresponder a la geometría. Las revisiones históricas se conservan.")
     with connection.cursor() as cursor, catalog_backend():
         cursor.execute(
             f"UPDATE public.{resource.table} SET "
@@ -488,7 +510,7 @@ def delete(resource, org_id, row_id, expected_revision=None):
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
     require_revision(current, expected_revision)
-    with connection.cursor() as cursor:
+    with connection.cursor() as cursor, catalog_backend():
         cursor.execute(
             f"DELETE FROM public.{resource.table} WHERE id = %s AND org_id = %s",
             [row_id, org_id],
@@ -525,6 +547,19 @@ def system_workspace(org_id, system_id):
     articles = list_rows(ARTICLES, org_id, system_id)
     beads = list_rows(BEADS, org_id, system_id)
     kits = list_rows(KITS, org_id, system_id)
+    from catalogs.glass import load_products
+    from catalogs.policies import manufacturing_policy_facts
+    from dekopen_engine.glass_composition import format_glass_notation
+    glasses = []
+    for mapping in load_products(system_id, org_id):
+        product = mapping["resolved_product"]
+        glasses.append({"mapping_id": mapping["mapping_id"],
+            "technical_sku": mapping["technical_sku"],
+            "name": product.name if product else mapping["glass_spec"],
+            "notation": format_glass_notation(product.composition) if product else None,
+            "source": product.source if product else None,
+            "synthetic": bool(system["is_demo"] or (product and product.synthetic)),
+            "product": product.model_dump(mode="json") if product else None})
 
     article_ids = [str(article["id"]) for article in articles]
     purchase_mappings = (
@@ -578,6 +613,8 @@ def system_workspace(org_id, system_id):
         "reinforcements": reinforcements,
         "purchase_mappings": purchase_mappings,
         "process_profile": process_profile,
+        "glasses": glasses,
+        "manufacturing_policies": manufacturing_policy_facts(system_id, org_id),
     }
 
 

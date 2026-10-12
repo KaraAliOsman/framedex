@@ -146,6 +146,8 @@ def test_bar_stock_needs_groups_by_purchasing_identity() -> None:
             }]
         if "reinforcement_articles" in query:
             return []
+        if "catalog_color_skus" in query:
+            return []
         raise AssertionError(query[:80])
 
     bars = [
@@ -251,6 +253,6 @@ def test_identity_lookup_matches_global_authorities() -> None:
                    "commercial_sku": "PROF-G"}],
         )
     identity_queries = [q for q in queries if "physical_stock_identity" in q]
-    assert len(identity_queries) == 2
+    assert len(identity_queries) == 3
     assert all("org_id IS NULL" in q for q in identity_queries)
     assert needs[0]["sku"] == "PROF-G"

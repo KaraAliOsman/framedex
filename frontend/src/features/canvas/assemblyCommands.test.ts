@@ -4,6 +4,7 @@ import { resolveCommands } from "../commands/registry";
 import type { CommandContext } from "../commands/types";
 import { assemblyCommands } from "./assemblyCommands";
 import { makeBowProduct, modulePrimaryBay, type ProductJson } from "./productEditing";
+import { choicePatch, type OpeningChoice } from "./physicalOpenings";
 
 function harness(
   product: ProductJson,
@@ -16,6 +17,8 @@ function harness(
     mullionSkus?: Partial<Record<"SPLIT_V" | "SPLIT_H", string>>;
     canUndo?: boolean;
     canRedo?: boolean;
+    openingChoices?: OpeningChoice[];
+    compatibleOpenings?: string[];
   } = {},
 ) {
   const commit = vi.fn();
@@ -32,6 +35,8 @@ function harness(
       couplerSkus: options.couplerSkus ?? [],
       panelSkus: options.panelSkus ?? [],
       mullionSkus: options.mullionSkus ?? {},
+      openingChoices: options.openingChoices,
+      compatibleOpenings: options.compatibleOpenings,
     },
     disabled: false,
     commit,
@@ -116,6 +121,41 @@ it("dispatches AI wire ops through the same command apply as the palette", async
   byId(commands, "module.set-width").run({ width: "750" });
   const viaPalette = commit.mock.calls[0]![0] as ProductJson;
   expect(viaOp).toEqual(viaPalette);
+});
+
+it("offers only sourced physical choices and shares their exact operation with AI", async () => {
+  const { applyDesignOps } = await import("./designOps");
+  const product = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 1200, angleDeg: 0 });
+  const choice: OpeningChoice = {
+    id: "outward-right",
+    label: "Abatible hacia afuera — bisagras a la derecha",
+    use: "WINDOW",
+    source: "Ficha sintética",
+    opening: {
+      movement: "TURN",
+      hinge_side: "RIGHT",
+      direction: "OUTWARD",
+      leaf_role: "SINGLE",
+      fixed_in_sash: false,
+    },
+  };
+  const { commands, commit } = harness(product, "m1", { openingChoices: [choice] });
+  const command = byId(commands, "module.set-opening");
+  expect(command.params?.[0]).toEqual({
+    kind: "choice",
+    id: "opening",
+    label: "Apertura",
+    options: [{ value: JSON.stringify(choicePatch(choice)), label: choice.label }],
+  });
+  const args = { opening: JSON.stringify(choicePatch(choice)) };
+  expect(command.describe?.(args)).toContain(choice.label);
+  command.run(args);
+  const viaPalette = commit.mock.calls[0]![0] as ProductJson;
+  const viaAI = applyDesignOps(product, [{ op: "set_opening", module: 0, ...choicePatch(choice) }]);
+  expect(viaAI).toEqual(viaPalette);
+  const bay = modulePrimaryBay(viaPalette.assembly.modules[0]!);
+  expect(bay?.opening).toEqual(choice.opening);
+  expect(bay?.opening_type).toBeNull();
 });
 
 it("arms the divide tools and drives history without a product mutation", () => {

@@ -1,0 +1,244 @@
+[
+  {
+    "theme": "light",
+    "density": "office",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "office",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "office",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "workshop",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "workshop",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "workshop",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "workshop",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "document",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "document",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "document",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "light",
+    "density": "document",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "office",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "office",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "office",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "workshop",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "workshop",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "workshop",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "workshop",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "document",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "document",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "document",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  },
+  {
+    "theme": "dark",
+    "density": "document",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "axe": "PASA",
+    "overflow": false,
+    "flow": "formulario español → diálogo → teclado → comando → ficha → Bien / Mal"
+  }
+]

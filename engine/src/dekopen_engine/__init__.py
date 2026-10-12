@@ -73,7 +73,13 @@ from dekopen_engine.models import (
     SlidingLayout,
     SlidingPanel,
     SlidingPanelKind,
+    SlidingTravel,
     SystemParams,
+    SystemFamily,
+    SlidingSystemParameters,
+    SystemDimensionalLimit,
+    ProfileCutRule,
+    ProfileReinforcementRule,
 )
 
 PACKAGE_NAME = "dekopen-engine"
@@ -119,7 +125,13 @@ __all__ = [
     "SlidingLayout",
     "SlidingPanel",
     "SlidingPanelKind",
+    "SlidingTravel",
     "SystemParams",
+    "SystemFamily",
+    "SlidingSystemParameters",
+    "SystemDimensionalLimit",
+    "ProfileCutRule",
+    "ProfileReinforcementRule",
     "__version__",
     "bom_hash_v1",
     "build_glass_piece",

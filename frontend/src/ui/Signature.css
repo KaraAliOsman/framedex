@@ -1,0 +1,100 @@
+.ui-sheet {
+  padding: var(--space-16px);
+  border: 1px solid var(--border-default);
+  background: var(--surface-sheet);
+  box-shadow: var(--sheet);
+}
+.ui-value {
+  font-family: var(--font-mono);
+  font-size: var(--type-dim);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--line-dim);
+}
+.ui-value__unit {
+  font-size: max(0.85em, var(--type-micro));
+  color: var(--text-small-muted);
+}
+.ui-code {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4px);
+}
+.ui-code__button {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2px);
+  color: var(--interactive);
+}
+.ui-code__fallback {
+  display: grid;
+  gap: var(--space-4px);
+}
+.ui-unknown,
+.ui-unknown__cause {
+  color: var(--text-secondary);
+}
+.ui-unknown__action {
+  margin-inline-start: var(--space-8px);
+}
+.ui-demo {
+  padding: var(--space-2px) var(--space-4px);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-1);
+  color: var(--text-secondary);
+  font: 500 var(--type-label) / var(--line-label) var(--font-mono);
+}
+.ui-dim-loader {
+  display: inline-flex;
+  width: var(--space-64px);
+  color: var(--interactive);
+}
+.ui-button .ui-dim-loader {
+  width: var(--space-24px);
+  color: inherit;
+}
+.ui-dim-loader svg {
+  width: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: square;
+}
+.ui-dim-loader__measure {
+  transition: stroke-dashoffset var(--t-state) linear;
+}
+.ui-glyph,
+.ui-opening-glyph {
+  flex: 0 0 auto;
+  width: var(--space-24px);
+  height: var(--space-24px);
+}
+.ui-badge .ui-glyph {
+  width: var(--space-12px);
+  height: var(--space-12px);
+}
+.ui-trace dl,
+.ui-trace dl > div {
+  display: grid;
+  gap: var(--space-4px);
+}
+.ui-trace dl > div {
+  grid-template-columns: 1fr 1fr;
+}
+.ui-trace dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.ui-trace__formula {
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+}
+.ui-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}

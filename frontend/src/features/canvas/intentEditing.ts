@@ -1,4 +1,6 @@
 import { normalizeDimensionCandidate } from "./snapping";
+import type { GlassProduct, GlassProcessing } from "../glass/glassModel";
+import type { PhysicalOpening, HingedLayout } from "./physicalOpenings";
 
 export const OPENINGS = [
   "FIXED",
@@ -12,6 +14,7 @@ export const OPENINGS = [
   "SLIDING",
   "AWNING",
   "DOOR_ENTRY",
+  "DOOR_DOUBLE",
 ] as const;
 
 /** Ordered sliding topology of a bay (mandate §12): rail count plus one
@@ -22,12 +25,32 @@ export type SlidingPanel = {
   slot: string;
   kind: "MOVING" | "FIXED";
   track: number | null;
+  travel?: "LEFT" | "RIGHT" | null;
 };
 
 export type SlidingLayout = {
   tracks: number;
   panels: SlidingPanel[];
 };
+
+/** Historical drawings remain readable without silently rewriting saved intent. */
+export function slidingTravel(
+  panel: SlidingPanel,
+  index: number,
+  count: number,
+): "LEFT" | "RIGHT" | null {
+  return panel.kind === "FIXED" ? null : (panel.travel ?? (index * 2 < count ? "RIGHT" : "LEFT"));
+}
+
+export function declareSlidingTravel(layout: SlidingLayout): SlidingLayout {
+  return {
+    ...layout,
+    panels: layout.panels.map((panel, index) => ({
+      ...panel,
+      travel: slidingTravel(panel, index, layout.panels.length),
+    })),
+  };
+}
 
 /** Presets mirrored from the engine (`geometry._SLIDING_PRESETS`) — every
  * arrangement alternates tracks so adjacent leaves never collide. */
@@ -76,6 +99,8 @@ export type Opening = (typeof OPENINGS)[number];
 export type SplitType = "SPLIT_V" | "SPLIT_H";
 
 export type IntentNode = {
+  extras?: import("../projects/extraModel").ExtraSelection[];
+  extra_context?: { opening_width_mm?: string | null; opening_height_mm?: string | null };
   id: string;
   type: "ROOT" | SplitType | "BAY";
   width_mm?: string | null;
@@ -84,12 +109,21 @@ export type IntentNode = {
   mullion_profile_sku?: string | null;
   children?: IntentNode[];
   opening_type?: Opening | null;
+  opening?: PhysicalOpening | null;
+  opening_use?: "WINDOW" | "DOOR" | null;
+  opening_recipe_code?: string | null;
+  hinged_layout?: HingedLayout | null;
   sliding_layout?: SlidingLayout | null;
   glass_thickness_mm?: string | null;
   glass_spec?: string | null;
   glass_article_sku?: string | null;
+  glass_product?: GlassProduct | null;
+  glass_processing?: GlassProcessing | null;
+  sill_height_mm?: string | null;
+  is_sidelight?: boolean | null;
   panel_article_sku?: string | null;
   hardware_set_sku?: string | null;
+  hardware_selection?: import("./hardwareContracts").HardwareSelection | null;
   handle_height_mm?: string | null;
   /** Declared hinge side of a DOOR_ENTRY leaf (DIN: LEFT = hinges left).
    * Doors carry no side in their opening_type, so handedness is declared
@@ -177,7 +211,14 @@ export function changeOpening(tree: IntentNode, bayId: string, opening: Opening)
   // Preserve explicit catalog choices. Engine validates their
   // compatibility. Doors declare handedness; the default mirrors the
   // manufacturing policy's DIN convention (hinges left unless stated).
-  const replacement: IntentNode = { ...bay, opening_type: opening };
+  const replacement: IntentNode = {
+    ...bay,
+    opening_type: opening,
+    opening: null,
+    opening_use: null,
+    opening_recipe_code: null,
+    hinged_layout: null,
+  };
   if (opening === "DOOR_ENTRY") {
     replacement.door_handedness = bay.door_handedness ?? "LEFT";
   } else {
@@ -236,6 +277,12 @@ export function splitBay(
   const second = { ...first, id: ids.secondBay };
   if (division.type === "SPLIT_V" && second.opening_type) {
     second.opening_type = MIRRORED_OPENING[second.opening_type] ?? second.opening_type;
+  }
+  if (division.type === "SPLIT_V" && second.opening && !second.hinged_layout) {
+    const side = second.opening.hinge_side;
+    if (side === "LEFT" || side === "RIGHT") {
+      second.opening = { ...second.opening, hinge_side: side === "LEFT" ? "RIGHT" : "LEFT" };
+    }
   }
   const replacement: IntentNode = {
     id: ids.split,
@@ -296,12 +343,21 @@ export function parentSplitOf(tree: IntentNode, bayId: string): IntentNode | nul
 /** The spec fields a bay can donate — structure never travels with them. */
 const BAY_SPEC_KEYS = [
   "opening_type",
+  "opening",
+  "opening_use",
+  "opening_recipe_code",
+  "hinged_layout",
   "sliding_layout",
   "glass_thickness_mm",
   "glass_spec",
   "glass_article_sku",
+  "glass_product",
+  "glass_processing",
+  "sill_height_mm",
+  "is_sidelight",
   "panel_article_sku",
   "hardware_set_sku",
+  "hardware_selection",
   "handle_height_mm",
   "door_handedness",
 ] as const;
@@ -313,7 +369,7 @@ const BAY_SPEC_KEYS = [
 export function baySpec(node: IntentNode): Partial<IntentNode> {
   const spec: Record<string, unknown> = {};
   for (const key of BAY_SPEC_KEYS) {
-    spec[key] = node[key] ?? null;
+    spec[key] = node[key] ?? (key === "is_sidelight" ? false : null);
   }
   return spec;
 }
@@ -327,10 +383,14 @@ export function applyBaySpec(
   const source = selectedBay(tree, sourceBayId);
   const target = selectedBay(tree, targetBayId);
   const spec = baySpec(source);
-  if (target.opening_type) {
+  if (target.opening_type || target.opening) {
     // An opening the target already declared is identity, not spec — the
     // paste must not silently flip a mirrored leaf's handedness.
     delete spec.opening_type;
+    delete spec.opening;
+    delete spec.opening_use;
+    delete spec.opening_recipe_code;
+    delete spec.hinged_layout;
     delete spec.door_handedness;
     delete spec.sliding_layout;
   }
@@ -351,5 +411,15 @@ export function updateBay(tree: IntentNode, bayId: string, patch: Partial<Intent
 export function singleBayTemplate(tree: IntentNode, bayId: string, opening: Opening): IntentNode {
   if (!OPENINGS.includes(opening)) throw new Error("unsupported_opening");
   const bay = omitDimensions(selectedBay(tree, bayId));
-  return { ...bay, opening_type: opening };
+  return {
+    ...bay,
+    opening_type: opening,
+    opening: null,
+    opening_use: null,
+    opening_recipe_code: null,
+    hinged_layout: null,
+    sliding_layout: null,
+    hardware_set_sku: null,
+    hardware_selection: null,
+  };
 }

@@ -12,8 +12,12 @@ import type { LeafWeight } from "./leafWeight";
 import type { PanelPiece } from "./panelPiece";
 import type { ProfileCut } from "./profileCut";
 import type { Reinforcement } from "./reinforcement";
+import type { ResolvedFinish } from "./resolvedFinish";
 
 export interface EngineCalculateResponse {
+  extras?: unknown[];
+  extra_suggestions?: unknown[];
+  finish?: ResolvedFinish | null;
   profile_cuts: ProfileCut[];
   reinforcements: Reinforcement[];
   glasses: GlassPiece[];
@@ -21,6 +25,7 @@ export interface EngineCalculateResponse {
   fittings: FittingPiece[];
   hardware_items: HardwareItem[];
   leaf_weights: LeafWeight[];
+  opening_leaves?: unknown[];
   /** @pattern ^sha256:[0-9a-f]{64}$ */
   calculation_hash: string;
 }

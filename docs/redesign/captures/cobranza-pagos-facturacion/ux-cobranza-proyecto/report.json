@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-10-10T13:33:32.488Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "cobranza-proyecto",
+      "path": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38?section=payments",
+      "reachedPath": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38",
+      "role": "OWNER",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "cobranza-proyecto__OWNER__light__390x844.png",
+      "overflowX": true,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cobranza-proyecto",
+      "path": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38?section=payments",
+      "reachedPath": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38",
+      "role": "OWNER",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "cobranza-proyecto__OWNER__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cobranza-proyecto",
+      "path": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38?section=payments",
+      "reachedPath": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38",
+      "role": "OWNER",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "cobranza-proyecto__OWNER__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cobranza-proyecto",
+      "path": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38?section=payments",
+      "reachedPath": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38",
+      "role": "OWNER",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "cobranza-proyecto__OWNER__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cobranza-proyecto",
+      "path": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38?section=payments",
+      "reachedPath": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38",
+      "role": "OWNER",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "cobranza-proyecto__OWNER__dark__390x844.png",
+      "overflowX": true,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cobranza-proyecto",
+      "path": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38?section=payments",
+      "reachedPath": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38",
+      "role": "OWNER",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "cobranza-proyecto__OWNER__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cobranza-proyecto",
+      "path": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38?section=payments",
+      "reachedPath": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38",
+      "role": "OWNER",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "cobranza-proyecto__OWNER__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "cobranza-proyecto",
+      "path": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38?section=payments",
+      "reachedPath": "/projects/0fd6f6cd-9088-42ce-b240-965e77f3de38",
+      "role": "OWNER",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "cobranza-proyecto__OWNER__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    }
+  ],
+  "topFindings": []
+}

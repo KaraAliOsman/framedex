@@ -10,8 +10,10 @@ import type { AiMetricsCommands } from "./aiMetricsCommands";
 import type { AiMetricsCost } from "./aiMetricsCost";
 import type { AiMetricsJobs } from "./aiMetricsJobs";
 import type { AiMetricsTimeSaved } from "./aiMetricsTimeSaved";
+import type { AiMetricsWorkItem } from "./aiMetricsWorkItem";
 
 export interface AiMetrics {
+  work?: AiMetricsWorkItem[];
   window_days: number;
   jobs: AiMetricsJobs;
   commands: AiMetricsCommands;

@@ -1,7 +1,31 @@
+import { domainLabels } from "../../i18n/domainLabels";
 import { t } from "../../i18n/es-CL";
 
+export function stockSourceLabel(source: string | null | undefined): string {
+  return source === "NEW"
+    ? "Material nuevo"
+    : source === "REMNANT"
+      ? "Retazo"
+      : "Sin dato · falta origen";
+}
+
+export function movementLabel(type: string | null | undefined): string {
+  const known = new Set([
+    "RECEIPT",
+    "CONSUMPTION",
+    "RESERVATION",
+    "RELEASE",
+    "ADJUSTMENT",
+    "RETURN",
+    "SCRAP",
+  ]);
+  return type && known.has(type)
+    ? t(`inventory.movement.${type}` as Parameters<typeof t>[0])
+    : "Sin dato · falta tipo de movimiento";
+}
+
 export function cutRoleLabel(role: string | null | undefined): string {
-  if (role === null || role === undefined || role === "") return "—";
+  if (role === null || role === undefined || role === "") return "Sin dato";
   const known: ReadonlySet<string> = new Set([
     "FRAME",
     "SASH",
@@ -15,7 +39,9 @@ export function cutRoleLabel(role: string | null | undefined): string {
     "CHANNEL",
     "REINFORCEMENT",
   ]);
-  return known.has(role) ? t(`production.role.${role}` as Parameters<typeof t>[0]) : role;
+  return known.has(role)
+    ? (domainLabels[role] ?? t(`production.role.${role}` as Parameters<typeof t>[0]))
+    : "Sin dato · falta etiqueta de pieza";
 }
 
 const OP_KINDS: ReadonlySet<string> = new Set([
@@ -37,8 +63,10 @@ const OP_KINDS: ReadonlySet<string> = new Set([
 ]);
 
 export function opKindLabel(kind: string | null | undefined): string {
-  if (kind === null || kind === undefined || kind === "") return "—";
-  return OP_KINDS.has(kind) ? t(`production.opKind.${kind}` as Parameters<typeof t>[0]) : kind;
+  if (kind === null || kind === undefined || kind === "") return "Sin dato";
+  return OP_KINDS.has(kind)
+    ? (domainLabels[kind] ?? t(`production.opKind.${kind}` as Parameters<typeof t>[0]))
+    : "Sin dato · falta etiqueta de operación";
 }
 
 /** Op label that never oversells authority: a feature declared only as a
@@ -65,16 +93,18 @@ const STOCK_KINDS: ReadonlySet<string> = new Set([
   "BAR",
   "SHEET",
   "KIT",
+  "HARDWARE_KIT",
+  "PANEL",
   "FITTING",
   "OFFCUT",
   "REMNANT",
 ]);
 
 export function stockKindLabel(kind: string | null | undefined): string {
-  if (kind === null || kind === undefined || kind === "") return "—";
+  if (kind === null || kind === undefined || kind === "") return "Sin dato";
   return STOCK_KINDS.has(kind)
-    ? t(`production.stockKindValue.${kind}` as Parameters<typeof t>[0])
-    : kind;
+    ? (domainLabels[kind] ?? t(`production.stockKindValue.${kind}` as Parameters<typeof t>[0]))
+    : "Sin dato · falta etiqueta de operación";
 }
 
 const CENTER_KINDS: ReadonlySet<string> = new Set([
@@ -95,10 +125,10 @@ const CENTER_KINDS: ReadonlySet<string> = new Set([
 ]);
 
 export function centerKindLabel(kind: string | null | undefined): string {
-  if (kind === null || kind === undefined || kind === "") return "—";
+  if (kind === null || kind === undefined || kind === "") return "Sin dato";
   return CENTER_KINDS.has(kind)
     ? t(`production.centerKind.${kind}` as Parameters<typeof t>[0])
-    : kind;
+    : "Sin dato · falta etiqueta de operación";
 }
 
 const STATION_CODES: ReadonlySet<string> = new Set([
@@ -120,10 +150,10 @@ const STATION_CODES: ReadonlySet<string> = new Set([
 ]);
 
 export function stationCodeLabel(code: string | null | undefined): string {
-  if (code === null || code === undefined || code === "") return "—";
+  if (code === null || code === undefined || code === "") return "Sin dato";
   return STATION_CODES.has(code)
     ? t(`production.station.${code}` as Parameters<typeof t>[0])
-    : code;
+    : "Sin dato · falta etiqueta de estación";
 }
 
 // Stations that physically work the sealed cut plan — mirrors
@@ -139,16 +169,10 @@ export const PLAN_REQUIRED_CODES: ReadonlySet<string> = new Set([
 // Member-local vocabulary — mirrors the machining pack's operator language
 // (backend/production/pack.py): the printed sheet and the screen name the
 // same datum identically, so a stick reconciles paper↔web without a map.
-const OP_REFERENCES: ReadonlyMap<string, string> = new Map([
-  ["member_start", "Ext. A"],
-  ["member_end", "Ext. B"],
-  ["bar_left_edge", "borde barra"],
-  ["sheet_top_left", "esquina lámina"],
-]);
 
 export function opReferenceLabel(reference: string | null | undefined): string {
-  if (reference === null || reference === undefined || reference === "") return "—";
-  return OP_REFERENCES.get(reference) ?? reference;
+  if (reference === null || reference === undefined || reference === "") return "Sin dato";
+  return domainLabels[reference] ?? "Sin dato · falta referencia";
 }
 
 const OP_FACES: ReadonlyMap<string, string> = new Map([
@@ -161,8 +185,8 @@ const OP_FACES: ReadonlyMap<string, string> = new Map([
 ]);
 
 export function opFaceLabel(face: string | null | undefined): string {
-  if (face === null || face === undefined || face === "") return "—";
-  return OP_FACES.get(face) ?? face;
+  if (face === null || face === undefined || face === "") return "Sin dato";
+  return OP_FACES.get(face) ?? domainLabels[face] ?? "Sin dato · falta cara";
 }
 
 const OP_BASES: ReadonlyMap<string, string> = new Map([
@@ -173,26 +197,21 @@ const OP_BASES: ReadonlyMap<string, string> = new Map([
 ]);
 
 export function opBasisLabel(basis: string | null | undefined): string {
-  if (basis === null || basis === undefined || basis === "") return "—";
+  if (basis === null || basis === undefined || basis === "") return "Sin dato";
   const mapped = OP_BASES.get(basis);
   if (mapped) return mapped;
   if (basis.startsWith("handle_requirement_policy:")) {
-    return `Política herraje ${basis.split(":", 2)[1] ?? ""}`;
+    return "Política de herraje sellada";
   }
   if (basis.startsWith("handle_policy:")) {
-    return `Herraje ${(basis.split(":", 2)[1] ?? "").slice(0, 8)}`;
+    return "Política de manilla sellada";
   }
-  return basis;
+  return "Sin dato · falta autoridad de operación";
 }
 
-const OP_BOUNDARIES: ReadonlyMap<string, string> = new Map([
-  ["HEAD_TRIM", "corte inicial"],
-  ["TAIL_TRIM", "corte final"],
-]);
-
 export function opBoundaryLabel(boundary: string | null | undefined): string {
-  if (boundary === null || boundary === undefined || boundary === "") return "—";
-  return OP_BOUNDARIES.get(boundary) ?? boundary;
+  if (boundary === null || boundary === undefined || boundary === "") return "Sin dato";
+  return domainLabels[boundary] ?? "Sin dato · falta límite";
 }
 
 const REMNANT_STATUSES: ReadonlySet<string> = new Set([
@@ -203,8 +222,8 @@ const REMNANT_STATUSES: ReadonlySet<string> = new Set([
 ]);
 
 export function remnantStatusLabel(status: string | null | undefined): string {
-  if (status === null || status === undefined || status === "") return "—";
+  if (status === null || status === undefined || status === "") return "Sin dato";
   return REMNANT_STATUSES.has(status)
     ? t(`production.remnantStatus.${status}` as Parameters<typeof t>[0])
-    : status;
+    : "Sin dato · falta estado del retazo";
 }

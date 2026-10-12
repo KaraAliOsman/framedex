@@ -1,0 +1,4939 @@
+[
+  {
+    "routeId": "catalogo",
+    "path": "/catalogs/systems",
+    "reachedPath": "/catalogs/systems",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "390x844",
+    "screenshot": "catalogo__WORKSHOP_MANAGER__light__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+      "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+      "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+    ],
+    "httpErrors": [
+      {
+        "url": "http://127.0.0.1:5173/api/v1/catalogs/articles/",
+        "status": 502
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/catalogs/glazing/",
+        "status": 502
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/v1/catalogs/hardware-kits/",
+        "status": 502
+      }
+    ],
+    "findings": [
+      {
+        "kind": "radius-over-4",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button. Volver a cargar"
+      }
+    ]
+  },
+  {
+    "routeId": "catalogo",
+    "path": "/catalogs/systems",
+    "reachedPath": "/catalogs/systems",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1440x900",
+    "screenshot": "catalogo__WORKSHOP_MANAGER__light__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "serie Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "ALU_65",
+        "sample": "trabajo faltantes Línea Aluminio 65 — referencia sintética ALU_65 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "rraje Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 Aluminio Catálogo de demostración Activo Profundidad de ser"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "SASH_ASSEMBLE",
+        "sample": "ltantes — CRIMP, CUT, GLAZE, HARDWARE, MACHINING, PACK, QC, SASH_ASSEMBLE Falta: centros de trabajo activos Consecuencia: una estaci"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "span.org-switcher__name Ventanas del Sur SpA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--primary "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.imports-toggle Importar catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.catalog-master Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "shadow-outside-scale",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button. Kits sin serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.catalog-detail Detalle de catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab is-active Sistema"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Artículos de perfil"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Junquillos y vidrio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Kits de herraje"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-chip Aluminio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Activo"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "span.ws-blocker-level Producción"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-blocker-target Crear los centros de trabajo faltantes"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 24 × 24 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 42 × 42 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 28 × 28 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 20 × 20 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 10 × 10 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 34 × 34 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 18 × 18 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 26 × 26 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 6 × 6 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      }
+    ]
+  },
+  {
+    "routeId": "catalogo",
+    "path": "/catalogs/systems",
+    "reachedPath": "/catalogs/systems",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1280x800",
+    "screenshot": "catalogo__WORKSHOP_MANAGER__light__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "serie Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "ALU_65",
+        "sample": "trabajo faltantes Línea Aluminio 65 — referencia sintética ALU_65 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "rraje Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 Aluminio Catálogo de demostración Activo Profundidad de ser"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "SASH_ASSEMBLE",
+        "sample": "ltantes — CRIMP, CUT, GLAZE, HARDWARE, MACHINING, PACK, QC, SASH_ASSEMBLE Falta: centros de trabajo activos Consecuencia: una estaci"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "span.org-switcher__name Ventanas del Sur SpA"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--primary "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.imports-toggle Importar catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.catalog-master Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "shadow-outside-scale",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button. Kits sin serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.catalog-detail Detalle de catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab is-active Sistema"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Artículos de perfil"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Junquillos y vidrio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Kits de herraje"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-chip Aluminio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Activo"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "span.ws-blocker-level Producción"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-blocker-target Crear los centros de trabajo faltantes"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 24 × 24 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 42 × 42 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 28 × 28 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 20 × 20 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 10 × 10 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 34 × 34 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 18 × 18 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 26 × 26 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 6 × 6 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      }
+    ]
+  },
+  {
+    "routeId": "catalogo",
+    "path": "/catalogs/systems",
+    "reachedPath": "/catalogs/systems",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "light",
+    "viewport": "1024x768",
+    "screenshot": "catalogo__WORKSHOP_MANAGER__light__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "serie Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "ALU_65",
+        "sample": "trabajo faltantes Línea Aluminio 65 — referencia sintética ALU_65 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "rraje Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 Aluminio Catálogo de demostración Activo Profundidad de ser"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "SASH_ASSEMBLE",
+        "sample": "ltantes — CRIMP, CUT, GLAZE, HARDWARE, MACHINING, PACK, QC, SASH_ASSEMBLE Falta: centros de trabajo activos Consecuencia: una estaci"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--primary "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.imports-toggle Importar catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.catalog-master Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "shadow-outside-scale",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button. Kits sin serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.catalog-detail Detalle de catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab is-active Sistema"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Artículos de perfil"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Junquillos y vidrio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Kits de herraje"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-chip Aluminio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Activo"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "span.ws-blocker-level Producción"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-blocker-target Crear los centros de trabajo faltantes"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 24 × 24 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 42 × 42 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 28 × 28 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 20 × 20 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 10 × 10 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 34 × 34 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 18 × 18 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 26 × 26 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 6 × 6 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      }
+    ]
+  },
+  {
+    "routeId": "catalogo",
+    "path": "/catalogs/systems",
+    "reachedPath": "/catalogs/systems",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "390x844",
+    "screenshot": "catalogo__WORKSHOP_MANAGER__dark__390x844.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "serie Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "ALU_65",
+        "sample": "trabajo faltantes Línea Aluminio 65 — referencia sintética ALU_65 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "rraje Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 Aluminio Catálogo de demostración Activo Profundidad de ser"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "SASH_ASSEMBLE",
+        "sample": "ltantes — CRIMP, CUT, GLAZE, HARDWARE, MACHINING, PACK, QC, SASH_ASSEMBLE Falta: centros de trabajo activos Consecuencia: una estaci"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--primary "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.imports-toggle Importar catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.catalog-master Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "shadow-outside-scale",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button. Kits sin serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.catalog-detail Detalle de catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab is-active Sistema"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Artículos de perfil"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Junquillos y vidrio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Kits de herraje"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-chip Aluminio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Activo"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "span.ws-blocker-level Producción"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-blocker-target Crear los centros de trabajo faltantes"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 24 × 24 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 42 × 42 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 28 × 28 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 20 × 20 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 10 × 10 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 34 × 34 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 18 × 18 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 26 × 26 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 6 × 6 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      }
+    ]
+  },
+  {
+    "routeId": "catalogo",
+    "path": "/catalogs/systems",
+    "reachedPath": "/catalogs/systems",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "screenshot": "catalogo__WORKSHOP_MANAGER__dark__1440x900.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "serie Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "ALU_65",
+        "sample": "trabajo faltantes Línea Aluminio 65 — referencia sintética ALU_65 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "rraje Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 Aluminio Catálogo de demostración Activo Profundidad de ser"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "SASH_ASSEMBLE",
+        "sample": "ltantes — CRIMP, CUT, GLAZE, HARDWARE, MACHINING, PACK, QC, SASH_ASSEMBLE Falta: centros de trabajo activos Consecuencia: una estaci"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--primary "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.imports-toggle Importar catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.catalog-master Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "shadow-outside-scale",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button. Kits sin serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.catalog-detail Detalle de catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab is-active Sistema"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Artículos de perfil"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Junquillos y vidrio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Kits de herraje"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-chip Aluminio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Activo"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "span.ws-blocker-level Producción"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-blocker-target Crear los centros de trabajo faltantes"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 24 × 24 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 42 × 42 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 28 × 28 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 20 × 20 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 10 × 10 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 34 × 34 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 18 × 18 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 26 × 26 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 6 × 6 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      }
+    ]
+  },
+  {
+    "routeId": "catalogo",
+    "path": "/catalogs/systems",
+    "reachedPath": "/catalogs/systems",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "screenshot": "catalogo__WORKSHOP_MANAGER__dark__1280x800.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "serie Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "ALU_65",
+        "sample": "trabajo faltantes Línea Aluminio 65 — referencia sintética ALU_65 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "rraje Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 Aluminio Catálogo de demostración Activo Profundidad de ser"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "SASH_ASSEMBLE",
+        "sample": "ltantes — CRIMP, CUT, GLAZE, HARDWARE, MACHINING, PACK, QC, SASH_ASSEMBLE Falta: centros de trabajo activos Consecuencia: una estaci"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--primary "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.imports-toggle Importar catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.catalog-master Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "shadow-outside-scale",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button. Kits sin serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.catalog-detail Detalle de catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab is-active Sistema"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Artículos de perfil"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Junquillos y vidrio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Kits de herraje"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-chip Aluminio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Activo"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "span.ws-blocker-level Producción"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-blocker-target Crear los centros de trabajo faltantes"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 24 × 24 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 42 × 42 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 28 × 28 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 20 × 20 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 10 × 10 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 34 × 34 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 18 × 18 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 26 × 26 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 6 × 6 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      }
+    ]
+  },
+  {
+    "routeId": "catalogo",
+    "path": "/catalogs/systems",
+    "reachedPath": "/catalogs/systems",
+    "role": "WORKSHOP_MANAGER",
+    "theme": "dark",
+    "viewport": "1024x768",
+    "screenshot": "catalogo__WORKSHOP_MANAGER__dark__1024x768.png",
+    "overflowX": false,
+    "consoleErrors": [],
+    "httpErrors": [],
+    "findings": [
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "serie Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "ALU_65",
+        "sample": "trabajo faltantes Línea Aluminio 65 — referencia sintética ALU_65 · Aluminio · v1 Global · Catálogo demo · Catálogo disponibl"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "GLASS_45",
+        "sample": "rraje Vidrio-dominante 45 (aluminio) — referencia sintética GLASS_45 Aluminio Catálogo de demostración Activo Profundidad de ser"
+      },
+      {
+        "kind": "raw-enum",
+        "match": "SASH_ASSEMBLE",
+        "sample": "ltantes — CRIMP, CUT, GLAZE, HARDWARE, MACHINING, PACK, QC, SASH_ASSEMBLE Falta: centros de trabajo activos Consecuencia: una estaci"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "contrast-under-aa",
+        "sample": "a.skip-link Saltar al contenido"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--primary "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.imports-toggle Importar catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "aside.catalog-master Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "input. "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "shadow-outside-scale",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.catalog-system "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button. Kits sin serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "section.catalog-detail Detalle de catálogo"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab is-active Sistema"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Ficha de serie"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Artículos de perfil"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Junquillos y vidrio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-tab Kits de herraje"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-chip Aluminio"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Activo"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "span.ws-blocker-level Producción"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-blocker-target Crear los centros de trabajo faltantes"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-map-node  "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 24 × 24 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 42 × 42 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 28 × 28 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 20 × 20 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 38 × 38 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 10 × 10 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 34 × 34 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 18 × 18 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 26 × 26 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "text.section-preview__dims 6 × 6 mm"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "small. aproximada"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Rol"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Ancho de cara"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Largo comercial"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Peso"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Compra"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge ws-badge--ok Mapeado"
+      },
+      {
+        "kind": "font-under-11",
+        "sample": "dt. Junquillos"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--small Consultar"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ui-button ui-button--ghost ui-button--small Ver registros"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "button.ws-kit-card "
+      },
+      {
+        "kind": "radius-over-4",
+        "sample": "span.ws-badge Catálogo de demostración"
+      }
+    ]
+  }
+]

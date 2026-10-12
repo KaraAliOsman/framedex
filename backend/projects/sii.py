@@ -768,6 +768,10 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
                 [invoice_id_s, org_id_s, project_id_s],
                 "invoice_not_found",
             )
+            payload = invoice["payload_json"]
+            payload = json.loads(payload) if isinstance(payload, str) else payload
+            if payload.get("document_kind") == "BOLETA":
+                raise contract_error(422, "sii_boleta_provider_required", "El adaptador fiscal instalado emite facturas y notas de crédito. La boleta interna puede probarse en el simulador; conecta un proveedor habilitado para DTE-39 antes de una emisión tributaria.")
             # The org folio slot serializes every emit; the existing-row
             # check runs inside it so two concurrent emits on the same
             # invoice can't both pass the replay check.

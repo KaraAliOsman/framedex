@@ -100,6 +100,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = _csv_env("CORS_ALLOWED_ORIGINS", "http://127.0.0.1:5173")
 CORS_ALLOW_CREDENTIALS = False
+DEKOPEN_PUBLIC_APP_URL = os.environ.get("DEKOPEN_PUBLIC_APP_URL", "http://127.0.0.1:5173").rstrip("/")
+MAIL_PROVIDER = os.environ.get("MAIL_PROVIDER", "sandbox")
+MAIL_ENCRYPTION_KEY = os.environ.get("MAIL_ENCRYPTION_KEY", SECRET_KEY)
+MAIL_FROM_ADDRESS = os.environ.get("MAIL_FROM_ADDRESS", "noreply@example.invalid")
+MAIL_SANDBOX_HOST = os.environ.get("MAIL_SANDBOX_HOST", "127.0.0.1")
+MAIL_SANDBOX_PORT = int(os.environ.get("MAIL_SANDBOX_PORT", "25325"))
+MAIL_SMTP_HOST = os.environ.get("MAIL_SMTP_HOST", "")
+MAIL_SMTP_PORT = int(os.environ.get("MAIL_SMTP_PORT", "587"))
+MAIL_SMTP_SSL = os.environ.get("MAIL_SMTP_SSL", "false").lower() == "true"
+MAIL_SMTP_STARTTLS = os.environ.get("MAIL_SMTP_STARTTLS", "true").lower() == "true"
+MAIL_SMTP_USER = os.environ.get("MAIL_SMTP_USER", "")
+MAIL_SMTP_PASSWORD = os.environ.get("MAIL_SMTP_PASSWORD", "")
+if PRODUCTION and not os.environ.get("MAIL_ENCRYPTION_KEY"):
+    raise ValueError("MAIL_ENCRYPTION_KEY is required in production")
 CORS_ALLOW_HEADERS = (*default_headers, "x-organization-id")
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://127.0.0.1:25321").rstrip("/")
@@ -128,7 +142,12 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
-        "CatalogProfileRoleEnum": ["FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "GLAZING_BEAD", "COUPLER", "ADDITIONAL", "THRESHOLD"],
+        "CurrencyEnum": ["CLP", "USD"],
+        "PricingOperationStateEnum": ["PREVIEW","PENDING","APPLIED","REJECTED","WITHDRAWN"],
+        "SlidingTravelEnum": ["LEFT", "RIGHT"],
+        "DivisionReferenceEnum": ["START", "END", "CENTER"],
+        "ContourReferenceEnum": ["START", "END"],
+        "CatalogProfileRoleEnum": ["FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "GLAZING_BEAD", "COUPLER", "ADDITIONAL", "THRESHOLD", "CHANNEL", "SLIDING_SASH", "INTERLOCK", "RAIL", "DOOR_SASH", "FRAME_EXTENSION", "SILL", "COVER_TRIM", "PLINTH"],
         "RoleEnum": ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER"],
         "MembershipRoleEnum": [
             "OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER", "OPERATOR",
@@ -145,8 +164,11 @@ SPECTACULAR_SETTINGS = {
         "WhiteColorEnum": ["WHITE"],
         "PaymentStatusEnum": ["NO_DEAL", "PENDING", "PARTIAL", "PAID"],
         "PaymentKindEnum": ["ANTICIPO", "PARCIAL", "SALDO"],
+        "CollectionMilestoneStatusEnum": ["PENDING", "DUE", "OVERDUE", "PAID"],
+        "FiscalSimulationStatusEnum": ["ACCEPTED", "WARNINGS", "REJECTED"],
         "VerticalReferenceEnum": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"],
-        "KitOpeningTypeEnum": ["AWNING", "DOOR", "SLIDING", "TILT_TURN", "TURN"],
+        "KitOpeningTypeEnum": ["AWNING", "DOOR", "SLIDING", "TILT", "TILT_TURN", "TURN",
+            "LIFT_SLIDE", "PARALLEL_SLIDE", "FOLD", "PIVOT_V", "PIVOT_H", "VERTICAL_SLIDE"],
         "ImportOpeningTypeEnum": [
             "AWNING", "DOOR_ENTRY", "FIXED", "SLIDING_2L",
             "TILT_TURN_LEFT", "TILT_TURN_RIGHT", "TURN_LEFT", "TURN_RIGHT",
@@ -180,6 +202,11 @@ LOGGING = {
         },
     },
     "loggers": {
+        "ai_gateway.usage": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "django.request": {
             "handlers": ["console"],
             "level": "ERROR",

@@ -32,4 +32,18 @@ export interface EvidenceRow {
   reviewed_by: string | null;
   /** @nullable */
   reviewed_at: string | null;
+  /** @nullable */
+  source_import_id?: string | null;
+  /** @nullable */
+  source_ref?: string | null;
+  /** @nullable */
+  source_quote?: string | null;
+  /** @nullable */
+  source_literal?: string | null;
+  /** @nullable */
+  extraction_confidence?: string | null;
+  /** @nullable */
+  extraction_method?: string | null;
+  canonical_value?: unknown | null;
+  original_value?: unknown | null;
 }

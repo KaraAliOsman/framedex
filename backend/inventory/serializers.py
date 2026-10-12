@@ -14,8 +14,49 @@ class StrictSerializer(serializers.Serializer):
         return super().to_internal_value(data)
 
 
+class SheetFormatRequestSerializer(StrictSerializer):
+    kind = serializers.ChoiceField(choices=["GLASS", "PANEL"])
+    technical_sku = serializers.CharField(max_length=100)
+    sku = serializers.CharField(max_length=100)
+    width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"))
+    height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"))
+    edge_trim_mm = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0"))
+    supplier = serializers.CharField(max_length=255)
+    source = serializers.CharField(max_length=500)
+
+
+class SheetFormatOptionSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    kind = serializers.CharField()
+    name = serializers.CharField()
+    is_demo = serializers.BooleanField()
+
+
+class SheetFormatSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    kind = serializers.CharField()
+    technical_sku = serializers.CharField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+    edge_trim_mm = serializers.CharField()
+    supplier = serializers.CharField(allow_null=True)
+    source = serializers.CharField(allow_null=True)
+    is_demo = serializers.BooleanField()
+
+
+class SheetFormatListSerializer(serializers.Serializer):
+    options = SheetFormatOptionSerializer(many=True)
+    items = SheetFormatSerializer(many=True)
+
+
+class SheetFormatCreatedSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+
+
 class InventoryStockItemSerializer(serializers.Serializer):
-    item_id = serializers.UUIDField()
+    item_id = serializers.UUIDField(allow_null=True)
     sku = serializers.CharField()
     name = serializers.CharField()
     category = serializers.CharField()
@@ -29,6 +70,7 @@ class InventoryStockItemSerializer(serializers.Serializer):
     )
     racks = serializers.CharField(allow_null=True, required=False)
     spec_text = serializers.CharField(required=False, allow_blank=True)
+    reservations = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class InventoryStockSerializer(serializers.Serializer):
@@ -57,6 +99,10 @@ class InventoryMovementSerializer(serializers.Serializer):
     note = serializers.CharField(allow_null=True)
     actor_id = serializers.UUIDField(allow_null=True)
     actor_label = serializers.CharField(allow_null=True, required=False)
+    order_code = serializers.CharField(allow_null=True, required=False)
+    receipt_code = serializers.CharField(allow_null=True, required=False)
+    supplier_document = serializers.CharField(allow_null=True, required=False)
+    received_on = serializers.DateField(allow_null=True, required=False)
     created_at = serializers.DateTimeField()
 
 
@@ -84,6 +130,9 @@ class OrderReceiptRequestSerializer(StrictSerializer):
     receipt_key = serializers.CharField(max_length=100)
     note = serializers.CharField(required=False, allow_null=True, max_length=500)
     lines = ReceiptLineRequestSerializer(many=True, allow_empty=False)
+    supplier_document = serializers.CharField(required=False, allow_null=True, max_length=100)
+    received_on = serializers.DateField(required=False, allow_null=True)
+    confirm_over_receipt = serializers.BooleanField(required=False, default=False)
 
 
 class OrderReceivingLineSerializer(serializers.Serializer):
@@ -101,10 +150,13 @@ class OrderReceivingLineSerializer(serializers.Serializer):
 
 class OrderReceiptSerializer(serializers.Serializer):
     id = serializers.UUIDField()
+    receipt_code = serializers.CharField()
     receipt_key = serializers.CharField()
     note = serializers.CharField(allow_null=True)
     received_by = serializers.CharField(allow_null=True)
     created_at = serializers.DateTimeField()
+    supplier_document = serializers.CharField(allow_null=True, required=False)
+    received_on = serializers.DateField(allow_null=True, required=False)
 
 
 class OrderReceivingSerializer(serializers.Serializer):
@@ -124,10 +176,11 @@ class InventoryMovementRequestSerializer(StrictSerializer):
 
 class RemnantSerializer(serializers.Serializer):
     id = serializers.UUIDField()
+    code = serializers.CharField()
     kind = serializers.ChoiceField(choices=("BAR", "SHEET"))
     stock_authority_id = serializers.UUIDField(allow_null=True)
     sheet_workshop_sku = serializers.CharField(allow_null=True)
-    physical_stock_identity = serializers.UUIDField(allow_null=True)
+    physical_stock_identity = serializers.CharField(allow_null=True)
     material = serializers.CharField(allow_null=True)
     color = serializers.CharField(allow_null=True)
     length_mm = serializers.DecimalField(
@@ -153,16 +206,34 @@ class RemnantSerializer(serializers.Serializer):
     article_sku = serializers.CharField(allow_null=True, required=False)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
+    age_days = serializers.IntegerField(required=False)
+    age_alert = serializers.BooleanField(required=False)
 
 
 class RemnantListSerializer(serializers.Serializer):
     remnants = RemnantSerializer(many=True)
+    age_limit_days = serializers.IntegerField(required=False)
+    events = serializers.ListField(child=serializers.DictField(), required=False)
+
+
+class RemnantActionSerializer(StrictSerializer):
+    confirmed = serializers.BooleanField()
+    reason = serializers.CharField(max_length=500, min_length=3)
+
+
+class RemnantMoveSerializer(RemnantActionSerializer):
+    rack_location = serializers.CharField(max_length=100, min_length=1)
+
+
+class RemnantReserveSerializer(StrictSerializer):
+    confirmed = serializers.BooleanField()
+    order_id = serializers.UUIDField()
 
 
 class BarAuthoritySerializer(serializers.Serializer):
     id = serializers.UUIDField()
     commercial_sku = serializers.CharField()
-    physical_stock_identity = serializers.UUIDField(allow_null=True)
+    physical_stock_identity = serializers.CharField(allow_null=True)
     stock_color = serializers.CharField(allow_null=True)
     source = serializers.ChoiceField(choices=("PROFILE", "REINFORCEMENT"))
 
@@ -184,7 +255,7 @@ class RemnantCreateSerializer(StrictSerializer):
     sheet_workshop_sku = serializers.CharField(
         required=False, allow_null=True, max_length=100
     )
-    physical_stock_identity = serializers.UUIDField(required=False, allow_null=True)
+    physical_stock_identity = serializers.CharField(required=False, allow_null=True)
     material = serializers.CharField(required=False, allow_null=True, max_length=50)
     color = serializers.CharField(required=False, allow_null=True, max_length=50)
     length_mm = serializers.DecimalField(
@@ -209,14 +280,14 @@ class RemnantCreateSerializer(StrictSerializer):
         if data["kind"] == "BAR":
             if not data.get("stock_authority_id") or not data.get("length_mm"):
                 raise serializers.ValidationError(
-                    "Bar remnants need stock_authority_id and a positive length_mm"
+                    "El retazo de barra necesita su suministro del catálogo y un largo positivo."
                 )
         else:
             if not data.get("sheet_workshop_sku") or not (
                 data.get("width_mm") and data.get("height_mm")
             ):
                 raise serializers.ValidationError(
-                    "Sheet remnants need sheet_workshop_sku and positive width/height"
+                    "El retazo de lámina necesita su suministro, ancho y alto positivos."
                 )
         return data
 

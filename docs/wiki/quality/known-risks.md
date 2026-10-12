@@ -1,18 +1,59 @@
 ---
 type: risk
 status: active
-updated: 2026-09-28
+updated: 2026-10-12
 volatility: medium
 sources:
+  - P20 código b8450659d4ec82e062bdef5e7b3e703266956b09 y evidencia de aceptación del 12-10-2026
   - owner conversations through 2026-09-28
   - recent DEKOPEN audit notes
 ---
 
 # Known risks and audit targets
 
+## Límites verificados en P20
+
+La aceptación conserva SII 39 real sin timbrador, entrega fiscal productiva
+sin credenciales/certificación y precio unitario de compra sin lista comercial
+autorizada. Los adaptadores y recorridos simulados no eliminan esos límites.
+La primera carga fría de WebGL se informa separada de interacción caliente.
+
+El laminado monolítico de 6,38 mm del ensayo DEMO no tiene junquillo declarado:
+35 combinaciones se rechazan, sin forzar fabricación. El termopanel laminado
+compatible sí pertenece a la matriz positiva. Publicar fuentes sintéticas o
+confirmar un montaje DEMO no acredita certificación del fabricante.
+
+La suite MiMo de P20 cumple E/J 18/21, pero conserva cinco fallos. La auditoría
+numérica sin cifras finales inventadas no acredita éxito de un plan faltante.
+Tarifas reales de IA, catálogos, costos, ensayos térmicos y calibración CNC
+requieren fuentes del dueño/proveedor; no se completan con estimaciones del LLM.
+Véase [aceptación](../../redesign/acceptance-2026-10-12.md) y
+[activación](../../operations/ACTIVACION.md).
+
+D04 verifies class expansion, exact sealed mass, component/length picking and
+the tenant boundary. Missing machining authority blocks station completion;
+synthetic capacity and RC data do not certify a manufacturer. See
+[hardware classes](../product/hardware-classes.md). Historical raw work-center
+codes and production chrome remain queue work for P12/P13/P16, with full-route
+baseline evidence preserved. New hardware controls have their own clean matrix.
+
 This page records recurring failure modes. It does **not** assert that every item is still broken. Re-test against the current ref.
 
+P13 verifica papel, CSV/DXF UTF-8, etiquetas y QR con la misma dirección física,
+callouts sin colisión y origen/destino de retazos. Imprimir no asigna códigos ni
+stock; una dirección prevista se vuelve material al completar Corte. Los planes
+históricos sin esa dirección requieren reoptimización humana. La tabla móvil
+de formatos expone la fuente completa: el control de desborde de página por sí
+solo no detectaba un recorte dentro del contenedor. Véase
+[corte y etiquetas](../product/cut-documents.md) y su aceptación P13.
+
 ## Editor/domain semantics
+
+P05 verifies shared DIN primitives, declared travel, exact arch crowns and
+dimension gutters across editor/PDF/portal. Legacy travel stays inferred;
+rail order remains a declared drawing convention. DEV assemblies without
+coupler authority cannot authorize manufacture. See
+[opening drawings](../product/opening-drawings.md).
 
 - sliders rendered as opening outward;
 - slider/casement categories insufficiently separated;
@@ -47,6 +88,17 @@ This page records recurring failure modes. It does **not** assert that every ite
 - technical UNKNOWN silently converted into default values;
 - imported profile sections with unverified scale/origin/orientation.
 
+D01 adds family guards, exact cut/refinement rules, reviewed import tokens and
+append-only publication/retraction history. Its upgrade gate checks old DEMO
+products without changing issued authority. Remaining boundaries: scanned images
+were pending a verified multimodal route at D01. IA3 later verified real MiMo
+vision and bounded literal/mixed/scanned PDF transport. Its first all-text
+multipart probe lost content at the compatible gateway; the corrected wire uses
+one consolidated text. Literal-evidence and human-review
+gates remain. Catalog data stays synthetic until a supplier source is reviewed.
+See [the authority page](../product/catalog-authority.md) and
+[provider evidence](../product/ai-provider.md).
+
 ## Pricing/quotation
 
 - preview mutating persisted state;
@@ -75,6 +127,22 @@ This page records recurring failure modes. It does **not** assert that every ite
 
 ## Manufacturing
 
+D07 liga la confirmación al diseño y a todos sus marcos; una generación o
+timestamp anterior, un actor falsificado o una posición de otro proyecto se
+rechazan. Una rectificación después de aprobación exige sucesora, Δ de venta
+y confirmación nueva. Los snapshots históricos sin la marca de obligatoriedad
+conservan su contrato; las emisiones nuevas no liberan OT pendiente. El borrado
+de una posición en borrador conserva su historial inmutable. Las reglas DEMO
+no acreditan tolerancias ni montaje reales; deben declararse con fuente por
+serie en Ajustes. Véase [vano y montaje](../product/opening-measurements.md).
+
+D03 preserves the R05 structural gate on a tall door with fixed sidelight.
+DEMO hardware and a fictional load input do not supply certified inertia or
+wind engineering. Never remove the gate to turn an incomplete fixture into a
+production order. The legacy upgrade, paired half-cent precision, handle ranges,
+catalog retirement and tenant-scoped inspector read have dedicated regressions.
+See [physical openings](../product/physical-openings.md).
+
 - released product with incomplete authority;
 - BOM and visual product diverging;
 - inventory shortage not blocking/flagging correctly;
@@ -83,6 +151,13 @@ This page records recurring failure modes. It does **not** assert that every ite
 - remake losing traceability.
 
 ## CNC
+
+P14 separa la autoridad física estricta de la lectura histórica: sección y
+montaje sellados, X desde el origen inicial, tramo completo frente a mordazas,
+comparación/confirmación y auditoría inmutable. Los recorridos verifican
+intercambio neutro sintético, sin acreditarlo como formato ejecutable ni
+validación industrial. Las declaraciones sin emisor o patrón siguen pendientes.
+Véase [autoridad CNC](../product/cnc-authority.md) y su aceptación.
 
 Treat all CNC capability as high-risk until validated against known machine fixtures.
 

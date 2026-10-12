@@ -119,6 +119,11 @@ it("expands to list imports and confirms marked candidates into positions", asyn
 
   // Wait for the system + glass picks to resolve before confirming.
   await waitFor(() => expect(screen.getByDisplayValue("Demo 60")).toBeTruthy());
+  await waitFor(() =>
+    expect(
+      screen.getByRole("combobox", { name: new RegExp(t("projects.importsGlass")) }),
+    ).toHaveValue("4-12-4 Float Incoloro"),
+  );
 
   fireEvent.click(screen.getByRole("button", { name: t("projects.importsConfirm") }));
   await waitFor(() => expect(vi.mocked(projectImportConfirm)).toHaveBeenCalledTimes(1));

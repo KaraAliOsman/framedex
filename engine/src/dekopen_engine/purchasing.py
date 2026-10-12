@@ -20,7 +20,7 @@ from dekopen_engine.cutting import (
 )
 from dekopen_engine.documentary_canonical import documentary_sha256_v1
 from dekopen_engine.manufacturing import ManufacturingFactsV1
-from dekopen_engine.models import EngineModel, HardwareComponent
+from dekopen_engine.models import EngineModel, FittingPiece, HardwareComponent
 
 
 class PurchaseAuthorityError(ValueError):
@@ -145,6 +145,21 @@ class FittingSelectionV1(EngineModel):
     quantity: int = Field(ge=1)
 
 
+def fitting_selections_v1(pieces: Sequence[FittingPiece], quantity: int) -> list[FittingSelectionV1]:
+    """Consolidate cut-group quantities without losing bay/leaf trace.
+
+    The BOM may declare screws for separate lengths of the same member role.
+    Purchasing has one counted source per (bay, leaf, SKU, kind, repetition).
+    """
+    grouped: dict[tuple[str | None, str | None, str, str], int] = {}
+    for piece in pieces:
+        key = (piece.bay_id, piece.leaf_id, piece.sku, piece.kind)
+        grouped[key] = grouped.get(key, 0) + piece.qty
+    return [FittingSelectionV1(repetition_index=repetition, bay_id=key[0],
+        leaf_id=key[1], technical_sku=key[2], kind=key[3], quantity=count)
+        for repetition in range(1, quantity + 1) for key, count in grouped.items()]
+
+
 class AccessoryLineV1(EngineModel):
     obligation_id: str
     obligation_kind: Literal[
@@ -178,6 +193,7 @@ class AccessoryScheduleV1(EngineModel):
 
 
 class PositionPurchaseInputV1(EngineModel):
+    reinforcement_color: str | None = None
     schema_version: Literal[1] = 1
     position_id: str
     position_index: int = Field(ge=1)
@@ -543,7 +559,7 @@ def project_purchase_requirements_v1(
                     source_kind=PhysicalSourceKind.REINFORCEMENT,
                     workshop_sku=reinforcement.workshop_sku,
                     material=CutMaterial.STEEL,
-                    color=position.color,
+                    color=position.reinforcement_color or position.color,
                     length_mm=reinforcement.cut_length_mm,
                     position_id=position.position_id,
                     bay_id=parent.bay_id,
@@ -598,6 +614,24 @@ def project_purchase_requirements_v1(
         for hardware in sorted(position.hardware, key=lambda item: (
             item.repetition_index, item.bay_id, item.leaf_id or "", item.technical_kit_sku
         )):
+            if hardware.contents and all(component.purchasing_sku is not None for component in hardware.contents):
+                for component in hardware.contents:
+                    if component.qty != component.qty.to_integral_value() or not component.manufacturer_name or not component.source:
+                        raise PurchaseAuthorityError("El componente requiere cantidad entera y autoridad de compra.")
+                    source_id = documentary_sha256_v1({"kind": "hardware_component",
+                        "position_id": position.position_id, "repetition_index": hardware.repetition_index,
+                        "bay_id": hardware.bay_id, "leaf_id": hardware.leaf_id,
+                        "kit_sku": hardware.technical_kit_sku, "component": component.model_dump(mode="python")})
+                    assert component.purchasing_sku is not None
+                    drafts.append(_RequirementDraft(order_type=SupplierOrderType.HARDWARE,
+                        category="FITTING", authority_ids=[component.source], technical_skus=[component.sku],
+                        purchasing_sku=component.purchasing_sku, manufacturer_name=component.manufacturer_name,
+                        unit="EA", quantity=int(component.qty)*hardware.quantity,
+                        oriented_height_mm=component.cut_length_mm, description=component.name,
+                        source_trace=[source_id]))
+                    non_accessory_technical.add(component.sku)
+                    non_accessory_purchasing.add(component.purchasing_sku)
+                continue
             mapping = _one_mapping(
                 hardware_mappings, hardware.technical_kit_sku, position.system_id, "Hardware kit"
             )

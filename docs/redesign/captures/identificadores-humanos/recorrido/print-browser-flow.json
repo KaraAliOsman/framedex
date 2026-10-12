@@ -1,0 +1,21 @@
+{
+  "result": "PASS",
+  "records": [
+    {
+      "name": "retazo-impreso-light",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "retazo-impreso-dark",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    }
+  ]
+}

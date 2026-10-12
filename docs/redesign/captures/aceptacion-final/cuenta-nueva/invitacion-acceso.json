@@ -1,0 +1,14 @@
+[
+  {
+    "case": "Invitación humana, outbox cifrada y correo SMTP sandbox a Mailpit",
+    "result": "PASA"
+  },
+  {
+    "case": "Correo nuevo se verifica con enlace de acceso y acepta el rol antes de crear membresía",
+    "result": "PASA"
+  },
+  {
+    "case": "Estimador sin administración de usuarios; desactivar revoca la siguiente petición",
+    "result": "PASA"
+  }
+]

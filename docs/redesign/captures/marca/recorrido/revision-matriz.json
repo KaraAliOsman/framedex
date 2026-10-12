@@ -1,0 +1,178 @@
+[
+  {
+    "width": 1440,
+    "theme": "light",
+    "state": "PDF pendiente",
+    "result": "PASA",
+    "source": "Respuesta sin metadata controlada; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1561,
+    "page_width_after": 1561
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "state": "PDF revisable",
+    "result": "PASA",
+    "source": "Datos y enlace reales; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1561,
+    "page_width_after": 1561
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "state": "PDF pendiente",
+    "result": "PASA",
+    "source": "Respuesta sin metadata controlada; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1561,
+    "page_width_after": 1561
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "state": "PDF revisable",
+    "result": "PASA",
+    "source": "Datos y enlace reales; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1561,
+    "page_width_after": 1561
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "state": "PDF pendiente",
+    "result": "PASA",
+    "source": "Respuesta sin metadata controlada; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1473,
+    "page_width_after": 1473
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "state": "PDF revisable",
+    "result": "PASA",
+    "source": "Datos y enlace reales; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1473,
+    "page_width_after": 1473
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "state": "PDF pendiente",
+    "result": "PASA",
+    "source": "Respuesta sin metadata controlada; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1473,
+    "page_width_after": 1473
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "state": "PDF revisable",
+    "result": "PASA",
+    "source": "Datos y enlace reales; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1473,
+    "page_width_after": 1473
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "state": "PDF pendiente",
+    "result": "PASA",
+    "source": "Respuesta sin metadata controlada; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1024,
+    "page_width_after": 1024
+  },
+  {
+    "width": 1024,
+    "theme": "light",
+    "state": "PDF revisable",
+    "result": "PASA",
+    "source": "Datos y enlace reales; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1024,
+    "page_width_after": 1024
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "state": "PDF pendiente",
+    "result": "PASA",
+    "source": "Respuesta sin metadata controlada; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1024,
+    "page_width_after": 1024
+  },
+  {
+    "width": 1024,
+    "theme": "dark",
+    "state": "PDF revisable",
+    "result": "PASA",
+    "source": "Datos y enlace reales; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 1024,
+    "page_width_after": 1024
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "state": "PDF pendiente",
+    "result": "PASA",
+    "source": "Respuesta sin metadata controlada; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 390,
+    "page_width_after": 390
+  },
+  {
+    "width": 390,
+    "theme": "light",
+    "state": "PDF revisable",
+    "result": "PASA",
+    "source": "Datos y enlace reales; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 390,
+    "page_width_after": 390
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "state": "PDF pendiente",
+    "result": "PASA",
+    "source": "Respuesta sin metadata controlada; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 390,
+    "page_width_after": 390
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "state": "PDF revisable",
+    "result": "PASA",
+    "source": "Datos y enlace reales; no envía",
+    "findings": [],
+    "overflow": false,
+    "page_width_before": 390,
+    "page_width_after": 390
+  }
+]

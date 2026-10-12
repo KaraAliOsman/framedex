@@ -14,6 +14,9 @@ export interface OrderResponse {
   order_code: string;
   order_type: OrderTypeEnum;
   status: OrderStatusEnum;
+  /** @nullable */
+  net_amount?: string | null;
+  currency?: string;
   supplier_name: string;
   /** @pattern ^[0-9a-f]{64}$ */
   order_snapshot_hash: string;

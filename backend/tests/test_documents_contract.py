@@ -53,7 +53,7 @@ def revision_snapshot() -> dict[str, object]:
                 "bay_id": "B1",
                 "leaf_id": None,
                 "bottom_drain_holes_mm": ["100.00", "500.00", "900.00"],
-                "closing_points_perimeter_mm": ["150.00"],
+                "closing_points_perimeter_mm": ["150"],
                 "continuous_width_mm": "1000.00",
                 "finish_class": "WHITE",
                 "has_coupler": False,
@@ -268,27 +268,34 @@ def test_client_document_escapes_input_and_never_contains_raw_cost() -> None:
     html = _doc01(revision_snapshot())
     assert "Cliente &lt;Seguro&gt;" in html
     assert "60000.00" not in html
-    assert "$\u00a0119.000" in html
+    assert "$119.000" in html
 
 
 def test_client_quote_includes_deterministic_opening_drawings() -> None:
     html = _doc01(revision_snapshot())
-    assert "<svg" in html and 'viewBox="0 0 1000 1200"' in html
+    assert "<svg" in html and "Vista interior" in html
+    from decimal import Decimal
+    import re
+    boxes = re.findall(r'viewBox="([^"]+)"', html)
+    assert any(Decimal(box.split()[2]) > 1000 and Decimal(box.split()[3]) > 1200
+               and Decimal(box.split()[0]) < 0 and Decimal(box.split()[1]) < 0 for box in boxes)
+    assert '<rect x="0" y="0" width="1000" height="1200"' in html
+    assert '1\u2009000' in html and '1\u2009200' in html
     sliding = revision_snapshot()
     sliding["positions"][0]["parametric_tree"] = {  # type: ignore[index]
         "id": "B1", "type": "BAY", "opening_type": "SLIDING_2L",
         "glass_spec": "4-12-4 Float Incoloro", "children": [],
     }
     sliding_html = _doc01(sliding)
-    # Card-scoped marker ids (the hero re-draws the same position) — each
-    # sliding panel still emits exactly one arrow in its product card.
-    assert sliding_html.count('marker-end="url(#arrow-1-c1)"') == 2
+    # Each leaf declares its own opposing travel, without SVG marker lookup.
+    assert sliding_html.count('data-symbol="slide_left_head"') == 1
+    assert sliding_html.count('data-symbol="slide_right_head"') == 1
     assert _doc01(sliding) == sliding_html
 
 
 def test_client_quote_renders_door_openings() -> None:
-    """DOOR_ENTRY/DOOR_DOUBLE leaves draw a dashed swing arc — a door in the
-    project must never 500 the customer quote."""
+    """Doors use DIN elevation triangles; swing arcs belong in plan only."""
+    import re
     for opening in ("DOOR_ENTRY", "DOOR_DOUBLE"):
         snapshot = revision_snapshot()
         snapshot["positions"][0]["parametric_tree"] = {  # type: ignore[index]
@@ -298,7 +305,9 @@ def test_client_quote_renders_door_openings() -> None:
         }
         html = _doc01(snapshot)
         assert "<svg" in html
-        assert "stroke-dasharray" in html
+        assert 'data-symbol="turn_left"' in html
+        assert 'stroke-dasharray' not in html
+        assert not re.search(r'd="[^"]*A ', html)
 
 
 def test_client_quote_renders_discount_fraction_as_percent() -> None:
@@ -308,8 +317,7 @@ def test_client_quote_renders_discount_fraction_as_percent() -> None:
     snapshot["positions"][0]["discount_pct"] = "0.10"  # type: ignore[index]
     snapshot["positions"][0]["price_net"] = "119000"  # type: ignore[index]
     html = _doc01(snapshot)
-    assert "-10%" in html
-    assert "descuento del 10%" in html
+    assert "descuento del 10,0 %" in html
     assert "0.1 %" not in html and "0.1%" not in html
 
 
@@ -340,7 +348,13 @@ def test_client_quote_draws_stacked_assembly_as_a_column() -> None:
         },
     }
     html = _doc01(snapshot)
-    assert 'viewBox="0 0 1000 2600"' in html
+    from decimal import Decimal
+    import re
+    boxes = re.findall(r'viewBox="([^"]+)"', html)
+    assert any(Decimal(box.split()[2]) > 1000 and Decimal(box.split()[3]) > 2600
+               and Decimal(box.split()[0]) < 0 and Decimal(box.split()[1]) < 0 for box in boxes)
+    assert '<rect x="0" y="400" width="1000" height="2200"' in html
+    assert '<rect x="0" y="0" width="1000" height="400"' in html
     # The transom sill sits at 2200 mm elevation → svg y = 2600 − 2200 = 400.
     assert 'x1="0" y1="400" x2="1000" y2="400"' in html
 
@@ -383,8 +397,8 @@ def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None
             "leaf_id": "L1",
             "handle_domain_slot": "PRIMARY",
             "host_member_id": "9" * 64,
-            "point": {"x_mm": "60.00", "y_mm": "1050.00"},
-            "requested_height_mm": "1050.00",
+            "point": {"x_mm": "60.00", "y_mm": "1050"},
+            "requested_height_mm": "1050",
             "vertical_reference": "OUTER_BOTTOM",
         }],
         "relationships": [
@@ -394,27 +408,27 @@ def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None
         ],
     }]
     html = _doc03(snapshot)
-    assert "100.00, 500.00, 900.00" in html
-    assert "150.00" in html
+    assert "100, 500, 900" in html
+    assert "150" in html
     assert "Matriz de ensamble" in html
     assert "BELONGS_TO_LEAF" in html and "REINFORCES" in html
     # heterogeneous endpoints resolve to the printed physical piece codes —
     # P{position}-U{unit}-{kind}{seq} — not raw ids nor bare spec letters
-    assert "P01-U01-M01" in html and "P01-U01-M02·R" in html
+    assert "P01-U01-M01" in html and "P01-U01-M02-R" in html
     assert "P01-U01-I01" in html and "P01-U01-MAN01" in html
     matrix = html.split("Matriz de ensamble", 1)[1]
     assert "a" * 64 not in matrix and "b" * 64 not in matrix
     assert "c" * 64 not in matrix and "e" * 64 not in matrix
-    assert "1050.00" in html
+    assert "1050" in html
     assert "<svg" in html
 
 
 def test_qc_is_blank_and_cost_report_uses_frozen_not_recorded_authority() -> None:
     qc = _doc06(revision_snapshot())
-    assert "Diferencia ≤ 1.50 mm" in qc
+    assert "Diferencia ≤ 1,5 mm" in qc
     assert "________________" in qc
     cost = _doc07(revision_snapshot())
-    assert "$\u00a060.000" in cost
+    assert "$60.000" in cost
     assert "NO REGISTRADA" in cost
     assert "valor: —" in cost
     invalid = {**revision_snapshot(), "realized_waste": {"status": "RECORDED", "value": "0"}}
@@ -430,6 +444,33 @@ def test_pdf_producer_emits_concrete_file_with_distinct_hash(monkeypatch: pytest
     assert content.startswith(b"%PDF-")
     assert media_type == "application/pdf"
     assert file_sha256(content) not in {"a" * 64, "b" * 64}
+
+
+@pytest.mark.parametrize("demo", [False, True])
+def test_demo_warning_uses_only_frozen_document_authority(monkeypatch, demo):
+    html_sources = []
+
+    class RecordedHTML:
+        def __init__(self, *, string, url_fetcher):
+            html_sources.append(string)
+
+        def write_pdf(self, **kwargs):
+            return b"%PDF-recorded"
+
+    monkeypatch.setattr("weasyprint.HTML", RecordedHTML)
+    snapshot = revision_snapshot()
+    snapshot["positions"][0]["is_demo"] = demo
+    render_pdf_document("DOC-01", snapshot, pdf_identifier="c" * 64)
+    order = order_snapshot("SUPPLIER_GLASS_PO")
+    order["is_demo"] = demo
+    render_pdf_document("DOC-02", order, pdf_identifier="d" * 64)
+    assert all(("<strong>DEMO</strong>" in source) is demo for source in html_sources)
+    content, _ = render_order_xlsx("DOC-02", order)
+    book = load_workbook(BytesIO(content), read_only=True, data_only=False)
+    try:
+        assert any(cell.value == "DEMO" for sheet in book for row in sheet for cell in row) is demo
+    finally:
+        book.close()
 
 
 def test_xlsx_is_deterministic_exact_text_and_no_formula_authority(

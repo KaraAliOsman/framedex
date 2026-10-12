@@ -157,6 +157,11 @@ def retry(
         raise JobServiceError("job_type_unknown")
     if role not in spec.roles:
         raise JobServiceError("job_permission_denied")
+    if job["type"] == "ai.agent.run":
+        # Resuming an AI conversation must use its owner-bound lifecycle
+        # endpoint; requeueing the worker payload would leave ai_jobs settled
+        # or replay a conversation belonging to another actor.
+        raise JobServiceError("job_permission_denied")
     payload = job.get("payload")
     if not isinstance(payload, dict):
         payload = {}

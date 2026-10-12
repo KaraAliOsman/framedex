@@ -57,7 +57,14 @@ ERRORS = {
 # Contract codes raised without a public_detail get a Spanish action-oriented
 # message here — the generic fallback reads like a crash, not a diagnosis.
 DOCUMENTARY_ERROR_DETAILS = {
+    "cnc_authority_stale": "La autoridad cambió mientras revisabas. Actualiza máquinas y herramientas y prepara el cambio otra vez.",
+    "cnc_profile_setup_invalid": "El montaje del perfil necesita sección sellada, orientación de carga, origen inicial y fuente técnica.",
+    "cnc_preview_required": "Revisa la vista previa y confirma los archivos antes de generar.",
+    "cnc_preview_stale": "El plan, la máquina o el historial cambió. Revisa una vista previa nueva.",
+    "cnc_machine_axis_invalid": "Declara ejes válidos de la máquina.",
+    "cnc_numeric_invalid": "Escribe una medida decimal válida, sin infinito ni texto.",
     "version_not_releasable": "La versión no está lista para liberar a producción.",
+    "production_measurements_unconfirmed": "Las medidas selladas no están confirmadas. Rectifica y confirma cada marco en una nueva revisión antes de liberar a producción.",
     "version_superseded": "La versión fue reemplazada por una revisión más reciente.",
     "production_process_unresolved": (
         "No hay autoridad de proceso para esta orden: vincula un perfil de proceso al sistema."
@@ -161,11 +168,12 @@ def public_documentary_errors():
             "supplier_eligibility_not_found",
             "purchase_projection_not_found",
             "version_not_found",
+            "quotation_preview_not_found",
         ):
             status_code = 404
         elif error.code == "document_access_denied":
             status_code = 403
-        elif error.code == "documentary_freeze_confirmation_required":
+        elif error.code in ("documentary_freeze_confirmation_required", "quotation_preview_stale", "quotation_preview_expired"):
             status_code = 409
         else:
             status_code = 422
@@ -259,8 +267,10 @@ def _freeze_attempt(token, claims, organization_header, project_id, data):
         with connection.cursor() as cursor:
             cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
             cursor.execute(
-                "SELECT set_config('request.jwt.claims',%s,true)",
-                [json.dumps(claims, separators=(",", ":"), sort_keys=True)],
+                "SELECT set_config('request.jwt.claims',%s,true), "
+                "set_config('request.jwt.claim.sub',%s,true)",
+                [json.dumps(claims, separators=(",", ":"), sort_keys=True),
+                 str(claims.get('sub') or '')],
             )
             cursor.execute("SET LOCAL ROLE authenticated")
         tenant = resolve_tenant_context(

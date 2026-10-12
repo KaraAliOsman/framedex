@@ -1,18 +1,24 @@
-import { type PropsWithChildren, type ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, useEffect, useState } from "react";
 
 import { t } from "../i18n/es-CL";
+import { Button } from "./Controls";
+import { DimLoader } from "./Signature";
+import { EmptyIllustration, type EmptyIllustrationKind } from "./EmptyIllustration";
 
 export function EmptyState({
   title,
   body,
   action,
+  kind = "sheet",
 }: {
   title: string;
   body?: string;
   action?: ReactNode;
+  kind?: EmptyIllustrationKind;
 }): JSX.Element {
   return (
     <div className="ui-empty">
+      <EmptyIllustration kind={kind} />
       <p className="ui-empty__title">{title}</p>
       {body ? <p className="ui-empty__body">{body}</p> : null}
       {action ? <div className="ui-empty__action">{action}</div> : null}
@@ -24,20 +30,34 @@ export function ErrorState({
   title,
   body,
   onRetry,
+  technical,
+  titleAs: Title = "p",
 }: {
   title?: string;
   body?: string;
   onRetry?: () => void;
+  technical?: string;
+  titleAs?: "p" | "h1" | "h2" | "h3";
 }): JSX.Element {
   return (
     <div className="ui-empty ui-empty--error" role="alert">
-      <p className="ui-empty__title">{title ?? t("ui.errorTitle")}</p>
+      <Title className="ui-empty__title">{title ?? t("ui.errorTitle")}</Title>
       {body ? <p className="ui-empty__body">{body}</p> : null}
+      <p className="ui-empty__body">
+        Revisa la conexión y los datos. Si continúa, comparte los detalles con el dueño de la
+        organización.
+      </p>
+      {technical ? (
+        <details className="ui-tech">
+          <summary>Detalles técnicos</summary>
+          <pre>{technical}</pre>
+        </details>
+      ) : null}
       {onRetry ? (
         <div className="ui-empty__action">
-          <button className="ui-button--primary" onClick={onRetry} type="button">
+          <Button variant="primary" onClick={onRetry}>
             {t("ui.retry")}
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>
@@ -73,6 +93,43 @@ export function Skeleton({ lines = 3 }: { lines?: number }): JSX.Element {
       {Array.from({ length: lines }, (_, index) => (
         <span className="ui-skeleton__line" key={index} style={{ width: `${88 - index * 14}%` }} />
       ))}
+    </div>
+  );
+}
+
+export function LoadingState({
+  label = "Cargando los datos",
+  shape,
+}: {
+  label?: string;
+  shape?: ReactNode;
+}): JSX.Element {
+  const [long, setLong] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setLong(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+  return (
+    <div className="ui-loading-state" aria-busy="true" aria-label={label} role="status">
+      {shape ?? <Skeleton />}
+      {long ? <DimLoader label={label} /> : null}
+      <span className="ui-visually-hidden">{label}</span>
+    </div>
+  );
+}
+
+export function BlockedState({
+  reason,
+  action,
+}: {
+  reason: string;
+  action: ReactNode;
+}): JSX.Element {
+  return (
+    <div className="ui-empty ui-empty--blocked" role="status">
+      <p className="ui-empty__title">Falta un requisito para continuar</p>
+      <p className="ui-empty__body">{reason}</p>
+      <div className="ui-empty__action">{action}</div>
     </div>
   );
 }

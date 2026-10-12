@@ -195,7 +195,7 @@ def pieces_from_result(
         key = "PROFILE:" + cut.model_dump_json(exclude={"qty"})
         piece = CutPiece(
             piece_id=sha256(key.encode("utf-8")).hexdigest(), source_kind="PROFILE",
-            workshop_sku=cut.sku, material=CutMaterial(cut.material.value), color=color,
+            workshop_sku=cut.sku, material=CutMaterial(cut.material.value), color=cut.stock_color or color,
             length_mm=cut.length_mm, source_position_id=source_position_id,
             bay_id=cut.bay_id, leaf_id=cut.leaf_id, role=cut.role.value, unit_index=1,
             angle_left=cut.angle_left, angle_right=cut.angle_right,
@@ -219,7 +219,8 @@ def pieces_from_result(
         key = "REINFORCEMENT:" + steel.model_dump_json(exclude={"qty"})
         piece = CutPiece(
             piece_id=sha256(key.encode("utf-8")).hexdigest(), source_kind="REINFORCEMENT",
-            workshop_sku=sku, material=CutMaterial.STEEL, color=color,
+            workshop_sku=sku, material=CutMaterial.STEEL,
+            color=result.finish.combination.reinforcement_stock_code if result.finish else color,
             length_mm=steel.length_mm, source_position_id=source_position_id,
             bay_id=steel.bay_id, leaf_id=steel.leaf_id, role=steel.role.value, unit_index=1,
             angle_left=Decimal(angles[0]) if angles else None,

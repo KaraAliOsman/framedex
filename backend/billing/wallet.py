@@ -30,7 +30,9 @@ def financial_transaction(org: UUID):
 
 
 def locked_org(org):
-    return one('SELECT * FROM public.tenancy_organizations WHERE id=%s FOR UPDATE', [org])
+    # Serialize balance changes without blocking independent metadata rows
+    # that reference this immutable organization key during an agent round.
+    return one('SELECT * FROM public.tenancy_organizations WHERE id=%s FOR NO KEY UPDATE', [org])
 
 
 def append(org, amount, action, key, reference=None, expires=None):

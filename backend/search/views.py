@@ -11,7 +11,7 @@ from documents.views import ERRORS, documentary_scope
 from search import service
 from search.serializers import SearchResponseSerializer
 
-_READERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER")
+_READERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER", "OPERATOR")
 
 
 class GlobalSearchView(APIView):

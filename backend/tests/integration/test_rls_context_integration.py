@@ -9,6 +9,7 @@ import json
 import os
 import secrets
 import base64
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 from django.conf import settings
@@ -20,7 +21,7 @@ from rest_framework.test import APIClient
 
 from ai_gateway.context import REQUIRED_REFS, build_context
 from authentication.jwt_verifier import AuthServerTokenVerifier
-from authentication.rls import authenticated_rls_context
+from authentication.rls import authenticated_rls_context, worker_claims
 from authentication.tenancy import MembershipRepository, resolve_tenant_context
 from authentication.types import VerifiedSupabaseToken
 from backend.tests.test_engine_api import g1_request, g4_request
@@ -84,9 +85,8 @@ def real_rows(django_db_blocker: DjangoDbBlocker) -> Iterator[RLSFixtures]:
                     cursor.execute(
                         "INSERT INTO public.profile_systems "
                         "(id, org_id, name, code, depth_mm, is_global, is_active, "
-                        "sliding_glazing_deduction_width_mm, sliding_glazing_deduction_height_mm, "
-                        "door_leaf_side_clearance_mm) "
-                        "VALUES (%s, %s, %s, %s, 60.00, FALSE, TRUE, 20.00, 20.00, 7.00)",
+                        "system_family, door_leaf_side_clearance_mm) "
+                        "VALUES (%s, %s, %s, %s, 60.00, FALSE, TRUE, 'CASEMENT', 7.00)",
                         [systems[name], org_id, f"System {name}", f"RLS_{name}"],
                     )
                     cursor.execute(
@@ -117,11 +117,13 @@ def real_rows(django_db_blocker: DjangoDbBlocker) -> Iterator[RLSFixtures]:
                         [organizations[org], tokens[user].user_id, active],
                     )
                 cursor.execute(
-                    "SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'"
+                    "SELECT id FROM public.profile_systems WHERE code = 'DEMO_60' AND version=1"
                 )
                 demo_system = cursor.fetchone()[0]
                 cursor.execute(
-                    "SELECT code, id FROM public.profile_systems WHERE is_global = TRUE"
+                    "SELECT code, id FROM public.profile_systems WHERE is_global = TRUE "
+                    "AND NOT legacy_authority AND is_active AND system_family IS NOT NULL"
+                    " ORDER BY code,version,id"
                 )
                 global_systems = {code: row_id for code, row_id in cursor.fetchall()}
             yield RLSFixtures(
@@ -172,6 +174,98 @@ def test_verified_claims_auth_uid_and_role_then_commit_cleanup(real_rows: RLSFix
         assert user_id == token.user_id
         assert role == "authenticated"
         assert json.loads(claims) == token.claims
+    assert_no_context()
+
+
+@pytest.mark.parametrize('context_kind', ['request', 'worker'])
+def test_verified_identity_overrides_and_restores_stale_individual_claim(
+    real_rows: RLSFixtures, context_kind: str
+) -> None:
+    """A previous identity must not override a newly verified JWT on a reused connection."""
+    current = real_rows.tokens['A']
+    stale = real_rows.tokens['B']
+    with transaction.atomic():
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT set_config('request.jwt.claim.sub',%s,true)", [str(stale.user_id)])
+        context = authenticated_rls_context if context_kind == 'request' else worker_claims
+        with context(current.claims):
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT auth.uid(), auth.jwt()->>\'sub\'')
+                uid, subject = cursor.fetchone()
+            assert uid == current.user_id and subject == str(current.user_id)
+            memberships = MembershipRepository().list_active_for_user(current.user_id)
+            assert {item.organization_id for item in memberships} == {real_rows.organizations['A']}
+            assert MembershipRepository().list_active_for_user(stale.user_id) == ()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT current_setting('request.jwt.claim.sub',true)")
+            assert cursor.fetchone()[0] == str(stale.user_id)
+        transaction.set_rollback(True)
+    # Worker settings are session-local; release the test's connection rather
+    # than leaving its synthetic previous identity on the shared pool.
+    connection.close()
+    assert_no_context()
+
+
+def test_nested_verified_identities_restore_individual_and_json_claims(real_rows: RLSFixtures) -> None:
+    first, second = real_rows.tokens['A'], real_rows.tokens['B']
+    with authenticated_rls_context(first.claims):
+        with authenticated_rls_context(second.claims):
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT auth.uid(), auth.jwt()->>\'sub\'')
+                assert cursor.fetchone() == (second.user_id, str(second.user_id))
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT auth.uid(), auth.jwt()->>\'sub\'')
+            assert cursor.fetchone() == (first.user_id, str(first.user_id))
+    assert_no_context()
+
+
+@pytest.mark.parametrize('boundary', ['price', 'freeze', 'preview', 'issue'])
+def test_repeatable_read_boundary_pins_verified_individual_claim(
+    real_rows: RLSFixtures, monkeypatch: pytest.MonkeyPatch, boundary: str,
+) -> None:
+    """Special outermost transactions must ignore an older session's subject."""
+    from documents import issuance_views, views as documentary_views
+    from pricing import views as pricing_views
+
+    current, stale = real_rows.tokens['A'], real_rows.tokens['B']
+    org = real_rows.organizations['A']
+    seen = []
+
+    def observe(*args, **kwargs):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT current_setting('request.jwt.claim.sub',true)::uuid, "
+                "current_setting('request.jwt.claims',true)::jsonb->>'sub'"
+            )
+            seen.append(cursor.fetchone())
+        return {'project_id': str(org)}
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT set_config('request.jwt.claim.sub',%s,false)", [str(stale.user_id)])
+    try:
+        if boundary == 'price':
+            pricing_views._preview_attempt(current, current.claims, str(org), {}, service=observe)
+        elif boundary == 'freeze':
+            monkeypatch.setattr(documentary_views, 'freeze_revision_a', observe)
+            documentary_views._freeze_attempt(
+                current, current.claims, str(org), uuid4(),
+                {'pricing_operation_id': uuid4(), 'confirmed': True},
+            )
+        else:
+            monkeypatch.setattr(issuance_views, 'verified_request_token', lambda _: current)
+            monkeypatch.setattr(issuance_views.issuance, 'prepare_preview', observe)
+            monkeypatch.setattr(issuance_views.issuance, 'issue_preview', observe)
+            issuance_views.guided_with_retry(
+                request=SimpleNamespace(headers={'X-Organization-ID': str(org)}),
+                project_id=uuid4(), data={'pricing_operation_id': uuid4()},
+                issuing=boundary == 'issue',
+            )
+        assert seen == [(current.user_id, str(current.user_id))]
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT current_setting('request.jwt.claim.sub',true)")
+            assert cursor.fetchone()[0] == str(stale.user_id)
+    finally:
+        connection.close()
     assert_no_context()
 
 
@@ -368,10 +462,11 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
     systems = response.json()["systems"]
     demo = next(system for system in systems if system["code"] == "DEMO_60")
     assert demo == {
-        "id": str(real_rows.demo_system),
+        "id": str(real_rows.global_systems["DEMO_60"]),
         "code": "DEMO_60",
-        "name": "Sistema Demo 60mm PVC — referencia sintética",
+        "name": "PVC practicable 60 mm · acoples v7 · DEMO",
         "is_demo": True,
+        "system_family": "CASEMENT",
         "quote_ready": True,
         "readiness_reasons": [],
     }
@@ -380,7 +475,7 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
         str(real_rows.systems[tenant]),
     }
     assert all(set(system) == {
-        "id", "code", "name", "is_demo", "quote_ready", "readiness_reasons",
+        "id", "code", "name", "is_demo", "quote_ready", "readiness_reasons", "system_family",
     } for system in systems)
     own = next(system for system in systems if system["id"] == str(real_rows.systems[tenant]))
     assert own["quote_ready"] is False
@@ -427,12 +522,21 @@ def test_shot06_all_28_catalog_fields_reach_typed_engine(real_rows: RLSFixtures)
 
     with authenticated_rls_context(real_rows.tokens["A"].claims):
         loaded = SystemParamsRepository().load_visible(real_rows.demo_system, real_rows.organizations["A"])
-    expected = demo_60_params()
+    expected = demo_60_params().model_copy(update={"legacy_authority": True, "rail_count": 2})
     actual_fields = loaded.model_dump()
     expected_fields = expected.model_dump()
     actual_fields["available_hardware_kits"] = sorted(actual_fields["available_hardware_kits"], key=lambda k: k["sku"])
     expected_fields["available_hardware_kits"] = sorted(expected_fields["available_hardware_kits"], key=lambda k: k["sku"])
-    assert len(SystemParams.model_fields) == len(actual_fields) == 26
+    assert len(SystemParams.model_fields) == 36
+    assert len(actual_fields) == 33
+    assert loaded.finish_authority is None and loaded.finish_profile_skus == {}
+    assert not {"finish_authority", "finish_profile_skus"} & actual_fields.keys()
+    assert loaded.extra_authority is None and "extra_authority" not in actual_fields
+    assert actual_fields["opening_capabilities"] == ()
+    assert actual_fields["paired_leaf_rule"] is None
+    compatible = actual_fields.pop("compatible_opening_systems")
+    assert compatible and all(capabilities for _, capabilities in compatible)
+    expected_fields.pop("compatible_opening_systems")
     # The demo seed declares the same synthetic per-article masses the engine
     # fixture carries — mass authority must reach the typed model
     # field-for-field rather than arriving through a fallback.

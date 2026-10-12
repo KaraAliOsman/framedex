@@ -1,5 +1,6 @@
 import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
-import { SLIDING_PRESETS } from "./intentEditing";
+import { visualOpening } from "./physicalOpenings";
+import { declareSlidingTravel, SLIDING_PRESETS } from "./intentEditing";
 import {
   findNode,
   intentBays,
@@ -1204,7 +1205,11 @@ export function setModuleOpening(
       // evaluate, so it seeds the 2-leaf topology the user then edits.
       return {
         ...cleared,
-        sliding_layout: opening === "SLIDING" ? structuredClone(SLIDING_PRESETS.SLIDING_2L!) : null,
+        opening: null,
+        opening_use: null,
+        hinged_layout: null,
+        sliding_layout:
+          opening === "SLIDING" ? declareSlidingTravel(SLIDING_PRESETS.SLIDING_2L!) : null,
       };
     }
     return { ...node, children: node.children?.map(withOpening) };
@@ -1254,7 +1259,7 @@ export function modulePrimaryBay(module: ProductModuleJson): IntentNode | null {
 
 export function moduleOpening(module: ProductModuleJson): Opening {
   const bay = modulePrimaryBay(module);
-  return bay?.opening_type ?? "FIXED";
+  return bay ? visualOpening(bay) : "FIXED";
 }
 
 /** Commercial glass SKU on every bay of a module — pricing authority. */
@@ -1263,6 +1268,7 @@ export function setModuleGlass(
   moduleId: string,
   glassArticleSku: string | null,
   glassSpec?: string | null,
+  authority?: Partial<IntentNode>,
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module) return product;
@@ -1274,11 +1280,31 @@ export function setModuleGlass(
         // The article is the composition authority: pick one and its spec is
         // sealed (null spec stays null — honest MISSING, never a thickness).
         glass_spec: glassArticleSku == null ? node.glass_spec : (glassSpec ?? null),
+        // A legacy/typed SKU edit must clear a previously selected recipe;
+        // a full catalog choice declares composition and total thickness together.
+        ...(node.glass_product ? { glass_product: null } : {}),
+        ...authority,
       };
     }
     return { ...node, children: node.children?.map(withGlass) };
   }
   return replaceModule(product, moduleId, { ...module, tree: withGlass(module.tree) });
+}
+
+/** Leaf metadata edits preserve each bay's recipe and its immutable authority. */
+export function setModuleBaySpec(
+  product: ProductJson,
+  moduleId: string,
+  patch: Partial<IntentNode>,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  function update(node: IntentNode): IntentNode {
+    return node.type === "BAY"
+      ? { ...node, ...patch }
+      : { ...node, children: node.children?.map(update) };
+  }
+  return replaceModule(product, moduleId, { ...module, tree: update(module.tree) });
 }
 
 export function moduleGlassSku(module: ProductModuleJson): string | null {
@@ -1412,7 +1438,7 @@ export function splitModuleBay(
   const bay = division.bayId
     ? (intentBays(root).find((item) => item.id === division.bayId) ?? null)
     : modulePrimaryBay(module);
-  if (!bay || moduleOpening(module) === "DOOR_ENTRY") return product;
+  if (!bay || (!bay.opening && moduleOpening(module) === "DOOR_ENTRY")) return product;
   const size = division.type === "SPLIT_V" ? Number(module.width_mm) : Number(module.height_mm);
   if (!Number.isFinite(size) || size <= 0) return product;
   const region = baySpanOnAxis(root, bay.id, division.type === "SPLIT_V", size, members);
@@ -1512,8 +1538,11 @@ export function copyBaySpec(
   // Osc-izq onto an Osc-der leaf would silently break the mirrored pair.
   // A bay with no declared opening adopts the source's.
   const payload = { ...spec };
-  if (targetNode?.opening_type) {
+  if (targetNode?.opening_type || targetNode?.opening) {
     delete payload.opening_type;
+    delete payload.opening;
+    delete payload.opening_use;
+    delete payload.hinged_layout;
     delete payload.door_handedness;
     delete payload.sliding_layout;
   }

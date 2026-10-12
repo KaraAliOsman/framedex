@@ -1,0 +1,103 @@
+| ID | Ola | Estado | PR | SHA | Notas |
+|---|---|---|---|---|---|
+| P00 | 0 | mergeado | https://github.com/KaraAliOsman/framedex/pull/114 | a096f85b2e56e21eda024c1ec92a456ed9d30b03 | CI 4/4 verde; PR mergeado en integracion/v1. |
+| P01 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/117 | 023b8ba303b680ca50b6e10119ce4ee4514c9c38 | CI 4/4 verde; material v2, validación y evidencia antes/después aceptados. |
+| IA1 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/118 | 2c9bbebc1cca6df125a4e0eeae14b22b71478b9e | CI 4/4 verde; 26 casos aislados, línea base MiMo 3/26 y MOCK 0/26, 48 regresiones de oráculos. |
+| D01 | 0b | mergeado | https://github.com/KaraAliOsman/framedex/pull/119 | d8fbe5071fdb346555f7ef4df3e91160cfb5dfe0 | CI 4/4 verde; cinco series cotizables, revisión/undo, 936 pgTAP, 274 RLS, 11 E2E y 28/28 mutaciones. |
+| D02 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/120 | 407f4ffd609a2dd4536e3e3c765eb7117c69715f | CI 4/4 verde; recetas con autoridad, reglas con fuente, 12 OT y 24 etiquetas, 959 pgTAP, 280 RLS, 11 E2E y 28/28 mutaciones. |
+| D03 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/121 | 8aa84f7ec8bb15bc7ca7117811cb77e862da04bd | CI 4/4 verde; 21 aperturas, seguridad de puerta, preview/undo, 986 pgTAP, 287 RLS, 11 E2E y compatibilidad histórica exacta. |
+| D04 | D1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/122 | dc36fe8efa5829a462d1edd0fcd813bfccbe5a3f | CI 4/4 verde; clases y expansión exacta, F6/diff/undo, picking de 12 OT, 1008 pgTAP, 294 RLS, 11 E2E y upgrade histórico intacto. |
+| D05 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/123 | 94f9f5e773cfd227bca820460011ada77ce95baa | CI 4/4 verde; carta por caras y precio por modo/moneda, 1031 pgTAP, 311 RLS, 11 E2E y ocho upgrades PG16; incidente local documentado. |
+| D06 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/124 | fb9b5881d48248f51c5f05ccdc9682aacdacc0bd | CI 4/4 verde; extras/BOM/cortes, servicios y venta sellada; 1067 pgTAP, 337 RLS, 11 E2E y upgrades PG16; privacidad por tenant verificada. |
+| D07 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/125 | f85c555c3e9bb63bf1eb7a98d2ac627e867ca21d | CI 4/4 verde; vano/montaje, evidencia y Δ de rectificación; 1090 pgTAP, 362 RLS, 11 E2E y ocho upgrades PG16; seis observaciones corregidas. |
+| IA2 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/126 | 0835e3f0834e2680674458693626617a84cc19f8 | CI 4/4 verde; 50 operaciones UI/IA/API, MiMo 21/26 y E+J 19/21 (90,48 %), aplicar/recargar/deshacer; 1101 pgTAP y 380 integraciones; tres observaciones corregidas. |
+| IA3 | D2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/127 | 64bdbe9bd5bcddfddc2b616bd9e7a9720686a8fa | CI 4/4 verde; MiMo 22/26 y E+J 19/21; 6 transportes, presupuesto/rutas/trazas; 1137 pgTAP, 395 integraciones y 11 E2E; cuatro observaciones corregidas. |
+| P02 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/128 | 4f84cb0799cd3ce0a3f4fe837872a9c97d5289fb | CI 4/4 verde; OC/REC/RT y dirección física común; 646 colocaciones, QR desde píxeles, 1156 pgTAP, 403 integraciones y 11 E2E; revisión corregida. |
+| P25 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/129 | 588835689c0324b6f76f0ea474f6460c6c22f0b1 | CI 4/4 verde; marca B, primera posición y emisor sellado; PDF revisado, correo idempotente/revocado, 1173 pgTAP, 410 integraciones y 11 E2E; revisión corregida. |
+| P04 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/130 | f5dbaa92958b279471bd6adfdbc0fe3693e70538 | CI 4/4 verde; lienzo/cotas, precio por cantidad y fantasma/aplicar/deshacer; 1173 pgTAP, 418 integraciones y 17 E2E; rúbrica PASA. |
+| P05 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/131 | 52f3ee8102753727b7ba9e568ec18593b5d269d3 | CI 4/4 verde; gramática DIN/vistas/cotas comunes, 56 fixtures de paridad, 1173 pgTAP y 418 integraciones; rúbrica PASA. |
+| P09 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/132 | 97aea5dfec6e4dddcb429a48b421c7598e758a0d | CI 4/4 verde; DOC-01 sellado, 100 posiciones en 40–45 páginas, QR revocable y 44 vistas; 1186 pgTAP, 425 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
+| P07 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/133 | d8e4d899a29d9f154f8c7d37b054581132dadbb1 | CI 4/4 verde; cascada/Δ exactos, aprobación y recibos; 1.200 pgTAP, 435 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
+| P03 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/134 | 5b06ceb12457b297a8748580453695714469c6a0 | CI 4/4 verde; Hoy por consecuencia, decisiones humanas, búsqueda y destinos exactos; 1.205 pgTAP, 439 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
+| P12 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/135 | e59539d1b282fde9c928fcd9e67f970e51995cdc | CI 4/4 verde; estación privada, QR físico y QC/remake idempotente; 1.218 pgTAP, 441 integraciones, 17 E2E y diez upgrades PG16; rúbrica PASA. |
+| P17 | 1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/136 | d5500d69bbc843162a9c189805a00d8904d11264 | CI 4/4 verde; presencia privada, dibujos/Δ, aplicar/deshacer y auditoría; 1.218 pgTAP, 444 integraciones, 17 E2E y upgrades PG16; rúbrica PASA. |
+| ED1 | ED1 | mergeado | https://github.com/KaraAliOsman/framedex/pull/137 | 7c214c28f2af841f7fe21c6ecf08a0b0045b9c9d | CI 4/4 verde; 192 vistas finales sin hallazgos, cuatro personas y MiMo real; coherencia/guardas y rúbrica por superficie PASA. |
+| P06 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/138 | c01fd3fe720f71ca8acf7ef8d86510d106e73075 | CI 4/4 verde; planta/ángulos/venta por módulo, 1.231 pgTAP, 445 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
+| P08 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/139 | 9329e9e3378c58bc2bef3bd9c23d80f613379397 | CI 4/4 verde; PDF revisado/emisión A/B y recibos; 1.249 pgTAP, 455 integraciones, 19 E2E y diez upgrades PG16; rúbrica PASA. |
+| P13 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/140 | 7066f28175750fb510d9bb2c831d95d10bb52587 | CI 4/4 verde; papel/etiquetas, UTF-8 y QR comunes; 1.249 pgTAP, 467 integraciones, 19 E2E y diez upgrades PG16; rúbrica PASA. |
+| P15 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/141 | fc0c685146b330878ed6712a153f995fda22735c | CI 4/4 verde; compra/stock/RT y correo sellados; 1.269 pgTAP, 473 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
+| P11 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/142 | 55d73156ac4981fab821eb279d73399025ac6057 | CI 4/4 verde; cobranza/RC/Flow y documentos internos sellados; 1.285 pgTAP, 483 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
+| P14 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/143 | c4eb4159a45caef4bbf88fb770372a5d13993411 | CI 4/4 verde; autoridad física/intercambio y CRUD auditado; 1.299 pgTAP, 486 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
+| P16 | 2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/144 | 5a34db52c78d6a277b17a29267aaf139958655af | CI 4/4 verde; gate compartido/fuentes inmutables, MiMo PDF/foto y undo; 1.315 pgTAP, 493 integraciones, 19 E2E y upgrades PG16; rúbrica PASA. |
+| ED2 | ED2 | mergeado | https://github.com/KaraAliOsman/framedex/pull/145 | fa3731843dbfbd75d00024e95f4986a3616a8747 | CI 4/4 verde; 224 vistas finales sin hallazgos/desbordes, cuatro personas y MiMo real; guardas 69/187 → 45/139 y rúbrica por superficie PASA. |
+| P21 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/146 | 412029ac1ea688a0f5bf1d560ba9b2e99871fae6 | CI 4/4 verde; biblioteca/lote/F4 y precio aplicado, cien posiciones en 1.781,68–1.975,32 ms; 1.325 pgTAP, 502 integraciones, 19 E2E y diez upgrades PG16; rúbrica PASA. |
+| P10 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/147 | 8c8bda1c70c70fddd6f45ae0401efea03a725bb8 | CI 4/4 verde; acuerdo aditivo, solución elegida y pago recuperable; 1.350 pgTAP, 512 integraciones, 19 E2E y upgrades PG16; 40 estados, Lighthouse 81 y rúbrica PASA. |
+| P22 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/148 | e317edb9b76b4346e33aa3b60b4783b4cc2f0a99 | CI 4/4 verde; ficha/RUT/fusión, PDF vivo, MFA/invitación y moneda/FX con autoridad; 1,389 pgTAP, 535 integraciones, 19 E2E y upgrades PG16; 356 capturas verificadas sin hallazgos y rúbrica PASA. |
+| P23 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/149 | 331d2eeeec57dedd14577c4ffd5ce8079568bc44 | CI 4/4 verde; despacho/terreno/postventa, replay privado y actas selladas; 1,427 pgTAP, 553 integraciones, 19 E2E y doce upgrades PG16; 40 vistas sin hallazgos y rúbrica PASA. |
+| D08 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/150 | d6921a893fcc3b303fcd693bd934380e7227f3d0 | CI 4/4 verde; catorce recetas, cortes/BOM/kits y planta; 1.451 pgTAP, 554 integraciones, 19 E2E y trece upgrades PG16; 199 capturas verificadas y rúbrica PASA. |
+| P19 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/151 | ff210e7a439b861349d1d602c4137ebe4e65d0c8 | CI 4/4 verde; 40 tipologías, 68 poses, bicolor sellado y render común; 281 PNG y rúbrica PASA. |
+| P18 | 3 | mergeado | https://github.com/KaraAliOsman/framedex/pull/152 | d3b86003d69e29089e62463f9f80af7fd0c5dc78 | CI 4/4 verde; Uw/OGUC con áreas visibles, autoridad ligada al espécimen y anexo inmutable; 1.467 pgTAP, 558 integraciones, 19 E2E, 69 PNG y rúbrica PASA. |
+| P24 | 4 | mergeado | https://github.com/KaraAliOsman/framedex/pull/153 | ed8ef310d5dead8bb85af3ec7b938f788f96b19d | CI 4/4 verde; causas/cierre real inmutable, 1.483 pgTAP, 589 integraciones, 19 E2E y trece upgrades PG16; 76 PNG y rúbrica PASA. |
+| P20 | 5 | mergeado | https://github.com/KaraAliOsman/framedex/pull/156 | c99d25b577cc2726d28465dbab59f142c2c7cd73 | CI 4/4 verde; 14 recorridos, UX912 sin hallazgos, dominio175 y MiMo E/J 18/21; guía probada, rúbrica PASA y activación declarada. PR final a main se entrega sin merge. |
+
+Arranque completado: PR [#116](https://github.com/KaraAliOsman/framedex/pull/116), squash `739704ab8f81ded8f860d44d44adba0c33f96db4` en `integracion/v1`; cuatro checks de CI PASA. Los cuatro commits locales se trasladaron conservando el arreglo de P00 y la evidencia preparada del fixture. `main` local no se modificó.
+
+Ola 0b cerrada: P01, IA1 y D01 integrados con sus cuatro checks verdes.
+P01 deja tokens, formatos exactos, primitivas y guardas; IA1 mide MiMo 3/26 y MOCK 0/26 sin atribuir reparaciones pendientes.
+D01 separa familias y autoridades, preserva datos históricos y conecta plantilla/IA con diff, revisión, publicación y deshacer reales.
+Capturas clave: `docs/redesign/captures/sistema-diseno/`, `diagnostico-evals/` y `sistemas-catalogo/`; catálogo D01 sin hallazgos nuevos.
+Riesgos: catálogo DEMO sin certificación, escaneos sin OCR verificado y dominio D02–D07/IA2–IA3 pendientes de su propia aceptación.
+
+Frente D01–D07 integrado: familias, vidrio, aperturas, herrajes, caras, extras y montaje con autoridad versionada.
+D07 conserva mínimo/dispersión, fija fabricación con motivo y liga confirmación a todos los marcos; OT pendiente bloqueada.
+La rectificación de una aprobación abre sucesora con Δ de venta y conserva el PDF anterior byte a byte.
+Capturas clave: `docs/redesign/captures/vano-fabricacion/`; 24 comparaciones sin hallazgos nuevos y ocho regresiones visuales adicionales.
+Riesgos: datos DEMO sin certificación; IA2/IA3 y las superficies P continúan su aceptación sobre el dominio integrado.
+
+Ola D2 cerrada: D05, D06, D07, IA2 e IA3 integrados con sus cuatro checks verdes.
+Caras, extras y montaje conservan autoridad sellada; IA comparte 50 operaciones con el motor y admite proveedor real por capacidad.
+IA3 mide MiMo 22/26 y editor/proyecto 19/21; herramientas, visión y PDF literal/mixto/escaneado pasan sus oráculos reales.
+Capturas clave: `colores-acabados/`, `accesorios-extras/`, `vano-fabricacion/`, `operaciones-herramientas/` y `proveedor-real/`; sin hallazgos nuevos en el alcance de cada encargo.
+Riesgos: catálogo DEMO sin certificación, cuatro fallos de negocio de IA conservados y tarifa Sin dato hasta declararla; las superficies P continúan su aceptación.
+
+Ola 1 cerrada: P02, P25, P04, P05, P09, P07, P03, P12 y P17 integrados con CI 4/4 verde.
+Direcciones físicas, marca, lienzo DIN, precios, DOC-01, Hoy y estaciones comparten datos sellados y autoridad del motor.
+P17 conserva presencia privada, cambios Low-E exactos, dibujos/Δ y deshacer con auditoría; una edición posterior queda protegida.
+Capturas clave: `docs/redesign/captures/asistente-trabajos-orb/`, `produccion-estaciones/`, `shell-hoy/` y `doc01-v2/`.
+Riesgos: catálogo DEMO sin certificación; Uw Sin dato y superficies posteriores pendientes; ED1 revisa ahora el conjunto.
+
+ED1 cerrado: revisión conjunta de la ola 1 integrada con CI 4/4 verde.
+Estados, formatos, paleta DIN, densidad por tarea y secciones/planes comparten reglas sin ampliar permisos ni autoridad.
+Estimador/emisión/DOC-01, dueño/aprobación, jefe/remake, operario/QR y nuevo lote MiMo aplicado/deshecho pasan.
+Capturas clave: `docs/redesign/captures/ed1/`; 192 antes y después, cero hallazgos finales; baseline 257/716 → 69/187.
+Riesgos: catálogo DEMO sin certificación, Uw Sin dato y superficies de ola 2 pendientes de su propio encargo/ED2.
+
+Ola 2 cerrada: P06, P08, P13, P15, P11, P14 y P16 integrados con CI 4/4 verde.
+Conjuntos, emisión, corte, compras, cobranza, CNC y catálogo conservan autoridad sellada y decisiones humanas.
+P16 contrasta PDF/foto con MiMo real, conserva fuentes y seis etapas de publicación/deshacer; DEMO no se certifica.
+Capturas clave: `docs/redesign/captures/catalogo-tecnico/`, `compras-inventario/`, `cnc-mecanizado/` y `pack-corte-etiquetas/`.
+Riesgos: catálogo sintético, políticas sin fuente declarada y calibración industrial externa; ED2 revisa ahora el conjunto.
+
+ED2 cerrado: revisión conjunta de la ola 2 integrada con CI 4/4 verde.
+Medidas, estados, capacidades y tablas móviles comparten reglas; Inventario del operario conserva tema y objetivos táctiles.
+Estimador/PDF/enlace, dueño/MiMo revisado, compra/recepción parcial/RT y taller/etiquetas/CNC pasan sin duplicar decisiones.
+Capturas clave: `docs/redesign/captures/ed2/`; 224 antes y después, cero hallazgos finales; baseline 69/187 → 45/139.
+Riesgos: bow Solo cotización, catálogo DEMO, integración financiera sandbox, autoridad térmica y validación industrial ausentes; la ola 3 conserva esos límites.
+
+Ola 3 cerrada: P21, P10, P22, P23, D08, P19 y P18 integrados con CI 4/4 verde.
+Proyecto, acuerdo, empresa, terreno, aperturas avanzadas, 3D y térmica comparten revisión y autoridad selladas.
+Uw usa áreas visibles; la alternativa mínima pasa por diff y deshacer; revocar una fuente conserva informe y PDF emitidos.
+Capturas clave: `docs/redesign/captures/termico-oguc/`, `tipologias-avanzadas/`, `3d-fisico/` y `terreno-postventa/`.
+Riesgos: catálogo DEMO, adaptadores financieros sandbox, datos reales de fabricante y validación industrial requieren activación; P24 y P20 continúan la aceptación.
+
+Ola 4 cerrada: P24 integrado con CI 4/4 verde.
+Ventas, margen, planta y terreno conservan período y fuentes; cada cifra llega al registro con F6.
+El cierre de costos requiere preview, cobertura real y clic humano; sus correcciones son aditivas e inmutables.
+Capturas clave: `docs/redesign/captures/analitica/`; 76 PNG, 40 vistas oficiales sin hallazgos y axe sin serious/critical.
+Riesgos: DEMO no acredita contabilidad ni tarifas reales; P20 verifica ahora el producto completo y su entrega al dueño.
+
+Programa v1 cerrado: 39 encargos; 39 mergeados y 0 bloqueados.
+P20 conserva catorce recorridos, rúbrica por persona y evidencia con sus refs originales.
+UX912 termina sin hallazgos; dominio175 mantiene paridad y rechazos por autoridad ausente.
+Guía, aceptación y ACTIVACION acompañan la revisión del dueño; REVIEW conserva sus datos.
+El PR de integración hacia main se entrega abierto, con sus cuatro checks y sin merge automático.

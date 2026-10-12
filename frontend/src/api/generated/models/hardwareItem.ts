@@ -17,4 +17,5 @@ export interface HardwareItem {
   /** @nullable */
   leaf_id: string | null;
   contents: HardwareComponent[];
+  resolution?: unknown | null;
 }

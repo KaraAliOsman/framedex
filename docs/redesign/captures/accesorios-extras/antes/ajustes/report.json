@@ -1,0 +1,207 @@
+{
+  "generatedAt": "2026-10-07T00:41:18.833Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "ajustes",
+      "path": "/settings/general",
+      "reachedPath": "/settings/general",
+      "role": "OWNER",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "ajustes__OWNER__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        },
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        }
+      ],
+      "findings": []
+    },
+    {
+      "routeId": "ajustes",
+      "path": "/settings/general",
+      "reachedPath": "/settings/general",
+      "role": "OWNER",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "ajustes__OWNER__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        },
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        }
+      ],
+      "findings": []
+    },
+    {
+      "routeId": "ajustes",
+      "path": "/settings/general",
+      "reachedPath": "/settings/general",
+      "role": "OWNER",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "ajustes__OWNER__light__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        },
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        }
+      ],
+      "findings": []
+    },
+    {
+      "routeId": "ajustes",
+      "path": "/settings/general",
+      "reachedPath": "/settings/general",
+      "role": "OWNER",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "ajustes__OWNER__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        },
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        }
+      ],
+      "findings": []
+    },
+    {
+      "routeId": "ajustes",
+      "path": "/settings/general",
+      "reachedPath": "/settings/general",
+      "role": "OWNER",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "ajustes__OWNER__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        },
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        }
+      ],
+      "findings": []
+    },
+    {
+      "routeId": "ajustes",
+      "path": "/settings/general",
+      "reachedPath": "/settings/general",
+      "role": "OWNER",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "ajustes__OWNER__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        },
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        }
+      ],
+      "findings": []
+    },
+    {
+      "routeId": "ajustes",
+      "path": "/settings/general",
+      "reachedPath": "/settings/general",
+      "role": "OWNER",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "ajustes__OWNER__dark__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        },
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        }
+      ],
+      "findings": []
+    },
+    {
+      "routeId": "ajustes",
+      "path": "/settings/general",
+      "reachedPath": "/settings/general",
+      "role": "OWNER",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "ajustes__OWNER__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "httpErrors": [
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        },
+        {
+          "url": "http://127.0.0.1:5173/api/v1/organization/branding/logo/",
+          "status": 500
+        }
+      ],
+      "findings": []
+    }
+  ],
+  "topFindings": []
+}

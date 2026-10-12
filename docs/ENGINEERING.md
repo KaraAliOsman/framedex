@@ -43,3 +43,55 @@ architecture. Don't escalate those.
   how to fix it — never enum names, hashes, IDs, or stack traces.
 - Distinguish "geometry valid" from "manufacturing definition incomplete"; never
   pretend missing catalog authority is exact output.
+
+## Human codes and exact presentation
+
+Computed values stay exact in the engine, API and sealed snapshots. Formatting
+only changes presentation, with half-up rounding where the displayed unit
+requires a precision. Use the shared frontend formatters and document renderers.
+
+| Magnitude | Human presentation |
+|---|---|
+| mm | Integer with thin-space grouping; preserve fractional authority, comma decimal (`1 249,5 mm`) |
+| m, m² | Two decimal places (`2,16 m²`) |
+| kg | One decimal place (`38,4 kg`) |
+| Units | Integer |
+| Percent | One decimal place and a space before `%` (`32,5 %`) |
+| CLP | No decimals, dot grouping (`$1.435.471`) |
+| USD | Two decimals, dot grouping, comma decimal (`US$ 1.234,56`) |
+| Angle | Integer unless fractional (`22,5°`), preserving sourced precision |
+| Date | `dd-mm-yyyy`, America/Santiago |
+
+Technical CSV/DXF are machine contracts: decimal point, no thousands separator,
+unchanged numeric values. Human piece codes are identical in these exports, web,
+cut and production PDFs, physical labels and QR. The sheets CSV appends
+`piece_label`; all preceding columns retain their positions. PDF text and UI use
+the human formats above. IDs in export columns remain machine identifiers.
+
+Projects retain their deliberate global `P-000123` sequence. Purchasing orders,
+remnants and receipts use tenant-local `OC-000123`, `RT-000045`, `REC-000012`.
+`entity_codes` assigns immutable aliases under a locked transactional counter;
+rollback rolls back both the alias and increment. Removed entities keep their
+address, so committed numbers are never reused. Backfill orders by `created_at,id`
+within organization and kind. Historical order codes, payloads, hashes, issued
+artifacts and project numbering remain byte-identical. New purchase orders
+reserve their address before sealing. Read projections use the alias only after
+checking documentary integrity; existing artifact slots are reused.
+
+Physical codes come from frozen manufacturing identities, for example
+`P01-U02-M03`, with reinforcement suffix `-R`; historical `·R` remains accepted
+as scan input. They are addresses within their OT: repeated equal cuts consume
+distinct frozen identities in deterministic plan order. A QR carries the order,
+human code and stable identity, and trace checks all three. It never grants access:
+authentication and organization RLS still apply. Presentation fields are copied
+onto the read plan, never persisted or included in an engine fingerprint.
+Production release creates one OT per position; the twelve-position fixture has
+twelve OT. A technical ID is shown only under technical details; a shortened
+document/plan fingerprint belongs in the title-block footer.
+
+An unqualified piece scan searches only workshop OT and bounds candidates to
+100. An extra candidate rejects the search before loading snapshots and asks
+for the QR containing the OT; no partial history is exposed as complete. Exact
+addresses keep their scope. Invalidated or missing cutting plans cannot produce
+physical cut labels; historical unit-manifest labels remain readable with an
+explicit cutting-label blocker.

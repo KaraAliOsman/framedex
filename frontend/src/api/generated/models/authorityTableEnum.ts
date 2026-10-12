@@ -7,6 +7,7 @@
  */
 
 /**
+ * * `catalog_color_skus` - catalog_color_skus
  * * `catalog_imports` - catalog_imports
  * * `fitting_purchase_mappings` - fitting_purchase_mappings
  * * `glass_purchase_mappings` - glass_purchase_mappings
@@ -22,6 +23,7 @@
 export type AuthorityTableEnum = (typeof AuthorityTableEnum)[keyof typeof AuthorityTableEnum];
 
 export const AuthorityTableEnum = {
+  catalog_color_skus: "catalog_color_skus",
   catalog_imports: "catalog_imports",
   fitting_purchase_mappings: "fitting_purchase_mappings",
   glass_purchase_mappings: "glass_purchase_mappings",

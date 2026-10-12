@@ -1,0 +1,443 @@
+{
+  "counts_by_kind": {
+    "END_MACHINING": 2
+  },
+  "declared_intent_gaps": [
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Bisagra \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-BISAGRA",
+      "declaration": "Alojamiento de bisagra",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "HINGE_PREP",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 1
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Cremona \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-CREMONA",
+      "declaration": "Alojamiento de cremona",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "SLOT",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 1
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Cerradero \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-CERRADERO",
+      "declaration": "Alojamiento de cerradero",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "LOCK_PREP",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 1
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "detail": "Emisor no implementado para esta declaraci\u00f3n sellada. No se gener\u00f3 trabajo de m\u00e1quina.",
+      "kind": "LOCK_PREP",
+      "leaf_id": null,
+      "name": "Puntos de cierre",
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "emitter_not_implemented",
+      "source": "Anotaci\u00f3n de taller de la revisi\u00f3n emitida",
+      "unit_index": 1
+    },
+    {
+      "detail": "Solo se sell\u00f3 el punto de manilla; faltan patr\u00f3n de agujeros y profundidad.",
+      "kind": "HANDLE_PREP",
+      "member_id": "982b1b8198e6a7717ee5828206a7e9d368b7f3c7dbbfbcf3fa924acb0edaaf44",
+      "name": "Preparaci\u00f3n de manilla",
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "rule_missing",
+      "source": "Regla de manilla de la revisi\u00f3n emitida",
+      "unit_index": 1
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Bisagra \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-BISAGRA",
+      "declaration": "Alojamiento de bisagra",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "HINGE_PREP",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 2
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Cremona \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-CREMONA",
+      "declaration": "Alojamiento de cremona",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "SLOT",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 2
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "code": "declared_intent_not_emitted",
+      "component_name": "Cerradero \u00b7 DEMO",
+      "component_sku": "DEMO_60-HW4-TURN-STANDARD-CERRADERO",
+      "declaration": "Alojamiento de cerradero",
+      "detail": "Declarada no emitida: faltan cara, cobertura de la cantidad resuelta, coordenadas, herramienta, hoja f\u00edsica sellada, lado de bisagras, profundidad, \u00e1mbito de la pieza anfitriona.",
+      "kind": "LOCK_PREP",
+      "leaf_id": null,
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "authority_incomplete",
+      "source": "Herrajes sint\u00e9ticos DEKOPEN v4; semilla 20261231; sin certificaci\u00f3n",
+      "unit_index": 2
+    },
+    {
+      "bay_id": "P14-LEAF",
+      "detail": "Emisor no implementado para esta declaraci\u00f3n sellada. No se gener\u00f3 trabajo de m\u00e1quina.",
+      "kind": "LOCK_PREP",
+      "leaf_id": null,
+      "name": "Puntos de cierre",
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "emitter_not_implemented",
+      "source": "Anotaci\u00f3n de taller de la revisi\u00f3n emitida",
+      "unit_index": 2
+    },
+    {
+      "detail": "Solo se sell\u00f3 el punto de manilla; faltan patr\u00f3n de agujeros y profundidad.",
+      "kind": "HANDLE_PREP",
+      "member_id": "a9cd92aaf88a2ec769ee61eb26e23d0d5f99c2f535fbdfba06e59caf9966f451",
+      "name": "Preparaci\u00f3n de manilla",
+      "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+      "position_index": 1,
+      "reason_code": "rule_missing",
+      "source": "Regla de manilla de la revisi\u00f3n emitida",
+      "unit_index": 2
+    }
+  ],
+  "fingerprint": "36902006f93e8a5ec45cc9167adfe60c9381bef1b9f3a474a5f8096b3de5c171",
+  "identity": {
+    "machine_id": "CNC-P14-END",
+    "machine_name": "Fresadora de extremos DEMO",
+    "member_id": "1f359e795876bd7b2f6c28d46032643beff907987fc0f06cee66006529c952b2",
+    "member_label": "P01-U01-M17",
+    "order_code": "OT-P-000601-REV-A-01",
+    "plan_seed": "11f619057661775d74f4d5b0c4e3a377c587b4dd079788c8978dee271b89c1d0",
+    "position_id": "11427932-cff4-4d20-aadb-546917fc6a27",
+    "postprocessor_id": "neutral-ops-v1",
+    "postprocessor_version": "1",
+    "project_code": "P-000601",
+    "revision_code": "REV-A"
+  },
+  "issues": [],
+  "machine": {
+    "authority_source": "Sujeci\u00f3n sint\u00e9tica P14 \u00b7 solo aceptaci\u00f3n de intercambio",
+    "axes": [
+      "X"
+    ],
+    "clamp_zones": [
+      {
+        "end_mm": "550",
+        "label": "Sujeci\u00f3n central DEMO",
+        "start_mm": "450"
+      }
+    ],
+    "clamps_declared": true,
+    "controller_family": "NEUTRAL",
+    "coordinate_systems": [
+      "MEMBER_PLAN"
+    ],
+    "encoding": "utf-8",
+    "machine_id": "CNC-P14-END",
+    "machine_type": "END_MILLER",
+    "max_member_length_mm": "6000",
+    "name": "Fresadora de extremos DEMO",
+    "postprocessor_id": "neutral-ops-v1",
+    "postprocessor_version": "1",
+    "profile_setups": [
+      {
+        "axial_datum": "MEMBER_START",
+        "loading_orientation": "EXTERIOR_UP",
+        "profile_sku": "DEMO_60-POSTE-V",
+        "section_fingerprint": "39d4c47ccf2afedab615aef2aa0217e5f4298dee7609da1c4abc924474026b66",
+        "source": "Montaje sint\u00e9tico P14 \u00b7 orientaci\u00f3n de aceptaci\u00f3n"
+      }
+    ],
+    "safe_margin_mm": "10",
+    "supported_faces": [
+      "START_EDGE",
+      "END_EDGE"
+    ],
+    "supported_kinds": [
+      "END_MACHINING"
+    ],
+    "tool_sources": {
+      "end_mill": "Fixture sint\u00e9tico P14 \u00b7 no usar para fabricaci\u00f3n real"
+    },
+    "tools": [
+      {
+        "compatible_kinds": [
+          "END_MACHINING"
+        ],
+        "diameter_mm": "10",
+        "kind": "END_MILL",
+        "max_depth_mm": "20",
+        "name": "Fresa extrema DEMO P14",
+        "tool_id": "end_mill",
+        "working_length_mm": "30"
+      }
+    ],
+    "units": "mm"
+  },
+  "members": {
+    "1f359e795876bd7b2f6c28d46032643beff907987fc0f06cee66006529c952b2": {
+      "angle_left_deg": "90",
+      "angle_right_deg": "90",
+      "axis": "VERTICAL",
+      "bay_id": null,
+      "cut_length_mm": "1388",
+      "end": {
+        "x_mm": "900",
+        "y_mm": "1440"
+      },
+      "leaf_id": null,
+      "leaf_slot": null,
+      "material": "PVC",
+      "position_index": 1,
+      "repetition_index": 1,
+      "role": "MULLION_V",
+      "sagitta_mm": null,
+      "start": {
+        "x_mm": "900",
+        "y_mm": "60"
+      },
+      "workshop_sku": "DEMO_60-POSTE-V"
+    }
+  },
+  "operation_count": 2,
+  "operations": [
+    {
+      "angle_left_deg": null,
+      "angle_right_deg": null,
+      "basis": "member_end_overlap",
+      "coordinate_system": "MEMBER_PLAN",
+      "depth_mm": "4.00",
+      "detail": {
+        "edge": "START",
+        "overlap_mm": "4.00",
+        "role": "MULLION_V",
+        "workshop_sku": "DEMO_60-POSTE-V"
+      },
+      "face": "START_EDGE",
+      "host": "1f359e795876bd7b2f6c28d46032643beff907987fc0f06cee66006529c952b2",
+      "host_kind": "MEMBER",
+      "kind": "END_MACHINING",
+      "operation_id": "4edf2287f91215a24b2fd2f7e569eef0",
+      "reference": "member_start",
+      "sequence_no": 1,
+      "tool_id": "end_mill",
+      "u_mm": "0",
+      "x_mm": "900.00",
+      "y_mm": "60.00"
+    },
+    {
+      "angle_left_deg": null,
+      "angle_right_deg": null,
+      "basis": "member_end_overlap",
+      "coordinate_system": "MEMBER_PLAN",
+      "depth_mm": "4.00",
+      "detail": {
+        "edge": "END",
+        "overlap_mm": "4.00",
+        "role": "MULLION_V",
+        "workshop_sku": "DEMO_60-POSTE-V"
+      },
+      "face": "END_EDGE",
+      "host": "1f359e795876bd7b2f6c28d46032643beff907987fc0f06cee66006529c952b2",
+      "host_kind": "MEMBER",
+      "kind": "END_MACHINING",
+      "operation_id": "d540b202994a2c86be12c61a0b48e07b",
+      "reference": "member_end",
+      "sequence_no": 2,
+      "tool_id": "end_mill",
+      "u_mm": "1388.00",
+      "x_mm": "900.00",
+      "y_mm": "1440.00"
+    }
+  ],
+  "order_code": "OT-P-000601-REV-A-01",
+  "output_kind": "NEUTRAL_INTERCHANGE",
+  "piece_labels": {
+    "017ab08e92a98986547cab5c3a8e36d1210140617a21996b3490e7211395af68": "P01-U02-M11-R",
+    "04c052ac1ad9593477f720e5d2b6956f89ceee362c79b1d66229abf423b119c4": "P01-U02-M04",
+    "06affff850adffabd4a91ec332ffa684ff5dd3d4887b2e8a444a12b04d828611": "P01-U01-M05",
+    "06fb0629576586b4626d77fa28180ce5e2e728fbb718bf4be99491e7343c5629": "P01-U02-M03",
+    "0d2e01b76d0a8e784657899b2a64a5dbe4bcd30b91c867deb885fc1d747fa619": "P01-U02-M02",
+    "0edada8f6fadc184a0fc1f195a4efbf08904e740bf14bc09ba3b9891a255dee9": "P01-U01-M17-R \u00b7 P01-U02-M17-R",
+    "1774f3c9360c8ee147ce368b9f6f0a4972e8ff27603dd22f377a73181d6bcbd1": "P01-U02-M17",
+    "1f359e795876bd7b2f6c28d46032643beff907987fc0f06cee66006529c952b2": "P01-U01-M17",
+    "25a0ecfac658089dbe83504a7a4ead0375d767ae9031b916a99ab3945d1890fe": "P01-U01-M02-R",
+    "28c44284383d00c518df9e59862303cfd19e44f44ede3bfa2832207c808aad00-01": "P01-U01-M10 (mec.) \u00b7 P01-U01-M11 \u00b7 P01-U02-M10 (mec.) \u00b7 P01-U02-M11",
+    "28c44284383d00c518df9e59862303cfd19e44f44ede3bfa2832207c808aad00-02": "P01-U01-M10 (mec.) \u00b7 P01-U01-M11 \u00b7 P01-U02-M10 (mec.) \u00b7 P01-U02-M11",
+    "2ae6d3117d6a31dd8cc31ae3c6170536b1717becfd4728477e49137a0aab9303": "P01-U01-M01-R",
+    "2dcb0a0ddc3a35bb4ca8e7b644227e1c466cd11495fea74536fa3bc84d58c72e": "P01-U02-M09",
+    "360e4df4cb7a55f06fdaa8f933778d270962692d766dc8dd1230660c7a25c132-01": "P01-U01-M14 \u00b7 P01-U01-M15 \u00b7 P01-U02-M14 \u00b7 P01-U02-M15",
+    "360e4df4cb7a55f06fdaa8f933778d270962692d766dc8dd1230660c7a25c132-02": "P01-U01-M14 \u00b7 P01-U01-M15 \u00b7 P01-U02-M14 \u00b7 P01-U02-M15",
+    "3cb5212465d3562c6484f24faa21b6ed5313647ebc6319375f056668db225f26": "P01-U01-M03-R",
+    "3e298e17d618ec68ac39eeedbb4a0da1d9b8319b9efd9bb2a9351cb7c84ea10c": "P01-U02-M14",
+    "4af625f22939ef0fc73c287be5871081efe52f1ea209321ca12833600802a52b": "P01-U01-M04",
+    "4b3f1e451f6e2b7efa3820e11ed0607de744f37474299480ac2e0079f6504c5d": "P01-U01-M14",
+    "4b6cb24046054d146aaa5af3f447e3b2e1f70ae8a686f8603a6f69bf527e51a4": "P01-U01-M04-R",
+    "4f24fe3d639ffd5e69dde1e53a1f7235c2a62f097d1b63f23104e8852dee15ab": "P01-U02-M02-R",
+    "51e6bb8c1a08a9b8b8e993750a0ac00a2c351606e2711512d1317439a963c600-01": "P01-U01-M09 \u00b7 P01-U01-M12 \u00b7 P01-U02-M09 \u00b7 P01-U02-M12",
+    "51e6bb8c1a08a9b8b8e993750a0ac00a2c351606e2711512d1317439a963c600-02": "P01-U01-M09 \u00b7 P01-U01-M12 \u00b7 P01-U02-M09 \u00b7 P01-U02-M12",
+    "57d44b191b322015944ce4b4244551ff6f2d2598a6968bd52977b51a638e69b5": "P01-U01-M08",
+    "5c0492b16a1e83c9af94a9808e50a8097a2be76994ff6c6f74b4b2f2a775277b": "P01-U02-M12",
+    "6dc07d0a48f338707dd93331a6db66a52b5e8ca477918d31c874e8437c6c0ae3-01": "P01-U01-M06 \u00b7 P01-U01-M07 \u00b7 P01-U02-M06 \u00b7 P01-U02-M07",
+    "6dc07d0a48f338707dd93331a6db66a52b5e8ca477918d31c874e8437c6c0ae3-02": "P01-U01-M06 \u00b7 P01-U01-M07 \u00b7 P01-U02-M06 \u00b7 P01-U02-M07",
+    "6e328cafce7ae08fddc575c02dcff75b7989f0273d5fbb1d3df2d8e07fc79d0a": "P01-U02-M15",
+    "6e87165f8b80c95175ac1bd9f4e023b500a3ea432788bbbafc46e1674c2cd0d1": "P01-U02-M01-R",
+    "6ebd96b45792c36ddc731dd0896e5e1cf24df298c5dabc2e61cfc79f9139b58b": "P01-U01-M17-R",
+    "71d3827c3d7db5a392e3be850599e4d9054bc39670756e6aa319aac8a28e4c6e": "P01-U01-M13",
+    "7bd6ce41b99ad0d0f1a8729d609901242fb2acb603a7d8267cc2690898468a90": "P01-U01-M10-R",
+    "7e62799e4c568cdf0283184fe6869f5d88e2828c555e881d67261ddd354d8e94": "P01-U02-M08",
+    "81d6382946eff6b63bbbe01f0d08d16e803ab4b41e6beeb562066da98c92a367": "P01-U02-M04-R",
+    "867d024fb9895a6ffc9cca3329c3051713a7c03c9b0d7378896d1965d60271f8": "P01-U01-M15",
+    "88ce4ef82239bb6faf2a4fc50fa6654e265a28a4464e5656cc2751f203220e00": "P01-U01-M16",
+    "8b3883e222a29669941f775df3cad4308588624e2dcf1adfe7d9c115b9e0df71": "P01-U01-M09",
+    "8ce1013ff0766ba3807c7afc5b8908d26bfbd51ebfb768e4ba28d8b65aef1acf": "P01-U02-M10-R",
+    "8dc6c05de36da483562a619495ea6d1359a550468b0ef0c15f15bafd8df26a94": "P01-U01-M02",
+    "90af6b327434a35e08775abfff76b8e7779f74dac38e4cf07cfec37240591b7c": "P01-U01-M17 \u00b7 P01-U02-M17",
+    "932f4b417942412f64e7c2f13b0cc4c9e833a138e893eb6e15b506cfd46d934b-01": "P01-U01-M02 \u00b7 P01-U01-M03 \u00b7 P01-U02-M02 \u00b7 P01-U02-M03",
+    "932f4b417942412f64e7c2f13b0cc4c9e833a138e893eb6e15b506cfd46d934b-02": "P01-U01-M02 \u00b7 P01-U01-M03 \u00b7 P01-U02-M02 \u00b7 P01-U02-M03",
+    "94d2ff31513ec121aacc9142b750133ba4a17233de816b255ae8886aaeaab119-01": "P01-U01-M05 \u00b7 P01-U01-M08 \u00b7 P01-U02-M05 \u00b7 P01-U02-M08",
+    "94d2ff31513ec121aacc9142b750133ba4a17233de816b255ae8886aaeaab119-02": "P01-U01-M05 \u00b7 P01-U01-M08 \u00b7 P01-U02-M05 \u00b7 P01-U02-M08",
+    "982b1b8198e6a7717ee5828206a7e9d368b7f3c7dbbfbcf3fa924acb0edaaf44": "P01-U01-M10",
+    "a4208d4622561cc0f62e503cbd4d1071c441f2538d7d4ae05c898abd69b309ef-01": "P01-U01-M13 \u00b7 P01-U01-M16 \u00b7 P01-U02-M13 \u00b7 P01-U02-M16",
+    "a4208d4622561cc0f62e503cbd4d1071c441f2538d7d4ae05c898abd69b309ef-02": "P01-U01-M13 \u00b7 P01-U01-M16 \u00b7 P01-U02-M13 \u00b7 P01-U02-M16",
+    "a510ba66ffca32d3f46fda1089052bd8ade68467c58fa8c93a03e68249b4944b-01": "P01-U01-M02-R \u00b7 P01-U01-M03-R \u00b7 P01-U02-M02-R \u00b7 P01-U02-M03-R",
+    "a510ba66ffca32d3f46fda1089052bd8ade68467c58fa8c93a03e68249b4944b-02": "P01-U01-M02-R \u00b7 P01-U01-M03-R \u00b7 P01-U02-M02-R \u00b7 P01-U02-M03-R",
+    "a991ebce7b98816c1e456eb78e26840b616f079fb7b47b25bbd84a79d00b9fd5-01": "P01-U01-M10-R \u00b7 P01-U01-M11-R \u00b7 P01-U02-M10-R \u00b7 P01-U02-M11-R",
+    "a991ebce7b98816c1e456eb78e26840b616f079fb7b47b25bbd84a79d00b9fd5-02": "P01-U01-M10-R \u00b7 P01-U01-M11-R \u00b7 P01-U02-M10-R \u00b7 P01-U02-M11-R",
+    "a9cd92aaf88a2ec769ee61eb26e23d0d5f99c2f535fbdfba06e59caf9966f451": "P01-U02-M10",
+    "abbb042823e27efc43bac3950ea4310236c039dec2f426fe02bc2e3533298ea1": "P01-U01-M12",
+    "ac301542aaeb9feade3a618802bf96569d80d293864c621d47f7c7463c055a3a": "P01-U01-M03",
+    "adb5b37fd86b4cee4d3dec19eda108f5adc6db1a7cce0da9100e143ddb0ba0f7": "P01-U01-M01",
+    "b6b4766f89709fe29bc44167cfb4bdfc4cfacdcf3bb41159d7cf025a2c470219": "P01-U02-M11",
+    "c0b6aa3974992cc6c8a7d96b7efe1850e6ad7cd1fac1020d954bb560efb8282e": "P01-U01-M11-R",
+    "ca56e3204fce7cc0d1ae664f35b868dad98115eda15c367a8a5c29f03fbe85a4": "P01-U02-M13",
+    "cf8681b4c24de83ab510f31d6b2f2463d0e22d337d2c5650bd4c70c744941741": "P01-U02-M01",
+    "d1d9c094dd8192e761a805cb16d3666caf6f493a0b29b5ebbcc4188cb3bcaa43": "P01-U02-M03-R",
+    "d5381d3b0e822c35f536e3419907daeace6e185400fdf920238d5974e521e557": "P01-U02-M07",
+    "e63535bc8ba747819fd62deaee02660832ec2e5e934caca3494af921f2611e38": "P01-U01-M06",
+    "e71c67bc121a12677b16debe3d4e652157122af2ce1fe3c49c8bec510487d295": "P01-U02-M16",
+    "e842488829e8995fc088b9beee1502c956a3394f060886e5df526ba81bfbe3ec": "P01-U01-M11",
+    "e897633640591b64aca18a517e95595edeb464d2fa907da38b8c05d91dfae8e1": "P01-U02-M17-R",
+    "f29d2903bafceec845640f4d3c35109f5f5c980919f097533d3f5bfb823c85c9-01": "P01-U01-M01 \u00b7 P01-U01-M04 \u00b7 P01-U02-M01 \u00b7 P01-U02-M04",
+    "f29d2903bafceec845640f4d3c35109f5f5c980919f097533d3f5bfb823c85c9-02": "P01-U01-M01 \u00b7 P01-U01-M04 \u00b7 P01-U02-M01 \u00b7 P01-U02-M04",
+    "f3c75d4754527b0fa3f76e8aac4c970d7b7fb768349926a2bf7ec9487ce5adc2-01": "P01-U01-M01-R \u00b7 P01-U01-M04-R \u00b7 P01-U02-M01-R \u00b7 P01-U02-M04-R",
+    "f3c75d4754527b0fa3f76e8aac4c970d7b7fb768349926a2bf7ec9487ce5adc2-02": "P01-U01-M01-R \u00b7 P01-U01-M04-R \u00b7 P01-U02-M01-R \u00b7 P01-U02-M04-R",
+    "f7d14deba4666b14db069fd9d17b4bed1630c0a5d0335763797f785e2a0f37d2": "P01-U02-M05",
+    "fc3462aca710dd15ba39ba1abcef959ad14e9519bf096454309b716c3ee389ab": "P01-U02-M06",
+    "ff7649392e324ffb265aa42185b3616546e9047aeb840af7cb8d59984b7a22b5": "P01-U01-M07"
+  },
+  "plan_fingerprint": "eba337bbe20e15d02d6f8fea5dc6a5e38026ece9db68ba9151309cb43bf21a3c",
+  "plan_seed": "11f619057661775d74f4d5b0c4e3a377c587b4dd079788c8978dee271b89c1d0",
+  "preview": {
+    "datum": "member_start",
+    "length_mm": "1388.00",
+    "marks": [
+      {
+        "face": "START_EDGE",
+        "operation_id": "4edf2287f91215a24b2fd2f7e569eef0",
+        "section_coverage": "END_PLANE",
+        "x_mm": "0"
+      },
+      {
+        "face": "END_EDGE",
+        "operation_id": "d540b202994a2c86be12c61a0b48e07b",
+        "section_coverage": "END_PLANE",
+        "x_mm": "1388.00"
+      }
+    ],
+    "section": {
+      "authority_source": "Secci\u00f3n declarada de DEMO_60-POSTE-V",
+      "axes": [],
+      "catalog_system": "DEMO_60",
+      "depth_mm": "60.00",
+      "drawing_ref": null,
+      "local_origin": "TOP_LEFT",
+      "orientation": "EXTERIOR_DOWN",
+      "orientation_declared": true,
+      "origin_declared": true,
+      "polygon": [
+        {
+          "x_mm": "0.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "80.00",
+          "y_mm": "0.00"
+        },
+        {
+          "x_mm": "80.00",
+          "y_mm": "60.00"
+        },
+        {
+          "x_mm": "0.00",
+          "y_mm": "60.00"
+        }
+      ],
+      "source": "POLYGON",
+      "synthetic": true
+    },
+    "section_fingerprint": "39d4c47ccf2afedab615aef2aa0217e5f4298dee7609da1c4abc924474026b66"
+  },
+  "project_code": "P-000601",
+  "revision_code": "REV-A",
+  "schema": "dekopen_ops_v1",
+  "validation": [
+    {
+      "code": "ok",
+      "detail": {
+        "host": "P01-U01-M17"
+      },
+      "level": "PASS",
+      "operation_id": "4edf2287f91215a24b2fd2f7e569eef0"
+    },
+    {
+      "code": "ok",
+      "detail": {
+        "host": "P01-U01-M17"
+      },
+      "level": "PASS",
+      "operation_id": "d540b202994a2c86be12c61a0b48e07b"
+    }
+  ],
+  "verdict": "WARN"
+}

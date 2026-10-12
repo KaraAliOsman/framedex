@@ -1,0 +1,61 @@
+{
+  "result": "PASA",
+  "records": [
+    {
+      "width": 1440,
+      "theme": "light",
+      "source": "Factor propio real ya verificado; QR, secreto y código ausentes en captura",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "source": "Factor propio real ya verificado; QR, secreto y código ausentes en captura",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "width": 1280,
+      "theme": "light",
+      "source": "Factor propio real ya verificado; QR, secreto y código ausentes en captura",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "width": 1280,
+      "theme": "dark",
+      "source": "Factor propio real ya verificado; QR, secreto y código ausentes en captura",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "width": 1024,
+      "theme": "light",
+      "source": "Factor propio real ya verificado; QR, secreto y código ausentes en captura",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "width": 1024,
+      "theme": "dark",
+      "source": "Factor propio real ya verificado; QR, secreto y código ausentes en captura",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "source": "Factor propio real ya verificado; QR, secreto y código ausentes en captura",
+      "overflow": false,
+      "findings": []
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "source": "Factor propio real ya verificado; QR, secreto y código ausentes en captura",
+      "overflow": false,
+      "findings": []
+    }
+  ]
+}

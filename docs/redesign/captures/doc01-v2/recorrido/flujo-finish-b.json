@@ -1,0 +1,6 @@
+[
+  {
+    "case": "B incluye A sellada y conserva total vigente; A byte idéntico",
+    "result": "PASA"
+  }
+]

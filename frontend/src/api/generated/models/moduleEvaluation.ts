@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { DrawingFacts } from "./drawingFacts";
 import type { EngineResultPayload } from "./engineResultPayload";
 import type { ProductIssue } from "./productIssue";
 import type { SlidingLayoutFacts } from "./slidingLayoutFacts";
@@ -14,4 +15,5 @@ export interface ModuleEvaluation {
   issues: ProductIssue[];
   result: EngineResultPayload | null;
   sliding: SlidingLayoutFacts[];
+  drawing?: DrawingFacts | null;
 }

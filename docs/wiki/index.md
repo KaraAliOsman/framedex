@@ -8,19 +8,69 @@ Content-oriented map of durable project knowledge.
 - [Schema / agent protocol](SCHEMA.md) — ingest, query, lint and session-bootstrap rules.
 - [Change log](log.md) — append-only chronology.
 
+- [Design constitution](../design/CONSTITUCION.md) - mandatory UI/product quality source for v1 work.
+
 ## Product direction
 
 - [Owner decisions](decisions/owner-decisions.md) — durable product and engineering decisions extracted from project conversations.
 - [Product vision](product/vision.md) — what DEKOPEN is trying to become and what it is explicitly not.
 - [Fenestration + UX principles](product/fenestration-and-ux.md) — domain/interaction rules that prevent visually plausible but physically wrong software.
+- [Catalog authority by family](product/catalog-authority.md) — exact rules, historical migration, reviewed import and synthetic authority boundaries.
+- [Glass composition](product/glass-composition.md) — structured recipes, sourced safety, exact billing and sealed supplier orders.
+- [Physical openings](product/physical-openings.md) — sourced motion, active/passive compositions, handles and immutable legacy transport.
+- [Advanced openings](product/advanced-openings.md) — sourced HST/PSK/folding/pivot/vertical-slide recipes, exact cuts/BOM/kits and motor-derived plan.
+- [Opening drawings](product/opening-drawings.md) — single DIN grammar, declared travel/view, exact contours and dimension gutters.
+- [Representación física 3D](product/physical-3d.md) — poses rígidas, hojas independientes, bicolor sellado y render común con límites explícitos.
+- [Hardware classes](product/hardware-classes.md) — exact component expansion, handles/options, sealed picking and declared machining gaps.
+- [Color finishes](product/color-finishes.md) — sourced room/street faces, exact surcharges, color-specific stock and sealed rendering.
+- [Accessories and services](product/accessories-services.md) — geometry-derived quantities, real extra BOM/cuts and revision-bound commercial sublines.
+- [Opening measurements](product/opening-measurements.md) — sourced mounting, exact fabrication, immutable surveys, revision sale and production confirmation.
+- [Autoridad térmica](product/thermal-authority.md) — áreas visibles, informes ligados al espécimen, OGUC y anexo sellado.
 
 ## Current state
+
+- [Analítica para decidir](product/decision-analytics.md) — cohortes, cierres inmutables de costos, F6 y desvíos con causa exacta.
+
+- [Despacho, terreno y postventa](product/field-work.md) — unidades selladas, cola privada, recepción inmutable, rectificación y decisiones trazables.
+
+- [Empresa y clientes](product/company-customers.md) — fichas auditadas, obras, saldos por moneda, MFA e invitaciones y PDF vivo.
+
+- [Propuesta y acuerdo del cliente](product/customer-proposals.md) — elección sellada, evidencia privada, líneas con IVA y retorno de pago verificado.
+
+- [Centro de trabajo del proyecto](product/project-workspace.md) — elevaciones, lote revisado, orden físico, precio aplicado y fases con autoridad.
+
+- [Autoridad física CNC](product/cnc-authority.md) — origen, sección/montaje, confirmación y evidencia inmutable.
+
+- [Cobranza y documentos de cobro](product/collections.md) — calendario sellado, recibos, enlaces verificados, simulación fiscal y recordatorio humano.
+
+- [Compras e inventario](product/purchasing-inventory.md) — necesidades por OT, recepción útil, OC/REC, retazos físicos y correo humano.
+
+- [Conjuntos y acoples](product/coupled-assemblies.md) — autoridad angular, cotas exactas, planta sincronizada y venta por módulo.
+
+- [Asistente y trabajos](product/assistant-work.md) — presencia privada por contexto, artefactos del motor, decisiones y deshacer auditables.
+
+- [Producción por estación](product/production-stations.md) — cola privada, QR físico, detalle escalable y decisiones de calidad idempotentes.
+
+- [Trabajo de Hoy y flujo](product/today-workflow.md) — cola por consecuencia, decisiones humanas, navegación por rol y búsqueda de entidades.
+
+- [Editor centrado en el lienzo](product/editor-canvas.md) — operaciones, precio indicativo, interacción y límites por tamaño.
+
+- [Design system](product/design-system.md) — constitution tokens, technical primitives, exact presentation and regression guardrails.
+- [Human addresses](product/human-addresses.md) — immutable tenant codes, physical label reconciliation, QR and exact presentation.
+- [Brand and sender identity](product/brand-identity.md) — profile-section signature, sealed manufacturer identity, onboarding and human-controlled mail recovery.
+- [Quotation document](product/quotation-document.md) — sealed preferences, exact commercial projections, revision alternatives and revocable PDF QR.
+- [Cotización guiada](product/guided-quotation.md) — PDF privado revisado, emisión canónica, recibo y ciclo de vida del acceso.
+- [Corte y etiquetas](product/cut-documents.md) — secuencia física común, papel compacto, declaración de láminas y dirección RT antes/después de Corte.
+- [Price workspace](product/price-workspace.md) — exact cascades and frozen replay, private purchase authority, margin approval and requester receipts.
 
 - [Current reality](state/current-reality.md) — volatile map of implementation state; must always carry a verification ref/date.
 
 ## Quality
 
+- [AI provider and authority](product/ai-provider.md) — real transport, tenant settings, budget, physical usage and verified limits.
+
 - [Known risks and audit targets](quality/known-risks.md) — recurring failure modes and areas that require paranoid testing.
+- [AI outcome baseline](quality/ai-outcome-baseline.md) — 26 owner requests, rollback harness, real-provider measurement and fixture limits.
 
 ## Research
 

@@ -1,0 +1,216 @@
+{
+  "deposit_received": {
+    "balance": "500",
+    "collected": "501",
+    "excess": "0",
+    "includes_simulation": false,
+    "milestones": [
+      {
+        "amount": "501",
+        "collected": "501",
+        "due_on": "2026-10-01",
+        "due_source": "APPROVAL",
+        "label": "Anticipo",
+        "remaining": "0",
+        "share": "0.5",
+        "status": "PAID"
+      },
+      {
+        "amount": "500",
+        "collected": "0",
+        "due_on": null,
+        "due_source": "DELIVERY_PENDING",
+        "label": "Saldo",
+        "remaining": "500",
+        "share": "0.5",
+        "status": "PENDING"
+      }
+    ],
+    "oldest_due_on": null,
+    "overdue": "0",
+    "percent": "50.0",
+    "status": "PARTIAL",
+    "total": "1001"
+  },
+  "no_deal": {
+    "balance": null,
+    "collected": "0",
+    "excess": "0",
+    "includes_simulation": false,
+    "milestones": [],
+    "oldest_due_on": null,
+    "overdue": "0",
+    "percent": null,
+    "status": "NO_DEAL",
+    "total": null
+  },
+  "odd_clp_pending": {
+    "balance": "1001",
+    "collected": "0",
+    "excess": "0",
+    "includes_simulation": false,
+    "milestones": [
+      {
+        "amount": "501",
+        "collected": "0",
+        "due_on": null,
+        "due_source": "APPROVAL_PENDING",
+        "label": "Anticipo",
+        "remaining": "501",
+        "share": "0.5",
+        "status": "PENDING"
+      },
+      {
+        "amount": "500",
+        "collected": "0",
+        "due_on": null,
+        "due_source": "DELIVERY_PENDING",
+        "label": "Saldo",
+        "remaining": "500",
+        "share": "0.5",
+        "status": "PENDING"
+      }
+    ],
+    "oldest_due_on": null,
+    "overdue": "0",
+    "percent": "0.0",
+    "status": "PENDING",
+    "total": "1001"
+  },
+  "overdue_approval": {
+    "balance": "1001",
+    "collected": "0",
+    "excess": "0",
+    "includes_simulation": false,
+    "milestones": [
+      {
+        "amount": "501",
+        "collected": "0",
+        "due_on": "2026-10-01",
+        "due_source": "APPROVAL",
+        "label": "Anticipo",
+        "remaining": "501",
+        "share": "0.5",
+        "status": "OVERDUE"
+      },
+      {
+        "amount": "500",
+        "collected": "0",
+        "due_on": null,
+        "due_source": "DELIVERY_PENDING",
+        "label": "Saldo",
+        "remaining": "500",
+        "share": "0.5",
+        "status": "PENDING"
+      }
+    ],
+    "oldest_due_on": "2026-10-01",
+    "overdue": "501",
+    "percent": "0.0",
+    "status": "PENDING",
+    "total": "1001"
+  },
+  "partial_credit": [
+    "300",
+    "57"
+  ],
+  "provider_excess": {
+    "balance": "-99",
+    "collected": "1100",
+    "excess": "99",
+    "includes_simulation": false,
+    "milestones": [
+      {
+        "amount": "501",
+        "collected": "501",
+        "due_on": null,
+        "due_source": "APPROVAL_PENDING",
+        "label": "Anticipo",
+        "remaining": "0",
+        "share": "0.5",
+        "status": "PAID"
+      },
+      {
+        "amount": "500",
+        "collected": "500",
+        "due_on": null,
+        "due_source": "DELIVERY_PENDING",
+        "label": "Saldo",
+        "remaining": "0",
+        "share": "0.5",
+        "status": "PAID"
+      }
+    ],
+    "oldest_due_on": null,
+    "overdue": "0",
+    "percent": "100.0",
+    "status": "PAID",
+    "total": "1001"
+  },
+  "simulated_balance": {
+    "balance": "0",
+    "collected": "1001",
+    "excess": "0",
+    "includes_simulation": true,
+    "milestones": [
+      {
+        "amount": "501",
+        "collected": "501",
+        "due_on": null,
+        "due_source": "APPROVAL_PENDING",
+        "label": "Anticipo",
+        "remaining": "0",
+        "share": "0.5",
+        "status": "PAID"
+      },
+      {
+        "amount": "500",
+        "collected": "500",
+        "due_on": null,
+        "due_source": "DELIVERY_PENDING",
+        "label": "Saldo",
+        "remaining": "0",
+        "share": "0.5",
+        "status": "PAID"
+      }
+    ],
+    "oldest_due_on": null,
+    "overdue": "0",
+    "percent": "100.0",
+    "status": "PAID",
+    "total": "1001"
+  },
+  "void_ignored": {
+    "balance": "1001",
+    "collected": "0",
+    "excess": "0",
+    "includes_simulation": false,
+    "milestones": [
+      {
+        "amount": "501",
+        "collected": "0",
+        "due_on": null,
+        "due_source": "APPROVAL_PENDING",
+        "label": "Anticipo",
+        "remaining": "501",
+        "share": "0.5",
+        "status": "PENDING"
+      },
+      {
+        "amount": "500",
+        "collected": "0",
+        "due_on": null,
+        "due_source": "DELIVERY_PENDING",
+        "label": "Saldo",
+        "remaining": "500",
+        "share": "0.5",
+        "status": "PENDING"
+      }
+    ],
+    "oldest_due_on": null,
+    "overdue": "0",
+    "percent": "0.0",
+    "status": "PENDING",
+    "total": "1001"
+  }
+}

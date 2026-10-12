@@ -9,10 +9,14 @@
 /**
  * * `LEFT` - LEFT
  * * `RIGHT` - RIGHT
+ * * `TOP` - TOP
+ * * `BOTTOM` - BOTTOM
  */
 export type HostMemberSideEnum = (typeof HostMemberSideEnum)[keyof typeof HostMemberSideEnum];
 
 export const HostMemberSideEnum = {
   LEFT: "LEFT",
   RIGHT: "RIGHT",
+  TOP: "TOP",
+  BOTTOM: "BOTTOM",
 } as const;

@@ -5,6 +5,9 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ClientAddressWriteRequest } from "./clientAddressWriteRequest";
+import type { ClientContactWriteRequest } from "./clientContactWriteRequest";
+import type { PartyKindEnum } from "./partyKindEnum";
 
 export interface PatchedClientUpdateRequest {
   /**
@@ -22,6 +25,10 @@ export interface PatchedClientUpdateRequest {
   giro?: string;
   /** @maxLength 20 */
   comuna?: string;
+  /** @maxLength 4000 */
   notes?: string;
+  party_kind?: PartyKindEnum;
+  contacts?: ClientContactWriteRequest[];
+  addresses?: ClientAddressWriteRequest[];
   expected_updated_at?: string;
 }

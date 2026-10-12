@@ -5,6 +5,8 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { AssemblyMeasure } from "./assemblyMeasure";
+import type { DrawingEnvelope } from "./drawingEnvelope";
 import type { EngineAssemblyCalculateResponseStatusEnum } from "./engineAssemblyCalculateResponseStatusEnum";
 import type { EngineResultPayload } from "./engineResultPayload";
 import type { ModuleEvaluation } from "./moduleEvaluation";
@@ -12,10 +14,12 @@ import type { PlanGeometry } from "./planGeometry";
 import type { ProductIssue } from "./productIssue";
 
 export interface EngineAssemblyCalculateResponse {
+  measures?: AssemblyMeasure | null;
   status: EngineAssemblyCalculateResponseStatusEnum;
   issues: ProductIssue[];
   plan: PlanGeometry | null;
   modules: ModuleEvaluation[];
+  elevation?: DrawingEnvelope | null;
   bom: EngineResultPayload | null;
   /** @pattern ^sha256:[0-9a-f]{64}$ */
   calculation_hash: string;

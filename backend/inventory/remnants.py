@@ -13,17 +13,21 @@ import json
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
+from urllib.parse import urlencode
 
+from django.conf import settings
 from django.db import transaction
 
 from dekopen_engine.cutting import RemnantBar
 from dekopen_engine.nesting import SheetRemnant
 from documents.repository import DocumentaryError, documentary_backend, one, rows
+from documents.preferences import document_preferences
 
 
 def _remnant_row(row: dict[str, object]) -> dict[str, object]:
     return {
         "id": str(row["id"]),
+        "code": row["code"],
         "kind": row["kind"],
         "stock_authority_id": (
             str(row["stock_authority_id"]) if row["stock_authority_id"] else None
@@ -58,7 +62,8 @@ def _remnant_row(row: dict[str, object]) -> dict[str, object]:
 
 
 _SELECT = """
-    SELECT id, kind, stock_authority_id, sheet_workshop_sku,
+    SELECT id, private.entity_code(org_id, 'RT', id) AS code,
+           kind, stock_authority_id, sheet_workshop_sku,
            physical_stock_identity, material, color,
            length_mm, width_mm, height_mm, status, origin,
            origin_order_id, reserved_order_id, consumed_order_id,
@@ -107,7 +112,7 @@ def list_remnants(
         {
             str(row["id"]): str(row["order_code"])
             for row in rows(
-                "SELECT id, order_code FROM public.orders"
+                "SELECT id, CASE WHEN order_type='WORKSHOP_OT' THEN order_code ELSE private.entity_code(org_id, 'OC', id, order_code) END AS order_code FROM public.orders"
                 " WHERE org_id = %s AND id = ANY(%s::uuid[])",
                 [str(org_id), sorted(order_ids)],
             )
@@ -125,20 +130,32 @@ def list_remnants(
     authority_ids = [
         entry["stock_authority_id"] for entry in remnants if entry["stock_authority_id"]
     ]
-    skus: dict[str, object] = {}
+    skus: dict[str, dict] = {}
     if authority_ids:
-        for table in ("profile_purchase_mappings", "reinforcement_articles"):
+        for table in ("profile_purchase_mappings", "reinforcement_articles", "catalog_color_skus"):
+            color_column = "finish" if table == "catalog_color_skus" else "stock_color"
             for row in rows(
-                f"SELECT id::text AS id, commercial_sku FROM public.{table} "
+                f"SELECT id::text AS id, commercial_sku,{color_column} AS stock_color,physical_stock_identity FROM public.{table} "
                 "WHERE id = ANY(%s::uuid[])",
                 [authority_ids],
             ):
-                skus[str(row["id"])] = row["commercial_sku"]
+                skus[str(row["id"])] = row
+    preferences = document_preferences(one("SELECT document_preferences FROM public.tenancy_organizations WHERE id=%s",
+                                          [str(org_id)],"organization_not_found")["document_preferences"])
+    limit = int(preferences["remnant_age_days"])
     for entry in remnants:
         entry["article_sku"] = (
-            skus.get(entry["stock_authority_id"]) if entry["stock_authority_id"] else None
+            (skus.get(entry["stock_authority_id"]) or {}).get("commercial_sku") if entry["stock_authority_id"] else None
         )
-    return {"remnants": remnants}
+        authority=skus.get(entry["stock_authority_id"]) or {}
+        entry["color"] = entry["color"] or authority.get("stock_color")
+        entry["physical_stock_identity"] = entry["physical_stock_identity"] or authority.get("physical_stock_identity")
+        entry["age_days"] = max(0,(datetime.now(timezone.utc)-entry["created_at"]).days)
+        entry["age_alert"] = entry["status"] == "AVAILABLE" and entry["age_days"] >= limit
+    events=rows("SELECT e.*,private.entity_code(e.org_id,'RT',e.remnant_id) AS remnant_code,o.order_code "
+                "FROM public.inventory_remnant_events e LEFT JOIN public.orders o ON o.id=e.order_id AND o.org_id=e.org_id "
+                "WHERE e.org_id=%s ORDER BY e.created_at DESC,e.id LIMIT 100",[str(org_id)])
+    return {"remnants": remnants,"age_limit_days":limit,"events":events}
 
 
 def list_bar_authorities(*, org_id: UUID) -> dict[str, object]:
@@ -167,6 +184,10 @@ def list_bar_authorities(*, org_id: UUID) -> dict[str, object]:
         """,
         [str(org_id)],
     )
+    finished = rows(
+        "SELECT id::text AS id,commercial_sku,physical_stock_identity,stock_color FROM catalog_color_skus "
+        "WHERE (org_id=%s OR org_id IS NULL) AND is_active ORDER BY commercial_sku,stock_color",
+        [str(org_id)])
     authorities = [
         {
             "id": row["id"],
@@ -175,7 +196,7 @@ def list_bar_authorities(*, org_id: UUID) -> dict[str, object]:
             "stock_color": row["stock_color"],
             "source": source,
         }
-        for source, found in (("PROFILE", profile), ("REINFORCEMENT", reinforcement))
+        for source, found in (("PROFILE", [*profile,*finished]), ("REINFORCEMENT", reinforcement))
         for row in found
     ]
     return {"authorities": authorities}
@@ -187,7 +208,7 @@ def create_remnant(
     kind: str,
     stock_authority_id: UUID | None = None,
     sheet_workshop_sku: str | None = None,
-    physical_stock_identity: UUID | None = None,
+    physical_stock_identity: str | None = None,
     material: str | None = None,
     color: str | None = None,
     length_mm: Decimal | None = None,
@@ -210,6 +231,36 @@ def create_remnant(
             or width_mm <= 0 or height_mm <= 0:
         raise DocumentaryError("remnant_sheet_dims_invalid")
     with transaction.atomic(), documentary_backend():
+        if kind == "BAR":
+            authority = _bar_identity(org_id, str(stock_authority_id))
+            if (physical_stock_identity and str(physical_stock_identity) != str(authority["physical_stock_identity"])) or (
+                color and color != authority["stock_color"]
+            ):
+                raise DocumentaryError("remnant_authority_mismatch", detail="El color o la identidad no coincide con el perfil del catálogo. Elige su suministro real.")
+            physical_stock_identity = authority["physical_stock_identity"]
+            color, material = authority["stock_color"], authority["material"]
+            if length_mm > Decimal(str(authority["stock_length_mm"])):
+                raise DocumentaryError("remnant_bar_dims_invalid", detail="El retazo supera el largo declarado de la barra. Revisa la medida y su suministro.")
+        else:
+            declared = rows("SELECT category,variant_key,attributes FROM inventory_items WHERE org_id=%s AND sku=%s "
+                            "AND attributes ? 'sheet_width_mm' AND attributes ? 'sheet_height_mm'",
+                            [str(org_id), sheet_workshop_sku])
+            if len(declared) != 1:
+                raise DocumentaryError("remnant_sheet_authority_missing", detail="Falta el formato y sustrato de la lámina. Decláralos en Catálogo antes de registrar su retazo.")
+            declaration = declared[0]
+            attributes = declaration['attributes']
+            if isinstance(attributes, str):
+                attributes = json.loads(attributes)
+            identity = declaration['variant_key'] or None
+            declared_color = attributes.get('color')
+            declared_material = declaration['category']
+            if (physical_stock_identity and physical_stock_identity != identity) or (
+                color and color != declared_color
+            ) or (material and material != declared_material):
+                raise DocumentaryError('remnant_authority_mismatch', detail='El sustrato, color o identidad no coincide con la lámina declarada. Revisa su suministro.')
+            if width_mm > Decimal(str(attributes['sheet_width_mm'])) or height_mm > Decimal(str(attributes['sheet_height_mm'])):
+                raise DocumentaryError('remnant_sheet_dims_invalid', detail='El retazo supera el formato declarado de la lámina. Revisa sus medidas.')
+            physical_stock_identity, color, material = identity, declared_color, declared_material
         created = one(
             """
             INSERT INTO public.inventory_remnants(
@@ -241,6 +292,22 @@ def create_remnant(
             "remnant_not_found",
         )
     return _remnant_row(row)
+
+
+def _bar_identity(org_id: UUID, authority_id: str) -> dict:
+    found = rows(
+        "SELECT m.physical_stock_identity::text,m.stock_color,a.material::text,a.commercial_length_mm AS stock_length_mm "
+        "FROM profile_purchase_mappings m JOIN profile_articles a ON a.id=m.profile_article_id "
+        "WHERE m.id=%s AND m.is_active AND (m.org_id=%s OR m.org_id IS NULL) "
+        "UNION ALL SELECT m.physical_stock_identity::text,m.stock_color,a.material::text,a.commercial_length_mm "
+        "FROM catalog_color_skus m JOIN profile_articles a ON a.id=m.profile_article_id "
+        "WHERE m.id=%s AND m.is_active AND (m.org_id=%s OR m.org_id IS NULL) "
+        "UNION ALL SELECT physical_stock_identity::text,stock_color,'STEEL',stock_length_mm FROM reinforcement_articles "
+        "WHERE id=%s AND is_active AND (org_id=%s OR org_id IS NULL)",
+        [authority_id,str(org_id),authority_id,str(org_id),authority_id,str(org_id)])
+    if len(found) != 1 or found[0]["stock_length_mm"] is None:
+        raise DocumentaryError("remnant_stock_authority_missing", detail="El suministro no tiene autoridad de stock vigente. Revisa su color y largo en Catálogo.")
+    return found[0]
 
 
 def bar_remnants_for_authorities(
@@ -338,9 +405,11 @@ def consume_order_remnants(*, org_id: UUID, order_id: UUID) -> int:
 
 def scrap_remnant(
     *, org_id: UUID, remnant_id: UUID, actor_id: UUID,
+    reason: str, confirmed: bool,
 ) -> dict[str, object]:
     """Mark an offcut as scrap — physically too damaged/short to reuse."""
     with transaction.atomic(), documentary_backend():
+        _action_reason(confirmed,reason)
         row = one(
             f"{_SELECT} WHERE id = %s AND org_id = %s FOR UPDATE",
             [str(remnant_id), str(org_id)],
@@ -364,6 +433,39 @@ def scrap_remnant(
             "remnant_not_found",
         )
     return _remnant_row(refreshed)
+
+
+def _action_reason(confirmed:bool,reason:str) -> None:
+    if not confirmed or len(reason.strip())<3:
+        raise DocumentaryError("inventory_confirmation_required",detail="Confirma la acción e indica un motivo para el libro de movimientos.")
+    rows("SELECT set_config('dekopen.inventory_reason',%s,true)",[reason.strip()])
+
+
+def move_remnant(*,org_id:UUID,remnant_id:UUID,actor_id:UUID,rack_location:str,reason:str,confirmed:bool) -> dict:
+    with transaction.atomic(),documentary_backend():
+        _action_reason(confirmed,reason)
+        row=one(f"{_SELECT} WHERE id=%s AND org_id=%s FOR UPDATE",[str(remnant_id),str(org_id)],"remnant_not_found")
+        if row['status'] in ('CONSUMED','SCRAPPED'):
+            raise DocumentaryError('remnant_consumed',detail="Este retazo ya salió del stock; consulta su historia.")
+        if not rack_location.strip():
+            raise DocumentaryError('rack_required',detail="Indica la ubicación física de destino.")
+        rows("UPDATE public.inventory_remnants SET rack_location=%s,updated_at=now() WHERE id=%s AND org_id=%s RETURNING id",
+             [rack_location.strip(),str(remnant_id),str(org_id)])
+        return _remnant_row(one(f"{_SELECT} WHERE id=%s AND org_id=%s",[str(remnant_id),str(org_id)],"remnant_not_found"))
+
+
+def reserve_for_work_order(*,org_id:UUID,remnant_id:UUID,actor_id:UUID,order_id:UUID,confirmed:bool) -> dict:
+    if not confirmed:
+        raise DocumentaryError('inventory_confirmation_required',detail="Confirma la OT y revisa el plan antes de reservar.")
+    from production.service import optimize_work_order
+    with transaction.atomic(),documentary_backend():
+        # Reuse the manufacturing optimizer and its locks; a manually chosen
+        # destination never fabricates compatibility or bypasses a started cut.
+        optimize_work_order(org_id=org_id,order_id=order_id,actor_id=actor_id,color="",strategy="fast")
+        row=one(f"{_SELECT} WHERE id=%s AND org_id=%s",[str(remnant_id),str(org_id)],"remnant_not_found")
+        if str(row['reserved_order_id']) != str(order_id) or row['status']!='RESERVED':
+            raise DocumentaryError('remnant_not_selected',detail="El motor eligió otro suministro. Revisa las necesidades actuales de la OT.")
+        return _remnant_row(row)
 
 
 def unreserve_remnant(
@@ -497,37 +599,67 @@ def record_produced_remnants(
     cut plan that made them."""
     inserted = 0
     for bar in produced_bars:
-        rows(
+        created = rows(
             """
             INSERT INTO public.inventory_remnants(
                 org_id, kind, stock_authority_id, length_mm,
-                origin, origin_order_id
-            ) VALUES (%s, 'BAR', %s::uuid, %s, 'PRODUCTION', %s)
+                origin, origin_order_id, id, rack_location
+            ) VALUES (%s, 'BAR', %s::uuid, %s, 'PRODUCTION', %s,
+                      coalesce(%s::uuid, gen_random_uuid()), %s)
+            ON CONFLICT (id) DO NOTHING
             RETURNING id
             """,
             [
                 str(org_id), str(bar["stock_authority_id"]),
-                str(bar["remainder_mm"]), str(order_id),
+                str(bar["remainder_mm"]), str(order_id), bar.get("id"), bar.get("rack_location"),
             ],
         )
-        inserted += 1
+        inserted += len(created)
     for sheet in produced_sheets:
-        rows(
+        created = rows(
             """
             INSERT INTO public.inventory_remnants(
                 org_id, kind, sheet_workshop_sku, width_mm, height_mm,
-                origin, origin_order_id
-            ) VALUES (%s, 'SHEET', %s, %s, %s, 'PRODUCTION', %s)
+                origin, origin_order_id, id, rack_location
+            ) VALUES (%s, 'SHEET', %s, %s, %s, 'PRODUCTION', %s,
+                      coalesce(%s::uuid, gen_random_uuid()), %s)
+            ON CONFLICT (id) DO NOTHING
             RETURNING id
             """,
             [
                 str(org_id), sheet["workshop_sku"],
                 str(sheet["width_mm"]), str(sheet["height_mm"]),
-                str(order_id),
+                str(order_id), sheet.get("id"), sheet.get("rack_location"),
             ],
         )
-        inserted += 1
+        inserted += len(created)
     return inserted
+
+
+def plan_remnant_addresses(*, org_id: UUID, order_id: UUID, plan: dict,
+                           rack_location: str) -> None:
+    """Reserve addresses at the human optimize click, without creating stock.
+
+    Equal plans reuse their addresses. Changed plans retain historical codes;
+    only CUT completion creates a physical AVAILABLE row with this identity.
+    """
+    from uuid import uuid5
+    from dekopen_engine.documentary_canonical import documentary_sha256_v1
+
+    bars = {bar["bar_index"]: bar for bar in plan["bars"].get("workshop_cut_plan") or []}
+    sheets = {sheet["sheet_index"]: sheet for sheet in plan.get("sheets") or []}
+    for kind, entries, homes, field in (
+        ("BAR", plan.get("produced_bars") or [], bars, "bar_index"),
+        ("SHEET", plan.get("produced_sheets") or [], sheets, "sheet_index"),
+    ):
+        for index, entry in enumerate(entries):
+            identity = str(uuid5(UUID(str(order_id)), "cut-remnant:" + documentary_sha256_v1({
+                "kind": kind, "index": index, "source": homes[entry[field]],
+                "remnant": {key: value for key, value in entry.items() if key not in {"id", "code", "rack_location"}},
+            })))
+            code = one("SELECT private.assign_entity_code(%s::uuid,'RT',%s::uuid) AS code",
+                       [str(org_id), identity], "remnant_code_failed")["code"]
+            entry.update(id=identity, code=code, rack_location=rack_location)
 
 
 def remnant_label(*, org_id: UUID, remnant_id: UUID) -> dict[str, object]:
@@ -547,7 +679,7 @@ def remnant_label(*, org_id: UUID, remnant_id: UUID) -> dict[str, object]:
     remnant = _remnant_row(row)
     identity = remnant["sheet_workshop_sku"]
     if not identity and remnant["stock_authority_id"]:
-        for table in ("profile_purchase_mappings", "reinforcement_articles"):
+        for table in ("profile_purchase_mappings", "reinforcement_articles", "catalog_color_skus"):
             found = rows(
                 f"SELECT commercial_sku FROM public.{table} WHERE id = %s",
                 [remnant["stock_authority_id"]],
@@ -566,10 +698,11 @@ def remnant_label(*, org_id: UUID, remnant_id: UUID) -> dict[str, object]:
             or remnant["physical_stock_identity"]
             or "—"
         )
-    payload = f"DEKOPEN|REMNANT|{remnant['id']}"
+    query = urlencode({"remnant": remnant["id"], "code": remnant["code"]})
+    payload = f"{settings.DEKOPEN_PUBLIC_APP_URL.rstrip('/')}/inventory?{query}"
     return {
         "remnant": remnant,
         "identity": identity,
         "qr_payload": payload,
-        "qr_svg": segno.make(payload, error="m").svg_inline(border=2, scale=6),
+        "qr_svg": segno.make(payload, error="m").svg_inline(border=4, scale=6, omitsize=True),
     }

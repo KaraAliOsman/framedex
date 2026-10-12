@@ -30,7 +30,7 @@ SELECT col_hasnt_default('public', 'profile_articles', 'weight_kg_m',
 INSERT INTO public.profile_systems
 SELECT (jsonb_populate_record(NULL::public.profile_systems,to_jsonb(source)||
     jsonb_build_object('id',gen_random_uuid(),'code','PGTAP143','technical_locked',false,'is_demo',false))).*
-FROM public.profile_systems source WHERE code='DEMO_60';
+FROM public.profile_systems source WHERE code='DEMO_60' AND version=1;
 INSERT INTO public.profile_articles (system_id, sku, name, role, material, face_width_mm)
 SELECT id, 'UNKNOWN-TEST', 'unknown fabrication data', 'MULLION_V', 'PVC', '60.00'
 FROM public.profile_systems WHERE code = 'PGTAP143';

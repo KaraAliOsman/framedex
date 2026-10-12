@@ -1,0 +1,9 @@
+{
+  "pack_pages": 3,
+  "bars": 3,
+  "pieces": 13,
+  "remnants": 5,
+  "qr_decoded_from_pixels": 18,
+  "sequence_equal_pdf_csv_dxf_labels": true,
+  "roll_one_page_per_label": true
+}

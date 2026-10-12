@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from math import ceil
+import json
 from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -28,6 +30,7 @@ from dekopen_engine.inspection_models import (
 )
 from dekopen_engine.inspector import inspect
 from dekopen_engine.manufacturing import (
+    handle_rules_for_leaf,
     HandleIntentV1,
     HandleRequirementPolicyV1,
     ManufacturingFactsV1,
@@ -46,9 +49,10 @@ from dekopen_engine.product import (
     frameless_module_computation,
 )
 from dekopen_engine.purchasing import (
-    FittingSelectionV1,
+    fitting_selections_v1,
     HardwareSelectionV1,
     PositionPurchaseInputV1,
+    PurchaseRequirementsV1,
     project_purchase_requirements_v1,
 )
 from dekopen_engine.snapshot import calculation_hash, calculation_response, result_payload
@@ -62,6 +66,7 @@ from engine_api.inspection_repository import InspectorAuthorities, InspectorRepo
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import commercial_backend
 from production.service import process_facts_snapshot
+from projects.brand_color import snapshot_preferences
 
 from documents.repository import (
     DocumentaryError,
@@ -141,7 +146,7 @@ def _pricing_state_matches(
             or D(str(position["discount_pct"])) != discount
         ):
             raise DocumentaryError("applied_pricing_binding_mismatch")
-    expected_cost = _stored_money(sum(costs.values(), D("0")))
+    expected_cost = _stored_money(sum(costs.values(), D("0"))+D(str(result.get("services_cost","0"))))
     expected_net = _stored_money(D(str(result.get("project_net"))))
     expected_tax = _stored_money(D(str(result.get("project_tax"))))
     expected_gross = _stored_money(D(str(result.get("project_gross"))))
@@ -189,28 +194,7 @@ def _handle_rules_for_leaf(
     handedness matches, and pinned rules win over wildcards when both
     match. Keeping the predicate in one place keeps the preparation UI and
     the freeze-time projection agreeing on which intents are required."""
-    matching = [
-        rule
-        for rule in slots
-        if rule.opening_type is leaf.opening_type
-        and (rule.leaf_slot is None or rule.leaf_slot == leaf.leaf_slot)
-        and (rule.leaf_handedness is None or rule.leaf_handedness == leaf.door_handedness)
-    ]
-    if leaf.door_handedness is not None:
-        # Pinned rules win per domain slot only — a wildcard rule for a
-        # slot with no pinned entry must still match.
-        pinned_slots = {
-            rule.handle_domain_slot
-            for rule in matching
-            if rule.leaf_handedness == leaf.door_handedness
-        }
-        matching = [
-            rule
-            for rule in matching
-            if rule.leaf_handedness is not None
-            or rule.handle_domain_slot not in pinned_slots
-        ]
-    return matching
+    return handle_rules_for_leaf(slots, leaf)
 
 
 def _missing_handle_intents(
@@ -323,6 +307,10 @@ def _handle_policy_requirements(
                         }
                     ),
                     "leaf_rects": _leaf_rects(leaf, placement_authorities),
+                    **({"default_height_mm": str(leaf.opening_handle.height_from_bottom_mm),
+                        "default_height_from_leaf_top_mm": str(leaf.opening_handle.y_mm),
+                        "default_vertical_reference": "LEAF_BOTTOM", "source": leaf.opening_handle.source}
+                       if leaf.opening_handle is not None else {}),
                 }
             )
             continue
@@ -335,6 +323,10 @@ def _handle_policy_requirements(
                     "opening_type": leaf.opening_type.value,
                     "handle_domain_slot": rule.handle_domain_slot,
                     "host_member_side": rule.host_member_side.value,
+                    **({"default_height_mm": str(leaf.opening_handle.height_from_bottom_mm),
+                        "default_height_from_leaf_top_mm": str(leaf.opening_handle.y_mm),
+                        "default_vertical_reference": "LEAF_BOTTOM", "source": leaf.opening_handle.source}
+                       if leaf.opening_handle is not None else {}),
                     "requires_handedness": False,
                     "outer_height_mm": str(item["nominal_height_mm"]),
                     "mounting_min_from_leaf_top_mm": str(
@@ -378,14 +370,17 @@ def _synthesized_handle_intents(
         children = node.get("children")
         if isinstance(children, list):
             stack.extend(children)
-    if not declared:
-        return intents
     covered = {
         (item.bay_id, item.leaf_id, item.handle_domain_slot) for item in intents
     }
     merged = list(intents)
     for leaf in trace.leaves:
-        height = declared.get(leaf.bay_id)
+        if leaf.opening is not None:
+            if leaf.opening_handle is None:
+                continue
+            height = leaf.opening_handle.height_from_bottom_mm
+        else:
+            height = declared.get(leaf.bay_id)
         if height is None or (leaf.bay_id, leaf.leaf_id, "PRIMARY") in covered:
             continue
         merged.append(HandleIntentV1(
@@ -393,13 +388,24 @@ def _synthesized_handle_intents(
             leaf_id=leaf.leaf_id,
             handle_domain_slot="PRIMARY",
             requested_height_mm=height,
-            vertical_reference=VerticalReference.OUTER_BOTTOM,
+            vertical_reference=VerticalReference.LEAF_BOTTOM if leaf.opening is not None else VerticalReference.OUTER_BOTTOM,
         ))
     return merged
 
 
 def _same_documentary_value(left: object, right: object) -> bool:
     return documentary_canonical_json_v1(left) == documentary_canonical_json_v1(right)
+
+
+def _canonical_bom_transport(value: object) -> dict[str, object]:
+    """Read old Decimal transports without rewriting their immutable bytes.
+
+    Only typed engine facts are normalized; text and real numeric changes
+    remain part of the exact binding comparison. Missing fields stay missing.
+    """
+    return result_payload(
+        EngineResult.model_validate_json(json_text(value)), exclude_unset=True
+    )
 
 
 _BOM_ADDITIVE_KEYS = frozenset({"fittings"})
@@ -658,6 +664,11 @@ def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
     return [result[key] for key in sorted(result)]
 
 
+def _position_finish(position: Mapping[str, object]) -> str:
+    from projects.finishes import position_finish_code
+    return position_finish_code(position)
+
+
 def _position_calculations(
     *,
     tree: dict[str, object],
@@ -667,6 +678,7 @@ def _position_calculations(
     params: object,
     system_id: UUID,
     org_id: UUID,
+    drawing_plan: dict | None = None,
 ) -> tuple[list[tuple[str | None, GeometryComputation, dict[str, object]]], EngineResult]:
     """Classic per-module geometry+trace for one persisted position.
 
@@ -675,6 +687,9 @@ def _position_calculations(
     module recomputes on its own tree, the ``module.id`` becoming the
     ``"<module_id>|<id>"`` namespace used by the persisted BOM.
     """
+    from dekopen_engine.finishes import prepare_finish, finish_result, validate_finish_size
+    validate_finish_size(params, color, width_mm, height_mm)
+    params = prepare_finish(params, color)
     calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]] = []
     is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
     coupler_articles = (
@@ -693,13 +708,19 @@ def _position_calculations(
         if evaluation.status.value != "VALID" or evaluation.bom is None:
             raise DocumentaryError("documentary_geometry_incomplete")
         result = evaluation.bom
+        if drawing_plan is not None and evaluation.plan is not None:
+            drawing_plan.update(evaluation.plan.model_dump(mode="python"))
+            if evaluation.measures is not None:
+                drawing_plan["assembly_measures"] = evaluation.measures.model_dump(mode="python")
         module_specs = [(module.id, module) for module in product.assembly.modules]
     else:
         result = None
         module_specs = [(None, None)]
     for module_id, module in module_specs:
         if module is not None and module.contour is not None:
-            computation, _contour_issues = contour_module_computation(module, params)
+            computation, _contour_issues = contour_module_computation(
+                module, params, is_foiled=color != "WHITE", finish=color
+            )
             if computation is None:
                 raise DocumentaryError("documentary_geometry_incomplete")
         elif module is not None and module.frameless is not None:
@@ -720,13 +741,15 @@ def _position_calculations(
                 color=color,
                 params=params,
             )
-            computation = compute_geometry(module_root, params, diagnostic=True)
+            computation = compute_geometry(
+                module_root, params, diagnostic=True, is_foiled=color != "WHITE", finish=color
+            )
         if computation.result is None or computation.manufacturing_trace is None:
             raise DocumentaryError("documentary_geometry_incomplete")
         module_tree = module.tree.model_dump(mode="json") if module is not None else tree
         calculations.append((module_id, computation, module_tree))
         if not is_assembly:
-            result = computation.result
+            result = finish_result(computation.result, params, color)
     if result is None:
         raise DocumentaryError("documentary_geometry_incomplete")
     return calculations, result
@@ -993,13 +1016,14 @@ def _collect_purchase_authorities(
     )
 
 
-def freeze_revision_a(
-    *, org_id: UUID, actor_id: UUID, project_id: UUID,
-    pricing_operation_id: UUID, confirmed: bool,
-    allow_incomplete_workshop: bool = False,
-) -> dict[str, object]:
-    if not confirmed:
-        raise DocumentaryError("documentary_freeze_confirmation_required")
+@dataclass(frozen=True)
+class PreparedRevision:
+    snapshot: dict[str, object]
+    purchase: PurchaseRequirementsV1 | None
+    position_system_ids: list[str]
+
+
+def lock_revision_inputs(*, org_id: UUID, project_id: UUID, pricing_operation_id: UUID) -> None:
     with commercial_backend():
         with connection.cursor() as cursor:
             cursor.execute(
@@ -1016,6 +1040,14 @@ def freeze_revision_a(
                 "WHERE project_id=%s AND org_id=%s ORDER BY position_index FOR UPDATE",
                 [project_id, org_id],
             )
+
+
+def compose_revision(
+    *, org_id: UUID, actor_id: UUID, project_id: UUID,
+    pricing_operation_id: UUID, sealed_at: datetime,
+    allow_incomplete_workshop: bool = False,
+) -> PreparedRevision:
+    """Compose the same authority for preview and seal, without issuing a revision."""
     with documentary_backend():
         project = one(
             "SELECT * FROM public.projects WHERE org_id=%s AND id=%s",
@@ -1023,24 +1055,6 @@ def freeze_revision_a(
             "project_not_found",
         )
         revision = str(project["current_revision"])
-        existing = rows(
-            "SELECT id,pricing_operation_id,revision_code,bom_hash,snapshot_sha256,"
-            "production_allowed,documentary_complete,emitted_at "
-            "FROM public.project_versions WHERE project_id=%s AND org_id=%s "
-            "AND revision_code=%s",
-            [project_id, org_id, revision],
-        )
-        if existing:
-            if len(existing) != 1 or str(existing[0]["pricing_operation_id"]) != str(
-                pricing_operation_id
-            ):
-                raise DocumentaryError("revision_already_sealed")
-            return {
-                **{key: (str(value) if isinstance(value, UUID) else value)
-                   for key, value in existing[0].items()},
-                "pricing_operation_id": str(pricing_operation_id),
-                "created": False,
-            }
         if project["status"] != "DRAFT":
             raise DocumentaryError("revision_not_available")
         operation = one(
@@ -1074,6 +1088,8 @@ def freeze_revision_a(
         pricing_result = _json_object(operation["result"], "invalid_applied_pricing_result")
         _pricing_state_matches(project, positions, request, pricing_snapshot, pricing_result)
         priced_bom = _technical_bom(pricing_snapshot)
+        extra_authorities = {str(item['position_id']):item['extra_authority'] for item in pricing_snapshot.get('positions',[])
+                             if 'extra_authority' in item}
 
         position_inputs: list[dict[str, object]] = []
         bom: list[dict[str, object]] = []
@@ -1095,7 +1111,7 @@ def freeze_revision_a(
             for row in rows(
                 """
                 SELECT id::text, material::text, end_milling_overlap_mm,
-                       process_profile_id::text
+                       process_profile_id::text, is_demo
                 FROM public.profile_systems
                 WHERE id = ANY(%s::uuid[])
                 """,
@@ -1106,13 +1122,22 @@ def freeze_revision_a(
             position_id = str(position["id"])
             tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
             is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
-            color = (
-                "WHITE"
-                if position["color_interior"] == "WHITE" and position["color_exterior"] == "WHITE"
-                else "FOILED"
-            )
+            color = _position_finish(position)
+            from projects.mounting import measurement_public
+            measure = measurement_public(org_id,position['id'],{
+                'system_id':str(position['system_id']), 'nominal_width_mm':str(position['width_mm']),
+                'nominal_height_mm':str(position['height_mm']), 'color':color, 'parametric_tree':tree},revision)
+            measurement_confirmed = bool(measure and measure['current'] and measure['state']=='CONFIRMED')
+            production_allowed = production_allowed and measurement_confirmed
             system_id = UUID(str(position["system_id"]))
             params = SystemParamsRepository().load_visible(system_id, org_id)
+            if position_id in extra_authorities:
+                from dekopen_engine.extra_models import ExtraAuthority
+                authority = extra_authorities[position_id]
+                params = params.model_copy(update={'extra_authority':ExtraAuthority.model_validate_json(json.dumps(authority)) if authority else None})
+                if authority is None:
+                    params.__pydantic_fields_set__.discard('extra_authority')
+            drawing_plan: dict = {}
             calculations, result = _position_calculations(
                 tree=tree,
                 width_mm=D(str(position["width_mm"])),
@@ -1121,17 +1146,21 @@ def freeze_revision_a(
                 params=params,
                 system_id=system_id,
                 org_id=org_id,
+                drawing_plan=drawing_plan,
             )
-            current_bom = result.model_dump(mode="json")
+            # Saving and pricing use the engine's canonical Decimal transport.
+            # Compare the same representation here: model_dump(mode="json")
+            # leaves e.g. a default extra overhang as "0" instead of "0.00".
+            current_bom = result_payload(result)
             stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
             stored_bom.pop("calculation_hash", None)
             priced_ref = priced_bom.get(position_id)
             if not _same_documentary_value(
                 _without_additive_bom_fields(current_bom, stored_bom),
-                _without_additive_bom_fields(stored_bom, stored_bom),
+                _without_additive_bom_fields(_canonical_bom_transport(stored_bom), stored_bom),
             ) or not isinstance(priced_ref, dict) or not _same_documentary_value(
                 _without_additive_bom_fields(current_bom, priced_ref),
-                _without_additive_bom_fields(priced_ref, priced_ref),
+                _without_additive_bom_fields(_canonical_bom_transport(priced_ref), priced_ref),
             ):
                 raise DocumentaryError("applied_pricing_technical_binding_drift")
 
@@ -1140,6 +1169,13 @@ def freeze_revision_a(
                 engine_result=current_bom,
                 system_facts=system_facts_by_id.get(str(system_id)),
             )
+            from catalogs.authority import catalog_authority_gate
+            catalog_gate = catalog_authority_gate(system_id=system_id, org_id=org_id,
+                params=params, process_facts=process_facts,
+                profile_skus={str(item.get("sku")) for item in current_bom.get("profile_cuts", [])},
+                hardware_skus={item.kit_sku for item in result.hardware_items},
+                panel_skus={str(item.get("sku")) for item in current_bom.get("panels", [])})
+            production_allowed = production_allowed and catalog_gate["ok"]
             annotations = workshop_annotations(position["workshop_annotations"])
             structural = structural_inputs(position["structural_inputs"])
             targets = {
@@ -1214,7 +1250,7 @@ def freeze_revision_a(
                     # Inspector violations carry no position identity; without
                     # it the estimator must binary-search the vano list.
                     raise ValueError(
-                        f"Vano «{position['name'] or position['position_index']}»: {error}"
+                        f"Vano «{position.get('name') or position.get('position_index')}»: {error}"
                     ) from error
                 module_allowed = inspection.production_allowed
                 module_complete = not any(
@@ -1323,14 +1359,7 @@ def freeze_revision_a(
                 quantity=item.qty,
                 contents=item.contents,
             ) for repetition in range(1, quantity + 1) for item in result.hardware_items]
-            fittings = [FittingSelectionV1(
-                repetition_index=repetition,
-                bay_id=item.bay_id,
-                leaf_id=item.leaf_id,
-                technical_sku=item.sku,
-                kind=item.kind,
-                quantity=item.qty,
-            ) for repetition in range(1, quantity + 1) for item in result.fittings]
+            fittings = fitting_selections_v1(result.fittings, quantity)
             polishing = glass_polishing(position["glass_polishing"])
             glass_targets = {
                 (
@@ -1372,6 +1401,7 @@ def freeze_revision_a(
                     quantity=quantity,
                     color=color,
                     location_tag=location_tag,
+                    reinforcement_color=result.finish.combination.reinforcement_stock_code if result.finish else None,
                     manufacturing_units=units,
                     hardware=hardware,
                     fittings=fittings,
@@ -1397,16 +1427,21 @@ def freeze_revision_a(
                 org_id=org_id,
                 color=color,
                 profile_skus=profile_skus,
+                finish_authority=params.finish_authority,
                 reinforcement_skus=reinforcement_skus,
                 glass_skus=glass_skus,
-                hardware_skus={item.technical_kit_sku for item in hardware},
+                hardware_skus={item.technical_kit_sku for item in hardware
+                    if not item.contents or not all(component.purchasing_sku is not None for component in item.contents)},
                 panel_skus=panel_skus,
                 fitting_skus={item.technical_sku for item in fittings},
             )
             purchase_authorities = _collect_purchase_authorities(
                 purchase_authorities, following
             )
+            from dekopen_engine.finishes import prepare_finish
+            from production.cnc_coverage import freeze_profile_sections
             position_inputs.append({
+                "profile_sections": freeze_profile_sections(prepare_finish(params, color), profile_skus),
                 "id": position_id,
                 "position_index": int(position["position_index"]),
                 "quantity": quantity,
@@ -1416,11 +1451,23 @@ def freeze_revision_a(
                 "height_mm": D(str(position["height_mm"])),
                 "color_interior": str(position["color_interior"]),
                 "color_exterior": str(position["color_exterior"]),
+                **({"resolved_finish": result.finish.model_dump(mode="python")} if result.finish is not None else {}),
                 "location_tag": location_tag,
                 "system_name": str(position["system_name"]),
+                "is_demo": bool(system_facts_by_id.get(str(system_id), {}).get("is_demo", False)),
                 "price_net": D(str(position["price_net"])),
                 "discount_pct": str(position["discount_pct"]),
                 "parametric_tree": tree,
+                **({"drawing_plan": drawing_plan} if drawing_plan else {}),
+                **({"opening_leaves": current_bom["opening_leaves"]}
+                   if current_bom.get("opening_leaves") else {}),
+                **({"commercial_hardware": [{
+                    "handle_name": item.resolution.handle_name,
+                    "handle_color": item.resolution.handle_color,
+                    "options": item.resolution.options,
+                    "synthetic": item.resolution.synthetic,
+                } for item in result.hardware_items if item.resolution is not None]}
+                    if any(item.resolution is not None for item in result.hardware_items) else {}),
                 "workshop_annotations": [item.model_dump(mode="python") for item in annotations],
                 "structural_inputs": [item.model_dump(mode="python") for item in structural],
                 "glass_polishing": [item.model_dump(mode="python") for item in polishing],
@@ -1436,6 +1483,8 @@ def freeze_revision_a(
                     position["legacy_handle_migration_confirmed"]
                 ),
                 "process_facts": process_facts,
+                "catalog_authority_gate": catalog_gate,
+                "measurements": measure,
             })
             bom.append({
                 "position_id": position_id,
@@ -1477,13 +1526,15 @@ def freeze_revision_a(
         )
         organization = one(
             "SELECT name, tax_id, commercial_name, giro, brand_address,"
-            " brand_phone, brand_email, brand_logo_key, brand_logo_sha256"
+            " brand_phone, brand_email, brand_logo_key, brand_logo_sha256,"
+            " brand_primary_color, document_attribution, portal_attribution, document_preferences"
             " FROM public.tenancy_organizations WHERE id = %s",
             [str(org_id)],
             "organization_not_found",
         )
-        sealed_at = datetime.now(timezone.utc)
         snapshot = {
+            "measurements_required": True,
+            "is_demo": any(item.get("is_demo") for item in position_inputs),
             "schema_version": 1,
             "canonical_version": DOCUMENTARY_CANONICAL_VERSION,
             "project_id": project_id,
@@ -1493,6 +1544,7 @@ def freeze_revision_a(
             # The logo key is content-addressed, so the frozen sha pins the
             # exact bytes a re-rendered document may show.
             "organization": {
+                **snapshot_preferences(organization),
                 "name": str(organization["name"]),
                 "tax_id": str(organization["tax_id"]),
                 "commercial_name": organization["commercial_name"],
@@ -1502,6 +1554,7 @@ def freeze_revision_a(
                 "brand_email": organization["brand_email"],
                 "brand_logo_key": organization["brand_logo_key"],
                 "brand_logo_sha256": organization["brand_logo_sha256"],
+                "document_preferences": decoded(organization["document_preferences"]),
             },
             "revision": revision,
             "sealed_by": actor_id,
@@ -1520,12 +1573,14 @@ def freeze_revision_a(
                 "payment_terms": str(project_input["payment_terms"]),
                 "quotation_valid_until": project_input["quotation_valid_until"],
                 "notes_commercial": project["notes_commercial"],
+                "commercial_terms": decoded(project_input["commercial_terms"]),
                 "currency": request.get("currency"),
                 "total_price_net": D(str(project["total_price_net"])),
                 "total_price_tax": D(str(project["total_price_tax"])),
                 "total_price_gross": D(str(project["total_price_gross"])),
             },
             "positions": position_inputs,
+            "alternatives": _sealed_alternatives(project_input["alternative_version_ids"], project_id, org_id),
             "bom": bom,
             "pricing": {
                 "operation_id": operation["id"],
@@ -1544,22 +1599,45 @@ def freeze_revision_a(
             "purchase_requirements": purchase.model_dump(mode="python") if purchase else None,
             "purchase_authorities": {
                 "physical_stock_bindings": [
-                    item.model_dump(mode="python")
-                    for item in purchase_authorities.stock_bindings
+                    item.model_dump(mode="python") for item in purchase_authorities.stock_bindings
                 ],
-                "glass": [item.model_dump(mode="python")
-                          for item in purchase_authorities.glass_mappings],
-                "hardware": [item.model_dump(mode="python")
-                             for item in purchase_authorities.hardware_mappings],
-                "panel": [item.model_dump(mode="python")
-                          for item in purchase_authorities.panel_authorities],
+                "glass": [
+                    item.model_dump(mode="python") for item in purchase_authorities.glass_mappings
+                ],
+                "hardware": [
+                    item.model_dump(mode="python")
+                    for item in purchase_authorities.hardware_mappings
+                ],
+                "panel": [
+                    item.model_dump(mode="python")
+                    for item in purchase_authorities.panel_authorities
+                ],
             },
             "production_allowed": production_allowed,
             "documentary_complete": documentary_complete,
             "realized_waste": {"status": "NOT_RECORDED", "value": None},
             "bom_hash": bom_hash,
         }
-        snapshot_sha256 = snapshot_sha256_v1(snapshot)
+        # Thermal evidence participates in preview and emission identically.
+        # It does not change any manufacturing or historical BOM identity.
+        if connection.vendor == "postgresql":
+            from projects.thermal import project_report
+            snapshot["thermal"] = project_report(org_id, project_id, sealed=False)
+        return PreparedRevision(snapshot, purchase, position_system_ids)
+
+
+def persist_revision(*, prepared: PreparedRevision) -> dict[str, object]:
+    """Persist only a composed and verified revision while the caller holds its locks."""
+    snapshot = prepared.snapshot
+    project_id, org_id = snapshot["project_id"], snapshot["org_id"]
+    actor_id, sealed_at = snapshot["sealed_by"], snapshot["sealed_at"]
+    revision, bom_hash = snapshot["revision"], snapshot["bom_hash"]
+    pricing_operation_id = snapshot["pricing"]["operation_id"]
+    production_allowed = snapshot["production_allowed"]
+    documentary_complete = snapshot["documentary_complete"]
+    snapshot_sha256 = snapshot_sha256_v1(snapshot)
+    purchase, position_system_ids = prepared.purchase, prepared.position_system_ids
+    with documentary_backend():
         version = one(
             "INSERT INTO public.project_versions("
             "project_id,org_id,revision_code,snapshot_json,pdf_storage_path,emitted_by,emitted_at,"
@@ -1662,6 +1740,81 @@ def freeze_revision_a(
         }
 
 
+
+def freeze_revision_a(
+    *, org_id: UUID, actor_id: UUID, project_id: UUID,
+    pricing_operation_id: UUID, confirmed: bool,
+    allow_incomplete_workshop: bool = False,
+) -> dict[str, object]:
+    """Historical idempotent entry point; composition is shared with guided issuance."""
+    if not confirmed:
+        raise DocumentaryError("documentary_freeze_confirmation_required")
+    lock_revision_inputs(org_id=org_id, project_id=project_id, pricing_operation_id=pricing_operation_id)
+    with documentary_backend():
+        project = one("SELECT current_revision FROM public.projects WHERE org_id=%s AND id=%s",
+                      [org_id, project_id], "project_not_found")
+        revision = str(project["current_revision"])
+        existing = rows(
+            "SELECT id,pricing_operation_id,revision_code,bom_hash,snapshot_sha256,"
+            "production_allowed,documentary_complete,emitted_at "
+            "FROM public.project_versions WHERE project_id=%s AND org_id=%s "
+            "AND revision_code=%s",
+            [project_id, org_id, revision],
+        )
+        if existing:
+            if len(existing) != 1 or str(existing[0]["pricing_operation_id"]) != str(
+                pricing_operation_id
+            ):
+                raise DocumentaryError("revision_already_sealed")
+            return {
+                **{key: (str(value) if isinstance(value, UUID) else value)
+                   for key, value in existing[0].items()},
+                "pricing_operation_id": str(pricing_operation_id),
+                "created": False,
+            }
+    prepared = compose_revision(org_id=org_id, actor_id=actor_id, project_id=project_id,
+                                pricing_operation_id=pricing_operation_id,
+                                sealed_at=datetime.now(timezone.utc),
+                                allow_incomplete_workshop=allow_incomplete_workshop)
+    return persist_revision(prepared=prepared)
+
+
+def _prepared_commercial_terms(values: dict, org_id: UUID) -> dict:
+    if values:
+        # Historical saved text never becomes a structured 50/50 schedule.
+        return decoded(values.get("commercial_terms", {}))
+    from documents.preferences import document_preferences
+    row = one("SELECT document_preferences FROM public.tenancy_organizations WHERE id=%s", [str(org_id)], "organization_not_found")
+    return document_preferences(row["document_preferences"])["commercial_terms"]
+
+
+def _prepared_valid_until(values: dict, org_id: UUID):
+    if values:
+        # Historical declarations retain their date, including a missing date.
+        return values.get("quotation_valid_until")
+    from zoneinfo import ZoneInfo
+    from documents.preferences import document_preferences
+    row = one("SELECT document_preferences FROM public.tenancy_organizations WHERE id=%s",
+              [str(org_id)], "organization_not_found")
+    days = document_preferences(row["document_preferences"])["quotation_valid_days"]
+    return datetime.now(ZoneInfo("America/Santiago")).date() + timedelta(days=days)
+
+
+def _sealed_alternatives(version_ids: list, project_id: UUID, org_id: UUID) -> list:
+    if len(version_ids) > 3 or len(set(map(str, version_ids))) != len(version_ids):
+        raise DocumentaryError("quote_alternatives_invalid")
+    from documents.artifacts import _revision_snapshot
+    snapshots = []
+    for version_id in version_ids:
+        version, value = _revision_snapshot(UUID(str(version_id)), org_id)
+        if str(version["project_id"]) != str(project_id):
+            raise DocumentaryError("quote_alternative_scope_mismatch")
+        # No recursive copy of prior alternatives. Their own base solution
+        # and commercial totals are exactly the issued proposal's authority.
+        snapshots.append({key: value[key] for key in ("revision", "project", "positions", "pricing")})
+    return snapshots
+
+
 def prepare_documentary_inputs(
     *, org_id: UUID, project_id: UUID
 ) -> dict[str, object]:
@@ -1673,14 +1826,14 @@ def prepare_documentary_inputs(
     positions = rows(
         "SELECT position.id,position.system_id,position.location_tag,position.width_mm,"
         "position.height_mm,position.color_interior,position.color_exterior,"
-        "position.parametric_tree,system.name AS system_name "
+        "position.parametric_tree,position.bom_snapshot,system.name AS system_name "
         "FROM public.project_positions position JOIN public.profile_systems system "
         "ON system.id=position.system_id WHERE position.project_id=%s AND position.org_id=%s "
         "ORDER BY position.position_index",
         [project_id, org_id],
     )
     project_inputs = rows(
-        "SELECT payment_terms,quotation_valid_until FROM public.project_documentary_inputs "
+        "SELECT payment_terms,quotation_valid_until,commercial_terms,alternative_version_ids FROM public.project_documentary_inputs "
         "WHERE project_id=%s AND org_id=%s",
         [project_id, org_id],
     )
@@ -1760,11 +1913,7 @@ def prepare_documentary_inputs(
         reinforcement_options = reinforcement.get(system_id, [])
 
         tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
-        color = (
-            "WHITE"
-            if position.get("color_interior") == "WHITE" and position.get("color_exterior") == "WHITE"
-            else "FOILED"
-        )
+        color = _position_finish(position)
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
         calculations, result = _position_calculations(
             tree=tree,
@@ -1792,7 +1941,7 @@ def prepare_documentary_inputs(
 
         trace_leaves: list[dict[str, object]] = []
         leaf_counts: dict[str | None, int] = {}
-        for module_id, computation, _module_tree in calculations:
+        for module_index, (module_id, computation, _module_tree) in enumerate(calculations, 1):
             trace = computation.manufacturing_trace
             if trace is None:
                 continue
@@ -1812,7 +1961,7 @@ def prepare_documentary_inputs(
                             else leaf.leaf_id
                         ),
                         "leaf_label": (
-                            f"Unidad {module_id} · hoja {number}"
+                            f"Unidad {module_index} · hoja {number}"
                             if module_id
                             else f"Hoja {number}"
                         ),
@@ -1975,12 +2124,32 @@ def prepare_documentary_inputs(
             }
         )
     values = project_inputs[0] if project_inputs else {}
+    missing = []
+    if not values.get("payment_terms"):
+        missing.append({"code": "payment_terms_missing", "detail": "Declara las condiciones de pago en Preparar emisión."})
+    if values.get("quotation_valid_until") is None:
+        missing.append({"code": "quotation_valid_until_missing", "detail": "Declara la vigencia de la cotización en Preparar emisión."})
+    from projects.service import _priced
+    if not _priced(org_id, project_id, project["current_revision"]):
+        missing.append({"code": "pricing_not_applied", "detail": "Calcula y aplica los precios vigentes del proyecto."})
+    for position in prepared:
+        identity = str(position["position_id"])
+        existing = position_inputs.get(identity)
+        if existing is None or existing.get("calculation_hash") != position["calculation_hash"]:
+            missing.append({"code": "documentary_inputs_unconfirmed", "position_id": identity,
+                            "detail": "Guarda la preparación documental del diseño vigente."})
+        if not position["documentary_ready"]:
+            missing.append({"code": "position_documentary_incomplete", "position_id": identity,
+                            "detail": "Completa la autoridad documental indicada por el inspector."})
     return {
         "project_id": project["id"],
         "revision_code": project["current_revision"],
         "payment_terms": values.get("payment_terms", ""),
-        "quotation_valid_until": values.get("quotation_valid_until"),
+        "quotation_valid_until": _prepared_valid_until(values, org_id),
+        "commercial_terms": _prepared_commercial_terms(values, org_id),
+        "alternative_version_ids": values.get("alternative_version_ids", []),
         "positions": prepared,
+        "missing": missing,
     }
 
 
@@ -2001,7 +2170,7 @@ def save_documentary_inputs(
         if project["status"] != "DRAFT":
             raise DocumentaryError("documentary_inputs_require_draft")
         positions = rows(
-            "SELECT id,system_id,width_mm,height_mm,color_interior,color_exterior,parametric_tree "
+            "SELECT id,system_id,width_mm,height_mm,color_interior,color_exterior,parametric_tree,bom_snapshot "
             "FROM public.project_positions WHERE project_id=%s AND org_id=%s "
             "ORDER BY position_index FOR UPDATE",
             [project_id, org_id],
@@ -2010,17 +2179,16 @@ def save_documentary_inputs(
         supplied = {str(item["position_id"]) for item in supplied_values}
         if supplied != expected or len(supplied_values) != len(supplied):
             raise DocumentaryError("documentary_position_coverage_required")
+        if "alternative_version_ids" in data:
+            with documentary_backend():
+                _sealed_alternatives(data["alternative_version_ids"], project_id, org_id)
         positions_by_id = {str(item["id"]): item for item in positions}
 
     for item in supplied_values:
         pos = positions_by_id[str(item["position_id"])]
         system_id_uuid = UUID(str(pos["system_id"]))
         tree = _json_object(pos["parametric_tree"], "invalid_parametric_tree")
-        color = (
-            "WHITE"
-            if pos.get("color_interior") == "WHITE" and pos.get("color_exterior") == "WHITE"
-            else "FOILED"
-        )
+        color = _position_finish(pos)
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
         calculations, result = _position_calculations(
             tree=tree,
@@ -2075,12 +2243,17 @@ def save_documentary_inputs(
             )
         one(
             "INSERT INTO public.project_documentary_inputs("
-            "project_id,org_id,payment_terms,quotation_valid_until,created_by) "
-            "VALUES(%s,%s,%s,%s,%s) "
+            "project_id,org_id,payment_terms,quotation_valid_until,commercial_terms,alternative_version_ids,created_by) "
+            "VALUES(%s,%s,%s,%s,%s::jsonb,%s::uuid[],%s) "
             "ON CONFLICT(project_id,org_id) DO UPDATE SET "
             "payment_terms=EXCLUDED.payment_terms,"
-            "quotation_valid_until=EXCLUDED.quotation_valid_until,updated_at=now() RETURNING id",
-            [project_id, org_id, data["payment_terms"], data["quotation_valid_until"], actor_id],
+            "quotation_valid_until=EXCLUDED.quotation_valid_until,"
+            "commercial_terms=CASE WHEN %s THEN EXCLUDED.commercial_terms ELSE project_documentary_inputs.commercial_terms END,"
+            "alternative_version_ids=CASE WHEN %s THEN EXCLUDED.alternative_version_ids ELSE project_documentary_inputs.alternative_version_ids END,"
+            "updated_at=now() RETURNING id",
+            [project_id, org_id, data["payment_terms"], data["quotation_valid_until"],
+             json_text(data.get("commercial_terms", {})), data.get("alternative_version_ids", []), actor_id,
+             "commercial_terms" in data, "alternative_version_ids" in data],
         )
         for item in supplied_values:
             position_id = UUID(str(item["position_id"]))
@@ -2195,6 +2368,7 @@ def _compare_position(row: dict[str, object]) -> dict[str, object]:
         "price_net": str(row.get("price_net") or ""),
         "discount_pct": str(row.get("discount_pct") or ""),
         "parametric_tree": row.get("parametric_tree"),
+        **({"opening_leaves": row["opening_leaves"]} if row.get("opening_leaves") else {}),
         "calculation_hash": str(row.get("calculation_hash") or ""),
         "documentary_signature": documentary_canonical_json_v1(
             {key: row.get(key) for key in _DOCUMENTARY_SLICE}

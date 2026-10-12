@@ -1,0 +1,19 @@
+[
+  {
+    "flow": "Proveedor de prueba aislado: editor → propuesta del motor/dibujos reales/Δ → aplicar → deshacer → auditoría",
+    "result": "PASA",
+    "states": [
+      "SUCCEEDED",
+      "QUEUED",
+      "RUNNING",
+      "WAITING_FOR_APPROVAL"
+    ],
+    "jobId": "26641be7-f694-408b-811f-2ff58fe53712",
+    "org": "5980c7c1-15b4-564d-9fa9-84c721745e2d"
+  },
+  {
+    "flow": "MiMo real sin fallback: misma solicitud → propuesta verificable/diff del motor",
+    "result": "PASA",
+    "jobId": "99cf868f-6303-42e8-b0e2-39899e7a1042"
+  }
+]

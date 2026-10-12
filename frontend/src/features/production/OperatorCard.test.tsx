@@ -30,7 +30,7 @@ const sawOp = {
   operation_id: "op-1",
   kind: "SAW_CUT",
   host: "BAR-01",
-  detail: { boundary: "B1" },
+  detail: { boundary: "HEAD_TRIM" },
 };
 const memberOp = {
   operation_id: "op-2",
@@ -48,7 +48,7 @@ describe("OperatorStepCard legacy op routing", () => {
       <OperatorStepCard step={step("WELD")} trace={trace} traceBusy={false} />,
     );
     expect(screen.queryByText("Mecanizado de extremo")).toBeNull();
-    expect(screen.queryByText("B1")).toBeNull();
+    expect(screen.queryByText("Corte inicial")).toBeNull();
     unmount();
 
     render(<OperatorStepCard step={step("MACHINING")} trace={trace} traceBusy={false} />);
@@ -56,7 +56,7 @@ describe("OperatorStepCard legacy op routing", () => {
     cleanup();
 
     render(<OperatorStepCard step={step("CUT")} trace={trace} traceBusy={false} />);
-    expect(screen.getByText("B1")).toBeTruthy();
+    expect(screen.getByText("Corte inicial")).toBeTruthy();
     expect(screen.queryByText("Mecanizado de extremo")).toBeNull();
   });
 

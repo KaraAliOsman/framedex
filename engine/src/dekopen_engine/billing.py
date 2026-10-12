@@ -5,6 +5,25 @@ from decimal import Decimal, localcontext
 from dekopen_engine.commercial import convert_cost, quantize_currency, number
 
 
+def ai_usage_cost_usd(prompt_tokens: int, completion_tokens: int,
+                      input_per_million: Decimal | None,
+                      output_per_million: Decimal | None) -> Decimal | None:
+    """Measured tokens × explicit operator tariff; absent tariff stays unknown."""
+    if any(type(value) is not int or value < 0 for value in (prompt_tokens, completion_tokens)):
+        raise ValueError('Nonnegative measured token counts required')
+    if input_per_million is None or output_per_million is None:
+        return None
+    for rate in (input_per_million, output_per_million):
+        number(rate)
+        if rate < 0:
+            raise ValueError('Nonnegative declared tariffs required')
+    with localcontext() as context:
+        context.prec = 80
+        return ((Decimal(prompt_tokens) * input_per_million
+                 + Decimal(completion_tokens) * output_per_million)
+                / Decimal('1000000'))
+
+
 def platform_charge_clp(net_usd: Decimal, observed_usd_clp: Decimal) -> Decimal:
     """Apply approved FX buffer and IVA, rounding only the final CLP amount."""
     number(net_usd, positive=True)

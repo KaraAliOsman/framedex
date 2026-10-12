@@ -212,7 +212,7 @@ def test_configuration_requires_base_glass_and_finite_authorities(commercial_row
 
 
 def seed_unpriced_project(org, owner, system=None):
-    system = system or one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    system = system or one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")['id']
     project = one('INSERT INTO public.projects(org_id,code,name,client_name,created_by) '
                   'VALUES(%s,%s,%s,%s,%s) RETURNING id',[org,str(uuid4()),'Commercial gate','Fixture',owner])['id']
     tree = {'id':'root','type':'BAY','opening_type':'FIXED','glass_spec':'4-12-4 Float Incoloro',
@@ -339,7 +339,7 @@ def test_composite_pricing_requires_exact_typology_configuration(commercial_rows
 
 def test_legacy_draft_rejects_submitted_typology_mismatch(commercial_rows):
     org,_,users=commercial_rows
-    system=one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    system=one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")['id']
     code=f"MISMATCH-{uuid4()}"
     response=owner_client(users['OWNER']).post('/api/v1/pricing/drafts/',{
         'code':code,'name':'Legacy mismatch','client_name':'Fixture','reason':'Legacy proof',
@@ -383,7 +383,7 @@ def test_direct_commercial_insert_guard_all_fields(commercial_rows, session_role
     from psycopg import sql
 
     org, _, users = commercial_rows
-    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")['id']
     creator = users.get(session_role, users['OWNER'])
     identity = as_user(users[session_role]) if session_role in users else nullcontext()
     with transaction.atomic(), identity:
@@ -606,12 +606,15 @@ def test_pricing_http_valid_preview_remains_successful(committed_commercial_rows
                                                  format='json')
     assert response.status_code==200
     body = response.json()
-    assert set(body)=={'id','project_id','revision_code','discount_pct','state','currency','lines',
+    assert set(body)=={'workspace','id','project_id','revision_code','discount_pct','state','currency','lines',
                       'project_net','project_tax','project_gross','cost_lines','total_cost',
                       'project_code','project_name','client_name','pricing_mode','segment',
                       'positions_breakdown','authorities','rules','requested_by_email',
                       'reason','requested_by','approved_by','approved_at','created_at',
-                      'extras','extras_net'}
+                      'extras','extras_net','services','document_extra_prices',
+                      'costs_visible','costs_reason'}
+    assert body['costs_visible'] is True and body['costs_reason'] is None
+    assert body['services']==[] and body['document_extra_prices']=='ITEMIZED'
     assert body['approved_by'] is None and body['approved_at'] is None
     assert body['state']=='PREVIEW'
     assert body['project_id']==str(project)
@@ -652,7 +655,7 @@ def test_applied_commercial_state_rejects_direct_writes(commercial_rows):
     org,_,users = commercial_rows
     project = applied_commercial_project(org,users['OWNER'])
     draft = seed_unpriced_project(org,users['OWNER'])
-    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")['id']
     position = one('SELECT id FROM public.project_positions WHERE project_id=%s',[project])['id']
     draft_position = one('SELECT id FROM public.project_positions WHERE project_id=%s',[draft])['id']
     before_project = one('SELECT * FROM public.projects WHERE id=%s',[project])
@@ -719,7 +722,7 @@ def test_other_tenant_direct_writes_touch_zero_rows(commercial_rows):
 
 def test_zero_unapplied_draft_remains_directly_mutable(commercial_rows):
     org,_,users = commercial_rows
-    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND version=1")['id']
     before_audit = one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',
                        [org])['n']
     with as_user(users['OWNER']):
@@ -1175,7 +1178,7 @@ def test_position_cost_preserves_original_database_sqlstate(commercial_rows,monk
         with connection.cursor() as cursor:
             cursor.execute('SELECT * FROM public.missing_shot08_technical_authority')
 
-    monkeypatch.setattr(pricing_service.SystemParamsRepository,'load_visible',failed_technical_read)
+    monkeypatch.setattr('pricing.resolved.SystemParamsRepository.load_visible',failed_technical_read)
     with pytest.raises(DatabaseError) as rejected:
         with as_user(users['OWNER']), commercial_backend():
             repo = PricingRepository(org,date(2026,9,10),'CLP')

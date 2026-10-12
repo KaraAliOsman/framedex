@@ -1,0 +1,337 @@
+.project-quotation-workspace[hidden],
+.project-desk[hidden] {
+  display: none;
+}
+
+.project-quotation-workspace {
+  min-width: 0;
+}
+
+.quotation-workbench {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.quotation-checklist,
+.quotation-review {
+  position: sticky;
+  top: 60px;
+  min-width: 0;
+  border: 1px solid var(--theme-border-subtle);
+  padding: 12px;
+  background: var(--theme-surface-panel);
+}
+
+.quotation-checklist h3,
+.quotation-review h3 {
+  margin: 0 0 12px;
+  font-size: var(--type-title-m);
+}
+
+.quotation-checklist {
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+}
+
+.quotation-checklist ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.quotation-checklist li {
+  border-top: 1px solid var(--theme-border-subtle);
+}
+
+.quotation-checklist button {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 4px;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+  padding: 6px 0;
+  background: transparent;
+  color: var(--theme-text-primary);
+}
+
+.quotation-checklist small {
+  grid-column: 2;
+  color: var(--theme-text-secondary);
+}
+
+.quotation-checklist li[data-complete="true"] button > span:first-child {
+  color: var(--theme-accent);
+}
+
+.quotation-checklist p,
+.quotation-review > p,
+.quotation-global p {
+  font-size: var(--type-body);
+  line-height: 1.5;
+}
+
+.quotation-fields,
+.quotation-customer {
+  min-width: 0;
+}
+
+.project-quotation-workspace .quotation-workbench label {
+  margin: 0;
+  gap: 4px;
+}
+
+.project-quotation-workspace .quotation-workbench input:not([type="checkbox"]),
+.project-quotation-workspace .quotation-workbench select {
+  padding: 6px 8px;
+  min-height: 32px;
+}
+
+.project-quotation-workspace .quotation-customer {
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--theme-border-subtle);
+}
+
+.quotation-customer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid var(--theme-border-subtle);
+  scroll-margin-top: 60px;
+}
+
+.quotation-customer > button,
+.quotation-customer > small {
+  grid-column: 1 / -1;
+}
+
+.quotation-customer label,
+.quotation-global label,
+.quotation-deadline label,
+.quotation-share label {
+  display: grid;
+  gap: 4px;
+}
+
+.quotation-customer input,
+.quotation-share input,
+.quotation-global input,
+.quotation-global select {
+  min-width: 0;
+  width: 100%;
+}
+
+.quotation-customer small {
+  color: var(--theme-warning);
+}
+
+.quotation-panel button.primary-action,
+.quotation-panel button.primary-action:hover {
+  background: var(--interactive-fill);
+  color: var(--text-on-fill);
+  border-color: var(--interactive-fill);
+}
+
+.quotation-review iframe {
+  display: block;
+  height: 390px;
+  width: 100%;
+  border: 1px solid var(--theme-border-subtle);
+  margin: 12px 0;
+  background: white;
+  scroll-margin-top: 72px;
+}
+
+.quotation-revision-seal {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  border-bottom: 2px solid var(--teal-700);
+  padding-bottom: 8px;
+}
+
+.quotation-revision-seal strong {
+  font-family: var(--font-mono);
+  font-size: var(--type-title-l);
+}
+
+.quotation-confirmation {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.quotation-confirmation div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 8px;
+}
+
+.quotation-confirmation dt {
+  color: var(--theme-text-secondary);
+}
+
+.quotation-confirmation dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.quotation-review code {
+  overflow-wrap: anywhere;
+}
+
+.quotation-review .quotation-confirm {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.quotation-review .quotation-confirm input {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.quotation-field-target {
+  outline: 2px solid var(--teal-600);
+  outline-offset: 2px;
+  background-color: var(--theme-surface-raised);
+}
+
+.quotation-position,
+.quotation-global,
+.quotation-link {
+  border-top: 1px solid var(--theme-border-subtle);
+  padding: 12px 0;
+}
+
+.quotation-position summary,
+.quotation-global > summary {
+  padding: 6px 0;
+  min-height: 28px;
+  cursor: pointer;
+}
+
+.quotation-global fieldset {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  border: 0;
+  padding: 0;
+}
+
+.quotation-global label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quotation-global input[type="checkbox"] {
+  width: auto;
+}
+
+.quotation-global-selection {
+  max-height: 240px;
+  overflow: auto;
+}
+
+.quotation-global-preview h4 {
+  margin: 12px 0;
+}
+
+.quotation-global-preview summary {
+  padding: 8px 0;
+  overflow-wrap: anywhere;
+}
+
+.quotation-link-timeline {
+  list-style: none;
+  padding: 0;
+}
+
+.quotation-link.quotation-link {
+  display: block;
+  margin: 0;
+}
+
+.quotation-link__title,
+.quotation-link-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.quotation-link-events {
+  border-left: 1px solid var(--theme-border-subtle);
+  list-style: none;
+  margin: 12px 0 12px 4px;
+  padding-left: 16px;
+}
+
+.quotation-link-events li {
+  padding: 4px 0;
+}
+
+.quotation-link-events time,
+.quotation-link__title strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.quotation-link-events blockquote {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 2px solid var(--theme-border-strong);
+  background: var(--theme-surface-raised);
+}
+
+.quotation-deadline {
+  min-width: 230px;
+}
+
+@media (max-width: 1350px) {
+  .quotation-workbench {
+    grid-template-columns: 176px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .quotation-workbench {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .quotation-checklist {
+    grid-column: 1 / -1;
+    position: static;
+  }
+
+  .quotation-checklist ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .quotation-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quotation-checklist ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quotation-review {
+    position: static;
+  }
+}

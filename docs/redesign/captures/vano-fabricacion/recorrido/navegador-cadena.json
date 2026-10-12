@@ -1,0 +1,52 @@
+[
+  {
+    "name": "ajustes-diff-fuente",
+    "screenshot": "ajustes-diff-fuente.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "ajustes-consulta-estimador",
+    "screenshot": "ajustes-consulta-estimador.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-vano-producto-390",
+    "screenshot": "portal-vano-producto-390.png",
+    "width": 390,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "rectificacion-aprobada-diff-precio",
+    "screenshot": "rectificacion-aprobada-diff-precio.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "reapertura-delta-y-confirmacion",
+    "screenshot": "reapertura-delta-y-confirmacion.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  }
+]

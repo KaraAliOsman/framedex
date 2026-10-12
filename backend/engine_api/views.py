@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from dekopen_engine.snapshot import calculation_response, evaluation_response
 from dekopen_engine.weight import MissingFabricationAuthority
+from dekopen_engine.catalog_rules import CatalogRuleError
+from dekopen_engine.openings import OpeningCapabilityError
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -141,6 +143,9 @@ class EngineCalculateView(APIView):
                 "system_not_found",
                 "Profile system does not exist or is not visible",
             ) from error
+        except (CatalogRuleError, OpeningCapabilityError) as error:
+            raise contract_error(422, error.code, str(error),
+                                 error_extra={"limits": error.params}) from error
         except (UnsupportedEngineContract, UnsupportedCatalogContract) as error:
             raise contract_error(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -188,7 +193,9 @@ class EngineLayoutView(EngineCalculateView):
         )
         return {
             "calculation_hash": super().build_response(data, result, params)["calculation_hash"],
-            "nodes": node_layout(compute_geometry(root, params)),
+            "nodes": node_layout(compute_geometry(
+                root, params, is_foiled=data["color"] != "WHITE", finish=data["color"]
+            )),
         }
 
 

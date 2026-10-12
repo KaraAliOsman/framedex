@@ -57,16 +57,17 @@ SELECT ok(EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='pu
 SELECT ok(EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cutting_profiles' AND column_name='kerf_mm' AND data_type='numeric' AND numeric_precision=10 AND numeric_scale=2 AND is_nullable='NO'),'exact cutting_profiles.kerf_mm');
 SELECT ok(EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cutting_profiles' AND column_name='head_trim_mm' AND data_type='numeric' AND numeric_precision=10 AND numeric_scale=2 AND is_nullable='NO'),'exact cutting_profiles.head_trim_mm');
 SELECT ok(EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cutting_profiles' AND column_name='tail_trim_mm' AND data_type='numeric' AND numeric_precision=10 AND numeric_scale=2 AND is_nullable='NO'),'exact cutting_profiles.tail_trim_mm');
-SELECT is((SELECT count(*) FROM public.inspector_rule_configs),42::BIGINT,'all fourteen global configs');
+SELECT is((SELECT count(*) FROM public.inspector_rule_configs WHERE system_id IN
+ (SELECT id FROM public.profile_systems WHERE version=1 AND code IN ('DEMO_60','ALU_65','GLASS_45'))),42::BIGINT,'all fourteen historical global configs');
 -- Exercise mutable catalog permissions on independent, unreferenced global rows.
 INSERT INTO public.profile_systems
 SELECT (jsonb_populate_record(NULL::public.profile_systems,to_jsonb(source)||
  jsonb_build_object('id','55700000-0000-4000-8000-000000000001','code','PGTAP07','technical_locked',false,'is_demo',false))).*
-FROM public.profile_systems source WHERE code='DEMO_60';
+FROM public.profile_systems source WHERE code='DEMO_60' AND version=1;
 INSERT INTO public.profile_articles
 SELECT (jsonb_populate_record(NULL::public.profile_articles,to_jsonb(source)||
  jsonb_build_object('id','55700000-0000-4000-8000-000000000002','system_id','55700000-0000-4000-8000-000000000001','sku','PGTAP07-FRAME'))).*
-FROM public.profile_articles source WHERE sku='MARCO';
+FROM public.profile_articles source WHERE sku='MARCO' AND system_id='3067da09-3119-5ad0-a1d5-498cd2dfd753';
 INSERT INTO public.inspector_rule_configs(system_id,rule_id,params)
 VALUES ('55700000-0000-4000-8000-000000000001','R01','{}');
 INSERT INTO public.profile_purchase_mappings(profile_article_id,commercial_sku,manufacturer_name,purchase_unit)

@@ -11,6 +11,8 @@
  */
 export interface FittingPiece {
   kind: string;
+  /** @nullable */
+  extra_code?: string | null;
   sku: string;
   qty: number;
   /** @nullable */

@@ -58,12 +58,16 @@ def convert_cost(value: Decimal, source: str, target: str,
     quantum(target)
     if source == target:
         return value
-    if source != 'USD' or target != 'CLP' or observed_rate is None:
+    # The declared observation is always CLP per USD. Imported USD costs keep
+    # their established 5% reserve; a local CLP cost quoted in USD uses the
+    # explicit observation as divisor, without inventing a second surcharge.
+    if observed_rate is None:
         raise PricingError('missing_fx_authority')
     number(observed_rate, positive=True)
     with localcontext() as context:
         context.prec = 80
-        return value * observed_rate * D('1.05')
+        return (value * observed_rate * D('1.05') if source == 'USD'
+                else value / observed_rate)
 
 
 def direct_cost(materials: Sequence[Decimal], area_m2: Decimal, waste: Decimal,
@@ -71,7 +75,10 @@ def direct_cost(materials: Sequence[Decimal], area_m2: Decimal, waste: Decimal,
     for value in (*materials, area_m2, waste, labor, installation):
         number(value)
     with localcontext() as context:
-        context.prec = 80
+        # Resolved bar fractions already carry 80 significant digits. Keep
+        # their finite authority intact when regrouping waste and process;
+        # selling division/rounding retains the established currency rules.
+        context.prec = 256
         return sum(materials, ZERO) * (ONE + waste) + area_m2 * (labor + installation)
 
 
@@ -167,6 +174,32 @@ class CommercialLine:
     unit_cost: Decimal
     exact_unit_price: Decimal
     discount: Decimal = ZERO
+
+
+def indicative_line_net(unit_price: Decimal, quantity: int, currency: str) -> Decimal:
+    """Undiscounted indicative sale for an explicitly declared quantity.
+
+    Zero quantity denotes an absent position in a creation/removal preview.
+    Missing unit authority must be handled by the caller, never replaced by zero.
+    """
+    if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity < 0:
+        raise PricingError('invalid_positions')
+    with localcontext() as context:
+        context.prec = 80
+        return quantize_currency(number(unit_price) * quantity, currency)
+
+
+def assembly_sale_adjustment(total: Decimal, module_prices: Sequence[Decimal], currency: str) -> Decimal:
+    """Residual of independent module quotes against the complete assembly.
+
+    Couplers, shared labor/installation and assembly-specific tariffs are
+    never silently dropped or allocated by a guessed proportion. The UI
+    names this explicit common adjustment and its formula.
+    """
+    with localcontext() as context:
+        context.prec = 80
+        return quantize_currency(number(total), currency)-sum(
+            (quantize_currency(number(price), currency) for price in module_prices), ZERO)
 
 
 @dataclass(frozen=True)

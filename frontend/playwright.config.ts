@@ -14,7 +14,8 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      // The real PDF review needs Chromium's viewer, unavailable in headless shell.
+      use: { ...devices["Desktop Chrome"], channel: "chromium" },
     },
   ],
 });

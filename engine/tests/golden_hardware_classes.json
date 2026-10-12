@@ -1,0 +1,2104 @@
+{
+  "corredera-pesada": {
+    "bom": {
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 24,
+          "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 20,
+          "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": "vano:L1",
+          "qty": 12,
+          "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": "vano:L1",
+          "qty": 18,
+          "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": "vano:L1",
+          "qty": 9,
+          "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": "vano:L2",
+          "qty": 12,
+          "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": "vano:L2",
+          "qty": 18,
+          "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": "vano:L2",
+          "qty": 9,
+          "sku": "DEMO_CORREDERA_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "2.8196",
+          "article_sku": "DEMO_CORREDERA_60-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "6-12-6",
+          "height_mm": "2120.00",
+          "leaf_id": "vano:L1",
+          "shape": null,
+          "thickness_net_mm": "12.00",
+          "weight_kg": "84.59",
+          "width_mm": "1330.00"
+        },
+        {
+          "area_m2": "2.8196",
+          "article_sku": "DEMO_CORREDERA_60-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "6-12-6",
+          "height_mm": "2120.00",
+          "leaf_id": "vano:L2",
+          "shape": null,
+          "thickness_net_mm": "12.00",
+          "weight_kg": "84.59",
+          "width_mm": "1330.00"
+        }
+      ],
+      "hardware_items": [
+        {
+          "bay_id": "vano",
+          "contents": [
+            {
+              "category": "ROLLER",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Carro reforzado · DEMO",
+              "price_quantity": "4",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+              "qty": "4",
+              "reason": "4 unidades declaradas",
+              "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "1.4000"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [
+                {
+                  "code": "CIERRE-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "CLOSING",
+                  "kind": "LOCK_PREP",
+                  "name": "Alojamiento de cierre de corredera",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cierre de corredera · DEMO",
+              "price_quantity": "1",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+              "qty": "1",
+              "reason": "1 unidades declaradas",
+              "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1000"
+            },
+            {
+              "category": "HANDLE",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Manilla estándar blanca · DEMO",
+              "price_quantity": "1",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+              "qty": "1",
+              "reason": "1 unidades declaradas",
+              "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.2500"
+            }
+          ],
+          "kit_sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY",
+          "leaf_id": "vano:L1",
+          "name": "Kit PVC corredera 60 mm · corredera · Pesada · DEMO",
+          "qty": 1,
+          "resolution": {
+            "class_code": "HEAVY",
+            "class_name": "Pesada · DEMO",
+            "exact_leaf_weight_kg": "115.8952624",
+            "family_name": "Kit PVC corredera 60 mm · corredera",
+            "handle_code": "STANDARD",
+            "handle_color": "Blanca",
+            "handle_color_code": "WHITE",
+            "handle_height_mm": "1128.00",
+            "handle_maximum_mm": "2156.00",
+            "handle_minimum_mm": "100",
+            "handle_name": "Estándar",
+            "height_mm": "2256.00",
+            "max_leaf_height_mm": "2500.00",
+            "max_leaf_weight_kg": "150.00",
+            "max_leaf_width_mm": "1600.00",
+            "min_leaf_height_mm": "200.00",
+            "min_leaf_width_mm": "200.00",
+            "option_codes": [],
+            "options": [],
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "synthetic": true,
+            "width_mm": "1466.00"
+          },
+          "unit": "kit"
+        },
+        {
+          "bay_id": "vano",
+          "contents": [
+            {
+              "category": "ROLLER",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Carro reforzado · DEMO",
+              "price_quantity": "4",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+              "qty": "4",
+              "reason": "4 unidades declaradas",
+              "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "1.4000"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [
+                {
+                  "code": "CIERRE-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "CLOSING",
+                  "kind": "LOCK_PREP",
+                  "name": "Alojamiento de cierre de corredera",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cierre de corredera · DEMO",
+              "price_quantity": "1",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+              "qty": "1",
+              "reason": "1 unidades declaradas",
+              "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1000"
+            },
+            {
+              "category": "HANDLE",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Manilla estándar blanca · DEMO",
+              "price_quantity": "1",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+              "qty": "1",
+              "reason": "1 unidades declaradas",
+              "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.2500"
+            }
+          ],
+          "kit_sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY",
+          "leaf_id": "vano:L2",
+          "name": "Kit PVC corredera 60 mm · corredera · Pesada · DEMO",
+          "qty": 1,
+          "resolution": {
+            "class_code": "HEAVY",
+            "class_name": "Pesada · DEMO",
+            "exact_leaf_weight_kg": "115.8952624",
+            "family_name": "Kit PVC corredera 60 mm · corredera",
+            "handle_code": "STANDARD",
+            "handle_color": "Blanca",
+            "handle_color_code": "WHITE",
+            "handle_height_mm": "1128.00",
+            "handle_maximum_mm": "2156.00",
+            "handle_minimum_mm": "100",
+            "handle_name": "Estándar",
+            "height_mm": "2256.00",
+            "max_leaf_height_mm": "2500.00",
+            "max_leaf_weight_kg": "150.00",
+            "max_leaf_width_mm": "1600.00",
+            "min_leaf_height_mm": "200.00",
+            "min_leaf_width_mm": "200.00",
+            "option_codes": [],
+            "options": [],
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "synthetic": true,
+            "width_mm": "1466.00"
+          },
+          "unit": "kit"
+        }
+      ],
+      "leaf_weights": [
+        {
+          "bay_id": "vano",
+          "hardware_weight_kg": "1.87",
+          "infill_weight_kg": "84.59",
+          "leaf_id": "vano:L1",
+          "pvc_weight_kg": "13.04",
+          "steel_weight_kg": "16.41",
+          "total_weight_kg": "115.90",
+          "weight_unknown_reasons": []
+        },
+        {
+          "bay_id": "vano",
+          "hardware_weight_kg": "1.87",
+          "infill_weight_kg": "84.59",
+          "leaf_id": "vano:L2",
+          "pvc_weight_kg": "13.04",
+          "steel_weight_kg": "16.41",
+          "total_weight_kg": "115.90",
+          "weight_unknown_reasons": []
+        }
+      ],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "3006.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "2406.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-MARCO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L1",
+          "length_mm": "1339.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L1",
+          "length_mm": "2129.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L2",
+          "length_mm": "1339.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L2",
+          "length_mm": "2129.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L1",
+          "length_mm": "1466.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L1",
+          "length_mm": "2256.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L2",
+          "length_mm": "1466.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L2",
+          "length_mm": "2256.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-HOJA-CORREDERA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L1",
+          "length_mm": "2256.00",
+          "material": "PVC",
+          "qty": 1,
+          "role": "INTERLOCK",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-ENCUENTRO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": "vano:L2",
+          "length_mm": "2256.00",
+          "material": "PVC",
+          "qty": 1,
+          "role": "INTERLOCK",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-ENCUENTRO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "2880.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "RAIL",
+          "sagitta_mm": null,
+          "sku": "DEMO_CORREDERA_60-RIEL"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "2976.00",
+          "parent_profile_sku": "DEMO_CORREDERA_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "2376.00",
+          "parent_profile_sku": "DEMO_CORREDERA_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": "vano:L1",
+          "length_mm": "1456.00",
+          "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": "vano:L1",
+          "length_mm": "2246.00",
+          "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": "vano:L2",
+          "length_mm": "1456.00",
+          "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": "vano:L2",
+          "length_mm": "2246.00",
+          "parent_profile_sku": "DEMO_CORREDERA_60-HOJA-CORREDERA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-HOJA-CORREDERA",
+          "role": "SLIDING_SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": "vano:L1",
+          "length_mm": "2246.00",
+          "parent_profile_sku": "DEMO_CORREDERA_60-ENCUENTRO",
+          "qty": 1,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-ENCUENTRO",
+          "role": "INTERLOCK",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": "vano:L2",
+          "length_mm": "2246.00",
+          "parent_profile_sku": "DEMO_CORREDERA_60-ENCUENTRO",
+          "qty": 1,
+          "reinforcement_sku": "DEMO_CORREDERA_60-ACERO-ENCUENTRO",
+          "role": "INTERLOCK",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "cost": "109478",
+    "interlocks": [
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "axis": "VERTICAL",
+        "bay_id": "vano",
+        "cut_length_mm": "2256.00",
+        "end": {
+          "x_mm": "1526.00",
+          "y_mm": "2316.00"
+        },
+        "identity": {
+          "assembly": "BAY:vano:LEAF:L1",
+          "leaf_slot": "L1",
+          "physical_member_slot": "INTERLOCK-RIGHT",
+          "position_id": "d0400000-0000-4000-8000-000000000001",
+          "position_index": 1,
+          "repetition_index": 1,
+          "role": "INTERLOCK",
+          "topology_path": "root/vano"
+        },
+        "leaf_id": "vano:L1",
+        "material": "PVC",
+        "member_id": "f7fa95aa06babec6b9d36bac689abae7f3b33c00bc927a3b589dc53b45589969",
+        "sagitta_mm": null,
+        "semantic_member_id": "root/vano/leaf/L1/INTERLOCK-RIGHT",
+        "start": {
+          "x_mm": "1526.00",
+          "y_mm": "60.00"
+        },
+        "workshop_sku": "DEMO_CORREDERA_60-ENCUENTRO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "axis": "VERTICAL",
+        "bay_id": "vano",
+        "cut_length_mm": "2256.00",
+        "end": {
+          "x_mm": "560.00",
+          "y_mm": "2316.00"
+        },
+        "identity": {
+          "assembly": "BAY:vano:LEAF:L2",
+          "leaf_slot": "L2",
+          "physical_member_slot": "INTERLOCK-LEFT",
+          "position_id": "d0400000-0000-4000-8000-000000000001",
+          "position_index": 1,
+          "repetition_index": 1,
+          "role": "INTERLOCK",
+          "topology_path": "root/vano"
+        },
+        "leaf_id": "vano:L2",
+        "material": "PVC",
+        "member_id": "dbe1407a0d41fb95828a2d00e760bd1666059957fbf68c9a27e9f450029d085c",
+        "sagitta_mm": null,
+        "semantic_member_id": "root/vano/leaf/L2/INTERLOCK-LEFT",
+        "start": {
+          "x_mm": "560.00",
+          "y_mm": "60.00"
+        },
+        "workshop_sku": "DEMO_CORREDERA_60-ENCUENTRO"
+      }
+    ],
+    "picking": [
+      {
+        "cut_length_mm": null,
+        "name": "Carro reforzado · DEMO",
+        "quantity": "8",
+        "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CARRO",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "corredera-pesada",
+          "corredera-pesada"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Cierre de corredera · DEMO",
+        "quantity": "2",
+        "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-CIERRE",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "corredera-pesada",
+          "corredera-pesada"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Manilla estándar blanca · DEMO",
+        "quantity": "2",
+        "sku": "DEMO_CORREDERA_60-HW4-SLIDING-HEAVY-MANILLA-STANDARD-WHITE",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "corredera-pesada",
+          "corredera-pesada"
+        ],
+        "unit": "unidad"
+      }
+    ]
+  },
+  "oscilobatiente-alta": {
+    "bom": {
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 10,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 18,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 8,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 16,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "1.6269",
+          "article_sku": "DEMO_60-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "1870.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "32.54",
+          "width_mm": "870.00"
+        }
+      ],
+      "hardware_items": [
+        {
+          "bay_id": "vano",
+          "contents": [
+            {
+              "category": "HINGE",
+              "cut_length_mm": null,
+              "machining": [
+                {
+                  "code": "BISAGRA-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "HINGE",
+                  "kind": "HINGE_PREP",
+                  "name": "Alojamiento de bisagra",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Bisagra · DEMO",
+              "price_quantity": "2",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-BISAGRA",
+              "qty": "2",
+              "reason": "2 unidades declaradas",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-BISAGRA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.3000"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": "1846.00",
+              "machining": [
+                {
+                  "code": "CREMONA-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "CLOSING",
+                  "kind": "SLOT",
+                  "name": "Alojamiento de cremona",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cremona · DEMO",
+              "price_quantity": "1.846",
+              "price_unit": "M",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-CREMONA",
+              "qty": "1",
+              "reason": "1 unidades declaradas; largo 1996.00 − 150 = 1846.00 mm",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CREMONA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.461500"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Punto de cierre · DEMO",
+              "price_quantity": "4",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-CIERRE",
+              "qty": "4",
+              "reason": "2 + 1 por cada 600 sobre 800; alto = 1996.00",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CIERRE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1600"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [
+                {
+                  "code": "CERRADERO-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "CLOSING",
+                  "kind": "LOCK_PREP",
+                  "name": "Alojamiento de cerradero",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cerradero · DEMO",
+              "price_quantity": "4",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-CERRADERO",
+              "qty": "4",
+              "reason": "2 + 1 por cada 600 sobre 800; alto = 1996.00",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CERRADERO",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1400"
+            },
+            {
+              "category": "OTHER",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Tapa de bisagra · DEMO",
+              "price_quantity": "2",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-TAPA",
+              "qty": "2",
+              "reason": "2 unidades declaradas",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-TAPA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.0200"
+            },
+            {
+              "category": "CONNECTOR",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Reenvío de esquina · DEMO",
+              "price_quantity": "2",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-RENVIO",
+              "qty": "2",
+              "reason": "2 unidades declaradas",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-RENVIO",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1600"
+            },
+            {
+              "category": "SUPPORT",
+              "cut_length_mm": "876.00",
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Compás · DEMO",
+              "price_quantity": "0.876",
+              "price_unit": "M",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-COMPAS",
+              "qty": "1",
+              "reason": "1 unidades declaradas; largo 996.00 − 120 = 876.00 mm",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-COMPAS",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.262800"
+            },
+            {
+              "category": "HANDLE",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Manilla estándar blanca · DEMO",
+              "price_quantity": "1",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-MANILLA-STANDARD-WHITE",
+              "qty": "1",
+              "reason": "1 unidades declaradas",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-MANILLA-STANDARD-WHITE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.2500"
+            }
+          ],
+          "kit_sku": "DEMO_60-HW4-TILT_TURN-STANDARD",
+          "leaf_id": null,
+          "name": "Kit PVC practicable 60 mm · oscilobatiente · Estándar · DEMO",
+          "qty": 1,
+          "resolution": {
+            "class_code": "STANDARD",
+            "class_name": "Estándar · DEMO",
+            "exact_leaf_weight_kg": "52.5147400",
+            "family_name": "Kit PVC practicable 60 mm · oscilobatiente",
+            "handle_code": "STANDARD",
+            "handle_color": "Blanca",
+            "handle_color_code": "WHITE",
+            "handle_height_mm": "998.00",
+            "handle_maximum_mm": "1896.00",
+            "handle_minimum_mm": "100",
+            "handle_name": "Estándar",
+            "height_mm": "1996.00",
+            "max_leaf_height_mm": "2500.00",
+            "max_leaf_weight_kg": "80.00",
+            "max_leaf_width_mm": "1600.00",
+            "min_leaf_height_mm": "200.00",
+            "min_leaf_width_mm": "200.00",
+            "option_codes": [],
+            "options": [],
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "synthetic": true,
+            "width_mm": "996.00"
+          },
+          "unit": "kit"
+        }
+      ],
+      "leaf_weights": [
+        {
+          "bay_id": "vano",
+          "hardware_weight_kg": "1.83",
+          "infill_weight_kg": "32.54",
+          "leaf_id": null,
+          "pvc_weight_kg": "8.14",
+          "steel_weight_kg": "10.01",
+          "total_weight_kg": "52.51",
+          "weight_unknown_reasons": []
+        }
+      ],
+      "opening_leaves": [
+        {
+          "bay_id": "vano",
+          "handle": {
+            "height_from_bottom_mm": "998.00",
+            "maximum_from_top_mm": "1896.00",
+            "maximum_height_from_bottom_mm": "1896.00",
+            "minimum_from_top_mm": "100.00",
+            "minimum_height_from_bottom_mm": "100.00",
+            "side": "RIGHT",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "x_mm": "958.50",
+            "y_mm": "998.00"
+          },
+          "height_mm": "1996.00",
+          "leaf_id": null,
+          "opening": {
+            "direction": "INWARD",
+            "fixed_in_sash": false,
+            "hinge_side": "LEFT",
+            "leaf_role": "SINGLE",
+            "movement": "TILT_TURN"
+          },
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "use": "WINDOW",
+          "width_mm": "996.00",
+          "x_mm": "52.00",
+          "y_mm": "52.00"
+        }
+      ],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1106.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "2106.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "1002.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "2002.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "879.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "1879.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1076.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "2076.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "972.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "1972.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "cost": "180402.928",
+    "interlocks": [],
+    "picking": [
+      {
+        "cut_length_mm": null,
+        "name": "Bisagra · DEMO",
+        "quantity": "2",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-BISAGRA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-alta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Cerradero · DEMO",
+        "quantity": "4",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CERRADERO",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-alta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": "876.00",
+        "name": "Compás · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-COMPAS",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-alta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": "1846.00",
+        "name": "Cremona · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CREMONA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-alta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Manilla estándar blanca · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-MANILLA-STANDARD-WHITE",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-alta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Punto de cierre · DEMO",
+        "quantity": "4",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CIERRE",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-alta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Reenvío de esquina · DEMO",
+        "quantity": "2",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-RENVIO",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-alta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Tapa de bisagra · DEMO",
+        "quantity": "2",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-TAPA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-alta"
+        ],
+        "unit": "unidad"
+      }
+    ]
+  },
+  "oscilobatiente-pequena": {
+    "bom": {
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 12,
+          "sku": "DEMO_60-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 12,
+          "sku": "DEMO_60-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "0.7839",
+          "article_sku": "DEMO_60-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "1170.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "15.68",
+          "width_mm": "670.00"
+        }
+      ],
+      "hardware_items": [
+        {
+          "bay_id": "vano",
+          "contents": [
+            {
+              "category": "HINGE",
+              "cut_length_mm": null,
+              "machining": [
+                {
+                  "code": "BISAGRA-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "HINGE",
+                  "kind": "HINGE_PREP",
+                  "name": "Alojamiento de bisagra",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Bisagra · DEMO",
+              "price_quantity": "2",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-BISAGRA",
+              "qty": "2",
+              "reason": "2 unidades declaradas",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-BISAGRA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.3000"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": "1146.00",
+              "machining": [
+                {
+                  "code": "CREMONA-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "CLOSING",
+                  "kind": "SLOT",
+                  "name": "Alojamiento de cremona",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cremona · DEMO",
+              "price_quantity": "1.146",
+              "price_unit": "M",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-CREMONA",
+              "qty": "1",
+              "reason": "1 unidades declaradas; largo 1296.00 − 150 = 1146.00 mm",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CREMONA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.286500"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Punto de cierre · DEMO",
+              "price_quantity": "3",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-CIERRE",
+              "qty": "3",
+              "reason": "2 + 1 por cada 600 sobre 800; alto = 1296.00",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CIERRE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1200"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [
+                {
+                  "code": "CERRADERO-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "CLOSING",
+                  "kind": "LOCK_PREP",
+                  "name": "Alojamiento de cerradero",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cerradero · DEMO",
+              "price_quantity": "3",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-CERRADERO",
+              "qty": "3",
+              "reason": "2 + 1 por cada 600 sobre 800; alto = 1296.00",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CERRADERO",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1050"
+            },
+            {
+              "category": "OTHER",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Tapa de bisagra · DEMO",
+              "price_quantity": "2",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-TAPA",
+              "qty": "2",
+              "reason": "2 unidades declaradas",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-TAPA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.0200"
+            },
+            {
+              "category": "CONNECTOR",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Reenvío de esquina · DEMO",
+              "price_quantity": "2",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-RENVIO",
+              "qty": "2",
+              "reason": "2 unidades declaradas",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-RENVIO",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1600"
+            },
+            {
+              "category": "SUPPORT",
+              "cut_length_mm": "676.00",
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Compás · DEMO",
+              "price_quantity": "0.676",
+              "price_unit": "M",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-COMPAS",
+              "qty": "1",
+              "reason": "1 unidades declaradas; largo 796.00 − 120 = 676.00 mm",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-COMPAS",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.202800"
+            },
+            {
+              "category": "HANDLE",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Manilla estándar blanca · DEMO",
+              "price_quantity": "1",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_60-HW4-TILT_TURN-STANDARD-MANILLA-STANDARD-WHITE",
+              "qty": "1",
+              "reason": "1 unidades declaradas",
+              "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-MANILLA-STANDARD-WHITE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.2500"
+            }
+          ],
+          "kit_sku": "DEMO_60-HW4-TILT_TURN-STANDARD",
+          "leaf_id": null,
+          "name": "Kit PVC practicable 60 mm · oscilobatiente · Estándar · DEMO",
+          "qty": 1,
+          "resolution": {
+            "class_code": "STANDARD",
+            "class_name": "Estándar · DEMO",
+            "exact_leaf_weight_kg": "27.1849400",
+            "family_name": "Kit PVC practicable 60 mm · oscilobatiente",
+            "handle_code": "STANDARD",
+            "handle_color": "Blanca",
+            "handle_color_code": "WHITE",
+            "handle_height_mm": "648.00",
+            "handle_maximum_mm": "1196.00",
+            "handle_minimum_mm": "100",
+            "handle_name": "Estándar",
+            "height_mm": "1296.00",
+            "max_leaf_height_mm": "2500.00",
+            "max_leaf_weight_kg": "80.00",
+            "max_leaf_width_mm": "1600.00",
+            "min_leaf_height_mm": "200.00",
+            "min_leaf_width_mm": "200.00",
+            "option_codes": [],
+            "options": [],
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "synthetic": true,
+            "width_mm": "796.00"
+          },
+          "unit": "kit"
+        }
+      ],
+      "leaf_weights": [
+        {
+          "bay_id": "vano",
+          "hardware_weight_kg": "1.48",
+          "infill_weight_kg": "15.68",
+          "leaf_id": null,
+          "pvc_weight_kg": "5.70",
+          "steel_weight_kg": "4.32",
+          "total_weight_kg": "27.18",
+          "weight_unknown_reasons": []
+        }
+      ],
+      "opening_leaves": [
+        {
+          "bay_id": "vano",
+          "handle": {
+            "height_from_bottom_mm": "648.00",
+            "maximum_from_top_mm": "1196.00",
+            "maximum_height_from_bottom_mm": "1196.00",
+            "minimum_from_top_mm": "100.00",
+            "minimum_height_from_bottom_mm": "100.00",
+            "side": "RIGHT",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "x_mm": "758.50",
+            "y_mm": "648.00"
+          },
+          "height_mm": "1296.00",
+          "leaf_id": null,
+          "opening": {
+            "direction": "INWARD",
+            "fixed_in_sash": false,
+            "hinge_side": "LEFT",
+            "leaf_role": "SINGLE",
+            "movement": "TILT_TURN"
+          },
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "use": "WINDOW",
+          "width_mm": "796.00",
+          "x_mm": "52.00",
+          "y_mm": "52.00"
+        }
+      ],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "906.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1406.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "802.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "1302.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-HOJA"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "679.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "1179.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_60-JQ-10"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1376.00",
+          "parent_profile_sku": "DEMO_60-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "1272.00",
+          "parent_profile_sku": "DEMO_60-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_60-ACERO-HOJA",
+          "role": "SASH",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "cost": "148062.328",
+    "interlocks": [],
+    "picking": [
+      {
+        "cut_length_mm": null,
+        "name": "Bisagra · DEMO",
+        "quantity": "2",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-BISAGRA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-pequena"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Cerradero · DEMO",
+        "quantity": "3",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CERRADERO",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-pequena"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": "676.00",
+        "name": "Compás · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-COMPAS",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-pequena"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": "1146.00",
+        "name": "Cremona · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CREMONA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-pequena"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Manilla estándar blanca · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-MANILLA-STANDARD-WHITE",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-pequena"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Punto de cierre · DEMO",
+        "quantity": "3",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-CIERRE",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-pequena"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Reenvío de esquina · DEMO",
+        "quantity": "2",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-RENVIO",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-pequena"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Tapa de bisagra · DEMO",
+        "quantity": "2",
+        "sku": "DEMO_60-HW4-TILT_TURN-STANDARD-TAPA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "oscilobatiente-pequena"
+        ],
+        "unit": "unidad"
+      }
+    ]
+  },
+  "puerta": {
+    "bom": {
+      "fittings": [
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 4,
+          "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+        },
+        {
+          "bay_id": null,
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 18,
+          "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+        },
+        {
+          "bay_id": "vano",
+          "kind": "REINFORCEMENT_SCREW",
+          "leaf_id": null,
+          "qty": 18,
+          "sku": "DEMO_PUERTA_70-TORNILLO-REF"
+        }
+      ],
+      "glasses": [
+        {
+          "area_m2": "1.4126",
+          "article_sku": "DEMO_PUERTA_70-GLASS",
+          "bay_id": "vano",
+          "exposed_edges": null,
+          "glass_spec": "4-16-4",
+          "height_mm": "1962.00",
+          "leaf_id": null,
+          "shape": null,
+          "thickness_net_mm": "8.00",
+          "weight_kg": "28.25",
+          "width_mm": "720.00"
+        }
+      ],
+      "hardware_items": [
+        {
+          "bay_id": "vano",
+          "contents": [
+            {
+              "category": "HINGE",
+              "cut_length_mm": null,
+              "machining": [
+                {
+                  "code": "BISAGRA-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "HINGE",
+                  "kind": "HINGE_PREP",
+                  "name": "Alojamiento de bisagra",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Bisagra · DEMO",
+              "price_quantity": "3",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_PUERTA_70-HW4-DOOR-STANDARD-BISAGRA",
+              "qty": "3",
+              "reason": "3 unidades declaradas",
+              "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-BISAGRA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.4500"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": "1688.00",
+              "machining": [
+                {
+                  "code": "CREMONA-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "CLOSING",
+                  "kind": "SLOT",
+                  "name": "Alojamiento de cremona",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cremona · DEMO",
+              "price_quantity": "1.688",
+              "price_unit": "M",
+              "purchasing_sku": "COMPRA-DEMO_PUERTA_70-HW4-DOOR-STANDARD-CREMONA",
+              "qty": "1",
+              "reason": "1 unidades declaradas; largo 2088.00 − 400 = 1688.00 mm",
+              "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-CREMONA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.422000"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Punto de cierre · DEMO",
+              "price_quantity": "5",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_PUERTA_70-HW4-DOOR-STANDARD-CIERRE",
+              "qty": "5",
+              "reason": "2 + 1 por cada 600 sobre 800; alto = 2088.00",
+              "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-CIERRE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.2000"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [
+                {
+                  "code": "CERRADERO-PREP",
+                  "covered_quantity": null,
+                  "depth_mm": null,
+                  "face": null,
+                  "host_scope": null,
+                  "host_side": "CLOSING",
+                  "kind": "LOCK_PREP",
+                  "name": "Alojamiento de cerradero",
+                  "positions_mm": [],
+                  "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+                  "tool_id": null
+                }
+              ],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cerradero · DEMO",
+              "price_quantity": "5",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_PUERTA_70-HW4-DOOR-STANDARD-CERRADERO",
+              "qty": "5",
+              "reason": "2 + 1 por cada 600 sobre 800; alto = 2088.00",
+              "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-CERRADERO",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.1750"
+            },
+            {
+              "category": "OTHER",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Tapa de bisagra · DEMO",
+              "price_quantity": "3",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_PUERTA_70-HW4-DOOR-STANDARD-TAPA",
+              "qty": "3",
+              "reason": "3 unidades declaradas",
+              "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-TAPA",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.0300"
+            },
+            {
+              "category": "LOCK",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Cilindro · DEMO",
+              "price_quantity": "1",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_PUERTA_70-HW4-DOOR-STANDARD-CILINDRO",
+              "qty": "1",
+              "reason": "1 unidades declaradas",
+              "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-CILINDRO",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.2000"
+            },
+            {
+              "category": "HANDLE",
+              "cut_length_mm": null,
+              "machining": [],
+              "manufacturer_name": "Fabricante sintético · DEMO",
+              "name": "Manilla puerta con escudo blanca · DEMO",
+              "price_quantity": "1",
+              "price_unit": "EA",
+              "purchasing_sku": "COMPRA-DEMO_PUERTA_70-HW4-DOOR-STANDARD-MANILLA-ESCUTCHEON-WHITE",
+              "qty": "1",
+              "reason": "1 unidades declaradas",
+              "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-MANILLA-ESCUTCHEON-WHITE",
+              "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+              "unit": "unidad",
+              "weight_kg": "0.2500"
+            }
+          ],
+          "kit_sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD",
+          "leaf_id": null,
+          "name": "Herraje puerta · DEMO · Estándar · DEMO",
+          "qty": 1,
+          "resolution": {
+            "class_code": "STANDARD",
+            "class_name": "Estándar · DEMO",
+            "exact_leaf_weight_kg": "44.0086736",
+            "family_name": "Herraje puerta · DEMO",
+            "handle_code": "ESCUTCHEON",
+            "handle_color": "Blanca",
+            "handle_color_code": "WHITE",
+            "handle_height_mm": "1000",
+            "handle_maximum_mm": "1988.00",
+            "handle_minimum_mm": "100",
+            "handle_name": "Puerta con escudo",
+            "height_mm": "2088.00",
+            "max_leaf_height_mm": "2800.00",
+            "max_leaf_weight_kg": "80.00",
+            "max_leaf_width_mm": "1400.00",
+            "min_leaf_height_mm": "1500.00",
+            "min_leaf_width_mm": "500.00",
+            "option_codes": [],
+            "options": [],
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "synthetic": true,
+            "width_mm": "846.00"
+          },
+          "unit": "kit"
+        }
+      ],
+      "leaf_weights": [
+        {
+          "bay_id": "vano",
+          "hardware_weight_kg": "1.78",
+          "infill_weight_kg": "28.25",
+          "leaf_id": null,
+          "pvc_weight_kg": "6.96",
+          "steel_weight_kg": "7.02",
+          "total_weight_kg": "44.01",
+          "weight_unknown_reasons": []
+        }
+      ],
+      "opening_leaves": [
+        {
+          "bay_id": "vano",
+          "handle": {
+            "height_from_bottom_mm": "1000.00",
+            "maximum_from_top_mm": "1988.00",
+            "maximum_height_from_bottom_mm": "1988.00",
+            "minimum_from_top_mm": "100.00",
+            "minimum_height_from_bottom_mm": "100.00",
+            "side": "RIGHT",
+            "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+            "x_mm": "808.50",
+            "y_mm": "1088.00"
+          },
+          "height_mm": "2088.00",
+          "leaf_id": null,
+          "opening": {
+            "direction": "INWARD",
+            "fixed_in_sash": false,
+            "hinge_side": "LEFT",
+            "leaf_role": "SINGLE",
+            "movement": "TURN"
+          },
+          "source": "Aperturas sintéticas DEKOPEN v3; semilla 20261006; sin certificación",
+          "use": "DOOR",
+          "width_mm": "846.00",
+          "x_mm": "77.00",
+          "y_mm": "62.00"
+        }
+      ],
+      "panels": [],
+      "profile_cuts": [
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "1006.00",
+          "material": "PVC",
+          "qty": 1,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_PUERTA_70-MARCO"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "90.0",
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "2203.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "FRAME",
+          "sagitta_mm": null,
+          "sku": "DEMO_PUERTA_70-MARCO"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "729.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_PUERTA_70-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "1971.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "GLAZING_BEAD",
+          "sagitta_mm": null,
+          "sku": "DEMO_PUERTA_70-JQ-10"
+        },
+        {
+          "angle_left": "90.0",
+          "angle_right": "90.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "860.00",
+          "material": "PVC",
+          "qty": 1,
+          "role": "THRESHOLD",
+          "sagitta_mm": null,
+          "sku": "DEMO_PUERTA_70-UMBRAL"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "852.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "DOOR_SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_PUERTA_70-HOJA"
+        },
+        {
+          "angle_left": "45.0",
+          "angle_right": "45.0",
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "2094.00",
+          "material": "PVC",
+          "qty": 2,
+          "role": "DOOR_SASH",
+          "sagitta_mm": null,
+          "sku": "DEMO_PUERTA_70-HOJA"
+        }
+      ],
+      "reinforcements": [
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "976.00",
+          "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+          "qty": 1,
+          "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": null,
+          "leaf_id": null,
+          "length_mm": "2173.00",
+          "parent_profile_sku": "DEMO_PUERTA_70-MARCO",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_PUERTA_70-ACERO-MARCO",
+          "role": "FRAME",
+          "sagitta_mm": null
+        },
+        {
+          "bay_id": "vano",
+          "leaf_id": null,
+          "length_mm": "2064.00",
+          "parent_profile_sku": "DEMO_PUERTA_70-HOJA",
+          "qty": 2,
+          "reinforcement_sku": "DEMO_PUERTA_70-ACERO-HOJA",
+          "role": "DOOR_SASH",
+          "sagitta_mm": null
+        }
+      ]
+    },
+    "cost": "190869.248",
+    "interlocks": [],
+    "picking": [
+      {
+        "cut_length_mm": null,
+        "name": "Bisagra · DEMO",
+        "quantity": "3",
+        "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-BISAGRA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "puerta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Cerradero · DEMO",
+        "quantity": "5",
+        "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-CERRADERO",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "puerta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Cilindro · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-CILINDRO",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "puerta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": "1688.00",
+        "name": "Cremona · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-CREMONA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "puerta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Manilla puerta con escudo blanca · DEMO",
+        "quantity": "1",
+        "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-MANILLA-ESCUTCHEON-WHITE",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "puerta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Punto de cierre · DEMO",
+        "quantity": "5",
+        "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-CIERRE",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "puerta"
+        ],
+        "unit": "unidad"
+      },
+      {
+        "cut_length_mm": null,
+        "name": "Tapa de bisagra · DEMO",
+        "quantity": "3",
+        "sku": "DEMO_PUERTA_70-HW4-DOOR-STANDARD-TAPA",
+        "source": "Herrajes sintéticos DEKOPEN v4; semilla 20261231; sin certificación",
+        "targets": [
+          "puerta"
+        ],
+        "unit": "unidad"
+      }
+    ]
+  }
+}

@@ -5,8 +5,20 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { DocumentPreferencesPatchRequest } from "./documentPreferencesPatchRequest";
 
 export interface OrgBrandingWriteRequest {
+  document_preferences?: DocumentPreferencesPatchRequest;
+  expected_updated_at?: string;
+  /**
+   * @minLength 1
+   * @pattern ^#[0-9A-Fa-f]{6}$
+   */
+  brand_primary_color?: string;
+  document_attribution?: boolean;
+  portal_attribution?: boolean;
+  notification_email?: string | null;
+  internal_mail_enabled?: boolean;
   /**
    * @maxLength 255
    * @nullable

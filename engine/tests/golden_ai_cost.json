@@ -1,0 +1,37 @@
+[
+  {
+    "estimated_cost_usd": "0.00057575",
+    "input_usd_per_million": "1.25",
+    "output_usd_per_million": "3.50",
+    "tokens_completion": 132,
+    "tokens_prompt": 91
+  },
+  {
+    "estimated_cost_usd": "0.00000000000001",
+    "input_usd_per_million": "0.00000001",
+    "output_usd_per_million": "0",
+    "tokens_completion": 0,
+    "tokens_prompt": 1
+  },
+  {
+    "estimated_cost_usd": "4294967294",
+    "input_usd_per_million": "1000000",
+    "output_usd_per_million": "1000000",
+    "tokens_completion": 2147483647,
+    "tokens_prompt": 2147483647
+  },
+  {
+    "estimated_cost_usd": "0",
+    "input_usd_per_million": "0",
+    "output_usd_per_million": "0",
+    "tokens_completion": 0,
+    "tokens_prompt": 0
+  },
+  {
+    "estimated_cost_usd": null,
+    "input_usd_per_million": null,
+    "output_usd_per_million": null,
+    "tokens_completion": 132,
+    "tokens_prompt": 91
+  }
+]

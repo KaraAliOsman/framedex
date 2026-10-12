@@ -6,8 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CncMachine } from "./cncMachine";
+import type { CncReadinessIdentity } from "./cncReadinessIdentity";
 
 export interface CncReadiness {
+  declared_unemitted: unknown[];
+  identity: CncReadinessIdentity;
+  plan_fingerprint: string;
+  required_tool_ids: unknown[];
   order_id: string;
   order_code: string;
   members: unknown[];

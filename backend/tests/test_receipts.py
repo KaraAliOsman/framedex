@@ -8,6 +8,14 @@ import pytest
 from projects import payments, receipts
 
 
+@pytest.fixture(autouse=True)
+def isolate_collection_readiness(monkeypatch):
+    from projects import collection_settings
+    monkeypatch.setattr(collection_settings, "status", lambda _: {**collection_settings.DEFAULTS,
+        "flow_connected": False, "sii_connected": False, "flow_environment": None,
+        "flow_instructions": "Configura Flow", "sii_instructions": "Configura SII"})
+
+
 class _Storage:
     def __init__(self):
         self.uploads = []

@@ -1,0 +1,414 @@
+{
+  "IN_OPENING": {
+    "result": {
+      "height": {
+        "derived_mm": "1200",
+        "deviation_mm": "0",
+        "fabrication_mm": "1200",
+        "first": {
+          "clearance_mm": "10",
+          "extension_mm": "0",
+          "frame_mm": "0",
+          "overlap_mm": "0"
+        },
+        "first_adjustment_mm": "-10",
+        "opening_mm": "1220",
+        "second": {
+          "clearance_mm": "10",
+          "extension_mm": "0",
+          "frame_mm": "0",
+          "overlap_mm": "0"
+        },
+        "second_adjustment_mm": "-10",
+        "spread_mm": "2"
+      },
+      "warnings": [
+        "Ancho: la dispersión supera la tolerancia declarada."
+      ],
+      "width": {
+        "derived_mm": "1500",
+        "deviation_mm": "0",
+        "fabrication_mm": "1500",
+        "first": {
+          "clearance_mm": "10",
+          "extension_mm": "0",
+          "frame_mm": "0",
+          "overlap_mm": "0"
+        },
+        "first_adjustment_mm": "-10",
+        "opening_mm": "1520",
+        "second": {
+          "clearance_mm": "10",
+          "extension_mm": "0",
+          "frame_mm": "0",
+          "overlap_mm": "0"
+        },
+        "second_adjustment_mm": "-10",
+        "spread_mm": "4"
+      }
+    },
+    "rule": {
+      "bottom": {
+        "clearance_mm": "10",
+        "extension_mm": "0",
+        "frame_mm": "0",
+        "overlap_mm": "0"
+      },
+      "code": "IN_OPENING",
+      "extras": [],
+      "kind": "IN_OPENING",
+      "left": {
+        "clearance_mm": "10",
+        "extension_mm": "0",
+        "frame_mm": "0",
+        "overlap_mm": "0"
+      },
+      "name": "IN_OPENING",
+      "right": {
+        "clearance_mm": "10",
+        "extension_mm": "0",
+        "frame_mm": "0",
+        "overlap_mm": "0"
+      },
+      "source": "DEMO · ensayo de montaje sin certificación",
+      "synthetic": true,
+      "tolerance_mm": "3",
+      "top": {
+        "clearance_mm": "10",
+        "extension_mm": "0",
+        "frame_mm": "0",
+        "overlap_mm": "0"
+      }
+    },
+    "survey": {
+      "heights_mm": [
+        "1220",
+        "1221",
+        "1222"
+      ],
+      "independent_extras": null,
+      "module_id": null,
+      "origin": "SITE",
+      "override": null,
+      "plumb_mm": null,
+      "rule_code": "IN_OPENING",
+      "rule_revision": 1,
+      "squareness_mm": null,
+      "wall": "CONCRETE",
+      "widths_mm": [
+        "1524",
+        "1520",
+        "1522"
+      ]
+    }
+  },
+  "OVERLAP": {
+    "result": {
+      "height": {
+        "derived_mm": "1270",
+        "deviation_mm": "0",
+        "fabrication_mm": "1270",
+        "first": {
+          "clearance_mm": "0",
+          "extension_mm": "0",
+          "frame_mm": "0",
+          "overlap_mm": "25"
+        },
+        "first_adjustment_mm": "25",
+        "opening_mm": "1220",
+        "second": {
+          "clearance_mm": "0",
+          "extension_mm": "0",
+          "frame_mm": "0",
+          "overlap_mm": "25"
+        },
+        "second_adjustment_mm": "25",
+        "spread_mm": "2"
+      },
+      "warnings": [
+        "Ancho: la dispersión supera la tolerancia declarada."
+      ],
+      "width": {
+        "derived_mm": "1570",
+        "deviation_mm": "0",
+        "fabrication_mm": "1570",
+        "first": {
+          "clearance_mm": "0",
+          "extension_mm": "0",
+          "frame_mm": "0",
+          "overlap_mm": "25"
+        },
+        "first_adjustment_mm": "25",
+        "opening_mm": "1520",
+        "second": {
+          "clearance_mm": "0",
+          "extension_mm": "0",
+          "frame_mm": "0",
+          "overlap_mm": "25"
+        },
+        "second_adjustment_mm": "25",
+        "spread_mm": "4"
+      }
+    },
+    "rule": {
+      "bottom": {
+        "clearance_mm": "0",
+        "extension_mm": "0",
+        "frame_mm": "0",
+        "overlap_mm": "25"
+      },
+      "code": "OVERLAP",
+      "extras": [],
+      "kind": "OVERLAP",
+      "left": {
+        "clearance_mm": "0",
+        "extension_mm": "0",
+        "frame_mm": "0",
+        "overlap_mm": "25"
+      },
+      "name": "OVERLAP",
+      "right": {
+        "clearance_mm": "0",
+        "extension_mm": "0",
+        "frame_mm": "0",
+        "overlap_mm": "25"
+      },
+      "source": "DEMO · ensayo de montaje sin certificación",
+      "synthetic": true,
+      "tolerance_mm": "3",
+      "top": {
+        "clearance_mm": "0",
+        "extension_mm": "0",
+        "frame_mm": "0",
+        "overlap_mm": "25"
+      }
+    },
+    "survey": {
+      "heights_mm": [
+        "1220",
+        "1221",
+        "1222"
+      ],
+      "independent_extras": null,
+      "module_id": null,
+      "origin": "SITE",
+      "override": null,
+      "plumb_mm": null,
+      "rule_code": "OVERLAP",
+      "rule_revision": 1,
+      "squareness_mm": null,
+      "wall": "CONCRETE",
+      "widths_mm": [
+        "1524",
+        "1520",
+        "1522"
+      ]
+    }
+  },
+  "RENOVATION": {
+    "result": {
+      "height": {
+        "derived_mm": "1184",
+        "deviation_mm": "0",
+        "fabrication_mm": "1184",
+        "first": {
+          "clearance_mm": "3",
+          "extension_mm": "0",
+          "frame_mm": "15",
+          "overlap_mm": "0"
+        },
+        "first_adjustment_mm": "-18",
+        "opening_mm": "1220",
+        "second": {
+          "clearance_mm": "3",
+          "extension_mm": "0",
+          "frame_mm": "15",
+          "overlap_mm": "0"
+        },
+        "second_adjustment_mm": "-18",
+        "spread_mm": "2"
+      },
+      "warnings": [
+        "Ancho: la dispersión supera la tolerancia declarada."
+      ],
+      "width": {
+        "derived_mm": "1484",
+        "deviation_mm": "0",
+        "fabrication_mm": "1484",
+        "first": {
+          "clearance_mm": "3",
+          "extension_mm": "0",
+          "frame_mm": "15",
+          "overlap_mm": "0"
+        },
+        "first_adjustment_mm": "-18",
+        "opening_mm": "1520",
+        "second": {
+          "clearance_mm": "3",
+          "extension_mm": "0",
+          "frame_mm": "15",
+          "overlap_mm": "0"
+        },
+        "second_adjustment_mm": "-18",
+        "spread_mm": "4"
+      }
+    },
+    "rule": {
+      "bottom": {
+        "clearance_mm": "3",
+        "extension_mm": "0",
+        "frame_mm": "15",
+        "overlap_mm": "0"
+      },
+      "code": "RENOVATION",
+      "extras": [],
+      "kind": "RENOVATION",
+      "left": {
+        "clearance_mm": "3",
+        "extension_mm": "0",
+        "frame_mm": "15",
+        "overlap_mm": "0"
+      },
+      "name": "RENOVATION",
+      "right": {
+        "clearance_mm": "3",
+        "extension_mm": "0",
+        "frame_mm": "15",
+        "overlap_mm": "0"
+      },
+      "source": "DEMO · ensayo de montaje sin certificación",
+      "synthetic": true,
+      "tolerance_mm": "3",
+      "top": {
+        "clearance_mm": "3",
+        "extension_mm": "0",
+        "frame_mm": "15",
+        "overlap_mm": "0"
+      }
+    },
+    "survey": {
+      "heights_mm": [
+        "1220",
+        "1221",
+        "1222"
+      ],
+      "independent_extras": null,
+      "module_id": null,
+      "origin": "SITE",
+      "override": null,
+      "plumb_mm": null,
+      "rule_code": "RENOVATION",
+      "rule_revision": 1,
+      "squareness_mm": null,
+      "wall": "CONCRETE",
+      "widths_mm": [
+        "1524",
+        "1520",
+        "1522"
+      ]
+    }
+  },
+  "SUBFRAME": {
+    "result": {
+      "height": {
+        "derived_mm": "1170",
+        "deviation_mm": "0",
+        "fabrication_mm": "1170",
+        "first": {
+          "clearance_mm": "5",
+          "extension_mm": "0",
+          "frame_mm": "20",
+          "overlap_mm": "0"
+        },
+        "first_adjustment_mm": "-25",
+        "opening_mm": "1220",
+        "second": {
+          "clearance_mm": "5",
+          "extension_mm": "0",
+          "frame_mm": "20",
+          "overlap_mm": "0"
+        },
+        "second_adjustment_mm": "-25",
+        "spread_mm": "2"
+      },
+      "warnings": [
+        "Ancho: la dispersión supera la tolerancia declarada."
+      ],
+      "width": {
+        "derived_mm": "1470",
+        "deviation_mm": "0",
+        "fabrication_mm": "1470",
+        "first": {
+          "clearance_mm": "5",
+          "extension_mm": "0",
+          "frame_mm": "20",
+          "overlap_mm": "0"
+        },
+        "first_adjustment_mm": "-25",
+        "opening_mm": "1520",
+        "second": {
+          "clearance_mm": "5",
+          "extension_mm": "0",
+          "frame_mm": "20",
+          "overlap_mm": "0"
+        },
+        "second_adjustment_mm": "-25",
+        "spread_mm": "4"
+      }
+    },
+    "rule": {
+      "bottom": {
+        "clearance_mm": "5",
+        "extension_mm": "0",
+        "frame_mm": "20",
+        "overlap_mm": "0"
+      },
+      "code": "SUBFRAME",
+      "extras": [],
+      "kind": "SUBFRAME",
+      "left": {
+        "clearance_mm": "5",
+        "extension_mm": "0",
+        "frame_mm": "20",
+        "overlap_mm": "0"
+      },
+      "name": "SUBFRAME",
+      "right": {
+        "clearance_mm": "5",
+        "extension_mm": "0",
+        "frame_mm": "20",
+        "overlap_mm": "0"
+      },
+      "source": "DEMO · ensayo de montaje sin certificación",
+      "synthetic": true,
+      "tolerance_mm": "3",
+      "top": {
+        "clearance_mm": "5",
+        "extension_mm": "0",
+        "frame_mm": "20",
+        "overlap_mm": "0"
+      }
+    },
+    "survey": {
+      "heights_mm": [
+        "1220",
+        "1221",
+        "1222"
+      ],
+      "independent_extras": null,
+      "module_id": null,
+      "origin": "SITE",
+      "override": null,
+      "plumb_mm": null,
+      "rule_code": "SUBFRAME",
+      "rule_revision": 1,
+      "squareness_mm": null,
+      "wall": "CONCRETE",
+      "widths_mm": [
+        "1524",
+        "1520",
+        "1522"
+      ]
+    }
+  }
+}

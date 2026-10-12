@@ -1,6 +1,11 @@
 from django.urls import path
+from production.glass_orders import ProductionGlassOrderView
+from production.hardware import VersionHardwarePickingView
+from production.field_views import FieldWorkspaceView, FieldScheduleView, FieldCommandView, FieldReviewView, FieldAssetAccessView
 
 from production.views import (
+    OperatorStationView,
+    ProductionQcRemakeView,
     ProductionOrderDeliveryConfirmationView,
     ProductionOrderDeliveryConfirmView,
     ProductionOrderDeliveryTransitionView,
@@ -19,6 +24,7 @@ from production.views import (
     ProductionOrderLabelsView,
     ProductionOrderCncFileView,
     ProductionOrderCutPackView,
+    ProductionOrderPieceLabelsView,
     ProductionOrderCancelView,
     ProductionOrderMaterialRecheckView,
     ProductionOrderPackView,
@@ -44,10 +50,21 @@ from production.views import (
     CncMachineDetailView,
     CncReadinessView,
     CncProgramListView,
+    CncPreviewView,
     CncProgramFileView,
 )
 
 urlpatterns = [
+    path('field/', FieldWorkspaceView.as_view()),
+    path('field/schedule/', FieldScheduleView.as_view()),
+    path('field/visits/<uuid:visit_id>/commands/', FieldCommandView.as_view()),
+    path('field/visits/<uuid:visit_id>/review/', FieldReviewView.as_view()),
+    path('field/assets/<uuid:asset_id>/access/', FieldAssetAccessView.as_view()),
+    path("orders/<uuid:order_id>/cnc/preview/", CncPreviewView.as_view(), name="production-order-cnc-preview"),
+    path("operator-station/", OperatorStationView.as_view(), name="production-operator-station"),
+    path("orders/<uuid:order_id>/qc-remake/", ProductionQcRemakeView.as_view(), name="production-qc-remake"),
+    path("versions/<uuid:version_id>/hardware-picking/", VersionHardwarePickingView.as_view()),
+    path("glass-orders/", ProductionGlassOrderView.as_view(), name="production-glass-orders"),
     path("prep/", ProductionPrepView.as_view(), name="production-prep"),
     path(
         "station-queue/",
@@ -61,7 +78,7 @@ urlpatterns = [
         name="production-order-trace",
     ),
     path(
-        "pieces/<str:piece_id>/trace/",
+        "pieces/<path:piece_id>/trace/",
         ProductionPieceTraceView.as_view(),
         name="production-piece-trace",
     ),
@@ -119,6 +136,11 @@ urlpatterns = [
         "orders/<uuid:order_id>/cut-pack/",
         ProductionOrderCutPackView.as_view(),
         name="production-order-cut-pack",
+    ),
+    path(
+        "orders/<uuid:order_id>/piece-labels/",
+        ProductionOrderPieceLabelsView.as_view(),
+        name="production-order-piece-labels",
     ),
     path(
         "orders/<uuid:order_id>/production-pack/",

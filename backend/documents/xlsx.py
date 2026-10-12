@@ -219,6 +219,8 @@ def render_order_xlsx(document_type: str, snapshot: dict[str, object]) -> tuple[
         ["Proveedor", _text(order.get("supplier_name"))],
         ["Revisión", _text(revision.get("revision_code"))],
     ]
+    if snapshot.get("is_demo"):
+        metadata.append(["DEMO", "Catálogo sintético de referencia. Sin certificación de fabricante."])
     expected: list[list[str | int]] = [*metadata, headers, *data]
     workbook = Workbook()
     sheet = workbook.active

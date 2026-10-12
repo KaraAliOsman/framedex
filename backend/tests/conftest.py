@@ -7,8 +7,31 @@ the same attribute afterwards and wins.
 """
 
 import pytest
-
 from projects import org_branding
+
+
+@pytest.fixture(autouse=True)
+def _explicit_ai_test_provider(monkeypatch):
+    """Test mode is an explicit capability; DEBUG/pytest never grants it."""
+    monkeypatch.setenv("AI_GATEWAY_MOCK_ENABLED", "1")
+
+@pytest.fixture
+def legacy_glass_read_model(monkeypatch):
+    """Explicit unit-only data boundary; real safety/identity guards still run.
+
+    Calculation contracts isolate catalog I/O just as they isolate profile
+    repositories. Integration tests exercise the actual tenant rule store.
+    """
+    from catalogs import glass
+
+    def read(statement, _parameters):
+        if statement.startswith("SELECT c.id,c.legacy_spec FROM public.glass_purchase_mappings"):
+            return [{"id": "legacy-fixture", "legacy_spec": "Historical fixture notation"}]
+        if statement.startswith("SELECT payload::text,revision FROM public.glass_safety_rule_sets"):
+            return []
+        raise AssertionError(f"Unexpected glass authority query: {statement}")
+
+    monkeypatch.setattr(glass, "rows", read)
 
 
 @pytest.fixture(autouse=True)

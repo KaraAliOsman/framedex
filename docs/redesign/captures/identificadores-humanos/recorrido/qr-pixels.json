@@ -1,0 +1,278 @@
+{
+  "result": "PASS",
+  "decoder": "zxing-cpp 3.1.1",
+  "records": [
+    {
+      "capture": "etiqueta-retazo-1024-dark.png",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "capture": "etiqueta-retazo-1024-light.png",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "capture": "etiqueta-retazo-1280-dark.png",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "capture": "etiqueta-retazo-1280-light.png",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "capture": "etiqueta-retazo-1440-dark.png",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "capture": "etiqueta-retazo-1440-light.png",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "capture": "etiqueta-retazo-390-dark.png",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "capture": "etiqueta-retazo-390-light.png",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-01-corte.pdf",
+      "page": 4,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&code=OT-P-000018-REV-A-01"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-01-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&code=OT-P-000018-REV-A-01"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-02-corte.pdf",
+      "page": 10,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=f82cb741-8f68-4c72-a8e0-81898d143e9c&code=OT-P-000018-REV-A-02"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-02-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=f82cb741-8f68-4c72-a8e0-81898d143e9c&code=OT-P-000018-REV-A-02"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-03-corte.pdf",
+      "page": 40,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=9cb63b62-597d-48ef-9249-4e85a9265780&code=OT-P-000018-REV-A-03"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-03-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=9cb63b62-597d-48ef-9249-4e85a9265780&code=OT-P-000018-REV-A-03"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-04-corte.pdf",
+      "page": 6,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=144a2273-b24e-448c-8c3e-98c9508f6722&code=OT-P-000018-REV-A-04"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-04-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=144a2273-b24e-448c-8c3e-98c9508f6722&code=OT-P-000018-REV-A-04"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-05-corte.pdf",
+      "page": 8,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=8583950c-ef50-4ded-993e-2a4b6fc64304&code=OT-P-000018-REV-A-05"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-05-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=8583950c-ef50-4ded-993e-2a4b6fc64304&code=OT-P-000018-REV-A-05"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-06-corte.pdf",
+      "page": 14,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=5115604b-8fdd-4ca0-8cc0-b763d0425216&code=OT-P-000018-REV-A-06"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-06-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=5115604b-8fdd-4ca0-8cc0-b763d0425216&code=OT-P-000018-REV-A-06"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-07-corte.pdf",
+      "page": 14,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=0291e6da-2be5-4333-b056-3a22c528c306&code=OT-P-000018-REV-A-07"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-07-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=0291e6da-2be5-4333-b056-3a22c528c306&code=OT-P-000018-REV-A-07"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-08-corte.pdf",
+      "page": 10,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=6c79bde3-67f6-459e-8f32-fbdc31f75439&code=OT-P-000018-REV-A-08"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-08-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=6c79bde3-67f6-459e-8f32-fbdc31f75439&code=OT-P-000018-REV-A-08"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-09-corte.pdf",
+      "page": 10,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=df836333-008f-44ae-bb78-72f4178e42a7&code=OT-P-000018-REV-A-09"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-09-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=df836333-008f-44ae-bb78-72f4178e42a7&code=OT-P-000018-REV-A-09"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-10-corte.pdf",
+      "page": 6,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=bfd9b3b9-cedf-4032-b659-7e258d37bc28&code=OT-P-000018-REV-A-10"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-10-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=bfd9b3b9-cedf-4032-b659-7e258d37bc28&code=OT-P-000018-REV-A-10"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-11-corte.pdf",
+      "page": 26,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=a8ce4b93-f661-4e20-92b6-caad87c27f48&code=OT-P-000018-REV-A-11"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-11-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=a8ce4b93-f661-4e20-92b6-caad87c27f48&code=OT-P-000018-REV-A-11"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-12-corte.pdf",
+      "page": 14,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=c38c4cb0-615d-44c0-8afd-b4272a61954f&code=OT-P-000018-REV-A-12"
+      ]
+    },
+    {
+      "document": "OT-P-000018-REV-A-12-produccion.pdf",
+      "page": 1,
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=c38c4cb0-615d-44c0-8afd-b4272a61954f&code=OT-P-000018-REV-A-12"
+      ]
+    },
+    {
+      "document": "retazo-impreso-light.pdf",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "document": "etiquetas-impresas-light.pdf",
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=OT-P-000018-REV-A-01-U01&identity=8d9552cb-4599-49b1-bb11-cbd75babbe4f%3AU1",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M06-R&identity=04695a42ad4bbd4b36c919517b2710ed434701a74074a6ff8785301057d7a469",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M07-R&identity=21aa2bc1ec49ecd724c7d471a8cb1b4386e87c7f80e93ebdecf1a6f730ef1590",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M02-R&identity=8bed769786c167dfbbe799b3e0bd63766c4815e4abc353c52378dd85448fa637",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M03-R&identity=64bb7973dda615021b5e0f3b19f9a21d8bad3d5168ea22463fc5c7c4dead3da0",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M06&identity=b33fb31089564801e40fe0b1be78b8343006a7d6465e049af9ba6bdf20ccbddb",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M07&identity=a40dcdad3f50810a937449405f51343317e706354729a85f10f5087ba1fe03d5",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M05&identity=1b94ee295dc2bdf4263f8ce905f52b4bedc3448c09808650a4764fb48914acb0",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M08&identity=ada75a1d865b23ef45a1bca37b0debbe18455b7e79ce005aa2337130c3a23a42",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M10&identity=8c588d58af7692ef7614bb48ece51b4f7a6d25fbd41591de1f3a93b92ee43731",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M11&identity=aacceb7fef1a53a6adea746016555dc8ed88d01c600e5b2cae5e8b3faee5115c",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M09&identity=ead9a24daf336d83b940ef8afdb41b9e0babc616d0fdc9412acc783da32c676e",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M12&identity=d1445295ebae3c234065a0052e45d7337d3a71ee1a90a55c723d6dcd85c73cd5",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M02&identity=5c7e46f153396bdd937d72efbdf17f8420888d61bfa604808183c7538f4934a3",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M03&identity=6edf5ee6016a0aed83d95b6a520ce13d027bcfc4b3cc33f49ce7dd88e9ed9220",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M01&identity=da5b86f81e52301fd7a0d5d3d8f7efbad77616246249a3992fd24a4b5af3ff5f",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M04&identity=976959a92766dc9bc13e02919375aa958b8a963a2135c6065374c97e2eda9d8e"
+      ]
+    },
+    {
+      "document": "retazo-impreso-dark.pdf",
+      "decoded": [
+        "http://127.0.0.1:5173/purchasing?remnant=6986f020-9e96-455b-a505-c4105d12e0ca&code=RT-000001"
+      ]
+    },
+    {
+      "document": "etiquetas-impresas-dark.pdf",
+      "decoded": [
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=OT-P-000018-REV-A-01-U01&identity=8d9552cb-4599-49b1-bb11-cbd75babbe4f%3AU1",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M06-R&identity=04695a42ad4bbd4b36c919517b2710ed434701a74074a6ff8785301057d7a469",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M07-R&identity=21aa2bc1ec49ecd724c7d471a8cb1b4386e87c7f80e93ebdecf1a6f730ef1590",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M02-R&identity=8bed769786c167dfbbe799b3e0bd63766c4815e4abc353c52378dd85448fa637",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M03-R&identity=64bb7973dda615021b5e0f3b19f9a21d8bad3d5168ea22463fc5c7c4dead3da0",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M06&identity=b33fb31089564801e40fe0b1be78b8343006a7d6465e049af9ba6bdf20ccbddb",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M07&identity=a40dcdad3f50810a937449405f51343317e706354729a85f10f5087ba1fe03d5",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M05&identity=1b94ee295dc2bdf4263f8ce905f52b4bedc3448c09808650a4764fb48914acb0",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M08&identity=ada75a1d865b23ef45a1bca37b0debbe18455b7e79ce005aa2337130c3a23a42",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M10&identity=8c588d58af7692ef7614bb48ece51b4f7a6d25fbd41591de1f3a93b92ee43731",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M11&identity=aacceb7fef1a53a6adea746016555dc8ed88d01c600e5b2cae5e8b3faee5115c",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M09&identity=ead9a24daf336d83b940ef8afdb41b9e0babc616d0fdc9412acc783da32c676e",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M12&identity=d1445295ebae3c234065a0052e45d7337d3a71ee1a90a55c723d6dcd85c73cd5",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M02&identity=5c7e46f153396bdd937d72efbdf17f8420888d61bfa604808183c7538f4934a3",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M03&identity=6edf5ee6016a0aed83d95b6a520ce13d027bcfc4b3cc33f49ce7dd88e9ed9220",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M01&identity=da5b86f81e52301fd7a0d5d3d8f7efbad77616246249a3992fd24a4b5af3ff5f",
+        "http://127.0.0.1:5173/production?order=8d9552cb-4599-49b1-bb11-cbd75babbe4f&piece=P01-U01-M04&identity=976959a92766dc9bc13e02919375aa958b8a963a2135c6065374c97e2eda9d8e"
+      ]
+    }
+  ]
+}

@@ -5,9 +5,19 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { LinkSourceEnum } from "./linkSourceEnum";
+import type { LinkStateEnum } from "./linkStateEnum";
 
 export interface ApprovalRecord {
+  evidence?: unknown | null;
+  /** @nullable */
+  selected_revision?: string | null;
+  /** @nullable */
+  decision_kind?: string | null;
+  /** @nullable */
+  position_index?: number | null;
   id: string;
+  link_source?: LinkSourceEnum;
   status: string;
   revision_code: string;
   /** @nullable */
@@ -18,6 +28,8 @@ export interface ApprovalRecord {
   decided_note: string | null;
   expires_at: string;
   created_at: string;
+  original_expires_at?: string;
+  link_state?: LinkStateEnum;
   /** @nullable */
   revoked_at: string | null;
   view_count: number;

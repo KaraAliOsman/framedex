@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from django.http import HttpResponse
 
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.response import Response
@@ -81,6 +82,7 @@ from projects.serializers import (
     ResetPricingSerializer,
     SuccessorRequestSerializer,
 )
+from projects.collection_serializers import InternalDocumentRequestSerializer
 
 READ_ROLES = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
 WRITE_ROLES = ("OWNER", "ESTIMATOR")
@@ -218,7 +220,7 @@ class PositionView(APIView):
     )
     def get(self, request, position_id):
         with scope(request, READ_ROLES) as (_, _, org):
-            return response(service.position_public(service.position_row(org, position_id)))
+            return response(service.position_public(service.position_row(org, position_id), org_id=org))
 
     @extend_schema(
         operation_id="positions_update",
@@ -536,7 +538,7 @@ class OrganizationBrandingLogoView(APIView):
     def get(self, request):
         with scope(request, READ_ROLES) as (_, _, org):
             content, content_type = org_branding.logo_bytes(org_id=org)
-        return Response(
+        return HttpResponse(
             content,
             content_type=content_type,
             headers={"Cache-Control": "private, max-age=300"},
@@ -597,16 +599,17 @@ class ProjectInvoicesView(APIView):
 
     @extend_schema(
         operation_id="project_invoice_emit",
-        request=None,
+        request=InternalDocumentRequestSerializer,
         responses={201: ProjectInvoiceSerializer, **ERRORS},
         **SCHEMA,
     )
     def post(self, request, project_id):
+        data = validate(InternalDocumentRequestSerializer, request.data or {})
         with scope(request, WRITE_ROLES) as (token, _, org):
             project = service.project_row(org, project_id)
             return response(
                 invoices.issue_invoice(
-                    org_id=org, project=project, actor_id=token.user_id
+                    org_id=org, project=project, actor_id=token.user_id, document_kind=data["document_kind"]
                 ),
                 status=201,
             )

@@ -24,28 +24,27 @@ from __future__ import annotations
 import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
+from dekopen_engine.models import ProfileRole
 
-ROLES = (
-    "FRAME",
-    "SASH",
-    "MULLION_V",
-    "MULLION_H",
-    "INVERSOR",
-    "GLAZING_BEAD",
-    "COUPLER",
-    "THRESHOLD",
-    "ADDITIONAL",
-)
+ROLES = tuple(role.value for role in ProfileRole)
 
 _ROLE_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("hoja corredera", "sliding sash"), "SLIDING_SASH"),
+    (("hoja de puerta", "door sash"), "DOOR_SASH"),
+    (("encuentro", "traslapo", "interlock"), "INTERLOCK"),
+    (("riel", "guía", "guia", "rail"), "RAIL"),
+    (("ensanche", "ampliación", "ampliacion"), "FRAME_EXTENSION"),
+    (("vierteaguas", "alféizar", "alfeizar"), "SILL"),
+    (("tapajuntas",), "COVER_TRIM"),
+    (("zócalo", "zocalo"), "PLINTH"),
     (("marco", "frame", "kasa"), "FRAME"),
     (("hoja", "sash", "ventana"), "SASH"),
     (("montante", "mullion", "vertical"), "MULLION_V"),
-    (("travesa", "horizontal", "jamba", "riel", "guia", "rail"), "MULLION_H"),
+    (("travesa", "horizontal"), "MULLION_H"),
     (("inversor", "adaptador", "inverter"), "INVERSOR"),
-    (("contravidrio", "junta", "vidrio", "bead", "clip"), "GLAZING_BEAD"),
+    (("junquillo", "contravidrio", "bead"), "GLAZING_BEAD"),
     (("acoplamiento", "bayo", "coupler", "union", "acople"), "COUPLER"),
-    (("umbral", "threshold", "zocalo"), "THRESHOLD"),
+    (("umbral", "threshold"), "THRESHOLD"),
     (("refuerzo", "steel", "acero", "reinforcement"), "ADDITIONAL"),
     (("tapa", "tapacanal", "cover", "cap"), "ADDITIONAL"),
 )
@@ -183,7 +182,7 @@ def parse_article_line(
             "role": (
                 {"normalized": role, "original": role_keyword, "source": "keyword"}
                 if role
-                else {"normalized": "ADDITIONAL", "original": None, "source": "default"}
+                else {"normalized": None, "original": None, "source": None}
             ),
             "face_width_mm": {
                 "normalized": face_width,
@@ -219,7 +218,7 @@ def parse_article_line(
         "key": key,
         "sku": sku,
         "name": name,
-        "role": role or "ADDITIONAL",
+        "role": role,
         "face_width_mm": face_width,
         "commercial_length_mm": None,
         "welding_loss_mm": None,

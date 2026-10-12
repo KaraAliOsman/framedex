@@ -1,0 +1,674 @@
+[
+  {
+    "id": "login",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "login-1440-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "pagina-ausente-1440-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "sin-conexion",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "sin-conexion-1440-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "error-pantalla",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "error-pantalla-1440-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "marca",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "marca-1440-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "onboarding-1440-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correos",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "correos-1440-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "acerca-de",
+    "width": 1440,
+    "theme": "light",
+    "screenshot": "acerca-de-1440-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correo-MAGIC_LINK",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-QUOTE",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-APPROVAL",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-PAYMENT",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-ORDER_BLOCKED",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "login",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "login-1440-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "pagina-ausente-1440-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "sin-conexion",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "sin-conexion-1440-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "error-pantalla",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "error-pantalla-1440-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "marca",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "marca-1440-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "onboarding-1440-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correos",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "correos-1440-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "acerca-de",
+    "width": 1440,
+    "theme": "dark",
+    "screenshot": "acerca-de-1440-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correo-MAGIC_LINK",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-QUOTE",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-APPROVAL",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-PAYMENT",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-ORDER_BLOCKED",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "login",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "login-1280-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "pagina-ausente-1280-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "sin-conexion",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "sin-conexion-1280-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "error-pantalla",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "error-pantalla-1280-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "marca",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "marca-1280-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "onboarding-1280-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correos",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "correos-1280-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "acerca-de",
+    "width": 1280,
+    "theme": "light",
+    "screenshot": "acerca-de-1280-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "login",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "login-1280-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "pagina-ausente-1280-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "sin-conexion",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "sin-conexion-1280-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "error-pantalla",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "error-pantalla-1280-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "marca",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "marca-1280-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "onboarding-1280-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correos",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "correos-1280-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "acerca-de",
+    "width": 1280,
+    "theme": "dark",
+    "screenshot": "acerca-de-1280-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "login",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "login-1024-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "pagina-ausente-1024-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "sin-conexion",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "sin-conexion-1024-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "error-pantalla",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "error-pantalla-1024-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "marca",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "marca-1024-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "onboarding-1024-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correos",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "correos-1024-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "acerca-de",
+    "width": 1024,
+    "theme": "light",
+    "screenshot": "acerca-de-1024-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "login",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "login-1024-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "pagina-ausente-1024-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "sin-conexion",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "sin-conexion-1024-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "error-pantalla",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "error-pantalla-1024-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "marca",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "marca-1024-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "onboarding-1024-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correos",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "correos-1024-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "acerca-de",
+    "width": 1024,
+    "theme": "dark",
+    "screenshot": "acerca-de-1024-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "login",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "login-390-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "pagina-ausente-390-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "sin-conexion",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "sin-conexion-390-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "error-pantalla",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "error-pantalla-390-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "marca",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "marca-390-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "onboarding-390-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correos",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "correos-390-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "acerca-de",
+    "width": 390,
+    "theme": "light",
+    "screenshot": "acerca-de-390-light.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correo-MAGIC_LINK",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-QUOTE",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-APPROVAL",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-PAYMENT",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-ORDER_BLOCKED",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "login",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "login-390-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "pagina-ausente-390-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "sin-conexion",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "sin-conexion-390-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "error-pantalla",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "error-pantalla-390-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "marca",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "marca-390-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "onboarding",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "onboarding-390-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correos",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "correos-390-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "acerca-de",
+    "width": 390,
+    "theme": "dark",
+    "screenshot": "acerca-de-390-dark.png",
+    "overflow": false,
+    "findings": []
+  },
+  {
+    "id": "correo-MAGIC_LINK",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-QUOTE",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-APPROVAL",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-PAYMENT",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  },
+  {
+    "id": "correo-ORDER_BLOCKED",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "findings": [],
+    "source": "API vista previa sin cifras de operación"
+  }
+]

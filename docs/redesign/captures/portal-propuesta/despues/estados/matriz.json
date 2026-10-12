@@ -1,0 +1,362 @@
+[
+  {
+    "state": "reemplazada",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "reemplazada",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "reemplazada",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "reemplazada",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "revocada",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "revocada",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "revocada",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "revocada",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "no_encontrada",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "no_encontrada",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "no_encontrada",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "no_encontrada",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "vigente",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "vigente",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "vigente",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "vigente",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "cambios",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "cambios",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "cambios",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "cambios",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "rechazada",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "rechazada",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "rechazada",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "rechazada",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "expirada",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "expirada",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "expirada",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "expirada",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "usd",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "usd",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "usd",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "usd",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "aprobada",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "aprobada",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "aprobada",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "aprobada",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "sucesora",
+    "width": 1440,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "sucesora",
+    "width": 1440,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "sucesora",
+    "width": 390,
+    "theme": "light",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  },
+  {
+    "state": "sucesora",
+    "width": 390,
+    "theme": "dark",
+    "overflow": false,
+    "errors": [],
+    "serious": [],
+    "payment_button": 0
+  }
+]

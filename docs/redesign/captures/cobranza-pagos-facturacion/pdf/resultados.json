@@ -1,0 +1,80 @@
+{
+  "documents": [
+    {
+      "code": "RC-0003",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "RC-0004",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "RC-0007",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "RC-0008",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "RC-0005",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "RC-0006",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "RC-0001",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "RC-0002",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "BOL-0002",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "FAC-0004",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "BOL-0003",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "FAC-0001",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "NC-0001",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "NC-0003",
+      "pages": 1,
+      "stored_hash_verified": true
+    },
+    {
+      "code": "NC-0002",
+      "pages": 1,
+      "stored_hash_verified": true
+    }
+  ],
+  "historical_files_unchanged": 8
+}

@@ -1,0 +1,17 @@
+BEGIN;
+CREATE EXTENSION IF NOT EXISTS pgtap;
+SET LOCAL search_path=public,extensions,pg_temp;
+SELECT plan(11);
+SELECT has_table('public','project_edit_operations','atomic edit history exists');
+SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.project_edit_operations'::regclass),'edit history has RLS');
+SELECT ok(NOT has_table_privilege('anon','public.project_edit_operations','SELECT'),'anonymous history denied');
+SELECT ok(NOT has_table_privilege('authenticated','public.project_edit_operations','SELECT'),'raw member history denied');
+SELECT ok(NOT has_table_privilege('authenticated','public.project_edit_operations','INSERT'),'raw member edits denied');
+SELECT ok(has_table_privilege('pricing_backend','public.project_edit_operations','SELECT,INSERT,UPDATE'),'trusted reversible edit boundary');
+SELECT ok(NOT has_table_privilege('pricing_backend','public.project_edit_operations','DELETE'),'trusted backend cannot delete audit history');
+SELECT has_trigger('public','project_edit_operations','project_edit_evidence','history guarded for elevated writers');
+SELECT ok((SELECT (tgtype::INT & 8)=8 FROM pg_trigger WHERE tgrelid='public.project_edit_operations'::regclass AND tgname='project_edit_evidence'),'DELETE fires immutable guard');
+SELECT is((SELECT count(*)::INT FROM pg_policies WHERE tablename='project_edit_operations'),3,'read, insert, undo policies are explicit');
+SELECT ok((SELECT bool_and(roles=ARRAY['pricing_backend']::NAME[]) FROM pg_policies WHERE tablename='project_edit_operations'),'no policy broadens raw member visibility');
+SELECT * FROM finish();
+ROLLBACK;

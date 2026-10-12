@@ -1,3 +1,4 @@
+import "fake-indexeddb/auto";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -5,10 +6,12 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "../api/apiMutator";
+import * as pricingTransport from "../api/apiMutator";
 import { authMe } from "../api/generated/dekopen";
 import { CommercialPricingPage } from "../features/pricing/PricingPage";
 import { useCanvasStore } from "../features/canvas/canvasStore";
-import { t } from "../i18n/es-CL";
+import { clearActor, enqueue, pending, readCopy, saveCopy } from "../features/field/outbox";
+import type { Workspace } from "../features/field/types";
 import { telemetry } from "../telemetry/telemetry";
 import { AuthSessionProvider, useAuthSession } from "./AuthSessionProvider";
 
@@ -67,6 +70,7 @@ function Probe(): JSX.Element {
     <>
       <span data-testid="status">{auth.status}</span>
       <span data-testid="active-org">{auth.me?.active_organization?.id ?? ""}</span>
+      <span data-testid="network-unavailable">{String(auth.networkUnavailable)}</span>
       <button onClick={() => void auth.selectOrganization("org-B")}>Select B</button>
       <button onClick={() => void auth.requestMagicLink("fixture@example.com")}>Magic link</button>
       <button onClick={() => void auth.signOut()}>Sign out</button>
@@ -155,7 +159,8 @@ function expectResetCanvas(): void {
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  await clearActor("unit-user");
   vi.clearAllMocks();
   window.localStorage.clear();
   fake.callback = null;
@@ -168,6 +173,38 @@ beforeEach(() => {
 });
 
 describe("authoritative session and active-organization boundary", () => {
+  it("erases the outgoing tenant's photos and agenda before the next context resolves", async () => {
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    const scope = { actor: "unit-user", org: "org-A" };
+    await saveCopy(scope, {
+      role: "INSTALLER",
+      visits: [],
+      incidents: [],
+      projects: [],
+      assignees: [],
+    } as Workspace);
+    await enqueue(scope, "visit-A", {
+      operation_key: "private-photo-A",
+      kind: "INCIDENT",
+      photo_b64: "private",
+    });
+    let finishB: ((value: Awaited<ReturnType<typeof authMe>>) => void) | undefined;
+    vi.mocked(authMe).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishB = resolve;
+        }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Select B" }));
+    await waitFor(() => expect(finishB).toBeDefined());
+    expect(await pending(scope)).toEqual([]);
+    expect(await readCopy(scope)).toBeUndefined();
+    expect(screen.getByTestId("status")).toHaveTextContent("resolving");
+    expect(screen.getByTestId("active-org")).toBeEmptyDOMElement();
+    await act(async () => finishB?.(result("org-B")));
+    await waitFor(() => expect(screen.getByTestId("active-org")).toHaveTextContent("org-B"));
+  });
   it("resolves a session without copying its access token into a second store", async () => {
     mount();
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
@@ -246,6 +283,7 @@ describe("authoritative session and active-organization boundary", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Select B" }));
     expectResetCanvas();
+    await waitFor(() => expect(finishB).toBeDefined());
     await act(async () => finishB?.(result("org-B")));
     await waitFor(() => expect(screen.getByTestId("active-org")).toHaveTextContent("org-B"));
   });
@@ -322,11 +360,36 @@ describe("authoritative session and active-organization boundary", () => {
     expect(screen.getByTestId("active-org")).toHaveTextContent("org-A");
   });
 
-  it("cannot expose tenant A design through CommercialDraft after selecting tenant B", async () => {
+  it("cannot expose tenant A prices through the commercial workspace after selecting tenant B", async () => {
+    const request = vi
+      .spyOn(pricingTransport, "apiMutator")
+      .mockImplementation(async <T,>(path: string, init: RequestInit): Promise<T> => {
+        const tenant = new Headers(init.headers).get("X-Organization-ID");
+        if (String(path).endsWith("options/"))
+          return { data: { fx: [], commercial_lists: [], band: null } } as T;
+        return {
+          data:
+            tenant === "org-A"
+              ? [
+                  {
+                    id: "operation-A",
+                    project_id: "project-A",
+                    project_code: "P-000001",
+                    revision_code: "REV-A",
+                    state: "APPLIED",
+                    currency: "CLP",
+                    project_gross: "1444",
+                    reason: "Condiciones privadas de A",
+                    created_at: "2026-10-09T12:00:00Z",
+                  },
+                ]
+              : [],
+        } as T;
+      });
     mount(<DraftSurface />);
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
     seedCanvas();
-    expect(screen.getByText("1444.00 × 1555.00 mm")).toBeInTheDocument();
+    await screen.findByText(/Condiciones privadas de A/);
     let finishB: ((value: Awaited<ReturnType<typeof authMe>>) => void) | undefined;
     vi.mocked(authMe).mockImplementationOnce(
       () =>
@@ -336,12 +399,20 @@ describe("authoritative session and active-organization boundary", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Select draft B" }));
     expectResetCanvas();
+    await waitFor(() => expect(finishB).toBeDefined());
     await act(async () => finishB?.(result("org-B")));
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
-    expect(screen.getByText(t("pricing.prepareDesign"))).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText(/Condiciones privadas de A/)).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText("$1.444")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver detalle" })).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: t("pricing.createDraft") }),
-    ).not.toBeInTheDocument();
+      request.mock.calls.some(
+        ([, init]) => new Headers(init.headers).get("X-Organization-ID") === "org-B",
+      ),
+    ).toBe(true);
+    request.mockRestore();
   });
 
   it("does not call async Auth methods from inside onAuthStateChange", async () => {
@@ -369,5 +440,17 @@ describe("authoritative session and active-organization boundary", () => {
       },
     });
     expect(capture).toHaveBeenCalledWith("auth_magic_link_requested");
+  });
+  it("distinguishes transport failure from denied authority for a scoped offline copy", async () => {
+    vi.mocked(authMe).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("error"));
+    expect(screen.getByTestId("network-unavailable")).toHaveTextContent("true");
+    vi.mocked(authMe).mockRejectedValueOnce(
+      new ApiError(403, { error: { code: "no_active_membership" } }),
+    );
+    act(() => fake.callback?.("TOKEN_REFRESHED", session));
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("no_membership"));
+    expect(screen.getByTestId("network-unavailable")).toHaveTextContent("false");
   });
 });

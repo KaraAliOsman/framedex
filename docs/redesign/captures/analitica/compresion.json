@@ -1,0 +1,387 @@
+{
+  "files": 76,
+  "bytesSaved": 0,
+  "pixelExact": true,
+  "records": [
+    {
+      "path": "antes-analitica.png",
+      "pixelsSha256": "3b32afdd80e7268b0f33dce272904cefe6e3af30244851b9f735363c688d0b2f",
+      "bytes": 17771
+    },
+    {
+      "path": "antes-hoy.png",
+      "pixelsSha256": "9e1c26bee467e2f4993ccdb10c932a09970507fbed79fd0ea29007a06c07f585",
+      "bytes": 45269
+    },
+    {
+      "path": "controles-1440-light.png",
+      "pixelsSha256": "7c73ca1868dfae54f6b26ea48bc2cda8d0abfcaedcac1e9aa2294a424c05ebf0",
+      "bytes": 152829
+    },
+    {
+      "path": "controles-390-dark.png",
+      "pixelsSha256": "85e8f2bc18a4d8c5630bb21aa40665bfdfc51c1292e458941ccb8782916cc1cc",
+      "bytes": 113148
+    },
+    {
+      "path": "estados/blocked.png",
+      "pixelsSha256": "df662ba8d9025d2f08e8c2ee0ac8554f82a511e7a9f4fd850598aabfdcc1b21f",
+      "bytes": 109208
+    },
+    {
+      "path": "estados/denied.png",
+      "pixelsSha256": "cd3b4ed752efd8dfd0e80552052080643568f0ed3c223e82bb08638636c06c7f",
+      "bytes": 25512
+    },
+    {
+      "path": "estados/empty.png",
+      "pixelsSha256": "e0f88d9f036edbaed093e30ae0a8cfe32aa83d6c111fbd7c7bb35737a8396a06",
+      "bytes": 53537
+    },
+    {
+      "path": "estados/error.png",
+      "pixelsSha256": "014689c5bca9ddbf9f57d72209e2538216cb2017500a626db6f84c392e3d833a",
+      "bytes": 50105
+    },
+    {
+      "path": "estados/loading.png",
+      "pixelsSha256": "a5d21518a1c34241f83d8bd11c9c863cc8565cd17bc0d1e4e8b96672d5b28951",
+      "bytes": 35555
+    },
+    {
+      "path": "margen-con-causas.png",
+      "pixelsSha256": "07db34eb24751f409fd60911b10bfc1c80347a50e763096f5f510c37f3c7c4c2",
+      "bytes": 155050
+    },
+    {
+      "path": "matriz/field-1024-dark.png",
+      "pixelsSha256": "e38d4efae52c0dce702e7ad6fbe6432bdad68debff6d0299fe32175456656e69",
+      "bytes": 82527
+    },
+    {
+      "path": "matriz/field-1024-light.png",
+      "pixelsSha256": "8fdd1a9e16925b079e3eea7b46d797ed1f98236672c97d8988dcaa11c17b11cb",
+      "bytes": 82074
+    },
+    {
+      "path": "matriz/field-1280-dark.png",
+      "pixelsSha256": "0df701562d7e01ffcbc8915d0bd3db9bff3c3887840e473ad9c8db9596da179b",
+      "bytes": 105299
+    },
+    {
+      "path": "matriz/field-1280-light.png",
+      "pixelsSha256": "1d4deb414a73a23a4be1e233a28c8cab3a48dd197a65209bdd6838323d975163",
+      "bytes": 105043
+    },
+    {
+      "path": "matriz/field-1440-dark.png",
+      "pixelsSha256": "1a2c608c53e8c3d4fd5904ced06dba0aadd5cac5b3262b0fffd798d7b99ffd67",
+      "bytes": 108303
+    },
+    {
+      "path": "matriz/field-1440-light.png",
+      "pixelsSha256": "3db44d1a00244aab2fd975503fda3096e5529f6b9bfbdccd8ca1995a356c9377",
+      "bytes": 107953
+    },
+    {
+      "path": "matriz/margin-1024-dark.png",
+      "pixelsSha256": "67f941f4678a3c5fb0aa0ed811903fd951519c738359ff724bb3f21a8676c5dd",
+      "bytes": 127912
+    },
+    {
+      "path": "matriz/margin-1024-light.png",
+      "pixelsSha256": "0be3cff3595a29ee91ddd987ad215740622f55dbdde68aacb00ef8c7a6a0944e",
+      "bytes": 127574
+    },
+    {
+      "path": "matriz/margin-1280-dark.png",
+      "pixelsSha256": "17b446c2132953cfc574be617e4a599c7f16ed2a0a6852e504413fd09001e0a6",
+      "bytes": 151968
+    },
+    {
+      "path": "matriz/margin-1280-light.png",
+      "pixelsSha256": "66f42ccedc8f9a04dababee1e289c80899793d47f8f8b03b626eded6ab6c4040",
+      "bytes": 151886
+    },
+    {
+      "path": "matriz/margin-1440-dark.png",
+      "pixelsSha256": "f2d286b5ed1a32abd28f228c59cfbef4e86fcdc2de82e91a9873256a1b15b672",
+      "bytes": 153254
+    },
+    {
+      "path": "matriz/margin-1440-light.png",
+      "pixelsSha256": "ad803a0acdcd521849c0ae8ddd951886695bcdc49be9b0f9e2b4d52a33e2c3ac",
+      "bytes": 152998
+    },
+    {
+      "path": "matriz/production-1024-dark.png",
+      "pixelsSha256": "850a88f513c4380cc34976fbfa25f01d06e6e2f9ecb5a001f85b6a444dfb73dd",
+      "bytes": 195962
+    },
+    {
+      "path": "matriz/production-1024-light.png",
+      "pixelsSha256": "721e48fc4a74b2ba38f36a30a75cd58ef685c253274ccf87500d12cc756b2fcb",
+      "bytes": 194586
+    },
+    {
+      "path": "matriz/production-1280-dark.png",
+      "pixelsSha256": "944c316c9c1be3e1277c66b5d0f56966966254eb587e8cdac05217ffa8f8fbc7",
+      "bytes": 220395
+    },
+    {
+      "path": "matriz/production-1280-light.png",
+      "pixelsSha256": "52e0895e5bae72ce36ec4106acfca135920f6a46e0973b385d5611d2d67c9ac5",
+      "bytes": 218483
+    },
+    {
+      "path": "matriz/production-1440-dark.png",
+      "pixelsSha256": "1293b089308e47e7f7ea64277684f4297852dc159893648deefc47d0337bfd5c",
+      "bytes": 224315
+    },
+    {
+      "path": "matriz/production-1440-light.png",
+      "pixelsSha256": "ae200a110631720bb3c0e8e5e2951ed0a9d0ff049a4e019c85fd1fbef924d15e",
+      "bytes": 222497
+    },
+    {
+      "path": "matriz/sales-1024-dark.png",
+      "pixelsSha256": "4a3b3169ea0d55340349d316b58b1f1d317553947fb5ab6200bce734c408c30b",
+      "bytes": 188006
+    },
+    {
+      "path": "matriz/sales-1024-light.png",
+      "pixelsSha256": "d24d0241763ec0856e1ea3ab6f80c41a221f40b216ec06788c2632104d48a8c3",
+      "bytes": 187349
+    },
+    {
+      "path": "matriz/sales-1280-dark.png",
+      "pixelsSha256": "577a0110f8b17d7893c082ae5aaaac53f311d77dfaf1cc6fe0a89cc7fff3f696",
+      "bytes": 212542
+    },
+    {
+      "path": "matriz/sales-1280-light.png",
+      "pixelsSha256": "e97166605ef83b9a3b4ed4a207619fd40e24dac8f4ee50f835b0d75c7a3a54eb",
+      "bytes": 212263
+    },
+    {
+      "path": "matriz/sales-1440-dark.png",
+      "pixelsSha256": "63ef6bdb8be6ce943517d3ee1b251bcd735114d355bb155941f61785a96277ef",
+      "bytes": 217049
+    },
+    {
+      "path": "matriz/sales-1440-light.png",
+      "pixelsSha256": "d178d3e3a6bebf870c7962939b26f9094881050ad72c6315e50726271f6205c0",
+      "bytes": 216353
+    },
+    {
+      "path": "movimientos-con-valor.png",
+      "pixelsSha256": "254a2e6f3d863f23c12c387169f22e4084af6434ed03cc81c1f0c666a35d3501",
+      "bytes": 183356
+    },
+    {
+      "path": "preview-costos.png",
+      "pixelsSha256": "caf90ec1d2b0b85d7e5a2043cf2f287f0d3ea3fd16092cdcc602701c32327eda",
+      "bytes": 175137
+    },
+    {
+      "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__dark__1024x768.png",
+      "pixelsSha256": "e93d4ef05b94a0c89d5fbc347ccec5cd8def7bdb14361007121a25e287875cc1",
+      "bytes": 43307
+    },
+    {
+      "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__dark__1280x800.png",
+      "pixelsSha256": "e7de7f7b7d841afa6a26ffbfb843500427529ef8706f33e9d5159118d5fcc954",
+      "bytes": 67269
+    },
+    {
+      "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__dark__1440x900.png",
+      "pixelsSha256": "71c5dc3c04b3d7182269a1d46f0da79d7b5f5d65a3c47ca8f007c42dd1cb2ab1",
+      "bytes": 70911
+    },
+    {
+      "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__dark__390x844.png",
+      "pixelsSha256": "bbdc84bfd6ea52f27fa3435e63aea97b8c1ba1593f4316e2c3667331b6bba808",
+      "bytes": 34421
+    },
+    {
+      "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__light__1024x768.png",
+      "pixelsSha256": "5da56090e14341beb67ccdbfb3684e6b43f5ec5c2d46fb59607c43c41d59e812",
+      "bytes": 42870
+    },
+    {
+      "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__light__1280x800.png",
+      "pixelsSha256": "7b03a339ab6974a0a1b41bbbfd7c6f549172255146999b4b1631d2c4e8efd8b0",
+      "bytes": 66372
+    },
+    {
+      "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__light__1440x900.png",
+      "pixelsSha256": "548dce289a01f6924e7d742d85ad2ba2f72bb1b6577733bb3e6b643ecf5e35a4",
+      "bytes": 70090
+    },
+    {
+      "path": "ux/ajustes-analytics/ajustes-analytics__OWNER__light__390x844.png",
+      "pixelsSha256": "5b37a3ab712af84aaefc21bac7e11a2fc564fc8739bf3600d6ebf57f29113aac",
+      "bytes": 34369
+    },
+    {
+      "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__dark__1024x768.png",
+      "pixelsSha256": "cc81f9c8e0ed619f78d4aa197b1a210d4372376c84ac18c0a380b31fd2cc21b0",
+      "bytes": 73642
+    },
+    {
+      "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__dark__1280x800.png",
+      "pixelsSha256": "c26bfd5a252e074441016da5b952b99622d3a1e00517900615780af3c736353b",
+      "bytes": 96778
+    },
+    {
+      "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__dark__1440x900.png",
+      "pixelsSha256": "a28b3fe88d5bce8ab6e1d1c87bd56f67b4022adf402cdbe629f47ab16c9bfc3a",
+      "bytes": 99402
+    },
+    {
+      "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__dark__390x844.png",
+      "pixelsSha256": "2ea9c5c7ad9ce7a17830ed87d3713b850d8fce4004492c03d34406eea686b391",
+      "bytes": 68005
+    },
+    {
+      "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__light__1024x768.png",
+      "pixelsSha256": "3e69eefc6355546912ceafe59d1f3bdc08d8a085b16ee972c68edf37d9ba14db",
+      "bytes": 73492
+    },
+    {
+      "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__light__1280x800.png",
+      "pixelsSha256": "8a1e8732e08a42c7514431284952b8d5028c4696ac3d202acf963dda72857798",
+      "bytes": 96567
+    },
+    {
+      "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__light__1440x900.png",
+      "pixelsSha256": "be8fa055f48a49c82d9cb90174c52d0f7d044a67813f653241e7f250eb793d0c",
+      "bytes": 99293
+    },
+    {
+      "path": "ux/analitica-field/analitica-field__WORKSHOP_MANAGER__light__390x844.png",
+      "pixelsSha256": "3903afdebd8509fe3d23999f9abf2de41507d41d2465837023bb0cb2a202de01",
+      "bytes": 67975
+    },
+    {
+      "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__dark__1024x768.png",
+      "pixelsSha256": "19b2290dd5a3b258f286204210221091d06af3c17c982e1f255093a3bfc5b4b5",
+      "bytes": 108061
+    },
+    {
+      "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__dark__1280x800.png",
+      "pixelsSha256": "3cb3769398db97d2a6425cf4ca88709420ba54e8badb8895f5720e17ea9f3615",
+      "bytes": 132748
+    },
+    {
+      "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__dark__1440x900.png",
+      "pixelsSha256": "e951eb2c0a5cd2a9bbfedb5e84ca1a7ae048864b05644fd8e18d797a4d0c70e9",
+      "bytes": 133733
+    },
+    {
+      "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__dark__390x844.png",
+      "pixelsSha256": "7838c587ea22502def83764c0ef8957706edb017fce558f95d3363321dd21a08",
+      "bytes": 94774
+    },
+    {
+      "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__light__1024x768.png",
+      "pixelsSha256": "d8149633e0ca3ae5096e8ac0fe996b924a26fcc06571adff343f980d97eb0719",
+      "bytes": 107305
+    },
+    {
+      "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__light__1280x800.png",
+      "pixelsSha256": "596313f445652ab6e5a7f07958e875a916001151799b3124bcece674aacd3d9d",
+      "bytes": 131960
+    },
+    {
+      "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__light__1440x900.png",
+      "pixelsSha256": "5137e337af51c8d32c583b53c2e78333eca67e4b0d0bd62213ed73a5e18fc74d",
+      "bytes": 133265
+    },
+    {
+      "path": "ux/analitica-margin/analitica-margin__WORKSHOP_MANAGER__light__390x844.png",
+      "pixelsSha256": "eed73dae8e01a9a6c0968d37f48160e9a8f44fdcd5e1d66f5518c4a437c3f687",
+      "bytes": 94367
+    },
+    {
+      "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__dark__1024x768.png",
+      "pixelsSha256": "270723b099ea1a161fffa0f8311f55b3725f7151a889ec3f76659c11ccb9a528",
+      "bytes": 192199
+    },
+    {
+      "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__dark__1280x800.png",
+      "pixelsSha256": "cf1a1623665f40dcc54f3ad58170b803793197946e6fef358ed39984e930129c",
+      "bytes": 216533
+    },
+    {
+      "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__dark__1440x900.png",
+      "pixelsSha256": "2179dde7888fbc4fb2451901ab9de5a660da246256d162863609f5275d14a24b",
+      "bytes": 220671
+    },
+    {
+      "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__dark__390x844.png",
+      "pixelsSha256": "27fabe64e03bff290ed2e24d9ba93dee6ea120e0acfb71c547de31e8d4b3bbd9",
+      "bytes": 183434
+    },
+    {
+      "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__light__1024x768.png",
+      "pixelsSha256": "6233b44001e2d9683e37e58f6dfa0d4b5ba110fba4611501f2a0eed42b0a6c90",
+      "bytes": 190986
+    },
+    {
+      "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__light__1280x800.png",
+      "pixelsSha256": "4010a17bbc2c7d2e90289880e3eb029b4458e59dff40f6dbc88f3572a666e92a",
+      "bytes": 215197
+    },
+    {
+      "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__light__1440x900.png",
+      "pixelsSha256": "026b0545fe35b0b9e5a06fa85acdb5bf9f4b6ccb4147fa72797d90a6a86bd0f7",
+      "bytes": 219517
+    },
+    {
+      "path": "ux/analitica-production/analitica-production__WORKSHOP_MANAGER__light__390x844.png",
+      "pixelsSha256": "0ef99199194bedc964552ba0704f5f596e5fb071374c5ecbcee99f4a23ded784",
+      "bytes": 182906
+    },
+    {
+      "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__dark__1024x768.png",
+      "pixelsSha256": "4367888016aac0d5ec2b6f1f9a82982d7be538de236775b4cc4aa07caa70a73c",
+      "bytes": 184099
+    },
+    {
+      "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__dark__1280x800.png",
+      "pixelsSha256": "50815c62b210672297c9437f081c0a7846eb8185239ce4d281df4a9e1fb07401",
+      "bytes": 208639
+    },
+    {
+      "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__dark__1440x900.png",
+      "pixelsSha256": "903d930f89d98e37d8198ca49a040043393ca567297a75060f926fe1242edd5e",
+      "bytes": 213040
+    },
+    {
+      "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__dark__390x844.png",
+      "pixelsSha256": "16f643841d4b5896f0e8261bac2a99cff9d12876ac72c2cb15ed92f4c478d5d0",
+      "bytes": 177029
+    },
+    {
+      "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__light__1024x768.png",
+      "pixelsSha256": "79caaf0dc391aee5c9feba63fc160b0155f62630d61a6d4b836d27025ffe523a",
+      "bytes": 183474
+    },
+    {
+      "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__light__1280x800.png",
+      "pixelsSha256": "aadc6087297e3040f4c5e76b6ba950acdda22802acf323f3e897ca40e6f89c92",
+      "bytes": 208047
+    },
+    {
+      "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__light__1440x900.png",
+      "pixelsSha256": "50cab3567637f7cc9940c67a47afddb37a2edbfbb5376397337cd3b962a93933",
+      "bytes": 212380
+    },
+    {
+      "path": "ux/analitica-sales/analitica-sales__WORKSHOP_MANAGER__light__390x844.png",
+      "pixelsSha256": "bb776efc2c61cf62332209d953b9e0ed5c1d7a603aa123003d29255bbf1df669",
+      "bytes": 175857
+    }
+  ]
+}

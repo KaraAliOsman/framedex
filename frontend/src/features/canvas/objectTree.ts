@@ -1,6 +1,7 @@
 import type { DesignOptions, ProductIssue } from "../../api/generated/models";
 import type { TranslationKey } from "../../i18n/es-CL";
 import type { IntentNode, Opening } from "./intentEditing";
+import { physicalNodeLabel, visualOpening } from "./physicalOpenings";
 import type { ProductJson } from "./productEditing";
 import type { MemberGeometry } from "./members";
 
@@ -32,6 +33,7 @@ const LEAF_KIND: Record<Opening, TranslationKey> = {
   SLIDING_4L: "intent.sliding4",
   SLIDING: "intent.slidingLayout",
   DOOR_ENTRY: "intent.door",
+  DOOR_DOUBLE: "intent.door",
 };
 
 function severityFor(issues: ProductIssue[], target: string): "error" | "warning" | null {
@@ -52,9 +54,9 @@ function bayChildren(
   glassNames: Map<string, string>,
 ): TreeNode[] {
   const rows: TreeNode[] = [];
-  const opening = node.opening_type ?? "FIXED";
+  const opening = visualOpening(node);
   const operable = opening !== "FIXED";
-  if (operable) {
+  if (operable || node.opening?.fixed_in_sash) {
     rows.push({
       id: `${moduleId}/${node.id}/sash`,
       label: t("tree.sash"),
@@ -64,15 +66,16 @@ function bayChildren(
       selectId: `${moduleId}/${node.id}`,
       children: [],
     });
-    rows.push({
-      id: `${moduleId}/${node.id}/handle`,
-      label: t("tree.handle"),
-      detail: node.handle_height_mm ? `${node.handle_height_mm} mm` : null,
-      kind: "handle",
-      severity: null,
-      selectId: `${moduleId}/${node.id}`,
-      children: [],
-    });
+    if (operable)
+      rows.push({
+        id: `${moduleId}/${node.id}/handle`,
+        label: t("tree.handle"),
+        detail: node.handle_height_mm ? `${node.handle_height_mm} mm` : null,
+        kind: "handle",
+        severity: null,
+        selectId: `${moduleId}/${node.id}`,
+        children: [],
+      });
   }
   if (node.panel_article_sku) {
     rows.push({
@@ -123,8 +126,8 @@ function intentRows(
   context: BayContext,
 ): TreeNode[] {
   if (node.type === "BAY") {
-    const opening = node.opening_type ?? "FIXED";
-    const label = t(LEAF_KIND[opening]);
+    const opening = visualOpening(node);
+    const label = physicalNodeLabel(node) ?? t(LEAF_KIND[opening]);
     context.bayCounter.value += 1;
     return [
       {

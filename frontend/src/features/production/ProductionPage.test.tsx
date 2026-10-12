@@ -1,8 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiMutator } from "../../api/apiMutator";
 import { t } from "../../i18n/es-CL";
+import { stationCodeLabel } from "./labels";
 import { ProductionPage } from "./ProductionPage";
 import { ConfirmProvider } from "../../ui";
 
@@ -10,6 +12,7 @@ const identity = vi.hoisted(() => ({ id: "tenant-a", role: "WORKSHOP_MANAGER" })
 vi.mock("../../auth/AuthSessionProvider", () => ({
   useAuthSession: () => ({ me: { active_organization: identity } }),
 }));
+vi.mock("../../theme/ThemeProvider", () => ({ useTheme: () => ({ theme: "dark" }) }));
 vi.mock("../../api/apiMutator", () => ({ apiMutator: vi.fn(), ApiError: class extends Error {} }));
 
 const mutator = apiMutator as ReturnType<typeof vi.fn>;
@@ -69,7 +72,37 @@ const detail = {
   ],
 };
 
+function stationResponse(url: string): { data: unknown; status: number } | null {
+  if (url === "/api/v1/production/operator-station/")
+    return {
+      data: { selected_code: "CUT", stations: [{ code: "CUT", label: "Corte" }] },
+      status: 200,
+    };
+  if (url === "/api/v1/production/station-queue/")
+    return {
+      data: {
+        stations: [
+          {
+            code: "CUT",
+            entries: [
+              {
+                step_id: "step-1",
+                order_id: order.id,
+                order_code: order.order_code,
+                status: "READY",
+                is_next: true,
+              },
+            ],
+          },
+        ],
+      },
+      status: 200,
+    };
+  return null;
+}
 function respond(url: string): { data: unknown; status: number } {
+  const station = stationResponse(url);
+  if (station) return station;
   if (url === "/api/v1/production/prep/") return { data: { versions: [] }, status: 200 };
   if (url === "/api/v1/production/orders/") return { data: { orders: [order] }, status: 200 };
   if (url === `/api/v1/production/orders/${order.id}/`) return { data: detail, status: 200 };
@@ -87,26 +120,101 @@ describe("ProductionPage", () => {
   it("lists work orders and opens the detail with steps", async () => {
     render(
       <MemoryRouter initialEntries={["/production"]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     const orderButton = await screen.findByRole("button", { name: /OT-REV-A-01/ });
     fireEvent.click(orderButton);
     await waitFor(() => expect(screen.getAllByText("Corte").length).toBeGreaterThan(0));
-    expect(screen.getByText("Armado")).toBeTruthy();
+    expect(screen.getByText(stationCodeLabel("ASSEMBLE"))).toBeTruthy();
     // Only the next actionable step shows START (backend rejects the rest) +
-    // callout + the operator card's sticky action bar mirrors it.
-    expect(screen.getAllByRole("button", { name: t("production.actionStart") })).toHaveLength(3);
+    // a single action region stays with the selected step.
+    expect(screen.getAllByRole("button", { name: t("production.actionStart") })).toHaveLength(1);
+  });
+
+  it("keeps the rejected piece available after QC blocks and confirms it in the remake request", async () => {
+    const blocked = {
+      ...detail,
+      status: "HOLD",
+      payload: {
+        optimization: {
+          bars: {
+            workshop_cut_plan: [
+              {
+                bar_index: 1,
+                cuts: [
+                  {
+                    sequence: 1,
+                    piece_id: "sealed-piece",
+                    piece_code: "P01-U01-M01",
+                    length_mm: "870.00",
+                    role: "FRAME",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      steps: [{ ...detail.steps[0], code: "QC", status: "BLOCKED", label: "Control de calidad" }],
+    };
+    mutator.mockImplementation(async (url: string) => {
+      if (url.endsWith("qc-remake/")) return { data: blocked, status: 201 };
+      if (url === `/api/v1/production/orders/${order.id}/`) return { data: blocked, status: 200 };
+      if (url.endsWith("trace/"))
+        return { data: { labels: {}, operations: { items: [] }, plan: {} }, status: 200 };
+      return respond(url);
+    });
+    render(
+      <MemoryRouter initialEntries={[`/production?order=${order.id}&section=calidad`]}>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.change(await screen.findByLabelText("Pieza que se rechaza"), {
+      target: { value: "P01-U01-M01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Rechazar y crear remake" }));
+    expect(mutator.mock.calls.some(([url]) => String(url).endsWith("qc-remake/"))).toBe(false);
+    fireEvent.change(await screen.findByLabelText("Motivo del rechazo"), {
+      target: { value: "Escuadra rechazada" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar rechazo y remake" }));
+    await waitFor(() =>
+      expect(mutator).toHaveBeenCalledWith(
+        `/api/v1/production/orders/${order.id}/qc-remake/`,
+        expect.objectContaining({ method: "POST", body: expect.any(String) }),
+      ),
+    );
+    const request = mutator.mock.calls.find(([url]) => String(url).endsWith("qc-remake/"))!;
+    expect(JSON.parse(request[1].body)).toMatchObject({
+      confirmed: true,
+      note: "Escuadra rechazada",
+      item_code: "P01-U01-M01",
+    });
   });
 
   it("starts a step through the transition endpoint", async () => {
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     const start = (await screen.findAllByRole("button", { name: t("production.actionStart") }))[0];
@@ -124,12 +232,16 @@ describe("ProductionPage", () => {
     identity.role = "ESTIMATOR";
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
-    await waitFor(() => expect(screen.getByText("OT-REV-A-01")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText(/OT-REV-A-01/).length).toBeGreaterThan(0));
     // The estimator sees blockers and shortages, never step controls.
     expect(screen.queryByText(t("production.denied"))).toBeNull();
     expect(screen.queryByRole("button", { name: t("production.actionStart") })).toBeNull();
@@ -138,9 +250,13 @@ describe("ProductionPage", () => {
   it("cancels a work order after a danger prompt", async () => {
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: t("production.cancelButton") }));
@@ -162,15 +278,21 @@ describe("ProductionPage", () => {
 
   it("offers a material recheck on a shortage order", async () => {
     mutator.mockImplementation(async (url: string) => {
+      const station = stationResponse(url);
+      if (station) return station;
       if (url === "/api/v1/production/prep/") return { data: { versions: [] }, status: 200 };
       if (url === "/api/v1/production/orders/") return { data: { orders: [order] }, status: 200 };
       return { data: { ...detail, shortage: 2 }, status: 200 };
     });
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: t("production.materialRecheck") }));
@@ -184,18 +306,24 @@ describe("ProductionPage", () => {
 
   it("hides write affordances on a cancelled order", async () => {
     mutator.mockImplementation(async (url: string) => {
+      const station = stationResponse(url);
+      if (station) return station;
       if (url === "/api/v1/production/prep/") return { data: { versions: [] }, status: 200 };
       if (url === "/api/v1/production/orders/") return { data: { orders: [order] }, status: 200 };
       return { data: { ...detail, status: "CANCELLED" }, status: 200 };
     });
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
-    await waitFor(() => expect(screen.getByText("OT-REV-A-01")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText(/OT-REV-A-01/).length).toBeGreaterThan(0));
     expect(screen.queryByRole("button", { name: t("production.cancelButton") })).toBeNull();
     expect(screen.queryByRole("button", { name: t("production.actionStart") })).toBeNull();
     expect(screen.getAllByText(t("production.orderCancelled")).length).toBeGreaterThan(0);
@@ -203,6 +331,8 @@ describe("ProductionPage", () => {
 
   it("hides UNBLOCK from operators but shows it to managers", async () => {
     mutator.mockImplementation(async (url: string) => {
+      const station = stationResponse(url);
+      if (station) return station;
       if (url === "/api/v1/production/prep/") return { data: { versions: [] }, status: 200 };
       if (url === "/api/v1/production/orders/") return { data: { orders: [order] }, status: 200 };
       return {
@@ -217,20 +347,28 @@ describe("ProductionPage", () => {
     identity.role = "OPERATOR";
     const { unmount } = render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
-    await waitFor(() => expect(screen.getByText("OT-REV-A-01")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText(/OT-REV-A-01/).length).toBeGreaterThan(0));
     expect(screen.queryByRole("button", { name: t("production.actionUnblock") })).toBeNull();
     unmount();
     identity.role = "WORKSHOP_MANAGER";
     render(
       <MemoryRouter initialEntries={[`/production?order=${order.id}`]}>
-        <ConfirmProvider>
-          <ProductionPage />
-        </ConfirmProvider>
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <ConfirmProvider>
+            <ProductionPage />
+          </ConfirmProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
     await waitFor(() =>

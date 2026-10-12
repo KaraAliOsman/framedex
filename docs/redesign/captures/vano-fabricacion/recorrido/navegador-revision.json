@@ -1,0 +1,82 @@
+[
+  {
+    "name": "ensanche-exigido-bloqueado",
+    "screenshot": "ensanche-exigido-bloqueado.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "propuesta-tardia-descartada",
+    "screenshot": "propuesta-tardia-descartada.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montaje-sin-ensanche-con-mosquitero-light-1440",
+    "screenshot": "montaje-sin-ensanche-con-mosquitero-light-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montaje-sin-ensanche-con-mosquitero-light-1280",
+    "screenshot": "montaje-sin-ensanche-con-mosquitero-light-1280.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montaje-sin-ensanche-con-mosquitero-light-1024",
+    "screenshot": "montaje-sin-ensanche-con-mosquitero-light-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montaje-sin-ensanche-con-mosquitero-dark-1440",
+    "screenshot": "montaje-sin-ensanche-con-mosquitero-dark-1440.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montaje-sin-ensanche-con-mosquitero-dark-1280",
+    "screenshot": "montaje-sin-ensanche-con-mosquitero-dark-1280.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  },
+  {
+    "name": "montaje-sin-ensanche-con-mosquitero-dark-1024",
+    "screenshot": "montaje-sin-ensanche-con-mosquitero-dark-1024.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "pageFindings": [],
+    "presentation": []
+  }
+]

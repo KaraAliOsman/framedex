@@ -27,5 +27,13 @@ export interface InventoryMovement {
   actor_id: string | null;
   /** @nullable */
   actor_label?: string | null;
+  /** @nullable */
+  order_code?: string | null;
+  /** @nullable */
+  receipt_code?: string | null;
+  /** @nullable */
+  supplier_document?: string | null;
+  /** @nullable */
+  received_on?: string | null;
   created_at: string;
 }

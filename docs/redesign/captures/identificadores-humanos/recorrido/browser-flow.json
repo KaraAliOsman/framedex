@@ -1,0 +1,437 @@
+{
+  "result": "PASS",
+  "records": [
+    {
+      "name": "compra-1440-light",
+      "scope": ".purchasing-orders",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "recepcion-1440-light",
+      "scope": ".purchasing-receipts",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiqueta-retazo-1440-light",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "orden-taller-1440-light",
+      "scope": ".production-detail",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-directo-1440-light",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-escaneado-1440-light",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "compra-1440-dark",
+      "scope": ".purchasing-orders",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "recepcion-1440-dark",
+      "scope": ".purchasing-receipts",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiqueta-retazo-1440-dark",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "orden-taller-1440-dark",
+      "scope": ".production-detail",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-directo-1440-dark",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-escaneado-1440-dark",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "compra-1280-light",
+      "scope": ".purchasing-orders",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "recepcion-1280-light",
+      "scope": ".purchasing-receipts",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiqueta-retazo-1280-light",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "orden-taller-1280-light",
+      "scope": ".production-detail",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-directo-1280-light",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-escaneado-1280-light",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "compra-1280-dark",
+      "scope": ".purchasing-orders",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "recepcion-1280-dark",
+      "scope": ".purchasing-receipts",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiqueta-retazo-1280-dark",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "orden-taller-1280-dark",
+      "scope": ".production-detail",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-directo-1280-dark",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-escaneado-1280-dark",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "compra-1024-light",
+      "scope": ".purchasing-orders",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "recepcion-1024-light",
+      "scope": ".purchasing-receipts",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiqueta-retazo-1024-light",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "orden-taller-1024-light",
+      "scope": ".production-detail",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-directo-1024-light",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-escaneado-1024-light",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "compra-1024-dark",
+      "scope": ".purchasing-orders",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "recepcion-1024-dark",
+      "scope": ".purchasing-receipts",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiqueta-retazo-1024-dark",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "orden-taller-1024-dark",
+      "scope": ".production-detail",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-directo-1024-dark",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-escaneado-1024-dark",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "compra-390-light",
+      "scope": ".purchasing-orders",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "recepcion-390-light",
+      "scope": ".purchasing-receipts",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiqueta-retazo-390-light",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "orden-taller-390-light",
+      "scope": ".production-detail",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-directo-390-light",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-escaneado-390-light",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "compra-390-dark",
+      "scope": ".purchasing-orders",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "recepcion-390-dark",
+      "scope": ".purchasing-receipts",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "etiqueta-retazo-390-dark",
+      "scope": ".inventory-label",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "orden-taller-390-dark",
+      "scope": ".production-detail",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-directo-390-dark",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "qr-escaneado-390-dark",
+      "scope": ".production-trace-matches",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "solo-lectura",
+      "scope": ".inventory-workspace",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "sin-permiso",
+      "scope": "main",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "direccion-no-disponible",
+      "scope": ".inventory-workspace",
+      "simulation": null,
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "estado-vacio",
+      "scope": ".inventory-workspace",
+      "simulation": "HTTP response controlled by test; business flow uses real fixture",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "estado-error",
+      "scope": ".inventory-workspace",
+      "simulation": "HTTP response controlled by test; business flow uses real fixture",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    },
+    {
+      "name": "estado-cargando",
+      "scope": ".inventory-workspace",
+      "simulation": "HTTP response controlled by test; business flow uses real fixture",
+      "numeric": [],
+      "overflow": false,
+      "errors": []
+    }
+  ]
+}

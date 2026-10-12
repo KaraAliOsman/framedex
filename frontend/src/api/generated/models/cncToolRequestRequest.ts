@@ -7,6 +7,8 @@
  */
 
 export interface CncToolRequestRequest {
+  /** @maxLength 500 */
+  authority_source?: string;
   /**
    * @minLength 1
    * @maxLength 40

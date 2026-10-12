@@ -49,6 +49,12 @@ class ProductionOrderSerializer(serializers.Serializer):
     version_shortage = serializers.IntegerField()
     remake_reason = serializers.DictField(allow_null=True, required=False)
     created_at = serializers.DateTimeField()
+    project_code = serializers.CharField(required=False, allow_null=True)
+    project_name = serializers.CharField(required=False, allow_null=True)
+    client_name = serializers.CharField(required=False, allow_null=True)
+    scheduled_date = serializers.DateField(required=False, allow_null=True)
+    optimization_ready = serializers.BooleanField(required=False)
+    qc_failed = serializers.BooleanField(required=False)
     project_version_id = serializers.UUIDField(allow_null=True, required=False)
     payload = serializers.DictField(required=False)
 
@@ -99,10 +105,34 @@ class ProductionOrderMakingSerializer(serializers.Serializer):
     location_tag = serializers.CharField(required=False, allow_null=True)
 
 
+class HardwarePickingRowSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    unit = serializers.CharField()
+    quantity = serializers.CharField()
+    cut_length_mm = serializers.CharField(allow_null=True)
+    source = serializers.CharField(allow_null=True)
+    targets = serializers.ListField(child=serializers.CharField())
+
+
+class HardwareMachiningGapSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    kind = serializers.CharField()
+    component_sku = serializers.CharField()
+    component_name = serializers.CharField()
+    declaration = serializers.CharField()
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    source = serializers.CharField()
+    detail = serializers.CharField()
+
+
 class ProductionOrderDetailSerializer(ProductionOrderSerializer):
     steps = ProductionStepSerializer(many=True)
     events = ProductionStepEventSerializer(many=True)
     making = ProductionOrderMakingSerializer(allow_null=True, required=False)
+    hardware_picking = HardwarePickingRowSerializer(many=True, required=False)
+    hardware_machining = HardwareMachiningGapSerializer(many=True, required=False)
     delivery_address = serializers.CharField(allow_null=True, required=False)
     dispatch_note_code = serializers.CharField(allow_null=True, required=False)
     dispatch_note_voided = serializers.BooleanField()
@@ -121,6 +151,7 @@ class QcCheckSerializer(StrictSerializer):
 
 
 class StepTransitionRequestSerializer(StrictSerializer):
+    block_on_fail = serializers.BooleanField(required=False, default=False)
     action = serializers.ChoiceField(
         choices=("START", "COMPLETE", "BLOCK", "UNBLOCK", "NOTE", "QC_CHECK")
     )
@@ -156,6 +187,10 @@ class StepTransitionRequestSerializer(StrictSerializer):
             raise serializers.ValidationError(
                 {"ops_done": "Operation evidence only applies to COMPLETE"}
             )
+        if data.get("block_on_fail") and not (
+            data["action"] == "QC_CHECK" and data.get("qc_check", {}).get("result") == "FAIL"
+        ):
+            raise serializers.ValidationError({"block_on_fail": "Requires a failed measurement"})
         return data
 
 
@@ -275,11 +310,34 @@ class PackingLabelSerializer(serializers.Serializer):
     qr_svg = serializers.CharField()
 
 
+class PhysicalPieceLabelSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    stable_id = serializers.CharField()
+    qr_payload = serializers.CharField()
+    qr_svg = serializers.CharField()
+    length_mm = serializers.CharField(allow_null=True)
+    width_mm = serializers.CharField(allow_null=True)
+    height_mm = serializers.CharField(allow_null=True)
+    workshop_sku = serializers.CharField(allow_null=True)
+    order_code = serializers.CharField(required=False)
+    position = serializers.CharField(required=False, allow_null=True)
+    unit_index = serializers.IntegerField(required=False, allow_null=True)
+    role_label = serializers.CharField(required=False)
+    parent_code = serializers.CharField(required=False, allow_null=True)
+    angle_left = serializers.CharField(required=False, allow_null=True)
+    angle_right = serializers.CharField(required=False, allow_null=True)
+    color = serializers.CharField(required=False, allow_null=True)
+    fingerprint = serializers.CharField(required=False)
+    next_station = serializers.CharField(required=False)
+
+
 class PackingLabelsSerializer(serializers.Serializer):
     order_id = serializers.UUIDField()
     order_code = serializers.CharField()
     status = serializers.CharField()
     labels = PackingLabelSerializer(many=True)
+    piece_labels = PhysicalPieceLabelSerializer(many=True)
+    piece_labels_blocked_reason = serializers.CharField(required=False, allow_blank=True)
 
 
 class WorkCenterSerializer(serializers.Serializer):
@@ -475,9 +533,32 @@ class ProductionVersionTraceSerializer(serializers.Serializer):
 
 class ProductionStationQueueSerializer(serializers.Serializer):
     stations = serializers.ListField()
+    selected_code = serializers.CharField(allow_null=True, required=False)
+
+
+class OperatorStationItemSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+
+
+class OperatorStationSerializer(serializers.Serializer):
+    selected_code = serializers.CharField(allow_null=True)
+    stations = OperatorStationItemSerializer(many=True)
+
+
+class OperatorStationRequestSerializer(StrictSerializer):
+    station_code = serializers.CharField(max_length=50)
+
+
+class QcRemakeRequestSerializer(StrictSerializer):
+    confirmed = serializers.BooleanField()
+    operation_key = serializers.UUIDField()
+    note = serializers.CharField(max_length=500, allow_blank=False)
+    item_code = serializers.CharField(max_length=50, required=False, default="", allow_blank=True)
 
 
 class CncToolRequestSerializer(StrictSerializer):
+    authority_source = serializers.CharField(max_length=500, required=False, allow_blank=True)
     code = serializers.CharField(max_length=40)
     name = serializers.CharField(max_length=120)
     kind = serializers.CharField(max_length=30)
@@ -491,6 +572,8 @@ class CncToolRequestSerializer(StrictSerializer):
 
 
 class CncToolSerializer(serializers.Serializer):
+    authority_revision = serializers.CharField()
+    authority_source = serializers.CharField()
     id = serializers.CharField()
     code = serializers.CharField()
     name = serializers.CharField()
@@ -503,11 +586,16 @@ class CncToolSerializer(serializers.Serializer):
 
 
 class CncMachineRequestSerializer(StrictSerializer):
+    machine_type = serializers.CharField(max_length=40, required=False, allow_blank=True)
+    profile_setups = serializers.ListField(child=serializers.DictField(), required=False)
+    axes = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
+    clamps_declared = serializers.BooleanField(required=False)
+    authority_source = serializers.CharField(max_length=500, required=False, allow_blank=True)
     code = serializers.CharField(max_length=40)
     name = serializers.CharField(max_length=120)
     manufacturer = serializers.CharField(required=False, allow_blank=True, max_length=120)
     model = serializers.CharField(required=False, allow_blank=True, max_length=120)
-    controller_family = serializers.CharField(required=False, max_length=80)
+    controller_family = serializers.CharField(required=False, allow_blank=True, max_length=80)
     coordinate_systems = serializers.ListField(child=serializers.CharField(), required=False)
     supported_kinds = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
     supported_faces = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
@@ -515,14 +603,20 @@ class CncMachineRequestSerializer(StrictSerializer):
     safe_margin_mm = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     clamp_zones = serializers.ListField(child=serializers.DictField(), required=False)
     tool_ids = serializers.ListField(child=serializers.CharField(), required=False)
-    postprocessor_id = serializers.CharField(required=False, max_length=80)
-    postprocessor_version = serializers.CharField(required=False, max_length=40)
+    postprocessor_id = serializers.CharField(required=False, allow_blank=True, max_length=80)
+    postprocessor_version = serializers.CharField(required=False, allow_blank=True, max_length=40)
     units = serializers.CharField(required=False, max_length=20)
     encoding = serializers.CharField(required=False, max_length=40)
     active = serializers.BooleanField(required=False)
 
 
 class CncMachineSerializer(serializers.Serializer):
+    authority_revision = serializers.CharField()
+    machine_type = serializers.CharField()
+    profile_setups = serializers.ListField()
+    axes = serializers.ListField(allow_null=True)
+    clamps_declared = serializers.BooleanField()
+    authority_source = serializers.CharField()
     id = serializers.CharField()
     code = serializers.CharField()
     name = serializers.CharField()
@@ -555,14 +649,41 @@ class CncWorkspaceSerializer(serializers.Serializer):
     machines = CncMachineSerializer(many=True)
     tools = CncToolSerializer(many=True)
     orders = serializers.ListField()
+    history = serializers.ListField()
+
+
+class CncPreviewRequestSerializer(StrictSerializer):
+    machine_id = serializers.UUIDField()
+    member_id = serializers.CharField(max_length=200)
+
+
+class CncPreviewSerializer(serializers.Serializer):
+    review_fingerprint = serializers.CharField()
+    verdict = serializers.CharField()
+    blockers = serializers.ListField()
+    member_label = serializers.CharField()
+    machine_code = serializers.CharField()
+    preview = serializers.DictField()
+    document = serializers.DictField()
+    diff = serializers.DictField()
+    declared_unemitted = serializers.ListField()
+    previous_id = serializers.CharField(allow_null=True)
+    previous_no = serializers.CharField(allow_null=True)
+    output_kind = serializers.CharField()
 
 
 class CncGenerateRequestSerializer(StrictSerializer):
+    expected_preview = serializers.CharField(max_length=64)
+    confirmed = serializers.BooleanField()
     machine_id = serializers.CharField()
     member_id = serializers.CharField(max_length=200)
 
 
 class CncReadinessSerializer(serializers.Serializer):
+    declared_unemitted = serializers.ListField()
+    identity = serializers.DictField()
+    plan_fingerprint = serializers.CharField()
+    required_tool_ids = serializers.ListField()
     order_id = serializers.CharField()
     order_code = serializers.CharField()
     members = serializers.ListField()
@@ -588,6 +709,8 @@ class CncProgramListSerializer(serializers.Serializer):
 
 
 class CncToolPatchSerializer(StrictSerializer):
+    expected_revision = serializers.CharField(min_length=64, max_length=64, required=False)
+    authority_source = serializers.CharField(max_length=500, required=False, allow_blank=True)
     code = serializers.CharField(max_length=40, required=False)
     name = serializers.CharField(max_length=120, required=False)
     kind = serializers.CharField(max_length=30, required=False)
@@ -601,11 +724,17 @@ class CncToolPatchSerializer(StrictSerializer):
 
 
 class CncMachinePatchSerializer(StrictSerializer):
+    expected_revision = serializers.CharField(min_length=64, max_length=64, required=False)
+    machine_type = serializers.CharField(max_length=40, required=False, allow_blank=True)
+    profile_setups = serializers.ListField(child=serializers.DictField(), required=False)
+    axes = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
+    clamps_declared = serializers.BooleanField(required=False)
+    authority_source = serializers.CharField(max_length=500, required=False, allow_blank=True)
     code = serializers.CharField(max_length=40, required=False)
     name = serializers.CharField(max_length=120, required=False)
     manufacturer = serializers.CharField(required=False, allow_blank=True, max_length=120)
     model = serializers.CharField(required=False, allow_blank=True, max_length=120)
-    controller_family = serializers.CharField(required=False, max_length=80)
+    controller_family = serializers.CharField(required=False, allow_blank=True, max_length=80)
     coordinate_systems = serializers.ListField(child=serializers.CharField(), required=False)
     supported_kinds = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
     supported_faces = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
@@ -613,8 +742,8 @@ class CncMachinePatchSerializer(StrictSerializer):
     safe_margin_mm = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     clamp_zones = serializers.ListField(child=serializers.DictField(), required=False)
     tool_ids = serializers.ListField(child=serializers.CharField(), required=False)
-    postprocessor_id = serializers.CharField(required=False, max_length=80)
-    postprocessor_version = serializers.CharField(required=False, max_length=40)
+    postprocessor_id = serializers.CharField(required=False, allow_blank=True, max_length=80)
+    postprocessor_version = serializers.CharField(required=False, allow_blank=True, max_length=40)
     units = serializers.CharField(required=False, max_length=20)
     encoding = serializers.CharField(required=False, max_length=40)
     active = serializers.BooleanField(required=False)

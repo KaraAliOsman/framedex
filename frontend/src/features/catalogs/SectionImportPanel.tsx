@@ -9,7 +9,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import type { SectionImportCandidate, SectionImportResponse } from "../../api/generated/models";
-import { parseLocaleNumber } from "../../format";
+import { fmtMm, parseLocaleNumber } from "../../format";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import type { catalogApi } from "./catalogModel";
 
@@ -133,7 +133,16 @@ export function SectionImportPanel({
 
   const scaledBox = useMemo(() => {
     if (!scaledPoints) return null;
-    return bbox(scaledPoints.map((point) => [point.x_mm, point.y_mm]));
+    // The renderer uses floats for its viewBox; the review label retains
+    // the exact hundredths of the vertices that will actually be applied.
+    const span = (axis: "x_mm" | "y_mm") => {
+      const values = scaledPoints.map((point) => BigInt(point[axis].replace(".", "")));
+      const low = values.reduce((a, b) => (a < b ? a : b));
+      const high = values.reduce((a, b) => (a > b ? a : b));
+      const units = high - low;
+      return `${units / 100n}.${String(units % 100n).padStart(2, "0")}`;
+    };
+    return { w: span("x_mm"), h: span("y_mm") };
   }, [scaledPoints]);
 
   async function upload(file: File) {
@@ -230,7 +239,7 @@ export function SectionImportPanel({
                   type="text"
                   required
                   inputMode="decimal"
-                  pattern="[0-9]+([.,][0-9]+)?"
+                  data-validation="[0-9]+([.,][0-9]+)?"
                   value={scale}
                   onChange={(event) => setScale(event.target.value)}
                 />
@@ -242,8 +251,8 @@ export function SectionImportPanel({
                     points={scaledPoints.map((point) => [point.x_mm, point.y_mm])}
                     className="section-import-preview-figure"
                   />
-                  <p>
-                    {ct("preview")}: {scaledBox.w.toFixed(1)} × {scaledBox.h.toFixed(1)} mm
+                  <p className="catalog-number">
+                    {ct("preview")}: {fmtMm(scaledBox.w)} × {fmtMm(scaledBox.h)} mm
                   </p>
                 </div>
               )}

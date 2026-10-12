@@ -22,7 +22,9 @@ import segno
 
 from dekopen_engine.cutting import CutBar, optimize_cut, pieces_from_result
 from dekopen_engine.manufacturing import ManufacturingFactsV1
-from dekopen_engine.models import EngineResult
+from dekopen_engine.models import EngineResult, HardwareItem
+from dekopen_engine.hardware_classes import hardware_picking
+from dekopen_engine.hardware_machining import hardware_operations
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from dekopen_engine.operations import (
     NeutralOpsPostProcessor,
@@ -219,6 +221,21 @@ def _member_ops_for_station(
             kind_label = "Ref. montaje"
         expected[str(op["operation_id"])] = f"{code} · {kind_label}"
     return expected
+
+
+def _require_hardware_machining_authority(*, org_id: UUID, order: dict[str, object]) -> None:
+    if not order.get("project_version_id"):
+        return
+    version = one("SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
+        [str(order["project_version_id"]), str(org_id)], "work_order_missing_version")
+    snapshot = _decoded(version["snapshot_json"])
+    position_id = str(_decoded(order.get("payload_json")).get("position_id") or "") or None
+    issues: list[dict[str, object]] = []
+    _sealed_hardware_operations(snapshot, position_id, _operations_fact_units(snapshot, position_id), issues)
+    if issues:
+        raise DocumentaryError("step_ops_incomplete",
+            detail="Hay mecanizados de herrajes declarados no emitidos. Completa la autoridad del catálogo y emite una nueva revisión antes de completar esta estación.",
+            extra={"hardware_machining": issues})
 
 
 def _ensure_work_centers(
@@ -513,6 +530,15 @@ def _routing(
         end_milling_overlap_mm=end_milling_overlap_mm,
         has_handles=has_handles,
     )
+    # Unemitted declarations occupy a station too: their gaps require an
+    # explicit workshop review before the operator completes that work.
+    declared = {
+        declaration["kind"]
+        for kit in engine_result.get("hardware_items") or []
+        for component in kit.get("contents") or []
+        for declaration in component.get("machining") or []
+    }
+    emitting.update(declared)
     # Stations that own a kind the sealed facts will emit — claimed here so
     # _station_has_work can't prune the station its op is mapped to.
     mapped_emitting = {
@@ -520,6 +546,8 @@ def _routing(
         for kind, station in operation_map.items()
         if str(kind) in emitting
     }
+    hardware_stations = {str(operation_map.get(kind) or "MACHINING") for kind in declared}
+    mapped_emitting.update(hardware_stations)
     routing: list[str] = []
     for station in stations:
         if not isinstance(station, dict):
@@ -536,6 +564,8 @@ def _routing(
             mapped_emitting=mapped_emitting,
         ):
             routing.append(code)
+    for code in sorted(hardware_stations-set(routing)):
+        routing.insert(1, code)
     return routing
 
 
@@ -583,11 +613,14 @@ def _work_order_payload(
         "quantity": position.get("quantity", 1),
         "color": color,
         "materials": {
+            **({"finish": engine["finish"]} if engine.get("finish") else {}),
+            **({"extras": engine["extras"]} if engine.get("extras") else {}),
+            **{
             key: engine.get(key) or []
             for key in (
                 "profile_cuts", "reinforcements", "glasses", "panels",
                 "fittings", "hardware_items",
-            )
+            )},
         },
         "glass_polishing": list(polishing or []),
         "routing": _routing(
@@ -624,11 +657,14 @@ def process_facts_snapshot(
     profile content AND its routing inputs. Release reads this verbatim so a
     later catalog/profile edit can never re-route sealed evidence."""
     profile, via = _resolve_process_profile(org_id, engine_result, system_facts)
-    return {
+    from dekopen_engine.catalog_authority import process_authority_gate
+    facts = {
         "system": dict(system_facts or {}),
         "profile": _frozen_profile(profile),
         "resolved_via": via,
     }
+    facts["authority_gate"] = process_authority_gate(facts)
+    return facts
 
 
 def _public_step(step: dict[str, object]) -> dict[str, object]:
@@ -723,7 +759,19 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             [str(version_id), str(org_id)],
             "version_not_found",
         )
+        from documents.agreements import lock_quote
+        lock_quote(org_id, version['project_id'])
+        frozen_measurements = version['snapshot_json']
+        if isinstance(frozen_measurements,str):
+            frozen_measurements = json.loads(frozen_measurements)
+        if frozen_measurements.get('measurements_required') and any(
+            not isinstance(pos.get('measurements'),dict) or not pos['measurements'].get('current')
+            or pos['measurements'].get('state')!='CONFIRMED' for pos in frozen_measurements.get('positions',[])):
+            raise DocumentaryError('production_measurements_unconfirmed')
         if not version["production_allowed"]:
+            raise DocumentaryError("version_not_releasable")
+        if any(pos.get("catalog_authority_gate", {}).get("ok") is False
+               for pos in frozen_measurements.get("positions", [])):
             raise DocumentaryError("version_not_releasable")
         # A sealed version stays valid only while it is the newest one —
         # once a later revision froze, releasing the superseded quote would
@@ -732,14 +780,24 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         # suffix length then lexicographically, never plain text order.
         latest = rows(
             """
-            SELECT revision_code::text AS code FROM public.project_versions
-            WHERE project_id = %s AND org_id = %s
-            ORDER BY length(revision_code) DESC, revision_code DESC LIMIT 1
+            SELECT v.revision_code::text AS code,p.current_revision,
+                   COALESCE(c.selected_version_id,v.id) AS selected_version_id
+            FROM public.project_versions v JOIN public.projects p ON p.id=v.project_id AND p.org_id=v.org_id
+            LEFT JOIN LATERAL private.quotation_choice(v.org_id,v.id) c ON c.kind='APPROVED'
+            WHERE v.project_id = %s AND v.org_id = %s
+            ORDER BY length(v.revision_code) DESC, v.revision_code DESC LIMIT 1
             """,
             [str(version["project_id"]), str(org_id)],
         )
-        if latest and str(latest[0]["code"]) != str(version["revision_code"]):
-            raise DocumentaryError("version_superseded")
+        if latest:
+            live = latest[0]
+            if live.get('current_revision') and str(live['current_revision']) != str(live['code']):
+                raise DocumentaryError('version_superseded')
+            if live.get('selected_version_id'):
+                if str(live['selected_version_id']) != str(version_id):
+                    raise DocumentaryError('version_superseded')
+            elif str(live['code']) != str(version['revision_code']):
+                raise DocumentaryError('version_superseded')
         snapshot = version["snapshot_json"]
         if isinstance(snapshot, str):
             snapshot = json.loads(snapshot)
@@ -771,12 +829,12 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         # position resolved to GENERIC_LEGACY means no bound/material process
         # profile exists — the routing would be invented. Re-seal on a
         # catalog with real process authority instead of shipping it.
+        from dekopen_engine.catalog_authority import process_authority_gate
         unresolved = sorted(
             str(pos.get("code") or pos.get("position_index") or pid)
             for pos in (snapshot.get("positions") or [])
             for pid in (str(pos.get("id")),)
-            if not isinstance(pos.get("process_facts"), dict)
-            or pos["process_facts"].get("resolved_via") == "generic_fallback"
+            if not process_authority_gate(pos.get("process_facts"))["ok"]
         )
         if unresolved:
             raise DocumentaryError("production_process_unresolved")
@@ -786,14 +844,13 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             for pos in snapshot.get("positions") or []
             if pos.get("id")
         }
-        # The sealed color is what the cut optimizer's stock variants are
-        # named after — WHITE only when both faces are WHITE, else FOILED.
+        # New finish charts seal a stock combination. Historical revisions
+        # keep their original WHITE/FOILED identity.
         color_by_position = {
             str(pos.get("id")): (
-                "WHITE"
-                if pos.get("color_interior") == "WHITE"
-                and pos.get("color_exterior") == "WHITE"
-                else "FOILED"
+                pos["resolved_finish"]["combination"]["code"] if pos.get("resolved_finish") else (
+                    "WHITE" if pos.get("color_interior") == "WHITE" and pos.get("color_exterior") == "WHITE" else "FOILED"
+                )
             )
             for pos in snapshot.get("positions") or []
             if pos.get("id")
@@ -976,10 +1033,35 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         }
 
 
-def list_production_orders(*, org_id: UUID) -> dict[str, object]:
-    orders = rows(
+def list_production_orders(*, org_id: UUID, actor_role: str | None = None,
+                           project_id: UUID | None = None) -> dict[str, object]:
+    with documentary_backend():
+        orders = rows(
         """
-        SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
+        SELECT o.id, o.order_code, o.order_type::text, o.status::text,
+               jsonb_build_object(
+                   'position_id', o.payload_json->'position_id',
+                   'quantity', o.payload_json->'quantity',
+                   'prep', o.payload_json->'prep',
+                   'packing', o.payload_json ? 'packing',
+                   'remake_reason', o.payload_json->'remake_reason',
+                   'remake_of', o.payload_json->'remake_of',
+                   'optimization', jsonb_build_object(
+                       'stock_reservations', o.payload_json#>'{optimization,stock_reservations}',
+                       'unmapped_stock_skus', o.payload_json#>'{optimization,unmapped_stock_skus}',
+                       'bars', jsonb_build_object('unplaced', o.payload_json#>'{optimization,bars,unplaced}'),
+                       'unnested', o.payload_json#>'{optimization,unnested}'
+                   )
+               ) AS payload_json,
+               p.code AS project_code, p.name AS project_name,
+               CASE WHEN %s = 'OPERATOR' THEN NULL ELSE p.client_name END AS client_name,
+               (SELECT min(d.scheduled_date) FROM public.deliveries d
+                WHERE d.order_id = o.id AND d.org_id = o.org_id
+                  AND d.status <> 'FAILED') AS scheduled_date,
+               (o.payload_json ? 'optimization'
+                AND NOT COALESCE((o.payload_json#>>'{optimization,invalidated}')::boolean, FALSE)) AS optimization_ready,
+               EXISTS(SELECT 1 FROM public.production_step_events ev
+                      WHERE ev.order_id = o.id AND ev.org_id = o.org_id AND ev.event = 'QC_FAILED') AS qc_failed,
                o.project_version_id, o.created_at,
                COUNT(s.id) AS steps_total,
                COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done,
@@ -991,14 +1073,22 @@ def list_production_orders(*, org_id: UUID) -> dict[str, object]:
                         AND dn.voided_at IS NULL
                      ) AS has_dispatch_note
         FROM public.orders o
+        LEFT JOIN public.projects p ON p.id = o.project_id AND p.org_id = o.org_id
         LEFT JOIN public.production_steps s ON s.order_id = o.id
         WHERE o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
-        GROUP BY o.id ORDER BY o.created_at DESC
+          AND (%s::uuid IS NULL OR o.project_id=%s::uuid)
+        GROUP BY o.id, p.id ORDER BY o.created_at DESC
         LIMIT 300
         """,
-        [str(org_id)],
+        [actor_role or "", str(org_id), project_id, project_id],
     )
-    return {"orders": [_public_order(order) for order in orders]}
+    return {"orders": [{
+        **_public_order(order, include_payload=True),
+        **{key: order.get(key) for key in (
+            "project_code", "project_name", "scheduled_date", "optimization_ready", "qc_failed",
+        )},
+        **({"client_name": order.get("client_name")} if actor_role != "OPERATOR" else {}),
+    } for order in orders]}
 
 
 def production_prep(*, org_id: UUID) -> dict[str, object]:
@@ -1012,10 +1102,13 @@ def production_prep(*, org_id: UUID) -> dict[str, object]:
                    p.code AS project_code,
                    jsonb_array_length(COALESCE(v.snapshot_json->'bom', '[]'::jsonb))
                        AS positions
-            FROM public.project_versions v
-            JOIN public.projects p ON p.id = v.project_id AND p.org_id = v.org_id
+            FROM public.project_versions offered
+            JOIN public.projects p ON p.id = offered.project_id AND p.org_id = offered.org_id
+            LEFT JOIN LATERAL private.quotation_choice(offered.org_id,offered.id) c ON c.kind='APPROVED'
+            JOIN public.project_versions v ON v.id=COALESCE(c.selected_version_id,offered.id) AND v.org_id=offered.org_id
             WHERE v.org_id = %s AND v.production_allowed
               AND jsonb_array_length(COALESCE(v.snapshot_json->'bom', '[]'::jsonb)) > 0
+              AND p.current_revision=offered.revision_code
               AND NOT EXISTS (
                   SELECT 1 FROM public.orders o
                   WHERE o.org_id = v.org_id AND o.project_version_id = v.id
@@ -1027,9 +1120,9 @@ def production_prep(*, org_id: UUID) -> dict[str, object]:
                   -- every version — an unreleasable newer revision still
                   -- supersedes) can actually be released.
                   SELECT 1 FROM public.project_versions v2
-                  WHERE v2.org_id = v.org_id AND v2.project_id = v.project_id
+                  WHERE v2.org_id = offered.org_id AND v2.project_id = offered.project_id
                     AND (length(v2.revision_code), v2.revision_code)
-                      > (length(v.revision_code), v.revision_code)
+                      > (length(offered.revision_code), offered.revision_code)
               )
             ORDER BY v.emitted_at DESC NULLS LAST, v.id
             """,
@@ -1329,7 +1422,7 @@ def recheck_work_order_material(
     }
 
 
-def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
+def get_work_order(*, org_id: UUID, order_id: UUID, actor_role: str | None = None) -> dict[str, object]:
     order = one(
         """
         SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
@@ -1372,7 +1465,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         """,
         [str(order_id), str(org_id)],
     )
-    dispatch_note = rows(
+    dispatch_note = [] if actor_role == "OPERATOR" else rows(
         "SELECT id, note_code, voided_at, voided_reason, unit_indexes, created_at "
         "FROM public.dispatch_notes "
         "WHERE org_id=%s AND work_order_id=%s "
@@ -1426,6 +1519,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     # snapshot. Only workshop fields cross; commercial data never leaves
     # the documentary context.
     output["making"] = None
+    sealed_snapshot = {}
     if order["project_version_id"]:
         position_id = _decoded(order["payload_json"]).get("position_id")
         with documentary_backend():
@@ -1441,7 +1535,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         sealed_positions = sealed_snapshot.get("positions") or []
         # The sealed project's delivery address prefills the delivery form —
         # workshop data only; the commercial fields stay out of the payload.
-        output["delivery_address"] = (
+        output["delivery_address"] = None if actor_role == "OPERATOR" else (
             sealed_snapshot.get("project") or {}
         ).get("delivery_address")
         sealed = next(
@@ -1462,6 +1556,25 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                 )
             }
     output["steps"] = [_public_step(step) for step in steps]
+    materials = (output.get("payload") or {}).get("materials") or {}
+    items = [HardwareItem.model_validate_json(json.dumps(item)) for item in materials.get("hardware_items") or []]
+    quantity = int((output.get("payload") or {}).get("quantity") or 1)
+    output["hardware_picking"] = _picking_payload([(item, quantity, str(order["order_code"])) for item in items])
+    machining_issues = []
+    hardware_operations(items=items, fact_units=_operations_fact_units(sealed_snapshot, str(position_id) if sealed_snapshot else None), issues=machining_issues)
+    output["hardware_machining"] = machining_issues
+    from production.pieces import addressed_plan, add_remnant_codes
+
+    display_payload = output.get("payload") or {}
+    if isinstance(display_payload.get("optimization"), dict):
+        display_payload["optimization"] = addressed_plan(
+            sealed_snapshot, display_payload["optimization"], order_id=order_id,
+        )
+        with documentary_backend():
+            add_remnant_codes(display_payload["optimization"], org_id)
+        from production.cut_manifest import grouped_cuts
+
+        display_payload["optimization"]["cut_groups"] = grouped_cuts(display_payload["optimization"])
     output["events"] = [
         {
             "id": str(event["id"]),
@@ -1477,6 +1590,14 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         }
         for event in events
     ]
+    if actor_role == "OPERATOR":
+        # Commercial documents stay at the HTTP boundary, including legacy
+        # payloads whose dispatch exports can embed customer contacts.
+        for key in ("dispatch_note_code", "dispatch_note_dte", "delivery_address"):
+            output.pop(key, None)
+        output["dispatch_notes"] = []
+        for key in ("dispatch", "delivery", "dispatch_note", "dispatch_note_dte"):
+            display_payload.pop(key, None)
     return output
 
 
@@ -1555,6 +1676,7 @@ def transition_step(
     qc_item: str | None = None,
     actor_role: str | None = None,
     ops_done: list[str] | None = None,
+    block_on_fail: bool = False,
 ) -> dict[str, object]:
     if action not in _TRANSITIONS:
         raise DocumentaryError("step_action_unknown")
@@ -1581,6 +1703,10 @@ def transition_step(
             "result": qc_check["result"],
         }
     elif qc_check is not None:
+        raise DocumentaryError("step_transition_invalid")
+    if block_on_fail and not (
+        action == "QC_CHECK" and qc_check and qc_check["result"] == "FAIL"
+    ):
         raise DocumentaryError("step_transition_invalid")
     with transaction.atomic(), documentary_backend():
         step_ref = one(
@@ -1681,6 +1807,10 @@ def transition_step(
         new_status, allowed = _TRANSITIONS[action]
         if action == "COMPLETE" and qc_result == "FAIL":
             new_status = "BLOCKED"
+        if block_on_fail:
+            new_status = "BLOCKED"
+            note = note or str(qc_check["check"])
+            qc_item = str(qc_check.get("item_code") or "").strip()[:50] or None
         if str(step["status"]) not in allowed:
             raise DocumentaryError("step_transition_invalid")
         # Routing is sequential: a station may only start once every earlier
@@ -1765,6 +1895,8 @@ def transition_step(
         # every machining op routed to this station must be declared — the
         # event records WHICH ops ran, not just that someone pressed done.
         ops_executed: list[str] | None = None
+        if action == "COMPLETE" and str(step["code"]) == "MACHINING":
+            _require_hardware_machining_authority(org_id=org_id, order=order)
         if (
             action == "COMPLETE"
             and str(step["code"]) in _OPS_EVIDENCE_STATIONS
@@ -1821,7 +1953,7 @@ def transition_step(
                     ),
                 )
         event_name = "QC_FAILED" if (
-            action == "COMPLETE" and qc_result == "FAIL"
+            action == "COMPLETE" and qc_result == "FAIL" or block_on_fail
         ) else _EVENTS[action]
         now = datetime.now(timezone.utc)
         if new_status is not None:
@@ -1875,8 +2007,8 @@ def transition_step(
             )
         rows(
             """
-            INSERT INTO public.production_step_events(org_id, order_id, step_id, event, actor_id, payload)
-            VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+            INSERT INTO public.production_step_events(org_id, order_id, step_id, event, actor_id, payload, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s)
             RETURNING id
             """,
             [
@@ -1887,7 +2019,7 @@ def transition_step(
                 str(actor_id),
                 json.dumps({
                     **({"note": note.strip()} if note else {}),
-                    **({"qc_result": qc_result} if qc_result else {}),
+                    **({"qc_result": "FAIL" if block_on_fail else qc_result} if qc_result or block_on_fail else {}),
                     **({"qc_check": qc_check} if qc_check else {}),
                     **({"qc_item": qc_item} if qc_item else {}),
                     **(
@@ -1896,6 +2028,7 @@ def transition_step(
                         else {}
                     ),
                 }),
+                now,
             ],
         )
         # §6: completing a bar-cutting station is where the physical drop
@@ -2135,6 +2268,10 @@ def transition_step(
         )
         # §08: a completed station queues the next-step notice — recomputed
         # when the job runs so a retried task reports the true successor.
+        if new_status == "BLOCKED":
+            from notifications.service import blocked_event
+
+            blocked_event(org_id=org_id, actor_id=actor_id, step_id=step_id)
         if new_status == "DONE":
             from automations.service import emit
 
@@ -2150,8 +2287,29 @@ def transition_step(
 
 
 def create_remake(
-    *, org_id: UUID, order_id: UUID, actor_id: UUID, note: str | None = None
+    *, org_id: UUID, order_id: UUID, actor_id: UUID, note: str | None = None,
+    operation_key: UUID | None = None,
 ) -> dict[str, object]:
+    return _create_remake(org_id=org_id, order_id=order_id, actor_id=actor_id,
+                          note=note, operation_key=operation_key)
+
+
+def create_field_remake(*, org_id, order_id, actor_id, incident_id, unit_index, note):
+    """A supervisor replaces one damaged field unit without rewinding its OT."""
+    with transaction.atomic(), documentary_backend():
+        from production.field import live_role, SUPERVISORS, reject
+        if live_role(org_id, actor_id) not in SUPERVISORS:
+            reject("El jefe de taller autoriza la reposición.", "field_permission", 403)
+        case = one("SELECT * FROM public.field_incidents WHERE id=%s AND org_id=%s FOR UPDATE",
+                   [incident_id, org_id], "field_incident_not_found")
+        if (case['kind'] != 'DAMAGE' or case['status'] != 'OPEN'
+                or str(case['order_id']) != str(order_id) or case['unit_index'] != unit_index):
+            reject("La reposición requiere una incidencia de daño abierta en esa unidad.")
+        return _create_remake(org_id=org_id, order_id=order_id, actor_id=actor_id,
+                              note=note, field_case=case)
+
+
+def _create_remake(*, org_id, order_id, actor_id, note=None, operation_key=None, field_case=None):
     """Remake work order for a unit that failed QC: copies the sealed material
     projection and routing from a HOLD order into a new ``-RM-`` order. The
     unique release index excludes remakes (``remake_of`` in payload)."""
@@ -2167,8 +2325,10 @@ def create_remake(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
-        if str(source["status"]) != "HOLD":
+        if field_case is None and str(source["status"]) != "HOLD":
             raise DocumentaryError("remake_requires_hold")
+        if field_case is not None and str(source['status']) not in ('DISPATCHED', 'INSTALLED'):
+            raise DocumentaryError('field_remake_requires_dispatch')
         payload = _decoded(source["payload_json"])
         payload.pop("optimization", None)  # stale plan — re-optimize the remake
         payload.pop("cnc_export", None)
@@ -2179,10 +2339,17 @@ def create_remake(
         # clean and re-derives its own (a deactivated center lands below).
         payload.pop("blockers", None)
         payload["remake_of"] = str(source["id"])
+        if field_case is not None:
+            payload['quantity'] = 1
+            payload['field_incident'] = {'id': str(field_case['id']), 'code': field_case['code'],
+                                         'source_unit_index': field_case['unit_index']}
+            payload['remake_reason'] = {'note': note, 'incident_code': field_case['code']}
+        if operation_key is not None:
+            payload["qc_operation_key"] = str(operation_key)
         # Carry the QC failure forward: the remake order names WHICH unit
         # failed and why, so the floor doesn't re-derive it from the source
         # order's history (review PM-H3).
-        failure_rows = rows(
+        failure_rows = [] if field_case is not None else rows(
             """
             SELECT payload FROM public.production_step_events
             WHERE org_id = %s AND order_id = %s
@@ -2195,7 +2362,8 @@ def create_remake(
         if failure_rows:
             failure_payload = _decoded(failure_rows[0].get("payload"))
             reason = {
-                "qc_item": failure_payload.get("qc_item"),
+                "qc_item": failure_payload.get("qc_item")
+                or (failure_payload.get("qc_check") or {}).get("item_code"),
                 "note": failure_payload.get("note"),
             }
             if reason["qc_item"] or reason["note"]:
@@ -2397,7 +2565,7 @@ def _cnc_bars_csv(
                 bar.get("commercial_sku"),
                 bar.get("stock_length_mm"),
                 cut.get("sequence"),
-                (cut_map or {}).get(_cut_key(cut), ""),
+                cut.get("piece_code") or (cut_map or {}).get(_cut_key(cut), ""),
                 cut.get("piece_id"),
                 cut.get("length_mm"),
                 cut.get("angle_left"),
@@ -2415,7 +2583,7 @@ def _cnc_sheets_csv(optimization: dict[str, object]) -> str:
     then Y then X — deterministic input for a panel saw / glass table."""
     rows_out = [
         "sheet_index,purchasing_sku,sheet_width_mm,sheet_height_mm,"
-        "x_mm,y_mm,width_mm,height_mm,rotated,piece_id,unit_index,bay_id,leaf_id"
+        "x_mm,y_mm,width_mm,height_mm,rotated,piece_id,unit_index,bay_id,leaf_id,piece_label"
     ]
     for sheet in sorted(
         optimization.get("sheets") or [], key=lambda s: int(s.get("sheet_index") or 0)
@@ -2440,6 +2608,7 @@ def _cnc_sheets_csv(optimization: dict[str, object]) -> str:
                 placement.get("unit_index"),
                 placement.get("bay_id"),
                 placement.get("leaf_id"),
+                placement.get("piece_code"),
             )))
     return "\n".join(rows_out) + "\n"
 
@@ -2508,6 +2677,7 @@ def export_cnc_files(
         # Printed piece codes join the saw rows so a labeled stick finds its
         # program line without a second file.
         cnc_cut_map: dict[tuple[str, ...], str] = {}
+        cnc_snapshot = {}
         if order.get("project_version_id"):
             version_row = one(
                 """
@@ -2524,13 +2694,16 @@ def export_cnc_files(
             except DocumentaryError:
                 cnc_cut_map = {}
         fingerprint = _optimization_fingerprint(optimization)
+        from production.pieces import addressed_plan
+
+        display_plan = addressed_plan(cnc_snapshot, optimization, order_id=order_id)
         header = (
             f"# dekopen order={order['order_code']} plan={fingerprint[:12]}"
             f" emitted={datetime.now(timezone.utc).isoformat()}\n"
         )
-        files = {"bars.csv": header + _cnc_bars_csv(optimization, cut_map=cnc_cut_map)}
+        files = {"bars.csv": header + _cnc_bars_csv(display_plan, cut_map=cnc_cut_map)}
         if optimization.get("sheets"):
-            files["sheets.csv"] = header + _cnc_sheets_csv(optimization)
+            files["sheets.csv"] = header + _cnc_sheets_csv(display_plan)
         export = {
             "schema": "work_order_cnc_export_v2",
             "optimization_fingerprint": fingerprint,
@@ -2640,10 +2813,56 @@ def _raw_fact_units(
 def _operations_fact_units(
     version_snapshot: dict[str, object], position_id: str | None
 ) -> list[ManufacturingFactsV1]:
-    return [
-        ManufacturingFactsV1.model_validate_json(json.dumps(unit))
-        for unit in _raw_fact_units(version_snapshot, position_id)
-    ]
+    units = []
+    for raw in _raw_fact_units(version_snapshot, position_id):
+        unit = ManufacturingFactsV1.model_validate_json(json.dumps(raw))
+        if unit.module_id is not None:
+            # The BOM/annotations carry module namespaces; physical facts are
+            # module-local. Project their addresses for matching only. Stable
+            # piece IDs, coordinates and sealed bytes stay unchanged.
+            prefix = unit.module_id + "|"
+            updates = {}
+            for field in ("members", "leaves", "infills", "handles"):
+                projected = []
+                for item in getattr(unit, field):
+                    values = {key: prefix + value
+                              for key in ("bay_id", "leaf_id")
+                              if (value := getattr(item, key)) is not None
+                              and not value.startswith(prefix)}
+                    projected.append(item.model_copy(update=values))
+                updates[field] = projected
+            unit = unit.model_copy(update=updates)
+        units.append(unit)
+    return units
+
+
+def _sealed_hardware_operations(version_snapshot, position_id, fact_units, issues):
+    operations = []
+    for position in version_snapshot.get("bom") or []:
+        if position_id and str(position.get("position_id")) != position_id:
+            continue
+        items = [HardwareItem.model_validate_json(json.dumps(item))
+            for item in (position.get("engine_result") or {}).get("hardware_items") or []]
+        scoped_units = [unit for unit in fact_units if unit.position_id == str(position.get("position_id"))]
+        operations.extend(hardware_operations(items=items, fact_units=scoped_units, issues=issues))
+    return operations
+
+
+def _picking_payload(items):
+    return [{key: str(value) if isinstance(value, Decimal) else value for key, value in row.items()}
+        for row in hardware_picking(items)]
+
+
+def version_hardware_picking(*, org_id: UUID, version_id: UUID):
+    with documentary_backend():
+        snapshot = _decoded(one("SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
+            [str(version_id), str(org_id)], "version_not_found")["snapshot_json"])
+    indexes = {str(position["id"]): position["position_index"] for position in snapshot.get("positions") or []}
+    items = [(HardwareItem.model_validate_json(json.dumps(item)), int(position["quantity"]),
+        f"Posición {indexes.get(str(position['position_id']), ordinal)}")
+        for ordinal, position in enumerate(snapshot.get("bom") or [], 1)
+        for item in (position.get("engine_result") or {}).get("hardware_items") or []]
+    return {"rows": _picking_payload(items)}
 
 
 # Workshop annotations that contractually name a machine operation kind:
@@ -2741,6 +2960,7 @@ def export_operations(
         ops = operations_from_plan(
             bars=bars, fact_units=fact_units, issues=ops_issues
         )
+        ops.extend(_sealed_hardware_operations(version_snapshot, str(payload.get("position_id") or "") or None, fact_units, ops_issues))
         ops_issues.extend(
             _declared_intent_gaps(
                 version_snapshot,
@@ -3029,7 +3249,9 @@ def export_dxf_files(
                         _infill_key(placement),
                         str(placement["piece_id"]),
                     )
-        files = dxf_files(optimization, codes=codes)
+        from production.pieces import addressed_plan
+
+        files = dxf_files(addressed_plan(snapshot, optimization, order_id=order_id), codes=codes)
         if not files:
             raise DocumentaryError("dxf_requires_optimization")
         export = {
@@ -3218,14 +3440,13 @@ def generate_packing_manifest(
 def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     """Printable unit labels: the stored manifest plus a QR per unit.
 
-    The QR encodes ``DEKOPEN|<order_code>|<label_code>|<piece_count>`` so a
-    scanned label identifies the order, the unit, and its checklist even
-    without a terminal at hand. Rendered on read — the manifest is already
-    sealed, so labels never drift from it."""
+    The QR address binds order, printed code and stable unit identity. The
+    scan opens the same unit's pieces and checklist; historical printed codes
+    remain readable. Rendered on read from the already sealed manifest."""
     with transaction.atomic(), documentary_backend():
         order = one(
             """
-            SELECT id, order_code, status::text, payload_json FROM public.orders
+            SELECT id, order_code, status::text, payload_json, project_version_id FROM public.orders
             WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
             """,
             [str(order_id), str(org_id)],
@@ -3244,9 +3465,10 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                 + int(unit.get("hardware") or 0)
                 + int(unit.get("fittings") or 0)
             )
-            qr_payload = (
-                f"DEKOPEN|{order['order_code']}|{unit['label_code']}|{pieces}"
-            )
+            from production.pieces import entity_address
+
+            qr_payload = entity_address("/production", order=order_id,
+                piece=unit["label_code"], identity=f"{order_id}:U{unit['unit_index']}")
             labels.append(
                 {
                     "unit_index": int(unit["unit_index"]),
@@ -3260,15 +3482,38 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                     "fittings": int(unit.get("fittings") or 0),
                     "qr_payload": qr_payload,
                     "qr_svg": segno.make(qr_payload, error="m").svg_inline(
-                        border=2, scale=6
+                        border=4, scale=6, omitsize=True
                     ),
                 }
             )
+        from production.pieces import addressed_plan, physical_labels
+
+        payload = _decoded(order["payload_json"])
+        optimization = payload.get("optimization") or {}
+        piece_labels = []
+        blocked_reason = ""
+        if not optimization or optimization.get("invalidated"):
+            blocked_reason = (
+                "El plan de corte fue invalidado al liberar material. " if optimization.get("invalidated")
+                else "Sin dato · la orden no tiene un plan de corte vigente. "
+            ) + "Optimiza la orden antes de imprimir etiquetas de piezas."
+        else:
+            snapshot = _decoded(one(
+                "SELECT snapshot_json::text FROM public.project_versions WHERE id=%s AND org_id=%s",
+                [str(order["project_version_id"]), str(org_id)], "version_not_found",
+            )["snapshot_json"]) if order.get("project_version_id") else {}
+            route = rows("SELECT sequence,code,label FROM public.production_steps "
+                         "WHERE order_id=%s AND org_id=%s ORDER BY sequence", [str(order_id),str(org_id)])
+            piece_labels = physical_labels(addressed_plan(snapshot, optimization, order_id=order_id),
+                snapshot=snapshot,order_code=order["order_code"],fingerprint=_optimization_fingerprint(optimization),
+                route=route)
         return {
             "order_id": str(order_id),
             "order_code": order["order_code"],
             "status": str(order["status"]),
             "labels": labels,
+            "piece_labels": piece_labels,
+            "piece_labels_blocked_reason": blocked_reason,
         }
 
 
@@ -3549,7 +3794,9 @@ def _sheet_rules(org_id: UUID) -> dict[str, list[SheetRule]]:
     for group in (by_sku, by_thickness, by_glass):
         for candidates in group.values():
             candidates.sort(
-                key=lambda r: (r.sheet_width_mm * r.sheet_height_mm, r.workshop_sku)
+                key=lambda r: (r.sheet_width_mm * r.sheet_height_mm, r.workshop_sku,
+                               r.sheet_width_mm, r.sheet_height_mm, r.edge_trim_mm,
+                               r.purchasing_sku, r.supplier_name or "", r.manufacturer_name or "")
             )
     return {
         "by_sku": by_sku,
@@ -3593,13 +3840,16 @@ def _compute_optimization(
     version_snapshot: dict[str, object],
     strategy: str,
     cutting_profile_code: str | None = None,
+    excluded_remnant_ids: set[str] | None = None,
+    stock_repository: CuttingRepository | None = None,
+    sheet_rules: dict | None = None,
 ) -> dict[str, object]:
     """Pure plan computation — reads stock/remnant pools, writes nothing:
     no reservations, no events. ``optimize_work_order`` persists the result;
     ``compare_optimization_strategies`` previews the same computation per
     strategy so the choice is evidence, not a guess."""
     started = perf_counter()
-    stocks = CuttingRepository()
+    stocks = stock_repository or CuttingRepository()
     authorities = stocks.for_result(result, UUID(str(system_id)), org_id, color)
     profile = stocks.cutting_profile(org_id, cutting_profile_code)
     # §6: on-hand bar drops matching the plan's stock authorities are cut
@@ -3608,6 +3858,8 @@ def _compute_optimization(
         org_id=org_id,
         authority_ids={s.stock_authority_id for s in authorities.stocks},
     )
+    if excluded_remnant_ids:
+        bar_remnants = [r for r in bar_remnants if r.remnant_id not in excluded_remnant_ids]
     per_unit = pieces_from_result(
         result,
         color=color,
@@ -3629,7 +3881,7 @@ def _compute_optimization(
     ).model_dump(mode="json")
     bar_runtime_ms = int((perf_counter() - started) * 1000)
 
-    rules = _sheet_rules(org_id)
+    rules = sheet_rules if sheet_rules is not None else _sheet_rules(org_id)
     sheets: list[dict[str, object]] = []
     sheet_purchases: list[dict[str, object]] = []
     unnested: list[dict[str, object]] = []
@@ -3729,9 +3981,9 @@ def _compute_optimization(
     for rule, group_pieces, group_kind in merged.values():
         outcome = nest_rects(
             group_pieces, rule,
-            remnants=remnants_service.sheet_remnants_for_sku(
+            remnants=[r for r in remnants_service.sheet_remnants_for_sku(
                 org_id=org_id, workshop_sku=rule.workshop_sku
-            ),
+            ) if not excluded_remnant_ids or r.remnant_id not in excluded_remnant_ids],
         )
         for layout in outcome.layouts:
             dumped = layout.model_dump(mode="json")
@@ -3786,6 +4038,7 @@ def _compute_optimization(
             entry["rack_location"] = consumed_locations.get(entry["id"])
     produced_bars = [
         {
+            "bar_index": bar["bar_index"],
             "stock_authority_id": bar["stock_authority_id"],
             "remainder_mm": bar["remainder_mm"],
         }
@@ -3794,6 +4047,7 @@ def _compute_optimization(
     ]
     produced_sheets = [
         {
+            "sheet_index": sheet["sheet_index"],
             "workshop_sku": sheet["workshop_sku"],
             "width_mm": remnant["width_mm"],
             "height_mm": remnant["height_mm"],
@@ -3942,6 +4196,7 @@ def _order_optimize_context(
             "fittings": materials.get("fittings") or [],
             "hardware_items": materials.get("hardware_items") or [],
             "leaf_weights": materials.get("leaf_weights") or [],
+            "finish": materials.get("finish"),
         },
         strict=False,
     )
@@ -3996,7 +4251,9 @@ def compare_optimization_strategies(
         }
 
 
-def station_queue(*, org_id: UUID) -> dict[str, object]:
+def station_queue(
+    *, org_id: UUID, actor_role: str | None = None, actor_id: UUID | None = None,
+) -> dict[str, object]:
     """Group every live order's open steps by station code: what the saw
     bench, the machining cell and the QC post each have queued right now.
 
@@ -4053,8 +4310,26 @@ def station_queue(*, org_id: UUID) -> dict[str, object]:
         station["blocked"] = sum(
             1 for e in station["entries"] if e["status"] == "BLOCKED"
         )
+    selected_code = None
+    if actor_role == "OPERATOR":
+        from production.stations import operator_station
+
+        if actor_id is None:
+            raise DocumentaryError("actor_membership_missing")
+        selected_code = operator_station(org_id=org_id, actor_id=actor_id)["selected_code"]
+        stations = {
+            code: {**station, "entries": [e for e in station["entries"] if e["is_next"]]}
+            for code, station in stations.items() if code == selected_code
+        }
+        for station in stations.values():
+            for status, key in (("IN_PROGRESS", "in_progress"), ("BLOCKED", "blocked")):
+                station[key] = sum(e["status"] == status for e in station["entries"])
+            station["pending"] = sum(e["status"] in ("READY", "PENDING") for e in station["entries"])
     return {
-        "stations": [station for _, station in sorted(stations.items())]
+        "stations": sorted(stations.values(), key=lambda station: min(
+            (e["sequence"] for e in station["entries"]), default=0,
+        )),
+        "selected_code": selected_code,
     }
 
 
@@ -4165,6 +4440,7 @@ def optimize_work_order(
                 "fittings": materials.get("fittings") or [],
                 "hardware_items": materials.get("hardware_items") or [],
                 "leaf_weights": materials.get("leaf_weights") or [],
+                "finish": materials.get("finish"),
             },
             strict=False,
         )
@@ -4187,6 +4463,14 @@ def optimize_work_order(
         consumed_sheets = plan["consumed_sheets"]
         produced_bars = plan["produced_bars"]
         produced_sheets = plan["produced_sheets"]
+        from documents.preferences import document_preferences
+
+        preferences = document_preferences(one(
+            "SELECT document_preferences FROM public.tenancy_organizations WHERE id=%s",
+            [str(org_id)], "organization_not_found",
+        )["document_preferences"])
+        remnants_service.plan_remnant_addresses(org_id=org_id, order_id=order_id, plan=plan,
+            rack_location=preferences["remnant_destination"])
         # Re-optimizing replaces the plan: the old reservation releases before
         # the new one claims, atomically — for remnants and for ledger stock
         # alike. Ledger reservations are capped at what is physically
@@ -4618,6 +4902,23 @@ def schedule_delivery(
             ],
         )
     return get_delivery(org_id=org_id, order_id=order_id)
+
+
+def cancel_scheduled_delivery(*, org_id: UUID, order_id: UUID, actor_id: UUID) -> None:
+    """Release an undispatched trip, preserving its schedule and audit evidence."""
+    with transaction.atomic(), documentary_backend():
+        role = one("SELECT private.field_actor_role(%s,%s) AS role", [org_id,actor_id])["role"]
+        if role not in ("OWNER", "WORKSHOP_MANAGER"):
+            raise DocumentaryError("documentary_permission_denied")
+        delivery = one(
+            "SELECT id FROM public.deliveries WHERE org_id=%s AND order_id=%s AND status='SCHEDULED' FOR UPDATE",
+            [org_id, order_id], "delivery_not_found",
+        )
+        rows("UPDATE public.deliveries SET status='FAILED',updated_at=now() WHERE id=%s RETURNING id", [delivery["id"]])
+        rows(
+            "INSERT INTO public.production_step_events(org_id,order_id,event,actor_id,payload) VALUES(%s,%s,'WO_DELIVERY_FAILED',%s,%s::jsonb) RETURNING id",
+            [org_id,order_id,actor_id,json.dumps({"delivery_id":str(delivery["id"]),"reason":"Salida cancelada antes del despacho"})],
+        )
 
 
 def transition_delivery(

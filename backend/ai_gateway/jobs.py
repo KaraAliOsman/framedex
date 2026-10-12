@@ -78,6 +78,7 @@ OPEN_STATES = frozenset(
 # human confirms. Kinds mirror what the agent can actually produce today.
 ARTIFACT_KINDS = frozenset(
     {
+        "blockers",
         "product_draft",
         "project_draft",
         "quote_draft",
@@ -361,7 +362,7 @@ def live_runs(*, org_id: UUID, job_ids: list) -> dict:
     with job_service.job_backend():
         found = rows(
             "SELECT payload->>'ai_job_id' AS ai_job_id, state, progress,"
-            " updated_at FROM public.job_runs"
+            " updated_at, phase FROM public.job_runs"
             " WHERE org_id = %s AND type = 'ai.agent.run'"
             " AND payload->>'ai_job_id' = ANY(%s::text[])"
             " ORDER BY created_at DESC",
@@ -376,6 +377,7 @@ def live_runs(*, org_id: UUID, job_ids: list) -> dict:
             "state": run["state"],
             "progress": float(run["progress"] or 0),
             "updated_at": str(run["updated_at"]),
+            "phase": run.get("phase"),
         }
     return latest
 
@@ -402,6 +404,8 @@ def list_jobs(
     limit: int = 30,
     before: str | None = None,
     before_id: str | None = None,
+    surface: str | None = None,
+    refs: dict | None = None,
 ) -> list[dict]:
     params: list[object] = [str(org_id), str(user_id)]
     if before_id:
@@ -418,6 +422,12 @@ def list_jobs(
     elif before:
         cursor = " AND created_at < %s"
         params.append(before)
+    if surface is not None:
+        cursor += " AND surface = %s"
+        params.append(surface)
+    if refs is not None:
+        cursor += " AND refs = %s::jsonb"
+        params.append(_dump(refs))
     params.append(limit)
     decoded = [
         _decode(row)
@@ -668,7 +678,14 @@ def record_outcome(
                 if 0 <= recorded["step_index"] < len(steps)
                 else None
             )
-            if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare"):
+            if step is None or step.get("kind") not in ("ops", "batch_ops", "prepare", "project_ops"):
+                return None
+            if recorded["action"] == "undone" and not any(
+                outcome.get("turn_index") == recorded["turn_index"]
+                and outcome.get("step_index") == recorded["step_index"]
+                and outcome.get("action") == "applied"
+                for outcome in (job.get("outcomes") or [])
+            ):
                 return None
             found = rows(
                 "UPDATE public.ai_jobs SET outcomes = outcomes || %s::jsonb,"
@@ -704,13 +721,15 @@ def record_outcome(
                     (turn_index, step_index)
                     for turn_index, turn_row in enumerate(transcript)
                     for step_index, step_row in enumerate(turn_row.get("steps") or [])
-                    if step_row.get("kind") in ("ops", "batch_ops", "prepare")
+                    if step_row.get("kind") in ("ops", "batch_ops", "prepare", "project_ops")
                 ]
                 resolved = {
                     (outcome["turn_index"], outcome["step_index"])
                     for outcome in (job.get("outcomes") or [])
+                    if outcome.get("action") in ("applied", "declined", "undone")
                 }
-                resolved.add((recorded["turn_index"], recorded["step_index"]))
+                if recorded["action"] in ("applied", "declined", "undone"):
+                    resolved.add((recorded["turn_index"], recorded["step_index"]))
                 if pending and all(pair in resolved for pair in pending):
                     write(
                         "UPDATE public.ai_jobs SET state = 'SUCCEEDED',"
@@ -800,7 +819,10 @@ def _decode(record: dict[str, object]) -> dict[str, object]:
     ):
         value = out.get(name)
         if isinstance(value, str):
-            out[name] = json.loads(value, parse_float=Decimal, parse_int=Decimal)
+            # Counts and indexes are JSON integers in the operation contract.
+            # Decimal integers render as floats in DRF and become invalid when
+            # a restored proposal is sent back to the strict apply endpoint.
+            out[name] = json.loads(value, parse_float=Decimal)
     for name in ("id", "org_id", "user_id"):
         if out.get(name) is not None:
             out[name] = str(out[name])

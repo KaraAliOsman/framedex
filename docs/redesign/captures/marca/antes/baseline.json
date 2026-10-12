@@ -1,0 +1,114 @@
+[
+  {
+    "id": "onboarding",
+    "width": 1440,
+    "theme": "light",
+    "path": "/onboarding",
+    "reached": "/onboarding"
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1440,
+    "theme": "light",
+    "path": "/p25-ruta-ausente",
+    "reached": "/dashboard"
+  },
+  {
+    "id": "onboarding",
+    "width": 1440,
+    "theme": "dark",
+    "path": "/onboarding",
+    "reached": "/onboarding"
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1440,
+    "theme": "dark",
+    "path": "/p25-ruta-ausente",
+    "reached": "/dashboard"
+  },
+  {
+    "id": "onboarding",
+    "width": 1280,
+    "theme": "light",
+    "path": "/onboarding",
+    "reached": "/onboarding"
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1280,
+    "theme": "light",
+    "path": "/p25-ruta-ausente",
+    "reached": "/dashboard"
+  },
+  {
+    "id": "onboarding",
+    "width": 1280,
+    "theme": "dark",
+    "path": "/onboarding",
+    "reached": "/onboarding"
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1280,
+    "theme": "dark",
+    "path": "/p25-ruta-ausente",
+    "reached": "/dashboard"
+  },
+  {
+    "id": "onboarding",
+    "width": 1024,
+    "theme": "light",
+    "path": "/onboarding",
+    "reached": "/onboarding"
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1024,
+    "theme": "light",
+    "path": "/p25-ruta-ausente",
+    "reached": "/dashboard"
+  },
+  {
+    "id": "onboarding",
+    "width": 1024,
+    "theme": "dark",
+    "path": "/onboarding",
+    "reached": "/onboarding"
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 1024,
+    "theme": "dark",
+    "path": "/p25-ruta-ausente",
+    "reached": "/dashboard"
+  },
+  {
+    "id": "onboarding",
+    "width": 390,
+    "theme": "light",
+    "path": "/onboarding",
+    "reached": "/onboarding"
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 390,
+    "theme": "light",
+    "path": "/p25-ruta-ausente",
+    "reached": "/dashboard"
+  },
+  {
+    "id": "onboarding",
+    "width": 390,
+    "theme": "dark",
+    "path": "/onboarding",
+    "reached": "/onboarding"
+  },
+  {
+    "id": "pagina-ausente",
+    "width": 390,
+    "theme": "dark",
+    "path": "/p25-ruta-ausente",
+    "reached": "/dashboard"
+  }
+]

@@ -6,14 +6,28 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CouplerChoice } from "./couplerChoice";
+import type { FinishAuthority } from "./finishAuthority";
 import type { GlassSpecChoice } from "./glassSpecChoice";
 import type { GlazingBeadChoice } from "./glazingBeadChoice";
 import type { HandlePolicy } from "./handlePolicy";
 import type { KitChoice } from "./kitChoice";
 import type { PanelChoice } from "./panelChoice";
 import type { ProfileChoice } from "./profileChoice";
+import type { SystemDimensionalLimit } from "./systemDimensionalLimit";
 
 export interface DesignOptions {
+  advanced_availability?: unknown[];
+  advanced_previews?: unknown[];
+  extra_definitions?: unknown[];
+  finish_authority?: FinishAuthority | null;
+  system_id: string;
+  /** @nullable */
+  system_family: string | null;
+  is_demo: boolean;
+  compatible_openings: string[];
+  opening_capabilities?: unknown[];
+  paired_leaf_rule?: unknown | null;
+  dimensional_limits: SystemDimensionalLimit[];
   profiles: ProfileChoice[];
   glazing_thicknesses: string[];
   hardware_kits: KitChoice[];

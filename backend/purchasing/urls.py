@@ -1,6 +1,7 @@
 from django.urls import path
 
 from purchasing.views import (
+    PurchasingNeedsView, PurchasingNeedsConfirmView, PurchaseMailView,
     PurchasingOrdersIndexView,
     PurchasingSuppliersView,
     CancelOrderView,
@@ -13,6 +14,9 @@ from purchasing.views import (
 )
 
 urlpatterns = [
+    path('needs/',PurchasingNeedsView.as_view()),
+    path('needs/confirm/',PurchasingNeedsConfirmView.as_view()),
+    path('orders/<uuid:order_id>/mail/',PurchaseMailView.as_view()),
     path("versions/", PurchasingVersionsView.as_view(), name="purchasing-versions"),
     path(
         "versions/<uuid:version_id>/",

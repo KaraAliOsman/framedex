@@ -35,4 +35,10 @@ export interface GlassPiece {
   article_sku: string | null;
   /** @nullable */
   exposed_edges: string[] | null;
+  composition?: unknown | null;
+  /** @nullable */
+  thickness_total_mm?: string | null;
+  /** @nullable */
+  billable_area_m2?: string | null;
+  processing?: unknown | null;
 }

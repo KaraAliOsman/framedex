@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-10-09T19:49:54.025Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "records": [
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "reachedPath": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "390x844",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "reachedPath": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1280x800",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "reachedPath": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1024x768",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "reachedPath": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "role": "ESTIMATOR",
+      "theme": "light",
+      "viewport": "1440x900",
+      "screenshot": "posicion-edicion__ESTIMATOR__light__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "reachedPath": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1024x768",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1024x768.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "reachedPath": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "390x844",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__390x844.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "reachedPath": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1440x900",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1440x900.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    },
+    {
+      "routeId": "posicion-edicion",
+      "path": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "reachedPath": "/projects/9e4206e6-bc2e-4790-b08a-1ef74fa26804/positions/b45aa93e-9ec0-419c-b0d8-2fc2222feab9/edit",
+      "role": "ESTIMATOR",
+      "theme": "dark",
+      "viewport": "1280x800",
+      "screenshot": "posicion-edicion__ESTIMATOR__dark__1280x800.png",
+      "overflowX": false,
+      "consoleErrors": [],
+      "httpErrors": [],
+      "findings": []
+    }
+  ],
+  "topFindings": []
+}

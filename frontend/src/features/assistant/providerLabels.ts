@@ -1,0 +1,48 @@
+export const AI_CAPABILITIES: Record<string, string> = {
+  design_assist: "Diseñar ventanas",
+  design_alternatives: "Comparar diseños",
+  agent: "Resolver encargos",
+  context_assist: "Consultar el proyecto",
+  catalog_import: "Leer catálogos",
+  catalog_compile: "Leer catálogos",
+  vision_ocr: "Leer imágenes",
+  nlp_command: "Interpretar instrucciones",
+  discount_suggest: "Proponer descuentos",
+  fabricability: "Revisar fabricación",
+};
+
+export const AI_PHASES: Record<string, string> = {
+  CONSULTING_PROJECT: "Consultando proyecto",
+  CALCULATING_ENGINE: "Calculando con el motor",
+  PREPARING_PROPOSAL: "Preparando propuesta",
+};
+
+export const AI_TOOLS: Record<string, string> = {
+  validate_operations: "Validar las medidas de prueba con el motor",
+  get_project: "Consultar el proyecto",
+  get_position: "Consultar la posición",
+  get_dashboard: "Consultar el trabajo del día",
+  get_context: "Consultar el contexto autorizado",
+  search_entities: "Buscar proyectos",
+  get_catalog: "Consultar el catálogo",
+  get_quotation: "Consultar la cotización",
+  get_production_state: "Consultar la producción",
+  get_work_order: "Consultar la orden de trabajo",
+  get_clients: "Consultar clientes",
+  get_supplier_orders: "Consultar pedidos de compra",
+  get_settings: "Consultar ajustes",
+  get_attention: "Consultar lo que requiere atención",
+  get_purchasing_state: "Consultar faltantes de compra",
+  get_production_plan: "Consultar el plan de producción",
+  get_document_candidates: "Consultar los documentos importados",
+  get_catalog_imports: "Consultar las importaciones de catálogo",
+  calculate_position: "Calcular la ventana",
+  validate_position: "Validar el diseño",
+  price_position: "Consultar la venta de la posición",
+  price_project: "Consultar la venta del proyecto",
+  explain_price_delta: "Comparar la diferencia de venta",
+  list_catalog_options: "Consultar opciones del catálogo",
+  get_blockers: "Revisar lo que falta",
+  simulate_ops: "Simular cambios con el motor",
+  preview_project_operations: "Simular cambios de posiciones",
+};

@@ -9,6 +9,7 @@ from ai_gateway import jobs, metrics
 
 def _job(**over):
     job = {
+        "id": uuid4(),
         "surface": "position",
         "state": "SUCCEEDED",
         "error_code": None,

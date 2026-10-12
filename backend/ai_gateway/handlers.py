@@ -14,6 +14,7 @@ from django.db import connection, transaction
 from jobs.handlers import _claims_for
 from jobs.registry import JobContext, JobPermanentError, ProgressReporter, register
 from ai_gateway.serializers import AiAgentRunSerializer
+from ai_gateway.usage import job_context
 
 _AGENT_CALLERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
 
@@ -124,7 +125,7 @@ def ai_agent_run(
                 job_id=ai_job_id, org_id=org_id, user_id=user_id
             ):
                 raise _Unclaimable
-        with transaction.atomic():
+        with transaction.atomic(), job_context(context.job_id, ai_job_id):
             with connection.cursor() as cursor:
                 _set_claims(cursor, context)
             # A cancel that found the row free between the marker and this

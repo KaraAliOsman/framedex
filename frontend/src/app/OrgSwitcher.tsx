@@ -46,12 +46,18 @@ export function OrgSwitcher(): JSX.Element | null {
       <button
         type="button"
         className="org-switcher__current"
+        title={`${org.name} · ${t(roleLabel[org.role])}`}
         aria-haspopup={others.length > 0 ? "menu" : undefined}
         aria-expanded={open || undefined}
         disabled={others.length === 0}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (!open) window.dispatchEvent(new Event("dekopen:shell-overlay"));
+          setOpen((value) => !value);
+        }}
       >
-        <span className="org-switcher__name">{org.name}</span>
+        <span className="org-switcher__name" title={org.name}>
+          {org.name}
+        </span>
         <span className="org-switcher__role">{t(roleLabel[org.role])}</span>
         {others.length > 0 && (
           <span className="org-switcher__chevron" aria-hidden>

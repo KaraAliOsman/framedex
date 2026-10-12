@@ -1,6 +1,9 @@
 """Deterministic commercial typology derived from validated design intent."""
 
 from collections.abc import Mapping
+import json
+from dekopen_engine.models import Opening, OpeningUse
+from dekopen_engine.openings import fabrication_alias
 
 
 COMMERCIAL_TYPOLOGIES = (
@@ -55,6 +58,17 @@ def derive_typology(tree: Mapping[str, object]) -> str:
     children = node.get("children")
     if isinstance(children, list) and children:
         return "COMPOSITE"
+    if isinstance(node.get("opening"), Mapping) and not node.get("opening_type"):
+        physical = Opening.model_validate_json(json.dumps(node["opening"]))
+        from dekopen_engine.advanced_openings import requires_recipe
+        if requires_recipe(physical.movement, OpeningUse(str(node.get("opening_use") or "WINDOW"))):
+            return "COMPOSITE"
+        if node.get("hinged_layout") or physical.fixed_in_sash:
+            return "COMPOSITE"
+        # Commercial buckets retain their historical tariff contract; the
+        # saved physical object remains the motion/handedness authority.
+        return _OPENING_TYPOLOGIES[fabrication_alias(physical,
+            OpeningUse(str(node.get("opening_use") or "WINDOW"))).value]
     opening = node.get("opening_type")
     if not isinstance(opening, str) or opening not in _OPENING_TYPOLOGIES:
         raise ValueError("unsupported opening typology")

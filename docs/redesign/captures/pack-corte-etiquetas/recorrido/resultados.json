@@ -1,0 +1,15 @@
+{
+  "order": "OT-P-000538-REV-A-02",
+  "cut": "DONE",
+  "plannedRemnants": 5,
+  "producedWithSameIdentity": [
+    "RT-000054",
+    "RT-000055",
+    "RT-000056",
+    "RT-000057",
+    "RT-000058"
+  ],
+  "consumedRemnants": 2,
+  "physicalMaterial": "DEMO declarado en movimiento; sin datos reales",
+  "qrOpensCut": true
+}

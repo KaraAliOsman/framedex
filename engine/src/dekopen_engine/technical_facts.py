@@ -5,8 +5,10 @@ from decimal import Decimal
 
 from dekopen_engine.hardware import HardwareCandidateEvaluation
 from dekopen_engine.manufacturing_trace import GeometryManufacturingTraceV1
-from dekopen_engine.models import BayOpeningType, EngineResult, HardwareKitRule, RailType
+from dekopen_engine.models import BayOpeningType, EngineResult, HardwareKitRule, Opening, RailType
 from dekopen_engine.weight import ExactLeafWeight
+from dekopen_engine.glass_composition import GlassProduct
+from dekopen_engine.catalog_rules import CatalogRuleError
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,6 +22,11 @@ class InfillTechnicalFacts:
     height_mm: Decimal
     exact_area_m2: Decimal
     bead_supported: bool
+    glass_product: GlassProduct | None = None
+    # Daylight dimensions, emitted where the geometry knows the rebate.
+    # Cut dimensions include hidden glass; they must never stand in for Ag.
+    visible_width_mm: Decimal | None = None
+    visible_height_mm: Decimal | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,13 +34,14 @@ class LeafTechnicalFacts:
     bay_id: str
     leaf_id: str | None
     opening_type: BayOpeningType
-    rail_type: RailType
+    rail_type: RailType | None
     finished_width_mm: Decimal
     finished_height_mm: Decimal
     base_weight: ExactLeafWeight
     candidates: list[HardwareCandidateEvaluation]
     selected_kit: HardwareKitRule | None
     exact_weight: ExactLeafWeight | None
+    opening: Opening | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,3 +68,4 @@ class GeometryComputation:
     spans: list[SpanTechnicalFacts] = field(default_factory=list)
     node_dimensions: dict[str, tuple[Decimal, Decimal]] = field(default_factory=dict)
     split_axes: dict[str, tuple[bool, Decimal]] = field(default_factory=dict)
+    catalog_violations: list[CatalogRuleError] = field(default_factory=list)

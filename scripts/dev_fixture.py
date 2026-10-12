@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Documented synthetic fixtures for DEKOPEN local development.
+"""Documented realistic DEMO fixtures for DEKOPEN local development.
 
-Creates one demo org with one account per role, commercial prerequisites
-(pricing rules + a cost list covering every reference-catalog purchase SKU),
-two clients, and three projects that exercise the product breadth:
+Creates two demo orgs, one account per role in the primary org, commercial
+prerequisites (pricing rules + a cost list covering every reference-catalog
+purchase SKU), six clients, and projects that exercise the product breadth.
 
   VIVIENDA  — a house: several positions, one priced-and-emitted path capable
   OBRA      — a larger works order: more positions, quantities > 1
@@ -19,17 +19,20 @@ Usage (stack running: `make test-db`'s supabase + Django + Vite):
 
 Env: SUPABASE_URL (default http://127.0.0.1:25321),
      SUPABASE_SERVICE_ROLE_KEY (required), DJANGO_URL (default :8000),
-     DATABASE_URL (default local supabase db — pricing writes are
+     DATABASE_URL (required — pricing writes are
      audit-gated for REST and use the privileged maintenance path).
 Idempotent: deterministic ids upserted on every run.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import struct
 import sys
 import uuid
+import zlib
 from decimal import Decimal
 
 import httpx
@@ -37,16 +40,18 @@ import psycopg
 
 SUPA = os.environ.get("SUPABASE_URL", "http://127.0.0.1:25321").rstrip("/")
 DJANGO = os.environ.get("DJANGO_URL", "http://127.0.0.1:8000").rstrip("/")
-DB = os.environ.get(
-    "DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:25322/postgres"
-)
+DB = os.environ.get("DATABASE_URL")
+if not DB:
+    sys.exit("DATABASE_URL is required (supabase status -o env)")
 SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 if not SERVICE_KEY:
     sys.exit("SUPABASE_SERVICE_ROLE_KEY is required (supabase status -o env)")
 
 NS = uuid.uuid5(uuid.NAMESPACE_URL, "https://dekopen.local/dev-fixture")
 ORG_ID = str(uuid.uuid5(NS, "org"))
-ORG_NAME = "DEKOPEN Demo Fixture"
+ORG_NAME = "Ventanas del Sur SpA"
+ORG_B_ID = str(uuid.uuid5(NS, "org-secondary"))
+ORG_B_NAME = "Cristales Bio Bio Ltda."
 
 ACCOUNTS = [
     ("owner", "demo-owner@fixture.dekopen.local", "OWNER"),
@@ -64,7 +69,7 @@ SVC = {
     "Prefer": "resolution=merge-duplicates,return=representation",
 }
 
-DEMO_60 = "3067da09-3119-5ad0-a1d5-498cd2dfd753"
+DEMO_60 = "1ac748f1-26f1-5cb6-86a6-41bcf2babcf7"
 
 
 def rest(path: str, rows: list[dict]) -> list[dict]:
@@ -74,6 +79,43 @@ def rest(path: str, rows: list[dict]) -> list[dict]:
     if response.status_code >= 300:
         sys.exit(f"POST {path} -> {response.status_code}: {response.text[:400]}")
     return response.json() if response.text else []
+
+
+def fixture_brand_logo(org_id: str) -> dict[str, str]:
+    """Store a real, synthetic window mark; never claim a nonexistent logo/hash."""
+    size = 64
+    scanlines = bytearray()
+    for y in range(size):
+        scanlines.append(0)
+        for x in range(size):
+            frame = (8 <= x < 56 and 8 <= y < 56 and
+                     (x < 12 or x >= 52 or y < 12 or y >= 52 or 30 <= x < 34))
+            scanlines.extend((7, 95, 90, 255) if frame else (255, 255, 255, 255))
+
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (struct.pack("!I", len(payload)) + kind + payload +
+                struct.pack("!I", zlib.crc32(kind + payload)))
+
+    content = (b"\x89PNG\r\n\x1a\n" +
+               chunk(b"IHDR", struct.pack("!IIBBBBB", size, size, 8, 6, 0, 0, 0)) +
+               chunk(b"IDAT", zlib.compress(bytes(scanlines))) + chunk(b"IEND", b""))
+    digest = hashlib.sha256(content).hexdigest()
+    key = f"org_{org_id}/branding/fixture_{digest[:12]}.png"
+    bucket = os.environ.get("SUPABASE_STORAGE_BUCKET_DOCS", "documents")
+    headers = {"apikey": SERVICE_KEY, "Authorization": f"Bearer {SERVICE_KEY}"}
+    url = f"{SUPA}/storage/v1/object/{bucket}/{key}"
+    existing = httpx.get(url, headers=headers, timeout=15)
+    if existing.status_code == 404 or (
+        existing.status_code == 400 and existing.json().get("error") == "not_found"
+    ):
+        uploaded = httpx.post(
+            url, headers={**headers, "Content-Type": "image/png"}, content=content, timeout=15
+        )
+        if uploaded.status_code >= 300:
+            sys.exit(f"Fixture logo upload failed: HTTP {uploaded.status_code}")
+    elif existing.status_code != 200 or existing.content != content:
+        sys.exit("Fixture logo storage does not match its content-addressed key")
+    return {"brand_logo_key": key, "brand_logo_sha256": digest}
 
 
 def sql(statement: str, params: tuple | None = None) -> None:
@@ -192,7 +234,7 @@ def fixed(width: str, height: str, uid: str = "m1") -> dict:
             "opening_type": "FIXED",
             "glass_thickness_mm": "24.00",
             "glass_spec": "4-16-4 Float Incoloro",
-            "glass_article_sku": "VIDRIO-BASE",
+            "glass_article_sku": "DEMO_60-VIDRIO-4-16-4",
         },
     )
 
@@ -205,7 +247,7 @@ def tilt_turn(width: str, height: str, uid: str = "m1") -> dict:
             "id": uid,
             "type": "SPLIT_V",
             "split_offset_mm": str(Decimal(width) / 2),
-            "mullion_profile_sku": "POSTE-V",
+            "mullion_profile_sku": "DEMO_60-POSTE-V",
             "children": [
                 {
                     "id": f"{uid}-a",
@@ -213,7 +255,7 @@ def tilt_turn(width: str, height: str, uid: str = "m1") -> dict:
                     "opening_type": "FIXED",
                     "glass_thickness_mm": "24.00",
                     "glass_spec": "4-16-4 Float Incoloro",
-                    "glass_article_sku": "VIDRIO-BASE",
+                    "glass_article_sku": "DEMO_60-VIDRIO-4-16-4",
                 },
                 {
                     "id": f"{uid}-b",
@@ -221,11 +263,56 @@ def tilt_turn(width: str, height: str, uid: str = "m1") -> dict:
                     "opening_type": "TILT_TURN_RIGHT",
                     "glass_thickness_mm": "24.00",
                     "glass_spec": "4-16-4 Float Incoloro",
-                    "glass_article_sku": "VIDRIO-BASE",
+                    "glass_article_sku": "DEMO_60-VIDRIO-4-16-4",
                 },
             ],
         },
     )
+
+
+def bay(width: str, height: str, opening: str, uid: str = "m1") -> dict:
+    result = design(
+        width,
+        height,
+        {
+            "id": uid,
+            "type": "BAY",
+            "opening_type": opening,
+            "glass_thickness_mm": "24.00",
+            "glass_spec": "4-16-4 Float Incoloro",
+            "glass_article_sku": "DEMO_60-VIDRIO-4-16-4",
+        },
+    )
+    tree = result["parametric_tree"]
+    if opening in {"TURN_LEFT", "TURN_RIGHT"}:
+        tree.pop("opening_type")
+        tree["opening_use"] = "WINDOW"
+        tree["opening"] = {"movement": "TURN", "direction": "INWARD",
+                           "hinge_side": "LEFT" if opening == "TURN_LEFT" else "RIGHT",
+                           "leaf_role": "SINGLE", "fixed_in_sash": False}
+    elif opening == "SLIDING_2L":
+        # A practicable series cannot manufacture a sliding sash. Select the
+        # pinned DEMO v7 sliding family and its own declared glass article.
+        result["system_id"] = "28f95d0e-868d-5e77-bcfe-8b58a3b7b546"
+        tree["glass_article_sku"] = "DEMO_CORREDERA_60-VIDRIO-4-16-4"
+        tree["sliding_layout"] = {"tracks": 2, "panels": [
+            {"slot": "L", "kind": "MOVING", "track": 0, "travel": "RIGHT"},
+            {"slot": "R", "kind": "MOVING", "track": 1, "travel": "LEFT"},
+        ]}
+    return result
+
+
+def coupled(*, bow: bool) -> dict:
+    """Real product-v2 modules, catalog couplers and a declared DEMO angle."""
+    modules = [{"id": f"coupled-{i}", "width_mm": width, "height_mm": "1300",
+                "tree": fixed(width, "1300", f"coupled-bay-{i}")["parametric_tree"]}
+               for i, width in enumerate(["600", "1200", "600"] if bow else ["1000", "1000"])]
+    couplings = [{"id": f"coupling-{i}", "kind": "INLINE", "edges": ["right", "left"],
+                  "modules": [left["id"], right["id"]], "angle_deg": "22.5" if bow else "0",
+                  "coupler_profile_sku": "DEMO_60-ACOPLE-REGULABLE"}
+                 for i, (left, right) in enumerate(zip(modules, modules[1:]))]
+    return design("2400" if bow else "2000", "1300",
+                  {"version": "product-v2", "assembly": {"modules": modules, "couplings": couplings}})
 
 
 def main() -> None:
@@ -237,7 +324,27 @@ def main() -> None:
             {
                 "id": ORG_ID,
                 "name": ORG_NAME,
-                "tax_id": "76.000.000-0",
+                "commercial_name": ORG_NAME,
+                "tax_id": "76.543.210-3",
+                "giro": "Fabricacion e instalacion de ventanas de PVC y aluminio",
+                "brand_address": "Paicavi 1250, Concepcion",
+                "brand_phone": "+56 41 255 0198",
+                "brand_email": "contacto@ventanasdelsur.example",
+                **fixture_brand_logo(ORG_ID),
+                "country": "CL",
+                "currency": "CLP",
+                "subscription_active": True,
+            },
+            {
+                "id": ORG_B_ID,
+                "name": ORG_B_NAME,
+                "commercial_name": ORG_B_NAME,
+                "tax_id": "77.123.456-9",
+                "giro": "Comercializacion de cristales y termopaneles",
+                "brand_address": "Los Carrera 840, Talcahuano",
+                "brand_phone": "+56 41 233 4411",
+                "brand_email": "operaciones@cristalesbiobio.example",
+                **fixture_brand_logo(ORG_B_ID),
                 "country": "CL",
                 "currency": "CLP",
                 "subscription_active": True,
@@ -255,6 +362,15 @@ def main() -> None:
                 "is_active": True,
             }
             for key, _, role in ACCOUNTS
+        ]
+        + [
+            {
+                "id": str(uuid.uuid5(NS, "membership-secondary-owner")),
+                "org_id": ORG_B_ID,
+                "user_id": users["owner"],
+                "role": "OWNER",
+                "is_active": True,
+            }
         ],
     )
 
@@ -308,14 +424,35 @@ def main() -> None:
         skus[(row["purchasing_sku"], row["purchase_unit"])] = "FITTING"
         skus[(row["technical_sku"], "EA")] = "FITTING"
 
+    # Purchasing units and pricing units differ for glass: a supplier can
+    # deliver each pane while the engine bills its technical SKU in m².
+    # Resolve by that explicit contract, never by sorted insertion order.
+    glass_technical_skus = {
+        row["technical_sku"] for row in query(
+            "glass_purchase_mappings?select=technical_sku&org_id=is.null"
+        )
+    }
+    costs = {
+        sku: ("M2" if sku in glass_technical_skus else unit, Decimal("100.00"))
+        for sku, unit in skus
+    }
+
     with psycopg.connect(DB, autocommit=True) as connection:
-        for (sku, unit), item_type in sorted(skus.items()):
+        for sku, unit, unit_cost in connection.execute(
+            "SELECT sku,unit,unit_cost FROM public.catalog_demo_prices"
+        ):
+            costs[sku] = (unit, unit_cost)
+        for sku, (unit, unit_cost) in sorted(costs.items()):
             connection.execute(
                 "INSERT INTO public.cost_list_items(id,org_id,cost_list_id,sku,"
                 "unit,item_type,unit_cost,description) "
-                "VALUES(%s,%s,%s,%s,%s,'FIXTURE',100.00,'DEMO FIXTURE cost') "
-                "ON CONFLICT (id) DO NOTHING",
-                (str(uuid.uuid5(NS, f"cost-{sku}-{unit}")), ORG_ID, cost_list_id, sku, unit),
+                "VALUES(%s,%s,%s,%s,%s,'FIXTURE',%s,'DEMO FIXTURE cost') "
+                "ON CONFLICT (cost_list_id,sku) DO UPDATE SET "
+                "unit=EXCLUDED.unit, unit_cost=EXCLUDED.unit_cost "
+                "WHERE cost_list_items.item_type='FIXTURE' AND "
+                "(cost_list_items.unit, cost_list_items.unit_cost) IS DISTINCT FROM "
+                "(EXCLUDED.unit, EXCLUDED.unit_cost)",
+                (str(uuid.uuid5(NS, f"cost-{sku}-{unit}")), ORG_ID, cost_list_id, sku, unit, unit_cost),
             )
 
         # Stock so the optimizer can cover a cut plan: bar SKUs keyed by their
@@ -343,6 +480,12 @@ def main() -> None:
                 "ON CONFLICT (org_id,sku,variant_key) DO NOTHING",
                 (item_id, ORG_ID, sku, f"Fixture {sku}"[:200], variant),
             )
+            # Earlier UI flows can create the same natural stock identity
+            # with another UUID. Use the persisted tenant row after conflict.
+            item_id = str(connection.execute(
+                "SELECT id FROM public.inventory_items WHERE org_id=%s AND sku=%s AND variant_key=%s",
+                (ORG_ID, sku, variant),
+            ).fetchone()[0])
             existing = connection.execute(
                 "SELECT 1 FROM public.inventory_movements WHERE org_id=%s "
                 "AND item_id=%s AND movement_type='RECEIPT' LIMIT 1",
@@ -359,11 +502,63 @@ def main() -> None:
     estimator = login(ACCOUNTS[1][1])
 
     clients = [
-        ("Vivienda Particular SpA", "76.543.210-1", "vivienda@fixture.test"),
-        ("Constructora Obra Grande Ltda.", "96.111.222-3", "obra@fixture.test"),
+        (
+            "Maria Paz Rojas",
+            "15.678.901-1",
+            "maria.rojas@example.cl",
+            "+56 9 6123 4500",
+            "Los Notros 1840, San Pedro de la Paz",
+            "Persona natural",
+            "San Pedro de la Paz",
+        ),
+        (
+            "Constructora Rio Claro SpA",
+            "76.456.789-7",
+            "obras@rioclaro.example.cl",
+            "+56 41 266 7788",
+            "Ongolmo 533, Concepcion",
+            "Construccion de edificios",
+            "Concepcion",
+        ),
+        (
+            "Inversiones Lomas Ltda.",
+            "96.543.210-8",
+            "administracion@lomas.example.cl",
+            "+56 41 244 6611",
+            "Camino a Chiguayante 3210, Chiguayante",
+            "Inmobiliaria",
+            "Chiguayante",
+        ),
+        (
+            "Colegio Valle Andino",
+            "76.987.654-5",
+            "mantencion@valleandino.example.cl",
+            "+56 41 231 5544",
+            "Av. Collao 980, Concepcion",
+            "Servicios educacionales",
+            "Concepcion",
+        ),
+        (
+            "Jorge Andres Vidal",
+            "18.456.789-K",
+            "jvidal@example.cl",
+            "+56 9 7345 2281",
+            "Pasaje Maiten 402, Hualpen",
+            "Persona natural",
+            "Hualpen",
+        ),
+        (
+            "Clinica Puerto Sur SpA",
+            "77.888.999-4",
+            "infraestructura@puertosur.example.cl",
+            "+56 41 287 4400",
+            "Barros Arana 1220, Concepcion",
+            "Servicios de salud",
+            "Concepcion",
+        ),
     ]
     client_ids = {}
-    for name, rut, email in clients:
+    for name, rut, email, phone, address, giro, comuna in clients:
         cid = str(uuid.uuid5(NS, f"client-{rut}"))
         rest(
             "clients",
@@ -374,6 +569,10 @@ def main() -> None:
                     "name": name,
                     "rut": rut,
                     "email": email,
+                    "phone": phone,
+                    "address": address,
+                    "giro": giro,
+                    "comuna": comuna,
                     "is_active": True,
                     "created_by": users["owner"],
                 }
@@ -384,7 +583,8 @@ def main() -> None:
     existing_projects = api(estimator, "GET", "/projects/").get("items", [])
 
     def project(slug: str, name: str, client: str, address: str) -> dict:
-        found = next((p for p in existing_projects if p["name"] == name), None)
+        display_name = f"{name} [{slug}]"
+        found = next((p for p in existing_projects if p["name"] == display_name), None)
         if found:
             return found
         created = api(
@@ -392,7 +592,7 @@ def main() -> None:
             "POST",
             "/projects/",
             {
-                "name": name,
+                "name": display_name,
                 "client_id": client_ids[client],
                 "client_name": client,
                 "delivery_address": address,
@@ -444,9 +644,9 @@ def main() -> None:
         )
 
     vivienda = project(
-        "VIVIENDA",
+        "CASA_LOMAS",
         "Vivienda demo — casa (fixture)",
-        "Vivienda Particular SpA",
+        "Maria Paz Rojas",
         "Av. Demostración 100, Santiago",
     )
     for loc, tree, qty in [
@@ -454,39 +654,114 @@ def main() -> None:
         ("Baño", fixed("600", "800", "vb1"), 1),
         ("Living", tilt_turn("2400", "1500", "vl1"), 1),
         ("Cocina", fixed("1200", "900", "vc1"), 1),
+        ("Logia", bay("900", "900", "TURN_LEFT", "lg1"), 1),
+        ("Estar segundo piso", bay("1800", "1200", "SLIDING_2L", "es1"), 1),
+        ("Dormitorio norte", bay("1400", "1100", "TILT_TURN_LEFT", "dn1"), 1),
+        ("Pasillo", fixed("700", "1400", "ps1"), 1),
+        ("Acceso terraza", bay("900", "2100", "TURN_RIGHT", "pt1"), 1),
+        ("Bow comedor · tres módulos DEMO", coupled(bow=True), 1),
+        ("Dormitorio poniente", fixed("900", "1300", "bw2"), 1),
+        ("Conjunto acoplado escritorio", coupled(bow=False), 1),
     ]:
         position(vivienda["id"], loc, tree, qty)
 
     obra = project(
-        "OBRA",
+        "TORRE_BARROS",
         "Obra grande demo — edificio (fixture)",
-        "Constructora Obra Grande Ltda.",
-        "Camino Fixture km 4, Renca",
+        "Constructora Rio Claro SpA",
+        "Barros Arana 1445, Concepcion",
     )
-    for i in range(1, 9):
+    for i in range(1, 101):
         position(
-            obra["id"], f"Eje {i}", tilt_turn("1800", "1400", f"ob{i}"), 4
+            obra["id"],
+            f"Piso {(i - 1) // 10 + 1} eje {((i - 1) % 10) + 1}",
+            tilt_turn("1800", "1400", f"ob{i}"),
+            1,
         )
 
     incompleta = project(
         "INCOMPLETA",
         "Proyecto incompleto (fixture)",
-        "Vivienda Particular SpA",
-        "Sin despacho",
+        "Colegio Valle Andino",
+        "Av. Collao 980, Concepcion",
     )
     position(
         incompleta["id"], "Pendiente de cotizar", fixed("900", "600", "inc1"), 1
     )
 
-    stage(estimator, users, vivienda, obra)
+    aprobado = project(
+        "APROBADO",
+        "Clinica Puerto Sur - ensayo de anticipo DEMO",
+        "Clinica Puerto Sur SpA",
+        "Barros Arana 1220, Concepcion",
+    )
+    position(aprobado["id"], "Box consulta", tilt_turn("1500", "1200", "ap1"), 8)
+
+    produccion = project(
+        "PRODUCCION",
+        "Condominio Los Raulies - ensayo de produccion DEMO",
+        "Inversiones Lomas Ltda.",
+        "Camino a Chiguayante 3210, Chiguayante",
+    )
+    position(
+        produccion["id"],
+        "Torre A vano tipo",
+        bay("1600", "1300", "SLIDING_2L", "pr1"),
+        18,
+    )
+
+    despachado = project(
+        "DESPACHADO",
+        "Casa Jorge Vidal - ensayo de despacho DEMO",
+        "Jorge Andres Vidal",
+        "Pasaje Maiten 402, Hualpen",
+    )
+    position(despachado["id"], "Fachada principal", fixed("1800", "1200", "dp1"), 3)
+
+    instalado = project(
+        "INSTALADO",
+        "Reposicion oficinas Rio Claro - ensayo de instalacion DEMO",
+        "Constructora Rio Claro SpA",
+        "Ongolmo 533, Concepcion",
+    )
+    position(instalado["id"], "Sala reuniones", tilt_turn("2000", "1400", "in1"), 2)
+
+    rechazado = project(
+        "RECHAZADO",
+        "Presupuesto local comercial - ensayo de rechazo DEMO",
+        "Maria Paz Rojas",
+        "Anibal Pinto 650, Concepcion",
+    )
+    position(rechazado["id"], "Vitrina", fixed("2400", "2100", "rj1"), 1)
 
     print(f"org {ORG_ID} ({ORG_NAME})")
+    print(f"org {ORG_B_ID} ({ORG_B_NAME})")
     for key, email, role in ACCOUNTS:
         print(f"  {role:18} {email}  / {PASSWORD}")
     print(f"  clients: {list(client_ids)}")
     print(f"  projects: vivienda={vivienda['id']} obra={obra['id']} incompleta={incompleta['id']}")
-    print(f"  cost items: {len(skus)} SKUs covered")
+    print(f"  cost items: {len(costs)} SKUs covered")
     print("DEMO FIXTURE — datos sintéticos de referencia (DEMO_60).")
+
+
+def mark_project_phases(projects: dict[str, str]) -> None:
+    status_by_phase = {
+        "borrador": "DRAFT",
+        "cotizado": "QUOTED",
+        "enviado": "QUOTED",
+        "aprobado con anticipo": "APPROVED",
+        "en produccion": "IN_PRODUCTION",
+        "despachado": "COMPLETED",
+        "instalado": "COMPLETED",
+        "rechazado": "CANCELLED",
+    }
+    for phase, project_id in projects.items():
+        sql(
+            "UPDATE public.projects SET status=%s, notes_internal="
+            "regexp_replace(COALESCE(notes_internal,''), "
+            "E'\\nFase fixture P00: .*', '', 'g') || %s WHERE id=%s",
+            (status_by_phase[phase], f"\nFase fixture P00: {phase}.", project_id),
+        )
 
 
 def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
@@ -495,7 +770,9 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
     Idempotent: re-checks current state at every step so reruns only fill
     what is missing. Same HTTP surface the UI drives.
     """
-    today = "2026-09-28"
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    today = datetime.now(ZoneInfo("America/Santiago")).date().isoformat()
 
     def save_inputs(project_id: str) -> None:
         prepared = api(
@@ -503,40 +780,79 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
         )
         positions = []
         for p in prepared["positions"]:
-            handle_intents = [
-                {
-                    "schema_version": 1,
-                    "bay_id": req["bay_id"],
-                    "leaf_id": req.get("leaf_id"),
-                    "handle_domain_slot": req["handle_domain_slot"],
-                    "requested_height_mm": "1050",
-                    "vertical_reference": "OUTER_BOTTOM",
-                }
-                for policy in p.get("handle_requirements", [])
-                for req in policy.get("requirements", [])
-            ]
+            def pick(options, current):
+                if current:
+                    return current
+                if not options:
+                    raise RuntimeError("no policy options for position")
+                return options[0]["id"]
+
+            placement_id = pick(
+                p.get("placement_options") or [],
+                p.get("manufacturing_placement_policy_id"),
+            )
+            handle_id = pick(
+                p.get("handle_options") or [],
+                p.get("handle_requirement_policy_id"),
+            )
+            reinforcement_id = pick(
+                p.get("reinforcement_options") or [],
+                p.get("reinforcement_cut_policy_id"),
+            )
+
+            # Preserve prepared evidence verbatim, merging duplicate targets.
+            # The fixture must not invent or recalculate manufacturing values.
+            merged: dict[tuple, dict] = {}
+            for ann in p.get("workshop_suggestions") or []:
+                key = (ann.get("bay_id"), ann.get("leaf_id"))
+                row = merged.setdefault(key, dict(ann))
+                for k, v in ann.items():
+                    if v not in (None, [], {}, "") and not row.get(k):
+                        row[k] = v
+            annotations = list(merged.values())
+
+            handle_intents = []
+            for policy in p.get("handle_requirements") or []:
+                if str(policy.get("policy_id")) != str(handle_id):
+                    continue
+                for req in policy.get("requirements") or []:
+                    # Explicit DEMO design intent (not computed authority):
+                    # 400 mm down from the leaf top fits the short demo leaves.
+                    refs = req.get("permitted_vertical_references") or []
+                    if "LEAF_TOP" not in refs:
+                        raise RuntimeError("DEMO handle intent needs LEAF_TOP authority")
+                    requested = "400"
+                    handle_intents.append(
+                        {
+                            "schema_version": 1,
+                            "bay_id": req["bay_id"],
+                            "leaf_id": req.get("leaf_id"),
+                            "handle_domain_slot": req["handle_domain_slot"],
+                            "requested_height_mm": requested,
+                            "vertical_reference": "LEAF_TOP",
+                        }
+                    )
+
             positions.append(
                 {
                     "position_id": p["position_id"],
                     "calculation_hash": p["calculation_hash"],
                     "location_tag": p["location_tag"] or "POS",
-                    "manufacturing_placement_policy_id": p[
-                        "manufacturing_placement_policy_id"
-                    ],
-                    "handle_requirement_policy_id": p[
-                        "handle_requirement_policy_id"
-                    ],
-                    "reinforcement_cut_policy_id": p["reinforcement_cut_policy_id"],
-                    "workshop_annotations": p.get("workshop_suggestions", []),
+                    "manufacturing_placement_policy_id": placement_id,
+                    "handle_requirement_policy_id": handle_id,
+                    "reinforcement_cut_policy_id": reinforcement_id,
+                    "workshop_annotations": annotations,
                     "structural_inputs": p.get("structural_inputs", []),
-                    "glass_polishing": p.get("polishing_suggestions", []),
+                    "glass_polishing": p.get("polishing_suggestions")
+                    or p.get("glass_polishing")
+                    or [],
                     "handle_intents": handle_intents,
                     "accessory_schedule": {
                         "schema_version": 1,
                         "coverage": "NONE_REQUIRED",
                         "items": [],
                     },
-                    "legacy_handle_migration_confirmed": False,
+                    "legacy_handle_migration_confirmed": True,
                 }
             )
         api(
@@ -545,7 +861,8 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
             f"/documents/projects/{project_id}/inputs/",
             {
                 "payment_terms": "50% anticipo, 50% contra entrega",
-                "quotation_valid_until": "2026-10-14",
+                "quotation_valid_until": (datetime.fromisoformat(today).date() + timedelta(days=15)).isoformat(),
+                "commercial_terms": prepared["commercial_terms"],
                 "positions": positions,
             },
         )
@@ -556,6 +873,7 @@ def stage(estimator: str, users: dict[str, str], *projects: dict) -> None:
             "current_pricing_operation_id"
         ):
             return {"id": detail["current_pricing_operation_id"]}
+        # Refresh only editable inputs; emitted inputs are immutable.
         save_inputs(project_id)
         operation = api(
             estimator,

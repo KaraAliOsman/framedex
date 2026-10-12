@@ -28,6 +28,12 @@ class JobRunSerializer(serializers.Serializer):
     completed_at = serializers.DateTimeField(allow_null=True)
     # Deep-link target for AI runs — NULL for every other job type.
     ai_job_id = serializers.UUIDField(required=False, allow_null=True)
+    context_label = serializers.CharField(required=False)
+    context_url = serializers.CharField(required=False, allow_null=True)
+    actor_label = serializers.CharField(required=False)
+    duration_ms = serializers.IntegerField(required=False, allow_null=True)
+    can_retry = serializers.BooleanField(required=False)
+    result_label = serializers.CharField(required=False)
 
 
 class JobEnqueueSerializer(StrictSerializer):

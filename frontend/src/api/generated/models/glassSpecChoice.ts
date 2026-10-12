@@ -10,4 +10,14 @@ export interface GlassSpecChoice {
   sku: string;
   /** @nullable */
   spec: string | null;
+  product?: unknown | null;
+  /** @nullable */
+  total_thickness_mm?: string | null;
+  /** @nullable */
+  net_thickness_mm?: string | null;
+  /** @nullable */
+  weight_kg_m2?: string | null;
+  compatible?: boolean;
+  review_reason?: string;
+  relative_price?: string;
 }

@@ -1,7 +1,21 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
-import { Link } from "react-router-dom";
+import { ActivationGuide } from "../features/settings/ActivationGuide";
+import { StatusBadge } from "../ui/StatusBadge";
+import { CollectionIntegrations } from "../features/projects/CollectionIntegrations";
+import { ValidatedForm } from "../ui/FormValidation";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { MailIntegrationCard } from "../features/notifications/MailPanels";
 
 import { ApiError } from "../api/apiMutator";
+import { actionErrorDetail } from "../features/errors";
 import {
   getOrganizationBrandingLogoReadUrl,
   organizationBrandingGet,
@@ -24,12 +38,27 @@ import type {
   SiiCaf,
   SiiCertificate,
 } from "../api/generated/models";
-import { PageHeader } from "../ui";
+import { PageHeader, DeniedState, Button, useConfirm } from "../ui";
+import {
+  CompanyCard,
+  UsersCard,
+  NumberingCard,
+  DocumentPreview,
+} from "../features/settings/AdminSections";
+import { PricingRulesSettings } from "../features/pricing/PricingPage";
+import { ProductionSettings } from "../features/settings/ProductionSettings";
+import { AnalyticsPreferences } from "../features/analytics/AnalyticsPreferences";
+import type { OrgBrandingWriteRequest, DocumentPreferences } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { formatDate } from "../features/money";
 import { t, type TranslationKey } from "../i18n/es-CL";
 import { MOD_K_HINT, MOD_KEY_HINT } from "../platform";
 import { useTheme } from "../theme/ThemeProvider";
+import { ExtraPolicyEditor } from "../features/projects/ExtraPolicyEditor";
+import { DocumentSettings } from "../features/projects/DocumentSettings";
+import { MountingRulesSettings } from "../features/projects/MountingRulesSettings";
+import { GlassRulesSettings } from "../features/glass/GlassRulesSettings";
+import { AiSettingsSection } from "../features/assistant/AiSettingsSection";
 
 const ROLE_KEYS: Record<MembershipRoleEnum, TranslationKey> = {
   OWNER: "settings.roleOwner",
@@ -126,6 +155,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setStatus(response.data);
       setSecretKey("");
+      setApiKey("");
       setMessage({ text: t("settings.flowSaved"), error: false });
     } catch {
       setMessage({ text: t("settings.flowSaveError"), error: true });
@@ -136,20 +166,18 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h3 className="eyebrow">{t("settings.flow")}</h3>
+      <h2 className="eyebrow">{t("settings.flow")}</h2>
       <p className="settings-hint">{t("settings.flowHint")}</p>
       <p>
-        <span
+        <StatusBadge
+          showIcon={false}
           className={`production-chip ${status?.configured ? "delivery-delivered" : "delivery-scheduled"}`}
         >
           {status?.configured ? t("settings.flowConfigured") : t("settings.flowNotConfigured")}
-        </span>
-        {status?.api_key_preview && (
-          <span className="settings-mono"> · {status.api_key_preview}</span>
-        )}
+        </StatusBadge>
       </p>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
-      <form className="payments-form" onSubmit={save}>
+      <ValidatedForm className="payments-form" data-region="marca-documentos" onSubmit={save}>
         <label>
           {t("settings.flowEnv")}
           <select value={apiUrl} onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}>
@@ -163,7 +191,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
             required={!status?.configured}
             value={apiKey}
             onChange={(event) => setApiKey(event.target.value)}
-            placeholder={status?.api_key_preview ?? "AB12CD34EF56"}
+            placeholder={status?.configured ? "Deja vacío para conservar la clave" : ""}
           />
         </label>
         <label>
@@ -196,7 +224,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
             {t("settings.flowSave")}
           </button>
         </div>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }
@@ -259,7 +287,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h3 className="eyebrow">{t("settings.siiTitle")}</h3>
+      <h2 className="eyebrow">{t("settings.siiTitle")}</h2>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       {items.length === 0 ? (
         <p className="settings-hint">{t("settings.siiCafEmpty")}</p>
@@ -285,7 +313,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
           </tbody>
         </table>
       )}
-      <form className="payments-form" onSubmit={upload}>
+      <ValidatedForm className="payments-form" data-region="logo-documentos" onSubmit={upload}>
         <label>
           {t("settings.siiCafFile")}
           <FilePick
@@ -316,7 +344,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
             {t("settings.siiCafUpload")}
           </button>
         </div>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }
@@ -382,7 +410,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h3 className="eyebrow">{t("settings.siiCertTitle")}</h3>
+      <h2 className="eyebrow">{t("settings.siiCertTitle")}</h2>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       {certificate === null ? (
         <p className="settings-hint">{t("settings.siiCertEmpty")}</p>
@@ -406,7 +434,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
           </div>
         </dl>
       )}
-      <form className="payments-form" onSubmit={upload}>
+      <ValidatedForm className="payments-form" onSubmit={upload}>
         <label>
           {t("settings.siiCertFile")}
           <FilePick inputRef={pickRef} accept=".pfx,.p12" file={pickFile} onFile={setPickFile} />
@@ -428,12 +456,31 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
             {t("settings.siiCertUpload")}
           </button>
         </div>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }
 
-function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
+function OrgBrandingCard({
+  orgId,
+  onDraft,
+  companyRevision,
+  onSaved,
+}: {
+  orgId: string;
+  onDraft?: (value: OrgBrandingWriteRequest) => void;
+  companyRevision?: { previous?: string; updated: string };
+  onSaved?: (revision: { previous?: string; updated: string }) => void;
+}): JSX.Element {
+  const confirm = useConfirm();
+  const [expected, setExpected] = useState<string>();
+  useEffect(() => {
+    if (companyRevision)
+      setExpected((previous) =>
+        previous === companyRevision.previous ? companyRevision.updated : previous,
+      );
+  }, [companyRevision]);
+  const [colorFallback, setColorFallback] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [pickFile, setPickFile] = useState<File | null>(null);
   const pickRef = useRef<HTMLInputElement>(null);
@@ -445,8 +492,16 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
     brand_address: "",
     brand_phone: "",
     brand_email: "",
+    brand_primary_color: "",
+    document_attribution: false,
+    portal_attribution: true,
+    notification_email: "",
+    internal_mail_enabled: false,
   });
-  const requestOptions = { headers: { "X-Organization-ID": orgId } };
+  useEffect(() => {
+    onDraft?.(form);
+  }, [form, onDraft]);
+  const requestOptions = useMemo(() => ({ headers: { "X-Organization-ID": orgId } }), [orgId]);
 
   const load = useCallback(async () => {
     try {
@@ -458,7 +513,14 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
         brand_address: response.data.brand_address ?? "",
         brand_phone: response.data.brand_phone ?? "",
         brand_email: response.data.brand_email ?? "",
+        brand_primary_color: response.data.brand_primary_color,
+        document_attribution: response.data.document_attribution,
+        portal_attribution: response.data.portal_attribution,
+        notification_email: response.data.notification_email ?? "",
+        internal_mail_enabled: response.data.internal_mail_enabled,
       });
+      setExpected(response.data.updated_at);
+      setColorFallback(response.data.brand_color_fallback);
       if (response.data.brand_logo_key) {
         try {
           const { blob } = await apiFetchBlob(getOrganizationBrandingLogoReadUrl());
@@ -475,7 +537,7 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
     } catch {
       setMessage({ text: t("settings.brandingLoadError"), error: true });
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [requestOptions]);
 
   useEffect(() => {
     void load();
@@ -483,24 +545,56 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
 
   async function save(event: FormEvent): Promise<void> {
     event.preventDefault();
-    const field = (name: keyof typeof form) => form[name].trim() || null;
+    const field = (
+      name:
+        | "commercial_name"
+        | "giro"
+        | "brand_address"
+        | "brand_phone"
+        | "brand_email"
+        | "notification_email",
+    ) => form[name].trim() || null;
+    if (!/^#[0-9A-Fa-f]{6}$/.test(form.brand_primary_color)) {
+      setMessage({
+        text: "El color debe tener # y seis caracteres hexadecimales. Corrige el color antes de guardar.",
+        error: true,
+      });
+      return;
+    }
+    if (
+      !(await confirm({
+        title: "Guardar marca",
+        body: "La marca y los pies se usarán en nuevas emisiones. Los documentos anteriores conservan su emisor.",
+      }))
+    )
+      return;
     setBusy(true);
     setMessage(null);
     try {
       const response = await organizationBrandingSave(
         {
+          expected_updated_at: expected,
           commercial_name: field("commercial_name"),
           giro: field("giro"),
           brand_address: field("brand_address"),
           brand_phone: field("brand_phone"),
           brand_email: field("brand_email"),
+          brand_primary_color: form.brand_primary_color,
+          document_attribution: form.document_attribution,
+          portal_attribution: form.portal_attribution,
+          notification_email: field("notification_email"),
+          internal_mail_enabled: form.internal_mail_enabled,
         },
         requestOptions,
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setColorFallback(response.data.brand_color_fallback);
+      setExpected(response.data.updated_at);
       setMessage({ text: t("settings.brandingSaved"), error: false });
-    } catch {
-      setMessage({ text: t("settings.brandingSaveError"), error: true });
+      if (response.data.updated_at)
+        onSaved?.({ previous: expected, updated: response.data.updated_at });
+    } catch (error) {
+      setMessage({ text: actionErrorDetail(error, t("settings.brandingSaveError")), error: true });
     } finally {
       setBusy(false);
     }
@@ -518,7 +612,14 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
       if (pickRef.current) pickRef.current.value = "";
       setPickFile(null);
       setMessage({ text: t("settings.brandingLogoUploaded"), error: false });
-      await load();
+      setExpected(response.data.updated_at);
+      if (response.data.updated_at)
+        onSaved?.({ previous: expected, updated: response.data.updated_at });
+      const { blob } = await apiFetchBlob(getOrganizationBrandingLogoReadUrl(), requestOptions);
+      setLogoUrl((previous) => {
+        if (previous) URL.revokeObjectURL(previous);
+        return URL.createObjectURL(blob);
+      });
     } catch {
       setMessage({ text: t("settings.brandingSaveError"), error: true });
     } finally {
@@ -533,7 +634,13 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
       const response = await organizationBrandingLogoDelete(requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setMessage({ text: t("settings.brandingSaved"), error: false });
-      await load();
+      setExpected(response.data.updated_at);
+      if (response.data.updated_at)
+        onSaved?.({ previous: expected, updated: response.data.updated_at });
+      setLogoUrl((previous) => {
+        if (previous) URL.revokeObjectURL(previous);
+        return null;
+      });
     } catch {
       setMessage({ text: t("settings.brandingSaveError"), error: true });
     } finally {
@@ -543,9 +650,18 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h3 className="eyebrow">{t("settings.branding")}</h3>
-      <p className="settings-hint">{t("settings.brandingHint")}</p>
+      <h2 className="eyebrow">{t("settings.branding")}</h2>
+      <p className="settings-hint">
+        La marca y el pie se sellan al emitir. Los documentos anteriores conservan su identidad.
+      </p>
+      {colorFallback ? (
+        <p role="status">
+          El color elegido no alcanza contraste AA contra paper. Usamos teal-800 en tus nuevas
+          emisiones; elige un color más oscuro si quieres reemplazarlo.
+        </p>
+      ) : null}
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
+      {message?.error && <Button onClick={() => void load()}>Recargar marca</Button>}
       <div className="settings-branding-preview">
         {logoUrl ? (
           <img
@@ -557,7 +673,7 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
           <p className="settings-hint">{t("settings.brandingLogoEmpty")}</p>
         )}
       </div>
-      <form className="payments-form" onSubmit={save}>
+      <ValidatedForm className="payments-form" onSubmit={save}>
         <label>
           {t("settings.brandingName")}
           <input
@@ -603,13 +719,65 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
             onChange={(event) => setForm((prev) => ({ ...prev, brand_email: event.target.value }))}
           />
         </label>
+        <label>
+          Color de la marca (#RRGGBB)
+          <input
+            value={form.brand_primary_color}
+            maxLength={7}
+            required
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, brand_primary_color: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.document_attribution}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, document_attribution: event.target.checked }))
+            }
+          />
+          Mostrar «Generado con DEKOPEN» en documentos nuevos
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.portal_attribution}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, portal_attribution: event.target.checked }))
+            }
+          />
+          Mostrar la atribución discreta en portales nuevos
+        </label>
+        <label>
+          Correo para avisos internos
+          <input
+            type="email"
+            value={form.notification_email}
+            required={form.internal_mail_enabled}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, notification_email: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.internal_mail_enabled}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, internal_mail_enabled: event.target.checked }))
+            }
+          />
+          Enviar avisos internos al recibir una aprobación o bloquear una OT
+        </label>
         <div className="payments-form-actions">
           <button type="submit" className="primary-action" disabled={busy}>
             {t("settings.brandingSave")}
           </button>
         </div>
-      </form>
-      <form className="payments-form" onSubmit={upload}>
+      </ValidatedForm>
+      <ValidatedForm className="payments-form" onSubmit={upload}>
         <label>
           {t("settings.brandingLogo")}
           <FilePick
@@ -629,174 +797,237 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
             </button>
           )}
         </div>
-      </form>
+      </ValidatedForm>
     </div>
   );
 }
 
+const SETTINGS_SECTIONS = [
+  ["account", "Cuenta"],
+  ["company", "Empresa"],
+  ["users", "Usuarios y roles"],
+  ["commercial", "Comercial"],
+  ["documents", "Documentos"],
+  ["numbering", "Numeración"],
+  ["production", "Producción"],
+  ["analytics", "Analítica"],
+  ["integrations", "Integraciones"],
+  ["ai", "Inteligencia artificial"],
+] as const;
+
 export function SettingsPage(): JSX.Element {
-  const auth = useAuthSession();
+  const auth = useAuthSession(),
+    org = auth.me?.active_organization;
+  const [params, setParams] = useSearchParams();
+  const section = params.get("section") ?? "company";
+  const owner = org?.role === "OWNER",
+    commercial = owner || org?.role === "ESTIMATOR";
+  const workshop = owner || org?.role === "WORKSHOP_MANAGER";
+  const [draft, setDraft] = useState<{ scope: string; value: OrgBrandingWriteRequest }>({
+    scope: "",
+    value: {},
+  });
+  const scope = `${org?.id}-${section}`;
+  const branding = draft.scope === scope ? draft.value : {};
+  const [companyRevision, setCompanyRevision] = useState<{
+    orgId: string;
+    previous?: string;
+    updated: string;
+  }>();
+  const onBrand = useCallback(
+    (value: OrgBrandingWriteRequest) => setDraft({ scope, value }),
+    [scope],
+  );
+  const onDocument = useCallback(
+    (value: DocumentPreferences) => setDraft({ scope, value: { document_preferences: value } }),
+    [scope],
+  );
   const { theme, toggleTheme } = useTheme();
-  const me = auth.me;
-  const org = me?.active_organization;
-  const isOwner = org?.role === "OWNER";
-  const canWriteDocs = org?.role === "OWNER" || org?.role === "ESTIMATOR";
-
+  if (!org) return <DeniedState reason="Elige tu organización antes de configurar." />;
   return (
-    <section className="settings" aria-labelledby="page-title">
-      <PageHeader
-        context={org?.name ?? t("org.none")}
-        headingId="page-title"
-        title={t("settings.title")}
-      />
-
-      <section aria-labelledby="settings-group-account" className="settings-group">
-        <h2 id="settings-group-account" className="settings-group__title">
-          {t("settings.groupAccount")}
-        </h2>
-        <div className="settings-grid">
-          <div className="settings-card">
-            <h3 className="eyebrow">{t("settings.account")}</h3>
-            <dl className="settings-list">
-              <div className="settings-row">
-                <dt>{t("settings.email")}</dt>
-                <dd className="settings-mono">{me?.user.email}</dd>
-              </div>
-              <div className="settings-row">
-                <dt>{t("settings.twoFactor")}</dt>
-                <dd>{me?.aal === "aal2" ? t("settings.aal2") : t("settings.aal1")}</dd>
-              </div>
-              <div className="settings-row">
-                <dt>{t("settings.role")}</dt>
-                <dd>{org ? t(ROLE_KEYS[org.role]) : "—"}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="settings-card">
-            <h3 className="eyebrow">{t("settings.appearance")}</h3>
-            <div
-              className="settings-theme"
-              role="radiogroup"
-              aria-label={t("settings.theme")}
-              onKeyDown={(event) => {
-                // Roving radio contract — arrows move the checked choice.
-                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-                event.preventDefault();
-                const next = theme === "light" ? "dark" : "light";
-                if (next !== theme) {
-                  toggleTheme();
-                  const options = event.currentTarget.querySelectorAll('[role="radio"]');
-                  (options[next === "light" ? 0 : 1] as HTMLElement | undefined)?.focus();
-                }
-              }}
+    <section
+      className="settings"
+      data-density={org.role === "OPERATOR" || org.role === "INSTALLER" ? "workshop" : "office"}
+      data-theme={theme}
+      aria-labelledby="page-title"
+    >
+      <PageHeader title="Ajustes" headingId="page-title" context={org.name} />
+      <div className="settings-sections">
+        <nav aria-label="Secciones de ajustes">
+          {SETTINGS_SECTIONS.map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              aria-current={section === key ? "page" : undefined}
+              onClick={() => setParams({ section: key })}
             >
-              {(["light", "dark"] as const).map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  role="radio"
-                  aria-checked={theme === option}
-                  className="settings-theme-option"
-                  data-active={theme === option}
-                  tabIndex={theme === option ? 0 : -1}
-                  onClick={() => {
-                    if (theme !== option) toggleTheme();
-                  }}
-                >
-                  {option === "light" ? t("settings.light") : t("settings.dark")}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {me !== null && me.memberships.length > 0 && (
-            <div className="settings-card">
-              <h3 className="eyebrow">{t("settings.memberships")}</h3>
-              <ul className="settings-list settings-plain">
-                {me.memberships.map((membership) => (
-                  <MembershipRow key={membership.organization_id} membership={membership} />
-                ))}
-              </ul>
+              {label}
+            </button>
+          ))}
+          <Link to="/settings/billing">Plan y facturación</Link>
+          <Link to="/settings/wallet">Créditos de IA</Link>
+        </nav>
+        <div className="settings-content" key={`${org.id}-${section}`}>
+          {section === "account" && (
+            <>
+              <section className="settings-card">
+                <h2>Tu cuenta</h2>
+                <dl className="settings-list">
+                  <div className="settings-row">
+                    <dt>Correo</dt>
+                    <dd>{auth.me?.user.email}</dd>
+                  </div>
+                  <div className="settings-row">
+                    <dt>Segundo factor</dt>
+                    <dd>{auth.me?.aal === "aal2" ? "Verificado" : "Sin verificar"}</dd>
+                  </div>
+                  <div className="settings-row">
+                    <dt>Rol</dt>
+                    <dd>{t(ROLE_KEYS[org.role])}</dd>
+                  </div>
+                </dl>
+                <Button onClick={toggleTheme}>
+                  Cambiar a tema {theme === "light" ? "oscuro" : "claro"}
+                </Button>
+                <p>
+                  Buscar: <kbd>{MOD_K_HINT}</kbd> · Deshacer: <kbd>{MOD_KEY_HINT}Z</kbd>
+                </p>
+                <Link className="ui-button" to="/auth/mfa?configure=1">
+                  Configurar segundo factor
+                </Link>
+              </section>
+              <section className="settings-card">
+                <h2>Organizaciones</h2>
+                <ul className="settings-list">
+                  {auth.me?.memberships.map((m) => (
+                    <MembershipRow key={m.organization_id} membership={m} />
+                  ))}
+                </ul>
+              </section>
+            </>
+          )}
+          {section === "company" && (
+            <div className="settings-with-preview">
+              <div>
+                <CompanyCard
+                  orgId={org.id}
+                  canEdit={owner}
+                  revision={companyRevision?.orgId === org.id ? companyRevision : undefined}
+                  onSaved={(company, previous) =>
+                    setCompanyRevision({ orgId: org.id, previous, updated: company.updated_at })
+                  }
+                />
+                {commercial ? (
+                  <OrgBrandingCard
+                    orgId={org.id}
+                    onDraft={onBrand}
+                    onSaved={(revision) => setCompanyRevision({ orgId: org.id, ...revision })}
+                    companyRevision={
+                      companyRevision?.orgId === org.id ? companyRevision : undefined
+                    }
+                  />
+                ) : (
+                  <DeniedState reason="El dueño o estimador configura la marca de documentos." />
+                )}
+              </div>
+              {commercial && <DocumentPreview orgId={org.id} branding={branding} />}
             </div>
           )}
-
-          {/* Every role gets the shortcuts reference — without it the
-           * non-owner settings page ends after three small cards (review m9). */}
-          <div className="settings-card">
-            <h3 className="eyebrow">{t("settings.shortcuts")}</h3>
-            <dl className="settings-list">
-              <div className="settings-row">
-                <dt>{t("settings.shortcutPalette")}</dt>
-                <dd>
-                  <kbd>{MOD_K_HINT}</kbd> / <kbd>/</kbd>
-                </dd>
+          {section === "users" && <UsersCard orgId={org.id} canEdit={owner} />}
+          {section === "commercial" && (
+            <div className="settings-with-preview">
+              <div>
+                {commercial ? (
+                  <DocumentSettings
+                    orgId={org.id}
+                    canEdit={commercial}
+                    section="commercial"
+                    onDraft={onDocument}
+                  />
+                ) : (
+                  <DeniedState reason="El dueño o estimador configura condiciones comerciales." />
+                )}
+                {owner ? (
+                  <PricingRulesSettings orgId={org.id} />
+                ) : (
+                  <DeniedState reason="El dueño configura IVA, bandas de margen y aprobación de descuentos." />
+                )}
+                <ExtraPolicyEditor orgId={org.id} canWrite={owner} />
               </div>
-              <div className="settings-row">
-                <dt>{t("settings.shortcutEsc")}</dt>
-                <dd>
-                  <kbd>Esc</kbd>
-                </dd>
-              </div>
-              <div className="settings-row">
-                <dt>{t("settings.shortcutUndo")}</dt>
-                <dd>
-                  <kbd>{MOD_KEY_HINT}Z</kbd> / <kbd>{MOD_KEY_HINT}Shift Z</kbd>
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </section>
-
-      {canWriteDocs && org !== undefined && (
-        <section aria-labelledby="settings-group-docs" className="settings-group">
-          <h2 id="settings-group-docs" className="settings-group__title">
-            {t("settings.groupDocs")}
-          </h2>
-          <div className="settings-grid">
-            <OrgBrandingCard orgId={org.id} />
-          </div>
-        </section>
-      )}
-
-      {isOwner && org !== undefined && (
-        <section aria-labelledby="settings-group-charging" className="settings-group">
-          <h2 id="settings-group-charging" className="settings-group__title">
-            {t("settings.groupCharging")}
-          </h2>
-          <div className="settings-grid">
-            <FlowIntegrationCard orgId={org.id} />
-            <SiiCafCard orgId={org.id} />
-            <SiiCertificateCard orgId={org.id} />
-          </div>
-        </section>
-      )}
-
-      {isOwner && (
-        <section aria-labelledby="settings-group-plan" className="settings-group">
-          <h2 id="settings-group-plan" className="settings-group__title">
-            {t("settings.groupPlan")}
-          </h2>
-          <div className="settings-grid">
-            <div className="settings-card">
-              <h3 className="eyebrow">{t("settings.billing")}</h3>
-              <p className="settings-hint">{t("settings.billingHint")}</p>
-              <div className="settings-links">
-                <Link className="ui-backlink" to="/settings/billing">
-                  {t("settings.billingPage")}
-                </Link>
-                <Link className="ui-backlink" to="/settings/wallet">
-                  {t("settings.walletPage")}
-                </Link>
-                <Link className="ui-backlink" to="/pricing/cost-lists">
-                  {t("pricing.lists")}
-                </Link>
-              </div>
+              {commercial && <DocumentPreview orgId={org.id} branding={branding} />}
             </div>
-          </div>
-        </section>
-      )}
+          )}
+          {section === "documents" && (
+            <div className="settings-with-preview">
+              <div>
+                {commercial ? (
+                  <DocumentSettings
+                    orgId={org.id}
+                    canEdit={commercial}
+                    section="documents"
+                    onDraft={onDocument}
+                  />
+                ) : (
+                  <DeniedState reason="El dueño o estimador configura los documentos de la empresa." />
+                )}
+              </div>
+              {commercial && <DocumentPreview orgId={org.id} branding={branding} />}
+            </div>
+          )}
+          {section === "numbering" && <NumberingCard orgId={org.id} />}
+          {section === "analytics" &&
+            (workshop ? (
+              <AnalyticsPreferences orgId={org.id} canEdit={owner} />
+            ) : (
+              <DeniedState reason="El dueño y el jefe de taller consultan la configuración de analítica." />
+            ))}
+          {section === "production" && (
+            <>
+              {["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role) ? (
+                <>
+                  <ProductionSettings orgId={org.id} canEdit={workshop} />
+                  <DocumentSettings orgId={org.id} canEdit={commercial} section="production" />
+                  <MountingRulesSettings orgId={org.id} canWrite={workshop} />
+                  <GlassRulesSettings orgId={org.id} canWrite={workshop} />
+                </>
+              ) : (
+                <DeniedState reason="El dueño o jefe de taller configura estaciones, montaje y materiales." />
+              )}
+            </>
+          )}
+          {section === "integrations" && (
+            <>
+              {owner && <ActivationGuide orgId={org.id} />}
+              {owner ? (
+                <>
+                  <CollectionIntegrations orgId={org.id} />
+                  <details className="settings-card">
+                    <summary>Conectar Flow</summary>
+                    <FlowIntegrationCard orgId={org.id} />
+                  </details>
+                  <MailIntegrationCard orgId={org.id} />
+                  <details className="settings-card">
+                    <summary>Configurar emisión SII</summary>
+                    <SiiCafCard orgId={org.id} />
+                    <SiiCertificateCard orgId={org.id} />
+                  </details>
+                </>
+              ) : (
+                <DeniedState reason="El dueño configura conexiones y consulta sus credenciales protegidas." />
+              )}
+            </>
+          )}
+          {section === "ai" &&
+            (owner ? (
+              <AiSettingsSection orgId={org.id} />
+            ) : (
+              <DeniedState reason="El dueño configura proveedor, rutas y presupuesto de IA." />
+            ))}
+          {!SETTINGS_SECTIONS.some(([key]) => key === section) && (
+            <p>Esta sección no existe. Elige una sección de Ajustes.</p>
+          )}
+        </div>
+      </div>
     </section>
   );
 }

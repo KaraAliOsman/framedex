@@ -1,0 +1,98 @@
+[
+  {
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "COMPLETADO",
+    "domainWrites": [],
+    "observedWrites": [
+      {
+        "method": "POST",
+        "path": "/api/v1/engine/assembly/calculate/"
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "theme": "light",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "state": "COMPLETADO",
+    "domainWrites": [],
+    "observedWrites": [
+      {
+        "method": "POST",
+        "path": "/api/v1/engine/assembly/calculate/"
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "theme": "light",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "state": "COMPLETADO",
+    "domainWrites": [],
+    "observedWrites": [
+      {
+        "method": "POST",
+        "path": "/api/v1/engine/assembly/calculate/"
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "COMPLETADO",
+    "domainWrites": [],
+    "observedWrites": [
+      {
+        "method": "POST",
+        "path": "/api/v1/engine/assembly/calculate/"
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "theme": "dark",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "state": "COMPLETADO",
+    "domainWrites": [],
+    "observedWrites": [
+      {
+        "method": "POST",
+        "path": "/api/v1/engine/assembly/calculate/"
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "theme": "dark",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "state": "COMPLETADO",
+    "domainWrites": [],
+    "observedWrites": [
+      {
+        "method": "POST",
+        "path": "/api/v1/engine/assembly/calculate/"
+      }
+    ],
+    "overflow": false
+  }
+]

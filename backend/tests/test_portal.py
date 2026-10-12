@@ -22,6 +22,31 @@ def _roles(monkeypatch):
     monkeypatch.setattr("portal.service.transaction.atomic", _atomic)
     monkeypatch.setattr("portal.service.documentary_backend", _atomic)
     monkeypatch.setattr("portal.service.portal_backend", _atomic)
+    # SQL seams follow the extracted proposal implementation. Domain guards
+    # and consent still run; only the persistence boundary is substituted.
+    for name in ('one','rows','write'):
+        monkeypatch.setattr('portal.proposal_service.'+name, lambda *a,_name=name,**k:getattr(service,_name)(*a,**k))
+    monkeypatch.setattr('portal.proposal_service.choice',lambda *a:None)
+    monkeypatch.setattr('portal.service.choice',lambda *a:None)
+    monkeypatch.setattr('portal.payments.provider_scope',_atomic)
+    monkeypatch.setattr('portal.payments.rows',lambda *a,**k:[])
+    monkeypatch.setattr('portal.proposal_service.resolve_option',lambda org,offer,rev:(offer,json.loads(offer['snapshot_json'])))
+    # The request-local resolver is the new persistence seam. These unit
+    # fixtures still substitute SQL only; real hash/inclusion checks run in
+    # test_offered_options and the PostgreSQL proposal integration suite.
+    class FakeOfferedOptions:
+        def __init__(self, org, offering):
+            self.org = org
+            self.offering = service._bound_version({
+                'org_id': org, 'project_version_id': offering['id'],
+                'project_id': offering['project_id']})
+            self.snapshot = json.loads(self.offering['snapshot_json'])
+
+        def resolve(self, revision):
+            from portal.proposal_service import resolve_option
+            return resolve_option(self.org, self.offering, revision)
+
+    monkeypatch.setattr('portal.proposal_service.OfferedOptions', FakeOfferedOptions)
 
 
 def test_share_quote_mints_hashed_token(monkeypatch) -> None:
@@ -121,6 +146,8 @@ def _approval(status="PENDING", expired=False):
 
 def _version(snapshot: dict | None = None, revision="REV-A"):
     return {
+        "id": uuid4(), "org_id":uuid4(), "project_id":uuid4(),
+        "snapshot_sha256": "a"*64,
         "revision_code": revision,
         "emitted_at": datetime.now(timezone.utc),
         "snapshot_json": json.dumps(
@@ -134,7 +161,8 @@ def _version(snapshot: dict | None = None, revision="REV-A"):
                     "total_price_tax": "1.90",
                     "total_price_gross": "11.90",
                     "quotation_valid_until": "2999-01-01",
-                }
+                },
+                "positions": [{"id":str(uuid4()),"quantity":1,"price_net":"10.00"}]
             }
         ),
     }
@@ -165,6 +193,10 @@ def _install_fakes(monkeypatch, approval, version=None, live=None, calls=None):
     def fake_one(sql_text, params, code="not_found"):
         lowered = " ".join(sql_text.lower().split())
         calls.append(lowered)
+        if lowered.startswith('insert into public.quote_decisions'):
+            return {'id':uuid4()}
+        if "private.quote_link_expires_at" in lowered:
+            return {"expires_at": params[2]}
         if "project_versions" in lowered:
             return version or _version()
         if "public.projects" in lowered:
@@ -183,7 +215,7 @@ def test_portal_quote_unknown_and_expired_tokens(monkeypatch) -> None:
     with pytest.raises(DocumentaryError, match="quote_not_found"):
         service.portal_quote("bogus")
 
-    monkeypatch.setattr("portal.service.rows", lambda *a, **k: [_approval(expired=True)])
+    _install_fakes(monkeypatch, _approval(expired=True))
     with pytest.raises(DocumentaryError, match="quote_expired"):
         service.portal_quote("expired-token")
 
@@ -260,13 +292,15 @@ def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) ->
             return [approval]
         if "project_payments" in lowered:
             return [
-                {"amount": "400.00", "voided_at": None},
-                {"amount": "50.00", "voided_at": "x"},
+                {"id":uuid4(),"amount": "400.00", "voided_at": None},
+                {"id":uuid4(),"amount": "50.00", "voided_at": "x"},
             ]
         return []
 
     def fake_one(sql_text, params, code="not_found"):
         lowered = " ".join(sql_text.lower().split())
+        if "private.quote_link_expires_at" in lowered:
+            return {"expires_at": params[2]}
         if "project_versions" in lowered:
             return _version(snapshot=sealed)
         if "public.projects" in lowered:
@@ -296,7 +330,24 @@ def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) ->
         "status": "PARTIAL",
         "collected": "400.00",
         "balance": "790.00",
+        "simulated": False,
     }
+
+
+def test_customer_finish_preserves_sealed_faces_without_internal_profile_bindings() -> None:
+    from engine.tests.finish_cases import finish_cases
+
+    finish = finish_cases()["pvc-nogal-exterior"]["bom"]["finish"]
+    sealed = {"positions": [{"resolved_finish": finish, "color_interior": "WHITE", "color_exterior": "WALNUT"}]}
+    original = json.dumps(sealed, sort_keys=True)
+    out = service._sealed_positions({"snapshot_json": sealed})[0]["resolved_finish"]
+    assert out["interior"] == finish["interior"]
+    assert out["exterior"] == finish["exterior"]
+    assert out["base"] == finish["base"]
+    assert out["combination"] == finish["combination"]
+    assert out["profile_skus"] == {}
+    assert finish["profile_skus"]
+    assert json.dumps(sealed, sort_keys=True) == original
 
 
 def test_decide_approves_project_and_replays(monkeypatch) -> None:
@@ -325,7 +376,10 @@ def test_decide_approves_project_and_replays(monkeypatch) -> None:
     )
     with patch("portal.service.SupabaseDocumentStorage"):
         out = service.decide_quote(
-            token="tok", decision="APPROVED", decided_by="Ana", note=None
+            token="tok", decision="APPROVED", decided_by="Ana", note=None,
+            decided_rut='12.345.678-5',confirmed=True,
+            expected_offering_sha256='a'*64,expected_selected_sha256='a'*64,
+            consent_text='Acepto la propuesta COT-P-1-REV-A por $12 IVA incluido y sus condiciones'
         )
 
     assert any("pricing_backend" in c for c in role_calls)
@@ -356,19 +410,16 @@ def test_decide_rejects_stale_link(monkeypatch) -> None:
     assert not any(c.startswith("update") for c in calls)
 
 
-def test_decide_confirm_on_already_approved_project(monkeypatch) -> None:
-    """A second link on the same sealed revision still seals its approval."""
+def test_decide_cannot_add_another_agreement_after_off_channel_approval(monkeypatch) -> None:
+    """A pending capability cannot create new consent after staff approval."""
     _roles(monkeypatch)
     approval = _approval()
     calls = _install_fakes(monkeypatch, approval, live=_live(status="APPROVED"))
     with patch("portal.service.SupabaseDocumentStorage"):
-        out = service.decide_quote(
-            token="tok", decision="APPROVED", decided_by="Ana", note=None
-        )
-    # the approval seals, but the project is not transitioned again
-    assert any("update public.customer_approvals" in c for c in calls)
+        with pytest.raises(DocumentaryError,match='quote_already_decided'):
+            service.decide_quote(token='tok',decision='APPROVED',decided_by='Ana',note=None)
+    assert not any("update public.customer_approvals" in c for c in calls)
     assert not any("update public.projects" in c for c in calls)
-    assert out["approval_status"] in {"PENDING", "APPROVED"}
 
 
 def test_decide_decline_on_approved_project_is_honest(monkeypatch) -> None:
@@ -482,11 +533,10 @@ def test_decide_replay_keeps_sealed_state(monkeypatch) -> None:
     assert out["approval_status"] == "APPROVED"
 
 
-def test_revoked_token_is_dead(monkeypatch) -> None:
+@pytest.mark.parametrize("expired", [False, True])
+def test_revoked_token_is_dead(monkeypatch, expired) -> None:
     _roles(monkeypatch)
-    monkeypatch.setattr(
-        "portal.service.rows", lambda *a, **k: [_approval(status="REVOKED")]
-    )
+    _install_fakes(monkeypatch, _approval(status="REVOKED", expired=expired))
     with pytest.raises(DocumentaryError, match="quote_revoked"):
         service.portal_quote("revoked-token")
     with pytest.raises(DocumentaryError, match="quote_revoked"):
@@ -706,10 +756,13 @@ def test_list_approvals_exposes_the_view_signal(monkeypatch) -> None:
                     "decided_at": None,
                     "decided_note": None,
                     "expires_at": datetime.now(timezone.utc) + timedelta(days=30),
+                    "original_expires_at": datetime.now(timezone.utc) + timedelta(days=30),
+                    "valid_until": "2999-01-01",
                     "created_at": datetime.now(timezone.utc),
                     "revoked_at": None,
                     "view_count": 3,
                     "last_viewed_at": viewed_at,
+                    "link_source": "SHARE",
                 }
             ]
         return []
@@ -717,8 +770,11 @@ def test_list_approvals_exposes_the_view_signal(monkeypatch) -> None:
     monkeypatch.setattr("portal.service.rows", fake_rows)
     monkeypatch.setattr(
         "portal.service.one",
-        lambda *a, **k: {"id": uuid4()},
+        lambda *a, **k: {"id": uuid4(), "current_revision": "REV-A"},
     )
     out = service.list_approvals(org_id=uuid4(), project_id=uuid4())
     assert out[0]["view_count"] == 3
+    assert out[0]["link_source"] == "SHARE"
     assert out[0]["last_viewed_at"] == viewed_at.isoformat()
+
+    assert out[0]["link_state"] == "VIEWED"

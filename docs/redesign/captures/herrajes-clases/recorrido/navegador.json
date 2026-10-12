@@ -1,0 +1,425 @@
+[
+  {
+    "name": "inspector-f6-manilla-opciones",
+    "screenshot": "inspector-f6-manilla-opciones.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "guardado-reapertura-opciones",
+    "screenshot": "guardado-reapertura-opciones.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "diff-clase-con-delta",
+    "screenshot": "diff-clase-con-delta.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "clase-aplicar-deshacer",
+    "screenshot": "clase-aplicar-deshacer.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "altura-fuera-de-rango",
+    "screenshot": "altura-fuera-de-rango.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "restriccion-siguiente-clase",
+    "screenshot": "restriccion-siguiente-clase.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "division-diff-motor",
+    "screenshot": "division-diff-motor.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "division-aplicar-deshacer",
+    "screenshot": "division-aplicar-deshacer.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1440-light",
+    "screenshot": "editor-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "avanzado-1440-light",
+    "screenshot": "avanzado-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pareja-1440-light",
+    "screenshot": "pareja-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1280-light",
+    "screenshot": "editor-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "avanzado-1280-light",
+    "screenshot": "avanzado-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pareja-1280-light",
+    "screenshot": "pareja-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1024-light",
+    "screenshot": "editor-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "avanzado-1024-light",
+    "screenshot": "avanzado-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pareja-1024-light",
+    "screenshot": "pareja-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1440-dark",
+    "screenshot": "editor-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "avanzado-1440-dark",
+    "screenshot": "avanzado-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pareja-1440-dark",
+    "screenshot": "pareja-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1280-dark",
+    "screenshot": "editor-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "avanzado-1280-dark",
+    "screenshot": "avanzado-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pareja-1280-dark",
+    "screenshot": "pareja-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "editor-1024-dark",
+    "screenshot": "editor-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "avanzado-1024-dark",
+    "screenshot": "avanzado-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pareja-1024-dark",
+    "screenshot": "pareja-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "estado-empty",
+    "screenshot": "estado-empty.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "estado-error",
+    "screenshot": "estado-error.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "estado-permission",
+    "screenshot": "estado-permission.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-1440-light",
+    "screenshot": "pedido-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-1280-light",
+    "screenshot": "pedido-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-1024-light",
+    "screenshot": "pedido-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-390-light",
+    "screenshot": "pedido-390-light.png",
+    "width": 390,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-1440-dark",
+    "screenshot": "pedido-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-1280-dark",
+    "screenshot": "pedido-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-1024-dark",
+    "screenshot": "pedido-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-390-dark",
+    "screenshot": "pedido-390-dark.png",
+    "width": 390,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-rol-operator",
+    "screenshot": "pedido-rol-operator.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "pedido-rol-installer",
+    "screenshot": "pedido-rol-installer.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-1440-light",
+    "screenshot": "portal-1440-light.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-1280-light",
+    "screenshot": "portal-1280-light.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-1024-light",
+    "screenshot": "portal-1024-light.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-390-light",
+    "screenshot": "portal-390-light.png",
+    "width": 390,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-1440-dark",
+    "screenshot": "portal-1440-dark.png",
+    "width": 1440,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-1280-dark",
+    "screenshot": "portal-1280-dark.png",
+    "width": 1280,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-1024-dark",
+    "screenshot": "portal-1024-dark.png",
+    "width": 1024,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  },
+  {
+    "name": "portal-390-dark",
+    "screenshot": "portal-390-dark.png",
+    "width": 390,
+    "overflow": false,
+    "errors": [],
+    "findings": [],
+    "presentation": []
+  }
+]
