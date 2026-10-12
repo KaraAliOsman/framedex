@@ -1020,7 +1020,7 @@ export function ProjectPrices({
         .finally(() => {
           if (generation.current === current) setCalculating(false);
         });
-    }, 350);
+    }, 180);
     return () => {
       window.clearTimeout(timer);
       generation.current += 1;
