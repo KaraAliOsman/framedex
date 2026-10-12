@@ -1260,6 +1260,527 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/analytics/decision/:
+    get:
+      operationId: analytics_decision_workspace
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+      tags:
+      - analytics
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsWorkspace'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/analytics/decision/export/:
+    get:
+      operationId: analytics_decision_csv
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+      tags:
+      - analytics
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: Detalle CSV UTF-8; valores exactos y definición por cifra.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/analytics/orders/{order_id}/actual/:
+    get:
+      operationId: analytics_actual_report
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - analytics
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActualReportResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: analytics_actual_report_save
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - analytics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualReportRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ActualReportRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ActualReportRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActualReportResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/analytics/orders/{order_id}/actual/preview/:
+    post:
+      operationId: analytics_actual_report_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - analytics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualReportRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ActualReportRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ActualReportRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActualReportResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/analytics/preferences/:
+    get:
+      operationId: analytics_preferences
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - analytics
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsPreference'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: analytics_preferences_save
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - analytics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsPreferenceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnalyticsPreferenceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnalyticsPreferenceRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsPreference'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/analytics/quotations/:
     get:
       operationId: analytics_quotations
@@ -23823,6 +24344,151 @@ components:
       - id
       - name
       - role
+    ActualReportRequestCurrencyEnum:
+      enum:
+      - CLP
+      - USD
+      - UF
+      type: string
+      description: |-
+        * `CLP` - CLP
+        * `USD` - USD
+        * `UF` - UF
+    ActualReportRequestRequest:
+      type: object
+      properties:
+        request_key:
+          type: string
+          format: uuid
+        expected_revision:
+          type: integer
+          minimum: 0
+        source_fingerprint:
+          type: string
+          minLength: 1
+          pattern: ^[0-9a-f]{64}$
+        currency:
+          $ref: '#/components/schemas/ActualReportRequestCurrencyEnum'
+        source:
+          type: string
+          minLength: 3
+          maxLength: 1000
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialActualRequest'
+        labor:
+          type: array
+          items:
+            $ref: '#/components/schemas/LaborActualRequest'
+        other_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+        reusable_credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+        closed:
+          type: boolean
+        bars:
+          $ref: '#/components/schemas/BarActualRequest'
+        confirmed:
+          type: boolean
+          default: false
+      required:
+      - bars
+      - closed
+      - currency
+      - expected_revision
+      - labor
+      - materials
+      - other_cost
+      - reason
+      - request_key
+      - reusable_credit
+      - source
+      - source_fingerprint
+    ActualReportResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        currency:
+          type: string
+          nullable: true
+        revision:
+          type: integer
+        source_fingerprint:
+          type: string
+        source:
+          type: string
+        reason:
+          type: string
+        materials:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        labor:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        produced:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        other_cost:
+          type: string
+          nullable: true
+        reusable_credit:
+          type: string
+          nullable: true
+        closed:
+          type: boolean
+        bars:
+          type: object
+          additionalProperties: {}
+        result:
+          type: object
+          additionalProperties: {}
+        previous_result:
+          type: object
+          additionalProperties: {}
+      required:
+      - bars
+      - closed
+      - code
+      - currency
+      - id
+      - labor
+      - materials
+      - other_cost
+      - produced
+      - project_id
+      - reason
+      - result
+      - reusable_credit
+      - revision
+      - source
+      - source_fingerprint
+      - status
     AdminResponse:
       type: object
       properties:
@@ -24780,6 +25446,130 @@ components:
       - id
       - requirement_line_id
       - supplier_eligibility_id
+    AnalyticsDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        href:
+          type: string
+        value:
+          type: string
+          nullable: true
+        unit:
+          type: string
+        currency:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+      required:
+      - code
+      - currency
+      - href
+      - label
+      - reason
+      - unit
+      - value
+    AnalyticsMetric:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        group:
+          type: string
+        value:
+          type: string
+          nullable: true
+        unit:
+          type: string
+        currency:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        formula:
+          type: string
+        source:
+          type: string
+        definition:
+          type: string
+        missing:
+          type: integer
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsDetail'
+      required:
+      - currency
+      - definition
+      - details
+      - formula
+      - group
+      - key
+      - label
+      - missing
+      - reason
+      - source
+      - unit
+      - value
+    AnalyticsPreference:
+      type: object
+      properties:
+        period_days:
+          type: integer
+          maximum: 366
+          minimum: 1
+      required:
+      - period_days
+    AnalyticsPreferenceRequest:
+      type: object
+      properties:
+        period_days:
+          type: integer
+          maximum: 366
+          minimum: 1
+      required:
+      - period_days
+    AnalyticsWorkspace:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date
+        end:
+          type: string
+          format: date
+        as_of:
+          type: string
+          format: date-time
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsMetric'
+        works:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        source:
+          type: string
+        empty:
+          type: boolean
+      required:
+      - as_of
+      - empty
+      - end
+      - metrics
+      - source
+      - start
+      - works
     AngleDegreesEnum:
       enum:
       - 45
@@ -25404,6 +26194,37 @@ components:
       - half
       - one_third
       - two_thirds
+    BarActualRequest:
+      type: object
+      properties:
+        complete:
+          type: boolean
+          default: false
+        input_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+        productive_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+        waste_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+        reusable_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+      required:
+      - input_mm
+      - productive_mm
+      - reusable_mm
+      - waste_mm
     BarAuthority:
       type: object
       properties:
@@ -33224,6 +34045,26 @@ components:
       - sku
       - stay_arms_qty
       - system_id
+    LaborActualRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+        hourly_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+      required:
+      - hourly_rate
+      - hours
+      - id
     LeafWeight:
       type: object
       properties:
@@ -33526,6 +34367,26 @@ components:
       - expected_recipient
       - expected_source_id
       - operation_key
+    MaterialActualRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+        waste_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,24}(?:\.\d{0,8})?$
+          nullable: true
+      required:
+      - id
+      - unit_cost
+      - waste_quantity
     MaterialEnum:
       enum:
       - PVC

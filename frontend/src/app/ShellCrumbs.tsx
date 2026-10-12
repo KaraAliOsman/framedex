@@ -40,6 +40,7 @@ export function crumbsFor(
   if (section === "purchasing") return [{ label: t("crumb.purchasing") }];
   if (section === "inventory") return [{ label: t("nav.inventory") }];
   if (section === "quotes") return [{ label: t("nav.quotes") }];
+  if (section === "analytics") return [{ label: t("nav.analytics") }];
   if (section === "clients") {
     const head: Crumb = { label: t("crumb.clients") };
     if (second !== undefined)

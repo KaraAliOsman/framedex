@@ -1476,3 +1476,33 @@ se atribuyen al fixture. CI y squash quedan por registrar al integrar.
 ## 2026-10-12 · P18 integrado
 PR #152 mergeado en d3b86003d69e29089e62463f9f80af7fd0c5dc78 con los cuatro checks verdes. Uw, OGUC, alternativa revisada y anexo sellado conservan sus límites y fuentes; ver product/thermal-authority.md y docs/redesign/P18-ACEPTACION.md. El stack propio se detuvo antes de continuar P24.
 
+
+## 2026-10-12 · P24, evidencia de decisiones y costos
+
+Código `577db8c038918e45e602291f0aede0766d0e07df`. Ventas, margen, planta y terreno
+con SQL versionado y aritmética Decimal; cierre de OT aditivo e inmutable,
+preview, confirmación humana y recibo original en replay. Descuento incluido
+una vez, cobertura invalidada por evidencia nueva y Sin dato ante faltantes.
+51 casos focales y ocho UI PASA; 40 vistas oficiales sin hallazgos y 74 PNG
+pixel idénticos. F6 llega a cada movimiento valorado. Gates completos/CI se
+registran al integrar; límites y cohortes en product/decision-analytics.md.
+
+## 2026-10-12 · P24, cuatro gates locales finales
+
+Código `5c484cbb9e458ceed0a4af1ec1a3cdeba8c2d067`. `make lint`, `make typecheck`,
+`make test` y `make build` PASA: 1.061 motor (+2 xfail históricos), 1.562 backend,
+1.140 frontend, 135 fuentes mypy y goldens/clientes reproducibles. Se mantiene
+la lista exacta de rutas OpenAPI y de navegación por rol, y el glosario UF.
+El test de fecha comercial y PDF usa el contrato explícito America/Santiago.
+La interrupción del runtime no se cuenta como gate válido; la corrida completa
+reiniciada termina sin errores. Database Gate y CI continúan su validación.
+
+## 2026-10-12 · P24, cierre local y controles legibles
+
+Código final `bab0df93149e1373b78efd00e17b3120cf092e6d`: los cuatro gates completos
+pasan también después de la corrección visual. Fechas Mono con calendario oscuro
+y hover con tinte seleccionado; axe pasa en 1440 claro y 390 oscuro con el puente
+abierto. 76 PNG comprimidos conservan sus píxeles. Database Gate completo termina
+exit 0: 1.483 pgTAP, 589 integraciones, 19 E2E y trece upgrades PG16. La plantilla
+pública de acceso del daemon se restauró y verificó byte a byte tras su reinicio;
+no se modificaron pruebas ni timeouts. La aceptación enlaza oráculos y límites.

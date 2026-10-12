@@ -1,0 +1,182 @@
+{
+  "bars": {
+    "cause": null,
+    "utilization": "0.9",
+    "waste_ratio": "0.05"
+  },
+  "base": {
+    "causes": [],
+    "cost": "500",
+    "credit": "0",
+    "labor": "60",
+    "lines": [
+      {
+        "amount": "420",
+        "id": "consume",
+        "kind": "CONSUMPTION",
+        "quantity": "42",
+        "unit_cost": "10",
+        "waste": "30"
+      },
+      {
+        "amount": "60",
+        "hourly_rate": "20",
+        "hours": "3",
+        "id": "cut",
+        "kind": "LABOR"
+      }
+    ],
+    "materials": "390",
+    "other": "20",
+    "waste": "30"
+  },
+  "bridge": {
+    "causes": [],
+    "delta_margin": "-0.0444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444",
+    "delta_profit": "-40.0",
+    "discount": "-100",
+    "drivers": [
+      {
+        "amount": "10",
+        "key": "materials"
+      },
+      {
+        "amount": "10",
+        "key": "waste"
+      },
+      {
+        "amount": "-10",
+        "key": "labor"
+      },
+      {
+        "amount": "-10",
+        "key": "other"
+      },
+      {
+        "amount": "-40.0",
+        "key": "remake"
+      }
+    ],
+    "net": "900",
+    "quoted_cost": "500",
+    "quoted_margin": "0.4444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444",
+    "quoted_profit": "400",
+    "real_cost": "540.0",
+    "real_margin": "0.4",
+    "real_profit": "360.0"
+  },
+  "recovered": {
+    "causes": [],
+    "cost": "16.0",
+    "credit": "3",
+    "labor": "0",
+    "lines": [
+      {
+        "amount": "20",
+        "id": "consume",
+        "kind": "CONSUMPTION",
+        "quantity": "10",
+        "unit_cost": "2",
+        "waste": "2"
+      },
+      {
+        "amount": "-4",
+        "id": "return",
+        "kind": "RETURN",
+        "quantity": "2",
+        "unit_cost": "2",
+        "waste": "0"
+      },
+      {
+        "amount": "2",
+        "id": "scrap",
+        "kind": "SCRAP",
+        "quantity": "1",
+        "unit_cost": "2",
+        "waste": "2"
+      },
+      {
+        "amount": "1.0",
+        "id": "remnant",
+        "kind": "REMNANT",
+        "quantity": "0.5",
+        "unit_cost": "2",
+        "waste": "0"
+      },
+      {
+        "amount": "0",
+        "hourly_rate": "2",
+        "hours": "0",
+        "id": "cut",
+        "kind": "LABOR"
+      }
+    ],
+    "materials": "12.0",
+    "other": "0",
+    "waste": "4"
+  },
+  "remake": {
+    "causes": [],
+    "cost": "40.0",
+    "credit": "0",
+    "labor": "10.0",
+    "lines": [
+      {
+        "amount": "30",
+        "id": "remake",
+        "kind": "CONSUMPTION",
+        "quantity": "3",
+        "unit_cost": "10",
+        "waste": "5.0"
+      },
+      {
+        "amount": "10.0",
+        "hourly_rate": "20",
+        "hours": "0.5",
+        "id": "recut",
+        "kind": "LABOR"
+      }
+    ],
+    "materials": "25.0",
+    "other": "0",
+    "waste": "5.0"
+  },
+  "remnant_quantities": {
+    "bar": "0.5",
+    "sheet": "1.875"
+  },
+  "sources": {
+    "labor": [
+      {
+        "amount": "-60",
+        "id": "cut"
+      }
+    ],
+    "materials": [
+      {
+        "amount": "-390",
+        "id": "consume"
+      },
+      {
+        "amount": "0",
+        "id": "credit"
+      }
+    ],
+    "other": [
+      {
+        "amount": "-20",
+        "id": "other"
+      }
+    ],
+    "waste": [
+      {
+        "amount": "-30",
+        "id": "consume"
+      }
+    ]
+  },
+  "wire": {
+    "small": "0.00000001",
+    "zero": "0.00000000"
+  }
+}

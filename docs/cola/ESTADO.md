@@ -87,5 +87,5 @@ Riesgos: bow Solo cotización, catálogo DEMO, integración financiera sandbox, 
 Ola 3 cerrada: P21, P10, P22, P23, D08, P19 y P18 integrados con CI 4/4 verde.
 Proyecto, acuerdo, empresa, terreno, aperturas avanzadas, 3D y térmica comparten revisión y autoridad selladas.
 Uw usa áreas visibles; la alternativa mínima pasa por diff y deshacer; revocar una fuente conserva informe y PDF emitidos.
-Capturas clave: `docs/redesign/captures/termico-oguc/`, `aperturas-avanzadas/`, `representacion-3d/` y `terreno-postventa/`.
+Capturas clave: `docs/redesign/captures/termico-oguc/`, `tipologias-avanzadas/`, `3d-fisico/` y `terreno-postventa/`.
 Riesgos: catálogo DEMO, adaptadores financieros sandbox, datos reales de fabricante y validación industrial requieren activación; P24 y P20 continúan la aceptación.
