@@ -1,6 +1,7 @@
 """Project and position routes."""
 
 from django.urls import path
+from projects.thermal_views import ProjectThermalView, ThermalAlternativesView
 
 from projects.views import (
     ClientView,
@@ -46,6 +47,8 @@ from projects.mounting import MountingRulesView, MountingPreviewView, Measuremen
 from projects.collection_views import CollectionSettingsView, FlowSimulationView, FiscalSimulationView, CollectionReminderView, CollectionReminderSendView
 
 urlpatterns = [
+    path("projects/<uuid:project_id>/thermal/", ProjectThermalView.as_view()),
+    path("projects/<uuid:project_id>/thermal/<uuid:position_id>/alternatives/", ThermalAlternativesView.as_view()),
     path("organization/company/",CompanyView.as_view()),
     path("organization/users/",CompanyUsersView.as_view()),
     path("organization/users/<uuid:identity>/",CompanyUserView.as_view()),

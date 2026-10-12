@@ -435,3 +435,23 @@ una unidad o tarifa distinta debe tener su autoridad comercial identificable.
 6. Las copias locales guardan fotos/firmas hasta sincronizar. Use teléfonos
    protegidos; una revocación no elimina una copia de un dispositivo sin red.
    Compruebe cierre de sesión y bloqueo del replay con acceso revocado.
+
+## Térmica · datos de fabricante y responsable de obra
+
+1. Publique un catálogo real por el flujo de revisión de Catálogo. DEMO
+   permanece sintético aunque un usuario confirme su revisión.
+2. En Catálogo › sistema › Térmica registre documentos originales de Uf por
+   combinación, Ug/g por vidrio, Ψg por separador y clases por espécimen. Declare
+   URL, página, laboratorio, norma, vigencia, dimensiones y aperturas. Para
+   aire, coteje inscripción MINVU y ensayo/clasificación NCh3297/NCh3296 a 100 Pa.
+3. Para prestaciones seleccione una posición que reproduzca exactamente el
+   producto ensayado. El servidor liga medidas, distribución, vidrio y herraje.
+   Revise y confirme cada informe; una corrección crea una fuente nueva.
+4. En Proyecto › Térmica declare zona oficial, uso, ubicación de ventanas y
+   muros según el plano. El responsable debe cotejar NCh3137/1 y /2, memoria
+   de cálculo y el plan local de descontaminación antes de confirmar alcance.
+5. Recorra F6, comparación de alternativa, diff, aplicar y deshacer. Active
+   el anexo opcional, revise el PDF y emita por el flujo común. La emisión
+   conserva las fuentes; la revocación posterior solo afecta cálculos nuevos.
+6. El resultado evalúa ventanas y no sustituye certificación profesional ni
+   acredita condensación, ventilación o cumplimiento completo del edificio.

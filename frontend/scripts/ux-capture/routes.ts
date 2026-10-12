@@ -3,6 +3,7 @@ export type UxRole = "OWNER" | "ESTIMATOR" | "WORKSHOP_MANAGER" | "OPERATOR" | "
 export type FixtureRefs = {
   projectId: string;
   positionId: string;
+  systemId?: string;
   clientId: string;
   orderId?: string;
   fieldVisitId?: string;
@@ -79,6 +80,20 @@ export function routesForFixture(refs: FixtureRefs): RouteDefinition[] {
       path: `/projects/${refs.projectId}`,
       roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"],
     },
+    {
+      id: "proyecto-termico",
+      path: `/projects/${refs.projectId}?section=thermal`,
+      roles: ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"],
+    },
+    ...(refs.systemId
+      ? [
+          {
+            id: "catalogo-termico",
+            path: `/catalogs/systems?system=${refs.systemId}&tab=termica`,
+            roles: ["OWNER", "WORKSHOP_MANAGER"] as UxRole[],
+          },
+        ]
+      : []),
     {
       id: "cobranza-proyecto",
       path: `/projects/${refs.projectId}?section=payments`,

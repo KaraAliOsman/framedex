@@ -5735,6 +5735,241 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/systems/{system_id}/thermal/:
+    get:
+      operationId: catalog_thermal_reports
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThermalCatalogResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: catalog_thermal_declare
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThermalAuthorityRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/systems/{system_id}/thermal/{report_id}/review/:
+    post:
+      operationId: catalog_thermal_review
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: report_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: system_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThermalReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ThermalReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ThermalReviewRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/clients/:
     get:
       operationId: clients_list
@@ -20939,6 +21174,227 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/thermal/:
+    get:
+      operationId: project_thermal_report
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThermalReport'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: project_thermal_save
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThermalWriteRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThermalReport'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/thermal/{position_id}/alternatives/:
+    get:
+      operationId: thermal_compliant_alternative
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: position_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThermalAlternative'
           description: ''
         '400':
           content:
@@ -37562,18 +38018,6 @@ components:
           type: string
           nullable: true
           maxLength: 255
-    OrientationEnum:
-      enum:
-      - EXTERIOR_DOWN
-      - EXTERIOR_UP
-      - EXTERIOR_LEFT
-      - EXTERIOR_RIGHT
-      type: string
-      description: |-
-        * `EXTERIOR_DOWN` - EXTERIOR_DOWN
-        * `EXTERIOR_UP` - EXTERIOR_UP
-        * `EXTERIOR_LEFT` - EXTERIOR_LEFT
-        * `EXTERIOR_RIGHT` - EXTERIOR_RIGHT
     OutcomeEnum:
       enum:
       - PAID
@@ -40799,7 +41243,7 @@ components:
           maxLength: 500
         orientation:
           allOf:
-          - $ref: '#/components/schemas/OrientationEnum'
+          - $ref: '#/components/schemas/ProfileSectionOrientationEnum'
           default: EXTERIOR_DOWN
         local_origin:
           allOf:
@@ -40809,6 +41253,18 @@ components:
       - depth_mm
       - polygon
       - source
+    ProfileSectionOrientationEnum:
+      enum:
+      - EXTERIOR_DOWN
+      - EXTERIOR_UP
+      - EXTERIOR_LEFT
+      - EXTERIOR_RIGHT
+      type: string
+      description: |-
+        * `EXTERIOR_DOWN` - EXTERIOR_DOWN
+        * `EXTERIOR_UP` - EXTERIOR_UP
+        * `EXTERIOR_LEFT` - EXTERIOR_LEFT
+        * `EXTERIOR_RIGHT` - EXTERIOR_RIGHT
     ProfileSectionRequest:
       type: object
       description: |-
@@ -40835,7 +41291,7 @@ components:
           maxLength: 500
         orientation:
           allOf:
-          - $ref: '#/components/schemas/OrientationEnum'
+          - $ref: '#/components/schemas/ProfileSectionOrientationEnum'
           default: EXTERIOR_DOWN
         local_origin:
           allOf:
@@ -44027,6 +44483,14 @@ components:
             $ref: '#/components/schemas/Supplier'
       required:
       - suppliers
+    SurfaceEnum:
+      enum:
+      - WALL
+      - ROOF
+      type: string
+      description: |-
+        * `WALL` - WALL
+        * `ROOF` - ROOF
     SystemDimensionalLimit:
       type: object
       properties:
@@ -44609,6 +45073,404 @@ components:
       - sash_overlap_mm
       - system_family
       - version
+    ThermalAlternative:
+      type: object
+      properties:
+        candidate:
+          nullable: true
+        evaluated:
+          type: integer
+        reason:
+          type: string
+          nullable: true
+        scope:
+          type: string
+      required:
+      - candidate
+      - evaluated
+      - reason
+    ThermalAuthorityKindEnum:
+      enum:
+      - FRAME
+      - GLASS
+      - SPACER
+      - PERFORMANCE
+      type: string
+      description: |-
+        * `FRAME` - FRAME
+        * `GLASS` - GLASS
+        * `SPACER` - SPACER
+        * `PERFORMANCE` - PERFORMANCE
+    ThermalAuthorityRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/ThermalAuthorityKindEnum'
+        profile_skus:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+        glass_sku:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        source_position_id:
+          type: string
+          format: uuid
+          nullable: true
+        spacer_code:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        uf:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+        ug:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+        solar_factor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+        psi_g:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+        air_class:
+          type: integer
+          maximum: 4
+          minimum: 0
+          nullable: true
+        air_pressure_pa:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+        water_class:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+        wind_class:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+        min_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        max_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        min_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        max_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        opening_types:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+          minItems: 1
+        source_document:
+          type: string
+          minLength: 1
+          maxLength: 500
+        source_url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 2000
+        source_page:
+          type: string
+          minLength: 1
+          maxLength: 200
+        laboratory:
+          type: string
+          minLength: 1
+          maxLength: 300
+        laboratory_registration:
+          type: string
+          default: ''
+          maxLength: 1000
+        report_date:
+          type: string
+          format: date
+        valid_until:
+          type: string
+          format: date
+        standard:
+          type: string
+          minLength: 1
+          maxLength: 200
+        applicability:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        synthetic:
+          type: boolean
+          default: false
+      required:
+      - applicability
+      - kind
+      - laboratory
+      - max_height_mm
+      - max_width_mm
+      - min_height_mm
+      - min_width_mm
+      - opening_types
+      - report_date
+      - source_document
+      - source_page
+      - source_url
+      - standard
+      - valid_until
+    ThermalCatalogResponse:
+      type: object
+      properties:
+        is_demo:
+          type: boolean
+        catalog_fingerprint:
+          type: string
+        profiles:
+          type: array
+          items: {}
+        glasses:
+          type: array
+          items: {}
+        specimens:
+          type: array
+          items: {}
+        items:
+          type: array
+          items: {}
+      required:
+      - catalog_fingerprint
+      - glasses
+      - is_demo
+      - items
+      - profiles
+      - specimens
+    ThermalInput:
+      type: object
+      properties:
+        zone:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ZoneEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        zone_source:
+          type: string
+          default: ''
+          maxLength: 1000
+        use:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/UseEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        walls_m2:
+          type: object
+          additionalProperties:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+        exposed_wall_area_m2:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          nullable: true
+        envelope_complete:
+          type: boolean
+          default: false
+        wall_source:
+          type: string
+          default: ''
+          maxLength: 1000
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThermalPosition'
+        include_doc01:
+          type: boolean
+          default: false
+        regulatory_scope_confirmed:
+          type: boolean
+          default: false
+        regulatory_calculation_source:
+          type: string
+          default: ''
+          maxLength: 2000
+        regulatory_method_confirmed:
+          type: boolean
+          default: false
+    ThermalInputRequest:
+      type: object
+      properties:
+        zone:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ZoneEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        zone_source:
+          type: string
+          default: ''
+          maxLength: 1000
+        use:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/UseEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        walls_m2:
+          type: object
+          additionalProperties:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+        exposed_wall_area_m2:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          nullable: true
+        envelope_complete:
+          type: boolean
+          default: false
+        wall_source:
+          type: string
+          default: ''
+          maxLength: 1000
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThermalPositionRequest'
+        include_doc01:
+          type: boolean
+          default: false
+        regulatory_scope_confirmed:
+          type: boolean
+          default: false
+        regulatory_calculation_source:
+          type: string
+          default: ''
+          maxLength: 2000
+        regulatory_method_confirmed:
+          type: boolean
+          default: false
+    ThermalPosition:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        orientation:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ThermalPositionOrientationEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        surface:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SurfaceEnum'
+          - $ref: '#/components/schemas/NullEnum'
+      required:
+      - position_id
+    ThermalPositionOrientationEnum:
+      enum:
+      - N
+      - E
+      - S
+      - W
+      - OGT
+      type: string
+      description: |-
+        * `N` - N
+        * `E` - E
+        * `S` - S
+        * `W` - W
+        * `OGT` - OGT
+    ThermalPositionRequest:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        orientation:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ThermalPositionOrientationEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        surface:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SurfaceEnum'
+          - $ref: '#/components/schemas/NullEnum'
+      required:
+      - position_id
+    ThermalReport:
+      type: object
+      properties:
+        inputs:
+          $ref: '#/components/schemas/ThermalInput'
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        sealed:
+          type: boolean
+        assessment: {}
+      required:
+      - assessment
+      - inputs
+      - sealed
+      - updated_at
+    ThermalReviewRequest:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/ThermalReviewStateEnum'
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - state
+    ThermalReviewStateEnum:
+      enum:
+      - REVIEWED
+      - REJECTED
+      - REVOKED
+      type: string
+      description: |-
+        * `REVIEWED` - REVIEWED
+        * `REJECTED` - REJECTED
+        * `REVOKED` - REVOKED
+    ThermalWriteRequest:
+      type: object
+      properties:
+        inputs:
+          $ref: '#/components/schemas/ThermalInputRequest'
+        expected_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - expected_updated_at
+      - inputs
     TimeWindowEnum:
       enum:
       - AM
@@ -44719,6 +45581,18 @@ components:
       - kit
       type: string
       description: '* `kit` - kit'
+    UseEnum:
+      enum:
+      - RESIDENTIAL
+      - EDUCATION
+      - HEALTH
+      - HOTEL
+      type: string
+      description: |-
+        * `RESIDENTIAL` - RESIDENTIAL
+        * `EDUCATION` - EDUCATION
+        * `HEALTH` - HEALTH
+        * `HOTEL` - HOTEL
     User:
       type: object
       properties:
@@ -45297,6 +46171,28 @@ components:
       - segment
       - state
       - total_cost
+    ZoneEnum:
+      enum:
+      - A
+      - B
+      - C
+      - D
+      - E
+      - F
+      - G
+      - H
+      - I
+      type: string
+      description: |-
+        * `A` - A
+        * `B` - B
+        * `C` - C
+        * `D` - D
+        * `E` - E
+        * `F` - F
+        * `G` - G
+        * `H` - H
+        * `I` - I
   securitySchemes:
     SupabaseBearer:
       type: http

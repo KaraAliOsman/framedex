@@ -1,5 +1,6 @@
 import { CatalogProvenance, SectionReviewFacts, SourceHighlight } from "./CatalogProvenance";
 import { WorkspaceGlasses, WorkspaceCosts } from "./WorkspaceMaterials";
+import { ThermalCatalogPanel } from "./ThermalCatalogPanel";
 import { StatusBadge } from "../../ui/StatusBadge";
 import { DemoBadge, DimLoader } from "../../ui";
 import { ValidatedForm } from "../../ui/FormValidation";
@@ -533,6 +534,7 @@ export function SystemWorkspaceView({
           ["perfiles", "Perfiles"],
           ["refuerzos", "Refuerzos"],
           ["vidrios", "Vidrios"],
+          ["termica", "Térmica"],
           ["herrajes", "Herrajes"],
           ["reglas", "Reglas de compatibilidad"],
           ["costos", "Costos"],
@@ -557,6 +559,7 @@ export function SystemWorkspaceView({
         </div>
       ) : null}
       {tab === "vidrios" ? <WorkspaceGlasses glasses={workspace.glasses} /> : null}
+      {tab === "termica" ? <ThermalCatalogPanel systemId={systemId} /> : null}
       {tab === "costos" ? <WorkspaceCosts /> : null}
       {tab === "perfiles" && (
         <section className="ws-section" id="ws.articles">

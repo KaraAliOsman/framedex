@@ -23,6 +23,10 @@ class InfillTechnicalFacts:
     exact_area_m2: Decimal
     bead_supported: bool
     glass_product: GlassProduct | None = None
+    # Daylight dimensions, emitted where the geometry knows the rebate.
+    # Cut dimensions include hidden glass; they must never stand in for Ag.
+    visible_width_mm: Decimal | None = None
+    visible_height_mm: Decimal | None = None
 
 
 @dataclass(frozen=True, slots=True)

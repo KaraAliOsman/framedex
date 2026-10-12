@@ -1032,6 +1032,8 @@ def _append_leaf(
             exact_area_m2=exact_glass_area_m2(width, height),
             bead_supported=infill_thickness in params.glazing_bead_rules,
             glass_product=node.glass_product if infill_kind == "GLASS" else None,
+            visible_width_mm=width - _TWO * (rebate_depth(params) - clearance_mm),
+            visible_height_mm=height - _TWO * (rebate_depth(params) - clearance_mm),
         )
     )
     semantic_infill_id = f"{semantic_leaf_id}/infill"
@@ -1248,6 +1250,8 @@ def _append_frame_glazed_pane(
             exact_area_m2=exact_glass_area_m2(width, height),
             bead_supported=node.glass_thickness_mm in params.glazing_bead_rules,
             glass_product=node.glass_product,
+            visible_width_mm=rect.width_mm,
+            visible_height_mm=rect.height_mm,
         )
     )
     infill_rect = _Rect(

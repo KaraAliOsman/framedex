@@ -199,6 +199,7 @@ async function discoverFixture(session: AuthSession): Promise<FixtureRefs> {
   return {
     projectId: process.env.DEKOPEN_UX_PROJECT_ID ?? project.id,
     positionId: process.env.DEKOPEN_UX_POSITION_ID ?? positionId,
+    systemId: process.env.DEKOPEN_UX_SYSTEM_ID,
     orderId: process.env.DEKOPEN_UX_ORDER_ID,
     fieldVisitId: process.env.DEKOPEN_UX_FIELD_VISIT_ID,
     clientId,

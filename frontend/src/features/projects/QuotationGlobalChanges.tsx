@@ -19,6 +19,7 @@ import { SimulationPreview } from "../assistant/SimulationPreview";
 import { DimLoader } from "../../ui/Signature";
 import { formatMoney } from "../money";
 import { domainLabel } from "../../i18n/domainLabels";
+import { ThermalDelta } from "./ThermalDelta";
 
 type Kind = "glass" | "finish" | "system" | "handle";
 type PriceSimulation = {
@@ -408,10 +409,6 @@ export function QuotationGlobalChanges({
                 Se modificarán {preview.diff.length} posiciones. Precio indicativo por posición,
                 incluida su cantidad; la emisión usará el precio aplicado.
               </p>
-              <p>
-                Δ de Uw: Sin dato · faltan autoridades térmicas de perfiles, vidrio y separador.{" "}
-                <Link to="/catalog">Revisar fuentes del catálogo</Link>
-              </p>
               {preview.simulations.map((raw, index) => {
                 const simulation = raw as PriceSimulation;
                 const position = project.positions?.find((p) => p.id === simulation.position_id);
@@ -428,6 +425,7 @@ export function QuotationGlobalChanges({
                         : "Sin dato"}
                     </summary>
                     <SimulationPreview simulation={raw} organizationId={orgId} />
+                    <ThermalDelta simulation={raw} />
                   </details>
                 );
               })}

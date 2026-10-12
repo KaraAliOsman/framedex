@@ -68,6 +68,8 @@ import type {
   CatalogSectionImportCreateBody,
   CatalogTemplateDownloadParams,
   CatalogTemplateSchema,
+  CatalogThermalDeclare201,
+  CatalogThermalReview200,
   CatalogUndoRequestRequest,
   ChangeInputRequest,
   ChangeResult,
@@ -366,6 +368,12 @@ import type {
   SystemResponse,
   SystemWorkspace,
   SystemWriteRequest,
+  ThermalAlternative,
+  ThermalAuthorityRequest,
+  ThermalCatalogResponse,
+  ThermalReport,
+  ThermalReviewRequest,
+  ThermalWriteRequest,
   TodayResponse,
   VersionHardwarePicking,
   Wallet,
@@ -6654,6 +6662,245 @@ export const catalogSystemWorkspace = async (
   return apiMutator<catalogSystemWorkspaceResponse>(getCatalogSystemWorkspaceUrl(rowId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type catalogThermalReportsResponse200 = {
+  data: ThermalCatalogResponse;
+  status: 200;
+};
+
+export type catalogThermalReportsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogThermalReportsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogThermalReportsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogThermalReportsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogThermalReportsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogThermalReportsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogThermalReportsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogThermalReportsResponseSuccess = catalogThermalReportsResponse200 & {
+  headers: Headers;
+};
+export type catalogThermalReportsResponseError = (
+  | catalogThermalReportsResponse400
+  | catalogThermalReportsResponse401
+  | catalogThermalReportsResponse403
+  | catalogThermalReportsResponse404
+  | catalogThermalReportsResponse409
+  | catalogThermalReportsResponse422
+  | catalogThermalReportsResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogThermalReportsResponse =
+  catalogThermalReportsResponseSuccess | catalogThermalReportsResponseError;
+
+export const getCatalogThermalReportsUrl = (systemId: string) => {
+  return `/api/v1/catalogs/systems/${systemId}/thermal/`;
+};
+
+export const catalogThermalReports = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogThermalReportsResponse> => {
+  return apiMutator<catalogThermalReportsResponse>(getCatalogThermalReportsUrl(systemId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogThermalDeclareResponse201 = {
+  data: CatalogThermalDeclare201;
+  status: 201;
+};
+
+export type catalogThermalDeclareResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogThermalDeclareResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogThermalDeclareResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogThermalDeclareResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogThermalDeclareResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogThermalDeclareResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogThermalDeclareResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogThermalDeclareResponseSuccess = catalogThermalDeclareResponse201 & {
+  headers: Headers;
+};
+export type catalogThermalDeclareResponseError = (
+  | catalogThermalDeclareResponse400
+  | catalogThermalDeclareResponse401
+  | catalogThermalDeclareResponse403
+  | catalogThermalDeclareResponse404
+  | catalogThermalDeclareResponse409
+  | catalogThermalDeclareResponse422
+  | catalogThermalDeclareResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogThermalDeclareResponse =
+  catalogThermalDeclareResponseSuccess | catalogThermalDeclareResponseError;
+
+export const getCatalogThermalDeclareUrl = (systemId: string) => {
+  return `/api/v1/catalogs/systems/${systemId}/thermal/`;
+};
+
+export const catalogThermalDeclare = async (
+  systemId: string,
+  thermalAuthorityRequest: ThermalAuthorityRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogThermalDeclareResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogThermalDeclareResponse>(getCatalogThermalDeclareUrl(systemId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(thermalAuthorityRequest),
+  });
+};
+
+export type catalogThermalReviewResponse200 = {
+  data: CatalogThermalReview200;
+  status: 200;
+};
+
+export type catalogThermalReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogThermalReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogThermalReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogThermalReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogThermalReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogThermalReviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type catalogThermalReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogThermalReviewResponseSuccess = catalogThermalReviewResponse200 & {
+  headers: Headers;
+};
+export type catalogThermalReviewResponseError = (
+  | catalogThermalReviewResponse400
+  | catalogThermalReviewResponse401
+  | catalogThermalReviewResponse403
+  | catalogThermalReviewResponse404
+  | catalogThermalReviewResponse409
+  | catalogThermalReviewResponse422
+  | catalogThermalReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogThermalReviewResponse =
+  catalogThermalReviewResponseSuccess | catalogThermalReviewResponseError;
+
+export const getCatalogThermalReviewUrl = (systemId: string, reportId: string) => {
+  return `/api/v1/catalogs/systems/${systemId}/thermal/${reportId}/review/`;
+};
+
+export const catalogThermalReview = async (
+  systemId: string,
+  reportId: string,
+  thermalReviewRequest: ThermalReviewRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogThermalReviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogThermalReviewResponse>(getCatalogThermalReviewUrl(systemId, reportId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(thermalReviewRequest),
   });
 };
 
@@ -22917,6 +23164,237 @@ export const projectsStartSuccessor = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(successorRequestRequest),
   });
+};
+
+export type projectThermalReportResponse200 = {
+  data: ThermalReport;
+  status: 200;
+};
+
+export type projectThermalReportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectThermalReportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectThermalReportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectThermalReportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectThermalReportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectThermalReportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectThermalReportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectThermalReportResponseSuccess = projectThermalReportResponse200 & {
+  headers: Headers;
+};
+export type projectThermalReportResponseError = (
+  | projectThermalReportResponse400
+  | projectThermalReportResponse401
+  | projectThermalReportResponse403
+  | projectThermalReportResponse404
+  | projectThermalReportResponse409
+  | projectThermalReportResponse422
+  | projectThermalReportResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectThermalReportResponse =
+  projectThermalReportResponseSuccess | projectThermalReportResponseError;
+
+export const getProjectThermalReportUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/thermal/`;
+};
+
+export const projectThermalReport = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectThermalReportResponse> => {
+  return apiMutator<projectThermalReportResponse>(getProjectThermalReportUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectThermalSaveResponse200 = {
+  data: ThermalReport;
+  status: 200;
+};
+
+export type projectThermalSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectThermalSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectThermalSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectThermalSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectThermalSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectThermalSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectThermalSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectThermalSaveResponseSuccess = projectThermalSaveResponse200 & {
+  headers: Headers;
+};
+export type projectThermalSaveResponseError = (
+  | projectThermalSaveResponse400
+  | projectThermalSaveResponse401
+  | projectThermalSaveResponse403
+  | projectThermalSaveResponse404
+  | projectThermalSaveResponse409
+  | projectThermalSaveResponse422
+  | projectThermalSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectThermalSaveResponse =
+  projectThermalSaveResponseSuccess | projectThermalSaveResponseError;
+
+export const getProjectThermalSaveUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/thermal/`;
+};
+
+export const projectThermalSave = async (
+  projectId: string,
+  thermalWriteRequest: ThermalWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectThermalSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectThermalSaveResponse>(getProjectThermalSaveUrl(projectId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(thermalWriteRequest),
+  });
+};
+
+export type thermalCompliantAlternativeResponse200 = {
+  data: ThermalAlternative;
+  status: 200;
+};
+
+export type thermalCompliantAlternativeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type thermalCompliantAlternativeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type thermalCompliantAlternativeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type thermalCompliantAlternativeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type thermalCompliantAlternativeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type thermalCompliantAlternativeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type thermalCompliantAlternativeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type thermalCompliantAlternativeResponseSuccess = thermalCompliantAlternativeResponse200 & {
+  headers: Headers;
+};
+export type thermalCompliantAlternativeResponseError = (
+  | thermalCompliantAlternativeResponse400
+  | thermalCompliantAlternativeResponse401
+  | thermalCompliantAlternativeResponse403
+  | thermalCompliantAlternativeResponse404
+  | thermalCompliantAlternativeResponse409
+  | thermalCompliantAlternativeResponse422
+  | thermalCompliantAlternativeResponse503
+) & {
+  headers: Headers;
+};
+
+export type thermalCompliantAlternativeResponse =
+  thermalCompliantAlternativeResponseSuccess | thermalCompliantAlternativeResponseError;
+
+export const getThermalCompliantAlternativeUrl = (projectId: string, positionId: string) => {
+  return `/api/v1/projects/${projectId}/thermal/${positionId}/alternatives/`;
+};
+
+export const thermalCompliantAlternative = async (
+  projectId: string,
+  positionId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<thermalCompliantAlternativeResponse> => {
+  return apiMutator<thermalCompliantAlternativeResponse>(
+    getThermalCompliantAlternativeUrl(projectId, positionId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type projectDesignOptionsResponse200 = {

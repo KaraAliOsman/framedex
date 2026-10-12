@@ -727,3 +727,22 @@ Las decisiones y los mecanismos se detallan en [Sistema v2](../design/SISTEMA-V2
   existe sección en ese snapshot; no completa los huecos con Catálogo vivo.
   DOC-01 mantiene su dibujo SVG y sus bytes emitidos. PNG descarga la cámara
   y pose visibles; miniaturas comparten rig, luz, color y materiales del visor.
+
+## P18 · autoridad térmica (2026-10-11)
+
+- Zona, uso, ubicación, orientación y superficie de muros comienzan Sin dato.
+  Son datos de obra, declarables en Proyecto › Térmica; un default de empresa
+  no puede suplir una fuente oficial ni la geometría de la envolvente.
+- Anexo DOC-01 comienza desactivado y se elige por revisión en el mismo panel.
+  El servidor imprime únicamente valores autoritativos sellados. Las revisiones
+  anteriores conservan sus bytes y su representación histórica.
+- Informes de Catálogo › Térmica requieren revisión humana. PERFORMANCE se
+  liga a una posición que reproduce el espécimen; solo vale para esa construcción
+  exacta, incluyendo medidas, apertura, vidrio y herraje. Un rango declarado
+  no basta para extender una clase. No hay un ajuste que omita esta autoridad.
+- Sin tabla oficial de comuna importada, no se infiere zona por dirección.
+  La memoria profesional y el plan de descontaminación quedan explícitos.
+  El veredicto se limita a ventanas, sin declarar cumplimiento del edificio.
+- La alternativa busca el mínimo entre combinaciones visibles evaluables
+  con precio; requiere el diff común y clic humano. Los datos DEMO y las
+  geometrías sin método quedan Sin dato y no habilitan propuestas favorables.
