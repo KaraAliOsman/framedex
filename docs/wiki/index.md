@@ -33,6 +33,12 @@ payloads are omitted from broad ripgrep discovery; read them by explicit path
 when the task needs them. The dated [v1 acceptance](../redesign/acceptance-2026-10-12.md)
 and [current reality](state/current-reality.md) orient integration work.
 
+The owner's [complete functional report · 12-10-2026](../reports/DEKOPEN-FUNCIONALIDAD-2026-10-12.md)
+is a dated snapshot with 57 chapters and contract inventories. Read it only
+when the task needs a full report; it is excluded from broad search and is
+not part of the default bootstrap. Its static inspection and historical
+acceptance claims keep separate refs; newer code always requires verification.
+
 ## Operating rules
 
 - [Wiki README](README.md) — purpose and authority boundaries.

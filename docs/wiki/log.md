@@ -1613,3 +1613,31 @@ el código sigue visible y los payloads se leen por ruta explícita. Sin pruebas
 funcionales locales, llamadas al proveedor ni recorridos del navegador. Código,
 goldens, migraciones, CI, aceptación, datos y sesiones locales se preservan.
 Recibo local: `.run/context-optimization-2026-10-12.json`.
+
+## 2026-10-12 · Reporte integral de funcionalidad solicitado por el dueño
+
+Sobre `0a9f057ba5338bc6be39181b9ca001915b2f2a59`, se compila
+`docs/reports/DEKOPEN-FUNCIONALIDAD-2026-10-12.md`: 57 capítulos funcionales y
+siete anexos con permisos, entradas/resultados, estados, guardas, fuentes,
+activación y límites. El código de producto coincide con la integración v1
+`2db4e13171884b93a989e68508a55f5590f9b34d` de PR #157; limpieza/documentación
+posteriores no se atribuyen como nuevas pruebas funcionales.
+
+El inventario estático recoge 334 operaciones HTTP sobre 265 paths,
+55 operaciones compartidas, 55 módulos del motor, 21 enums del modelo físico,
+43 declaraciones de rutas, 149 nombres de CREATE TABLE del historial y
+144 schemas de solicitud con 806 propiedades. Los 899 componentes OpenAPI no
+se cuentan como funciones. Se corrige `docs/ai/OPERACIONES.md`: 55 operaciones
+registradas —38 diseño, 2 posición, 11 proyecto, 4 preparación— frente al límite
+de 50 por lote. La historia de IA2 conserva su cifra de aquella fase.
+
+La aceptación histórica mantiene sus refs y límites: MiMo P20 21/26,
+E/J 18/21, cinco casos fallidos conservados, DEMO/sandbox sin autoridad de
+fabricación ni tributación. El reporte enlaza ACTIVACION y no acredita
+conexiones externas nuevas. No se ejecutan pruebas del producto, llamadas IA,
+emisiones, pagos ni navegador; no se alteran stack, datos ni sesiones.
+
+La proyección HTML autónoma con índice, búsqueda, temas e impresión queda
+local en `.run/reports/`, con recibo de construcción/validación. El snapshot
+versionado se enlaza bajo demanda y se excluye en `.rgignore` para no volver
+a introducir carga documental en el arranque de los agentes.

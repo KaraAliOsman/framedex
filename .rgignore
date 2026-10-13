@@ -28,3 +28,6 @@
 /docs/redesign/decisions.md
 /docs/ai/evals/*.json
 /docs/wiki/log.md
+
+# Owner-requested functional snapshots: read only for a report/history task.
+/docs/reports/DEKOPEN-FUNCIONALIDAD-*.md
