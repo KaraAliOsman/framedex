@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # D01 · sistemas, autoridad e ingesta de catálogo
 
 La familia de un sistema limita las aperturas que el motor admite. Las reglas de

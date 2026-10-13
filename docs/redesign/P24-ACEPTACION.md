@@ -2,12 +2,12 @@
 
 Rama `codex/P24-analitica`, desde integración `97bd42a8`.
 Definiciones y oráculos: [metricas.md](../analytics/metricas.md).
-Evidencia: [antes](captures/analitica/antes-analitica.png),
-[margen y causas](captures/analitica/margen-con-causas.png),
-[movimiento valorado](captures/analitica/movimientos-con-valor.png),
-[preview](captures/analitica/preview-costos.png),
-[matriz](captures/analitica/matriz/), [estados](captures/analitica/estados/)
-y [ux:capture](captures/analitica/ux/).
+Evidencia: [antes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/analitica/antes-analitica.png),
+[margen y causas](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/analitica/margen-con-causas.png),
+[movimiento valorado](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/analitica/movimientos-con-valor.png),
+[preview](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/analitica/preview-costos.png),
+[matriz](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/analitica/matriz), [estados](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/analitica/estados)
+y [ux:capture](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/analitica/ux).
 
 ## Resultado
 
@@ -52,7 +52,7 @@ precios, versiones ni documentos emitidos.
 - Fechas con el control común, Mono y calendario oscuro; hover con tinte de
   selección. Axe en 1440 claro y 390 oscuro: cero serious/critical, incluido
   el puente abierto y la fila enfocada. Ocho tests UI, lint y tipos repasan
-  esta corrección de presentación. [Controles](captures/analitica/controles-390-dark.png).
+  esta corrección de presentación. [Controles](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/analitica/controles-390-dark.png).
 - Sobre código final `bab0df93` (rama P24), `make lint`, `make typecheck`,
   `make test` y `make build`: PASA. 1.061 tests del motor (dos xfail históricas),
   1.562 backend y 1.140 frontend; 135 fuentes mypy sin errores. Goldens y cliente

@@ -1,3 +1,7 @@
+> Informe histórico anterior al programa v1. El estado vigente está en
+> [aceptación final](acceptance-2026-10-12.md); las conexiones pendientes, en
+> [ACTIVACION](../operations/ACTIVACION.md).
+
 # Fase 14 — Validación completa del producto y cierre con evidencia
 
 ## Problema inicial

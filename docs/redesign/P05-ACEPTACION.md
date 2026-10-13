@@ -21,7 +21,7 @@ privadas. Puertas usan triángulo en elevación, nunca arco de giro.
 | Enlace público → doce posiciones/nueve hojas físicas → dos vistas | PASA. 16 vistas en 1440/1280/1024/390, sin exposición de autoridad privada; selectores accesibles debajo de la elevación. |
 | Vacío/carga/error/sin permiso/bloqueado | PASA. Cinco estados capturados; transporte demorado/fallido declarado, permisos y revisión cerrada reales. |
 
-[Capturas](captures/simbologia-cotas/): `antes/`, `despues/`, `formas/`,
+[Capturas](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/simbologia-cotas): `antes/`, `despues/`, `formas/`,
 `conjuntos/`, `portal/`, `estados/`, `pdf/`, `ux/` y `ux-portal/` conservan
 matrices y verificaciones. Correderas: 12 vistas y seis muestrarios completos;
 formas reales: 24 vistas, tres tamaños y ambos temas/caras. Los runners

@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # D03 · aperturas físicas, composiciones y autoridad de manillas
 
 La apertura expresa movimiento, bisagras, dirección y rol de la hoja. El

@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Fase 09 — Plan de corte y pack de taller: reporte de aceptación
 
 Caso de referencia: OT-P-000008-REV-A-01 (orden viva, 2 unidades P01, 6 barras).

@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-06 — Pricing decision-table evidence
 
 HEAD `280ab98` · branch `devin/1790335313-commercial-workspace` · live dev stack

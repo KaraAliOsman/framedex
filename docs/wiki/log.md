@@ -1564,3 +1564,80 @@ acredita producción/certificación ni dinero. Véase
 ## 2026-10-12 · P20 integrado
 
 [PR #156](https://github.com/KaraAliOsman/framedex/pull/156), squash `c99d25b577cc2726d28465dbab59f142c2c7cd73`; cuatro checks de CI PASA sobre `c8ac0612aa1ff10008ab666c9527eccc67a9bc4c`. Los 39 encargos quedan cerrados en ESTADO. El cierre documental conserva los refs de cada corrida, límites de sandbox/DEMO y fallos del proveedor. La revisión hacia main se entrega al dueño sin merge.
+
+## 2026-10-12 · main integrado y workspace depurado
+
+Por instrucción del dueño, [PR #157](https://github.com/KaraAliOsman/framedex/pull/157)
+integra v1 a main en `2db4e13171884b93a989e68508a55f5590f9b34d`, con los
+cuatro checks SUCCESS en ambas corridas. Los 39 encargos permanecen mergeados.
+
+La limpieza retira 6,979 archivos de evidencia histórica
+(1,560,471,278 bytes) del checkout; el SHA anterior y los enlaces archivados
+permiten recuperarlos. Los 2,185 archivos de aceptación final y las
+entradas QR/reportes usados por herramientas permanecen. Los mapas de progreso
+y estado se condensan con acceso explícito a sus originales; no se borra
+historia de decisiones ni este log. Véase `docs/redesign/captures/README.md`.
+
+Se retiran 34,146 archivos temporales locales (2,587,938,566 bytes) a la
+Papelera de Windows, conservando perfiles Brave, launchers, propiedad REVIEW,
+PRIMARY, WSL registrado, dependencias, bases y `.env`. La reducción del workspace
+es 3.86 GiB; no se atribuye a una poda del historial ni de la Papelera.
+`docs/operations/WORKSPACE.md`, `.gitignore` y `.rgignore` establecen retención
+y búsqueda para futuros agentes. Verificación de archivos, hashes de launchers,
+metadatos de evidencia, enlaces y refs; sin pruebas funcionales, navegador ni IA.
+
+## 2026-10-12 · Entrada de agentes por tarea y stack vigente
+
+Sobre `d078f550`, el dueño pide reducir el ruido que había desviado a otras
+IA. `AGENTS.md`, el índice y el protocolo de wiki pasan a seleccionar dominio,
+código, pruebas y especificación antes de consultar historia. La cola completa
+y los informes de rediseño reciben marcas de contexto histórico; se preservan
+sus archivos, decisiones y recibos. La constitución mantenida sigue en
+`docs/design/CONSTITUCION.md`.
+
+`.rgignore` retira del descubrimiento general generados, goldens JSON y
+payloads/historia. En esta estación, `rg --files` pasa de 3,238 a 1,657 archivos
+y de 78,469,177 a 30,026,202 bytes. El material
+permanece accesible por ruta explícita; esta medida describe descubrimiento,
+no una mejora medida de ejecución del producto.
+
+La skill local pasa de 451 a 100 líneas y de 62,391 a 4,958 bytes, basada en
+los scripts actuales: REVIEW posee sus recursos, inicia API/web/worker y carga
+`.env` en memoria; el gate limpio exige un proyecto sin datos previos. Se
+retiran recetas de otra estación, defectos históricos y manipulación manual de
+Auth del procedimiento activo, con acceso a la versión anterior por SHA.
+README alinea Node mínimo con `frontend/package.json` (`22.22.2`).
+
+Validación estática: skill válida, 134 enlaces locales y 63 rutas comprobados;
+el código sigue visible y los payloads se leen por ruta explícita. Sin pruebas
+funcionales locales, llamadas al proveedor ni recorridos del navegador. Código,
+goldens, migraciones, CI, aceptación, datos y sesiones locales se preservan.
+Recibo local: `.run/context-optimization-2026-10-12.json`.
+
+## 2026-10-12 · Reporte integral de funcionalidad solicitado por el dueño
+
+Sobre `0a9f057ba5338bc6be39181b9ca001915b2f2a59`, se compila
+`docs/reports/DEKOPEN-FUNCIONALIDAD-2026-10-12.md`: 57 capítulos funcionales y
+siete anexos con permisos, entradas/resultados, estados, guardas, fuentes,
+activación y límites. El código de producto coincide con la integración v1
+`2db4e13171884b93a989e68508a55f5590f9b34d` de PR #157; limpieza/documentación
+posteriores no se atribuyen como nuevas pruebas funcionales.
+
+El inventario estático recoge 334 operaciones HTTP sobre 265 paths,
+55 operaciones compartidas, 55 módulos del motor, 21 enums del modelo físico,
+43 declaraciones de rutas, 149 nombres de CREATE TABLE del historial y
+144 schemas de solicitud con 806 propiedades. Los 899 componentes OpenAPI no
+se cuentan como funciones. Se corrige `docs/ai/OPERACIONES.md`: 55 operaciones
+registradas —38 diseño, 2 posición, 11 proyecto, 4 preparación— frente al límite
+de 50 por lote. La historia de IA2 conserva su cifra de aquella fase.
+
+La aceptación histórica mantiene sus refs y límites: MiMo P20 21/26,
+E/J 18/21, cinco casos fallidos conservados, DEMO/sandbox sin autoridad de
+fabricación ni tributación. El reporte enlaza ACTIVACION y no acredita
+conexiones externas nuevas. No se ejecutan pruebas del producto, llamadas IA,
+emisiones, pagos ni navegador; no se alteran stack, datos ni sesiones.
+
+La proyección HTML autónoma con índice, búsqueda, temas e impresión queda
+local en `.run/reports/`, con recibo de construcción/validación. El snapshot
+versionado se enlaza bajo demanda y se excluye en `.rgignore` para no volver
+a introducir carga documental en el arranque de los agentes.

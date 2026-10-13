@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # D06 · accesorios y servicios con autoridad
 
 La posición conserva vierteaguas, ensanches, tapajuntas, mosquiteros y accesorios
@@ -38,7 +41,7 @@ desborde móvil anterior, fuera de los anchos obligatorios de oficina; su
 redistribución pertenece a P04/P05. Los hallazgos heredados del cromo y Catálogo
 permanecen visibles en los informes de antes/después, sin alterar los detectores.
 
-La captura [`inspector-cantidad-visible.png`](recorrido/inspector-cantidad-visible.png)
+La captura [`inspector-cantidad-visible.png`](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/accesorios-extras/recorrido/inspector-cantidad-visible.png)
 usa el desplazamiento real del inspector y muestra 1,56 m × $7.500 = $11.700.
 Las cinco superficies nuevas se verifican además con los detectores acotados del
 recorrido. Las fallas de transporte de los ensayos de estado son deliberadas;

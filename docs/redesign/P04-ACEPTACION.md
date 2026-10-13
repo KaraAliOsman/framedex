@@ -38,7 +38,7 @@ usan Supabase/Django reales. Las organizaciones E2E se aíslan y eliminan.
 
 ## Matrices y capturas
 
-En [capturas](captures/editor-canvas-first/), `antes/` conserva seis vistas
+En [capturas](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/editor-canvas-first), `antes/` conserva seis vistas
 1440/1280/1024 en ambos temas. `despues/` contiene ocho vistas a
 1440×900, 1280×800, 1024×768 y 390×844, dos drawers y cinco estados:
 vacío, carga, error, sin permiso y bloqueado por revisión cerrada.

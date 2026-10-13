@@ -2,7 +2,7 @@
 
 Verificado sobre código `9213655c`, rama `codex/D08-tipologias-avanzadas`, con
 Supabase/Auth propios, Django, worker y Chromium. La evidencia se conserva en
-[tipologías avanzadas](captures/tipologias-avanzadas/). Integrado por
+[tipologías avanzadas](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/tipologias-avanzadas). Integrado por
 [PR #150](https://github.com/KaraAliOsman/framedex/pull/150), squash
 `d6921a893fcc3b303fcd693bd934380e7227f3d0`; CI 4/4 verde sobre `b66ba1c6`
 en la corrida `38174351774`. La comprobación local completa terminó con salida 0.
@@ -53,10 +53,10 @@ la aritmética ambiental no cambia el snapshot ni su hash.
 
 ## Dibujo y evidencia
 
-[Antes](captures/tipologias-avanzadas/antes/) conserva las seis vistas de la
+[Antes](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/tipologias-avanzadas/antes) conserva las seis vistas de la
 serie básica previa. [Matriz](captures/tipologias-avanzadas/matriz/validacion.json)
-registra los 84 ensayos y [estados](captures/tipologias-avanzadas/estados/)
-los fallos deliberados y sus salidas. [Recorrido](captures/tipologias-avanzadas/recorrido/)
+registra los 84 ensayos y [estados](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/tipologias-avanzadas/estados)
+los fallos deliberados y sus salidas. [Recorrido](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/tipologias-avanzadas/recorrido)
 incluye captura técnica, planta y comercial de cada receta, los SVG comunes,
 el PDF real emitido y su verificación SHA-256. Los PNG se comprimen sin
 alterar sus píxeles. Las referencias históricas `s063`/`s064` se contrastaron

@@ -51,7 +51,7 @@ se conservaron. Ninguna tarifa de aceptación se convirtió en precio productivo
 
 ## Estados y evidencia visual
 
-- [Antes](captures/portal-propuesta/antes/): vigente y reemplazada, escritorio
+- [Antes](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/portal-propuesta/antes): vigente y reemplazada, escritorio
   y celular, ambos temas.
 - [Matriz de estados](captures/portal-propuesta/despues/estados/matriz.json):
   40 vistas de vigente, aprobada, cambios, rechazada, revocada, expirada,
@@ -59,18 +59,18 @@ se conservaron. Ninguna tarifa de aceptación se convirtió en precio productivo
   errores de ejecución o hallazgos axe serious/critical.
 - [Aprobada final](captures/portal-propuesta/despues/aprobada/matriz.json):
   los cuatro tamaños del contrato y ambos temas, después del pago.
-- [Captura oficial](captures/portal-propuesta/ux/index.html): 40 vistas en
+- [Captura oficial](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/portal-propuesta/ux/index.html): 40 vistas en
   cuatro tamaños y dos temas, sin hallazgos nuevos. El 410 de la capacidad
   revocada es el resultado esperado, con su página dedicada.
-- [Recorrido](captures/portal-propuesta/recorrido/): selección A, decisión,
+- [Recorrido](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/portal-propuesta/recorrido): selección A, decisión,
   proyecto/Cobranza, cambios, rechazo y retorno fallido/aprobado.
-- [Sucesora permitida](captures/portal-propuesta/sucesora/): el QR histórico
+- [Sucesora permitida](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/portal-propuesta/sucesora): el QR histórico
   reemplazado lleva a B solo con permiso sellado del fabricante; nunca ofrece
   pago sobre A. Se verifica a 1440/390 y ambos temas.
-- [Estados de superficie](captures/portal-propuesta/estados-superficie/):
+- [Estados de superficie](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/portal-propuesta/estados-superficie):
   carga retenida, conexión interrumpida y reintento, vacío/bloqueo por inyección
   de fallo, y permisos reales del operario. La inyección no modifica el dominio.
-- [Detalles inspeccionados](captures/portal-propuesta/detalles/): portada,
+- [Detalles inspeccionados](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/portal-propuesta/detalles): portada,
   condiciones y posición con formatos y texto legibles.
 
 El dibujo comparte el renderer y los hechos físicos sellados: vista declarada,

@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Bot 2D flat redesign — verification (PR #113, HEAD `9409f34`)
 
 Stack live: Vite :5173 (worktree on `devin/1790681698-bot-2d`), Django :8000, Supabase docker, Chrome CDP :29229 (Devin system browser).

@@ -1,3 +1,7 @@
+> Informe histórico anterior al programa v1. El estado vigente está en
+> [aceptación final](acceptance-2026-10-12.md); las conexiones pendientes, en
+> [ACTIVACION](../operations/ACTIVACION.md).
+
 # Entradas bloqueantes — fase 00
 
 Lo que falta para pasar de "base verificable" a "transformación integral",

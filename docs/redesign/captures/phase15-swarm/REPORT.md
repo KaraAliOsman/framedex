@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-15 — Barrido exhaustivo en vivo (final user-facing validation pass)
 
 HEAD `9f9e8c3` (`devin/1790335313-commercial-workspace`). Stack en vivo: Vite :5173, Django :8000, Supabase docker (:25321/:25322), Mailpit :25324, runjobs con `AI_GATEWAY_MOCK_ENABLED=1`, Chrome CDP :9333. Grabación continua con anotaciones durante todo el barrido.

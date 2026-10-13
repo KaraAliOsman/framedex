@@ -79,7 +79,7 @@ fabricable sin autoridad para producir una captura anterior.
 | Arrastre hasta 30°, simulación y deshacer | Regresión E2E: geometría y precio reales, ajuste de ángulo, commit al soltar y restauración con Ctrl+Z. |
 | Bow, Bay 45°, puerta + lateral, ventana + sobreluz, esquina 90° | Recorrido con vidrio del catálogo y selección por teclado. La puerta usa la serie de puerta; las otras recetas usan la practicable. [Recetas](captures/conjuntos-planta/ronda2/recetas.json). |
 | Vacío, carga, error/reintento, bloqueo angular, sin permiso | Cinco estados en Chromium; el reintento recupera el catálogo real y el bloqueo enfoca Acoplador. [Estados](captures/conjuntos-planta/estados/informe.json). |
-| Proyecto → precio → preparación/manillas → emisión → DOC-01 | Revisión A real y worker. Tres páginas Carta, planta y elevación desarrollada en página 2; cuatro cotas presentes, cifras cerradas y sin costos internos. [Verificación](captures/conjuntos-planta/recorrido/doc01-verificacion.json), [página](captures/conjuntos-planta/recorrido/doc01-planta-pagina-2.png). |
+| Proyecto → precio → preparación/manillas → emisión → DOC-01 | Revisión A real y worker. Tres páginas Carta, planta y elevación desarrollada en página 2; cuatro cotas presentes, cifras cerradas y sin costos internos. [Verificación](captures/conjuntos-planta/recorrido/doc01-verificacion.json), [página](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/conjuntos-planta/recorrido/doc01-planta-pagina-2.png). |
 
 El PDF completo y las sesiones privadas permanecen fuera de Git. Su SHA256
 es `01afcaaba751ab06cfb09e7d8c979ef786593c288c4ea7b923d0530ed178c3dd`.

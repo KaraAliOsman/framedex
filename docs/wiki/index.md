@@ -2,11 +2,49 @@
 
 Content-oriented map of durable project knowledge.
 
+## Route a task
+
+Choose the affected row before reading domain pages. Paths below are relative
+to the repository root. Frontend tests are colocated `*.test.ts(x)` plus
+`frontend/tests/`; HTTP tests live in `backend/tests/` and its `integration/`
+subdirectory. SQL/RLS changes also use `supabase/tests/`. Read the applicable
+specification and the linked domain pages, then inspect current code.
+
+| Task | Source entry points | Test entry points | Domain knowledge / specification |
+|---|---|---|---|
+| Calculation, geometry, physical authority | `engine/src/dekopen_engine/`, `backend/engine_api/` | `engine/tests/`, `backend/tests/` | [Catalog authority](product/catalog-authority.md), [openings](product/physical-openings.md), [glass](product/glass-composition.md); [PRD-01](../PRD/PRD-01.md), [domain v3](../PRD/PRD-20-domain-v3.md) |
+| Catalog import and publishing | `backend/catalogs/`, `frontend/src/features/catalogs/` | `backend/tests/test_catalog_*.py`, colocated UI tests | [Catalog authority](product/catalog-authority.md); [PRD-08](../PRD/PRD-08.md), [PRD-20](../PRD/PRD-20.md) |
+| Projects, canvas, inspector and 3D | `backend/projects/`, `frontend/src/features/{projects,canvas,glass,inspector}/` | `backend/tests/`, `engine/tests/`, colocated UI tests | [Workspace](product/project-workspace.md), [editor](product/editor-canvas.md), [3D](product/physical-3d.md); [PRD-04](../PRD/PRD-04.md), [PRD-07](../PRD/PRD-07.md), [PRD-12](../PRD/PRD-12.md) |
+| Price, quotation, PDF and client agreement | `backend/{pricing,documents,portal}/`, `frontend/src/features/{pricing,quotations,portal}/` | `backend/tests/`, `engine/tests/`, colocated UI tests | [Price](product/price-workspace.md), [quotation](product/quotation-document.md), [agreement](product/customer-proposals.md); [PRD-05](../PRD/PRD-05.md), [PRD-06](../PRD/PRD-06.md), [PRD-11](../PRD/PRD-11.md) |
+| AI proposals, operations and jobs | `backend/{ai_gateway,jobs}/`, `engine/src/dekopen_engine/design_operations.py`, `frontend/src/features/{assistant,jobs}/` | `backend/tests/test_ai_*.py`, `engine/tests/`, colocated UI tests | [Assistant](product/assistant-work.md), [provider](product/ai-provider.md), [operation contract](../ai/OPERACIONES.md); [PRD-10](../PRD/PRD-10.md), [PRD-13](../PRD/PRD-13.md) |
+| Production, cutting, labels and CNC | `backend/production/`, `backend/documents/`, `frontend/src/features/production/`, `engine/src/dekopen_engine/` | `engine/tests/`, `backend/tests/`, colocated UI tests | [Stations](product/production-stations.md), [cut documents](product/cut-documents.md), [CNC](product/cnc-authority.md) |
+| Purchasing and inventory | `backend/{purchasing,inventory}/`, `frontend/src/features/purchasing/` | `backend/tests/`, colocated UI tests | [Purchasing / inventory](product/purchasing-inventory.md); [PRD-16](../PRD/PRD-16.md) |
+| Payments, company, roles and security | `backend/{billing,authentication}/`, `frontend/src/features/{billing,settings}/`, `supabase/migrations/` | `backend/tests/`, `supabase/tests/`, colocated UI tests | [Collections](product/collections.md), [company / customers](product/company-customers.md); [PRD-03](../PRD/PRD-03.md), [PRD-02](../PRD/PRD-02.md), [PRD-19](../PRD/PRD-19.md) |
+| Dispatch, installation and post-sale | `backend/production/`, `frontend/src/features/field/` | `backend/tests/integration/test_field_work.py`, colocated UI tests | [Field work](product/field-work.md) |
+| Analytics, Today and search | `backend/{analytics,search}/`, `frontend/src/features/analytics/`, `frontend/src/app/navigation.ts` | `backend/tests/`, colocated UI tests | [Analytics](product/decision-analytics.md), [Today](product/today-workflow.md) |
+| Local stack and repository maintenance | `scripts/review_stack.py`, `scripts/local_gates.py`, `scripts/dev_fixture.py` | Inspect affected script and ownership guards | [Stack skill](../../.agents/skills/testing-framedex/SKILL.md), [workspace](../operations/WORKSPACE.md), [review guide](../GUIA-REVISION.md) |
+
+Brace notation groups directories; pass actual paths to PowerShell commands.
+For navigation/auth entry points use `frontend/src/App.tsx`,
+`frontend/src/PrivateApplication.tsx` and `backend/config/urls.py`.
+The [constitution](../design/CONSTITUCION.md) applies to every product surface.
+Generated API/OpenAPI, golden JSON, completed queue prompts and historical
+payloads are omitted from broad ripgrep discovery; read them by explicit path
+when the task needs them. The dated [v1 acceptance](../redesign/acceptance-2026-10-12.md)
+and [current reality](state/current-reality.md) orient integration work.
+
+The owner's [complete functional report · 12-10-2026](../reports/DEKOPEN-FUNCIONALIDAD-2026-10-12.md)
+is a dated snapshot with 57 chapters and contract inventories. Read it only
+when the task needs a full report; it is excluded from broad search and is
+not part of the default bootstrap. Its static inspection and historical
+acceptance claims keep separate refs; newer code always requires verification.
+
 ## Operating rules
 
 - [Wiki README](README.md) — purpose and authority boundaries.
 - [Schema / agent protocol](SCHEMA.md) — ingest, query, lint and session-bootstrap rules.
 - [Change log](log.md) — append-only chronology.
+- [Workspace maintenance](../operations/WORKSPACE.md) — safe cleanup, persistent local state and evidence retention.
 
 - [Design constitution](../design/CONSTITUCION.md) - mandatory UI/product quality source for v1 work.
 
@@ -64,6 +102,7 @@ Content-oriented map of durable project knowledge.
 - [Price workspace](product/price-workspace.md) — exact cascades and frozen replay, private purchase authority, margin approval and requester receipts.
 
 - [Current reality](state/current-reality.md) — volatile map of implementation state; must always carry a verification ref/date.
+- [v1 acceptance](../redesign/acceptance-2026-10-12.md) — final scope and limits; [evidence map](../redesign/captures/README.md) separates retained acceptance from historical captures.
 
 ## Quality
 

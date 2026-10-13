@@ -60,16 +60,16 @@ QUOTE por otro camino. Las APIs históricas permanecen compatibles.
 
 Evidencia:
 
-- [Antes](captures/cotizacion-emision/antes/proyecto-1440-claro.png).
-- [RUT pendiente](captures/cotizacion-emision/recorrido/02-rut-invalido.png),
-  [respuesta perdida](captures/cotizacion-emision/recorrido/06-respuesta-perdida.png)
-  y [fallback](captures/cotizacion-emision/recorrido/07-portapapeles-alternativa.png).
-- [Campana](captures/cotizacion-emision/recorrido/12-campana-cambios.png),
-  [diff Low-E](captures/cotizacion-emision/recorrido/13-vidrio-global-impacto.png)
-  y [B aprobada](captures/cotizacion-emision/recorrido/19-revision-b-aprobada.png).
-- [Vencimiento](captures/cotizacion-emision/enlaces/03-portal-vencido-390.png),
-  [regeneración](captures/cotizacion-emision/enlaces/05-regenerado.png) y
-  [revocación](captures/cotizacion-emision/enlaces/08-portal-regenerado-revocado-390.png).
+- [Antes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/antes/proyecto-1440-claro.png).
+- [RUT pendiente](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/recorrido/02-rut-invalido.png),
+  [respuesta perdida](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/recorrido/06-respuesta-perdida.png)
+  y [fallback](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/recorrido/07-portapapeles-alternativa.png).
+- [Campana](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/recorrido/12-campana-cambios.png),
+  [diff Low-E](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/recorrido/13-vidrio-global-impacto.png)
+  y [B aprobada](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/recorrido/19-revision-b-aprobada.png).
+- [Vencimiento](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/enlaces/03-portal-vencido-390.png),
+  [regeneración](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/enlaces/05-regenerado.png) y
+  [revocación](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cotizacion-emision/enlaces/08-portal-regenerado-revocado-390.png).
 - [Matriz específica](captures/cotizacion-emision/matriz/matriz.json),
   [captura oficial de proyecto](captures/cotizacion-emision/ux-proyecto-detalle/report.json),
   [portal](captures/cotizacion-emision/ux-portal-aprobada/report.json) y

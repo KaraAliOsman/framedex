@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # D02 · composición, seguridad, precio y pedido de vidrio
 
 El vidrio se elige como un producto del catálogo con una receta verificable. El

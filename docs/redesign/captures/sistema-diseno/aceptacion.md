@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # P01 · aceptación del material de interfaz
 
 Verificado el 05-10-2026 sobre `codex/P01-sistema-diseno`, desde la base `7e98f71d02f31949def1383766eb2b6ee53e156c`. La aceptación cubre las primitivas, los formatos, la validación y la migración de estilos. Las pantallas pendientes de la cola conservan sus defectos heredados; esta tabla no las acredita como rediseñadas.
@@ -12,14 +15,14 @@ Verificado el 05-10-2026 sobre `codex/P01-sistema-diseno`, desde la base `7e98f7
 
 | Evidencia | Enlace |
 |---|---|
-| Manual claro, oficina, 1440 | [PNG](manual/light-office-1440.png) |
-| Manual oscuro, oficina, 1024 | [PNG](manual/dark-office-1024.png) |
-| Manual oscuro, taller, 390 | [PNG](manual/dark-workshop-390.png) |
-| Bien / Mal | [PNG](manual/light-office-1440-bien-mal.png) |
-| Cobranza, error visible | [PNG](validacion/cobranza-light-1440.png) |
-| Catálogo, error en español | [PNG](validacion/catalogo-dark-1440.png) |
-| Proyecto antes | [PNG](antes/proyecto-detalle__ESTIMATOR__light__1440x900.png) |
-| Proyecto después | [PNG](despues/proyecto-detalle__ESTIMATOR__light__1440x900.png) |
+| Manual claro, oficina, 1440 | [PNG](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/sistema-diseno/manual/light-office-1440.png) |
+| Manual oscuro, oficina, 1024 | [PNG](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/sistema-diseno/manual/dark-office-1024.png) |
+| Manual oscuro, taller, 390 | [PNG](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/sistema-diseno/manual/dark-workshop-390.png) |
+| Bien / Mal | [PNG](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/sistema-diseno/manual/light-office-1440-bien-mal.png) |
+| Cobranza, error visible | [PNG](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/sistema-diseno/validacion/cobranza-light-1440.png) |
+| Catálogo, error en español | [PNG](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/sistema-diseno/validacion/catalogo-dark-1440.png) |
+| Proyecto antes | [PNG](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/sistema-diseno/antes/proyecto-detalle__ESTIMATOR__light__1440x900.png) |
+| Proyecto después | [PNG](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/sistema-diseno/despues/proyecto-detalle__ESTIMATOR__light__1440x900.png) |
 | Matriz del manual / validación | [Resultados](manual/results.json) · [Resultados](validacion/results.json) |
 | Matriz completa | [Antes](antes/report.json) · [Después](despues/report.json) |
 | Limpieza CSS | [Reglas y causas](css-cleanup.json) · [Métrica reproducible](css-metrics.json) |

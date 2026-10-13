@@ -29,9 +29,14 @@ For current implementation claims, inspect the current ref, tests and running pr
 ## Start here
 
 1. Read `index.md`.
-2. Read `state/current-reality.md` for the latest verified product-state map.
-3. Read `decisions/owner-decisions.md` before making product-direction decisions.
-4. Read `quality/known-risks.md` before touching editor, pricing, catalog, factory or CNC.
-5. For any volatile/current claim, inspect the repository before acting.
+2. Choose the task's domain route; read the linked pages and affected source.
+3. Read `state/current-reality.md` when integration state matters, and
+   `decisions/owner-decisions.md` when making product-direction decisions.
+4. Read the relevant risks in `quality/known-risks.md` for editor, pricing,
+   catalog, factory or CNC work.
+5. For any volatile/current claim, inspect the target ref before acting.
+
+Read chronological history or raw evidence when it resolves a specific question.
+Completed prompts and dated reports preserve context; they do not restart work.
 
 See `SCHEMA.md` for the maintenance protocol.

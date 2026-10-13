@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-10 — Full 4-role workshop journey (acceptance run)
 
 HEAD `f1bfc95`→`d410de0`→`b4a59a3` (fixes landed mid-run; Django restarted on backend commits, Vite HMR for frontend). Stack: Vite :5173, Django :8000 (`--noreload`), Supabase :25321/DB :25322, Mailpit :25324. Roles exercised live: OWNER (aal2), WORKSHOP_MANAGER, OPERATOR, INSTALLER, ESTIMATOR via magic-link sessions.

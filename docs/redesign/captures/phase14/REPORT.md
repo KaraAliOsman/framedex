@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Fase 14 — validación completa del producto en vivo (CIERRE)
 
 HEAD `23b3b45` (`devin/1790335313-commercial-workspace`). Stack dev real: Vite `localhost:5173`, Django `127.0.0.1:8000` (`--noreload`), Supabase `supabase_db_dekopen` (138 migraciones + `seed.sql` + `scripts/dev_fixture.py`), Mailpit, Chrome CDP :9333.

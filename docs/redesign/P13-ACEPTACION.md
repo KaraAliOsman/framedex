@@ -58,22 +58,22 @@ operario a 390 px oscuro y Corte completado. Sus cinco RT previstos entran
 al inventario con el mismo código, dimensión y destino; los dos retazos
 tomados pasan a consumidos. La OT anterior de P12 conserva su historia.
 
-- [Antes, corte 1440 claro](captures/pack-corte-etiquetas/antes/corte-1440-claro.png).
-- [Después, corte](captures/pack-corte-etiquetas/despues/corte-1440-claro.png),
-  [formatos](captures/pack-corte-etiquetas/despues/formatos-1440-claro.png) y
-  [ajustes](captures/pack-corte-etiquetas/despues/ajustes-1440-claro.png).
-- [Lista impresa](captures/pack-corte-etiquetas/impresion/lista-corte.png),
-  [vidrios](captures/pack-corte-etiquetas/impresion/vidrios.png),
-  [etiquetas](captures/pack-corte-etiquetas/impresion/etiquetas.png) y
-  [rollo](captures/pack-corte-etiquetas/impresion/etiqueta-rollo.png).
+- [Antes, corte 1440 claro](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/antes/corte-1440-claro.png).
+- [Después, corte](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/despues/corte-1440-claro.png),
+  [formatos](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/despues/formatos-1440-claro.png) y
+  [ajustes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/despues/ajustes-1440-claro.png).
+- [Lista impresa](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/impresion/lista-corte.png),
+  [vidrios](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/impresion/vidrios.png),
+  [etiquetas](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/impresion/etiquetas.png) y
+  [rollo](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/impresion/etiqueta-rollo.png).
 - [Resultados de impresión y QR](captures/pack-corte-etiquetas/impresion/resultados.json):
   tres barras, trece piezas, cinco retazos, tres páginas de pack, dieciocho
   QR decodificados desde píxeles y dieciocho páginas/etiquetas de rollo.
   El pack anterior ocupaba cuatro páginas para las mismas tres barras.
-- [Corte por QR](captures/pack-corte-etiquetas/recorrido/02-qr-en-corte-390-oscuro.png),
-  [RT físico](captures/pack-corte-etiquetas/recorrido/03-retazo-real-con-destino.png)
+- [Corte por QR](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/recorrido/02-qr-en-corte-390-oscuro.png),
+  [RT físico](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/recorrido/03-retazo-real-con-destino.png)
   y [resultado del flujo](captures/pack-corte-etiquetas/recorrido/resultados.json).
-- [Formato incompatible rechazado](captures/pack-corte-etiquetas/recorrido/04-formato-incompatible-rechazado.png):
+- [Formato incompatible rechazado](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/recorrido/04-formato-incompatible-rechazado.png):
   el servidor rechaza sustrato desconocido, despunte sin medida útil e identidad
   de suministro incompatible con 422 y texto accionable, sin escribir datos.
 - [Matriz](captures/pack-corte-etiquetas/matriz/resultados.json): dieciséis
@@ -81,8 +81,8 @@ tomados pasan a consumidos. La OT anterior de P12 conserva su historia.
   sin desborde de página ni errores JavaScript; carga, error/reintento, vacío,
   bloqueado y sin permiso comprobados. Las respuestas retenidas/de error
   existen solo en el harness de aceptación, no en el producto.
-- [Auditor de Producción](captures/pack-corte-etiquetas/ux-produccion/index.html)
-  y [auditor de formatos](captures/pack-corte-etiquetas/ux-formatos-lamina/index.html):
+- [Auditor de Producción](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/ux-produccion/index.html)
+  y [auditor de formatos](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/pack-corte-etiquetas/ux-formatos-lamina/index.html):
   ocho capturas por ruta, cero hallazgos finales. Los reportes vacíos de una
   selección de ruta errónea se retiraron y no se cuentan como evidencia.
 

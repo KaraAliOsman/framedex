@@ -5,7 +5,7 @@ window/door manufacturers, with `0.00 mm` deterministic tolerance.
 
 ## Quickstart
 
-Requires Python 3.12+, Node.js 20.19+/22+, npm. The live DB gate additionally
+Requires Python 3.12+, Node.js 22.22.2+, npm. The live DB gate additionally
 needs Docker and Supabase CLI 2.116.0.
 
 ```bash
@@ -17,7 +17,14 @@ make lint typecheck test build    # unit surfaces
 make test-db                      # live gate: clean Supabase stack, pgTAP, RLS, auth e2e
 ```
 
-Run locally:
+For local product review with role accounts, worker and real AI, follow the
+[review guide](docs/GUIA-REVISION.md). On Windows,
+`scripts/start_local.ps1` prepares the owned REVIEW stack at `127.0.0.1:5179`;
+its data persists. Credentials are read from the ignored root `.env` in memory.
+Agents maintaining that stack use the
+[local stack skill](.agents/skills/testing-framedex/SKILL.md).
+
+For development with hot reload:
 
 ```bash
 python backend/manage.py runserver          # sqlite fallback without DATABASE_URL
@@ -37,3 +44,7 @@ specifications in [`docs/PRD/`](./docs/PRD/).
 
 Changes land via pull request. CI checks: **Lint & Typecheck**, **Test Suite**,
 **Frontend Build**, **Database Gate**.
+
+Current delivery: [v1 acceptance](docs/redesign/acceptance-2026-10-12.md),
+[review guide](docs/GUIA-REVISION.md) and [activation](docs/operations/ACTIVACION.md).
+For safe cleanup and evidence retention, see [workspace maintenance](docs/operations/WORKSPACE.md).

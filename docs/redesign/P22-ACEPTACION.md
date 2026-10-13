@@ -62,20 +62,20 @@ termina en la nueva obra real; no se inventa una miniatura con precio.
 
 ## Evidencia visual y estados
 
-- [Antes](captures/clientes-ajustes/antes/): 24 vistas de clientes, ajustes y
+- [Antes](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/clientes-ajustes/antes): 24 vistas de clientes, ajustes y
   alta, dueño/estimador, 1440/1024 y ambos temas.
-- [Recorrido](captures/clientes-ajustes/recorrido/): cliente y dirección,
+- [Recorrido](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/clientes-ajustes/recorrido): cliente y dirección,
   duplicado, emisión, PDF, fusión, marca viva, invitación y alta.
-- [Estados](captures/clientes-ajustes/estados/): diez capturas de vacío,
+- [Estados](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/clientes-ajustes/estados): diez capturas de vacío,
   carga, error, sin permiso y bloqueo. Carga/503 se inyectan únicamente en
   transporte Playwright; fusión, denegación y falta de revisión son estados reales.
-- [Ajustes](captures/clientes-ajustes/ux/ajustes/index.html): nueve secciones,
+- [Ajustes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/clientes-ajustes/ux/ajustes/index.html): nueve secciones,
   tres roles, cuatro tamaños y ambos temas. Empresa y Comercial tienen
   repeticiones finales con la corrección de tarifas y Marca.
-- [Clientes](captures/clientes-ajustes/ux/clientes/index.html) y
-  [alta](captures/clientes-ajustes/ux/alta/index.html): mismos tamaños/temas,
+- [Clientes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/clientes-ajustes/ux/clientes/index.html) y
+  [alta](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/clientes-ajustes/ux/alta/index.html): mismos tamaños/temas,
   dueño/estimador. El operario tiene su denegación real en Estados.
-- [Precios](captures/clientes-ajustes/ux/precios-final/index.html): controles
+- [Precios](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/clientes-ajustes/ux/precios-final/index.html): controles
   de moneda y fuente explícita. El recorrido USD produce US$ 582,20 con la
   observación DEMO a 900 pesos por dólar, sin aplicar ni emitir ni modificar
   el acuerdo CLP. `moneda-fx.json` conserva el resultado de API y navegador.

@@ -3,7 +3,7 @@
 Base `81ee66d7`, rama `codex/ED1-pase-editorial-ola1`. Verificación del
 09-10-2026. La revisión reúne shell/Hoy/paleta, editor/DIN/selectores,
 precios, DOC-01, taller, asistente/Orb y marca/ingreso. La
-[comparación por persona](captures/ed1/index.html) conserva las capturas
+[comparación por persona](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/ed1/index.html) conserva las capturas
 anteriores y posteriores lado a lado.
 
 ## Qué cambió y por qué
@@ -53,7 +53,7 @@ la aceptación de sus flujos posteriores.
 
 | Persona/capacidad | Resultado y evidencia |
 | --- | --- |
-| Estimador: Hoy → buscar proyecto → editor/vistas DIN/sección → precio → preparación → emitir → DOC-01 | PASA. Tres posiciones, cascada del motor cerrada, neto $68.211 y total $81.171. Clic y worker generan cuatro páginas Carta con Plex embebida, sin costos internos. [Recorrido](captures/ed1/recorridos/estimador.json), [PDF verificado](captures/ed1/recorridos/doc01.json), [primera página](captures/ed1/recorridos/doc01-carta.png). |
+| Estimador: Hoy → buscar proyecto → editor/vistas DIN/sección → precio → preparación → emitir → DOC-01 | PASA. Tres posiciones, cascada del motor cerrada, neto $68.211 y total $81.171. Clic y worker generan cuatro páginas Carta con Plex embebida, sin costos internos. [Recorrido](captures/ed1/recorridos/estimador.json), [PDF verificado](captures/ed1/recorridos/doc01.json), [primera página](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/ed1/recorridos/doc01-carta.png). |
 | Dueño: Hoy → Precios → solicitud bajo la banda → aprobar → Asistente | PASA. Backend rechaza aplicar como estimador; el dueño revisa y aprueba por UI. [Personas](captures/ed1/recorridos/personas.json). |
 | Jefe: Hoy → tablero → QC bloqueado con motivo → remake → plan de corte | PASA. Conserva la pieza rechazada y obtiene doce cortes del motor en el plan del remake. [Personas](captures/ed1/recorridos/personas.json). |
 | Operario, 390 oscuro: estación Corte → QR → pieza → iniciar → bloquear → supervisor desbloquea | PASA. Código físico real, puesto privado y causa persistente. [Personas](captures/ed1/recorridos/personas.json). |

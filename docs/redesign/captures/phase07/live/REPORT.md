@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../../README.md) para continuar.
+
 # Phase-07 — commercial proposal live flows
 
 HEAD `e82e17e` · branch `devin/1790335313-commercial-workspace` · live dev stack
