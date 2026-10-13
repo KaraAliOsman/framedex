@@ -1,7 +1,7 @@
 # P03 · navegación por flujo y trabajo de Hoy
 
 Rama `codex/P03-shell-hoy`, base `096621c9`. Verificación local 09-10-2026.
-Evidencia en [capturas](captures/shell-hoy/).
+Evidencia en [capturas](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/shell-hoy).
 
 Hoy muestra compromisos con verbo, entidad, causa y destino. El motor ordena
 vencidos, bloqueos, trabajo del día y seguimiento, sin comparar monedas.

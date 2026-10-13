@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # D05 · colores y acabados por caras
 
 El estimador elige interior y exterior desde una carta con fuente y ve el

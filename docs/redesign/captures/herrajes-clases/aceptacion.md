@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # D04 · herrajes por familia, clase y componentes
 
 El motor resuelve el herraje y explica sus restricciones. Una elección comprende

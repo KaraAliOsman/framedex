@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-04 captures — parameter-evidence registry + Studio kit picker
 
 Worktree `/home/ubuntu/wt-commercial` · branch `devin/1790335313-commercial-workspace` · **HEAD `20d8c70`**

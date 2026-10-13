@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-08 — Compras → Recepción → Stock → Retazos (live verification)
 
 Branch `devin/1790335313-commercial-workspace`, HEAD `c685f5b` + fix commits through `f6da4de`.

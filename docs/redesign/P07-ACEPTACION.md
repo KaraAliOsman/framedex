@@ -1,7 +1,7 @@
 # P07 · precio del proyecto, cascada y aprobación
 
 Rama `codex/P07-workspace-precios`, base `3351066d40a4ad7b19943984efb0cfe8e0893351`.
-Verificación local 09-10-2026. Evidencia en [capturas](captures/workspace-precios/).
+Verificación local 09-10-2026. Evidencia en [capturas](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/workspace-precios).
 
 El proyecto abre comparando el precio aplicado con una propuesta del motor.
 La cascada conserva composición, merma, proceso, servicios, utilidad a lista,

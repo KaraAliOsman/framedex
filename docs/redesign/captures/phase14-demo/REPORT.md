@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Demo integral A→Z — DEKOPEN en vivo
 
 HEAD `a560176` (`devin/1790335313-commercial-workspace`). Grabación única continua en una sola toma: Chrome maximizado en pantalla real 1600×1200 (viewport 1600×1017), Vite `127.0.0.1:5173`, Django `127.0.0.1:8000`, Supabase local, Mailpit real para el magic link.

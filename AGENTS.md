@@ -75,3 +75,12 @@ research or prior conclusions:
 Keep four categories distinct: verified current repo fact, owner/product intent,
 historical context, and external research. Never turn a wiki inference into
 engineering numeric truth or production authority.
+
+## Repository hygiene
+
+Read `docs/operations/WORKSPACE.md` before cleaning local files. `.run/` also
+holds persistent browser sessions, stack ownership and registered WSL storage.
+Keep generated captures temporary; deliberately select evidence for commits.
+`docs/redesign/captures/README.md` maps current acceptance and archived evidence.
+Default ripgrep searches omit capture payloads; use an explicit file path or
+`rg --no-ignore docs/redesign/captures/` when investigating that evidence.

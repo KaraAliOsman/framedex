@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 ﻿# Baseline UX 2026-10-05
 
 Captura inicial generada con `npm --prefix frontend run ux:capture -- --out ../docs/redesign/captures/baseline-2026-10-05 --routes login --roles ESTIMATOR` sobre stack local Supabase + Django + Vite.

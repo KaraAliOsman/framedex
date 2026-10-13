@@ -7,6 +7,7 @@ Content-oriented map of durable project knowledge.
 - [Wiki README](README.md) — purpose and authority boundaries.
 - [Schema / agent protocol](SCHEMA.md) — ingest, query, lint and session-bootstrap rules.
 - [Change log](log.md) — append-only chronology.
+- [Workspace maintenance](../operations/WORKSPACE.md) — safe cleanup, persistent local state and evidence retention.
 
 - [Design constitution](../design/CONSTITUCION.md) - mandatory UI/product quality source for v1 work.
 
@@ -64,6 +65,7 @@ Content-oriented map of durable project knowledge.
 - [Price workspace](product/price-workspace.md) — exact cascades and frozen replay, private purchase authority, margin approval and requester receipts.
 
 - [Current reality](state/current-reality.md) — volatile map of implementation state; must always carry a verification ref/date.
+- [v1 acceptance](../redesign/acceptance-2026-10-12.md) — final scope and limits; [evidence map](../redesign/captures/README.md) separates retained acceptance from historical captures.
 
 ## Quality
 

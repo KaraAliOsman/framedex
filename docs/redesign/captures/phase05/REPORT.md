@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-05 — Commercial unification acceptance captures
 
 HEAD `da45d88` · branch `devin/1790335313-commercial-workspace` · recorded live on the local

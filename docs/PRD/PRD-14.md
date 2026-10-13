@@ -46,5 +46,5 @@ Para emitir el sello de certificación oficial sin quemar tokens innecesarios, e
 
 La independencia, el doble ciego, el árbitro determinista, los umbrales y el opt-in humano son
 contratos de producto. Los proveedores, modelos concretos y métodos internos se resuelven por
-`ai_routes` conforme a [PRD-13](./PRD-13.md) y [FUTURE_CAPABILITIES §3](./FUTURE_CAPABILITIES.md#3-principio-de-neutralidad-tecnológica-y-de-ia-ai-capability-neutral).
+`ai_routes` conforme a [PRD-13](./PRD-13.md); se conserva el principio de neutralidad tecnológica y de IA.
 Cambiar un nombre de modelo no autoriza cambiar billing, auditoría, bloqueos ni emisión.

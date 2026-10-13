@@ -28,7 +28,7 @@ en 1440×900, 1280×800 y 1024×768, ambos temas, más portal en 390×844. El su
 registra condiciones, confirmación y teclado. Los runners oficiales recorren
 Ajustes, proyecto y portal en cuatro tamaños y ambos temas.
 
-[Capturas](captures/doc01-v2/) conserva PDF anterior, fixtures finales,
+[Capturas](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/doc01-v2) conserva PDF anterior, fixtures finales,
 matrices, recorridos y reportes oficiales. Los PDFs públicos son sintéticos y
 rotulados DEMO; usan enlaces `example.test`. Los documentos y las capacidades
 del recorrido real permanecen en el directorio local ignorado.

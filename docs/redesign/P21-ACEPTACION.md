@@ -20,7 +20,7 @@ pasan 31 casos: medidas en la fila con diff y deshacer, orden sin renumerar,
 flechas, Enter al editor, Supr con confirmación y propuesta antes del borrado,
 restauración, lista/grilla y Producción/Documentos/Actividad. Los seis tamaños
 y temas de escritorio de esa matriz no presentan hallazgos ni desbordes.
-La [matriz de consulta](captures/centro-proyecto/ux-final/index.html) recorre
+La [matriz de consulta](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/centro-proyecto/ux-final/index.html) recorre
 estimador y jefe de taller, cuatro tamaños y dos temas con los detectores
 oficiales sin alterar sus reglas.
 
@@ -106,7 +106,7 @@ Los [cinco estados](captures/centro-proyecto/estados/estados.json) incluyen
 retención de la consulta para carga y respuesta 503 para error, inyectadas
 solo por Playwright; vacío, instalador sin permiso y precio bloqueado son
 estados reales del fixture. Ninguna de esas pruebas modifica una posición.
-La [captura de medidas](captures/centro-proyecto/despues/diff-medidas.png)
+La [captura de medidas](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/centro-proyecto/despues/diff-medidas.png)
 muestra 1 500 × 1 200 → 1 300 × 1 200 mm y Δ neto de la simulación;
 se descarta sin persistir. La compresión verifica píxeles, modo y tamaño
 exactos de los PNG, no solo su legibilidad.

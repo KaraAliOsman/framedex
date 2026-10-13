@@ -1,3 +1,8 @@
+Programa v1 integrado a `main` en [PR #157](https://github.com/KaraAliOsman/framedex/pull/157),
+SHA `2db4e13171884b93a989e68508a55f5590f9b34d`, cuatro checks requeridos en verde.
+Esta tabla conserva los merges originales por encargo. Las capturas anteriores
+a la aceptación final se consultan en [el archivo de evidencia](../redesign/captures/README.md).
+
 | ID | Ola | Estado | PR | SHA | Notas |
 |---|---|---|---|---|---|
 | P00 | 0 | mergeado | https://github.com/KaraAliOsman/framedex/pull/114 | a096f85b2e56e21eda024c1ec92a456ed9d30b03 | CI 4/4 verde; PR mergeado en integracion/v1. |

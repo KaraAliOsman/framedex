@@ -69,11 +69,11 @@ se verifican además contra PostgreSQL, sin depender de los controles de UI.
 
 ## Evidencia
 
-- [Antes](captures/cobranza-pagos-facturacion/antes/cobranza-1440-claro.png),
-  [saldo y traza](captures/cobranza-pagos-facturacion/despues/pagado-con-traza-1440.png),
-  [validación](captures/cobranza-pagos-facturacion/despues/validacion-espanol.png).
-- [Mensaje preparado/enviado](captures/cobranza-pagos-facturacion/despues/recordatorio-ia-enviado.png),
-  [retorno móvil](captures/cobranza-pagos-facturacion/despues/retorno-simulado-390.png).
+- [Antes](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cobranza-pagos-facturacion/antes/cobranza-1440-claro.png),
+  [saldo y traza](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cobranza-pagos-facturacion/despues/pagado-con-traza-1440.png),
+  [validación](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cobranza-pagos-facturacion/despues/validacion-espanol.png).
+- [Mensaje preparado/enviado](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cobranza-pagos-facturacion/despues/recordatorio-ia-enviado.png),
+  [retorno móvil](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/cobranza-pagos-facturacion/despues/retorno-simulado-390.png).
 - [Matriz](captures/cobranza-pagos-facturacion/matriz/resultados.json) y
   [documentos sellados](captures/cobranza-pagos-facturacion/pdf/resultados.json).
 - `ux-cobranza-proyecto/report.json`, `ux-ajustes/report.json` y

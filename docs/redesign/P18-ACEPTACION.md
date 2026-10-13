@@ -2,12 +2,12 @@
 
 Código `5b786e7af6555b7fdb8e40399a604c3c909d94dc`, rama
 `codex/P18-termico-oguc`, desde integración `c777b165`.
-Evidencia: [antes proyecto](captures/termico-oguc/antes-proyecto.png),
-[antes catálogo](captures/termico-oguc/antes-catalogo.png),
-[matriz](captures/termico-oguc/matriz/),
-[estados](captures/termico-oguc/estados/),
-[ux:capture](captures/termico-oguc/ux/) y
-[DOC-01](captures/termico-oguc/documento/).
+Evidencia: [antes proyecto](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/termico-oguc/antes-proyecto.png),
+[antes catálogo](https://github.com/KaraAliOsman/framedex/blob/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/termico-oguc/antes-catalogo.png),
+[matriz](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/termico-oguc/matriz),
+[estados](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/termico-oguc/estados),
+[ux:capture](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/termico-oguc/ux) y
+[DOC-01](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/termico-oguc/documento).
 
 ## Resultado y límites
 

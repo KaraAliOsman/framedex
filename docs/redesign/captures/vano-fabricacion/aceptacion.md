@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # D07 · del vano a fabricación
 
 El estimador ingresa el vano y el motor obtiene fabricación con la regla

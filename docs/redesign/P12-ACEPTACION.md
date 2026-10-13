@@ -1,7 +1,7 @@
 # P12 · producción por estación
 
 Base `62ebcbe9`, rama `codex/P12-produccion-estaciones`. Verificación local
-09-10-2026; evidencia en [capturas](captures/produccion-estaciones/).
+09-10-2026; evidencia en [capturas](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/produccion-estaciones).
 
 El jefe abre un tablero por estación con la primera tarea de cada OT,
 compromiso declarado y motivos de bloqueo. El detalle sustituye el muro de

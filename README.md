@@ -37,3 +37,7 @@ specifications in [`docs/PRD/`](./docs/PRD/).
 
 Changes land via pull request. CI checks: **Lint & Typecheck**, **Test Suite**,
 **Frontend Build**, **Database Gate**.
+
+Current delivery: [v1 acceptance](docs/redesign/acceptance-2026-10-12.md),
+[review guide](docs/GUIA-REVISION.md) and [activation](docs/operations/ACTIVACION.md).
+For safe cleanup and evidence retention, see [workspace maintenance](docs/operations/WORKSPACE.md).

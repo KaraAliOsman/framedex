@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-11 — CNC / machining acceptance — live verification report
 
 **HEAD:** `c004218` (incl. migration `20261228000010_step_event_cnc_program` fixing the CHECK that dropped `WO_CNC_PROGRAM` — defect found + fixed mid-run).

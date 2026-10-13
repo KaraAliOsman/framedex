@@ -1564,3 +1564,24 @@ acredita producción/certificación ni dinero. Véase
 ## 2026-10-12 · P20 integrado
 
 [PR #156](https://github.com/KaraAliOsman/framedex/pull/156), squash `c99d25b577cc2726d28465dbab59f142c2c7cd73`; cuatro checks de CI PASA sobre `c8ac0612aa1ff10008ab666c9527eccc67a9bc4c`. Los 39 encargos quedan cerrados en ESTADO. El cierre documental conserva los refs de cada corrida, límites de sandbox/DEMO y fallos del proveedor. La revisión hacia main se entrega al dueño sin merge.
+
+## 2026-10-12 · main integrado y workspace depurado
+
+Por instrucción del dueño, [PR #157](https://github.com/KaraAliOsman/framedex/pull/157)
+integra v1 a main en `2db4e13171884b93a989e68508a55f5590f9b34d`, con los
+cuatro checks SUCCESS en ambas corridas. Los 39 encargos permanecen mergeados.
+
+La limpieza retira 6,979 archivos de evidencia histórica
+(1,560,471,278 bytes) del checkout; el SHA anterior y los enlaces archivados
+permiten recuperarlos. Los 2,185 archivos de aceptación final y las
+entradas QR/reportes usados por herramientas permanecen. Los mapas de progreso
+y estado se condensan con acceso explícito a sus originales; no se borra
+historia de decisiones ni este log. Véase `docs/redesign/captures/README.md`.
+
+Se retiran 34,146 archivos temporales locales (2,587,938,566 bytes) a la
+Papelera de Windows, conservando perfiles Brave, launchers, propiedad REVIEW,
+PRIMARY, WSL registrado, dependencias, bases y `.env`. La reducción del workspace
+es 3.86 GiB; no se atribuye a una poda del historial ni de la Papelera.
+`docs/operations/WORKSPACE.md`, `.gitignore` y `.rgignore` establecen retención
+y búsqueda para futuros agentes. Verificación de archivos, hashes de launchers,
+metadatos de evidencia, enlaces y refs; sin pruebas funcionales, navegador ni IA.

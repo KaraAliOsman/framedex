@@ -1,0 +1,3 @@
+# Generated evidence is available explicitly with rg --no-ignore.
+# Keep normal agent source searches and file inventories focused.
+docs/redesign/captures/

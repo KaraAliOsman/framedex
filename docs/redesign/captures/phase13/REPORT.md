@@ -1,3 +1,6 @@
+> Informe histórico de esta corrida. Consulte [aceptación final](../../acceptance-2026-10-12.md) y
+> [ubicación de las capturas archivadas](../README.md) para continuar.
+
 # Phase-13 — First impression + first project — acceptance report
 
 Stack: worktree `wt-commercial` @ `875655d`. Vite `localhost:5173` + `127.0.0.1:5173`, Django :8000, Supabase :25321/:25322, Mailpit :25324, Chrome CDP. All flows run live in the browser; the magic-link round trip used real Mailpit mail + the gotrue verify URL (never pre-fetched).

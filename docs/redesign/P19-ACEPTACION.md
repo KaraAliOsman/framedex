@@ -3,7 +3,7 @@
 Código `94b5f151723207fa7b96a5a087a6906f471454d4`, lectura explícita de tokens
 `86b79340bab710a9cc9f1336323fdd9393ce981b`, sobre
 `codex/P19-3d-fisico`, desde integración `5098d4b1`.
-La evidencia se conserva en [3D físico](captures/3d-fisico/).
+La evidencia se conserva en [3D físico](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/3d-fisico).
 
 ## Modelo y alcance
 
@@ -66,7 +66,7 @@ DOC-01 consume SVG técnico actualmente: se conservan sus bytes históricos.
 - [40 tipologías](captures/3d-fisico/tipologias/validacion.json): cerrada,
   abierta, exterior, despiece y PNG; 38 operables y dos fijos, cero errores.
   Se inspeccionaron comparaciones de las 40, puerta, plegable, HST/PSK,
-  correderas por carril y despiece. [Antes](captures/3d-fisico/antes/) conserva
+  correderas por carril y despiece. [Antes](https://github.com/KaraAliOsman/framedex/tree/2db4e13171884b93a989e68508a55f5590f9b34d/docs/redesign/captures/3d-fisico/antes) conserva
   el HST sin apertura; la ampliación final corrige su tamaño a 1024 px.
 - [14 recorridos](captures/3d-fisico/recorrido/validacion.json): seis editor
   (1440/1280/1024 claro/oscuro), ocho portal (incluye 390), guardar/recargar,
