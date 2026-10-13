@@ -67,5 +67,26 @@ los launchers de la tabla. Las credenciales se leen en memoria desde `.env`.
    el resultado medido en la wiki. No reescriba el historial de Git para reducir
    el tamaño: la reducción corresponde al checkout y a temporales locales.
 
-`.rgignore` omite los payloads de capturas en búsquedas generales. Para leerlos,
-abra la ruta concreta o use `rg --no-ignore docs/redesign/captures/`.
+## Búsqueda por tarea
+
+`AGENTS.md` y las rutas por dominio de [la wiki](../wiki/index.md) dirigen al
+código, sus pruebas y la especificación pertinente. Lea historia cuando
+resuelva una pregunta concreta; la cola terminada no es un nuevo mandato.
+Las marcas `docs/cola/AGENTS.md` y `docs/redesign/AGENTS.md` señalan ese límite.
+
+`.rgignore` omite de búsquedas generales el cliente/OpenAPI generado, goldens
+JSON, prompts terminados, capturas, informes históricos, payloads de evals y
+el log cronológico. Conserva visibles código, pruebas, migraciones, PRD, wiki
+de dominio, aceptación global vigente y fixtures. Son exclusiones de búsqueda;
+no cambian el seguimiento de Git ni las entradas de generadores o tests.
+
+Empiece con `rg --files <carpeta-del-dominio>` y búsquedas de símbolo/error
+dentro de esas carpetas. Para lo excluido, abra un archivo conocido directamente
+o use `rg --no-ignore <patrón> <carpeta-específica>`. Evite un `--no-ignore`
+global que vuelva a recorrer dependencias, sesiones o datos privados.
+
+La receta actual de stack está en
+[testing-framedex](../../.agents/skills/testing-framedex/SKILL.md), basada en
+`review_stack.py`, `dev_fixture.py` y la guía de revisión. La receta anterior
+se conserva en un enlace a Git; sus rutas de otra estación, defectos de fases
+antiguas y recuperación manual de Auth no son el procedimiento vigente.

@@ -1585,3 +1585,31 @@ es 3.86 GiB; no se atribuye a una poda del historial ni de la Papelera.
 `docs/operations/WORKSPACE.md`, `.gitignore` y `.rgignore` establecen retención
 y búsqueda para futuros agentes. Verificación de archivos, hashes de launchers,
 metadatos de evidencia, enlaces y refs; sin pruebas funcionales, navegador ni IA.
+
+## 2026-10-12 · Entrada de agentes por tarea y stack vigente
+
+Sobre `d078f550`, el dueño pide reducir el ruido que había desviado a otras
+IA. `AGENTS.md`, el índice y el protocolo de wiki pasan a seleccionar dominio,
+código, pruebas y especificación antes de consultar historia. La cola completa
+y los informes de rediseño reciben marcas de contexto histórico; se preservan
+sus archivos, decisiones y recibos. La constitución mantenida sigue en
+`docs/design/CONSTITUCION.md`.
+
+`.rgignore` retira del descubrimiento general generados, goldens JSON y
+payloads/historia. En esta estación, `rg --files` pasa de 3,238 a 1,657 archivos
+y de 78,469,177 a 30,026,202 bytes. El material
+permanece accesible por ruta explícita; esta medida describe descubrimiento,
+no una mejora medida de ejecución del producto.
+
+La skill local pasa de 451 a 100 líneas y de 62,391 a 4,958 bytes, basada en
+los scripts actuales: REVIEW posee sus recursos, inicia API/web/worker y carga
+`.env` en memoria; el gate limpio exige un proyecto sin datos previos. Se
+retiran recetas de otra estación, defectos históricos y manipulación manual de
+Auth del procedimiento activo, con acceso a la versión anterior por SHA.
+README alinea Node mínimo con `frontend/package.json` (`22.22.2`).
+
+Validación estática: skill válida, 134 enlaces locales y 63 rutas comprobados;
+el código sigue visible y los payloads se leen por ruta explícita. Sin pruebas
+funcionales locales, llamadas al proveedor ni recorridos del navegador. Código,
+goldens, migraciones, CI, aceptación, datos y sesiones locales se preservan.
+Recibo local: `.run/context-optimization-2026-10-12.json`.
