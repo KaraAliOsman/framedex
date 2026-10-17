@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-17
 volatility: medium
-verified_ref: codex/v1-experiencia
+verified_ref: 42ccac96823f53ee1b33e9d8baba00fb698e204d
 sources:
   - docs/ux/2026-10-17/05-ia-catalogos.md
   - engine/src/dekopen_engine/catalog_rules.py

@@ -1721,3 +1721,5 @@ No se declara aceptación definitiva: faltan corpus fabricante/OCR regional,
 activos físicos aprobados y aceptación profesional independiente. El PDF usa un
 renderer separado; no existe una transacción única diseño/precio/PDF y varias
 superficies del negocio conservan su composición anterior.
+
+Referencia fija del código de cierre: `42ccac96823f53ee1b33e9d8baba00fb698e204d`.

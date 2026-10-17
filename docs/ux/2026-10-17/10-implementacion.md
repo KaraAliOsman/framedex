@@ -1,7 +1,8 @@
 # Construcción v1 · 17-10-2026
 
 Autorizada por el dueño con «ahora empieza». Base: `edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f`.
-Rama `codex/v1-experiencia`. El build REVIEW se reconstruyó desde este checkout
+Rama `codex/v1-experiencia`; código de cierre `42ccac96823f53ee1b33e9d8baba00fb698e204d`.
+El build REVIEW se reconstruyó desde este checkout
 sin fixture/reset. Esta revisión no acredita aceptación definitiva del dueño ni
 superioridad operativa sobre la competencia.
 

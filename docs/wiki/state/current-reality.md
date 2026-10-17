@@ -3,7 +3,7 @@ type: state
 status: active
 updated: 2026-10-17
 volatility: high
-verified_ref: codex/v1-experiencia
+verified_ref: 42ccac96823f53ee1b33e9d8baba00fb698e204d
 sources:
   - https://github.com/KaraAliOsman/framedex/pull/157
   - docs/cola/ESTADO.md

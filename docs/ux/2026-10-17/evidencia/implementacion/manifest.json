@@ -1,7 +1,7 @@
 {
   "phase": "implementation",
   "date": "2026-10-17",
-  "verified_ref": "codex/v1-experiencia",
+  "verified_ref": "42ccac96823f53ee1b33e9d8baba00fb698e204d",
   "base_ref": "edcfd2844d2c2fc7cbb0d3b543b50e9089ab9b3f",
   "provenance": "Owned REVIEW rebuilt from this checkout without fixture/reset; captures selected across final integration builds",
   "data": "Synthetic DEMO; no industrial certification or production services asserted",

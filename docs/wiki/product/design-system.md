@@ -3,7 +3,7 @@ type: concept
 status: active
 updated: 2026-10-17
 volatility: medium
-verified_ref: codex/v1-experiencia
+verified_ref: 42ccac96823f53ee1b33e9d8baba00fb698e204d
 sources:
   - docs/wiki/sources/owner-ux-direction-2026-10-17.md
   - ED2 PR https://github.com/KaraAliOsman/framedex/pull/145, CI 4/4 sobre dd3fe1ffce2c14ba1125442d8a137021d1ba32f2, corrida https://github.com/KaraAliOsman/framedex/actions/runs/38091279743, squash fa3731843dbfbd75d00024e95f4986a3616a8747, 2026-10-10.

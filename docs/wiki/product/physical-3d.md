@@ -3,7 +3,7 @@ type: synthesis
 status: active
 updated: 2026-10-17
 volatility: high
-verified_ref: codex/v1-experiencia
+verified_ref: 42ccac96823f53ee1b33e9d8baba00fb698e204d
 sources:
   - docs/ux/2026-10-17/04-representacion.md
   - docs/redesign/P19-ACEPTACION.md
